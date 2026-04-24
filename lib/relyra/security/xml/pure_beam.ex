@@ -14,7 +14,10 @@ defmodule Relyra.Security.XML.PureBeam do
 
     cond do
       byte_size(xml) > max_bytes ->
-        {:error, Error.new(:payload_too_large, "XML payload exceeds max_bytes limit", %{max_bytes: max_bytes})}
+        {:error,
+         Error.new(:payload_too_large, "XML payload exceeds max_bytes limit", %{
+           max_bytes: max_bytes
+         })}
 
       String.contains?(xml, "<!DOCTYPE") ->
         {:error, Error.new(:doctype_forbidden, "DOCTYPE declarations are forbidden")}
