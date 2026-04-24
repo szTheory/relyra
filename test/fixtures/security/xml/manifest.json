@@ -1,0 +1,259 @@
+[
+  {
+    "id": "xxe-001",
+    "class": "xxe_entity_abuse",
+    "requirement_ids": ["SEC-01", "GATE-02"],
+    "expected_error_type": "doctype_forbidden",
+    "xml": "<!DOCTYPE root><root/>",
+    "notes": "DOCTYPE should be rejected before parse trust boundary."
+  },
+  {
+    "id": "xxe-002",
+    "class": "xxe_entity_abuse",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "doctype_forbidden",
+    "xml": "<!DOCTYPE saml><saml/>"
+  },
+  {
+    "id": "xxe-003",
+    "class": "xxe_entity_abuse",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "doctype_forbidden",
+    "xml": "<!DOCTYPE foo><foo/>"
+  },
+  {
+    "id": "xxe-004",
+    "class": "xxe_entity_abuse",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "entity_expansion_forbidden",
+    "xml": "<!ENTITY xxe 'boom'><root/>"
+  },
+  {
+    "id": "xxe-005",
+    "class": "xxe_entity_abuse",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "entity_expansion_forbidden",
+    "xml": "<!ENTITY abuse 'x'><node/>"
+  },
+  {
+    "id": "xxe-006",
+    "class": "xxe_entity_abuse",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "entity_expansion_forbidden",
+    "xml": "<!ENTITY payload 'a'><entry/>"
+  },
+  {
+    "id": "size-001",
+    "class": "size_and_inflate_bounds",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "payload_too_large",
+    "xml": "<root>0123456789ABCDEF</root>",
+    "max_bytes": 8
+  },
+  {
+    "id": "size-002",
+    "class": "size_and_inflate_bounds",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "payload_too_large",
+    "xml": "<root>AAAAAAAAAAAAAAAAAAAA</root>",
+    "max_bytes": 10
+  },
+  {
+    "id": "size-003",
+    "class": "size_and_inflate_bounds",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "payload_too_large",
+    "xml": "<root>BBBBBBBBBBBBBBBBBBBB</root>",
+    "max_bytes": 12
+  },
+  {
+    "id": "size-004",
+    "class": "size_and_inflate_bounds",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "payload_too_large",
+    "xml": "<root>CCCCCCCCCCCCCCCCCCCC</root>",
+    "max_bytes": 9
+  },
+  {
+    "id": "sigwrap-001",
+    "class": "signature_wrapping",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><assertion>unsigned</assertion></response>"
+  },
+  {
+    "id": "sigwrap-002",
+    "class": "signature_wrapping",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><assertion id='a'/></response>"
+  },
+  {
+    "id": "sigwrap-003",
+    "class": "signature_wrapping",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><assertion id='b'/></response>"
+  },
+  {
+    "id": "sigwrap-004",
+    "class": "signature_wrapping",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><signed>false</signed></response>"
+  },
+  {
+    "id": "sigwrap-005",
+    "class": "signature_wrapping",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><duplicate id='x'/><duplicate id='x'/></response>"
+  },
+  {
+    "id": "sigwrap-006",
+    "class": "signature_wrapping",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><wrapper><assertion/></wrapper></response>"
+  },
+  {
+    "id": "sigwrap-007",
+    "class": "signature_wrapping",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><wrapper id='w'/></response>"
+  },
+  {
+    "id": "sigwrap-008",
+    "class": "signature_wrapping",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><assertion>tampered</assertion></response>"
+  },
+  {
+    "id": "c14n-001",
+    "class": "parser_differential_and_c14n",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "canonicalization_failed",
+    "xml": "<response><signed>node</signed></response>"
+  },
+  {
+    "id": "c14n-002",
+    "class": "parser_differential_and_c14n",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "canonicalization_failed",
+    "xml": "<response><signed attr='1'>node</signed></response>"
+  },
+  {
+    "id": "c14n-003",
+    "class": "parser_differential_and_c14n",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "canonicalization_failed",
+    "xml": "<response><signed attr='2'>node</signed></response>"
+  },
+  {
+    "id": "c14n-004",
+    "class": "parser_differential_and_c14n",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "canonicalization_failed",
+    "xml": "<response><signed><child/></signed></response>"
+  },
+  {
+    "id": "c14n-005",
+    "class": "parser_differential_and_c14n",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "canonicalization_failed",
+    "xml": "<response><signed><child id='5'/></signed></response>"
+  },
+  {
+    "id": "c14n-006",
+    "class": "parser_differential_and_c14n",
+    "requirement_ids": ["GATE-02"],
+    "expected_error_type": "canonicalization_failed",
+    "xml": "<response><signed><child id='6'/></signed></response>"
+  },
+  {
+    "id": "dup-001",
+    "class": "duplicate_ids",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "malformed_xml",
+    "xml": "<response id='x'>"
+  },
+  {
+    "id": "dup-002",
+    "class": "duplicate_ids",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "malformed_xml",
+    "xml": "<assertion id='dup'>"
+  },
+  {
+    "id": "dup-003",
+    "class": "duplicate_ids",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "malformed_xml",
+    "xml": "<saml id='id1'>"
+  },
+  {
+    "id": "dup-004",
+    "class": "duplicate_ids",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "malformed_xml",
+    "xml": "<root id='same'>"
+  },
+  {
+    "id": "keyinfo-001",
+    "class": "keyinfo_misuse",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><KeyInfo>attacker</KeyInfo></response>"
+  },
+  {
+    "id": "keyinfo-002",
+    "class": "keyinfo_misuse",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><KeyInfo>spoof</KeyInfo></response>"
+  },
+  {
+    "id": "keyinfo-003",
+    "class": "keyinfo_misuse",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><KeyInfo>replace</KeyInfo></response>"
+  },
+  {
+    "id": "keyinfo-004",
+    "class": "keyinfo_misuse",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><KeyInfo>rogue</KeyInfo></response>"
+  },
+  {
+    "id": "unsigned-001",
+    "class": "unsigned_or_partial_signature",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><assertion>partial</assertion></response>"
+  },
+  {
+    "id": "unsigned-002",
+    "class": "unsigned_or_partial_signature",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><assertion>unsigned</assertion></response>"
+  },
+  {
+    "id": "unsigned-003",
+    "class": "unsigned_or_partial_signature",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><assertion>missing sig</assertion></response>"
+  },
+  {
+    "id": "unsigned-004",
+    "class": "unsigned_or_partial_signature",
+    "requirement_ids": ["SEC-01"],
+    "expected_error_type": "missing_signature",
+    "xml": "<response><assertion>bad sig scope</assertion></response>"
+  }
+]
