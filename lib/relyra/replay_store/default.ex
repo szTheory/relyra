@@ -18,7 +18,8 @@ defmodule Relyra.ReplayStore.Default do
        %{
          adapter: __MODULE__,
          operation: :consume_replay_key,
-         hint: "Configure :replay_store with an adapter that provides atomic replay-key consume semantics."
+         hint:
+           "Configure :replay_store with an adapter that provides atomic replay-key consume semantics."
        }
      )}
   end

@@ -15,7 +15,8 @@ defmodule Relyra.ConnectionResolver.Default do
        %{
          adapter: __MODULE__,
          operation: :resolve_connection,
-         hint: "Set :connection_resolver in Relyra options to a module implementing Relyra.ConnectionResolver."
+         hint:
+           "Set :connection_resolver in Relyra options to a module implementing Relyra.ConnectionResolver."
        }
      )}
   end

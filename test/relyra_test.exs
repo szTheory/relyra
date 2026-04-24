@@ -113,7 +113,11 @@ defmodule RelyraTest do
     assert request_consume_error.type in [:adapter_not_configured, :unsupported_default_adapter]
 
     assert {:error, %Relyra.Error{} = replay_consume_error} =
-             Relyra.ReplayStore.Default.consume_replay_key("rk_123", %{connection_id: "conn-123"}, [])
+             Relyra.ReplayStore.Default.consume_replay_key(
+               "rk_123",
+               %{connection_id: "conn-123"},
+               []
+             )
 
     assert replay_consume_error.type in [:adapter_not_configured, :unsupported_default_adapter]
   end

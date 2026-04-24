@@ -18,7 +18,8 @@ defmodule Relyra.RequestStore.Default do
        %{
          adapter: __MODULE__,
          operation: :put_intent,
-         hint: "Configure :request_store with an ETS or Ecto adapter before enabling login initiation."
+         hint:
+           "Configure :request_store with an ETS or Ecto adapter before enabling login initiation."
        }
      )}
   end
@@ -31,7 +32,8 @@ defmodule Relyra.RequestStore.Default do
        %{
          adapter: __MODULE__,
          operation: :put_intent,
-         hint: "Set :request_store in Relyra options to a module implementing Relyra.RequestStore."
+         hint:
+           "Set :request_store in Relyra options to a module implementing Relyra.RequestStore."
        }
      )}
   end
@@ -48,7 +50,8 @@ defmodule Relyra.RequestStore.Default do
        %{
          adapter: __MODULE__,
          operation: :fetch_intent,
-         hint: "Set :request_store in Relyra options to a module implementing Relyra.RequestStore."
+         hint:
+           "Set :request_store in Relyra options to a module implementing Relyra.RequestStore."
        }
      )}
   end
@@ -79,7 +82,8 @@ defmodule Relyra.RequestStore.Default do
        %{
          adapter: __MODULE__,
          operation: :consume_intent,
-         hint: "Configure :request_store with an adapter that supports one-time consume semantics."
+         hint:
+           "Configure :request_store with an adapter that supports one-time consume semantics."
        }
      )}
   end
@@ -92,7 +96,8 @@ defmodule Relyra.RequestStore.Default do
        %{
          adapter: __MODULE__,
          operation: :consume_intent,
-         hint: "Set :request_store in Relyra options to a module implementing Relyra.RequestStore."
+         hint:
+           "Set :request_store in Relyra options to a module implementing Relyra.RequestStore."
        }
      )}
   end
