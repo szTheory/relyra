@@ -16,7 +16,9 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 <!-- Shipped and confirmed valuable. -->
 
-(None yet — ship to validate)
+- [x] **XML strategy ADR locked (GATE-01/GATE-03)**: ADR 0001 now fixes pure-BEAM `saxy` as default, defines objective hybrid fallback trigger, and locks conditional checksum/matrix policy (Validated in Phase 01: XML Security ADR and Guardrails).
+- [x] **Hardened XML seam contract (SEC-01)**: `Relyra.Security.XML` callback surface and typed `%Relyra.Error{}` baseline are frozen for downstream protocol work (Validated in Phase 01: XML Security ADR and Guardrails).
+- [x] **Canonicalization acceptance gate contract (GATE-02)**: manifest-backed adversarial corpus and binary `gate02_c14n` CI lane are in place (Validated in Phase 01: XML Security ADR and Guardrails).
 
 ### Active
 
@@ -123,7 +125,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| **XML security path = ADR in Phase 1** (not locked at bootstrap) | Single largest v0.1 correctness+deploy risk per deep research §"Tradeoffs". Requires explicit research deliverable with canonicalization choice, entity-disabling guarantees, signature-wrapping defenses, deployment story, and adversarial-corpus coverage of `ruby-saml` CVE-2024-45409 + `samlify` wrapping fixtures. Options stay live: pure-BEAM XMLDSig / NIF-over-xmlsec / hybrid. | — Pending (Phase 1) |
+| **XML security path = ADR in Phase 1** (not locked at bootstrap) | Single largest v0.1 correctness+deploy risk per deep research §"Tradeoffs". Requires explicit research deliverable with canonicalization choice, entity-disabling guarantees, signature-wrapping defenses, deployment story, and adversarial-corpus coverage of `ruby-saml` CVE-2024-45409 + `samlify` wrapping fixtures. Options stay live: pure-BEAM XMLDSig / NIF-over-xmlsec / hybrid. | ✓ Completed in Phase 01 (ADR 0001: pure-BEAM default with conditional hybrid fallback + checksum gate) |
 | **v0.1 package shape = single `relyra` with optional LiveView admin gate** | DNA convergence (sigra/lattice_stripe/threadline/scrypath/lockspire/mailglass all single-package). One install command, zero admin-specific deps for the host app. Revisit a `relyra_admin` split at v0.4/0.5 (accrue pattern). | — Pending (validate at v0.4) |
 | **Request/replay store default = ship both ETS + Ecto behind one behaviour each** | DNA: sigra sessions + threadline audit use Ecto-backed defaults; ETS-dev-only is the demo/single-node story. Ship `Relyra.RequestStore.ETS` (dev, loud prod-warning) and `Relyra.RequestStore.Ecto` (prod default). Behaviour is the contract. Same for `ReplayStore`. | — Pending (v0.1 ship) |
 | **`mix relyra.install` scope at v0.1 = minimal** | Config stub + behaviour skeletons + dev fake-IdP cert. Golden-diff fixture from day 1 (sigra pattern). Full Ecto migrations + schemas land with v0.2 "Enterprise config." Keeps v0.1 surface honest and matches the "no Ecto hard-dep in v0.1" posture. | — Pending (v0.1 ship) |
@@ -149,4 +151,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-04-24 after initialization (GSD `/gsd-new-project` bootstrap; five open decisions from `RELYRA-GSD-IDEA.md` resolved).*
+*Last updated: 2026-04-24 after Phase 01 completion (ADR lock, seam freeze, and security gate rollout).*
