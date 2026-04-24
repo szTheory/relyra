@@ -7,6 +7,7 @@ defmodule Relyra.MixProject do
       version: "0.1.0",
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
       deps: deps()
     ]
   end
@@ -22,8 +23,34 @@ defmodule Relyra.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
+      {:sobelow, "~> 0.14", only: [:dev, :test], runtime: false}
+    ]
+  end
+
+  defp aliases do
+    [
+      qa: [
+        "format --check-formatted",
+        "compile --warnings-as-errors",
+        "credo --strict",
+        "test --warnings-as-errors"
+      ],
+      "ci.fast": [
+        "compile --warnings-as-errors",
+        "test --warnings-as-errors --exclude integration"
+      ],
+      "ci.security": [
+        "test --only security_corpus --warnings-as-errors",
+        "test --only gate02_c14n --warnings-as-errors",
+        "deps.audit",
+        "hex.audit",
+        "sobelow --config"
+      ],
+      "ci.integration": [
+        "test --only integration --warnings-as-errors"
+      ]
     ]
   end
 end
