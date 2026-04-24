@@ -1,86 +1,84 @@
 [
   {
-    "id": "prot-issuer-001",
-    "class": "issuer_mismatch",
-    "requirement_ids": ["PROT-03"],
-    "expected_error_type": "issuer_mismatch",
-    "payload": {
-      "issuer": "https://evil.example.com/metadata"
-    }
-  },
-  {
-    "id": "prot-status-001",
-    "class": "unsupported_status",
+    "id": "prot-unsigned-001",
+    "class": "unsigned_payload",
     "requirement_ids": ["PROT-02"],
-    "expected_error_type": "unsupported_status",
-    "payload": {
-      "status": "urn:oasis:names:tc:SAML:2.0:status:Responder"
-    }
+    "expected_error_type": "malformed_xml",
+    "payload": "<Fake>unsigned</Fake>"
   },
   {
-    "id": "prot-destination-001",
-    "class": "destination_mismatch",
+    "id": "prot-missing-field-001",
+    "class": "missing_protocol_field",
     "requirement_ids": ["PROT-03"],
-    "expected_error_type": "destination_mismatch",
-    "payload": {
-      "destination": "https://evil.example.com/saml/acs"
-    }
+    "expected_error_type": "missing_protocol_field",
+    "payload": "<Response InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-1\"><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-1\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
   },
   {
-    "id": "prot-audience-001",
-    "class": "invalid_audience",
-    "requirement_ids": ["PROT-03"],
-    "expected_error_type": "invalid_audience",
-    "payload": {
-      "audiences": ["https://wrong-sp.example.com/metadata"]
-    }
+    "id": "prot-in-response-to-001",
+    "class": "in_response_to_mismatch",
+    "requirement_ids": ["PROT-02"],
+    "expected_error_type": "in_response_to_mismatch",
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_999\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-1\"><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-1\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
   },
   {
-    "id": "prot-recipient-001",
-    "class": "recipient_mismatch",
-    "requirement_ids": ["PROT-03"],
-    "expected_error_type": "recipient_mismatch",
-    "payload": {
-      "recipient": "https://evil.example.com/saml/recipient"
-    }
+    "id": "prot-relay-state-001",
+    "class": "relay_state_mismatch",
+    "requirement_ids": ["PROT-02"],
+    "expected_error_type": "relay_state_mismatch",
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-1\"><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-1\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
   },
   {
     "id": "prot-time-001",
     "class": "assertion_not_yet_valid",
     "requirement_ids": ["PROT-05"],
     "expected_error_type": "assertion_not_yet_valid",
-    "payload": {
-      "assertion_times": {
-        "not_before": "2099-01-01T00:00:00Z",
-        "not_on_or_after": "2099-01-01T01:00:00Z",
-        "subject_confirmation_not_on_or_after": "2099-01-01T01:00:00Z"
-      }
-    }
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-1\"><Conditions NotBefore=\"2099-01-01T00:00:00Z\" NotOnOrAfter=\"2099-01-01T01:00:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2099-01-01T01:00:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-1\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
   },
   {
     "id": "prot-time-002",
     "class": "assertion_expired",
     "requirement_ids": ["PROT-05"],
     "expected_error_type": "assertion_expired",
-    "payload": {
-      "assertion_times": {
-        "not_before": "2000-01-01T00:00:00Z",
-        "not_on_or_after": "2000-01-01T00:01:00Z",
-        "subject_confirmation_not_on_or_after": "2099-01-01T01:00:00Z"
-      }
-    }
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-1\"><Conditions NotBefore=\"2000-01-01T00:00:00Z\" NotOnOrAfter=\"2000-01-01T00:01:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2099-01-01T01:00:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-1\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
   },
   {
     "id": "prot-time-003",
     "class": "subject_confirmation_expired",
     "requirement_ids": ["PROT-05"],
     "expected_error_type": "subject_confirmation_expired",
-    "payload": {
-      "assertion_times": {
-        "not_before": "2000-01-01T00:00:00Z",
-        "not_on_or_after": "2099-01-01T01:00:00Z",
-        "subject_confirmation_not_on_or_after": "2000-01-01T00:01:00Z"
-      }
-    }
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-1\"><Conditions NotBefore=\"2000-01-01T00:00:00Z\" NotOnOrAfter=\"2099-01-01T01:00:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2000-01-01T00:01:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-1\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "prot-request-intent-001",
+    "class": "request_intent_missing",
+    "request_mode": "store",
+    "requirement_ids": ["PROT-04"],
+    "expected_error_type": "request_intent_missing",
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-missing-intent\"><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-missing-intent\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "prot-in-response-to-store-001",
+    "class": "in_response_to_mismatch_store_backed",
+    "request_mode": "store",
+    "connection_source": "resolver",
+    "requirement_ids": ["PROT-04", "EXT-04"],
+    "expected_error_type": "in_response_to_mismatch",
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_999\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-store-mismatch\"><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-store-mismatch\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "prot-replay-duplicate-001",
+    "class": "replayed_assertion",
+    "request_mode": "store",
+    "requirement_ids": ["SEC-06"],
+    "expected_error_type": "replayed_assertion",
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-replay-duplicate\"><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-replay-duplicate\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "prot-explicit-compat-001",
+    "class": "explicit_request_intent_success",
+    "request_mode": "explicit",
+    "requirement_ids": ["PROT-04"],
+    "expected_success": true,
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-explicit-success\"><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-explicit-success\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
   }
 ]

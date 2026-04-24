@@ -1,3 +1,58 @@
+defmodule Relyra.TestSupport.NoopRequestStore do
+  @moduledoc false
+
+  @behaviour Relyra.RequestStore
+
+  alias Relyra.Error
+
+  @impl true
+  def put_intent(_relay_state, _intent, _opts), do: :ok
+
+  @impl true
+  def fetch_intent(relay_state, opts) when is_binary(relay_state) and is_list(opts) do
+    case Keyword.get(opts, :request_intent) do
+      intent when is_map(intent) ->
+        {:ok, intent}
+
+      _ ->
+        {:error,
+         Error.new(
+           :request_intent_not_found,
+           "No request intent present in relyra test options",
+           %{relay_state: relay_state}
+         )}
+    end
+  end
+
+  @impl true
+  def consume_intent(_relay_state, _request_id, _opts), do: :ok
+end
+
+defmodule Relyra.TestSupport.NoopReplayStore do
+  @moduledoc false
+
+  @behaviour Relyra.ReplayStore
+
+  @impl true
+  def consume_replay_key(_replay_key, _metadata, _opts), do: :ok
+end
+
+defmodule Relyra.TestSupport.NoopConnectionResolver do
+  @moduledoc false
+
+  @behaviour Relyra.ConnectionResolver
+
+  alias Relyra.Error
+
+  @impl true
+  def resolve_connection(_request_context, opts) when is_list(opts) do
+    case Keyword.get(opts, :resolved_connection) do
+      connection when is_map(connection) -> {:ok, connection}
+      _ -> {:error, Error.new(:adapter_not_configured, "resolved_connection is missing", %{})}
+    end
+  end
+end
+
 defmodule RelyraTest do
   use ExUnit.Case, async: true
 
@@ -12,7 +67,9 @@ defmodule RelyraTest do
 
     relay_context = %{return_to: "/dashboard"}
 
-    case Relyra.start_login(connection, relay_context) do
+    opts = [request_store: Relyra.TestSupport.NoopRequestStore, now: ~U[2026-04-24 16:00:00Z]]
+
+    case Relyra.start_login(connection, relay_context, opts) do
       {:ok, %{request_id: request_id, relay_state: relay_state}} ->
         assert String.starts_with?(request_id, "id_")
         assert String.starts_with?(relay_state, "rs_")
@@ -33,24 +90,45 @@ defmodule RelyraTest do
       recipient: "https://sp.example.com/saml/acs"
     }
 
+    connection = %{
+      connection_id: "conn-123",
+      idp_entity_id: "https://idp.example.com/metadata",
+      issuer: "https://idp.example.com/metadata",
+      sp_entity_id: "https://sp.example.com/metadata",
+      acs_url: "https://sp.example.com/saml/acs",
+      cert_chain: ["pem-cert-chain"]
+    }
+
     opts = [
       now: ~U[2026-04-24 16:00:00Z],
-      connection: %{
-        connection_id: "conn-123",
-        idp_entity_id: "https://idp.example.com/metadata",
-        issuer: "https://idp.example.com/metadata",
-        sp_entity_id: "https://sp.example.com/metadata",
-        acs_url: "https://sp.example.com/saml/acs",
-        cert_chain: ["pem-cert-chain"]
-      }
+      relay_state: request_intent.relay_state,
+      connection: connection,
+      resolved_connection: connection,
+      request_store: Relyra.TestSupport.NoopRequestStore,
+      replay_store: Relyra.TestSupport.NoopReplayStore,
+      connection_resolver: Relyra.TestSupport.NoopConnectionResolver,
+      request_intent: request_intent
     ]
 
+    explicit_result = Relyra.consume_response(@valid_response, request_intent, opts)
+    store_backed_result = Relyra.consume_response(@valid_response, opts)
+
     # tuple contract: {:ok, map()} | {:error, %Relyra.Error{type: atom()}}
-    assert match?({:ok, %{}}, Relyra.consume_response(@valid_response, request_intent, opts)) or
-             match?(
-               {:error, %Relyra.Error{type: _}},
-               Relyra.consume_response(@valid_response, request_intent, opts)
-             )
+    assert(
+      case explicit_result do
+        {:ok, %{}} -> true
+        {:error, %Relyra.Error{type: type}} when is_atom(type) -> true
+        _ -> false
+      end
+    )
+
+    assert(
+      case store_backed_result do
+        {:ok, %{}} -> true
+        {:error, %Relyra.Error{type: type}} when is_atom(type) -> true
+        _ -> false
+      end
+    )
   end
 
   test "consume_response/3 returns typed relay-state error when relay_state is omitted" do
@@ -63,16 +141,21 @@ defmodule RelyraTest do
       recipient: "https://sp.example.com/saml/acs"
     }
 
+    connection = %{
+      connection_id: "conn-123",
+      idp_entity_id: "https://idp.example.com/metadata",
+      issuer: "https://idp.example.com/metadata",
+      sp_entity_id: "https://sp.example.com/metadata",
+      acs_url: "https://sp.example.com/saml/acs",
+      cert_chain: ["pem-cert-chain"]
+    }
+
     opts = [
       now: ~U[2026-04-24 16:00:00Z],
-      connection: %{
-        connection_id: "conn-123",
-        idp_entity_id: "https://idp.example.com/metadata",
-        issuer: "https://idp.example.com/metadata",
-        sp_entity_id: "https://sp.example.com/metadata",
-        acs_url: "https://sp.example.com/saml/acs",
-        cert_chain: ["pem-cert-chain"]
-      }
+      connection: connection,
+      request_store: Relyra.TestSupport.NoopRequestStore,
+      replay_store: Relyra.TestSupport.NoopReplayStore,
+      connection_resolver: Relyra.TestSupport.NoopConnectionResolver
     ]
 
     assert {:error, %Relyra.Error{type: :relay_state_missing}} =
