@@ -9,7 +9,8 @@ defmodule Relyra.Protocol.AuthnRequest do
 
   @spec build(map(), map(), keyword()) :: {:ok, map()} | {:error, Error.t()}
   def build(connection, relay_context, opts \\ [])
-      when is_map(connection) and is_map(relay_context) do
+
+  def build(connection, relay_context, opts) when is_map(connection) and is_map(relay_context) do
     _ = relay_context
 
     with {:ok, destination} <- required_field(connection, [:destination, :idp_sso_url], "destination"),

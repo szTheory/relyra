@@ -6,7 +6,9 @@ defmodule Relyra.Security.RelayState do
   @relay_state_pattern ~r/^rs_[A-Za-z0-9_-]{16,}$/
 
   @spec issue(map(), keyword()) :: {:ok, binary()} | {:error, Error.t()}
-  def issue(relay_context, opts \\ []) when is_map(relay_context) do
+  def issue(relay_context, opts \\ [])
+
+  def issue(relay_context, opts) when is_map(relay_context) do
     relay_state = generate_relay_state()
     metadata = relay_metadata(relay_context)
     persist_metadata(relay_state, metadata, opts)

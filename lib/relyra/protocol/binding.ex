@@ -19,7 +19,9 @@ defmodule Relyra.Protocol.Binding do
   end
 
   @spec decode_post(map(), keyword()) :: {:ok, map()} | {:error, Error.t()}
-  def decode_post(params, opts \\ []) when is_map(params) do
+  def decode_post(params, opts \\ [])
+
+  def decode_post(params, opts) when is_map(params) do
     saml_response_key = Keyword.get(opts, :saml_response_key, "SAMLResponse")
     relay_state_key = Keyword.get(opts, :relay_state_key, "RelayState")
 
