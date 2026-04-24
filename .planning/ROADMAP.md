@@ -10,7 +10,7 @@ Relyra v0.1 ships as a strict-by-default SAML SP library for Phoenix teams, star
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: XML Security ADR and Guardrails** - Lock parser/signature architecture and non-negotiable trust invariants.
+- [x] **Phase 1: XML Security ADR and Guardrails** - Lock parser/signature architecture and non-negotiable trust invariants. (Completed 2026-04-24)
 - [ ] **Phase 2: Protocol and Signature Core** - Implement SP-initiated flow with strict verification and protocol validation.
 - [ ] **Phase 3: Behaviour Contracts and Stores** - Ship extension behaviours and production-safe request/replay adapter defaults.
 - [ ] **Phase 4: Phoenix Runtime Integration** - Expose router macro, ACS/login endpoints, and typed runtime error flow.
@@ -117,7 +117,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. XML Security ADR and Guardrails | 0/3 | Not started | - |
+| 1. XML Security ADR and Guardrails | 3/3 | Complete | 2026-04-24 |
 | 2. Protocol and Signature Core | 0/3 | Not started | - |
 | 3. Behaviour Contracts and Stores | 0/3 | Not started | - |
 | 4. Phoenix Runtime Integration | 0/2 | Not started | - |
