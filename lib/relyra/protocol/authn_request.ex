@@ -13,7 +13,8 @@ defmodule Relyra.Protocol.AuthnRequest do
   def build(connection, relay_context, opts) when is_map(connection) and is_map(relay_context) do
     _ = relay_context
 
-    with {:ok, destination} <- required_field(connection, [:destination, :idp_sso_url], "destination"),
+    with {:ok, destination} <-
+           required_field(connection, [:destination, :idp_sso_url], "destination"),
          {:ok, issuer} <- required_field(connection, [:issuer, :sp_entity_id], "issuer"),
          {:ok, acs_url} <- required_field(connection, [:acs_url], "acs_url") do
       protocol_binding = Keyword.get(opts, :protocol_binding, @default_protocol_binding)
