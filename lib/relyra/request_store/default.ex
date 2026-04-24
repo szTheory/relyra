@@ -7,7 +7,9 @@ defmodule Relyra.RequestStore.Default do
 
   @impl true
   @spec put_intent(binary(), map(), keyword()) :: :ok | {:error, Error.t()}
-  def put_intent(relay_state, intent, _opts \\ [])
+  def put_intent(relay_state, intent, opts \\ [])
+
+  def put_intent(relay_state, intent, _opts)
       when is_binary(relay_state) and is_map(intent) do
     {:error,
      Error.new(
@@ -36,7 +38,9 @@ defmodule Relyra.RequestStore.Default do
 
   @impl true
   @spec fetch_intent(binary(), keyword()) :: {:ok, map()} | {:error, Error.t()}
-  def fetch_intent(relay_state, _opts \\ []) when is_binary(relay_state) do
+  def fetch_intent(relay_state, opts \\ [])
+
+  def fetch_intent(relay_state, _opts) when is_binary(relay_state) do
     {:error,
      Error.new(
        :adapter_not_configured,
@@ -64,7 +68,9 @@ defmodule Relyra.RequestStore.Default do
 
   @impl true
   @spec consume_intent(binary(), binary(), keyword()) :: :ok | {:error, Error.t()}
-  def consume_intent(relay_state, request_id, _opts \\ [])
+  def consume_intent(relay_state, request_id, opts \\ [])
+
+  def consume_intent(relay_state, request_id, _opts)
       when is_binary(relay_state) and is_binary(request_id) do
     {:error,
      Error.new(

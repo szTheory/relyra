@@ -7,7 +7,9 @@ defmodule Relyra.ReplayStore.Default do
 
   @impl true
   @spec consume_replay_key(binary(), map(), keyword()) :: :ok | {:error, Error.t()}
-  def consume_replay_key(replay_key, metadata, _opts \\ [])
+  def consume_replay_key(replay_key, metadata, opts \\ [])
+
+  def consume_replay_key(replay_key, metadata, _opts)
       when is_binary(replay_key) and is_map(metadata) do
     {:error,
      Error.new(
