@@ -8,10 +8,9 @@ defmodule Relyra.Security.RelayState do
   @spec issue(map(), keyword()) :: {:ok, binary()} | {:error, Error.t()}
   def issue(relay_context, opts \\ [])
 
-  def issue(relay_context, opts) when is_map(relay_context) do
+  def issue(relay_context, _opts) when is_map(relay_context) do
     relay_state = generate_relay_state()
-    metadata = relay_metadata(relay_context)
-    persist_metadata(relay_state, metadata, opts)
+    _ = relay_context
     {:ok, relay_state}
   end
 
@@ -48,13 +47,6 @@ defmodule Relyra.Security.RelayState do
     rejected(:invalid_format, %{relay_state: :non_binary})
   end
 
-  defp relay_metadata(relay_context) do
-    %{
-      request_id: Map.get(relay_context, :request_id) || Map.get(relay_context, "request_id"),
-      return_to: Map.get(relay_context, :return_to) || Map.get(relay_context, "return_to")
-    }
-  end
-
   defp generate_relay_state do
     relay_state = "rs_" <> Base.url_encode64(:crypto.strong_rand_bytes(18), padding: false)
 
@@ -62,17 +54,6 @@ defmodule Relyra.Security.RelayState do
       relay_state
     else
       "rs_" <> Base.url_encode64(:crypto.strong_rand_bytes(18), padding: false)
-    end
-  end
-
-  defp persist_metadata(relay_state, metadata, opts) do
-    case Keyword.get(opts, :store_metadata) do
-      store_metadata when is_function(store_metadata, 2) ->
-        _ = store_metadata.(relay_state, metadata)
-        :ok
-
-      _ ->
-        :ok
     end
   end
 
