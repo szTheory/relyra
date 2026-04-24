@@ -1,0 +1,86 @@
+[
+  {
+    "id": "prot-issuer-001",
+    "class": "issuer_mismatch",
+    "requirement_ids": ["PROT-03"],
+    "expected_error_type": "issuer_mismatch",
+    "payload": {
+      "issuer": "https://evil.example.com/metadata"
+    }
+  },
+  {
+    "id": "prot-status-001",
+    "class": "unsupported_status",
+    "requirement_ids": ["PROT-02"],
+    "expected_error_type": "unsupported_status",
+    "payload": {
+      "status": "urn:oasis:names:tc:SAML:2.0:status:Responder"
+    }
+  },
+  {
+    "id": "prot-destination-001",
+    "class": "destination_mismatch",
+    "requirement_ids": ["PROT-03"],
+    "expected_error_type": "destination_mismatch",
+    "payload": {
+      "destination": "https://evil.example.com/saml/acs"
+    }
+  },
+  {
+    "id": "prot-audience-001",
+    "class": "invalid_audience",
+    "requirement_ids": ["PROT-03"],
+    "expected_error_type": "invalid_audience",
+    "payload": {
+      "audiences": ["https://wrong-sp.example.com/metadata"]
+    }
+  },
+  {
+    "id": "prot-recipient-001",
+    "class": "recipient_mismatch",
+    "requirement_ids": ["PROT-03"],
+    "expected_error_type": "recipient_mismatch",
+    "payload": {
+      "recipient": "https://evil.example.com/saml/recipient"
+    }
+  },
+  {
+    "id": "prot-time-001",
+    "class": "assertion_not_yet_valid",
+    "requirement_ids": ["PROT-05"],
+    "expected_error_type": "assertion_not_yet_valid",
+    "payload": {
+      "assertion_times": {
+        "not_before": "2099-01-01T00:00:00Z",
+        "not_on_or_after": "2099-01-01T01:00:00Z",
+        "subject_confirmation_not_on_or_after": "2099-01-01T01:00:00Z"
+      }
+    }
+  },
+  {
+    "id": "prot-time-002",
+    "class": "assertion_expired",
+    "requirement_ids": ["PROT-05"],
+    "expected_error_type": "assertion_expired",
+    "payload": {
+      "assertion_times": {
+        "not_before": "2000-01-01T00:00:00Z",
+        "not_on_or_after": "2000-01-01T00:01:00Z",
+        "subject_confirmation_not_on_or_after": "2099-01-01T01:00:00Z"
+      }
+    }
+  },
+  {
+    "id": "prot-time-003",
+    "class": "subject_confirmation_expired",
+    "requirement_ids": ["PROT-05"],
+    "expected_error_type": "subject_confirmation_expired",
+    "payload": {
+      "assertion_times": {
+        "not_before": "2000-01-01T00:00:00Z",
+        "not_on_or_after": "2099-01-01T01:00:00Z",
+        "subject_confirmation_not_on_or_after": "2000-01-01T00:01:00Z"
+      }
+    }
+  }
+]
