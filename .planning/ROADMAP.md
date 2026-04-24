@@ -11,7 +11,7 @@ Relyra v0.1 ships as a strict-by-default SAML SP library for Phoenix teams, star
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: XML Security ADR and Guardrails** - Lock parser/signature architecture and non-negotiable trust invariants. (Completed 2026-04-24)
-- [ ] **Phase 2: Protocol and Signature Core** - Implement SP-initiated flow with strict verification and protocol validation.
+- [x] **Phase 2: Protocol and Signature Core** - Implement SP-initiated flow with strict verification and protocol validation. (Completed 2026-04-24)
 - [ ] **Phase 3: Behaviour Contracts and Stores** - Ship extension behaviours and production-safe request/replay adapter defaults.
 - [ ] **Phase 4: Phoenix Runtime Integration** - Expose router macro, ACS/login endpoints, and typed runtime error flow.
 - [ ] **Phase 5: Observability and Enforcement** - Add telemetry catalog, redacted logging, and compile-time safety checks.
@@ -49,7 +49,7 @@ Plans:
 Plans:
 - [x] 02-01: Implement AuthnRequest and binding encode/decode primitives.
 - [x] 02-02: Implement signature verification, signed-node selection, and algorithm policy.
-- [ ] 02-03: Implement response/assertion validation pipeline with typed protocol errors.
+- [x] 02-03: Implement response/assertion validation pipeline with typed protocol errors.
 
 ### Phase 3: Behaviour Contracts and Stores
 **Goal**: Ship stable extension contracts and safe defaults for request intent and replay controls.
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. XML Security ADR and Guardrails | 3/3 | Complete | 2026-04-24 |
-| 2. Protocol and Signature Core | 2/3 | In Progress | - |
+| 2. Protocol and Signature Core | 3/3 | Complete | 2026-04-24 |
 | 3. Behaviour Contracts and Stores | 0/3 | Not started | - |
 | 4. Phoenix Runtime Integration | 0/2 | Not started | - |
 | 5. Observability and Enforcement | 0/2 | Not started | - |

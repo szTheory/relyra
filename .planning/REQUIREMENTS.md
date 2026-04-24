@@ -22,10 +22,10 @@ Committed scope for the first public Hex release ("SP-initiated SSO, verified en
 ### Protocol Core
 
 - [x] **PROT-01**: Relyra generates SP-initiated `AuthnRequest` payloads with stable IDs and required protocol fields.
-- [ ] **PROT-02**: Relyra accepts ACS POSTed SAML responses and returns either `{:ok, login_result}` or `{:error, %Relyra.Error{}}` with no silent success path.
-- [ ] **PROT-03**: Relyra validates issuer, audience, recipient, destination, status, and tenant/connection binding constraints before establishing session.
+- [x] **PROT-02**: Relyra accepts ACS POSTed SAML responses and returns either `{:ok, login_result}` or `{:error, %Relyra.Error{}}` with no silent success path.
+- [x] **PROT-03**: Relyra validates issuer, audience, recipient, destination, status, and tenant/connection binding constraints before establishing session.
 - [ ] **PROT-04**: Relyra enforces `InResponseTo` request intent for SP-initiated flows and rejects missing/mismatched request bindings.
-- [ ] **PROT-05**: Relyra validates time conditions (`NotBefore`, `NotOnOrAfter`, SubjectConfirmation windows) with bounded configurable skew.
+- [x] **PROT-05**: Relyra validates time conditions (`NotBefore`, `NotOnOrAfter`, SubjectConfirmation windows) with bounded configurable skew.
 
 ### Extension Behaviours and Stores
 
@@ -112,10 +112,10 @@ Each v0.1 requirement maps to exactly one planned phase.
 | SEC-08 | Phase 5 | Pending |
 | SEC-09 | Phase 6 | Pending |
 | PROT-01 | Phase 2 | Completed (02-01) |
-| PROT-02 | Phase 2 | Pending |
-| PROT-03 | Phase 2 | Pending |
+| PROT-02 | Phase 2 | Completed (02-03) |
+| PROT-03 | Phase 2 | Completed (02-03) |
 | PROT-04 | Phase 3 | Pending |
-| PROT-05 | Phase 2 | Pending |
+| PROT-05 | Phase 2 | Completed (02-03) |
 | EXT-01 | Phase 3 | Pending |
 | EXT-02 | Phase 3 | Pending |
 | EXT-03 | Phase 3 | Pending |
