@@ -32,9 +32,9 @@ Relyra v0.1 ships as a strict-by-default SAML SP library for Phoenix teams, star
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Finalize XML ADR with pure-BEAM/NIF/hybrid evaluation and decision record.
-- [ ] 01-02: Implement hardened XML seam contract and baseline adapter scaffolding.
-- [ ] 01-03: Establish canonicalization/security acceptance criteria and seed fixture corpus.
+- [x] 01-01: Finalize XML ADR with pure-BEAM/NIF/hybrid evaluation and decision record.
+- [x] 01-02: Implement hardened XML seam contract and baseline adapter scaffolding.
+- [x] 01-03: Establish canonicalization/security acceptance criteria and seed fixture corpus.
 
 ### Phase 2: Protocol and Signature Core
 **Goal**: Deliver strict SP-initiated protocol core that only accepts verified trust paths.
