@@ -1,0 +1,66 @@
+[
+  {
+    "id": "sig-ki-001",
+    "class": "keyinfo_trust_injection",
+    "requirement_ids": ["SEC-02"],
+    "signature_method": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+    "digest_method": "http://www.w3.org/2001/04/xmlenc#sha256",
+    "expected_error_type": "untrusted_certificate"
+  },
+  {
+    "id": "sig-ki-002",
+    "class": "keyinfo_trust_injection",
+    "requirement_ids": ["SEC-02"],
+    "signature_method": "http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256",
+    "digest_method": "http://www.w3.org/2001/04/xmlenc#sha256",
+    "expected_error_type": "untrusted_certificate"
+  },
+  {
+    "id": "sig-dup-001",
+    "class": "duplicate_xml_id",
+    "requirement_ids": ["SEC-04"],
+    "signature_method": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+    "digest_method": "http://www.w3.org/2001/04/xmlenc#sha256",
+    "expected_error_type": "duplicate_xml_id"
+  },
+  {
+    "id": "sig-dup-002",
+    "class": "duplicate_xml_id",
+    "requirement_ids": ["SEC-04"],
+    "signature_method": "http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha384",
+    "digest_method": "http://www.w3.org/2001/04/xmldsig-more#sha384",
+    "expected_error_type": "duplicate_xml_id"
+  },
+  {
+    "id": "sig-amb-001",
+    "class": "ambiguous_signed_node",
+    "requirement_ids": ["SEC-03"],
+    "signature_method": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512",
+    "digest_method": "http://www.w3.org/2001/04/xmlenc#sha512",
+    "expected_error_type": "ambiguous_signed_node"
+  },
+  {
+    "id": "sig-amb-002",
+    "class": "ambiguous_signed_node",
+    "requirement_ids": ["SEC-03"],
+    "signature_method": "http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512",
+    "digest_method": "http://www.w3.org/2001/04/xmlenc#sha512",
+    "expected_error_type": "ambiguous_signed_node"
+  },
+  {
+    "id": "sig-sha1-001",
+    "class": "sha1_signature",
+    "requirement_ids": ["SEC-05"],
+    "signature_method": "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
+    "digest_method": "http://www.w3.org/2000/09/xmldsig#sha1",
+    "expected_error_type": "deprecated_algorithm"
+  },
+  {
+    "id": "sig-sha1-002",
+    "class": "sha1_override_expired",
+    "requirement_ids": ["SEC-05"],
+    "signature_method": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha1",
+    "digest_method": "http://www.w3.org/2001/04/xmlenc#sha1",
+    "expected_error_type": "legacy_algorithm_override_expired"
+  }
+]
