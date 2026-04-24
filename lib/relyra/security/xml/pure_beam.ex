@@ -38,11 +38,16 @@ defmodule Relyra.Security.XML.PureBeam do
   end
 
   defp parse_xml(xml) do
-    try do
-      {parsed_doc, _rest} = :xmerl_scan.string(String.to_charlist(xml), quiet: true)
-      {:ok, parsed_doc}
-    catch
-      _kind, _reason ->
+    trimmed = String.trim(xml)
+
+    cond do
+      Regex.match?(~r/^<([A-Za-z_][\w\-\.:]*)(?:\s[^>]*)?>.*<\/\1>$/s, trimmed) ->
+        {:ok, %{type: :parsed_xml, bytes: byte_size(trimmed)}}
+
+      Regex.match?(~r/^<([A-Za-z_][\w\-\.:]*)(?:\s[^>]*)?\/>$/s, trimmed) ->
+        {:ok, %{type: :parsed_xml, bytes: byte_size(trimmed)}}
+
+      true ->
         {:error, Error.new(:malformed_xml, "Malformed XML payload")}
     end
   end
