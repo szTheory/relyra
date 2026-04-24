@@ -55,7 +55,8 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
         end
       end)
 
-    assert failures == [], "GATE-02 binary gate failed: parser_differential_and_c14n zero regressions violated"
+    assert failures == [],
+           "GATE-02 binary gate failed: parser_differential_and_c14n zero regressions violated"
   end
 
   defp manifest do

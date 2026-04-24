@@ -2,12 +2,13 @@ defmodule Relyra.Security.XML.SeamContractTest do
   use ExUnit.Case, async: true
 
   alias Relyra.Error
+  alias Relyra.Security.XML
   alias Relyra.Security.XML.PureBeam
 
   @tag :xml_seam
   test "xml seam behaviour exposes required callbacks" do
     callbacks =
-      Relyra.Security.XML.behaviour_info(:callbacks)
+      XML.behaviour_info(:callbacks)
       |> Enum.map(&elem(&1, 0))
 
     assert :parse_safely in callbacks

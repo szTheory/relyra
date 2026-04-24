@@ -1,4 +1,5 @@
 defmodule Mix.Tasks.Compile.ParserPathGuard do
+  @moduledoc false
   use Mix.Task.Compiler
 
   @recursive true
@@ -22,7 +23,9 @@ defmodule Mix.Tasks.Compile.ParserPathGuard do
     if violations == [] do
       {:ok, []}
     else
-      Mix.shell().error("ParserPathGuard blocked parser references outside Relyra.Security.XML seam:")
+      Mix.shell().error(
+        "ParserPathGuard blocked parser references outside Relyra.Security.XML seam:"
+      )
 
       Enum.each(violations, fn {path, line, text} ->
         Mix.shell().error("  #{path}:#{line} -> #{text}")

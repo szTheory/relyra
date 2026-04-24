@@ -16,6 +16,17 @@ defmodule Relyra.MixProject do
     ]
   end
 
+  def cli do
+    [
+      preferred_envs: [
+        qa: :test,
+        "ci.fast": :test,
+        "ci.security": :test,
+        "ci.integration": :test
+      ]
+    ]
+  end
+
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
