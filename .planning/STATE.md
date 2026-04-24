@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-04-24T15:47:23Z"
-last_activity: 2026-04-24 -- Completed Phase 02 Plan 01 execution
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-04-24T15:55:11Z"
+last_activity: 2026-04-24 -- Completed Phase 02 Plan 02 execution
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
-  percent: 67
+  completed_plans: 5
+  percent: 83
 ---
 
 # Project State
@@ -26,26 +26,26 @@ See: `.planning/PROJECT.md` (updated 2026-04-24)
 ## Current Position
 
 Phase: 02 (protocol-and-signature-core) — EXECUTING
-Plan: 2 of 3
-Status: Ready for 02-02
-Last activity: 2026-04-24 -- Completed Phase 02 Plan 01 execution
+Plan: 3 of 3
+Status: Ready for 02-03
+Last activity: 2026-04-24 -- Completed Phase 02 Plan 02 execution
 
-Progress: [███░░░░░░░] 33%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: -
-- Total execution time: 0.1 hours
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 3 | - | - |
-| 2 | 1 | 7 min | 7 min |
+| 2 | 2 | 10 min | 5 min |
 | 3 | 0 | - | - |
 | 4 | 0 | - | - |
 | 5 | 0 | - | - |
@@ -53,7 +53,7 @@ Progress: [███░░░░░░░] 33%
 
 **Recent Trend:**
 
-- Last 5 plans: 02-01 and Phase 01 plans all passed verification.
+- Last 5 plans: 02-02, 02-01, and Phase 01 plans all passed verification.
 - Trend: Stable
 
 ## Accumulated Context
@@ -70,6 +70,9 @@ Recent decisions affecting current work:
 - `Relyra.start_login/3` now delegates to typed protocol/security primitives.
 - RelayState policy is opaque `rs_` handles only, with typed `:relay_state_rejected` failures.
 - AuthnRequest IDs are `id_`-prefixed and default to HTTP-POST protocol binding.
+- Signature verification now rejects document KeyInfo trust and requires configured cert chain input.
+- Signature consumption is bound to exactly one verified signed node with typed ambiguity and duplicate-ID failures.
+- Algorithm policy now enforces SHA-256+ defaults with explicit expiring SHA-1 override semantics.
 
 ### Pending Todos
 
@@ -82,7 +85,7 @@ None yet.
 ## Session Continuity
 
 Last session: --stopped-at
-Stopped at: Completed 02-01-PLAN.md
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
 
-**Planned Phase:** 2 (Protocol and Signature Core) — next plan 02-02
+**Planned Phase:** 2 (Protocol and Signature Core) — next plan 02-03

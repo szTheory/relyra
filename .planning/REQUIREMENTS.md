@@ -10,10 +10,10 @@ Committed scope for the first public Hex release ("SP-initiated SSO, verified en
 ### Security Invariants
 
 - [ ] **SEC-01**: Relyra parses inbound SAML with a single hardened XML path that rejects DTDs, external entities, external fetches, and oversized payloads before any trust decision.
-- [ ] **SEC-02**: Relyra verifies XML signatures only against configured IdP certificates and never trusts document-provided `KeyInfo` as a trust source.
-- [ ] **SEC-03**: Relyra consumes only the exact signed node it verified and rejects signature-wrapping indicators (including ambiguous signed-node selection).
-- [ ] **SEC-04**: Relyra rejects duplicate XML IDs during response validation.
-- [ ] **SEC-05**: Relyra enforces algorithm policy with SHA-256+ defaults and rejects SHA-1 unless a time-boxed legacy policy with reason and expiry is explicitly configured.
+- [x] **SEC-02**: Relyra verifies XML signatures only against configured IdP certificates and never trusts document-provided `KeyInfo` as a trust source.
+- [x] **SEC-03**: Relyra consumes only the exact signed node it verified and rejects signature-wrapping indicators (including ambiguous signed-node selection).
+- [x] **SEC-04**: Relyra rejects duplicate XML IDs during response validation.
+- [x] **SEC-05**: Relyra enforces algorithm policy with SHA-256+ defaults and rejects SHA-1 unless a time-boxed legacy policy with reason and expiry is explicitly configured.
 - [ ] **SEC-06**: Relyra enforces replay protection with atomic consumption semantics and rejects replayed assertions/responses.
 - [x] **SEC-07**: Relyra uses opaque, server-side RelayState handles and never redirects from raw RelayState URLs.
 - [ ] **SEC-08**: Relyra emits redacted logs and never logs raw assertions/responses or unredacted sensitive attributes.
@@ -103,10 +103,10 @@ Each v0.1 requirement maps to exactly one planned phase.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SEC-01 | Phase 1 | Pending |
-| SEC-02 | Phase 2 | Pending |
-| SEC-03 | Phase 2 | Pending |
-| SEC-04 | Phase 2 | Pending |
-| SEC-05 | Phase 2 | Pending |
+| SEC-02 | Phase 2 | Completed (02-02) |
+| SEC-03 | Phase 2 | Completed (02-02) |
+| SEC-04 | Phase 2 | Completed (02-02) |
+| SEC-05 | Phase 2 | Completed (02-02) |
 | SEC-06 | Phase 3 | Pending |
 | SEC-07 | Phase 2 | Completed (02-01) |
 | SEC-08 | Phase 5 | Pending |

@@ -48,7 +48,7 @@ Plans:
 
 Plans:
 - [x] 02-01: Implement AuthnRequest and binding encode/decode primitives.
-- [ ] 02-02: Implement signature verification, signed-node selection, and algorithm policy.
+- [x] 02-02: Implement signature verification, signed-node selection, and algorithm policy.
 - [ ] 02-03: Implement response/assertion validation pipeline with typed protocol errors.
 
 ### Phase 3: Behaviour Contracts and Stores
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. XML Security ADR and Guardrails | 3/3 | Complete | 2026-04-24 |
-| 2. Protocol and Signature Core | 1/3 | In Progress | - |
+| 2. Protocol and Signature Core | 2/3 | In Progress | - |
 | 3. Behaviour Contracts and Stores | 0/3 | Not started | - |
 | 4. Phoenix Runtime Integration | 0/2 | Not started | - |
 | 5. Observability and Enforcement | 0/2 | Not started | - |
