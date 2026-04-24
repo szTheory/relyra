@@ -15,13 +15,13 @@ Committed scope for the first public Hex release ("SP-initiated SSO, verified en
 - [ ] **SEC-04**: Relyra rejects duplicate XML IDs during response validation.
 - [ ] **SEC-05**: Relyra enforces algorithm policy with SHA-256+ defaults and rejects SHA-1 unless a time-boxed legacy policy with reason and expiry is explicitly configured.
 - [ ] **SEC-06**: Relyra enforces replay protection with atomic consumption semantics and rejects replayed assertions/responses.
-- [ ] **SEC-07**: Relyra uses opaque, server-side RelayState handles and never redirects from raw RelayState URLs.
+- [x] **SEC-07**: Relyra uses opaque, server-side RelayState handles and never redirects from raw RelayState URLs.
 - [ ] **SEC-08**: Relyra emits redacted logs and never logs raw assertions/responses or unredacted sensitive attributes.
 - [ ] **SEC-09**: Relyra ships a permanent adversarial fixture corpus (XXE, signature wrapping, parser differential, replay, SHA-1, unsigned assertion classes) in CI.
 
 ### Protocol Core
 
-- [ ] **PROT-01**: Relyra generates SP-initiated `AuthnRequest` payloads with stable IDs and required protocol fields.
+- [x] **PROT-01**: Relyra generates SP-initiated `AuthnRequest` payloads with stable IDs and required protocol fields.
 - [ ] **PROT-02**: Relyra accepts ACS POSTed SAML responses and returns either `{:ok, login_result}` or `{:error, %Relyra.Error{}}` with no silent success path.
 - [ ] **PROT-03**: Relyra validates issuer, audience, recipient, destination, status, and tenant/connection binding constraints before establishing session.
 - [ ] **PROT-04**: Relyra enforces `InResponseTo` request intent for SP-initiated flows and rejects missing/mismatched request bindings.
@@ -108,10 +108,10 @@ Each v0.1 requirement maps to exactly one planned phase.
 | SEC-04 | Phase 2 | Pending |
 | SEC-05 | Phase 2 | Pending |
 | SEC-06 | Phase 3 | Pending |
-| SEC-07 | Phase 2 | Pending |
+| SEC-07 | Phase 2 | Completed (02-01) |
 | SEC-08 | Phase 5 | Pending |
 | SEC-09 | Phase 6 | Pending |
-| PROT-01 | Phase 2 | Pending |
+| PROT-01 | Phase 2 | Completed (02-01) |
 | PROT-02 | Phase 2 | Pending |
 | PROT-03 | Phase 2 | Pending |
 | PROT-04 | Phase 3 | Pending |

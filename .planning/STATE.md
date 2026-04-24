@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: planning
-stopped_at: Phase 2 context gathered (assumptions mode)
-last_updated: "2026-04-24T15:15:12.826Z"
-last_activity: 2026-04-24 - Phase 01 completed and verified; ready to plan Phase 02
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-04-24T15:47:23Z"
+last_activity: 2026-04-24 -- Completed Phase 02 Plan 01 execution
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_plans: 6
+  completed_plans: 4
+  percent: 67
 ---
 
 # Project State
@@ -21,31 +21,31 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-04-24)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection, never a silent compromise.  
-**Current focus:** Phase 02 - Protocol and Signature Core
+**Current focus:** Phase 02 — protocol-and-signature-core
 
 ## Current Position
 
-Phase: 2 of 6 (Protocol and Signature Core)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-04-24 - Phase 01 completed and verified; ready to plan Phase 02
+Phase: 02 (protocol-and-signature-core) — EXECUTING
+Plan: 2 of 3
+Status: Ready for 02-02
+Last activity: 2026-04-24 -- Completed Phase 02 Plan 01 execution
 
-Progress: [██░░░░░░░░] 17%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: -
-- Total execution time: 0.0 hours
+- Total execution time: 0.1 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 3 | - | - |
-| 2 | 0 | - | - |
+| 2 | 1 | 7 min | 7 min |
 | 3 | 0 | - | - |
 | 4 | 0 | - | - |
 | 5 | 0 | - | - |
@@ -53,7 +53,7 @@ Progress: [██░░░░░░░░] 17%
 
 **Recent Trend:**
 
-- Last 5 plans: -
+- Last 5 plans: 02-01 and Phase 01 plans all passed verification.
 - Trend: Stable
 
 ## Accumulated Context
@@ -67,6 +67,9 @@ Recent decisions affecting current work:
 - Bootstrap locked strict defaults, non-goals, and v0.1-v1.0 scope split.
 - XML security implementation remains a Phase 1 gated decision.
 - Architecture boundary model and 6-phase execution order are now defined.
+- `Relyra.start_login/3` now delegates to typed protocol/security primitives.
+- RelayState policy is opaque `rs_` handles only, with typed `:relay_state_rejected` failures.
+- AuthnRequest IDs are `id_`-prefixed and default to HTTP-POST protocol binding.
 
 ### Pending Todos
 
@@ -79,7 +82,7 @@ None yet.
 ## Session Continuity
 
 Last session: --stopped-at
-Stopped at: Phase 2 context gathered (assumptions mode)
-Resume file: --resume-file
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
 
-**Planned Phase:** 02 (Protocol and Signature Core) — 3 plans — 2026-04-24T16:52:00.000Z
+**Planned Phase:** 2 (Protocol and Signature Core) — next plan 02-02
