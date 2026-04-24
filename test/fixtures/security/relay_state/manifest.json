@@ -1,0 +1,58 @@
+[
+  {
+    "id": "relay-raw-url-https",
+    "class": "raw_url",
+    "requirement_ids": ["SEC-07"],
+    "relay_state": "https://tenant.example.com/dashboard",
+    "expected_error_type": "relay_state_rejected",
+    "expected_reason": "raw_url"
+  },
+  {
+    "id": "relay-raw-url-http",
+    "class": "raw_url",
+    "requirement_ids": ["SEC-07"],
+    "relay_state": "http://tenant.example.com/dashboard",
+    "expected_error_type": "relay_state_rejected",
+    "expected_reason": "raw_url"
+  },
+  {
+    "id": "relay-scheme-relative",
+    "class": "scheme_relative",
+    "requirement_ids": ["SEC-07"],
+    "relay_state": "//tenant.example.com/dashboard",
+    "expected_error_type": "relay_state_rejected",
+    "expected_reason": "raw_url"
+  },
+  {
+    "id": "relay-invalid-prefix",
+    "class": "malformed_prefix",
+    "requirement_ids": ["SEC-07"],
+    "relay_state": "relay_ABC123opaquehandle",
+    "expected_error_type": "relay_state_rejected",
+    "expected_reason": "invalid_format"
+  },
+  {
+    "id": "relay-tampered-short",
+    "class": "tampered",
+    "requirement_ids": ["SEC-07"],
+    "relay_state": "rs_short",
+    "expected_error_type": "relay_state_rejected",
+    "expected_reason": "tampered"
+  },
+  {
+    "id": "relay-valid-handle-1",
+    "class": "valid_opaque_handle",
+    "requirement_ids": ["SEC-07"],
+    "relay_state": "rs_AbCdEf0123456789_-",
+    "expected_error_type": null,
+    "expected_reason": null
+  },
+  {
+    "id": "relay-valid-handle-2",
+    "class": "valid_opaque_handle",
+    "requirement_ids": ["SEC-07"],
+    "relay_state": "rs_ZYXwvutSRQPONMLKJIHG_098765",
+    "expected_error_type": null,
+    "expected_reason": null
+  }
+]
