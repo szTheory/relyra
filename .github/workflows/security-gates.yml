@@ -9,6 +9,8 @@ on:
 jobs:
   security:
     runs-on: ubuntu-latest
+    env:
+      RELYRA_XML_STRATEGY: pure_beam
     strategy:
       fail-fast: false
       matrix:
@@ -39,6 +41,10 @@ jobs:
 
       - name: Security lane
         run: mix ci.security
+
+      - name: Verify NIF checksum manifest for non-pure strategy
+        if: env.RELYRA_XML_STRATEGY != 'pure_beam'
+        run: .github/scripts/verify_nif_checksums.sh
 
       - name: Integration lane
         run: mix ci.integration
