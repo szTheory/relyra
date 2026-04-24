@@ -40,12 +40,27 @@ Selected strategy: pure-beam single parser (saxy).
 
 Maintain one parser trust path and reject malformed or dangerous XML before trust
 decisions. Reassess strategy only through explicit phase gates and ADR updates.
+If canonicalization or signed-node acceptance gates fail, switch to hybrid+xmlsec without changing Relyra.Security.XML callbacks.
 
 ## Consequences
 
 - Phase 2+ must consume `Relyra.Security.XML` seam outputs and typed `%Relyra.Error{}`.
 - Parser usage outside the XML seam must be blocked by compile-time and CI guards.
 - A conditional NIF policy remains required if strategy changes to hybrid or NIF.
+
+## Conditional NIF Policy (GATE-03)
+
+If strategy moves to hybrid/NIF, release artifacts must cover this target matrix:
+
+- Linux GNU x86_64
+- Linux GNU aarch64
+- Linux musl x86_64
+- macOS aarch64
+- macOS x86_64
+
+Required release artifact: checksum manifest.
+Release gate: publish is blocked if checksum verification fails.
+Windows remains source-build best effort unless adoption pressure justifies precompiled artifacts.
 
 ## Rollback Trigger
 
