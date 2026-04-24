@@ -15,7 +15,8 @@ defmodule Relyra.Security.Signature do
 
     cond do
       cert_chain == [] ->
-        {:error, Error.new(:untrusted_certificate, "Configured certificate chain is required", details)}
+        {:error,
+         Error.new(:untrusted_certificate, "Configured certificate chain is required", details)}
 
       Map.get(parsed_doc, :key_info_trust) == true ->
         {:error,
@@ -30,7 +31,10 @@ defmodule Relyra.Security.Signature do
          Error.new(
            :duplicate_xml_id,
            "Duplicate XML IDs detected in signed material",
-           Map.merge(details, %{duplicate_ids: duplicate_xml_ids, duplicate_count: length(duplicate_xml_ids)})
+           Map.merge(details, %{
+             duplicate_ids: duplicate_xml_ids,
+             duplicate_count: length(duplicate_xml_ids)
+           })
          )}
 
       true ->
@@ -54,8 +58,13 @@ defmodule Relyra.Security.Signature do
     signature_method = Map.get(parsed_doc, :signature_method)
     digest_method = Map.get(parsed_doc, :digest_method)
 
-    with :ok <- evaluate_policy(AlgorithmPolicy.enforce_signature_method(policy, signature_method), details),
-         :ok <- evaluate_policy(AlgorithmPolicy.enforce_digest_method(policy, digest_method), details) do
+    with :ok <-
+           evaluate_policy(
+             AlgorithmPolicy.enforce_signature_method(policy, signature_method),
+             details
+           ),
+         :ok <-
+           evaluate_policy(AlgorithmPolicy.enforce_digest_method(policy, digest_method), details) do
       verified_signed_node(parsed_doc, signature_method, digest_method, details)
     end
   end
@@ -71,7 +80,8 @@ defmodule Relyra.Security.Signature do
 
     case signed_candidates do
       [] ->
-        {:error, Error.new(:missing_signature, "No signed node candidates were verified", details)}
+        {:error,
+         Error.new(:missing_signature, "No signed node candidates were verified", details)}
 
       [candidate] ->
         {:ok,
@@ -100,7 +110,8 @@ defmodule Relyra.Security.Signature do
     |> Enum.reject(&is_nil/1)
   end
 
-  defp merge_error_details(%Error{details: error_details} = error, details) when is_map(error_details) do
+  defp merge_error_details(%Error{details: error_details} = error, details)
+       when is_map(error_details) do
     %{error | details: Map.merge(details, error_details)}
   end
 

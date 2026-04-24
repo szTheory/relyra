@@ -64,13 +64,15 @@ defmodule Relyra.Security.AlgorithmPolicy do
     end
   end
 
-  defp method_allowed?(allowed_methods, method) when is_binary(method) and is_list(allowed_methods) do
+  defp method_allowed?(allowed_methods, method)
+       when is_binary(method) and is_list(allowed_methods) do
     Enum.member?(allowed_methods, method)
   end
 
   defp method_allowed?(_allowed_methods, _method), do: false
 
-  defp enforce_sha1_policy(legacy_sha1, method, method_type, sha1_methods) when is_binary(method) do
+  defp enforce_sha1_policy(legacy_sha1, method, method_type, sha1_methods)
+       when is_binary(method) do
     if MapSet.member?(sha1_methods, method) do
       enforce_legacy_override(legacy_sha1, method, method_type)
     else
@@ -82,7 +84,11 @@ defmodule Relyra.Security.AlgorithmPolicy do
     deprecated_algorithm(method, method_type)
   end
 
-  defp enforce_legacy_override(%{reason: reason, expires_at: %DateTime{} = expires_at}, method, method_type)
+  defp enforce_legacy_override(
+         %{reason: reason, expires_at: %DateTime{} = expires_at},
+         method,
+         method_type
+       )
        when is_binary(reason) and byte_size(reason) > 0 do
     case DateTime.compare(expires_at, DateTime.utc_now()) do
       :gt ->
