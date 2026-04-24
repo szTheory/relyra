@@ -4,7 +4,17 @@ defmodule Relyra.Protocol.ValidationPipeline do
   alias Relyra.Error
   alias Relyra.Security.SignedNode
 
-  @ordered_stages [:parse_safely, :issuer_connection_match, :signature_verify, :signed_node_bind, :status, :destination, :audience, :recipient, :time_conditions]
+  @ordered_stages [
+    :parse_safely,
+    :issuer_connection_match,
+    :signature_verify,
+    :signed_node_bind,
+    :status,
+    :destination,
+    :audience,
+    :recipient,
+    :time_conditions
+  ]
   @success_status "urn:oasis:names:tc:SAML:2.0:status:Success"
   @default_signature_method "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
   @default_digest_method "http://www.w3.org/2001/04/xmlenc#sha256"
@@ -17,14 +27,16 @@ defmodule Relyra.Protocol.ValidationPipeline do
   def run(response_payload, request_intent, connection, opts \\ [])
 
   def run(response_payload, request_intent, connection, opts)
-      when is_binary(response_payload) and is_map(request_intent) and is_map(connection) and is_list(opts) do
+      when is_binary(response_payload) and is_map(request_intent) and is_map(connection) and
+             is_list(opts) do
     now = Keyword.get(opts, :now, DateTime.utc_now())
     payload = payload_map(opts)
     cert_chain = cert_chain(connection, payload, opts)
 
     with {:ok, parsed_doc} <-
            Relyra.Security.XML.PureBeam.parse_safely(response_payload, parse_opts(opts)),
-         protocol_payload <- protocol_payload(parsed_doc, payload, request_intent, connection, now),
+         protocol_payload <-
+           protocol_payload(parsed_doc, payload, request_intent, connection, now),
          :ok <- validate_issuer_connection_match(protocol_payload, connection, request_intent),
          {:ok, signed_node} <-
            Relyra.Security.Signature.verify(protocol_payload, connection, cert_chain, opts),

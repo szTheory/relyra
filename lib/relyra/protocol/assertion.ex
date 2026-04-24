@@ -45,7 +45,8 @@ defmodule Relyra.Protocol.Assertion do
   @spec validate_time_conditions(map(), DateTime.t(), keyword()) :: :ok | {:error, Error.t()}
   def validate_time_conditions(assertion_times, now, opts \\ [])
 
-  def validate_time_conditions(assertion_times, %DateTime{} = now, opts) when is_map(assertion_times) do
+  def validate_time_conditions(assertion_times, %DateTime{} = now, opts)
+      when is_map(assertion_times) do
     case normalize_skew(opts) do
       {:ok, skew_seconds} ->
         with {:ok, not_before} <- fetch_datetime(assertion_times, :not_before),

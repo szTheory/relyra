@@ -92,7 +92,10 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
       Relyra.consume_response(
         @valid_response,
         request_intent(),
-        consume_opts(payload: %{"status" => "urn:oasis:names:tc:SAML:2.0:status:Responder"}, now: @fixed_now)
+        consume_opts(
+          payload: %{"status" => "urn:oasis:names:tc:SAML:2.0:status:Responder"},
+          now: @fixed_now
+        )
       )
 
     Enum.each([success_result, error_result], fn result ->

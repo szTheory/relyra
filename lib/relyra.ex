@@ -56,7 +56,9 @@ defmodule Relyra do
        )}
   end
 
-  defp normalize_consume_result({:ok, login_result}) when is_map(login_result), do: {:ok, login_result}
+  defp normalize_consume_result({:ok, login_result}) when is_map(login_result),
+    do: {:ok, login_result}
+
   defp normalize_consume_result({:error, %Error{} = error}), do: {:error, error}
 
   defp normalize_consume_result(_result) do
