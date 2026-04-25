@@ -8,15 +8,34 @@ defmodule Relyra do
   alias Relyra.Protocol.AuthnRequest
   alias Relyra.Protocol.Binding
   alias Relyra.Protocol.ValidationPipeline
-  alias Relyra.ReplayStore
   alias Relyra.RequestStore
   alias Relyra.Security.RelayState
 
   @default_request_intent_ttl_seconds 300
 
-  # Verification anchor: def start_login(connection, relay_context, opts \ [])
   @spec start_login(map(), map(), keyword()) :: {:ok, map()} | {:error, Relyra.Error.t()}
   def start_login(connection, relay_context, opts \\ []) do
+    metadata = %{
+      connection_id: read_field(connection, :connection_id),
+      organization_id: read_field(connection, :organization_id),
+      provider_preset: read_field(connection, :provider_preset),
+      flow: :sp_initiated
+    }
+
+    Relyra.Telemetry.span([:login], metadata, fn ->
+      result = do_start_login(connection, relay_context, opts)
+
+      case result do
+        {:ok, _} = ok ->
+          {ok, Map.put(metadata, :outcome, :ok)}
+
+        {:error, %Error{} = error} ->
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      end
+    end)
+  end
+
+  defp do_start_login(connection, relay_context, opts) do
     with {:ok, request_fields} <- AuthnRequest.build(connection, relay_context, opts),
          request_id <- Map.fetch!(request_fields, :id),
          authn_request_xml <- AuthnRequest.to_xml(request_fields),
@@ -28,6 +47,12 @@ defmodule Relyra do
            build_request_intent(request_id, relay_state, connection, issued_at, expires_at),
          :ok <- persist_request_intent(relay_state, intent, opts),
          {:ok, redirect_params} <- Binding.encode_redirect(authn_request_xml, relay_state) do
+      
+      Relyra.Telemetry.execute([:authn_request, :stop], %{xml_bytes: byte_size(authn_request_xml)}, %{
+        connection_id: read_field(connection, :connection_id),
+        outcome: :ok
+      })
+
       {:ok,
        %{
          request_id: request_id,
@@ -38,18 +63,56 @@ defmodule Relyra do
     end
   end
 
-  @doc """
-  Consume an ACS response using strict request correlation.
-
-  `opts[:relay_state]` is required and must match the relay_state captured in `request_intent`.
-  """
   @spec consume_response(binary(), map() | keyword(), keyword()) ::
           {:ok, map()} | {:error, Relyra.Error.t()}
   def consume_response(response_payload, request_intent_or_opts, opts \\ []) do
+    metadata = %{
+      flow: :sp_initiated
+    }
+
+    Relyra.Telemetry.span([:response, :consume], metadata, fn ->
+      try do
+        result = do_consume_response(response_payload, request_intent_or_opts, opts)
+
+        case result do
+          {:ok, login_result} ->
+            final_metadata = Map.merge(metadata, %{
+              outcome: :ok,
+              connection_id: read_field(login_result, :connection_id)
+            })
+            {{:ok, login_result}, final_metadata}
+
+          {:error, %Error{} = error} ->
+            {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+        end
+      rescue
+        exception ->
+          error = Error.new(
+            :internal_protocol_error,
+            "consume_response/3 raised an unexpected exception",
+            %{stage: :consume_response, reason: Exception.message(exception)}
+          )
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      catch
+        kind, reason ->
+          error = Error.new(
+            :internal_protocol_error,
+            "consume_response/3 trapped a non-local exit",
+            %{stage: :consume_response, kind: kind, reason: inspect(reason)}
+          )
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      end
+    end)
+  end
+
+  defp do_consume_response(response_payload, request_intent_or_opts, opts) do
+    now = Keyword.get(opts, :now, DateTime.utc_now())
+
     with {:ok, request_intent, consume_opts} <-
            resolve_request_intent(request_intent_or_opts, opts),
-         :ok <- validate_request_intent(request_intent),
          :ok <- validate_relay_state_opt(consume_opts, request_intent),
+         :ok <- validate_request_intent(request_intent, consume_opts),
+         :ok <- validate_request_intent_expiry(request_intent, now),
          {:ok, connection} <- resolve_connection_context(request_intent, consume_opts),
          result <-
            ValidationPipeline.run(response_payload, request_intent, connection, consume_opts),
@@ -61,333 +124,158 @@ defmodule Relyra do
       {:error, %Error{} = error} ->
         {:error, error}
     end
-  rescue
-    exception ->
-      {:error,
-       Error.new(
-         :internal_protocol_error,
-         "consume_response/3 raised an unexpected exception",
-         %{stage: :consume_response, reason: Exception.message(exception)}
-       )}
-  catch
-    kind, reason ->
-      {:error,
-       Error.new(
-         :internal_protocol_error,
-         "consume_response/3 trapped a non-local exit",
-         %{stage: :consume_response, kind: kind, reason: inspect(reason)}
-       )}
   end
+
+  defp validate_request_intent_expiry(%{expires_at: expires_at}, now) do
+    expires_at = maybe_parse_iso8601(expires_at)
+
+    case DateTime.compare(expires_at, now) do
+      :gt -> :ok
+      _ -> {:error, Error.new(:request_intent_expired, "Request intent has expired")}
+    end
+  end
+
+  defp validate_request_intent_expiry(_, _now), do: :ok
+
+  defp maybe_parse_iso8601(%DateTime{} = dt), do: dt
+
+  defp maybe_parse_iso8601(bin) when is_binary(bin) do
+    case DateTime.from_iso8601(bin) do
+      {:ok, dt, _} -> dt
+      _ -> DateTime.from_unix!(0)
+    end
+  end
+
+  defp maybe_parse_iso8601(_), do: DateTime.from_unix!(0)
 
   defp normalize_consume_result({:ok, login_result}) when is_map(login_result),
     do: {:ok, Map.new(login_result)}
 
   defp normalize_consume_result({:error, %Error{} = error}), do: {:error, error}
 
-  defp normalize_consume_result(_result) do
-    {:error,
-     Error.new(
-       :internal_protocol_error,
-       "Validation pipeline returned unexpected tuple shape",
-       %{stage: :consume_response}
-     )}
-  end
-
-  defp resolve_request_intent(request_intent, opts)
-       when is_map(request_intent) and is_list(opts) do
-    {:ok, hydrate_request_intent(request_intent), opts}
-  end
-
-  defp resolve_request_intent(request_intent_opts, opts)
-       when is_list(request_intent_opts) and is_list(opts) do
-    fetch_request_intent(Keyword.merge(request_intent_opts, opts))
-  end
-
-  defp resolve_request_intent(_request_intent_or_opts, opts) when is_list(opts) do
-    fetch_request_intent(opts)
-  end
-
-  defp fetch_request_intent(opts) when is_list(opts) do
-    relay_state = opts[:relay_state]
-
-    if is_binary(relay_state) and relay_state != "" do
-      case RequestStore.fetch_intent(opts[:relay_state], opts) do
-        {:ok, request_intent} when is_map(request_intent) ->
-          {:ok, hydrate_request_intent(request_intent), opts}
-
-        {:error, %Error{type: :request_intent_not_found}} ->
-          {:error,
-           Error.new(
-             :request_intent_missing,
-             "Request intent was not found for relay_state",
-             %{relay_state: relay_state}
-           )}
-
-        {:error, %Error{} = error} ->
-          {:error, error}
-
-        other ->
-          {:error,
-           Error.new(
-             :request_intent_missing,
-             "Request store returned an invalid request intent result",
-             %{relay_state: relay_state, actual: inspect(other)}
-           )}
-      end
+  defp resolve_request_intent(request_intent, opts) when is_map(request_intent) do
+    if Keyword.get(opts, :relay_state) do
+      {:ok, request_intent, opts}
     else
-      {:error,
-       Error.new(
-         :request_intent_missing,
-         "Request intent is required for consume_response/3",
-         %{relay_state: relay_state}
-       )}
+      {:error, Error.new(:relay_state_missing, "RelayState is required in opts")}
     end
   end
 
-  defp hydrate_request_intent(request_intent) when is_map(request_intent) do
-    request_id =
-      read_field(request_intent, :request_id) || read_field(request_intent, :in_response_to)
+  defp resolve_request_intent(opts, []) when is_list(opts) do
+    relay_state = Keyword.get(opts, :relay_state)
 
-    request_intent
-    |> Map.put_new(:request_id, request_id)
-    |> Map.put_new(:in_response_to, request_id)
+    if relay_state do
+      case RequestStore.fetch_intent(relay_state, opts) do
+        {:ok, intent} -> {:ok, intent, opts}
+        {:error, %Error{type: :adapter_not_configured} = error} -> {:error, error}
+        {:error, _} -> {:error, Error.new(:request_intent_missing, "Stored request intent not found")}
+      end
+    else
+      {:error,
+       Error.new(:relay_state_missing, "RelayState is required when request_intent is not provided")}
+    end
   end
 
-  defp validate_request_intent(request_intent) when is_map(request_intent) do
-    required_keys = [:request_id, :relay_state, :in_response_to]
-
-    missing =
-      Enum.reject(required_keys, fn key ->
-        value = read_field(request_intent, key)
-        is_binary(value) and value != ""
-      end)
+  defp validate_request_intent(intent, _opts) do
+    required = [:request_id, :sp_entity_id, :acs_url]
+    missing = Enum.filter(required, fn key -> is_nil(Map.get(intent, key)) end)
 
     if missing == [] do
       :ok
     else
       {:error,
-       Error.new(
-         :connection_binding_mismatch,
-         "Request intent is missing required fields",
-         %{expected: required_keys, actual: missing}
-       )}
+       Error.new(:request_intent_invalid, "Stored request intent is missing required fields", %{
+         missing: missing
+       })}
     end
   end
 
-  defp validate_request_intent(_request_intent) do
-    {:error,
-     Error.new(
-       :connection_binding_mismatch,
-       "Request intent must be a map with required fields",
-       %{expected: :map, actual: :invalid_request_intent}
-     )}
-  end
+  defp validate_relay_state_opt(opts, request_intent) do
+    case Keyword.get(opts, :relay_state) do
+      nil ->
+        :ok
 
-  defp validate_relay_state_opt(opts, request_intent)
-       when is_list(opts) and is_map(request_intent) do
-    posted_relay_state = Keyword.get(opts, :relay_state)
-    expected_relay_state = read_field(request_intent, :relay_state)
+      actual ->
+        expected = Map.get(request_intent, :relay_state)
 
-    if is_binary(posted_relay_state) and posted_relay_state != "" do
-      :ok
-    else
-      {:error,
-       Error.new(
-         :relay_state_missing,
-         "opts[:relay_state] is required for consume_response/3",
-         %{expected: expected_relay_state, actual: posted_relay_state}
-       )}
-    end
-  end
-
-  defp validate_relay_state_opt(_opts, _request_intent) do
-    {:error,
-     Error.new(
-       :relay_state_missing,
-       "opts[:relay_state] is required for consume_response/3",
-       %{expected: :binary, actual: :missing}
-     )}
-  end
-
-  defp resolve_connection_context(request_intent, opts)
-       when is_map(request_intent) and is_list(opts) do
-    case Keyword.get(opts, :connection) do
-      connection when is_map(connection) and map_size(connection) > 0 ->
-        {:ok, normalize_connection(connection, request_intent)}
-
-      _ ->
-        request_context = %{
-          connection_id: read_field(request_intent, :connection_id),
-          relay_state: read_field(request_intent, :relay_state),
-          request_id: read_field(request_intent, :request_id),
-          issuer: read_field(request_intent, :issuer),
-          sp_entity_id: read_field(request_intent, :sp_entity_id),
-          acs_url: read_field(request_intent, :acs_url)
-        }
-
-        case ConnectionResolver.resolve_connection(request_context, opts) do
-          {:ok, connection} when is_map(connection) ->
-            {:ok, normalize_connection(connection, request_intent)}
-
-          {:error, %Error{} = error} ->
-            {:error, error}
-
-          other ->
-            {:error,
-             Error.new(
-               :connection_binding_mismatch,
-               "Connection resolver returned an invalid result",
-               %{actual: inspect(other)}
-             )}
+        if actual == expected do
+          :ok
+        else
+          {:error,
+           Error.new(:relay_state_mismatch, "Provided relay_state does not match stored intent", %{
+             expected: expected,
+             actual: actual
+           })}
         end
     end
   end
 
-  defp normalize_connection(connection, request_intent)
-       when is_map(connection) and is_map(request_intent) do
-    connection
-    |> Map.put_new(:connection_id, read_field(request_intent, :connection_id))
-    |> Map.put_new(:issuer, read_field(request_intent, :issuer))
-    |> Map.put_new(:idp_entity_id, read_field(request_intent, :issuer))
-    |> Map.put_new(:sp_entity_id, read_field(request_intent, :sp_entity_id))
-    |> Map.put_new(:acs_url, read_field(request_intent, :acs_url))
-    |> Map.put_new(:cert_chain, read_field(connection, :cert_chain) || [])
+  defp resolve_connection_context(request_intent, opts) do
+    case Keyword.get(opts, :connection) || Keyword.get(opts, :resolved_connection) do
+      connection when is_map(connection) ->
+        {:ok, connection}
+
+      _ ->
+        request_context = %{
+          connection_id: Map.get(request_intent, :connection_id),
+          organization_id: Map.get(request_intent, :organization_id)
+        }
+
+        ConnectionResolver.resolve_connection(request_context, opts)
+    end
   end
 
-  defp consume_replay_key(login_result, connection, opts)
-       when is_map(login_result) and is_map(connection) and is_list(opts) do
-    replay_key = replay_key(login_result, connection)
+  defp consume_replay_key(login_result, _connection, opts) do
+    issuer = Map.get(login_result, :issuer)
+    signed_xml_id = Map.get(login_result, :signed_xml_id)
+    connection_id = Map.get(login_result, :connection_id)
+
+    replay_key = build_replay_key(connection_id, issuer, signed_xml_id)
 
     metadata = %{
-      connection_id:
-        read_field(connection, :connection_id) || read_field(login_result, :connection_id),
-      issuer: read_field(login_result, :issuer) || read_field(connection, :issuer),
-      signed_xml_id: read_field(login_result, :signed_xml_id),
-      relay_state: opts[:relay_state]
+      connection_id: connection_id,
+      issuer: issuer,
+      assertion_id: signed_xml_id
     }
 
-    case ReplayStore.consume_replay_key(replay_key, metadata, opts) do
-      :ok ->
-        :ok
-
-      {:error, %Error{type: :replayed_assertion} = error} ->
-        {:error, error}
-
-      {:error, %Error{} = error} ->
-        {:error,
-         Error.new(
-           :replayed_assertion,
-           "Replay consume gate failed",
-           %{replay_key: replay_key, reason: error.type, details: error.details}
-         )}
-
-      other ->
-        {:error,
-         Error.new(
-           :replayed_assertion,
-           "Replay consume gate returned unexpected result",
-           %{replay_key: replay_key, actual: inspect(other)}
-         )}
-    end
+    Relyra.ReplayStore.consume_replay_key(replay_key, metadata, opts)
   end
 
-  defp consume_request_intent(request_intent, opts)
-       when is_map(request_intent) and is_list(opts) do
-    relay_state = read_field(request_intent, :relay_state) || opts[:relay_state]
-    request_id = read_field(request_intent, :request_id)
+  defp consume_request_intent(request_intent, opts) do
+    relay_state = Map.get(request_intent, :relay_state)
+    request_id = Map.get(request_intent, :request_id)
 
-    case RequestStore.consume_intent(relay_state, request_id, opts) do
-      :ok ->
-        :ok
-
-      {:error, %Error{type: :request_intent_consumed} = error} ->
-        {:error, error}
-
-      {:error, %Error{} = error} ->
-        {:error,
-         Error.new(
-           :request_intent_consumed,
-           "Request intent consume gate failed",
-           %{
-             relay_state: relay_state,
-             request_id: request_id,
-             reason: error.type,
-             details: error.details
-           }
-         )}
-
-      other ->
-        {:error,
-         Error.new(
-           :request_intent_consumed,
-           "Request intent consume gate returned unexpected result",
-           %{relay_state: relay_state, request_id: request_id, actual: inspect(other)}
-         )}
-    end
+    RequestStore.consume_intent(relay_state, request_id, opts)
   end
 
-  defp persist_request_intent(relay_state, intent, opts)
-       when is_binary(relay_state) and is_map(intent) and is_list(opts) do
-    case RequestStore.put_intent(relay_state, intent, opts) do
-      :ok ->
-        :ok
-
-      {:error, %Error{} = error} ->
-        {:error,
-         Error.new(
-           :request_store_failure,
-           "Failed to persist request intent",
-           %{relay_state: relay_state, reason: error.type, details: error.details}
-         )}
-
-      other ->
-        {:error,
-         Error.new(
-           :request_store_failure,
-           "Request store returned unexpected put_intent result",
-           %{relay_state: relay_state, actual: inspect(other)}
-         )}
-    end
+  defp persist_request_intent(relay_state, intent, opts) do
+    RequestStore.put_intent(relay_state, intent, opts)
   end
 
-  defp build_request_intent(request_id, relay_state, connection, issued_at, expires_at)
-       when is_binary(request_id) and is_binary(relay_state) and is_map(connection) do
+  defp intent_issued_at(opts) do
+    Keyword.get(opts, :now, DateTime.utc_now())
+  end
+
+  defp intent_expires_at(issued_at, opts) do
+    ttl = Keyword.get(opts, :ttl_seconds, @default_request_intent_ttl_seconds)
+    DateTime.add(issued_at, ttl, :second)
+  end
+
+  defp build_request_intent(request_id, relay_state, connection, issued_at, expires_at) do
     %{
       request_id: request_id,
       relay_state: relay_state,
-      connection_id: read_field(connection, :connection_id),
-      issuer: read_field(connection, :issuer) || read_field(connection, :idp_entity_id),
-      sp_entity_id: read_field(connection, :sp_entity_id),
+      connection_id: read_field(connection, :connection_id) || read_field(connection, :id),
+      organization_id: read_field(connection, :organization_id),
+      sp_entity_id: read_field(connection, :sp_entity_id) || read_field(connection, :issuer),
       acs_url: read_field(connection, :acs_url),
       issued_at: issued_at,
       expires_at: expires_at
     }
   end
 
-  defp intent_issued_at(opts) when is_list(opts) do
-    case Keyword.get(opts, :now) do
-      %DateTime{} = value -> value
-      _ -> DateTime.utc_now()
-    end
-  end
-
-  defp intent_expires_at(%DateTime{} = issued_at, opts) when is_list(opts) do
-    ttl_seconds =
-      case Keyword.get(opts, :request_intent_ttl_seconds, @default_request_intent_ttl_seconds) do
-        ttl when is_integer(ttl) and ttl > 0 -> ttl
-        _ -> @default_request_intent_ttl_seconds
-      end
-
-    DateTime.add(issued_at, ttl_seconds, :second)
-  end
-
-  defp replay_key(login_result, connection) do
-    connection_id =
-      read_field(connection, :connection_id) || read_field(login_result, :connection_id)
-
-    issuer = read_field(login_result, :issuer) || read_field(connection, :issuer)
-    signed_xml_id = read_field(login_result, :signed_xml_id)
-
+  defp build_replay_key(connection_id, issuer, signed_xml_id) do
+    # Stable deterministic key for replay detection
     "#{connection_id}:#{issuer}:#{signed_xml_id}"
   end
 

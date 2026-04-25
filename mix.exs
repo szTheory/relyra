@@ -8,6 +8,7 @@ defmodule Relyra.MixProject do
       app: :relyra,
       version: "0.1.0",
       elixir: "~> 1.19",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       compilers: [:parser_path_guard] ++ Mix.compilers(),
       elixirc_options: [ignore_module_conflict: true],
@@ -27,6 +28,9 @@ defmodule Relyra.MixProject do
     ]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
@@ -38,6 +42,9 @@ defmodule Relyra.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:telemetry, "~> 1.3"},
+      {:plug, "~> 1.16"},
+      {:phoenix, "~> 1.8", optional: true},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.14", only: [:dev, :test], runtime: false},

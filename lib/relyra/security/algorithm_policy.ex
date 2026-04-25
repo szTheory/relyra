@@ -46,6 +46,31 @@ defmodule Relyra.Security.AlgorithmPolicy do
     }
   end
 
+  @spec from_connection(map(), keyword()) :: {:ok, t()} | {:error, Error.t()}
+  def from_connection(connection, _opts \\ []) do
+    # In v0.1 we use default policy unless something is in connection
+    case Map.get(connection, :algorithm_policy) do
+      %__MODULE__{} = policy -> {:ok, policy}
+      _ -> {:ok, default()}
+    end
+  end
+
+  @spec validate_method(t(), term(), keyword()) :: :ok | {:error, Error.t()}
+  def validate_method(policy, method, _opts \\ []) do
+    case enforce_signature_method(policy, method) do
+      :ok -> :ok
+      %Error{} = error -> {:error, error}
+    end
+  end
+
+  @spec validate_digest(t(), term(), keyword()) :: :ok | {:error, Error.t()}
+  def validate_digest(policy, method, _opts \\ []) do
+    case enforce_digest_method(policy, method) do
+      :ok -> :ok
+      %Error{} = error -> {:error, error}
+    end
+  end
+
   @spec enforce_signature_method(t(), term()) :: :ok | Error.t()
   def enforce_signature_method(policy, method) do
     if method_allowed?(policy.allowed_signature_methods, method) do

@@ -11,10 +11,10 @@ Relyra v0.1 ships as a strict-by-default SAML SP library for Phoenix teams, star
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: XML Security ADR and Guardrails** - Lock parser/signature architecture and non-negotiable trust invariants. (Completed 2026-04-24)
-- [x] **Phase 2: Protocol and Signature Core** - Implement SP-initiated flow with strict verification and protocol validation. (Completed 2026-04-24)
-- [ ] **Phase 3: Behaviour Contracts and Stores** - Ship extension behaviours and production-safe request/replay adapter defaults.
-- [ ] **Phase 4: Phoenix Runtime Integration** - Expose router macro, ACS/login endpoints, and typed runtime error flow.
-- [ ] **Phase 5: Observability and Enforcement** - Add telemetry catalog, redacted logging, and compile-time safety checks.
+- [x] **Phase 2: Protocol and Signature Core** - Implement SP-initiated flow with strict verification and protocol validation. (Completed 2026-04-24 after 02-04/02-05 gap closure)
+- [x] **Phase 3: Behaviour Contracts and Stores** - Ship extension behaviours and production-safe request/replay adapter defaults. (Completed 2026-04-24)
+- [x] **Phase 4: Phoenix Runtime Integration** - Expose router macro, ACS/login endpoints, and typed runtime error flow. (Completed 2026-04-24)
+- [x] **Phase 5: Observability and Enforcement** - Add telemetry catalog, redacted logging, and compile-time safety checks. (Completed 2026-04-24)
 - [ ] **Phase 6: Delivery Hardening and Adoption Surface** - Finalize provider guides, installer, TestSupport, CI/release discipline, and docs.
 
 ## Phase Details
@@ -44,12 +44,14 @@ Plans:
   1. SP-initiated login protocol flow works end-to-end in pure core logic.
   2. Signature verification is bound to consumed signed nodes with wrapping/ID defenses.
   3. Issuer/audience/recipient/destination/status/time validations return typed failures.
-**Plans**: 3 plans
+**Plans**: 5 plans
 
 Plans:
 - [x] 02-01: Implement AuthnRequest and binding encode/decode primitives.
 - [x] 02-02: Implement signature verification, signed-node selection, and algorithm policy.
 - [x] 02-03: Implement response/assertion validation pipeline with typed protocol errors.
+- [x] 02-04: Close fail-open trust path by removing synthetic payload defaults and enforcing request correlation.
+- [x] 02-05: Add regression corpus and verification gates for unsigned payload and correlation bypass closures.
 
 ### Phase 3: Behaviour Contracts and Stores
 **Goal**: Ship stable extension contracts and safe defaults for request intent and replay controls.
@@ -62,9 +64,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Define and publish behaviour contracts plus static/default adapter scaffolding.
-- [ ] 03-02: Implement ETS and Ecto request/replay adapters with production guardrails.
-- [ ] 03-03: Integrate InResponseTo and replay semantics through core consume flow.
+- [x] 03-01: Define and publish behaviour contracts plus static/default adapter scaffolding.
+- [x] 03-02: Implement ETS and Ecto request/replay adapters with production guardrails.
+- [x] 03-03: Integrate InResponseTo and replay semantics through core consume flow.
 
 ### Phase 4: Phoenix Runtime Integration
 **Goal**: Provide ergonomic Phoenix integration surface with strict typed failure routing.
@@ -77,8 +79,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Implement router macro and endpoint/controller scaffolding.
-- [ ] 04-02: Wire ACS/login session and error callback runtime flow.
+- [x] 04-01: Implement router macro and endpoint/controller scaffolding.
+- [x] 04-02: Wire ACS/login session and error callback runtime flow.
 
 ### Phase 5: Observability and Enforcement
 **Goal**: Make validation outcomes explainable and guardrail violations impossible to miss.
@@ -118,9 +120,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. XML Security ADR and Guardrails | 3/3 | Complete | 2026-04-24 |
-| 2. Protocol and Signature Core | 3/3 | Complete | 2026-04-24 |
-| 3. Behaviour Contracts and Stores | 0/3 | Not started | - |
-| 4. Phoenix Runtime Integration | 0/2 | Not started | - |
-| 5. Observability and Enforcement | 0/2 | Not started | - |
+| 2. Protocol and Signature Core | 5/5 | Complete (02-04/02-05 gap closure) | 2026-04-24 |
+| 3. Behaviour Contracts and Stores | 3/3 | Complete | 2026-04-24 |
+| 4. Phoenix Runtime Integration | 2/2 | Complete | 2026-04-24 |
+| 5. Observability and Enforcement | 2/2 | Complete | 2026-04-24 |
 | 6. Delivery Hardening and Adoption Surface | 0/4 | Not started | - |
 

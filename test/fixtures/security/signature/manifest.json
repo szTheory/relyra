@@ -24,6 +24,22 @@
     "expected_error_type": "duplicate_xml_id"
   },
   {
+    "id": "sig-missing-signature-method-001",
+    "class": "missing_signature_method",
+    "requirement_ids": ["SEC-02"],
+    "signature_method": null,
+    "digest_method": "http://www.w3.org/2001/04/xmlenc#sha256",
+    "expected_error_type": "missing_signature"
+  },
+  {
+    "id": "sig-missing-digest-method-001",
+    "class": "missing_digest_method",
+    "requirement_ids": ["SEC-05"],
+    "signature_method": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+    "digest_method": null,
+    "expected_error_type": "missing_signature"
+  },
+  {
     "id": "sig-dup-002",
     "class": "duplicate_xml_id",
     "requirement_ids": ["SEC-04"],

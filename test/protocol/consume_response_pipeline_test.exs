@@ -359,6 +359,11 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
   defp maybe_force_replay_conflict(opts, _fixture), do: opts
 
   defp fixture_request_intent(%{"class" => "request_intent_missing"}), do: nil
+
+  defp fixture_request_intent(%{"class" => "request_intent_expired"}) do
+    Map.put(request_intent(), :expires_at, "2026-04-24T15:59:59Z")
+  end
+
   defp fixture_request_intent(_fixture), do: request_intent()
 
   defp request_intent do
@@ -430,14 +435,16 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
       <Issuer>#{fields.issuer}</Issuer>
       <Status><StatusCode Value="#{fields.status}"/></Status>
       <Assertion ID="#{fields.assertion_id}">
-        <Conditions NotBefore="#{fields.not_before}" NotOnOrAfter="#{fields.not_on_or_after}">
-          <AudienceRestriction><Audience>#{fields.audience}</Audience></AudienceRestriction>
-        </Conditions>
+        <Issuer>#{fields.issuer}</Issuer>
         <Subject>
+          <NameID>user@example.com</NameID>
           <SubjectConfirmation>
             <SubjectConfirmationData Recipient="#{fields.recipient}" NotOnOrAfter="#{fields.subject_confirmation_not_on_or_after}"/>
           </SubjectConfirmation>
         </Subject>
+        <Conditions NotBefore="#{fields.not_before}" NotOnOrAfter="#{fields.not_on_or_after}">
+          <AudienceRestriction><Audience>#{fields.audience}</Audience></AudienceRestriction>
+        </Conditions>
       </Assertion>
       <Signature>
         <SignedInfo>

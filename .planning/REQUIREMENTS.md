@@ -9,7 +9,7 @@ Committed scope for the first public Hex release ("SP-initiated SSO, verified en
 
 ### Security Invariants
 
-- [ ] **SEC-01**: Relyra parses inbound SAML with a single hardened XML path that rejects DTDs, external entities, external fetches, and oversized payloads before any trust decision.
+- [x] **SEC-01**: Relyra parses inbound SAML with a single hardened XML path that rejects DTDs, external entities, external fetches, and oversized payloads before any trust decision.
 - [x] **SEC-02**: Relyra verifies XML signatures only against configured IdP certificates and never trusts document-provided `KeyInfo` as a trust source.
 - [x] **SEC-03**: Relyra consumes only the exact signed node it verified and rejects signature-wrapping indicators (including ambiguous signed-node selection).
 - [x] **SEC-04**: Relyra rejects duplicate XML IDs during response validation.
@@ -54,9 +54,9 @@ Committed scope for the first public Hex release ("SP-initiated SSO, verified en
 
 These are required decisions, not optional nice-to-haves:
 
-- [ ] **GATE-01**: Select XML security implementation strategy (pure BEAM vs NIF-over-xmlsec vs hybrid) and lock the seam contract.
-- [ ] **GATE-02**: Define canonicalization acceptance threshold (fixture corpus and correctness bar required before release).
-- [ ] **GATE-03**: If NIF path is selected, lock supported precompiled target matrix and checksum verification policy.
+- [x] **GATE-01**: Select XML security implementation strategy (pure BEAM vs NIF-over-xmlsec vs hybrid) and lock the seam contract.
+- [x] **GATE-02**: Define canonicalization acceptance threshold (fixture corpus and correctness bar required before release).
+- [x] **GATE-03**: If NIF path is selected, lock supported precompiled target matrix and checksum verification policy.
 - [ ] **GATE-04**: Verify release-time external prerequisites (domain/namespace diligence and Keycloak image pin freshness).
 
 ## v0.2+ Deferred Requirements
@@ -102,20 +102,20 @@ Each v0.1 requirement maps to exactly one planned phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Pending |
-| SEC-02 | Phase 2 | Completed (02-02) |
-| SEC-03 | Phase 2 | Completed (02-02) |
-| SEC-04 | Phase 2 | Completed (02-02) |
-| SEC-05 | Phase 2 | Completed (02-02) |
+| SEC-01 | Phase 1 | Completed (01-01/01-02/01-03) |
+| SEC-02 | Phase 2 | Completed (02-04/02-05 gap closure) |
+| SEC-03 | Phase 2 | Completed (02-04/02-05 gap closure) |
+| SEC-04 | Phase 2 | Completed (02-04/02-05 gap closure) |
+| SEC-05 | Phase 2 | Completed (02-04/02-05 gap closure) |
 | SEC-06 | Phase 3 | Pending |
 | SEC-07 | Phase 2 | Completed (02-01) |
 | SEC-08 | Phase 5 | Pending |
 | SEC-09 | Phase 6 | Pending |
 | PROT-01 | Phase 2 | Completed (02-01) |
-| PROT-02 | Phase 2 | Completed (02-03) |
-| PROT-03 | Phase 2 | Completed (02-03) |
+| PROT-02 | Phase 2 | Completed (02-04/02-05 gap closure) |
+| PROT-03 | Phase 2 | Completed (02-04/02-05 gap closure) |
 | PROT-04 | Phase 3 | Pending |
-| PROT-05 | Phase 2 | Completed (02-03) |
+| PROT-05 | Phase 2 | Completed (02-04/02-05 gap closure) |
 | EXT-01 | Phase 3 | Pending |
 | EXT-02 | Phase 3 | Pending |
 | EXT-03 | Phase 3 | Pending |
@@ -130,9 +130,9 @@ Each v0.1 requirement maps to exactly one planned phase.
 | OBS-03 | Phase 6 | Pending |
 | OBS-04 | Phase 5 | Pending |
 | OBS-05 | Phase 6 | Pending |
-| GATE-01 | Phase 1 | Pending |
-| GATE-02 | Phase 1 | Pending |
-| GATE-03 | Phase 1 | Pending |
+| GATE-01 | Phase 1 | Completed (01-ADR) |
+| GATE-02 | Phase 1 | Completed (01-03) |
+| GATE-03 | Phase 1 | Completed (01-ADR policy lock) |
 | GATE-04 | Phase 6 | Pending |
 
 **Coverage:**

@@ -7,5 +7,40 @@ defmodule Relyra.SessionAdapter do
 
   # Verification anchor: @callback establish_session(subject, context, opts  [])
   @callback establish_session(subject :: map(), context :: map(), opts :: keyword()) ::
-              {:ok, map()} | {:error, Error.t()}
+              {:ok, map() | Plug.Conn.t()} | {:error, Error.t()}
+
+  @spec establish_session(map(), map(), keyword()) :: {:ok, map() | Plug.Conn.t()} | {:error, Error.t()}
+  def establish_session(subject, context, opts \\ []) do
+    metadata = %{
+      connection_id: read_field(context, :connection_id)
+    }
+
+    Relyra.Telemetry.span([:session, :establish], metadata, fn ->
+      adapter = Keyword.get(opts, :session_adapter)
+      
+      result = 
+        cond do
+          is_nil(adapter) ->
+            {:error, Error.new(:adapter_not_configured, "Session adapter is not configured")}
+
+          Code.ensure_loaded?(adapter) and function_exported?(adapter, :establish_session, 3) ->
+            adapter.establish_session(subject, context, opts)
+
+          true ->
+            {:error, Error.new(:adapter_not_configured, "Session adapter is unavailable")}
+        end
+
+      case result do
+        {:ok, _} = ok ->
+          {ok, Map.put(metadata, :outcome, :ok)}
+
+        {:error, %Error{} = error} ->
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      end
+    end)
+  end
+
+  defp read_field(map, key) when is_map(map) and is_atom(key) do
+    Map.get(map, key) || Map.get(map, Atom.to_string(key))
+  end
 end

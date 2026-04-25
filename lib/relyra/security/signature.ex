@@ -10,10 +10,45 @@ defmodule Relyra.Security.Signature do
 
   def verify(parsed_doc, connection, cert_chain, opts)
       when is_map(parsed_doc) and is_map(connection) and is_list(cert_chain) and is_list(opts) do
+    metadata = %{
+      connection_id: Map.get(connection, :connection_id) || Map.get(connection, :id)
+    }
+
+    Relyra.Telemetry.span([:signature, :verify], metadata, fn ->
+      result = do_verify(parsed_doc, connection, cert_chain, opts)
+
+      case result do
+        {:ok, signed_node} ->
+          {{:ok, signed_node},
+           Map.merge(metadata, %{
+             outcome: :ok,
+             signature_algorithm: signed_node.signature_method,
+             digest_algorithm: signed_node.digest_method
+           })}
+
+        {:error, %Error{} = error} ->
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      end
+    end)
+  end
+
+  def verify(_parsed_doc, connection, _cert_chain, _opts) do
     details = connection_details(connection)
-    duplicate_xml_ids = duplicate_xml_ids(parsed_doc)
+
+    {:error,
+     Error.new(
+       :invalid_signature,
+       "Signature verification inputs are invalid",
+       Map.put(details, :reason, :invalid_signature_input)
+     )}
+  end
+
+  defp do_verify(parsed_doc, connection, cert_chain, opts) do
+    details = connection_details(connection)
+    duplicate_xml_ids = Map.get(parsed_doc, :duplicate_ids) || []
 
     cond do
+
       cert_chain == [] ->
         {:error,
          Error.new(:untrusted_certificate, "Configured certificate chain is required", details)}
@@ -40,17 +75,6 @@ defmodule Relyra.Security.Signature do
       true ->
         verify_algorithms_and_candidates(parsed_doc, details, opts)
     end
-  end
-
-  def verify(_parsed_doc, connection, _cert_chain, _opts) do
-    details = connection_details(connection)
-
-    {:error,
-     Error.new(
-       :invalid_signature,
-       "Signature verification inputs are invalid",
-       Map.put(details, :reason, :invalid_signature_input)
-     )}
   end
 
   defp verify_algorithms_and_candidates(parsed_doc, details, opts) do
@@ -101,13 +125,6 @@ defmodule Relyra.Security.Signature do
            Map.merge(details, %{candidate_count: length(candidates)})
          )}
     end
-  end
-
-  defp duplicate_xml_ids(parsed_doc) do
-    parsed_doc
-    |> Map.get(:duplicate_ids, [])
-    |> List.wrap()
-    |> Enum.reject(&is_nil/1)
   end
 
   defp merge_error_details(%Error{details: error_details} = error, details)

@@ -11,6 +11,7 @@ defmodule Relyra.Security.XML do
           | :external_reference_forbidden
           | :payload_too_large
           | :malformed_xml
+          | :missing_protocol_field
           | :duplicate_xml_id
           | :missing_signature
           | :invalid_signature

@@ -204,4 +204,37 @@ defmodule RelyraTest do
 
     assert replay_consume_error.type in [:adapter_not_configured, :unsupported_default_adapter]
   end
+
+  test "misconfigured adapter modules return typed errors instead of raising" do
+    connection = %{
+      connection_id: "conn-123",
+      idp_sso_url: "https://idp.example.com/sso",
+      issuer: "https://idp.example.com/metadata",
+      idp_entity_id: "https://idp.example.com/metadata",
+      sp_entity_id: "https://sp.example.com/metadata",
+      acs_url: "https://sp.example.com/saml/acs",
+      cert_chain: ["pem-cert-chain"]
+    }
+
+    relay_context = %{return_to: "/dashboard"}
+
+    assert {:error, %Relyra.Error{type: :adapter_not_configured}} =
+             Relyra.start_login(connection, relay_context,
+               request_store: :not_a_module,
+               now: ~U[2026-04-24 16:00:00Z]
+             )
+
+
+    consume_opts = [
+      now: ~U[2026-04-24 16:00:00Z],
+      relay_state: "rs_1234567890abcdef",
+      request_store: :not_a_module,
+      replay_store: Relyra.TestSupport.NoopReplayStore,
+      connection_resolver: Relyra.TestSupport.NoopConnectionResolver,
+      resolved_connection: connection
+    ]
+
+    assert {:error, %Relyra.Error{type: :adapter_not_configured}} =
+             Relyra.consume_response(@valid_response, consume_opts)
+  end
 end

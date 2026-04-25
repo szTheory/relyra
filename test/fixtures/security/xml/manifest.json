@@ -135,42 +135,42 @@
     "class": "parser_differential_and_c14n",
     "requirement_ids": ["GATE-02"],
     "expected_error_type": "canonicalization_failed",
-    "xml": "<response><signed>node</signed></response>"
+    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-1'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed>node</signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-1'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
   },
   {
     "id": "c14n-002",
     "class": "parser_differential_and_c14n",
     "requirement_ids": ["GATE-02"],
     "expected_error_type": "canonicalization_failed",
-    "xml": "<response><signed attr='1'>node</signed></response>"
+    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-2'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed attr='1'>node</signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-2'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
   },
   {
     "id": "c14n-003",
     "class": "parser_differential_and_c14n",
     "requirement_ids": ["GATE-02"],
     "expected_error_type": "canonicalization_failed",
-    "xml": "<response><signed attr='2'>node</signed></response>"
+    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-3'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed attr='2'>node</signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-3'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
   },
   {
     "id": "c14n-004",
     "class": "parser_differential_and_c14n",
     "requirement_ids": ["GATE-02"],
     "expected_error_type": "canonicalization_failed",
-    "xml": "<response><signed><child/></signed></response>"
+    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-4'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed><child/></signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-4'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
   },
   {
     "id": "c14n-005",
     "class": "parser_differential_and_c14n",
     "requirement_ids": ["GATE-02"],
     "expected_error_type": "canonicalization_failed",
-    "xml": "<response><signed><child id='5'/></signed></response>"
+    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-5'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed><child id='5'/></signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-5'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
   },
   {
     "id": "c14n-006",
     "class": "parser_differential_and_c14n",
     "requirement_ids": ["GATE-02"],
     "expected_error_type": "canonicalization_failed",
-    "xml": "<response><signed><child id='6'/></signed></response>"
+    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-6'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed><child id='6'/></signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-6'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
   },
   {
     "id": "dup-001",

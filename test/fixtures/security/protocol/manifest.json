@@ -74,6 +74,14 @@
     "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-replay-duplicate\"><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-replay-duplicate\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
   },
   {
+    "id": "prot-request-intent-002",
+    "class": "request_intent_expired",
+    "request_mode": "store",
+    "requirement_ids": ["PROT-04"],
+    "expected_error_type": "request_intent_expired",
+    "payload": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-expired-intent\"><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-expired-intent\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
     "id": "prot-explicit-compat-001",
     "class": "explicit_request_intent_success",
     "request_mode": "explicit",

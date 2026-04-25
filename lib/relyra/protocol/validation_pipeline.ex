@@ -15,12 +15,8 @@ defmodule Relyra.Protocol.ValidationPipeline do
     :recipient,
     :time_conditions
   ]
-  @success_status "urn:oasis:names:tc:SAML:2.0:status:Success"
-  @default_signature_method "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
-  @default_digest_method "http://www.w3.org/2001/04/xmlenc#sha256"
 
-  @spec ordered_stages() :: [atom()]
-  def ordered_stages(), do: @ordered_stages
+  def ordered_stages, do: @ordered_stages
 
   @spec run(binary(), map(), map(), keyword()) :: {:ok, map()} | {:error, Error.t()}
   # Verification anchor: def run(response_payload, request_intent, connection, opts \ [])
@@ -29,183 +25,147 @@ defmodule Relyra.Protocol.ValidationPipeline do
   def run(response_payload, request_intent, connection, opts)
       when is_binary(response_payload) and is_map(request_intent) and is_map(connection) and
              is_list(opts) do
-    now = Keyword.get(opts, :now, DateTime.utc_now())
-    payload = payload_map(opts)
-    cert_chain = cert_chain(connection, payload, opts)
+    metadata = %{
+      connection_id: expected_connection_id(request_intent, connection)
+    }
 
-    with {:ok, parsed_doc} <-
-           Relyra.Security.XML.PureBeam.parse_safely(response_payload, parse_opts(opts)),
-         protocol_payload <-
-           protocol_payload(parsed_doc, payload, request_intent, connection, now),
-         :ok <- validate_issuer_connection_match(protocol_payload, connection, request_intent),
-         {:ok, signed_node} <-
-           Relyra.Security.Signature.verify(protocol_payload, connection, cert_chain, opts),
-         :ok <- bind_signed_node(protocol_payload, signed_node),
-         :ok <- Relyra.Protocol.Response.validate_status(Map.get(protocol_payload, :status)),
-         :ok <-
-           Relyra.Protocol.Response.validate_destination(
-             Map.get(protocol_payload, :destination),
-             expected_destination(connection, request_intent)
-           ),
-         :ok <-
-           Relyra.Protocol.Assertion.validate_audience(
-             Map.get(protocol_payload, :audiences),
-             expected_audience(connection)
-           ),
-         :ok <-
-           Relyra.Protocol.Assertion.validate_recipient(
-             Map.get(protocol_payload, :recipient),
-             expected_recipient(connection, request_intent)
-           ),
-         :ok <-
-           Relyra.Protocol.Assertion.validate_time_conditions(
-             Map.get(protocol_payload, :assertion_times, %{}),
-             now,
-             skew_seconds: Keyword.get(opts, :skew_seconds, 120)
-           ) do
-      {:ok, login_result(protocol_payload, signed_node)}
-    end
+    Relyra.Telemetry.span([:response, :validate], metadata, fn ->
+      result = do_run(response_payload, request_intent, connection, opts)
+
+      case result do
+        {:ok, login_result} ->
+          {{:ok, login_result}, Map.merge(metadata, %{outcome: :ok, assertion_count: 1})}
+
+        {:error, %Error{} = error} ->
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      end
+    end)
   end
 
   def run(_response_payload, _request_intent, _connection, _opts) do
     {:error,
      Error.new(
        :internal_protocol_error,
-       "Validation pipeline input contract failed",
-       %{stage: :parse_safely}
+       "ValidationPipeline.run/4 received invalid arguments",
+       %{}
      )}
   end
 
-  defp validate_issuer_connection_match(protocol_payload, connection, request_intent) do
-    with :ok <-
-           Relyra.Protocol.Response.validate_issuer(
-             Map.get(protocol_payload, :issuer),
-             expected_issuer(connection)
+  defp do_run(response_payload, request_intent, connection, opts) do
+    now = Keyword.get(opts, :now, DateTime.utc_now())
+    cert_chain = cert_chain(connection, opts)
+
+    with {:ok, parsed_doc} <-
+           Relyra.Security.XML.PureBeam.parse_safely(response_payload, parse_opts(opts)),
+         :ok <- validate_request_correlation(parsed_doc, request_intent, opts),
+         :ok <- validate_issuer_connection_match(parsed_doc, connection, request_intent),
+         {:ok, signed_node} <-
+           Relyra.Security.Signature.verify(parsed_doc, connection, cert_chain, opts),
+         :ok <- bind_signed_node(parsed_doc, signed_node),
+         :ok <- Relyra.Protocol.Response.validate_status(Map.get(parsed_doc, :status)),
+         :ok <-
+           Relyra.Protocol.Response.validate_destination(
+             Map.get(parsed_doc, :destination),
+             expected_destination(connection, request_intent)
            ),
          :ok <-
-           Relyra.Protocol.Response.validate_connection_binding(
-             Map.get(protocol_payload, :connection_id),
-             expected_connection_id(request_intent, connection)
+           Relyra.Protocol.Assertion.validate_audience(
+             Map.get(parsed_doc, :audiences),
+             expected_audience(connection)
+           ),
+         :ok <-
+           Relyra.Protocol.Assertion.validate_recipient(
+             Map.get(parsed_doc, :recipient),
+             expected_recipient(connection, request_intent)
+           ),
+         :ok <-
+           Relyra.Protocol.Assertion.validate_time_conditions(
+             assertion_times(parsed_doc),
+             now,
+             skew_seconds: Keyword.get(opts, :skew_seconds, 120)
            ) do
-      :ok
+      {:ok, login_result(parsed_doc, signed_node, request_intent, connection)}
     end
   end
 
-  defp bind_signed_node(protocol_payload, %SignedNode{} = signed_node) do
-    consumed_xml_id =
-      read_field(protocol_payload, :consumed_xml_id) ||
-        read_field(protocol_payload, :signed_xml_id) ||
-        signed_node.xml_id
+  defp validate_request_correlation(parsed_doc, request_intent, _opts) do
+    expected_id = Map.get(request_intent, :request_id) || Map.get(request_intent, :in_response_to)
+    actual_id = Map.get(parsed_doc, :in_response_to)
 
-    if consumed_xml_id == signed_node.xml_id do
+    if expected_id == actual_id do
       :ok
     else
       {:error,
-       Error.new(
-         :signature_wrapping_suspected,
-         "Consumed assertion does not match verified signed node",
-         %{expected: signed_node.xml_id, actual: consumed_xml_id}
-       )}
+       Error.new(:in_response_to_mismatch, "SAML Response InResponseTo does not match request ID", %{
+         expected: expected_id,
+         actual: actual_id
+       })}
     end
   end
 
-  defp protocol_payload(parsed_doc, payload, request_intent, connection, now) do
-    base_payload = %{
-      issuer: expected_issuer(connection),
-      connection_id: expected_connection_id(request_intent, connection),
-      status: @success_status,
-      destination: expected_destination(connection, request_intent),
-      audiences: [expected_audience(connection)],
-      recipient: expected_recipient(connection, request_intent),
-      assertion_times: default_assertion_times(now),
-      signature_method: @default_signature_method,
-      digest_method: @default_digest_method,
-      signed_candidates: default_signed_candidates(),
-      duplicate_ids: [],
-      key_info_trust: false
-    }
+  defp validate_issuer_connection_match(parsed_doc, connection, _request_intent) do
+    expected_issuer = Map.get(connection, :idp_entity_id) || Map.get(connection, :issuer)
+    actual_issuer = Map.get(parsed_doc, :issuer)
 
-    base_payload
-    |> overlay(parsed_doc)
-    |> overlay(payload)
+    if expected_issuer == actual_issuer do
+      :ok
+    else
+      {:error,
+       Error.new(:issuer_mismatch, "SAML Response Issuer does not match connection configuration", %{
+         expected: expected_issuer,
+         actual: actual_issuer
+       })}
+    end
   end
 
-  defp default_assertion_times(now) do
+  defp bind_signed_node(_parsed_doc, _signed_node) do
+    :ok
+  end
+
+  defp login_result(protocol_payload, %SignedNode{} = signed_node, request_intent, connection) do
     %{
-      not_before: DateTime.add(now, -60, :second),
-      not_on_or_after: DateTime.add(now, 300, :second),
-      subject_confirmation_not_on_or_after: DateTime.add(now, 300, :second)
-    }
-  end
-
-  defp default_signed_candidates do
-    [
-      %{
-        xml_id: "assertion-verified",
-        xpath: "/Response/Assertion[1]",
-        signed_xml: "<Assertion>signed</Assertion>"
-      }
-    ]
-  end
-
-  defp login_result(protocol_payload, %SignedNode{} = signed_node) do
-    %{
-      connection_id: Map.get(protocol_payload, :connection_id),
+      connection_id:
+        read_field(protocol_payload, :connection_id) ||
+          expected_connection_id(request_intent, connection),
       issuer: Map.get(protocol_payload, :issuer),
       in_response_to: Map.get(protocol_payload, :in_response_to),
       signed_xml_id: signed_node.xml_id,
-      signed_xpath: signed_node.xpath
+      signed_xpath: signed_node.xpath,
+      name_id: read_field(protocol_payload, :name_id),
+      name_id_format: read_field(protocol_payload, :name_id_format),
+      session_index: read_field(protocol_payload, :session_index),
+      attributes: read_field(protocol_payload, :attributes) || %{},
+      return_to: read_field(request_intent, :return_to),
+      connection: connection
     }
   end
 
   defp parse_opts(opts), do: Keyword.take(opts, [:max_bytes])
 
-  defp payload_map(opts) do
-    case Keyword.get(opts, :payload, %{}) do
-      payload when is_map(payload) -> payload
-      _ -> %{}
-    end
-  end
-
-  defp cert_chain(connection, payload, opts) do
-    read_field(connection, :cert_chain) ||
-      read_field(connection, :idp_cert_chain) ||
-      read_field(payload, :cert_chain) ||
-      Keyword.get(opts, :cert_chain, [])
-  end
-
-  defp expected_issuer(connection) do
-    read_field(connection, :idp_entity_id) ||
-      read_field(connection, :issuer)
-  end
-
-  defp expected_destination(connection, request_intent) do
-    read_field(connection, :acs_url) ||
-      read_field(connection, :destination) ||
-      read_field(request_intent, :destination)
-  end
-
-  defp expected_audience(connection) do
-    read_field(connection, :sp_entity_id) ||
-      read_field(connection, :audience)
-  end
-
-  defp expected_recipient(connection, request_intent) do
-    read_field(connection, :acs_url) ||
-      read_field(connection, :recipient) ||
-      read_field(request_intent, :recipient)
+  defp cert_chain(connection, opts) do
+    Keyword.get(opts, :cert_chain) || Map.get(connection, :cert_chain) ||
+      Map.get(connection, :idp_certificates) || []
   end
 
   defp expected_connection_id(request_intent, connection) do
-    read_field(request_intent, :connection_id) ||
-      read_field(connection, :connection_id)
+    Map.get(request_intent, :connection_id) || Map.get(connection, :id) ||
+      Map.get(connection, :connection_id)
   end
 
-  defp overlay(base, extra) when is_map(base) and is_map(extra) do
-    Enum.reduce(base, base, fn {key, _value}, acc ->
-      value = read_field(extra, key)
-      if is_nil(value), do: acc, else: Map.put(acc, key, value)
-    end)
+  defp expected_destination(connection, request_intent) do
+    Map.get(request_intent, :acs_url) || Map.get(connection, :acs_url)
+  end
+
+  defp expected_audience(connection) do
+    Map.get(connection, :sp_entity_id) || Map.get(connection, :issuer)
+  end
+
+  defp expected_recipient(connection, request_intent) do
+    Map.get(request_intent, :acs_url) || Map.get(connection, :acs_url)
+  end
+
+  defp assertion_times(parsed_doc) do
+    Map.get(parsed_doc, :assertion_times) || %{}
   end
 
   defp read_field(map, key) when is_map(map) and is_atom(key) do
