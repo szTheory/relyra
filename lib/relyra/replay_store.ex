@@ -15,7 +15,9 @@ defmodule Relyra.ReplayStore do
   def consume_replay_key(replay_key, metadata, opts)
       when is_binary(replay_key) and is_map(metadata) and is_list(opts) do
     telemetry_metadata = %{
-      connection_id: Map.get(metadata, :connection_id)
+      connection_id: Map.get(metadata, :connection_id),
+      issuer: Map.get(metadata, :issuer),
+      assertion_id: Map.get(metadata, :assertion_id)
     }
 
     Relyra.Telemetry.span([:replay, :check], telemetry_metadata, fn ->
@@ -23,18 +25,35 @@ defmodule Relyra.ReplayStore do
 
       result =
         case Keyword.get(opts, :replay_store_consume) do
-          fun when is_function(fun, 3) -> fun.(replay_key, metadata, opts)
-          _ -> dispatch_replay_store(replay_store(opts), :consume_replay_key, [replay_key, metadata, opts])
+          fun when is_function(fun, 3) ->
+            fun.(replay_key, metadata, opts)
+
+          _ ->
+            dispatch_replay_store(replay_store(opts), :consume_replay_key, [
+              replay_key,
+              metadata,
+              opts
+            ])
         end
 
       latency = System.monotonic_time() - start_time
+      replay_store_latency_ms = System.convert_time_unit(latency, :native, :millisecond)
 
       case result do
         :ok ->
-          {:ok, Map.merge(telemetry_metadata, %{outcome: :ok, replay_store_latency_ms: System.convert_time_unit(latency, :native, :millisecond)})}
+          {:ok,
+           Map.merge(telemetry_metadata, %{
+             outcome: :ok,
+             replay_store_latency_ms: replay_store_latency_ms
+           })}
 
         {:error, %Error{} = error} ->
-          {{:error, error}, Map.merge(telemetry_metadata, %{outcome: :error, error_code: error.type})}
+          {{:error, error},
+           Map.merge(telemetry_metadata, %{
+             outcome: :error,
+             error_code: error.type,
+             replay_store_latency_ms: replay_store_latency_ms
+           })}
       end
     end)
   end

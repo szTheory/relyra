@@ -19,7 +19,8 @@ defmodule Relyra do
       connection_id: read_field(connection, :connection_id),
       organization_id: read_field(connection, :organization_id),
       provider_preset: read_field(connection, :provider_preset),
-      flow: :sp_initiated
+      flow: :sp_initiated,
+      binding: :redirect
     }
 
     Relyra.Telemetry.span([:login], metadata, fn ->
@@ -36,31 +37,67 @@ defmodule Relyra do
   end
 
   defp do_start_login(connection, relay_context, opts) do
-    with {:ok, request_fields} <- AuthnRequest.build(connection, relay_context, opts),
-         request_id <- Map.fetch!(request_fields, :id),
-         authn_request_xml <- AuthnRequest.to_xml(request_fields),
-         {:ok, relay_state} <-
-           RelayState.issue(Map.put(relay_context, :request_id, request_id), opts),
-         issued_at <- intent_issued_at(opts),
-         expires_at <- intent_expires_at(issued_at, opts),
-         intent <-
-           build_request_intent(request_id, relay_state, connection, issued_at, expires_at),
-         :ok <- persist_request_intent(relay_state, intent, opts),
-         {:ok, redirect_params} <- Binding.encode_redirect(authn_request_xml, relay_state) do
-      
-      Relyra.Telemetry.execute([:authn_request, :stop], %{xml_bytes: byte_size(authn_request_xml)}, %{
-        connection_id: read_field(connection, :connection_id),
-        outcome: :ok
-      })
+    metadata = %{
+      connection_id: read_field(connection, :connection_id),
+      organization_id: read_field(connection, :organization_id),
+      provider_preset: read_field(connection, :provider_preset),
+      flow: :sp_initiated,
+      binding: :redirect
+    }
 
-      {:ok,
-       %{
-         request_id: request_id,
-         authn_request: authn_request_xml,
-         relay_state: relay_state,
-         redirect_params: redirect_params
-       }}
-    end
+    Relyra.Telemetry.span([:authn_request], metadata, fn ->
+      with {:ok, request_fields} <- AuthnRequest.build(connection, relay_context, opts),
+           request_id <- Map.fetch!(request_fields, :id),
+           authn_request_xml <- AuthnRequest.to_xml(request_fields),
+           {:ok, relay_state} <-
+             RelayState.issue(Map.put(relay_context, :request_id, request_id), opts),
+           issued_at <- intent_issued_at(opts),
+           expires_at <- intent_expires_at(issued_at, opts),
+           intent <-
+             build_request_intent(request_id, relay_state, connection, issued_at, expires_at) do
+        request_store_start = System.monotonic_time()
+        request_store_result = persist_request_intent(relay_state, intent, opts)
+        request_store_latency_ms = duration_ms(request_store_start)
+
+        case request_store_result do
+          :ok ->
+            case Binding.encode_redirect(authn_request_xml, relay_state) do
+              {:ok, redirect_params} ->
+                base64_request = Map.get(redirect_params, "SAMLRequest") || ""
+
+                {
+                  {:ok,
+                   %{
+                     request_id: request_id,
+                     authn_request: authn_request_xml,
+                     relay_state: relay_state,
+                     redirect_params: redirect_params
+                   }},
+                  Map.merge(metadata, %{
+                    outcome: :ok,
+                    xml_bytes: byte_size(authn_request_xml),
+                    base64_bytes: byte_size(base64_request),
+                    request_store_latency_ms: request_store_latency_ms
+                  })
+                }
+
+              {:error, %Error{} = error} ->
+                {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+            end
+
+          {:error, %Error{} = error} ->
+            {{:error, error},
+             Map.merge(metadata, %{
+               outcome: :error,
+               error_code: error.type,
+               request_store_latency_ms: request_store_latency_ms
+             })}
+        end
+      else
+        {:error, %Error{} = error} ->
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      end
+    end)
   end
 
   @spec consume_response(binary(), map() | keyword(), keyword()) ::
@@ -76,10 +113,12 @@ defmodule Relyra do
 
         case result do
           {:ok, login_result} ->
-            final_metadata = Map.merge(metadata, %{
-              outcome: :ok,
-              connection_id: read_field(login_result, :connection_id)
-            })
+            final_metadata =
+              Map.merge(metadata, %{
+                outcome: :ok,
+                connection_id: read_field(login_result, :connection_id)
+              })
+
             {{:ok, login_result}, final_metadata}
 
           {:error, %Error{} = error} ->
@@ -87,19 +126,23 @@ defmodule Relyra do
         end
       rescue
         exception ->
-          error = Error.new(
-            :internal_protocol_error,
-            "consume_response/3 raised an unexpected exception",
-            %{stage: :consume_response, reason: Exception.message(exception)}
-          )
+          error =
+            Error.new(
+              :internal_protocol_error,
+              "consume_response/3 raised an unexpected exception",
+              %{stage: :consume_response, reason: Exception.message(exception)}
+            )
+
           {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
       catch
         kind, reason ->
-          error = Error.new(
-            :internal_protocol_error,
-            "consume_response/3 trapped a non-local exit",
-            %{stage: :consume_response, kind: kind, reason: inspect(reason)}
-          )
+          error =
+            Error.new(
+              :internal_protocol_error,
+              "consume_response/3 trapped a non-local exit",
+              %{stage: :consume_response, kind: kind, reason: inspect(reason)}
+            )
+
           {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
       end
     end)
@@ -166,13 +209,21 @@ defmodule Relyra do
 
     if relay_state do
       case RequestStore.fetch_intent(relay_state, opts) do
-        {:ok, intent} -> {:ok, intent, opts}
-        {:error, %Error{type: :adapter_not_configured} = error} -> {:error, error}
-        {:error, _} -> {:error, Error.new(:request_intent_missing, "Stored request intent not found")}
+        {:ok, intent} ->
+          {:ok, intent, opts}
+
+        {:error, %Error{type: :adapter_not_configured} = error} ->
+          {:error, error}
+
+        {:error, _} ->
+          {:error, Error.new(:request_intent_missing, "Stored request intent not found")}
       end
     else
       {:error,
-       Error.new(:relay_state_missing, "RelayState is required when request_intent is not provided")}
+       Error.new(
+         :relay_state_missing,
+         "RelayState is required when request_intent is not provided"
+       )}
     end
   end
 
@@ -202,10 +253,14 @@ defmodule Relyra do
           :ok
         else
           {:error,
-           Error.new(:relay_state_mismatch, "Provided relay_state does not match stored intent", %{
-             expected: expected,
-             actual: actual
-           })}
+           Error.new(
+             :relay_state_mismatch,
+             "Provided relay_state does not match stored intent",
+             %{
+               expected: expected,
+               actual: actual
+             }
+           )}
         end
     end
   end
@@ -277,6 +332,10 @@ defmodule Relyra do
   defp build_replay_key(connection_id, issuer, signed_xml_id) do
     # Stable deterministic key for replay detection
     "#{connection_id}:#{issuer}:#{signed_xml_id}"
+  end
+
+  defp duration_ms(start_time) do
+    System.convert_time_unit(System.monotonic_time() - start_time, :native, :millisecond)
   end
 
   defp read_field(map, key) when is_map(map) and is_atom(key) do

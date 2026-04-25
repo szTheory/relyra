@@ -11,7 +11,8 @@ defmodule Relyra.Security.Signature do
   def verify(parsed_doc, connection, cert_chain, opts)
       when is_map(parsed_doc) and is_map(connection) and is_list(cert_chain) and is_list(opts) do
     metadata = %{
-      connection_id: Map.get(connection, :connection_id) || Map.get(connection, :id)
+      connection_id: Map.get(connection, :connection_id) || Map.get(connection, :id),
+      flow: :sp_initiated
     }
 
     Relyra.Telemetry.span([:signature, :verify], metadata, fn ->
@@ -48,7 +49,6 @@ defmodule Relyra.Security.Signature do
     duplicate_xml_ids = Map.get(parsed_doc, :duplicate_ids) || []
 
     cond do
-
       cert_chain == [] ->
         {:error,
          Error.new(:untrusted_certificate, "Configured certificate chain is required", details)}

@@ -22,7 +22,7 @@ defmodule Relyra.Protocol.Binding do
   def decode_post(params, opts \\ [])
 
   def decode_post(params, opts) when is_map(params) do
-    metadata = %{binding: :post}
+    metadata = %{binding: :post, flow: :sp_initiated}
 
     Relyra.Telemetry.span([:response, :decode], metadata, fn ->
       result = do_decode_post(params, opts)
@@ -30,13 +30,16 @@ defmodule Relyra.Protocol.Binding do
       case result do
         {:ok, %{response_xml: xml} = decoded} ->
           saml_response_key = Keyword.get(opts, :saml_response_key, "SAMLResponse")
-          encoded_response = Map.get(params, saml_response_key) || Map.get(params, to_string(saml_response_key))
-          
-          {{:ok, decoded}, Map.merge(metadata, %{
-            outcome: :ok,
-            xml_bytes: byte_size(xml),
-            base64_bytes: byte_size(encoded_response || "")
-          })}
+
+          encoded_response =
+            Map.get(params, saml_response_key) || Map.get(params, to_string(saml_response_key))
+
+          {{:ok, decoded},
+           Map.merge(metadata, %{
+             outcome: :ok,
+             xml_bytes: byte_size(xml),
+             base64_bytes: byte_size(encoded_response || "")
+           })}
 
         {:error, %Error{} = error} ->
           {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}

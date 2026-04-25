@@ -9,16 +9,18 @@ defmodule Relyra.SessionAdapter do
   @callback establish_session(subject :: map(), context :: map(), opts :: keyword()) ::
               {:ok, map() | Plug.Conn.t()} | {:error, Error.t()}
 
-  @spec establish_session(map(), map(), keyword()) :: {:ok, map() | Plug.Conn.t()} | {:error, Error.t()}
+  @spec establish_session(map(), map(), keyword()) ::
+          {:ok, map() | Plug.Conn.t()} | {:error, Error.t()}
   def establish_session(subject, context, opts \\ []) do
     metadata = %{
-      connection_id: read_field(context, :connection_id)
+      connection_id: read_field(context, :connection_id),
+      flow: :sp_initiated
     }
 
     Relyra.Telemetry.span([:session, :establish], metadata, fn ->
       adapter = Keyword.get(opts, :session_adapter)
-      
-      result = 
+
+      result =
         cond do
           is_nil(adapter) ->
             {:error, Error.new(:adapter_not_configured, "Session adapter is not configured")}

@@ -26,18 +26,25 @@ defmodule Relyra.Protocol.ValidationPipeline do
       when is_binary(response_payload) and is_map(request_intent) and is_map(connection) and
              is_list(opts) do
     metadata = %{
-      connection_id: expected_connection_id(request_intent, connection)
+      connection_id: expected_connection_id(request_intent, connection),
+      flow: :sp_initiated
     }
 
     Relyra.Telemetry.span([:response, :validate], metadata, fn ->
       result = do_run(response_payload, request_intent, connection, opts)
 
       case result do
-        {:ok, login_result} ->
-          {{:ok, login_result}, Map.merge(metadata, %{outcome: :ok, assertion_count: 1})}
+        {:ok, login_result, assertion_count} ->
+          {{:ok, login_result},
+           Map.merge(metadata, %{outcome: :ok, assertion_count: assertion_count})}
 
-        {:error, %Error{} = error} ->
-          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+        {:error, %Error{} = error, assertion_count} ->
+          {{:error, error},
+           Map.merge(metadata, %{
+             outcome: :error,
+             error_code: error.type,
+             assertion_count: assertion_count
+           })}
       end
     end)
   end
@@ -55,9 +62,20 @@ defmodule Relyra.Protocol.ValidationPipeline do
     now = Keyword.get(opts, :now, DateTime.utc_now())
     cert_chain = cert_chain(connection, opts)
 
-    with {:ok, parsed_doc} <-
-           Relyra.Security.XML.PureBeam.parse_safely(response_payload, parse_opts(opts)),
-         :ok <- validate_request_correlation(parsed_doc, request_intent, opts),
+    case Relyra.Security.XML.PureBeam.parse_safely(response_payload, parse_opts(opts)) do
+      {:ok, parsed_doc} ->
+        case do_run_validations(parsed_doc, request_intent, connection, cert_chain, opts, now) do
+          {:ok, login_result} -> {:ok, login_result, assertion_count(parsed_doc)}
+          {:error, %Error{} = error} -> {:error, error, assertion_count(parsed_doc)}
+        end
+
+      {:error, %Error{} = error} ->
+        {:error, error, 0}
+    end
+  end
+
+  defp do_run_validations(parsed_doc, request_intent, connection, cert_chain, opts, now) do
+    with :ok <- validate_request_correlation(parsed_doc, request_intent, opts),
          :ok <- validate_issuer_connection_match(parsed_doc, connection, request_intent),
          {:ok, signed_node} <-
            Relyra.Security.Signature.verify(parsed_doc, connection, cert_chain, opts),
@@ -71,7 +89,8 @@ defmodule Relyra.Protocol.ValidationPipeline do
          :ok <-
            Relyra.Protocol.Assertion.validate_audience(
              Map.get(parsed_doc, :audiences),
-             expected_audience(connection)
+             expected_audience(connection),
+             connection
            ),
          :ok <-
            Relyra.Protocol.Assertion.validate_recipient(
@@ -85,6 +104,8 @@ defmodule Relyra.Protocol.ValidationPipeline do
              skew_seconds: Keyword.get(opts, :skew_seconds, 120)
            ) do
       {:ok, login_result(parsed_doc, signed_node, request_intent, connection)}
+    else
+      {:error, %Error{} = error} -> {:error, error}
     end
   end
 
@@ -96,10 +117,14 @@ defmodule Relyra.Protocol.ValidationPipeline do
       :ok
     else
       {:error,
-       Error.new(:in_response_to_mismatch, "SAML Response InResponseTo does not match request ID", %{
-         expected: expected_id,
-         actual: actual_id
-       })}
+       Error.new(
+         :in_response_to_mismatch,
+         "SAML Response InResponseTo does not match request ID",
+         %{
+           expected: expected_id,
+           actual: actual_id
+         }
+       )}
     end
   end
 
@@ -111,10 +136,14 @@ defmodule Relyra.Protocol.ValidationPipeline do
       :ok
     else
       {:error,
-       Error.new(:issuer_mismatch, "SAML Response Issuer does not match connection configuration", %{
-         expected: expected_issuer,
-         actual: actual_issuer
-       })}
+       Error.new(
+         :issuer_mismatch,
+         "SAML Response Issuer does not match connection configuration",
+         %{
+           expected: expected_issuer,
+           actual: actual_issuer
+         }
+       )}
     end
   end
 
@@ -166,6 +195,12 @@ defmodule Relyra.Protocol.ValidationPipeline do
 
   defp assertion_times(parsed_doc) do
     Map.get(parsed_doc, :assertion_times) || %{}
+  end
+
+  defp assertion_count(parsed_doc) do
+    parsed_doc
+    |> Map.get(:signed_candidates, [])
+    |> length()
   end
 
   defp read_field(map, key) when is_map(map) and is_atom(key) do
