@@ -10,39 +10,40 @@ Relyra is an open-source **SAML 2.0 Service Provider library for Elixir and Phoe
 
 Positioning tagline: **"Enterprise SAML, calmly verified."**
 
+## Current State
+
+- v0.1 is shipped and archived.
+- The library now covers hardened XML parsing, strict protocol validation, store-backed replay protection, Phoenix integration, telemetry, and adopter-facing docs/release tooling.
+- Next milestone focus: v0.2 enterprise configuration.
+
+## Next Milestone Goals
+
+- Ecto schemas and migrations for connection, certificate, mapping, and audit data.
+- Metadata import/export and controlled refresh flows.
+- Certificate rollover lifecycle with staged trust and expiry signaling.
+- Persisted attribute/group mapping configuration with auditability.
+
 ## Requirements
 
 ### Validated
 
 <!-- Shipped and confirmed valuable. -->
 
-- [x] **XML strategy ADR locked (GATE-01/GATE-03)**: ADR 0001 now fixes pure-BEAM `saxy` as default, defines objective hybrid fallback trigger, and locks conditional checksum/matrix policy (Validated in Phase 01: XML Security ADR and Guardrails).
-- [x] **Hardened XML seam contract (SEC-01)**: `Relyra.Security.XML` callback surface and typed `%Relyra.Error{}` baseline are frozen for downstream protocol work (Validated in Phase 01: XML Security ADR and Guardrails).
-- [x] **Canonicalization acceptance gate contract (GATE-02)**: manifest-backed adversarial corpus and binary `gate02_c14n` CI lane are in place (Validated in Phase 01: XML Security ADR and Guardrails).
+- [x] **XML strategy ADR locked (GATE-01/GATE-03)**: ADR 0001 fixed pure-BEAM `saxy` as the default, defined the objective hybrid fallback trigger, and locked conditional checksum/matrix policy.
+- [x] **Hardened XML seam contract (SEC-01)**: `Relyra.Security.XML` and `%Relyra.Error{}` are frozen for downstream protocol work.
+- [x] **Canonicalization acceptance gate contract (GATE-02)**: manifest-backed adversarial corpus and binary `gate02_c14n` CI lane are in place.
+- [x] **SP-initiated protocol core (SEC-02/03/04/05/07, PROT-01/02/03/05)**: AuthnRequest, RelayState, signature verification, and validation pipeline are shipped.
+- [x] **Store-backed trust gates (SEC-06, PROT-04, EXT-01..05)**: replay protection, request intent, and public behaviours/stores are shipped.
+- [x] **Phoenix runtime integration (PHX-01/02/03/04)**: router macro, ACS/login runtime, typed errors, and install path are shipped.
+- [x] **Observability and enforcement (OBS-01..05, SEC-08)**: telemetry, redaction, boundaries, and release discipline are shipped.
+- [x] **Phase 06 delivery hardening**: provider presets, TestSupport/FakeIdP, installer scaffolding, release discipline, and scope-first docs are shipped.
 
 ### Active
 
-<!-- v0.1 "SP-initiated SSO, verified end-to-end" — the first Hex release. -->
-
-- [ ] **SP-initiated SSO end-to-end**: `AuthnRequest` generation + ACS `consume_response/3` with strict signed assertion/response validation
-- [ ] **Hardened XML path** (entities/DTDs disabled before parse; size limits before and after base64/inflate) — ADR-backed in Phase 1 (pure-BEAM vs NIF-over-xmlsec vs hybrid) before any protocol code lands
-- [ ] **XMLDSig signature verification** against configured IdP certs (never `KeyInfo` from the document); verified signature bound to the exact consumed XML node; duplicate XML IDs rejected
-- [ ] **Protocol validation**: Issuer / Audience / Recipient / Destination / `InResponseTo` / `NotBefore` / `NotOnOrAfter` / replay / status / tenant-connection match
-- [ ] **Five public behaviours**: `Relyra.ConnectionResolver`, `Relyra.SessionAdapter`, `Relyra.UserMapper`, `Relyra.RequestStore`, `Relyra.ReplayStore` (default adapters `@moduledoc false`)
-- [ ] **Phoenix router macro**: `saml_routes/2` with connection_resolver / session_adapter / on_error options
-- [ ] **Store defaults shipping**: `Relyra.RequestStore.ETS` (dev; loud warning if `Mix.env == :prod`) + `Relyra.RequestStore.Ecto` (prod default); same pair for `ReplayStore`
-- [ ] **Algorithm policy**: SHA-256+ default; SHA-1 rejected; time-boxed legacy escape hatch with mandatory audit + `reason` + expiry date
-- [ ] **RelayState safety**: opaque server-side handle (`rs_...` → `{return_to, tenant_id, request_id, expires_at}`) — never a raw URL
-- [ ] **Typed error contract**: `%Relyra.Error{type: atom(), message: String.t(), details: map()}` with ~30 stable atoms (`:invalid_signature`, `:signature_wrapping_suspected`, `:assertion_expired`, `:replayed_assertion`, `:invalid_audience`, `:recipient_mismatch`, `:deprecated_algorithm`, …)
-- [ ] **Telemetry catalog**: `[:relyra, :saml, …]` event namespace, single-file catalog module, measurements + metadata documented
-- [ ] **Provider guides (v0.1)**: Okta, Microsoft Entra ID, Google Workspace recipes + local Keycloak dev container (SimpleSAMLphp optional)
-- [ ] **Minimal `mix relyra.install`**: config stub + behaviour skeletons + fake IdP cert for dev; no Ecto migrations yet (land with v0.2 schemas). Golden-diff installer test from day 1.
-- [ ] **CI lanes**: `qa` / `ci.fast` / `ci.integration` (Keycloak) / `ci.security` (XXE + signature-wrapping + parser-differential + SHA-1 + unsigned-assertion + replay fixtures — every known SAML CVE becomes a permanent regression fixture) / installer-path-gate / `compile --no-optional-deps --warnings-as-errors` / release-please / post-publish parity verification
-- [ ] **OSS release discipline**: Release Please + Keep-a-Changelog + tag-version guard (kiln pattern) + post-publish parity check + daily drift cron with rolling issue (scrypath pattern)
-- [ ] **Scope-first README + security-first docs**: README "What v0.1 includes / does not include / Install / Quick start / Guides / Security"; `SECURITY.md` with private advisory workflow; Getting Started guide; Security model doc; `CONVENTIONS.md` (SAML validation ordering, request/replay store contracts, tenancy scoping, unsafe-option audit rules)
-- [ ] **Custom Credo checks**: `NoRawAssertionInLog`, `NoParseBeforeEntityDisable`, `NoSignatureSkipInPublicAPI`
-- [ ] **Hex package hygiene**: `@version` in `mix.exs` is single source of truth; `package.files` is an explicit whitelist (never `test/`, `.planning/`, `prompts/`); `boundary` compiler enforces protocol-core ↔ Phoenix/Ecto/LiveView isolation
-- [ ] **Legal + naming due diligence**: confirm Hex `relyra` availability + `szTheory/relyra` GitHub org + `relyra.dev` domain / trademark scan (GSD research phase deliverable before `REQUIREMENTS.md` is locked in stone)
+- [ ] **Enterprise config**: Ecto schemas, migrations, metadata import/export, certificate rollover, and mapping persistence for v0.2.
+- [ ] **Admin surface**: optional mountable LiveView admin once configuration storage exists.
+- [ ] **Advanced protocol**: IdP-initiated SSO and SLO remain later milestones.
+- [ ] **Conformance/migrations**: external security review and migration tools remain out of scope for v0.2.
 
 ### Out of Scope
 
@@ -151,4 +152,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-04-24 after Phase 01 completion (ADR lock, seam freeze, and security gate rollout).*
+*Last updated: 2026-04-25 after Phase 06 completion (delivery hardening, release discipline, and adoption surface shipped).*
