@@ -14,7 +14,6 @@ end
 
 defmodule Relyra.Phoenix.RouterTest do
   use ExUnit.Case, async: true
-  import Plug.Conn
   import Phoenix.ConnTest
 
   alias Relyra.Phoenix.TestRouter

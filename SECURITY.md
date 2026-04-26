@@ -20,6 +20,16 @@ and response metadata as potentially hostile.
 - Replay protection is required.
 - Raw assertions/responses must not be logged.
 
+## Release prerequisites
+
+Before tagging or publishing a release:
+
+- Confirm the public domain / namespace values still match the deployed EntityID,
+  ACS URL, and metadata URL surface.
+- Confirm any Keycloak example uses a pinned image tag and refresh that pin only
+  after checking the upstream release notes.
+- Run the release parity lane (`mix ci.release`) before publish.
+
 ## Reporting a vulnerability
 
 Use a private GitHub Security Advisory or contact the maintainers privately.

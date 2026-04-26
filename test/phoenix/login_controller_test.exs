@@ -22,7 +22,7 @@ defmodule Relyra.Phoenix.LoginTestRouter do
 end
 
 defmodule Relyra.Phoenix.LoginControllerTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   import Phoenix.ConnTest
 
   alias Relyra.Phoenix.LoginTestRouter

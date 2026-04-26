@@ -8,7 +8,7 @@ defmodule Relyra.Phoenix.ACSTestRouter do
 end
 
 defmodule Relyra.Phoenix.ACSControllerTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   import Phoenix.ConnTest
 
   alias Relyra.TestSupport.FakeConnectionResolver

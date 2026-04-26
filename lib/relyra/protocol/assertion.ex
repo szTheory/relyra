@@ -5,23 +5,33 @@ defmodule Relyra.Protocol.Assertion do
 
   @default_skew_seconds 120
 
-  @spec validate_audience(term(), term()) :: :ok | {:error, Error.t()}
-  def validate_audience(actual_audiences, expected_audience) do
+  alias Relyra.Provider
+
+  @spec validate_audience(term(), term(), map() | nil) :: :ok | {:error, Error.t()}
+  def validate_audience(actual_audiences, expected_audience, connection \\ nil) do
     normalized_expected = normalize(expected_audience)
     normalized_audiences = normalize_audiences(actual_audiences)
 
     if normalized_expected in normalized_audiences do
       :ok
     else
+      details = %{
+        expected: normalized_expected,
+        actual: normalized_audiences
+      }
+
+      details =
+        case Provider.hint_for(connection, :sp_entity_id) do
+          nil -> details
+          hint -> Map.put(details, :provider_hint, hint)
+        end
+
       {:error,
        Error.new(
          :invalid_audience,
          "Assertion audience does not include expected audience",
-         %{
-           expected: normalized_expected,
-           actual: normalized_audiences
-         }
-       )}
+          details
+        )}
     end
   end
 

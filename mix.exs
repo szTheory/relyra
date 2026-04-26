@@ -23,7 +23,8 @@ defmodule Relyra.MixProject do
         qa: :test,
         "ci.fast": :test,
         "ci.security": :test,
-        "ci.integration": :test
+        "ci.integration": :test,
+        "ci.release": :test
       ]
     ]
   end
@@ -75,6 +76,9 @@ defmodule Relyra.MixProject do
       ],
       "ci.integration": [
         "test --only integration --warnings-as-errors"
+      ],
+      "ci.release": [
+        "test test/release/release_hardening_test.exs --warnings-as-errors"
       ]
     ]
   end
