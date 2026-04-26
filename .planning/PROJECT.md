@@ -14,14 +14,19 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 - v0.1 is shipped and archived.
 - The library now covers hardened XML parsing, strict protocol validation, store-backed replay protection, Phoenix integration, telemetry, and adopter-facing docs/release tooling.
-- Next milestone focus: v0.2 enterprise configuration.
 
-## Next Milestone Goals
+## Current Milestone
 
-- Ecto schemas and migrations for connection, certificate, mapping, and audit data.
-- Metadata import/export and controlled refresh flows.
-- Certificate rollover lifecycle with staged trust and expiry signaling.
-- Persisted attribute/group mapping configuration with auditability.
+### v0.2 - Enterprise configuration
+
+**Goal:** add durable trust-data for tenant-scoped SAML connections without leaking config blobs into runtime code.
+
+**Target features:**
+- Connection records and schema/migration foundations.
+- Runtime snapshot hydration through an Ecto-backed resolver adapter.
+- Metadata import/export with controlled refresh and provenance.
+- Certificate inventory with staged rollover and expiry signaling.
+- Persisted attribute/group mappings with auditable change history.
 
 ## Requirements
 
@@ -40,35 +45,21 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 ### Active
 
-- [ ] **Enterprise config**: Ecto schemas, migrations, metadata import/export, certificate rollover, and mapping persistence for v0.2.
-- [ ] **Admin surface**: optional mountable LiveView admin once configuration storage exists.
-- [ ] **Advanced protocol**: IdP-initiated SSO and SLO remain later milestones.
-- [ ] **Conformance/migrations**: external security review and migration tools remain out of scope for v0.2.
+<!-- Current scope. Building toward these. -->
+
+- [ ] **CFG-01**: User can create and maintain tenant-scoped SAML connection records backed by Ecto schemas and migrations.
+- [ ] **CFG-02**: Relyra can resolve a persisted connection into a runtime snapshot for login and metadata flows.
+- [ ] **CFG-03**: User can import and export metadata for a connection and trigger a controlled refresh with provenance.
+- [ ] **CFG-04**: User can manage certificate inventory for a connection with expiry tracking and staged rollover.
+- [ ] **CFG-05**: User can persist attribute/group mapping configuration and review a durable audit history of trust changes.
 
 ### Out of Scope
 
-<!-- Explicit boundaries, with reasoning. -->
+<!-- Explicit boundaries. Includes reasoning to prevent re-adding. -->
 
-**Non-goals (all milestones):**
-
-- **Identity Provider tooling beyond `Relyra.TestSupport.FakeIdP`** — Relyra is SP-only. FakeIdP is dev/CI only, not a product.
-- **OIDC / OAuth** — lives in `lockspire`. Relyra is specifically SAML 2.0.
-- **Generic auth framework** (session mgmt, password login, MFA) — lives in `sigra`. Relyra's `SessionAdapter` behaviour hands off to whatever the host app uses.
-- **Hosted SSO broker / SaaS / open-core billing on login volume** — data lives in the host app's database. Never.
-- **SCIM / user-lifecycle management** — separate integration. Relyra exposes JIT-provisioning + `UserMapper` hooks but does not own SCIM.
-- **Cryptographic claims beyond strict defaults** — no "military-grade", "bulletproof", "unhackable" language. Ever. (Brand book §22.)
-
-**Deferred past v0.1:**
-
-- **Ecto schemas + migrations + metadata import/export + certificate rollover** — v0.2 "Enterprise config".
-- **Mountable `Relyra.LiveAdmin` LiveView** — v0.3. Biggest adoption unlock per deep research, but ships as an optional module gated by `Relyra.OptionalDeps.LiveView` once Ecto schemas exist.
-- **IdP-initiated SSO** — v0.4 behind per-connection `allow_idp_initiated?: false` default, with mandatory opaque server-side RelayState + replay + audit. Never the headline feature. (Deep research §"IdP-initiated SSO".)
-- **Single Logout (SLO)** — v0.5. SLO across IdPs/bindings/back-channels is genuinely hard (Passport-SAML explicitly warns IdP-initiated SLO is not fully supported). Ship as advanced, testable, partial-by-provider, behind explicit opt-in. Never as a headline feature. (Deep research §"Over-promising SLO".)
-- **Encrypted assertions, signed AuthnRequests, signed metadata, artifact binding, external security review, SAML Interop Lab / Kantara conformance, migration tools** (`mix relyra.migrate.samly`, `mix relyra.migrate.ex_saml`), multi-region reference architecture — v1.0 "Production conformance".
-
-**Package shape (locked for v0.1):**
-
-- **Single `relyra` package on Hex**, not sibling `relyra` + `relyra_admin`. LiveView admin compiled only when `phoenix_live_view` is available via `Relyra.OptionalDeps.LiveView`. Revisit potential split at v0.4/0.5.
+- [LiveView admin surface] — reserved for the next adoption UX milestone once config storage is stable.
+- [Bulk operations across many connections] — useful later, but not needed to prove the trust-data model.
+- [Scheduled metadata refresh automation] — v0.2 uses explicit, controlled refresh; automation can wait until provenance is proven.
 
 ## Context
 
@@ -152,4 +143,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-04-25 after Phase 06 completion (delivery hardening, release discipline, and adoption surface shipped).*
+*Last updated: 2026-04-26 after v0.2 milestone start.*
