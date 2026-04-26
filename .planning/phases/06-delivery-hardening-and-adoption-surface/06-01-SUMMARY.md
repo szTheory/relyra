@@ -5,11 +5,12 @@ subsystem: adoption-surface
 tags: [provider-presets, security-corpus, testsupport, installer, docs]
 requires:
   - phase: 06-01
-    provides: provider presets, TestSupport DX, installer scaffold, and hardened docs
+    provides: provider presets, TestSupport DX, installer scaffold, release hardening, and hardened docs
 provides:
   - provider presets with safe defaults and admin label translation
   - TestSupport/FakeIdP helpers for adopter integration tests
   - a minimal mix relyra.install scaffold and golden-path coverage
+  - release metadata, parity verification, and release prerequisites
   - scope-first README, SECURITY, and conventions docs
 affects: [phase-06-completion, requirement-tracking]
 tech-stack:
@@ -22,9 +23,12 @@ key-files:
   created:
     - .planning/phases/06-delivery-hardening-and-adoption-surface/06-01-SUMMARY.md
   modified:
-    - README.md
+    - CHANGELOG.md
     - SECURITY.md
     - CONVENTIONS.md
+    - .release-please-config.json
+    - .release-please-manifest.json
+    - .github/workflows/release-parity.yml
     - guides/getting_started.md
     - guides/recipes/okta.md
     - guides/recipes/entra.md
@@ -39,22 +43,24 @@ key-files:
     - test/provider/provider_test.exs
     - test/mix/relyra_install_test.exs
     - test/test_support_demo_test.exs
+    - test/release/release_hardening_test.exs
 key-decisions:
   - "Use a module-per-provider preset registry with keyword defaults, label translation, and footgun checks instead of struct rigidity."
   - "Keep the installer hand-rolled and sentinel-based rather than adopting Igniter for a small v0.1 scaffold."
   - "Treat FakeIdP as test-only helper infrastructure and document the security boundary explicitly in SECURITY.md and README.md."
-requirements-completed: [OBS-03, PHX-04]
-duration: 18min
+  - "Use Keep a Changelog plus release-please metadata and a release-parity lane to keep the tagged release surface honest."
+requirements-completed: [OBS-03, OBS-05, PHX-04, SEC-09, GATE-04]
+duration: 30min
 completed: 2026-04-25
 ---
 
 # Phase 06 Plan 01: Delivery Hardening and Adoption Surface Summary
 
-Relyra now ships the v0.1 adoption surface: provider presets, TestSupport/FakeIdP helpers, a minimal installer scaffold, and scope-first docs that point adopters at the recipes and threat model.
+Relyra now ships the v0.1 adoption surface: provider presets, TestSupport/FakeIdP helpers, a minimal installer scaffold, release discipline artifacts, and scope-first docs that point adopters at the recipes, threat model, and release prerequisites.
 
 ## Performance
 
-- **Duration:** 18 min
+- **Duration:** 30 min
 - **Completed:** 2026-04-25
 - **Tasks:** 1 logical chunk
 - **Files modified:** 17 tracked files in the committed chunk
@@ -65,13 +71,15 @@ Relyra now ships the v0.1 adoption surface: provider presets, TestSupport/FakeId
 - Shipped `Relyra.TestSupport` and `Relyra.TestSupport.FakeIdP` for adopter tests, plus a live demo test showing the helper surface end-to-end.
 - Added `mix relyra.install` scaffolding and a test that verifies the generated host-app files and sentinel config block.
 - Rewrote the top-level README and added SECURITY/CONVENTIONS docs to tighten scope and security expectations.
+- Added `CHANGELOG.md`, release-please metadata, a release-parity workflow, and explicit release prerequisites for namespace/domain and Keycloak pin checks.
 
 ## Verification Results
 
 - `mix test test/provider/provider_test.exs test/mix/relyra_install_test.exs test/test_support_demo_test.exs test/security/signature_policy_test.exs test/security/signed_node_binding_test.exs`
+- `mix test test/release/release_hardening_test.exs`
 - `mix test`
 
-Both passed.
+All passed.
 
 ## Deviations from Plan
 
