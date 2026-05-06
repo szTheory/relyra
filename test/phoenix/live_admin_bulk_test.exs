@@ -1,6 +1,7 @@
 defmodule Relyra.LiveAdmin.BulkTest do
   use ExUnit.Case, async: false
 
+  import Phoenix.Component
   alias Ecto.Adapters.SQL.Sandbox
   alias Relyra.LiveAdmin.ConnectionsLive
   alias Relyra.LiveAdmin.Scope
@@ -35,6 +36,7 @@ defmodule Relyra.LiveAdmin.BulkTest do
       }
     }
     |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
+    |> assign(:live_action, :index)
   end
 
   test "Task 1: ConnectionsLive tracks selected_ids MapSet" do
@@ -82,5 +84,80 @@ defmodule Relyra.LiveAdmin.BulkTest do
     
     # Verify checked state
     assert html =~ ~s(checked)
+  end
+
+  test "Task 2: Bulk Actions menu appears only when IDs are selected" do
+    import Phoenix.LiveViewTest
+    socket = mount_socket()
+    
+    # Empty selection
+    html = render_component(ConnectionsLive, Map.put(socket.assigns, :live_action, :index))
+    refute html =~ "Bulk Actions"
+
+    # With selection
+    socket = assign(socket, :selected_ids, MapSet.new(["conn1"]))
+    html = render_component(ConnectionsLive, Map.put(socket.assigns, :live_action, :index))
+    assert html =~ "Bulk Actions"
+  end
+
+  test "Task 2: handle_event bulk_action calls BulkActions.run" do
+    # We need to insert some connections to test the real run
+    c1_id = "01JKP9G6D2Q7X6Z0X4M7X6Z0X1" # Valid ULID format
+    c2_id = "01JKP9G6D2Q7X6Z0X4M7X6Z0X2" # Valid ULID format
+
+    c1 = @repo.insert!(%Relyra.Ecto.Connection{
+      connection_id: c1_id,
+      display_name: "C1",
+      organization_id: "org_bulk",
+      status: :disabled,
+      sp_entity_id: "sp1",
+      idp_entity_id: "idp1",
+      acs_url: "https://sp1/acs",
+      idp_sso_url: "https://idp1/sso"
+    })
+
+    c2 = @repo.insert!(%Relyra.Ecto.Connection{
+      connection_id: c2_id,
+      display_name: "C2",
+      organization_id: "org_bulk",
+      status: :disabled,
+      sp_entity_id: "sp2",
+      idp_entity_id: "idp2",
+      acs_url: "https://sp2/acs",
+      idp_sso_url: "https://idp2/sso"
+    })
+
+    # Insert active certificates
+    @repo.insert!(%Relyra.Ecto.Certificate{
+      connection_record_id: c1.id,
+      fingerprint_sha256: "f1",
+      lifecycle_state: :active,
+      role: :signing,
+      pem: "PEM1",
+      source: "manual"
+    })
+
+    @repo.insert!(%Relyra.Ecto.Certificate{
+      connection_record_id: c2.id,
+      fingerprint_sha256: "f2",
+      lifecycle_state: :active,
+      role: :signing,
+      pem: "PEM2",
+      source: "manual"
+    })
+
+    socket = mount_socket()
+    socket = assign(socket, :selected_ids, MapSet.new([c1_id, c2_id]))
+
+    assert {:noreply, socket} = ConnectionsLive.handle_event("bulk_action", %{"action" => "enable"}, socket)
+    
+    assert %{"info" => info} = socket.assigns.flash
+    assert info =~ "Processed 2 connections"
+    assert info =~ "2 succeeded"
+    assert MapSet.size(socket.assigns.selected_ids) == 0
+
+    # Verify state in DB
+    assert @repo.get_by(Relyra.Ecto.Connection, connection_id: c1_id).status == :enabled
+    assert @repo.get_by(Relyra.Ecto.Connection, connection_id: c2_id).status == :enabled
   end
 end

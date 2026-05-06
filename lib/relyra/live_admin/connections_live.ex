@@ -4,7 +4,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     use Phoenix.LiveView
 
-    alias Relyra.Ecto.{CertificateInventory, Connections, MappingCommands}
+    alias Relyra.Ecto.{BulkActions, CertificateInventory, Connections, MappingCommands}
+    alias Relyra.Metadata
     alias Relyra.LiveAdmin.Components.{ConnectionDetail, ConnectionForm, ConnectionList, PresetPicker}
     alias Relyra.LiveAdmin.Query
     alias Relyra.LiveAdmin.Scope
@@ -100,6 +101,33 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         end
 
       {:noreply, assign(socket, :selected_ids, selected_ids)}
+    end
+
+    def handle_event("bulk_action", %{"action" => action}, socket) do
+      repo = socket.assigns.relyra_admin_repo
+      scope = socket.assigns.admin_scope
+      ids = MapSet.to_list(socket.assigns.selected_ids)
+      audit = audit_context(scope, "live_admin_bulk_#{action}")
+
+      action_fn =
+        case action do
+          "enable" -> &Connections.enable/2
+          "disable" -> &Connections.disable/2
+          "refresh_metadata" -> &Metadata.refresh/2
+        end
+
+      {:ok, results} = BulkActions.run(repo, ids, action_fn, audit: audit)
+
+      success_count = Enum.count(results, fn {_, res} -> match?({:ok, _}, res) end)
+      error_count = map_size(results) - success_count
+
+      msg = "Processed #{map_size(results)} connections: #{success_count} succeeded, #{error_count} failed."
+
+      {:noreply,
+       socket
+       |> put_flash(:info, msg)
+       |> assign(:selected_ids, MapSet.new())
+       |> reload_connections()}
     end
 
     def handle_event("confirm_activate_certificate", %{"fingerprint" => fingerprint, "confirmation" => confirmation}, socket) do
@@ -325,6 +353,13 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           />
 
           <main>
+            <div :if={MapSet.size(@selected_ids) > 0} style="margin-bottom: 20px; padding: 12px; background: #f0f4f8; border: 1px solid #d1d9e1; border-radius: 4px; display: flex; align-items: center; gap: 16px;">
+              <span style="font-weight: bold;">Bulk Actions ({MapSet.size(@selected_ids)} selected):</span>
+              <button phx-click="bulk_action" phx-value-action="enable" style="padding: 4px 8px; cursor: pointer;">Enable</button>
+              <button phx-click="bulk_action" phx-value-action="disable" style="padding: 4px 8px; cursor: pointer;">Disable</button>
+              <button phx-click="bulk_action" phx-value-action="refresh_metadata" style="padding: 4px 8px; cursor: pointer;">Refresh Metadata</button>
+            </div>
+
             <%= case @live_action do %>
               <% :new -> %>
                 {render_connection_editor(assigns, :new)}
@@ -410,6 +445,13 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     defp handle_reload_result(socket, {:error, error}, _message) do
       {:noreply, put_flash(socket, :error, error.message)}
+    end
+
+    defp reload_connections(socket) do
+      {:ok, connections} =
+        Query.list_connections(socket.assigns.relyra_admin_repo, socket.assigns.admin_scope)
+
+      assign(socket, :connections, connections)
     end
 
     defp maybe_load_detail(_socket, nil, _filters), do: {:ok, nil}

@@ -13,11 +13,11 @@ defmodule Relyra.Ecto.BulkActionsTest do
 
       result = BulkActions.run(repo, ids, action_fun, [])
 
-      assert result == %{
+      assert result == {:ok, %{
                1 => {:ok, 10},
                2 => {:ok, 20},
                3 => {:ok, 30}
-             }
+             }}
     end
 
     test "generates and injects correlation_id into audit context" do
@@ -29,7 +29,7 @@ defmodule Relyra.Ecto.BulkActionsTest do
         {:ok, audit[:correlation_id]}
       end
 
-      result = BulkActions.run(repo, ids, action_fun, [])
+      {:ok, result} = BulkActions.run(repo, ids, action_fun, [])
       
       # Since we only have one ID, the result should have that correlation_id
       assert {:ok, correlation_id} = result[1]
@@ -48,7 +48,7 @@ defmodule Relyra.Ecto.BulkActionsTest do
 
       result = BulkActions.run(repo, ids, action_fun, audit: %{correlation_id: existing_cid})
       
-      assert result == %{1 => {:ok, :success}}
+      assert result == {:ok, %{1 => {:ok, :success}}}
     end
   end
 end

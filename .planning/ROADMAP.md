@@ -54,9 +54,10 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 
 </details>
 
-### 📋 v0.5 — Operational maturity (In progress)
+### 📋 v0.5 — Operational maturity (Planning)
 
-- [ ] **Phase 20: Bulk operations across connections** (1/3 plans) - Add multi-select UI to the connections list and implement transactional bulk actions for metadata refresh and lifecycle toggling.
+- [x] **Phase 20: Bulk operations across connections** - Add multi-select UI to the connections list and implement transactional bulk actions for metadata refresh and lifecycle toggling. Verified 2026-05-06.
+- [ ] **Phase 21: Scheduled metadata refresh** - Implement background refresh orchestration with security guardrails and operator alerts.
 
 ## Phase Details
 
@@ -69,6 +70,20 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 2. Operator can trigger "Enable", "Disable", or "Refresh Metadata" for all selected connections.
 3. Bulk actions provide clear feedback on success or failure for each individual connection in the batch.
 4. Bulk mutations remain audit-atomic; each connection's trust change co-commits its own audit row.
+**Plans**: 2 plans
+- [x] 20-01-PLAN.md — BulkActions coordinator
+- [x] 20-02-PLAN.md — UI integration
+**UI hint**: yes
+
+### Phase 21: Scheduled metadata refresh
+**Goal**: Automate trust maintenance by periodically refreshing metadata from remote sources while maintaining safety invariants.
+**Depends on**: Phase 20
+**Requirements**: CFG-08
+**Success Criteria** (what must be TRUE):
+1. Adopters can enable "Auto-refresh" on a per-connection basis.
+2. System implements a background worker to fetch and apply metadata updates.
+3. Automatic updates only apply if the new metadata is valid and signed.
+4. Failures trigger alerts/logs without breaking the existing trust state.
 **Plans**: TBD
 **UI hint**: yes
 

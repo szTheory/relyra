@@ -18,9 +18,12 @@ defmodule Relyra.Ecto.BulkActions do
     opts_with_audit = Keyword.put(opts, :audit, Map.put(audit, :correlation_id, correlation_id))
     opts_with_repo = Keyword.put_new(opts_with_audit, :repo, repo)
 
-    Enum.map(ids, fn id ->
-      {id, action_fun.(id, opts_with_repo)}
-    end)
-    |> Map.new()
+    results =
+      Enum.map(ids, fn id ->
+        {id, action_fun.(id, opts_with_repo)}
+      end)
+      |> Map.new()
+
+    {:ok, results}
   end
 end
