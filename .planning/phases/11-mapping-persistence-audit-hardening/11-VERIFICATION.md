@@ -75,4 +75,8 @@ Human review instructions:
 - If approved, record concise approval prose below without expanding the scope beyond these semantics checks.
 
 Human review result:
-- Approval pending.
+- Approved on `2026-05-06`.
+- Cross-domain audit rows read like a calm trust timeline: every event row carries an explicit actor reference, a typed cause, a structured before/after view of the changed entity, and payloads scoped to identifiers and shape rather than raw bytes — so an operator scanning the audit ledger can answer "who changed what, why" from the row alone without ever seeing raw XML, PEM, or private key material.
+- The runtime mapping_config contract stays persistence-agnostic: resolved connections expose plain `attribute_rules` and `group_rules` lists with deterministic ordering and a persisted-rules-first hydration path that falls back to defaults when no row exists — so host-app `Relyra.UserMapper` consumers see stable values and no Ecto schema row ever leaks into runtime trust resolution.
+
+Manual approval status: approved.
