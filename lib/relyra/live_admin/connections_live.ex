@@ -8,6 +8,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     alias Relyra.LiveAdmin.Components.{ConnectionDetail, ConnectionForm, ConnectionList, PresetPicker}
     alias Relyra.LiveAdmin.Query
     alias Relyra.LiveAdmin.Scope
+    alias Relyra.LiveAdmin.AttributeMappingsForm
+    alias Relyra.LiveAdmin.GroupMappingsForm
     alias Relyra.Metadata
 
     @impl true
@@ -23,8 +25,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
        |> assign(:provider_options, Query.provider_options())
        |> assign(:audit_filters, %{})
        |> assign(:connection_form_data, default_connection_form_data(nil, socket.assigns.admin_scope))
-       |> assign(:attribute_mappings_json, "[]")
-       |> assign(:group_mappings_json, "[]")
+       |> assign(:attribute_mappings_changeset, AttributeMappingsForm.changeset(%AttributeMappingsForm{}, %{}))
+       |> assign(:group_mappings_changeset, GroupMappingsForm.changeset(%GroupMappingsForm{}, %{}))
        |> assign(:metadata_import_xml, "")
        |> assign(:metadata_source_url, "")}
     end
@@ -159,8 +161,24 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       end
     end
 
-    def handle_event("save_attribute_mappings", %{"mapping" => %{"json" => json}}, socket) do
-      with {:ok, mappings} <- decode_mapping_json(json) do
+    def handle_event("validate_attribute_mappings", %{"attribute_mappings_form" => params}, socket) do
+      changeset =
+        socket.assigns.attribute_mappings_changeset.data
+        |> AttributeMappingsForm.changeset(params)
+        |> Map.put(:action, :validate)
+
+      {:noreply, assign(socket, :attribute_mappings_changeset, changeset)}
+    end
+
+    def handle_event("save_attribute_mappings", %{"attribute_mappings_form" => params}, socket) do
+      changeset = AttributeMappingsForm.changeset(socket.assigns.attribute_mappings_changeset.data, params)
+
+      if changeset.valid? do
+        mappings =
+          Ecto.Changeset.apply_changes(changeset).mappings
+          |> Enum.map(&Map.from_struct/1)
+          |> Enum.map(&Map.drop(&1, [:id]))
+
         handle_reload_result(
           socket,
           MappingCommands.replace_attribute_mappings(
@@ -172,13 +190,56 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           "Attribute mappings saved."
         )
       else
-        {:error, message} ->
-          {:noreply, put_flash(socket, :error, message)}
+        {:noreply, assign(socket, attribute_mappings_changeset: Map.put(changeset, :action, :insert))}
       end
     end
 
-    def handle_event("save_group_mappings", %{"mapping" => %{"json" => json}}, socket) do
-      with {:ok, mappings} <- decode_mapping_json(json) do
+    def handle_event("add_attribute_mapping", _params, socket) do
+      form = socket.assigns.attribute_mappings_changeset.data
+      current_mappings = Ecto.Changeset.get_field(socket.assigns.attribute_mappings_changeset, :mappings) || []
+      
+      # Build params to recreate the current state + 1 new empty mapping
+      params = %{
+        "mappings" => current_mappings ++ [%{}]
+      }
+      
+      changeset = AttributeMappingsForm.changeset(form, params)
+      {:noreply, assign(socket, :attribute_mappings_changeset, changeset)}
+    end
+
+    def handle_event("remove_attribute_mapping", %{"index" => index}, socket) do
+      form = socket.assigns.attribute_mappings_changeset.data
+      current_mappings = Ecto.Changeset.get_field(socket.assigns.attribute_mappings_changeset, :mappings) || []
+      
+      idx = String.to_integer(index)
+      updated_mappings = List.delete_at(current_mappings, idx)
+      
+      params = %{
+        "mappings" => Enum.map(updated_mappings, &Map.from_struct(&1))
+      }
+      
+      changeset = AttributeMappingsForm.changeset(form, params)
+      {:noreply, assign(socket, :attribute_mappings_changeset, changeset)}
+    end
+
+    def handle_event("validate_group_mappings", %{"group_mappings_form" => params}, socket) do
+      changeset =
+        socket.assigns.group_mappings_changeset.data
+        |> GroupMappingsForm.changeset(params)
+        |> Map.put(:action, :validate)
+
+      {:noreply, assign(socket, :group_mappings_changeset, changeset)}
+    end
+
+    def handle_event("save_group_mappings", %{"group_mappings_form" => params}, socket) do
+      changeset = GroupMappingsForm.changeset(socket.assigns.group_mappings_changeset.data, params)
+
+      if changeset.valid? do
+        mappings =
+          Ecto.Changeset.apply_changes(changeset).mappings
+          |> Enum.map(&Map.from_struct/1)
+          |> Enum.map(&Map.drop(&1, [:id]))
+
         handle_reload_result(
           socket,
           MappingCommands.replace_group_mappings(
@@ -190,9 +251,35 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           "Group mappings saved."
         )
       else
-        {:error, message} ->
-          {:noreply, put_flash(socket, :error, message)}
+        {:noreply, assign(socket, group_mappings_changeset: Map.put(changeset, :action, :insert))}
       end
+    end
+
+    def handle_event("add_group_mapping", _params, socket) do
+      form = socket.assigns.group_mappings_changeset.data
+      current_mappings = Ecto.Changeset.get_field(socket.assigns.group_mappings_changeset, :mappings) || []
+      
+      params = %{
+        "mappings" => current_mappings ++ [%{}]
+      }
+      
+      changeset = GroupMappingsForm.changeset(form, params)
+      {:noreply, assign(socket, :group_mappings_changeset, changeset)}
+    end
+
+    def handle_event("remove_group_mapping", %{"index" => index}, socket) do
+      form = socket.assigns.group_mappings_changeset.data
+      current_mappings = Ecto.Changeset.get_field(socket.assigns.group_mappings_changeset, :mappings) || []
+      
+      idx = String.to_integer(index)
+      updated_mappings = List.delete_at(current_mappings, idx)
+      
+      params = %{
+        "mappings" => Enum.map(updated_mappings, &Map.from_struct(&1))
+      }
+      
+      changeset = GroupMappingsForm.changeset(form, params)
+      {:noreply, assign(socket, :group_mappings_changeset, changeset)}
     end
 
     @impl true
@@ -221,8 +308,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                   base_path={@relyra_admin_base_path}
                   metadata_import_xml={@metadata_import_xml}
                   metadata_source_url={@metadata_source_url}
-                  attribute_mappings_json={@attribute_mappings_json}
-                  group_mappings_json={@group_mappings_json}
+                  attribute_mappings_changeset={@attribute_mappings_changeset}
+                  group_mappings_changeset={@group_mappings_changeset}
                   audit_filters={@audit_filters}
                 />
               <% _ -> %>
@@ -359,10 +446,31 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     end
 
     defp assign_forms(socket, detail, _preset_param) do
+      attribute_mappings_form = %AttributeMappingsForm{
+        mappings: Enum.map(detail.attribute_mappings, fn m ->
+          %Relyra.LiveAdmin.AttributeMappingForm{
+            source_attribute: m.source_attribute,
+            target_field: m.target_field,
+            multivalue_strategy: m.multivalue_strategy
+          }
+        end)
+      }
+
+      group_mappings_form = %GroupMappingsForm{
+        mappings: Enum.map(detail.group_mappings, fn m ->
+          %Relyra.LiveAdmin.GroupMappingForm{
+            source_attribute: m.source_attribute,
+            source_value: m.source_value,
+            role_target: m.role_target,
+            role_value: m.role_value
+          }
+        end)
+      }
+
       assign(socket,
         connection_form_data: connection_form_data(detail.connection, socket.assigns.admin_scope),
-        attribute_mappings_json: Jason.encode!(detail.attribute_mappings, pretty: true),
-        group_mappings_json: Jason.encode!(detail.group_mappings, pretty: true)
+        attribute_mappings_changeset: AttributeMappingsForm.changeset(attribute_mappings_form, %{}),
+        group_mappings_changeset: GroupMappingsForm.changeset(group_mappings_form, %{})
       )
     end
 

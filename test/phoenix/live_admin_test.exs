@@ -141,4 +141,111 @@ defmodule Relyra.LiveAdminTest do
 
     assert [%{label: "Legacy SHA-1 support enabled (compatibility override)"}] = detail.risk_flags
   end
+
+  test "add_attribute_mapping and save_attribute_mappings update the connection's attribute mappings" do
+    connection =
+      @repo.insert!(%Connection{
+        connection_id: "conn_attr",
+        organization_id: "org_attr",
+        display_name: "Attr SSO",
+        sp_entity_id: "sp",
+        idp_entity_id: "idp"
+      })
+
+    scope = %Scope{actor: "ops@example.com", organization_id: "org_attr"}
+
+    {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+
+    socket =
+      %Phoenix.LiveView.Socket{
+        assigns: %{
+          __changed__: %{},
+          flash: %{},
+          admin_scope: scope,
+          relyra_admin_repo: @repo,
+          relyra_admin_base_path: "/admin",
+          connection_id: connection.connection_id,
+          detail: detail
+        }
+      }
+      |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
+      |> put_in([Access.key!(:assigns), :live_action], :edit)
+      |> then(fn socket -> ConnectionsLive.handle_params(%{"connection_id" => connection.connection_id}, "http://localhost", socket) end)
+      |> elem(1)
+
+    assert {:noreply, socket} = ConnectionsLive.handle_event("add_attribute_mapping", %{}, socket)
+    
+    assert %Ecto.Changeset{} = socket.assigns.attribute_mappings_changeset
+    
+    # Save mapping
+    assert {:noreply, _socket} = ConnectionsLive.handle_event("save_attribute_mappings", %{
+      "attribute_mappings_form" => %{
+        "mappings" => %{
+          "0" => %{
+            "source_attribute" => "email",
+            "target_field" => "email",
+            "multivalue_strategy" => "first"
+          }
+        }
+      }
+    }, socket)
+
+    # Verify DB state
+    assert [%Relyra.Ecto.AttributeMapping{source_attribute: "email", target_field: :email, multivalue_strategy: :first}] = 
+      @repo.all(Relyra.Ecto.AttributeMapping)
+  end
+
+  test "add_group_mapping and save_group_mappings update the connection's group mappings" do
+    connection =
+      @repo.insert!(%Connection{
+        connection_id: "conn_grp",
+        organization_id: "org_grp",
+        display_name: "Grp SSO",
+        sp_entity_id: "sp",
+        idp_entity_id: "idp"
+      })
+
+    scope = %Scope{actor: "ops@example.com", organization_id: "org_grp"}
+
+    {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+
+    socket =
+      %Phoenix.LiveView.Socket{
+        assigns: %{
+          __changed__: %{},
+          flash: %{},
+          admin_scope: scope,
+          relyra_admin_repo: @repo,
+          relyra_admin_base_path: "/admin",
+          connection_id: connection.connection_id,
+          detail: detail
+        }
+      }
+      |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
+      |> put_in([Access.key!(:assigns), :live_action], :edit)
+      |> then(fn socket -> ConnectionsLive.handle_params(%{"connection_id" => connection.connection_id}, "http://localhost", socket) end)
+      |> elem(1)
+
+    assert {:noreply, socket} = ConnectionsLive.handle_event("add_group_mapping", %{}, socket)
+    
+    assert %Ecto.Changeset{} = socket.assigns.group_mappings_changeset
+    
+    # Save mapping
+    assert {:noreply, _socket} = ConnectionsLive.handle_event("save_group_mappings", %{
+      "group_mappings_form" => %{
+        "mappings" => %{
+          "0" => %{
+            "source_attribute" => "groups",
+            "source_value" => "admins",
+            "role_target" => "role",
+            "role_value" => "admin"
+          }
+        }
+      }
+    }, socket)
+
+    # Verify DB state
+    assert [%Relyra.Ecto.GroupMapping{source_attribute: "groups", source_value: "admins", role_target: :role, role_value: "admin"}] = 
+      @repo.all(Relyra.Ecto.GroupMapping)
+  end
 end

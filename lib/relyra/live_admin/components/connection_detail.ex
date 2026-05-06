@@ -161,21 +161,40 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           <section style="border: 1px solid #ddd; padding: 16px;">
             <h3 style="margin-top: 0;">Mappings</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-              <form phx-submit="save_attribute_mappings" style="display: grid; gap: 12px;">
-                <label>
-                  Attribute mappings JSON
-                  <textarea name="mapping[json]" rows="12" style="width: 100%;">{@attribute_mappings_json}</textarea>
-                </label>
-                <button type="submit">Save attribute mappings</button>
-              </form>
+              <.form for={@attribute_mappings_changeset} phx-change="validate_attribute_mappings" phx-submit="save_attribute_mappings" style="display: grid; gap: 12px; border: 1px solid #ddd; padding: 16px; border-radius: 4px;">
+                <h4 style="margin: 0; font-size: 16px;">Attribute Mappings</h4>
+                <.inputs_for :let={m} field={@attribute_mappings_changeset[:mappings]}>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: center; border: 1px solid #eee; padding: 8px; background: #fafafa; border-radius: 4px;">
+                    <input type="text" name={m[:source_attribute].name} value={m[:source_attribute].value} placeholder="Source (e.g. email)" required style="padding: 4px; width: 100%; box-sizing: border-box;" />
+                    <select name={m[:target_field].name} style="padding: 4px; width: 100%; box-sizing: border-box;">
+                      {Phoenix.HTML.Form.options_for_select([:email, :first_name, :last_name, :display_name, :name_id], m[:target_field].value)}
+                    </select>
+                    <select name={m[:multivalue_strategy].name} style="padding: 4px; width: 100%; box-sizing: border-box;">
+                      {Phoenix.HTML.Form.options_for_select([:first, :all], m[:multivalue_strategy].value)}
+                    </select>
+                    <button type="button" phx-click="remove_attribute_mapping" phx-value-index={m.index} style="cursor: pointer; background: transparent; border: none; color: #d32f2f;">✕</button>
+                  </div>
+                </.inputs_for>
+                <button type="button" phx-click="add_attribute_mapping" style="justify-self: start; padding: 6px 12px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">+ Add mapping</button>
+                <button type="submit" style="margin-top: 12px; padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer;">Save attribute mappings</button>
+              </.form>
 
-              <form phx-submit="save_group_mappings" style="display: grid; gap: 12px;">
-                <label>
-                  Group mappings JSON
-                  <textarea name="mapping[json]" rows="12" style="width: 100%;">{@group_mappings_json}</textarea>
-                </label>
-                <button type="submit">Save group mappings</button>
-              </form>
+              <.form for={@group_mappings_changeset} phx-change="validate_group_mappings" phx-submit="save_group_mappings" style="display: grid; gap: 12px; border: 1px solid #ddd; padding: 16px; border-radius: 4px;">
+                <h4 style="margin: 0; font-size: 16px;">Group Mappings</h4>
+                <.inputs_for :let={m} field={@group_mappings_changeset[:mappings]}>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; border: 1px solid #eee; padding: 8px; background: #fafafa; border-radius: 4px;">
+                    <input type="text" name={m[:source_attribute].name} value={m[:source_attribute].value} placeholder="Attribute" required style="padding: 4px; width: 100%; box-sizing: border-box;" />
+                    <input type="text" name={m[:source_value].name} value={m[:source_value].value} placeholder="Value" required style="padding: 4px; width: 100%; box-sizing: border-box;" />
+                    <select name={m[:role_target].name} style="padding: 4px; width: 100%; box-sizing: border-box;">
+                      {Phoenix.HTML.Form.options_for_select([:role], m[:role_target].value)}
+                    </select>
+                    <input type="text" name={m[:role_value].name} value={m[:role_value].value} placeholder="Role" required style="padding: 4px; width: 100%; box-sizing: border-box;" />
+                    <button type="button" phx-click="remove_group_mapping" phx-value-index={m.index} style="cursor: pointer; background: transparent; border: none; color: #d32f2f;">✕</button>
+                  </div>
+                </.inputs_for>
+                <button type="button" phx-click="add_group_mapping" style="justify-self: start; padding: 6px 12px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">+ Add mapping</button>
+                <button type="submit" style="margin-top: 12px; padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer;">Save group mappings</button>
+              </.form>
             </div>
 
             <table style="width: 100%; margin-top: 16px;">
@@ -188,8 +207,11 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                 </tr>
               </thead>
               <tbody>
-                <tr :for={revision <- @detail.mapping_revisions}>
-                  <td>{revision.inserted_at}</td>
+                <tr :for={{revision, index} <- Enum.with_index(@detail.mapping_revisions)}>
+                  <td>
+                    {revision.inserted_at}
+                    <span :if={index == 0} style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-left: 8px; font-weight: bold;">Active</span>
+                  </td>
                   <td>{revision.action}</td>
                   <td>{revision.actor}</td>
                   <td>{revision.cause}</td>
