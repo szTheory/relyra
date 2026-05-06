@@ -222,25 +222,25 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
           <section style="border: 1px solid #ddd; padding: 16px;">
             <h3 style="margin-top: 0;">Audit timeline</h3>
-            <form method="get" action={show_path(@base_path, @detail.connection.connection_id)} style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
+            <form phx-change="filter_audits" phx-submit="filter_audits" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
               <label>
                 Actor
-                <input type="text" name="actor" value={@audit_filters["actor"]} style="width: 100%;" />
+                <input type="text" name="filters[actor]" value={@audit_filters["actor"]} style="width: 100%;" />
               </label>
               <label>
                 Domain
-                <input type="text" name="domain" value={@audit_filters["domain"]} style="width: 100%;" />
+                <input type="text" name="filters[domain]" value={@audit_filters["domain"]} style="width: 100%;" />
               </label>
               <label>
                 Action
-                <input type="text" name="action" value={@audit_filters["action"]} style="width: 100%;" />
+                <input type="text" name="filters[action]" value={@audit_filters["action"]} style="width: 100%;" />
               </label>
               <div style="display: flex; align-items: end;">
                 <button type="submit">Filter</button>
               </div>
             </form>
 
-            <table style="width: 100%;">
+            <table style="width: 100%; border-collapse: collapse;">
               <thead>
                 <tr>
                   <th align="left">When</th>
@@ -248,15 +248,24 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                   <th align="left">Action</th>
                   <th align="left">Actor</th>
                   <th align="left">Cause</th>
+                  <th align="left">Details</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr :for={event <- @detail.audit_events}>
-                  <td>{event.inserted_at}</td>
-                  <td>{event.domain}</td>
-                  <td>{event.action}</td>
-                  <td>{event.actor}</td>
-                  <td>{event.cause}</td>
+              <tbody :for={event <- @detail.audit_events}>
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 8px 0;">{event.inserted_at}</td>
+                  <td style="padding: 8px 0;">{event.domain}</td>
+                  <td style="padding: 8px 0;">{event.action}</td>
+                  <td style="padding: 8px 0;">{event.actor}</td>
+                  <td style="padding: 8px 0;">{event.cause}</td>
+                  <td style="padding: 8px 0;">
+                    <button type="button" phx-click={Phoenix.LiveView.JS.toggle(to: "#audit-details-#{event.id}")} style="padding: 4px 8px; font-size: 12px;">View</button>
+                  </td>
+                </tr>
+                <tr id={"audit-details-#{event.id}"} style="display: none;">
+                  <td colspan="6" style="background: #f9f9f9; padding: 12px; border-bottom: 1px solid #ddd;">
+                    <pre style="margin: 0; font-size: 12px; overflow-x: auto;"><code>{inspect(event.diff_summary, pretty: true)}</code></pre>
+                  </td>
                 </tr>
               </tbody>
             </table>

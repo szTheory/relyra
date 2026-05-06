@@ -282,6 +282,17 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       {:noreply, assign(socket, :group_mappings_changeset, changeset)}
     end
 
+    def handle_event("filter_audits", %{"filters" => filters}, socket) do
+      # Make sure we don't carry over extraneous params.
+      filters = Map.take(filters, ["actor", "domain", "action"])
+      
+      # We could patch the URL to preserve the filters in query string.
+      {:noreply,
+       socket
+       |> assign(:audit_filters, filters)
+       |> push_patch(to: show_path(socket.assigns.relyra_admin_base_path, socket.assigns.connection_id) <> "?" <> URI.encode_query(filters))}
+    end
+
     @impl true
     def render(assigns) do
       ~H"""

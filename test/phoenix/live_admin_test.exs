@@ -248,4 +248,94 @@ defmodule Relyra.LiveAdminTest do
     assert [%Relyra.Ecto.GroupMapping{source_attribute: "groups", source_value: "admins", role_target: :role, role_value: "admin"}] = 
       @repo.all(Relyra.Ecto.GroupMapping)
   end
+
+  test "failed mapping updates trigger atomic rollback" do
+    connection =
+      @repo.insert!(%Connection{
+        connection_id: "conn_fail",
+        organization_id: "org",
+        display_name: "Fail SSO",
+        sp_entity_id: "sp",
+        idp_entity_id: "idp"
+      })
+
+    scope = %Scope{actor: "ops@example.com", organization_id: "org"}
+
+    {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+
+    socket =
+      %Phoenix.LiveView.Socket{
+        assigns: %{
+          __changed__: %{},
+          flash: %{},
+          admin_scope: scope,
+          relyra_admin_repo: @repo,
+          relyra_admin_base_path: "/admin",
+          connection_id: connection.connection_id,
+          detail: detail
+        }
+      }
+      |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
+      |> put_in([Access.key!(:assigns), :live_action], :edit)
+      |> then(fn socket -> ConnectionsLive.handle_params(%{"connection_id" => connection.connection_id}, "http://localhost", socket) end)
+      |> elem(1)
+
+    # Corrupt the actor in the scope to force an audit validation failure during transaction
+    socket = Phoenix.Component.assign(socket, :admin_scope, %Scope{actor: "", organization_id: "org"})
+
+    assert {:noreply, socket} = ConnectionsLive.handle_event("add_attribute_mapping", %{}, socket)
+    
+    assert {:noreply, socket} = ConnectionsLive.handle_event("save_attribute_mappings", %{
+      "attribute_mappings_form" => %{
+        "mappings" => %{
+          "0" => %{
+            "source_attribute" => "email",
+            "target_field" => "email",
+            "multivalue_strategy" => "first"
+          }
+        }
+      }
+    }, socket)
+
+    assert %{"error" => error_msg} = socket.assigns.flash
+    assert String.contains?(error_msg, "validation")
+
+    # Assert rollback: no mappings were saved
+    assert [] = @repo.all(Relyra.Ecto.AttributeMapping)
+  end
+
+  test "filter_audits event scopes audit list" do
+    connection =
+      @repo.insert!(%Connection{
+        connection_id: "conn_filter",
+        organization_id: "org",
+        display_name: "Filter SSO",
+        sp_entity_id: "sp",
+        idp_entity_id: "idp"
+      })
+
+    scope = %Scope{actor: "ops@example.com", organization_id: "org"}
+    {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+
+    socket =
+      %Phoenix.LiveView.Socket{
+        assigns: %{
+          __changed__: %{},
+          flash: %{},
+          admin_scope: scope,
+          relyra_admin_repo: @repo,
+          relyra_admin_base_path: "/admin",
+          connection_id: connection.connection_id,
+          detail: detail
+        }
+      }
+      |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
+      |> put_in([Access.key!(:assigns), :live_action], :show)
+      |> then(fn socket -> ConnectionsLive.handle_params(%{"connection_id" => connection.connection_id}, "http://localhost", socket) end)
+      |> elem(1)
+
+    assert {:noreply, socket} = ConnectionsLive.handle_event("filter_audits", %{"filters" => %{"actor" => "audit@example.com", "domain" => "", "action" => ""}}, socket)
+    
+    assert socket.assigns.audit_filters == %{"actor" => "audit@example.com", "domain" => "", "action" => ""}
+  end
 end
