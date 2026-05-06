@@ -101,6 +101,11 @@ Phase numbering continues from v0.1, so v0.2 starts at Phase 07.
 
 **Phase 14: Mapping/audit milestone verification**
 - Goal: close the remaining verification gap for Phase 11 without reopening already-green implementation work.
+- Status: complete (verified after Phase 14 execution).
+- Plans: 2 plans.
+- Plan list:
+- [x] `14-01-PLAN.md` — create `11-VERIFICATION.md` from the locked serial packet and blocking manual sign-off gate.
+- [x] `14-02-PLAN.md` — update live milestone truth in `REQUIREMENTS.md`, `ROADMAP.md`, and `STATE.md` after CFG-05 verification closure.
 - Gap closure: resolves the audit orphan state for `CFG-05` by producing the missing phase verification artifact.
 - Success criteria:
   1. Phase 11 verification evidence exists for mapping persistence and audit hardening behavior.
