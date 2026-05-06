@@ -4,12 +4,18 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     use Phoenix.Component
 
+    alias Relyra.LiveAdmin.Components.RiskPanel
+
     attr :connection_form_data, :map, required: true
     attr :admin_scope, :map, required: true
+    attr :risk_flags, :list, default: []
 
     def connection_form(assigns) do
       ~H"""
-      <form phx-submit="save_connection" style="display: grid; gap: 12px; border: 1px solid #ddd; padding: 16px;">
+      <div style="display: grid; gap: 16px;">
+        <RiskPanel.risk_panel risk_flags={@risk_flags} />
+
+        <form phx-submit="save_connection" style="display: grid; gap: 12px; border: 1px solid #ddd; padding: 16px;">
         <label>
           Display name
           <input type="text" name="connection[display_name]" value={@connection_form_data["display_name"]} style="width: 100%;" />
@@ -79,6 +85,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
         <button type="submit">Save connection</button>
       </form>
+      </div>
       """
     end
   end

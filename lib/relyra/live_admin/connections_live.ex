@@ -271,6 +271,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         <ConnectionForm.connection_form
           connection_form_data={@connection_form_data}
           admin_scope={@admin_scope}
+          risk_flags={if @detail, do: @detail.risk_flags, else: []}
         />
       </section>
       """
@@ -286,7 +287,19 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           :disable -> Connections.disable(socket.assigns.connection_id, repo: repo, audit: audit)
         end
 
-      handle_reload_result(socket, result, "Connection #{transition}d.")
+      case result do
+        {:ok, _record} ->
+          {:noreply, socket |> reload_detail() |> put_flash(:info, "Connection #{transition}d.")}
+
+        {:error, %Relyra.Error{type: :invalid_connection_record, details: %{errors: errors}} = error} ->
+          detail = socket.assigns.detail
+          connection = %{detail.connection | readiness_errors: errors}
+          detail = %{detail | connection: connection}
+          {:noreply, socket |> assign(:detail, detail) |> put_flash(:error, error.message)}
+
+        {:error, error} ->
+          {:noreply, put_flash(socket, :error, error.message)}
+      end
     end
 
     defp handle_reload_result(socket, {:ok, _result}, message) do
