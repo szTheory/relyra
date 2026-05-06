@@ -172,8 +172,8 @@ defmodule Relyra.Protocol.ValidationPipeline do
   defp parse_opts(opts), do: Keyword.take(opts, [:max_bytes])
 
   defp cert_chain(connection, opts) do
-    Keyword.get(opts, :cert_chain) || Map.get(connection, :cert_chain) ||
-      Map.get(connection, :idp_certificates) || []
+    Keyword.get(opts, :cert_chain) || Map.get(connection, :idp_certificates) ||
+      Map.get(connection, :cert_chain) || []
   end
 
   defp expected_connection_id(request_intent, connection) do

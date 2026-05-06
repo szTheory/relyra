@@ -55,6 +55,18 @@ defmodule Relyra.Telemetry do
   - Namespace: `[:relyra, :saml, :session, :establish]`
   - Measurements: `[:duration_ms]`
   - Metadata: `[:connection_id, :flow, :outcome, :error_code]`
+
+  ### metadata.refresh
+  Emitted when an operator-triggered metadata refresh starts or stops.
+  - Namespace: `[:relyra, :saml, :metadata, :refresh]`
+  - Measurements: `[:duration_ms]`
+  - Metadata: `[:connection_id, :metadata_source_id, :source_kind, :trigger, :outcome, :error_code, :certificate_count]`
+
+  ### metadata.import
+  Emitted when an operator-triggered local XML import starts or stops.
+  - Namespace: `[:relyra, :saml, :metadata, :import]`
+  - Measurements: `[:duration_ms]`
+  - Metadata: `[:connection_id, :source_kind, :trigger, :outcome, :error_code, :certificate_count]`
   """
 
   @doc false

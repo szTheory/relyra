@@ -59,7 +59,8 @@ defmodule Relyra.Provider.GoogleWorkspace do
         severity: :warning,
         message: "Google Workspace is happiest when NameID maps to the primary email",
         check: fn connection ->
-          if Map.get(connection, :name_id_format) == "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress" do
+          if Map.get(connection, :name_id_format) ==
+               "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress" do
             :ok
           else
             {:warn, "Confirm your attribute mapping returns a stable email-style principal"}

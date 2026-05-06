@@ -12,7 +12,11 @@ defmodule Relyra.ProviderTest do
   end
 
   test "apply_defaults/2 keeps user values" do
-    config = Provider.apply_defaults(:okta, sp_entity_id: "https://sp.example.com/metadata", allow_idp_initiated?: true)
+    config =
+      Provider.apply_defaults(:okta,
+        sp_entity_id: "https://sp.example.com/metadata",
+        allow_idp_initiated?: true
+      )
 
     assert Keyword.fetch!(config, :provider_preset) == :okta
     assert Keyword.fetch!(config, :sp_entity_id) == "https://sp.example.com/metadata"

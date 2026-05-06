@@ -39,7 +39,10 @@ defmodule Relyra.TestSupport do
 
       def fake_idp_metadata, do: Relyra.TestSupport.fake_idp_metadata()
       def build_saml_response(opts \\ []), do: Relyra.TestSupport.build_saml_response(opts)
-      def sign_saml_response(builder, opts \\ []), do: Relyra.TestSupport.sign_saml_response(builder, opts)
+
+      def sign_saml_response(builder, opts \\ []),
+        do: Relyra.TestSupport.sign_saml_response(builder, opts)
+
       def saml_login(conn), do: Relyra.TestSupport.saml_login(conn)
     end
   end
@@ -89,7 +92,8 @@ defmodule Relyra.TestSupport do
   defdelegate sign_saml_response(builder, opts \\ []), to: Relyra.TestSupport.FakeIdP, as: :sign
 
   @spec saml_login(Plug.Conn.t()) :: {:ok, term()} | {:error, atom()}
-  def saml_login(%Plug.Conn{assigns: %{current_user: current_user}}) when not is_nil(current_user) do
+  def saml_login(%Plug.Conn{assigns: %{current_user: current_user}})
+      when not is_nil(current_user) do
     ensure_not_prod!()
     {:ok, current_user}
   end

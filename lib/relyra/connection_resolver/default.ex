@@ -10,9 +10,10 @@ defmodule Relyra.ConnectionResolver.Default do
   def resolve_connection(_request_context, _opts \\ []) do
     {:error,
      Error.new(
-       :adapter_not_configured,
+       :resolver_misconfigured,
        "Connection resolver adapter is not configured",
        %{
+         reason: :adapter_unavailable,
          adapter: __MODULE__,
          operation: :resolve_connection,
          hint:

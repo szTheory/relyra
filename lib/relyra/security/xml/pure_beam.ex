@@ -131,12 +131,18 @@ defmodule Relyra.Security.XML.PureBeam do
   defp extract_attributes(xml) do
     # This is a very basic regex-based attribute extractor.
     # It assumes <saml:Attribute Name="..."><saml:AttributeValue>...</saml:AttributeValue></saml:Attribute>
-    Regex.scan(~r/<(?:\w+:)?Attribute\b[^>]*\bName=(["'])(.*?)\1[^>]*>(.*?)<\/(?:\w+:)?Attribute>/is, xml)
+    Regex.scan(
+      ~r/<(?:\w+:)?Attribute\b[^>]*\bName=(["'])(.*?)\1[^>]*>(.*?)<\/(?:\w+:)?Attribute>/is,
+      xml
+    )
     |> Enum.map(fn [_, _, name, values_xml] ->
-      values = 
-        Regex.scan(~r/<(?:\w+:)?AttributeValue\b[^>]*>(.*?)<\/(?:\w+:)?AttributeValue>/is, values_xml)
+      values =
+        Regex.scan(
+          ~r/<(?:\w+:)?AttributeValue\b[^>]*>(.*?)<\/(?:\w+:)?AttributeValue>/is,
+          values_xml
+        )
         |> Enum.map(fn [_, value] -> String.trim(value) end)
-      
+
       {name, values}
     end)
     |> Enum.into(%{})
@@ -157,7 +163,6 @@ defmodule Relyra.Security.XML.PureBeam do
       duplicate_ids: extract_duplicate_ids(xml),
       key_info_trust: Regex.match?(~r/<(?:\w+:)?KeyInfo\b/is, xml)
     }
-
 
     require_present_fields(
       fields,

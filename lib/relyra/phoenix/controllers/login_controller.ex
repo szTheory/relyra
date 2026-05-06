@@ -12,6 +12,7 @@ defmodule Relyra.Phoenix.Controllers.LoginController do
 
   def create(conn, %{"connection_id" => connection_id} = params) do
     opts = controller_opts(conn)
+
     relay_context = %{
       connection_id: connection_id,
       return_to: params["return_to"] || "/"

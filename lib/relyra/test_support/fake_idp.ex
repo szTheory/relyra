@@ -12,7 +12,16 @@ defmodule Relyra.TestSupport.FakeIdP do
 
   defmodule Builder do
     @moduledoc false
-    defstruct [:issuer, :subject, :audience, :destination, :recipient, :in_response_to, :name_id, :relay_state]
+    defstruct [
+      :issuer,
+      :subject,
+      :audience,
+      :destination,
+      :recipient,
+      :in_response_to,
+      :name_id,
+      :relay_state
+    ]
   end
 
   @default_issuer "https://idp.example.com/metadata"
@@ -92,7 +101,9 @@ defmodule Relyra.TestSupport.FakeIdP do
   end
 
   defp response_xml(%Builder{} = builder, opts) do
-    signature_method = Keyword.get(opts, :signature_method, "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256")
+    signature_method =
+      Keyword.get(opts, :signature_method, "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256")
+
     digest_method = Keyword.get(opts, :digest_method, "http://www.w3.org/2001/04/xmlenc#sha256")
     assertion_id = Keyword.get(opts, :assertion_id, "assertion_123")
 

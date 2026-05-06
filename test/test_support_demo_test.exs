@@ -1,7 +1,7 @@
 defmodule Relyra.TestSupportDemoRouter do
   use Phoenix.Router
 
-  post "/:connection_id/acs", Relyra.TestSupportDemoController, :acs
+  post("/:connection_id/acs", Relyra.TestSupportDemoController, :acs)
 end
 
 defmodule Relyra.TestSupportDemoController do

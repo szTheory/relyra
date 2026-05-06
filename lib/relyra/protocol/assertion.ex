@@ -30,8 +30,8 @@ defmodule Relyra.Protocol.Assertion do
        Error.new(
          :invalid_audience,
          "Assertion audience does not include expected audience",
-          details
-        )}
+         details
+       )}
     end
   end
 

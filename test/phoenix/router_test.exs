@@ -3,11 +3,11 @@ defmodule Relyra.Phoenix.TestRouter do
   import Relyra.Phoenix.Router
 
   pipeline :browser do
-    plug :accepts, ["html"]
+    plug(:accepts, ["html"])
   end
 
   scope "/" do
-    pipe_through :browser
+    pipe_through(:browser)
     saml_routes()
   end
 end
@@ -22,9 +22,9 @@ defmodule Relyra.Phoenix.RouterTest do
 
   test "saml_routes/0 registers expected routes" do
     routes = TestRouter.__routes__()
-    
+
     paths = Enum.map(routes, fn r -> r.path end)
-    
+
     assert "/:connection_id/metadata" in paths
     assert "/:connection_id/login" in paths
     assert "/:connection_id/acs" in paths

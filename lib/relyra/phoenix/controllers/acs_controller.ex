@@ -6,7 +6,7 @@ defmodule Relyra.Phoenix.Controllers.ACSController do
 
   def create(conn, params) do
     opts = controller_opts(conn)
-    
+
     case Relyra.Protocol.Binding.decode_post(params, opts) do
       {:ok, %{response_xml: response_xml, relay_state: relay_state}} ->
         consume_opts = Keyword.put(opts, :relay_state, relay_state)
@@ -18,7 +18,6 @@ defmodule Relyra.Phoenix.Controllers.ACSController do
           {:error, %Error{} = error} ->
             handle_error(conn, error, opts)
         end
-
 
       {:error, %Error{} = error} ->
         handle_error(conn, error, opts)
@@ -33,10 +32,13 @@ defmodule Relyra.Phoenix.Controllers.ACSController do
         case Relyra.SessionAdapter.establish_session(mapped_user, login_result, opts) do
           {:ok, updated_conn_or_result} ->
             # If it returned a Conn, use it. Otherwise, assume it worked and redirect.
-            new_conn = if is_struct(updated_conn_or_result, Plug.Conn), do: updated_conn_or_result, else: conn
-            
+            new_conn =
+              if is_struct(updated_conn_or_result, Plug.Conn),
+                do: updated_conn_or_result,
+                else: conn
+
             return_to = Map.get(login_result, :return_to) || "/"
-            
+
             new_conn
             |> redirect(to: return_to)
             |> halt()

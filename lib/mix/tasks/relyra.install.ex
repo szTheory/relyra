@@ -8,7 +8,13 @@ defmodule Mix.Tasks.Relyra.Install do
   def run(args) do
     {opts, _argv, _invalid} =
       OptionParser.parse(args,
-        switches: [module: :string, router: :string, repo: :string, no_config: :boolean, force: :boolean],
+        switches: [
+          module: :string,
+          router: :string,
+          repo: :string,
+          no_config: :boolean,
+          force: :boolean
+        ],
         aliases: [m: :module]
       )
 
@@ -17,8 +23,18 @@ defmodule Mix.Tasks.Relyra.Install do
     no_config = Keyword.get(opts, :no_config, false)
 
     root_module_path = module_path(module_name)
-    ensure_generated_file!(Path.join(["lib", root_module_path, "relyra", "connections.ex"]), connection_template(module_name), force)
-    ensure_generated_file!(Path.join(["lib", root_module_path, "relyra", "user_mapper.ex"]), user_mapper_template(module_name), force)
+
+    ensure_generated_file!(
+      Path.join(["lib", root_module_path, "relyra", "connections.ex"]),
+      connection_template(module_name),
+      force
+    )
+
+    ensure_generated_file!(
+      Path.join(["lib", root_module_path, "relyra", "user_mapper.ex"]),
+      user_mapper_template(module_name),
+      force
+    )
 
     unless no_config do
       ensure_config!()
@@ -48,6 +64,7 @@ defmodule Mix.Tasks.Relyra.Install do
     path = "config/config.exs"
     sentinel_start = "# --- Relyra START ---"
     sentinel_end = "# --- Relyra END ---"
+
     snippet = """
 
     #{sentinel_start}
@@ -76,14 +93,21 @@ defmodule Mix.Tasks.Relyra.Install do
       if String.contains?(contents, "saml_routes()") do
         :ok
       else
-        Mix.shell().info("Router found at #{router_path}, but route injection is ambiguous. Add saml_routes() manually.")
-        Mix.shell().info("Generated for #{module_name}; use the router macro in the appropriate scope.")
+        Mix.shell().info(
+          "Router found at #{router_path}, but route injection is ambiguous. Add saml_routes() manually."
+        )
+
+        Mix.shell().info(
+          "Generated for #{module_name}; use the router macro in the appropriate scope."
+        )
       end
     else
       if force do
         Mix.shell().info("Router file #{router_path} missing; skipped due to --force.")
       else
-        Mix.shell().info("Router file #{router_path} missing; add saml_routes() manually if needed.")
+        Mix.shell().info(
+          "Router file #{router_path} missing; add saml_routes() manually if needed."
+        )
       end
     end
   end

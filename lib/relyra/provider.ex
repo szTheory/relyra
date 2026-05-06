@@ -137,7 +137,8 @@ defmodule Relyra.Provider do
   still applied underneath user overrides.
   """
   @spec from_metadata_url(atom(), String.t()) :: keyword()
-  def from_metadata_url(preset_id, metadata_url) when is_atom(preset_id) and is_binary(metadata_url) do
+  def from_metadata_url(preset_id, metadata_url)
+      when is_atom(preset_id) and is_binary(metadata_url) do
     apply_defaults(preset_id, idp_metadata_url: metadata_url)
   end
 

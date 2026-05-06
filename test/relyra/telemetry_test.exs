@@ -112,6 +112,34 @@ defmodule Relyra.TelemetryTest do
     :telemetry.detach(handler_id)
   end
 
+  test "metadata refresh telemetry emits redaction-safe identifiers and counts only" do
+    handler_id = attach_telemetry([[:metadata, :refresh]])
+
+    assert {:ok, :refreshed} =
+             Relyra.Telemetry.span(
+               [:metadata, :refresh],
+               %{connection_id: "conn-123", source_kind: :remote_url, trigger: :manual_refresh},
+               fn ->
+                 {{:ok, :refreshed}, %{outcome: :ok, certificate_count: 2, metadata_source_id: "source-1"}}
+               end
+             )
+
+    assert_receive {:telemetry_event, [:relyra, :saml, :metadata, :refresh, :start], %{system_time: _},
+                    %{connection_id: "conn-123", source_kind: :remote_url, trigger: :manual_refresh}},
+                   100
+
+    assert_receive {:telemetry_event, [:relyra, :saml, :metadata, :refresh, :stop],
+                    %{duration_ms: duration_ms},
+                    %{outcome: :ok, certificate_count: 2, metadata_source_id: "source-1"}},
+                   100
+
+    assert is_integer(duration_ms)
+    assert duration_ms >= 0
+
+    refute_receive {:telemetry_event, _, _, _}, 50
+    :telemetry.detach(handler_id)
+  end
+
   test "ACS decode and consume flow emits response, signature, replay, user, and session telemetry" do
     handler_id =
       attach_telemetry([

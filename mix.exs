@@ -23,6 +23,7 @@ defmodule Relyra.MixProject do
         qa: :test,
         "ci.fast": :test,
         "ci.security": :test,
+        "ci.verify": :test,
         "ci.integration": :test,
         "ci.release": :test
       ]
@@ -51,7 +52,8 @@ defmodule Relyra.MixProject do
       {:sobelow, "~> 0.14", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13", optional: true},
       {:ecto_sql, "~> 3.13", optional: true},
-      {:postgrex, ">= 0.0.0", optional: true}
+      {:postgrex, ">= 0.0.0", optional: true},
+      {:req, "~> 0.5", optional: true}
     ]
   end
 
@@ -73,6 +75,9 @@ defmodule Relyra.MixProject do
         "deps.audit",
         "hex.audit",
         "sobelow --config"
+      ],
+      "ci.verify": [
+        "test test/relyra/ecto/audit_hardening_test.exs test/relyra/ecto/connection_record_test.exs test/relyra/ecto/metadata_apply_test.exs test/relyra/ecto/certificate_inventory_transition_test.exs test/relyra/ecto/mapping_commands_test.exs test/relyra/ecto/ecto_connection_resolver_test.exs test/relyra/connection_snapshot_test.exs test/relyra/user_mapper/default_attribute_test.exs --warnings-as-errors"
       ],
       "ci.integration": [
         "test --only integration --warnings-as-errors"

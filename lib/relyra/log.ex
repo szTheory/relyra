@@ -2,18 +2,28 @@ defmodule Relyra.Log do
   @moduledoc false
   require Logger
 
-  @sensitive_keys [:xml, :response_xml, :assertion_xml, :signed_xml, :relay_state, :private_key]
+  @sensitive_keys [
+    :xml,
+    :response_xml,
+    :assertion_xml,
+    :signed_xml,
+    :relay_state,
+    :private_key,
+    :metadata_xml,
+    :certificate_pem,
+    :pem
+  ]
 
   def info(message, metadata \\ []) do
-    Logger.info(message, redact_metadata(metadata))
+    Logger.info(format_message(message, metadata))
   end
 
   def error(message, metadata \\ []) do
-    Logger.error(message, redact_metadata(metadata))
+    Logger.error(format_message(message, metadata))
   end
 
   def debug(message, metadata \\ []) do
-    Logger.debug(message, redact_metadata(metadata))
+    Logger.debug(format_message(message, metadata))
   end
 
   defp redact_metadata(metadata) when is_list(metadata) do
@@ -21,6 +31,14 @@ defmodule Relyra.Log do
   end
 
   defp redact_metadata(metadata), do: metadata
+
+  defp format_message(message, metadata) do
+    case redact_metadata(metadata) do
+      [] -> message
+      %{} = map when map == %{} -> message
+      redacted -> "#{message} #{inspect(redacted)}"
+    end
+  end
 
   defp redact_value(key, _value) when key in @sensitive_keys do
     "[REDACTED]"

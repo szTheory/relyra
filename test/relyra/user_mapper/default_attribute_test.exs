@@ -106,4 +106,57 @@ defmodule Relyra.UserMapper.DefaultAttributeTest do
     assert {:ok, user_map} = DefaultAttribute.map_attributes(assertion, connection)
     assert user_map.roles == ["developer"]
   end
+
+  test "persisted mapping rules apply in deterministic order for host apps" do
+    assertion = %{
+      name_id: "ordered-rules",
+      attributes: %{
+        "display_name" => ["Ada Lovelace", "A. Lovelace"],
+        "mail" => "ada@example.com",
+        "groups" => ["staff", "admins"]
+      }
+    }
+
+    connection = %{
+      mapping_config: %{
+        attribute_rules: [
+          %{
+            source_attribute: "display_name",
+            target_field: :display_name,
+            multivalue_strategy: :all
+          },
+          %{
+            source_attribute: "mail",
+            target_field: :email,
+            multivalue_strategy: :first
+          }
+        ],
+        group_rules: [
+          %{
+            source_attribute: "groups",
+            source_value: "staff",
+            role_target: :role,
+            role_value: "staff"
+          },
+          %{
+            source_attribute: "groups",
+            source_value: "admins",
+            role_target: :role,
+            role_value: "admin"
+          }
+        ]
+      }
+    }
+
+    assert {:ok, user_map} = DefaultAttribute.map_attributes(assertion, connection)
+
+    assert user_map == %{
+             name_id: "ordered-rules",
+             email: "ada@example.com",
+             first_name: nil,
+             last_name: nil,
+             display_name: ["Ada Lovelace", "A. Lovelace"],
+             roles: ["staff", "admin"]
+           }
+  end
 end

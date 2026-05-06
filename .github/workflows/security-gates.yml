@@ -42,6 +42,9 @@ jobs:
       - name: Security lane
         run: mix ci.security
 
+      - name: Verification lane
+        run: mix ci.verify
+
       - name: Verify NIF checksum manifest for non-pure strategy
         if: env.RELYRA_XML_STRATEGY != 'pure_beam'
         run: .github/scripts/verify_nif_checksums.sh

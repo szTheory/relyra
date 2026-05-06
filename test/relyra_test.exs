@@ -177,7 +177,7 @@ defmodule RelyraTest do
   end
 
   test "default extension adapters keep typed error tuple compatibility" do
-    assert {:error, %Relyra.Error{type: :adapter_not_configured}} =
+    assert {:error, %Relyra.Error{type: :resolver_misconfigured}} =
              Relyra.ConnectionResolver.Default.resolve_connection(%{}, [])
 
     assert {:error, %Relyra.Error{} = request_put_error} =
@@ -223,7 +223,6 @@ defmodule RelyraTest do
                request_store: :not_a_module,
                now: ~U[2026-04-24 16:00:00Z]
              )
-
 
     consume_opts = [
       now: ~U[2026-04-24 16:00:00Z],

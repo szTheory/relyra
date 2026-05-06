@@ -6,13 +6,13 @@ defmodule Relyra.Phoenix.Controllers.MetadataController do
 
   def show(conn, %{"connection_id" => connection_id} = _params) do
     opts = controller_opts(conn)
-    
+
     request_context = %{connection_id: connection_id, plug_conn: conn}
-    
+
     case Relyra.ConnectionResolver.resolve_connection(request_context, opts) do
       {:ok, connection} ->
         xml = Relyra.Protocol.Metadata.build_sp_metadata(connection, opts)
-        
+
         conn
         |> put_resp_content_type("application/xml")
         |> send_resp(200, xml)

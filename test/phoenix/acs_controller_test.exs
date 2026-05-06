@@ -47,7 +47,7 @@ defmodule Relyra.Phoenix.ACSControllerTest do
 
   test "POST /:connection_id/acs success" do
     conn = Phoenix.ConnTest.build_conn()
-    
+
     request_intent = %{
       request_id: "id_123",
       in_response_to: "id_123",
@@ -67,12 +67,16 @@ defmodule Relyra.Phoenix.ACSControllerTest do
 
     Relyra.RequestStore.ETS.ensure_table!()
     Relyra.ReplayStore.ETS.ensure_table!()
-    
+
     # Pre-populate request store
     Relyra.RequestStore.ETS.put_intent("rs_123", request_intent)
 
-    conn = post(conn, "/valid/acs", %{"SAMLResponse" => Base.encode64(@valid_xml), "RelayState" => "rs_123"})
-    
+    conn =
+      post(conn, "/valid/acs", %{
+        "SAMLResponse" => Base.encode64(@valid_xml),
+        "RelayState" => "rs_123"
+      })
+
     assert redirected_to(conn) == "/welcome"
   end
 

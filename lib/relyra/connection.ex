@@ -4,6 +4,7 @@ defmodule Relyra.Connection do
   """
   defstruct [
     :id,
+    :connection_id,
     :idp_entity_id,
     :sp_entity_id,
     :acs_url,
@@ -18,11 +19,13 @@ defmodule Relyra.Connection do
     :clock_skew_seconds,
     :provider_preset,
     :display_name,
-    :organization_id
+    :organization_id,
+    :mapping_config
   ]
 
   @type t :: %__MODULE__{
           id: binary(),
+          connection_id: binary(),
           idp_entity_id: binary(),
           sp_entity_id: binary(),
           acs_url: binary(),
@@ -37,6 +40,7 @@ defmodule Relyra.Connection do
           clock_skew_seconds: integer() | nil,
           provider_preset: atom() | nil,
           display_name: binary() | nil,
-          organization_id: binary() | nil
+          organization_id: binary() | nil,
+          mapping_config: map() | nil
         }
 end

@@ -65,7 +65,11 @@ defmodule Relyra.Provider.Entra do
         severity: :warning,
         message: "Entra works best with persistent NameID values",
         check: fn connection ->
-          if Map.get(connection, :name_id_format) in [nil, "", "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"] do
+          if Map.get(connection, :name_id_format) in [
+               nil,
+               "",
+               "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+             ] do
             :ok
           else
             {:warn, "Use persistent NameID unless you have a clear claim-mapping reason not to"}
@@ -89,5 +93,6 @@ defmodule Relyra.Provider.Entra do
 
   @impl true
   def guide_url,
-    do: "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-saml-single-sign-on"
+    do:
+      "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-saml-single-sign-on"
 end

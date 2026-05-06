@@ -151,6 +151,9 @@ defmodule Relyra.ConnectionSnapshotTest do
                }
              ]
            }
+
+    refute Map.has_key?(snapshot, :attribute_mappings)
+    refute Map.has_key?(snapshot, :group_mappings)
   end
 
   test "hydrate leaves mapping_config absent when no persisted mappings exist" do
@@ -177,6 +180,69 @@ defmodule Relyra.ConnectionSnapshotTest do
 
     assert {:ok, snapshot} = ConnectionSnapshot.hydrate(aggregate)
     assert snapshot.mapping_config == nil
+  end
+
+  test "hydrate keeps mapping_config as the only runtime mapping surface" do
+    aggregate = %Connection{
+      id: Ecto.UUID.generate(),
+      connection_id: "01JV2B4ENQDJ6D44AH0R0R5XB4",
+      sp_entity_id: "https://sp.example.com/metadata",
+      acs_url: "https://sp.example.com/saml/acs",
+      idp_entity_id: "https://idp.example.com/metadata",
+      idp_sso_url: "https://idp.example.com/sso",
+      runtime_policy: %RuntimePolicy{},
+      certificates: [
+        %Certificate{
+          fingerprint_sha256: "active",
+          pem: "-----BEGIN CERTIFICATE-----\nACTIVE\n-----END CERTIFICATE-----",
+          source: "manual",
+          lifecycle_state: :active,
+          role: :signing
+        }
+      ],
+      attribute_mappings: [
+        %{
+          position: 0,
+          source_attribute: "mail",
+          target_field: "email",
+          multivalue_strategy: "first"
+        }
+      ],
+      group_mappings: [
+        %{
+          position: 0,
+          source_attribute: "groups",
+          source_value: "admins",
+          role_target: "role",
+          role_value: "admin"
+        }
+      ]
+    }
+
+    assert {:ok, snapshot} = ConnectionSnapshot.hydrate(aggregate)
+
+    runtime_map = Map.from_struct(snapshot)
+
+    assert runtime_map.mapping_config == %{
+             attribute_rules: [
+               %{
+                 source_attribute: "mail",
+                 target_field: :email,
+                 multivalue_strategy: :first
+               }
+             ],
+             group_rules: [
+               %{
+                 source_attribute: "groups",
+                 source_value: "admins",
+                 role_target: :role,
+                 role_value: "admin"
+               }
+             ]
+           }
+
+    refute Map.has_key?(runtime_map, :attribute_mappings)
+    refute Map.has_key?(runtime_map, :group_mappings)
   end
 
   test "hydrate fails closed when persisted mapping rows cannot normalize" do
