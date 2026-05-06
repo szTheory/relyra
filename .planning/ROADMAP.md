@@ -54,15 +54,23 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 
 </details>
 
-### 📋 v0.5 — Operational maturity (Planning)
+### 📋 v0.5 — Operational maturity (In progress)
 
-- [ ] **Phase 20: TBD**
+- [ ] **Phase 20: Bulk operations across connections** (1/3 plans) - Add multi-select UI to the connections list and implement transactional bulk actions for metadata refresh and lifecycle toggling.
 
 ## Phase Details
 
-### Phase 20: TBD
-**Goal**: TBD
+### Phase 20: Bulk operations across connections
+**Goal**: Operators can perform lifecycle and metadata actions across many connections at once, reducing operational toil for large-scale deployments.
 **Depends on**: Phase 19
+**Requirements**: CFG-07
+**Success Criteria** (what must be TRUE):
+1. Connections list in the admin UI supports multi-selection of connections.
+2. Operator can trigger "Enable", "Disable", or "Refresh Metadata" for all selected connections.
+3. Bulk actions provide clear feedback on success or failure for each individual connection in the batch.
+4. Bulk mutations remain audit-atomic; each connection's trust change co-commits its own audit row.
+**Plans**: TBD
+**UI hint**: yes
 
 ## Progress
 
@@ -85,3 +93,5 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 | 16. Metadata management UI | v0.3 | 3/3 | Complete | 2026-05-06 |
 | 17. Certificate inventory + staged rollover UI | v0.3 | 2/2 | Complete | 2026-05-06 |
 | 18. Mapping editor + audit timeline hardening | v0.3 | 2/2 | Complete | 2026-05-06 |
+| 19. IdP-initiated SSO | v0.4 | 3/3 | Complete | 2026-05-06 |
+| 20. Bulk operations across connections | v0.5 | 1/3 | In progress | |

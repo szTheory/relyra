@@ -24,20 +24,18 @@ See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity mi
 
 ## Current Position
 
-Phase: 20 - TBD
-Plan: TBD
-Status: Planning v0.5
-Last activity: 2026-05-06 — Milestone v0.4 completed.
+Phase: 20 - Bulk operations across connections
+Plan: 01
+Status: In progress
+Last activity: 2026-05-06 -- BulkActions coordinator implemented.
 
-Progress: [          ] 0%
+Progress: [|         ] 10%
 
 ## Accumulated Context
 
-**Decisions log:** Full log lives in `.planning/PROJECT.md` Key Decisions table. Highlights from v0.3:
-- Admin surface successfully mounted via router integration, keeping authentication inside host application.
-- Metadata and Certificate management successfully exposed to admin interface.
-- Audit ledger expanded to include all connection/trust operations successfully wrapping the core logic.
-- Ecto tech debt closed via explicit rollback handling.
+**Decisions log:** Full log lives in `.planning/PROJECT.md` Key Decisions table. Highlights from v0.5:
+- Sequential execution for BulkActions to avoid DB pressure.
+- Automatic correlation_id generation for bulk operations.
 
 **Open blockers:** None.
 
