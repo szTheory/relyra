@@ -5,7 +5,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     use Phoenix.LiveView
 
     alias Relyra.Ecto.{CertificateInventory, Connections, MappingCommands}
-    alias Relyra.LiveAdmin.Components.{ConnectionDetail, ConnectionList}
+    alias Relyra.LiveAdmin.Components.{ConnectionDetail, ConnectionForm, ConnectionList, PresetPicker}
     alias Relyra.LiveAdmin.Query
     alias Relyra.LiveAdmin.Scope
     alias Relyra.Metadata
@@ -33,6 +33,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     def handle_params(params, _uri, socket) do
       audit_filters = Map.take(params, ["actor", "domain", "action"])
       connection_id = params["connection_id"]
+      preset_param = params["preset"]
 
       with {:ok, connections} <-
              Query.list_connections(socket.assigns.relyra_admin_repo, socket.assigns.admin_scope),
@@ -43,7 +44,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
          |> assign(:connection_id, connection_id)
          |> assign(:detail, detail)
          |> assign(:audit_filters, audit_filters)
-         |> assign_forms(detail)}
+         |> assign_forms(detail, preset_param)}
       else
         {:error, error} ->
           {:noreply, put_flash(socket, :error, error.message)}
@@ -260,84 +261,17 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           <a :if={@detail} href={show_path(@relyra_admin_base_path, @detail.connection.connection_id)}>Back</a>
         </div>
 
-        <form phx-submit="save_connection" style="display: grid; gap: 12px; border: 1px solid #ddd; padding: 16px;">
-          <label>
-            Display name
-            <input type="text" name="connection[display_name]" value={@connection_form_data["display_name"]} style="width: 100%;" />
-          </label>
+        <PresetPicker.preset_picker
+          :if={@mode == :new}
+          provider_options={@provider_options}
+          selected_preset={@connection_form_data["provider_preset"] || ""}
+          base_path={@relyra_admin_base_path}
+        />
 
-          <label :if={is_nil(@admin_scope.organization_id)}>
-            Organization ID
-            <input type="text" name="connection[organization_id]" value={@connection_form_data["organization_id"]} style="width: 100%;" />
-          </label>
-
-          <input :if={!is_nil(@admin_scope.organization_id)} type="hidden" name="connection[organization_id]" value={@admin_scope.organization_id} />
-
-          <label>
-            Provider preset
-            <select name="connection[provider_preset]" style="width: 100%;">
-              <option value="">Custom</option>
-              <option :for={{label, value} <- @provider_options} value={value} selected={@connection_form_data["provider_preset"] == value}>
-                {label}
-              </option>
-            </select>
-          </label>
-
-          <label>
-            SP entity ID
-            <input type="text" name="connection[sp_entity_id]" value={@connection_form_data["sp_entity_id"]} style="width: 100%;" />
-          </label>
-
-          <label>
-            ACS URL
-            <input type="text" name="connection[acs_url]" value={@connection_form_data["acs_url"]} style="width: 100%;" />
-          </label>
-
-          <label>
-            IdP entity ID
-            <input type="text" name="connection[idp_entity_id]" value={@connection_form_data["idp_entity_id"]} style="width: 100%;" />
-          </label>
-
-          <label>
-            IdP SSO URL
-            <input type="text" name="connection[idp_sso_url]" value={@connection_form_data["idp_sso_url"]} style="width: 100%;" />
-          </label>
-
-          <label>
-            <input type="hidden" name="connection[allow_idp_initiated?]" value="false" />
-            <input type="checkbox" name="connection[allow_idp_initiated?]" value="true" checked={@connection_form_data["allow_idp_initiated?"] == "true"} />
-            Allow IdP-initiated SSO
-          </label>
-
-          <label>
-            <input type="hidden" name="connection[require_signed_assertions?]" value="false" />
-            <input type="checkbox" name="connection[require_signed_assertions?]" value="true" checked={@connection_form_data["require_signed_assertions?"] == "true"} />
-            Require signed assertions
-          </label>
-
-          <label>
-            <input type="hidden" name="connection[require_signed_response?]" value="false" />
-            <input type="checkbox" name="connection[require_signed_response?]" value="true" checked={@connection_form_data["require_signed_response?"] == "true"} />
-            Require signed response
-          </label>
-
-          <label>
-            Clock skew seconds
-            <input type="text" name="connection[clock_skew_seconds]" value={@connection_form_data["clock_skew_seconds"]} style="width: 100%;" />
-          </label>
-
-          <label>
-            NameID format
-            <input type="text" name="connection[name_id_format]" value={@connection_form_data["name_id_format"]} style="width: 100%;" />
-          </label>
-
-          <label>
-            Algorithm policy JSON
-            <textarea name="connection[algorithm_policy_json]" rows="6" style="width: 100%;">{@connection_form_data["algorithm_policy_json"]}</textarea>
-          </label>
-
-          <button type="submit">Save connection</button>
-        </form>
+        <ConnectionForm.connection_form
+          connection_form_data={@connection_form_data}
+          admin_scope={@admin_scope}
+        />
       </section>
       """
     end
@@ -388,11 +322,43 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       socket |> assign(:detail, detail) |> assign_forms(detail)
     end
 
-    defp assign_forms(socket, nil) do
-      assign(socket, :connection_form_data, default_connection_form_data(nil, socket.assigns.admin_scope))
+    defp assign_forms(socket, detail, preset_param \\ nil)
+
+    defp assign_forms(socket, nil, preset_param) do
+      base_data = default_connection_form_data(nil, socket.assigns.admin_scope)
+      
+      form_data =
+        if preset_param && preset_param != "" do
+          try do
+            preset_atom = String.to_existing_atom(preset_param)
+            if preset_atom in Relyra.Provider.list() do
+              defaults_map = Map.new(Relyra.Provider.apply_defaults(preset_atom, []))
+              
+              conn_map = %{
+                display_name: nil,
+                organization_id: nil,
+                provider_preset: preset_atom,
+                sp_entity_id: Map.get(defaults_map, :sp_entity_id),
+                acs_url: Map.get(defaults_map, :acs_url),
+                idp_entity_id: Map.get(defaults_map, :idp_entity_id),
+                idp_sso_url: Map.get(defaults_map, :idp_sso_url),
+                runtime_policy: defaults_map
+              }
+              connection_form_data(conn_map, socket.assigns.admin_scope)
+            else
+              base_data
+            end
+          rescue
+            ArgumentError -> base_data
+          end
+        else
+          base_data
+        end
+
+      assign(socket, :connection_form_data, form_data)
     end
 
-    defp assign_forms(socket, detail) do
+    defp assign_forms(socket, detail, _preset_param) do
       assign(socket,
         connection_form_data: connection_form_data(detail.connection, socket.assigns.admin_scope),
         attribute_mappings_json: Jason.encode!(detail.attribute_mappings, pretty: true),
