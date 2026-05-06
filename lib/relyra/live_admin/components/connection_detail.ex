@@ -78,7 +78,25 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                       expires {certificate.not_after || "unknown"} · source {certificate.source}
                     </div>
                     <div style="display: flex; gap: 8px; margin-top: 8px;">
-                      <button phx-click="activate_certificate" phx-value-fingerprint={certificate.fingerprint_sha256}>Promote next</button>
+                      <button type="button" onclick={"document.getElementById('promote_modal_#{certificate.fingerprint_sha256}').showModal()"}>Promote next</button>
+
+                      <dialog id={"promote_modal_#{certificate.fingerprint_sha256}"} style="border: 1px solid #ccc; border-radius: 8px; padding: 24px; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div style="margin-bottom: 16px;">
+                          <h3 style="margin-top: 0;">Confirm Promotion</h3>
+                          <p>Please type the first 6 characters of the fingerprint (<strong>{String.slice(certificate.fingerprint_sha256, 0..5)}</strong>) to confirm.</p>
+                        </div>
+                        <form method="dialog" style="position: absolute; top: 12px; right: 12px;">
+                          <button style="border: none; background: transparent; cursor: pointer; font-size: 16px;">✕</button>
+                        </form>
+                        <form phx-submit="confirm_activate_certificate" style="display: flex; flex-direction: column; gap: 12px;">
+                          <input type="hidden" name="fingerprint" value={certificate.fingerprint_sha256} />
+                          <input type="text" name="confirmation" placeholder={String.slice(certificate.fingerprint_sha256, 0..5)} pattern={String.slice(certificate.fingerprint_sha256, 0..5)} required style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                            <button type="button" onclick={"document.getElementById('promote_modal_#{certificate.fingerprint_sha256}').close()"} style="padding: 8px 16px; border: 1px solid #ccc; border-radius: 4px; background: white; cursor: pointer;">Cancel</button>
+                            <button type="submit" style="padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer;">Confirm</button>
+                          </div>
+                        </form>
+                      </dialog>
                     </div>
                   </div>
                 <% end %>
@@ -101,7 +119,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                       expires {certificate.not_after || "unknown"} · source {certificate.source}
                     </div>
                     <div style="display: flex; gap: 8px; margin-top: 8px;">
-                      <button phx-click="retire_certificate" phx-value-fingerprint={certificate.fingerprint_sha256}>Retire active</button>
+                      <button phx-click="retire_certificate" phx-value-fingerprint={certificate.fingerprint_sha256} data-confirm="Are you sure you want to retire this active certificate?">Retire active</button>
                     </div>
                   </div>
                 <% end %>
@@ -129,6 +147,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                         phx-click="rollback_certificate"
                         phx-value-restore_fingerprint={certificate.fingerprint_sha256}
                         phx-value-retire_fingerprint={List.first(@detail.certificates_by_state.active).fingerprint_sha256}
+                        data-confirm="Are you sure you want to restore this retired certificate and retire the active one?"
                       >
                         Restore and retire current active
                       </button>

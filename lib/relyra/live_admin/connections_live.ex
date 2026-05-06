@@ -87,24 +87,28 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       transition_connection(socket, :disable)
     end
 
-    def handle_event("activate_certificate", %{"fingerprint" => fingerprint}, socket) do
-      try do
-        handle_reload_result(
-          socket,
-          CertificateInventory.activate_signing_certificate(
-            socket.assigns.relyra_admin_repo,
-            socket.assigns.connection_id,
-            fingerprint,
-            audit: audit_context(socket.assigns.admin_scope, "live_admin_activate_certificate")
-          ),
-          "Certificate promoted."
-        )
-      rescue
-        Ecto.StaleEntryError ->
-          {:noreply,
-           socket
-           |> put_flash(:error, "The connection was modified by another operator. Please review the updated trust state.")
-           |> reload_detail()}
+    def handle_event("confirm_activate_certificate", %{"fingerprint" => fingerprint, "confirmation" => confirmation}, socket) do
+      if confirmation == String.slice(fingerprint, 0..5) do
+        try do
+          handle_reload_result(
+            socket,
+            CertificateInventory.activate_signing_certificate(
+              socket.assigns.relyra_admin_repo,
+              socket.assigns.connection_id,
+              fingerprint,
+              audit: audit_context(socket.assigns.admin_scope, "live_admin_activate_certificate")
+            ),
+            "Certificate promoted."
+          )
+        rescue
+          Ecto.StaleEntryError ->
+            {:noreply,
+             socket
+             |> put_flash(:error, "The connection was modified by another operator. Please review the updated trust state.")
+             |> reload_detail()}
+        end
+      else
+        {:noreply, put_flash(socket, :error, "Confirmation did not match the certificate fingerprint.")}
       end
     end
 
