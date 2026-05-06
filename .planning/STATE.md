@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: LiveView admin
 status: execution
-last_updated: "2026-05-06T14:00:00Z"
-last_activity: 2026-05-06 -- Phase 15 executed, verified, awaiting human testing
+last_updated: "2026-05-06T18:30:00Z"
+last_activity: 2026-05-06 -- Phase 17 Plan 01 executed and completed
 progress:
   total_phases: 4
   completed_phases: 0
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.3 LiveView admin mileston
 
 ## Current Position
 
-Phase: 16 - Metadata management UI
-Plan: 16-03 (Completed)
+Phase: 17 - 17-certificate-inventory-staged-rollover-ui
+Plan: 17-01 (Completed)
 Status: Executed and verified.
-Last activity: 2026-05-06 — Phase 16 completed.
+Last activity: 2026-05-06 — Phase 17 Plan 01 completed.
 
 Progress: [==========] 100%
 
