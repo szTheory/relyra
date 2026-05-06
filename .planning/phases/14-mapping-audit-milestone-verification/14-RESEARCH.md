@@ -316,24 +316,24 @@ CONTEXT.md "Claude's Discretion" allows ordering flexibility *as long as* `11-VE
 
 **All other claims in this research are VERIFIED against repo state or CITED from the locked CONTEXT.md / 13-PATTERNS.md / 10-VERIFICATION.md precedents.**
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 > Per CONTEXT.md, D-01..D-12 are locked and the discussion was assumptions-mode. The questions below are narrow, planner-actionable, and **none of them block planning**.
 
 1. **Resume-file pointer choice** (low-impact, agent discretion under D-08).
    - What we know: STATE.md needs repointing away from `14-CONTEXT.md`.
    - What's unclear: aim at `11-VERIFICATION.md` (new authoritative artifact, my recommendation) vs. omit (Phase 13 left it pointing at the context file even after closure).
-   - Recommendation: Repoint to `11-VERIFICATION.md`. Cleaner mental model for the next inbound agent.
+   - RESOLVED: Repoint to `11-VERIFICATION.md`. Cleaner mental model for the next inbound agent.
 
 2. **Phase 14 progress accounting on STATE.md** (low-impact, mechanical).
    - What we know: STATE.md frontmatter `progress` block currently shows `total_phases: 7, completed_phases: 6`.
    - What's unclear: whether to bump `completed_phases: 6 -> 7` *and* leave `total_phases: 7` (my recommendation) or whether the GSD convention treats verification phases as not counting separately. Phase 13's closure of itself already used this exact pattern — Phase 14 should mirror it.
-   - Recommendation: Bump `completed_phases: 6 -> 7`, leave `total_phases: 7`, bump `total_plans: 23 -> 25` and `completed_plans: 23 -> 25`.
+   - RESOLVED: Bump `completed_phases: 6 -> 7`, leave `total_phases: 7`, bump `total_plans: 23 -> 25` and `completed_plans: 23 -> 25`.
 
 3. **Exact wording of the two D-10 manual prompts** (agent discretion per CONTEXT.md "Claude's Discretion").
    - What we know: D-10 supplies the semantic content; the planner picks exact prose.
    - What's unclear: nothing of substance — the recommended prose in Validation Architecture above already matches the D-10 source language closely.
-   - Recommendation: Use the prose in this RESEARCH.md's Manual Sign-Off Coverage Gap table verbatim. The planner's `rg -nF` verifier will then have a stable literal grep target.
+   - RESOLVED: Use the prose in this RESEARCH.md's Manual Sign-Off Coverage Gap table verbatim. The planner's `rg -nF` verifier will then have a stable literal grep target.
 
 ## Sources
 
