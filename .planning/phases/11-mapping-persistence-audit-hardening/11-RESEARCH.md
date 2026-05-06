@@ -339,17 +339,17 @@ All material claims in this research were verified against the local codebase, l
 |---|-------|---------|---------------|
 | A1 | The research remains planning-valid until 2026-06-04 if package versions and docs are not re-checked sooner. [ASSUMED] | Metadata | Low; the planner may rely on slightly stale package/doc timing guidance if Phase 11 is delayed. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **What is the exact runtime field that carries normalized mapping config?**
-   - What we know: The runtime boundary must stay plain-data only, and the exact field name is left to discretion. [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-CONTEXT.md]
-   - What's unclear: Whether mapping config should extend `%Relyra.Connection{}`, travel as a sibling snapshot object, or be passed separately to `Relyra.UserMapper`. [VERIFIED: lib/relyra/connection.ex] [VERIFIED: lib/relyra/user_mapper.ex]
-   - Recommendation: Decide this in planning before task decomposition, because it controls module signatures, test seams, and how much Phase 11 touches runtime APIs. [VERIFIED: lib/relyra/connection_resolver/ecto.ex]
+   - Resolution: extend `%Relyra.Connection{}` with a plain `:mapping_config` field populated only by `Relyra.Ecto.ConnectionSnapshot`. [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-01-PLAN.md] [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-03-PLAN.md]
+   - Why this path: it preserves the existing pure runtime contract, keeps resolver output as a single normalized runtime struct, and lets `Relyra.UserMapper` consume persisted config without any Ecto-row leakage. [VERIFIED: lib/relyra/connection.ex] [VERIFIED: lib/relyra/ecto/connection_snapshot.ex] [VERIFIED: lib/relyra/user_mapper.ex]
+   - Planning consequence: Phase 11 should update `%Relyra.Connection{}` and the snapshot/loader seam, not introduce a sibling runtime snapshot object or a separate mapper-only side channel. [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-03-PLAN.md]
 
 2. **How granular should the audit taxonomy be in v0.2?**
-   - What we know: Actions must stay typed and coherent across connection, metadata, certificate, and mapping domains. [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-CONTEXT.md]
-   - What's unclear: Whether planners should use a small action set like `created|updated|enabled|disabled|applied|retired` or a more explicit domain-prefixed taxonomy. [VERIFIED: absence of existing audit taxonomy in `lib/` search]
-   - Recommendation: Keep v0.2 small and typed, and prefer stable action enums over stringly free-form event names. [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-CONTEXT.md]
+   - Resolution: keep a small typed taxonomy split across `domain` plus `action`, with domains at least `:connection`, `:metadata`, `:certificate`, and `:mapping`, and actions such as `:create`, `:update`, `:enable`, `:disable`, `:apply`, `:stage`, `:promote`, `:retire`, `:rollback`, `:replace_attribute_mappings`, and `:replace_group_mappings`. [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-02-PLAN.md] [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-03-PLAN.md]
+   - Why this path: it satisfies D-13 and D-20 with explicit reviewable event types while avoiding free-form string taxonomies or domain-specific one-off schemas. [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-CONTEXT.md]
+   - Planning consequence: use stable enums or equivalently bounded values for `domain` and `action`, and capture normalized before/after trust views plus bounded diffs in the same transaction as the authoritative write. [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-CONTEXT.md] [VERIFIED: .planning/phases/11-mapping-persistence-audit-hardening/11-02-PLAN.md]
 
 ## Environment Availability
 
