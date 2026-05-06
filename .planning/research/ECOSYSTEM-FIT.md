@@ -67,9 +67,11 @@ defmodule MyApp.Relyra.SessionImpl do
   @behaviour Relyra.SessionAdapter
 
   def establish_session(conn, %Relyra.Assertion{} = assertion, _opts) do
+    config = MyApp.Sigra.config()
+
     with {:ok, user} <- find_or_create_user(assertion),
-         {:ok, _session, conn} <- Sigra.Session.get_or_create(conn, user, :saml, %{}) do
-      {:ok, conn}
+         {:ok, session} <- Sigra.Auth.create_session(config, user, %{auth_method: :saml}) do
+      {:ok, Plug.Conn.put_session(conn, :user_token, session.token)}
     end
   end
 
