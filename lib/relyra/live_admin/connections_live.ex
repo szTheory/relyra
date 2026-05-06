@@ -88,29 +88,45 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     end
 
     def handle_event("activate_certificate", %{"fingerprint" => fingerprint}, socket) do
-      handle_reload_result(
-        socket,
-        CertificateInventory.activate_signing_certificate(
-          socket.assigns.relyra_admin_repo,
-          socket.assigns.connection_id,
-          fingerprint,
-          audit: audit_context(socket.assigns.admin_scope, "live_admin_activate_certificate")
-        ),
-        "Certificate promoted."
-      )
+      try do
+        handle_reload_result(
+          socket,
+          CertificateInventory.activate_signing_certificate(
+            socket.assigns.relyra_admin_repo,
+            socket.assigns.connection_id,
+            fingerprint,
+            audit: audit_context(socket.assigns.admin_scope, "live_admin_activate_certificate")
+          ),
+          "Certificate promoted."
+        )
+      rescue
+        Ecto.StaleEntryError ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "The connection was modified by another operator. Please review the updated trust state.")
+           |> reload_detail()}
+      end
     end
 
     def handle_event("retire_certificate", %{"fingerprint" => fingerprint}, socket) do
-      handle_reload_result(
-        socket,
-        CertificateInventory.retire_signing_certificate(
-          socket.assigns.relyra_admin_repo,
-          socket.assigns.connection_id,
-          fingerprint,
-          audit: audit_context(socket.assigns.admin_scope, "live_admin_retire_certificate")
-        ),
-        "Certificate retired."
-      )
+      try do
+        handle_reload_result(
+          socket,
+          CertificateInventory.retire_signing_certificate(
+            socket.assigns.relyra_admin_repo,
+            socket.assigns.connection_id,
+            fingerprint,
+            audit: audit_context(socket.assigns.admin_scope, "live_admin_retire_certificate")
+          ),
+          "Certificate retired."
+        )
+      rescue
+        Ecto.StaleEntryError ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "The connection was modified by another operator. Please review the updated trust state.")
+           |> reload_detail()}
+      end
     end
 
     def handle_event(
@@ -118,17 +134,25 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           %{"restore_fingerprint" => restore_fingerprint, "retire_fingerprint" => retire_fingerprint},
           socket
         ) do
-      handle_reload_result(
-        socket,
-        CertificateInventory.rollback_signing_certificate(
-          socket.assigns.relyra_admin_repo,
-          socket.assigns.connection_id,
-          restore_fingerprint,
-          retire_fingerprint,
-          audit: audit_context(socket.assigns.admin_scope, "live_admin_rollback_certificate")
-        ),
-        "Certificate rollback completed."
-      )
+      try do
+        handle_reload_result(
+          socket,
+          CertificateInventory.rollback_signing_certificate(
+            socket.assigns.relyra_admin_repo,
+            socket.assigns.connection_id,
+            restore_fingerprint,
+            retire_fingerprint,
+            audit: audit_context(socket.assigns.admin_scope, "live_admin_rollback_certificate")
+          ),
+          "Certificate rollback completed."
+        )
+      rescue
+        Ecto.StaleEntryError ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "The connection was modified by another operator. Please review the updated trust state.")
+           |> reload_detail()}
+      end
     end
 
     def handle_event("save_attribute_mappings", %{"mapping" => %{"json" => json}}, socket) do
