@@ -4,7 +4,6 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     use Phoenix.LiveView
 
-    alias Relyra.LiveAdmin.Scope
     alias Relyra.LiveAdmin.Query
     alias Relyra.Metadata
 

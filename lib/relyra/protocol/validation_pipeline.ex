@@ -18,16 +18,17 @@ defmodule Relyra.Protocol.ValidationPipeline do
 
   def ordered_stages, do: @ordered_stages
 
-  @spec run(binary(), map(), map(), keyword()) :: {:ok, map()} | {:error, Error.t()}
+  @spec run(binary(), map() | nil, map(), keyword()) :: {:ok, map()} | {:error, Error.t()}
   # Verification anchor: def run(response_payload, request_intent, connection, opts \ [])
   def run(response_payload, request_intent, connection, opts \\ [])
 
   def run(response_payload, request_intent, connection, opts)
-      when is_binary(response_payload) and is_map(request_intent) and is_map(connection) and
+      when is_binary(response_payload) and (is_map(request_intent) or is_nil(request_intent)) and
+             is_map(connection) and
              is_list(opts) do
     metadata = %{
       connection_id: expected_connection_id(request_intent, connection),
-      flow: :sp_initiated
+      flow: if(is_nil(request_intent), do: :idp_initiated, else: :sp_initiated)
     }
 
     Relyra.Telemetry.span([:response, :validate], metadata, fn ->
@@ -75,7 +76,7 @@ defmodule Relyra.Protocol.ValidationPipeline do
   end
 
   defp do_run_validations(parsed_doc, request_intent, connection, cert_chain, opts, now) do
-    with :ok <- validate_request_correlation(parsed_doc, request_intent, opts),
+    with :ok <- validate_request_correlation(parsed_doc, request_intent, connection, opts),
          :ok <- validate_issuer_connection_match(parsed_doc, connection, request_intent),
          {:ok, signed_node} <-
            Relyra.Security.Signature.verify(parsed_doc, connection, cert_chain, opts),
@@ -103,28 +104,54 @@ defmodule Relyra.Protocol.ValidationPipeline do
              now,
              skew_seconds: Keyword.get(opts, :skew_seconds, 120)
            ) do
-      {:ok, login_result(parsed_doc, signed_node, request_intent, connection)}
+      {:ok, login_result(parsed_doc, signed_node, request_intent, connection, opts)}
     else
       {:error, %Error{} = error} -> {:error, error}
     end
   end
 
-  defp validate_request_correlation(parsed_doc, request_intent, _opts) do
-    expected_id = Map.get(request_intent, :request_id) || Map.get(request_intent, :in_response_to)
-    actual_id = Map.get(parsed_doc, :in_response_to)
+  defp validate_request_correlation(parsed_doc, request_intent, connection, _opts) do
+    case request_intent do
+      nil ->
+        actual_id = Map.get(parsed_doc, :in_response_to)
 
-    if expected_id == actual_id do
-      :ok
-    else
-      {:error,
-       Error.new(
-         :in_response_to_mismatch,
-         "SAML Response InResponseTo does not match request ID",
-         %{
-           expected: expected_id,
-           actual: actual_id
-         }
-       )}
+        cond do
+          not is_nil(actual_id) ->
+            {:error,
+             Error.new(
+               :in_response_to_mismatch,
+               "SAML Response contains InResponseTo but no matching request was found",
+               %{actual: actual_id}
+             )}
+
+          !read_field(connection, :allow_idp_initiated) ->
+            {:error,
+             Error.new(
+               :idp_initiated_not_allowed,
+               "IdP-initiated SSO is not enabled for this connection"
+             )}
+
+          true ->
+            :ok
+        end
+
+      intent ->
+        expected_id = Map.get(intent, :request_id) || Map.get(intent, :in_response_to)
+        actual_id = Map.get(parsed_doc, :in_response_to)
+
+        if expected_id == actual_id do
+          :ok
+        else
+          {:error,
+           Error.new(
+             :in_response_to_mismatch,
+             "SAML Response InResponseTo does not match request ID",
+             %{
+               expected: expected_id,
+               actual: actual_id
+             }
+           )}
+        end
     end
   end
 
@@ -151,7 +178,7 @@ defmodule Relyra.Protocol.ValidationPipeline do
     :ok
   end
 
-  defp login_result(protocol_payload, %SignedNode{} = signed_node, request_intent, connection) do
+  defp login_result(protocol_payload, %SignedNode{} = signed_node, request_intent, connection, opts) do
     %{
       connection_id:
         read_field(protocol_payload, :connection_id) ||
@@ -165,6 +192,7 @@ defmodule Relyra.Protocol.ValidationPipeline do
       session_index: read_field(protocol_payload, :session_index),
       attributes: read_field(protocol_payload, :attributes) || %{},
       return_to: read_field(request_intent, :return_to),
+      relay_state: read_field(request_intent, :relay_state) || Keyword.get(opts, :relay_state),
       connection: connection
     }
   end
@@ -177,12 +205,12 @@ defmodule Relyra.Protocol.ValidationPipeline do
   end
 
   defp expected_connection_id(request_intent, connection) do
-    Map.get(request_intent, :connection_id) || Map.get(connection, :id) ||
+    (request_intent && Map.get(request_intent, :connection_id)) || Map.get(connection, :id) ||
       Map.get(connection, :connection_id)
   end
 
   defp expected_destination(connection, request_intent) do
-    Map.get(request_intent, :acs_url) || Map.get(connection, :acs_url)
+    (request_intent && Map.get(request_intent, :acs_url)) || Map.get(connection, :acs_url)
   end
 
   defp expected_audience(connection) do
@@ -190,7 +218,7 @@ defmodule Relyra.Protocol.ValidationPipeline do
   end
 
   defp expected_recipient(connection, request_intent) do
-    Map.get(request_intent, :acs_url) || Map.get(connection, :acs_url)
+    (request_intent && Map.get(request_intent, :acs_url)) || Map.get(connection, :acs_url)
   end
 
   defp assertion_times(parsed_doc) do
@@ -203,7 +231,12 @@ defmodule Relyra.Protocol.ValidationPipeline do
     |> length()
   end
 
+  defp read_field(nil, _key), do: nil
+
   defp read_field(map, key) when is_map(map) and is_atom(key) do
-    Map.get(map, key) || Map.get(map, Atom.to_string(key))
+    case Map.fetch(map, key) do
+      {:ok, value} -> value
+      :error -> Map.get(map, Atom.to_string(key))
+    end
   end
 end

@@ -157,11 +157,11 @@ defmodule Relyra do
          :ok <- validate_request_intent(request_intent, consume_opts),
          :ok <- validate_request_intent_expiry(request_intent, now),
          {:ok, connection} <- resolve_connection_context(request_intent, consume_opts),
-         result <-
+         {:ok, result_map} <-
            ValidationPipeline.run(response_payload, request_intent, connection, consume_opts),
-         {:ok, login_result} <- normalize_consume_result(result),
-         :ok <- consume_replay_key(login_result, connection, consume_opts),
-         :ok <- consume_request_intent(request_intent, consume_opts) do
+         :ok <- consume_replay_key(result_map, connection, consume_opts),
+         :ok <- consume_request_intent(request_intent, consume_opts),
+         {:ok, login_result} <- normalize_consume_result(result_map) do
       {:ok, login_result}
     else
       {:error, %Error{} = error} ->
@@ -191,10 +191,25 @@ defmodule Relyra do
 
   defp maybe_parse_iso8601(_), do: DateTime.from_unix!(0)
 
-  defp normalize_consume_result({:ok, login_result}) when is_map(login_result),
-    do: {:ok, Map.new(login_result)}
+  defp normalize_consume_result(result) when is_map(result) do
+    principal = %Relyra.Principal{
+      name_id: Map.get(result, :name_id),
+      name_id_format: Map.get(result, :name_id_format),
+      session_index: Map.get(result, :session_index),
+      attributes: Map.get(result, :attributes),
+      connection_id: Map.get(result, :connection_id)
+    }
 
-  defp normalize_consume_result({:error, %Error{} = error}), do: {:error, error}
+    login_result = %Relyra.LoginResult{
+      principal: principal,
+      connection: Map.get(result, :connection),
+      relay_state: Map.get(result, :relay_state),
+      issuer: Map.get(result, :issuer),
+      in_response_to: Map.get(result, :in_response_to)
+    }
+
+    {:ok, login_result}
+  end
 
   defp resolve_request_intent(request_intent, opts) when is_map(request_intent) do
     if Keyword.get(opts, :relay_state) do
@@ -216,16 +231,18 @@ defmodule Relyra do
           {:error, error}
 
         {:error, _} ->
-          {:error, Error.new(:request_intent_missing, "Stored request intent not found")}
+          # If not found in store, we might be in an IdP-initiated flow.
+          # We return nil intent and let the pipeline decide based on connection config.
+          {:ok, nil, opts}
       end
     else
-      {:error,
-       Error.new(
-         :relay_state_missing,
-         "RelayState is required when request_intent is not provided"
-       )}
+      # No relay_state and no intent map provided.
+      # We return nil intent and assume connection will be provided in opts.
+      {:ok, nil, opts}
     end
   end
+
+  defp validate_request_intent(nil, _opts), do: :ok
 
   defp validate_request_intent(intent, _opts) do
     required = [:request_id, :sp_entity_id, :acs_url]
@@ -247,9 +264,9 @@ defmodule Relyra do
         :ok
 
       actual ->
-        expected = Map.get(request_intent, :relay_state)
+        expected = Map.get(request_intent || %{}, :relay_state)
 
-        if actual == expected do
+        if is_nil(expected) or actual == expected do
           :ok
         else
           {:error,
@@ -272,8 +289,8 @@ defmodule Relyra do
 
       _ ->
         request_context = %{
-          connection_id: Map.get(request_intent, :connection_id),
-          organization_id: Map.get(request_intent, :organization_id)
+          connection_id: read_field(request_intent, :connection_id),
+          organization_id: read_field(request_intent, :organization_id)
         }
 
         ConnectionResolver.resolve_connection(request_context, opts)
@@ -295,6 +312,8 @@ defmodule Relyra do
 
     Relyra.ReplayStore.consume_replay_key(replay_key, metadata, opts)
   end
+
+  defp consume_request_intent(nil, _opts), do: :ok
 
   defp consume_request_intent(request_intent, opts) do
     relay_state = Map.get(request_intent, :relay_state)

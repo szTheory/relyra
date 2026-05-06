@@ -92,7 +92,7 @@ defmodule Relyra.Security.XML.PureBeam do
 
     require_present_fields(
       fields,
-      [:issuer, :status, :destination, :in_response_to],
+      [:issuer, :status, :destination],
       :missing_protocol_field,
       "Required protocol fields are missing from response payload"
     )

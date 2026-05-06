@@ -14,29 +14,22 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 - **v0.1 shipped 2026-04-25** — strict SP core with hardened XML, protocol validation, behaviour-backed stores, Phoenix runtime, telemetry, adopter docs.
 - **v0.2 shipped 2026-05-06** — durable enterprise configuration. 5/5 requirements verified, 168/168 serial tests green, cross-domain audit ledger live.
-- Code state at v0.2 close: ~16,500 LOC across `lib/` and `test/` (Elixir).
+- **v0.3 shipped 2026-05-06** — LiveView admin surface. All capabilities from v0.2 are now exposed via a mountable interface. 10/10 requirements verified.
+- Code state at v0.3 close: ~16,500 LOC across `lib/` and `test/` (Elixir).
 
-## Current Milestone: v0.3 — LiveView admin
+## Current Milestone: v0.4 — IdP-initiated SSO
 
-**Goal:** Ship a complete LiveView admin surface so an adopter can mount one router and get end-customer self-service for every v0.2 capability — connections, metadata, certificates, mappings, audit ledger.
+**Goal:** Ship IdP-initiated SSO and opaque RelayState handling to unlock deployments where SP-initiated flows are not possible, such as enterprise dashboards and legacy portals.
 
 **Target features:**
 
-- Connection CRUD + lifecycle UI (CFG-06 surface — surfaces CFG-01).
-- Metadata source UI — paste XML / paste URL, import history with last-known-good visible, refresh button (surfaces CFG-03).
-- Certificate inventory + staged rollover UI — active/next/retired, expiry warnings, "promote next" / "retire active" with conflict-aware locking (surfaces CFG-04).
-- Attribute/group mapping editor + revision history view (surfaces CFG-05).
-- Audit ledger timeline view — filter by connection / actor / event type, redaction-safe display.
-- Provider preset prefill at connection creation (Okta, Entra ID, Google Workspace, Ping, OneLogin, ADFS, Shibboleth, Keycloak).
-- `Relyra.LiveView.Router` macro + mount/auth pattern — adopter mounts with one router line; auth boundary delegated to host app.
-- `legacy_algorithm_policy` risk panels (compatibility-constraint visibility).
-- (Ride-along) `MappingCommands.append_audit/8` explicit `repo.rollback/1` to close v0.2 tech-debt carryover.
+- **IdP-initiated SSO** — accept unsolicited assertions with security guardrails against cross-site request forgery and unsolicited assertion replay.
+- **Opaque RelayState** — map state between SP and IdP without relying on untrusted data in the response.
 
-**Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the v0.3 → v1.0 plan and rationale (north star, adoption-blocker priority, milestone slotting, judgment calls).
+**Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the v0.4 → v1.0 plan and rationale (north star, adoption-blocker priority, milestone slotting, judgment calls).
 
 **Deferred to later milestones per arc:**
 
-- **v0.4** — IdP-initiated SSO + opaque RelayState.
 - **v0.5** — Operational maturity (CFG-07 bulk ops, CFG-08 scheduled refresh, debug bundles, expiry alerts, mapping templates).
 - **v0.6** — SLO (Single Logout).
 - **v1.0** — External security review + conformance + docs polish.
@@ -64,13 +57,14 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - ✓ **CFG-04** — Certificate inventory w/ expiry tracking + staged rollover — v0.2 (Phase 10 verified via Phase 13; serial rollover 23/23, manual sign-off)
 - ✓ **CFG-05** — Persisted attribute/group mapping + durable audit history — v0.2 (Phase 11 verified via Phase 14; serial mapping/audit 62/62, manual sign-off)
 
+**v0.3:**
+- ✓ **CFG-06** — LiveView admin surface exposing connections, metadata, certificates, and mapping configuration — v0.3 (Phases 15-18; 10/10 requirements verified 2026-05-06)
+
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
-- [ ] **CFG-06**: User can manage enterprise configuration through an optional LiveView admin surface.
-- [ ] **CFG-07**: User can run bulk operations across multiple connections.
-- [ ] **CFG-08**: User can enable scheduled metadata refresh automation with guardrails.
+- [ ] **IDP-INIT-01**: User can initiate login from the IdP and rely on opaque RelayState handling.
 
 ### Out of Scope
 

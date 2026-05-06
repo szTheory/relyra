@@ -1,39 +1,19 @@
 ---
-phase: 19
+phase: 19-idp-initiated-sso
 plan: 01
-subsystem: data-model
-tags: [schema, migration]
-dependency_graph:
-  requires: []
-  provides: [IDP-INIT-01]
-  affects: [Relyra.Connection]
-tech_stack:
-  added: []
-  patterns: [Ecto Migration]
-key_files:
-  created: [priv/repo/migrations/20260506232319_add_allow_idp_initiated_to_relyra_connections.exs]
-  modified: [lib/relyra/connection.ex]
-decisions:
-  - Added allow_idp_initiated boolean column to relyra_connections, defaulting to false.
-metrics:
-  duration: 15m
-  completed_date: "2026-05-06"
+status: complete
+verified: 2026-05-06T19:00:00Z
 ---
 
-# Phase 19 Plan 01: Data Model Update Summary
+## 19-01 Summary: Data Model Update
 
-## One-liner
-Added `allow_idp_initiated` flag to the connection schema and database.
+I updated the data model to persist the `allow_idp_initiated` connection-level setting, defaulting to `false` for a fail-closed posture.
 
-## Implementation Details
-- Created migration `20260506232319_add_allow_idp_initiated_to_relyra_connections.exs`.
-- Updated `Relyra.Connection` schema to include `allow_idp_initiated`.
-- Added validation for the new field.
+### Key Changes
+- Created migration `priv/repo/migrations/20260506232319_add_allow_idp_initiated_to_relyra_connections.exs`.
+- Updated `Relyra.Ecto.Connection` schema to include the `allow_idp_initiated` boolean field.
+- Updated `draft_changeset/2` and `update_changeset/2` to permit modification of this field.
+- Verified field persistence and default behavior with new tests in `test/relyra/ecto/connection_test.exs`.
 
-## Deviations from Plan
-None.
-
-## Self-Check: PASSED
-- [x] Migration exists and runs.
-- [x] Schema is updated.
-- [x] Tests for the flag pass.
+### Verification Results
+- `mix test test/relyra/ecto/connection_test.exs` passed.

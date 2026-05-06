@@ -10,7 +10,6 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     alias Relyra.LiveAdmin.Scope
     alias Relyra.LiveAdmin.AttributeMappingsForm
     alias Relyra.LiveAdmin.GroupMappingsForm
-    alias Relyra.Metadata
 
     @impl true
     def mount(_params, session, socket) do
@@ -536,14 +535,6 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       %{actor: scope.actor, cause: cause}
     end
 
-    defp decode_mapping_json(json) when is_binary(json) do
-      case Jason.decode(json) do
-        {:ok, value} when is_list(value) -> {:ok, value}
-        {:ok, _other} -> {:error, "Mappings JSON must decode to a list."}
-        {:error, _error} -> {:error, "Mappings JSON is invalid."}
-      end
-    end
-
     defp decode_json_map(json) when is_binary(json) do
       case Jason.decode(json) do
         {:ok, value} when is_map(value) -> value
@@ -577,9 +568,6 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     defp truthy?(value), do: value in ["true", "on", true]
     defp boolean_string(true), do: "true"
     defp boolean_string(false), do: "false"
-
-    defp maybe_put_req(opts, nil), do: opts
-    defp maybe_put_req(opts, req), do: Keyword.put(opts, :req, req)
 
     defp ensure_admin_assigns(socket, session) do
       socket = ensure_changed_assigns(socket)

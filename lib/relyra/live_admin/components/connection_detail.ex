@@ -276,7 +276,6 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     end
 
     defp edit_path(base_path, connection_id), do: "#{base_path}/connections/#{connection_id}/edit"
-    defp show_path(base_path, connection_id), do: "#{base_path}/connections/#{connection_id}"
 
     defp status_style(:enabled), do: "background: #e8f5e9; color: #2e7d32;"
     defp status_style(:disabled), do: "background: #ffebee; color: #c62828;"

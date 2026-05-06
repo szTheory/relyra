@@ -7,6 +7,8 @@ defmodule Relyra.LoginResult do
     :connection,
     :mapped_user,
     :relay_state,
+    :issuer,
+    :in_response_to,
     :validation_trace
   ]
 
@@ -15,6 +17,8 @@ defmodule Relyra.LoginResult do
           connection: Relyra.Connection.t(),
           mapped_user: term() | nil,
           relay_state: binary() | nil,
+          issuer: binary() | nil,
+          in_response_to: binary() | nil,
           validation_trace: [map()]
         }
 end

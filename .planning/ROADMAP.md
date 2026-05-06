@@ -4,7 +4,8 @@
 
 - ✅ **v0.1 — SP-initiated SSO, verified end-to-end** (shipped 2026-04-25). See `.planning/milestones/v0.1-ROADMAP.md`.
 - ✅ **v0.2 — Enterprise configuration** (shipped 2026-05-06). See `.planning/milestones/v0.2-ROADMAP.md`.
-- 📋 **v0.3 — LiveView admin** (planning ready 2026-05-06).
+- ✅ **v0.3 — LiveView admin** (shipped 2026-05-06). See `.planning/milestones/v0.3-ROADMAP.md`.
+- 📋 **v0.4 — IdP-initiated SSO** (planning ready 2026-05-06).
 
 ## Phases
 
@@ -31,67 +32,38 @@ See `.planning/milestones/v0.2-ROADMAP.md` for full phase details, decisions, de
 
 </details>
 
-### 📋 v0.3 — LiveView admin (Planning)
+<details>
+<summary>✅ v0.3 — LiveView admin (Phases 15-18) — SHIPPED 2026-05-06</summary>
 
-- [ ] **Phase 15: Admin shell + connection lifecycle** - Mount the optional LiveView admin surface, create connections from presets or blank forms, and surface strict-default compatibility risk panels.
-- [ ] **Phase 16: Metadata management UI** - Let operators import metadata by XML or URL, review import history, and run explicit manual refresh with last-known-good visibility.
-- [ ] **Phase 17: Certificate inventory + staged rollover UI** - Expose active/next/retired certificate state, expiry context, and conflict-safe promote/retire actions.
-- [ ] **Phase 18: Mapping editor + audit timeline hardening** - Ship mapping revision editing, audit-ledger browsing, and typed rollback-safe failures for admin-triggered trust mutations.
+- [x] Phase 15: Admin shell + connection lifecycle (3/3 plans) — verified 2026-05-06
+- [x] Phase 16: Metadata management UI (3/3 plans) — verified 2026-05-06
+- [x] Phase 17: Certificate inventory + staged rollover UI (2/2 plans) — verified 2026-05-06
+- [x] Phase 18: Mapping editor + audit timeline hardening (2/2 plans) — verified 2026-05-06
+
+See `.planning/milestones/v0.3-ROADMAP.md` for full phase details, decisions, deferred items, and tech debt.
+
+</details>
+
+### 📋 v0.4 — IdP-initiated SSO (Planning)
+
+- [x] **Phase 19: IdP-initiated SSO** - Implement unsolicited assertion support with security guardrails and opaque RelayState handling. Verified 2026-05-06.
 
 ## Phase Details
 
-### Phase 15: Admin shell + connection lifecycle
-**Goal**: Adopters can mount the optional Relyra admin surface inside their Phoenix app and operators can create and manage tenant-scoped SAML connections without leaving the host app's auth boundary.
-**Depends on**: Phase 14
-**Requirements**: ADM-01, ADM-02, RISK-01
+### Phase 19: IdP-initiated SSO
+**Goal**: Adopters can accept SAML logins initiated from the IdP dashboard without compromising security or losing RelayState context.
+**Depends on**: Phase 18
+**Requirements**: IDP-INIT-01
 **Success Criteria** (what must be TRUE):
-1. Adopter can mount the Relyra admin surface with one router integration point and keep authentication and authorization decisions in the host app.
-2. Operator can create a new connection from a supported provider preset or a blank form and see provider defaults prefilled before saving.
-3. Operator can move a connection between draft, enabled, and disabled states from the admin UI and see the current lifecycle state reflected immediately.
-4. Operator sees a clear risk panel whenever a connection enables `legacy_algorithm_policy` or another compatibility override that weakens strict defaults.
+1. Connection can explicitly opt-in to IdP-initiated flows via `allow_idp_initiated` flag.
+2. Validation pipeline correctly handles responses missing `InResponseTo` only when allowed.
+3. System extracts and surfaces RelayState to the host application in a normalized `LoginResult` struct.
+4. XML parser handles optional `InResponseTo` attribute.
 **Plans**: 3 plans
-- [ ] 15-01-PLAN.md — Component shell extraction
-- [ ] 15-02-PLAN.md — Form extraction and preset routing
-- [ ] 15-03-PLAN.md — Lifecycle controls and risk surface wiring
-**UI hint**: yes
-
-### Phase 16: Metadata management UI
-**Goal**: Operators can onboard and maintain metadata sources through the admin UI without causing implicit trust changes.
-**Depends on**: Phase 15
-**Requirements**: MDUI-01, MDUI-02
-**Success Criteria** (what must be TRUE):
-1. Operator can import metadata for a connection by pasting XML and gets typed success or failure feedback without leaving the page.
-2. Operator can register or update a metadata source URL for a connection through the admin UI.
-3. Operator can review metadata import history, including the current last-known-good state for the connection.
-4. Operator can trigger a manual metadata refresh and the UI makes it clear that newly fetched trust material is not implicitly promoted.
-**Plans**: TBD
-**UI hint**: yes
-
-### Phase 17: Certificate inventory + staged rollover UI
-**Goal**: Operators can inspect certificate trust state and perform staged rollover actions safely from the admin UI.
-**Depends on**: Phase 16
-**Requirements**: CERT-01, CERT-02
-**Success Criteria** (what must be TRUE):
-1. Operator can view a connection's certificate inventory with active, next, and retired entries distinguished clearly.
-2. Operator can see expiry facts and rollover context for each certificate without opening raw PEM material.
-3. Operator can promote the next signing certificate or retire the active certificate from the UI.
-4. Operator receives typed conflict-safe feedback when a rollover action loses an optimistic-lock race to another trust-state change.
-**Plans**: TBD
-**UI hint**: yes
-
-### Phase 18: Mapping editor + audit timeline hardening
-**Goal**: Operators can manage mapping rules and inspect the trust-change timeline while admin-triggered mutations remain audit-atomic.
-**Depends on**: Phase 17
-**Requirements**: MAP-01, AUD-01, SAFE-01
-**Success Criteria** (what must be TRUE):
-1. Operator can edit attribute and group mapping rules for a connection and save a new revision through the admin UI.
-2. Operator can review prior mapping revisions and distinguish the current live mapping from historical entries.
-3. Operator can browse the audit ledger with connection, actor, and event-type filters and sees only redaction-safe event details.
-4. Operator receives a typed failure and no trust-state change is committed when an admin-triggered mutation cannot append its required audit event.
-**Plans**: 2 plans
-- [x] 18-01-PLAN.md — Mapping editor UI and active badging
-- [x] 18-02-PLAN.md — Audit ledger expansion and transaction verification
-**UI hint**: yes
+- [x] 19-01-PLAN.md — Data model update
+- [x] 19-02-PLAN.md — Safe redirect utility
+- [x] 19-03-PLAN.md — ACS pipeline update
+**UI hint**: no
 
 ## Progress
 
