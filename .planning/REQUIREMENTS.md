@@ -13,7 +13,7 @@ Committed scope for the next milestone: enterprise configuration.
 - [x] **CFG-02**: Relyra can resolve a persisted connection into a runtime snapshot for login and metadata flows.
 - [x] **CFG-03**: User can import and export metadata for a connection and trigger a controlled refresh with provenance.
 - [x] **CFG-04**: User can manage certificate inventory for a connection with expiry tracking and staged rollover.
-- [ ] **CFG-05**: User can persist attribute/group mapping configuration and review a durable audit history of trust changes.
+- [x] **CFG-05**: User can persist attribute/group mapping configuration and review a durable audit history of trust changes.
 
 ## v1 Requirements
 
@@ -51,7 +51,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CFG-02 | Phase 08 | Complete |
 | CFG-03 | Phase 12 | Complete |
 | CFG-04 | Phase 13 | Complete |
-| CFG-05 | Phase 14 | Pending |
+| CFG-05 | Phase 14 | Complete |
 
 **Coverage:**
 - v1 requirements: 5 total
@@ -60,4 +60,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-26*
-*Last updated: 2026-05-06 after Phase 13 execution*
+*Last updated: 2026-05-06 after Phase 14 execution*
