@@ -1,0 +1,144 @@
+defmodule Relyra.LiveAdmin.TestScopeProvider do
+  @behaviour Relyra.LiveAdmin.ScopeProvider
+
+  alias Relyra.LiveAdmin.Scope
+
+  @impl true
+  def resolve_admin_scope(session, _params, _opts) when is_map(session) do
+    actor = Map.get(session, "admin_actor") || Map.get(session, :admin_actor)
+
+    if is_binary(actor) and actor != "" do
+      {:ok,
+       %Scope{
+         actor: actor,
+         actor_label: Map.get(session, "admin_actor_label") || Map.get(session, :admin_actor_label),
+         organization_id:
+           Map.get(session, "admin_organization_id") || Map.get(session, :admin_organization_id)
+       }}
+    else
+      {:error, :unauthenticated}
+    end
+  end
+end
+
+defmodule Relyra.LiveAdmin.TestRouter do
+  use Phoenix.Router
+
+  import Relyra.LiveAdmin.Router
+
+  pipeline :browser do
+    plug Plug.Session, store: :cookie, key: "_relyra_admin_test", signing_salt: "router-salt"
+    plug :fetch_session
+  end
+
+  scope "/" do
+    pipe_through :browser
+
+    relyra_admin_routes("/admin",
+      repo: Relyra.TestSupport.EctoTestRepo,
+      scope_provider: Relyra.LiveAdmin.TestScopeProvider
+    )
+  end
+end
+
+defmodule Relyra.LiveAdminTest do
+  use ExUnit.Case, async: false
+
+  alias Ecto.Adapters.SQL.Sandbox
+
+  alias Relyra.Ecto.Connection
+  alias Relyra.LiveAdmin.ConnectionsLive
+  alias Relyra.LiveAdmin.Scope
+
+  @repo Relyra.TestSupport.EctoTestRepo
+
+  setup do
+    owner = Sandbox.start_owner!(@repo, shared: true)
+    Relyra.TestSupport.MigrationCase.reset_tables!()
+
+    on_exit(fn ->
+      Sandbox.stop_owner(owner)
+    end)
+
+    :ok
+  end
+
+  test "relyra_admin_routes registers the admin paths" do
+    paths = Enum.map(Relyra.LiveAdmin.TestRouter.__routes__(), & &1.path)
+
+    assert "/admin" in paths
+    assert "/admin/connections/new" in paths
+    assert "/admin/connections/:connection_id" in paths
+    assert "/admin/connections/:connection_id/edit" in paths
+  end
+
+  test "on_mount halts and redirects unauthenticated callers" do
+    assert {:halt, %Phoenix.LiveView.Socket{redirected: {:redirect, %{to: "/"}}}} =
+             Relyra.LiveAdmin.OnMount.on_mount(
+               [repo: @repo, scope_provider: Relyra.LiveAdmin.TestScopeProvider],
+               %{},
+               %{},
+               %Phoenix.LiveView.Socket{}
+             )
+  end
+
+  test "save_connection event creates a scoped connection through the live admin" do
+    socket =
+      %Phoenix.LiveView.Socket{
+        assigns: %{
+          __changed__: %{},
+          flash: %{},
+          admin_scope: %Scope{
+            actor: "ops@example.com",
+            actor_label: "Ops User",
+            organization_id: "org_live"
+          },
+          relyra_admin_repo: @repo,
+          relyra_admin_base_path: "/admin"
+        }
+      }
+      |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
+      |> put_in([Access.key!(:assigns), :live_action], :new)
+
+    assert {:noreply, _socket} =
+             ConnectionsLive.handle_event("save_connection", %{
+               "connection" => %{
+                 "display_name" => "Acme SSO",
+                 "organization_id" => "org_live",
+                 "provider_preset" => "okta",
+                 "sp_entity_id" => "https://sp.example.com/metadata",
+                 "acs_url" => "https://sp.example.com/acs",
+                 "idp_entity_id" => "https://idp.example.com/metadata",
+                 "idp_sso_url" => "https://idp.example.com/sso",
+                 "allow_idp_initiated?" => "false",
+                 "require_signed_assertions?" => "true",
+                 "require_signed_response?" => "true",
+                 "clock_skew_seconds" => "60",
+                 "name_id_format" => "persistent",
+                 "algorithm_policy_json" => "{}"
+               }
+             }, socket)
+
+    assert [%Connection{display_name: "Acme SSO", organization_id: "org_live"}] = @repo.all(Connection)
+  end
+
+  test "Query.get_connection_detail/4 normalizes the legacy_sha1 risk flag" do
+    connection =
+      @repo.insert!(%Connection{
+        connection_id: "conn_risk",
+        organization_id: "org_risk",
+        display_name: "Risk SSO",
+        sp_entity_id: "sp",
+        idp_entity_id: "idp",
+        runtime_policy: %{
+          algorithm_policy: %{"legacy_sha1" => true}
+        }
+      })
+
+    scope = %Scope{actor: "ops@example.com", organization_id: "org_risk"}
+
+    assert {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+
+    assert [%{label: "Legacy SHA-1 support enabled (compatibility override)"}] = detail.risk_flags
+  end
+end
