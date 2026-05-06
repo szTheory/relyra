@@ -16,12 +16,21 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         </div>
 
         <ul :if={@connections != []} style="list-style: none; margin: 0; padding: 0; border: 1px solid #ddd;">
-          <li :for={connection <- @connections} style="border-bottom: 1px solid #eee; padding: 12px;">
-            <a href={show_path(@base_path, connection.connection_id)}>
-              <strong>{connection.display_name || connection.connection_id}</strong>
-            </a>
-            <div style="font-size: 12px; color: #666; margin-top: 4px;">
-              {connection.organization_id} · {connection.status} · {connection.provider_label}
+          <li :for={connection <- @connections} style="border-bottom: 1px solid #eee; padding: 12px; display: flex; align-items: flex-start; gap: 12px;">
+            <input
+              type="checkbox"
+              style="margin-top: 4px;"
+              phx-click="toggle_selection"
+              phx-value-connection-id={connection.connection_id}
+              checked={MapSet.member?(@selected_ids, connection.connection_id)}
+            />
+            <div style="flex: 1;">
+              <a href={show_path(@base_path, connection.connection_id)}>
+                <strong>{connection.display_name || connection.connection_id}</strong>
+              </a>
+              <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                {connection.organization_id} · {connection.status} · {connection.provider_label}
+              </div>
             </div>
           </li>
         </ul>

@@ -27,7 +27,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
        |> assign(:attribute_mappings_changeset, AttributeMappingsForm.changeset(%AttributeMappingsForm{}, %{}))
        |> assign(:group_mappings_changeset, GroupMappingsForm.changeset(%GroupMappingsForm{}, %{}))
        |> assign(:metadata_import_xml, "")
-       |> assign(:metadata_source_url, "")}
+       |> assign(:metadata_source_url, "")
+       |> assign(:selected_ids, MapSet.new())}
     end
 
     @impl true
@@ -86,6 +87,19 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     def handle_event("disable_connection", _params, socket) do
       transition_connection(socket, :disable)
+    end
+
+    def handle_event("toggle_selection", %{"connection-id" => id}, socket) do
+      selected_ids = socket.assigns.selected_ids
+
+      selected_ids =
+        if MapSet.member?(selected_ids, id) do
+          MapSet.delete(selected_ids, id)
+        else
+          MapSet.put(selected_ids, id)
+        end
+
+      {:noreply, assign(socket, :selected_ids, selected_ids)}
     end
 
     def handle_event("confirm_activate_certificate", %{"fingerprint" => fingerprint, "confirmation" => confirmation}, socket) do
@@ -304,7 +318,11 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         </header>
 
         <section style="display: grid; grid-template-columns: minmax(260px, 320px) 1fr; gap: 24px;">
-          <ConnectionList.connection_list connections={@connections} base_path={@relyra_admin_base_path} />
+          <ConnectionList.connection_list
+            connections={@connections}
+            base_path={@relyra_admin_base_path}
+            selected_ids={@selected_ids}
+          />
 
           <main>
             <%= case @live_action do %>
