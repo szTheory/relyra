@@ -88,7 +88,9 @@ See `.planning/milestones/v0.2-ROADMAP.md` for full phase details, decisions, de
 2. Operator can review prior mapping revisions and distinguish the current live mapping from historical entries.
 3. Operator can browse the audit ledger with connection, actor, and event-type filters and sees only redaction-safe event details.
 4. Operator receives a typed failure and no trust-state change is committed when an admin-triggered mutation cannot append its required audit event.
-**Plans**: TBD
+**Plans**: 2 plans
+- [x] 18-01-PLAN.md — Mapping editor UI and active badging
+- [x] 18-02-PLAN.md — Audit ledger expansion and transaction verification
 **UI hint**: yes
 
 ## Progress
@@ -110,5 +112,5 @@ See `.planning/milestones/v0.2-ROADMAP.md` for full phase details, decisions, de
 | 14. Mapping/audit milestone verification | v0.2 | 2/2 | Complete (closure phase) | 2026-05-06 |
 | 15. Admin shell + connection lifecycle | v0.3 | 3/3 | Complete | 2026-05-06 |
 | 16. Metadata management UI | v0.3 | 3/3 | Complete | 2026-05-06 |
-| 17. Certificate inventory + staged rollover UI | v0.3 | 0/0 | Not started | - |
-| 18. Mapping editor + audit timeline hardening | v0.3 | 0/0 | Not started | - |
+| 17. Certificate inventory + staged rollover UI | v0.3 | 2/2 | Complete | 2026-05-06 |
+| 18. Mapping editor + audit timeline hardening | v0.3 | 2/2 | Complete | 2026-05-06 |

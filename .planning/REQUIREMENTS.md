@@ -26,12 +26,12 @@ Committed scope for v0.3: an optional LiveView admin surface that exposes the v0
 ### Mapping And Audit
 
 - [ ] **MAP-01**: Operator can edit attribute and group mapping rules for a connection and review prior mapping revisions.
-- [ ] **AUD-01**: Operator can browse the audit ledger with connection, actor, and event-type filters and see only redaction-safe event details.
+- [x] **AUD-01**: Operator can browse the audit ledger with connection, actor, and event-type filters and see only redaction-safe event details.
 
 ### Risk Visibility
 
 - [ ] **RISK-01**: Operator can see clear risk panels whenever a connection uses `legacy_algorithm_policy` or similar compatibility overrides that weaken strict defaults.
-- [ ] **SAFE-01**: Operator never gets a partial admin-side trust mutation when the corresponding audit write fails; the action returns a typed failure instead.
+- [x] **SAFE-01**: Operator never gets a partial admin-side trust mutation when the corresponding audit write fails; the action returns a typed failure instead.
 
 ## Deferred To Later Milestones
 
@@ -67,9 +67,9 @@ Committed scope for v0.3: an optional LiveView admin surface that exposes the v0
 | CERT-01 | Phase 17 | Pending |
 | CERT-02 | Phase 17 | Pending |
 | MAP-01 | Phase 18 | Pending |
-| AUD-01 | Phase 18 | Pending |
+| AUD-01 | Phase 18 | Complete |
 | RISK-01 | Phase 15 | Pending |
-| SAFE-01 | Phase 18 | Pending |
+| SAFE-01 | Phase 18 | Complete |
 
 **Coverage:**
 - v0.3 requirements: 10 total

@@ -4,10 +4,10 @@ milestone: v0.3
 milestone_name: LiveView admin
 status: execution
 last_updated: "2026-05-06T18:30:00Z"
-last_activity: 2026-05-06 -- Phase 17 Plan 01 executed and completed
+last_activity: 2026-05-06 -- Phase 17 Plan 02 executed and completed
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
   completed_plans: 3
   percent: 25
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.3 LiveView admin mileston
 
 ## Current Position
 
-Phase: 17 - 17-certificate-inventory-staged-rollover-ui
-Plan: 17-01 (Completed)
-Status: Executed and verified.
-Last activity: 2026-05-06 — Phase 17 Plan 01 completed.
+Phase: 18 - 18-mapping-editor-audit-timeline-hardening
+Plan: 18-02 (Completed)
+Status: Phase 18 Plan 02 executed and completed.
+Last activity: 2026-05-06 — Phase 18 Plan 02 completed.
 
 Progress: [==========] 100%
 
