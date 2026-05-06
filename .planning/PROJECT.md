@@ -16,15 +16,30 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.2 shipped 2026-05-06** — durable enterprise configuration. 5/5 requirements verified, 168/168 serial tests green, cross-domain audit ledger live.
 - Code state at v0.2 close: ~16,500 LOC across `lib/` and `test/` (Elixir).
 
-## Next Milestone
+## Current Milestone: v0.3 — LiveView admin
 
-### v0.3 — TBD
+**Goal:** Ship a complete LiveView admin surface so an adopter can mount one router and get end-customer self-service for every v0.2 capability — connections, metadata, certificates, mappings, audit ledger.
 
-To be defined via `/gsd-new-milestone`. Carryover candidates from v0.2 deferred list:
+**Target features:**
 
-- **LiveView admin surface (CFG-06)** — adoption-UX milestone now unblocked because config storage is stable.
-- **Bulk operations across multiple connections (CFG-07)**.
-- **Scheduled metadata refresh automation with guardrails (CFG-08)**.
+- Connection CRUD + lifecycle UI (CFG-06 surface — surfaces CFG-01).
+- Metadata source UI — paste XML / paste URL, import history with last-known-good visible, refresh button (surfaces CFG-03).
+- Certificate inventory + staged rollover UI — active/next/retired, expiry warnings, "promote next" / "retire active" with conflict-aware locking (surfaces CFG-04).
+- Attribute/group mapping editor + revision history view (surfaces CFG-05).
+- Audit ledger timeline view — filter by connection / actor / event type, redaction-safe display.
+- Provider preset prefill at connection creation (Okta, Entra ID, Google Workspace, Ping, OneLogin, ADFS, Shibboleth, Keycloak).
+- `Relyra.LiveView.Router` macro + mount/auth pattern — adopter mounts with one router line; auth boundary delegated to host app.
+- `legacy_algorithm_policy` risk panels (compatibility-constraint visibility).
+- (Ride-along) `MappingCommands.append_audit/8` explicit `repo.rollback/1` to close v0.2 tech-debt carryover.
+
+**Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the v0.3 → v1.0 plan and rationale (north star, adoption-blocker priority, milestone slotting, judgment calls).
+
+**Deferred to later milestones per arc:**
+
+- **v0.4** — IdP-initiated SSO + opaque RelayState.
+- **v0.5** — Operational maturity (CFG-07 bulk ops, CFG-08 scheduled refresh, debug bundles, expiry alerts, mapping templates).
+- **v0.6** — SLO (Single Logout).
+- **v1.0** — External security review + conformance + docs polish.
 
 ## Requirements
 
@@ -154,4 +169,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-06 after v0.2 milestone close.*
+*Last updated: 2026-05-06 — v0.3 LiveView admin milestone started.*

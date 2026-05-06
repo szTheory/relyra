@@ -1,35 +1,35 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.2
-milestone_name: Enterprise configuration
-status: shipped
-last_updated: "2026-05-06T08:57:31Z"
-last_activity: 2026-05-06 -- v0.2 milestone closed; archived to milestones/; tag v0.2 created
+milestone: v0.3
+milestone_name: LiveView admin
+status: planning
+last_updated: "2026-05-06T09:41:16Z"
+last_activity: 2026-05-06 -- Milestone v0.3 started
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 25
-  completed_plans: 25
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-05-06 after v0.2 milestone close)
+See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.3 LiveView admin milestone started)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Planning next milestone (v0.3 — TBD via `/gsd-new-milestone`).
+**Current focus:** v0.3 — LiveView admin surface (end-customer self-service for v0.2 capabilities). See `.planning/MILESTONE-ARC.md` for the v0.3 → v1.0 plan.
 
 ## Current Position
 
-Milestone: v0.2 — Enterprise configuration — SHIPPED 2026-05-06
-Status: Archived to `.planning/milestones/v0.2-ROADMAP.md` and `.planning/milestones/v0.2-REQUIREMENTS.md`
-Re-audit: passed 5/5 (`.planning/milestones/v0.2-MILESTONE-AUDIT.md`)
-Tag: v0.2
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-06 — Milestone v0.3 started
 
-Progress: [██████████] 100%
+Progress: [          ] 0%
 
 ## Accumulated Context
 
