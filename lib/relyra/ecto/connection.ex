@@ -36,6 +36,7 @@ if Code.ensure_loaded?(Ecto.Schema) do
       field :acs_url, :string
       field :idp_entity_id, :string
       field :idp_sso_url, :string
+      field :allow_idp_initiated, :boolean, default: false
       field :lock_version, :integer, default: 1
 
       belongs_to :active_metadata_revision, MetadataRevision,
@@ -92,6 +93,7 @@ if Code.ensure_loaded?(Ecto.Schema) do
         :acs_url,
         :idp_entity_id,
         :idp_sso_url,
+        :allow_idp_initiated,
         :active_metadata_revision_id,
         :last_known_good_metadata_revision_id
       ])
@@ -117,6 +119,7 @@ if Code.ensure_loaded?(Ecto.Schema) do
         :acs_url,
         :idp_entity_id,
         :idp_sso_url,
+        :allow_idp_initiated,
         :active_metadata_revision_id,
         :last_known_good_metadata_revision_id
       ])
