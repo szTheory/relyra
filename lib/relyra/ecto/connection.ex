@@ -62,6 +62,8 @@ if Code.ensure_loaded?(Ecto.Schema) do
       has_many :mapping_revisions, MappingRevision, foreign_key: :connection_record_id
       has_many :audit_events, AuditEvent, foreign_key: :connection_record_id
 
+      field :readiness_errors, :map, virtual: true, default: %{}
+
       timestamps(type: :utc_datetime_usec)
     end
 
