@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: LiveView admin
 status: planning
-last_updated: "2026-05-06T09:41:16Z"
-last_activity: 2026-05-06 -- Milestone v0.3 started
+last_updated: "2026-05-06T14:00:00Z"
+last_activity: 2026-05-06 -- v0.3 roadmap created
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.3 LiveView admin mileston
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 15 - Admin shell + connection lifecycle
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-06 — Milestone v0.3 started
+Status: Roadmap ready; phase planning not started
+Last activity: 2026-05-06 — Phase 15-18 roadmap written
 
 Progress: [          ] 0%
 
@@ -41,6 +41,8 @@ Progress: [          ] 0%
 - Closure-phase pattern (12 → 09's verification, etc.) is the canonical move when an audit surfaces verification orphans.
 
 **Open blockers:** None.
+
+**Roadmap coverage:** 10/10 v0.3 requirements mapped across Phases 15-18.
 
 **Carryover tech debt for v0.3:**
 - `Relyra.Ecto.MappingCommands.append_audit/8` does not explicitly call `repo.rollback/1` on `AuditWriter` failure (relies on `transact/1` auto-rollback); other three co-commit sites use the explicit pattern. Modern Ecto: correct. Legacy fallback: theoretically vulnerable.

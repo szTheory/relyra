@@ -60,22 +60,22 @@ Committed scope for v0.3: an optional LiveView admin surface that exposes the v0
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ADM-01 | TBD | Pending |
-| ADM-02 | TBD | Pending |
-| MDUI-01 | TBD | Pending |
-| MDUI-02 | TBD | Pending |
-| CERT-01 | TBD | Pending |
-| CERT-02 | TBD | Pending |
-| MAP-01 | TBD | Pending |
-| AUD-01 | TBD | Pending |
-| RISK-01 | TBD | Pending |
-| SAFE-01 | TBD | Pending |
+| ADM-01 | Phase 15 | Pending |
+| ADM-02 | Phase 15 | Pending |
+| MDUI-01 | Phase 16 | Pending |
+| MDUI-02 | Phase 16 | Pending |
+| CERT-01 | Phase 17 | Pending |
+| CERT-02 | Phase 17 | Pending |
+| MAP-01 | Phase 18 | Pending |
+| AUD-01 | Phase 18 | Pending |
+| RISK-01 | Phase 15 | Pending |
+| SAFE-01 | Phase 18 | Pending |
 
 **Coverage:**
 - v0.3 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10
+- Mapped to phases: 10
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-06*
-*Last updated: 2026-05-06 after continuing the v0.3 milestone kickoff*
+*Last updated: 2026-05-06 after roadmap creation for v0.3*
