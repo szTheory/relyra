@@ -57,26 +57,84 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
           <section style="border: 1px solid #ddd; padding: 16px;">
             <h3 style="margin-top: 0;">Certificates</h3>
-            <div :for={state <- [:active, :next, :retired]} style="margin-bottom: 16px;">
-              <h4 style="margin-bottom: 8px;">{state}</h4>
-              <div :if={Map.get(@detail.certificates_by_state, state) == []}>None</div>
-              <div :for={certificate <- Map.get(@detail.certificates_by_state, state)} style="border: 1px solid #eee; padding: 12px; margin-bottom: 8px;">
-                <div><strong>{certificate.fingerprint_sha256}</strong></div>
-                <div style="font-size: 12px; color: #666;">
-                  expires {certificate.not_after || "unknown"} · source {certificate.source}
-                </div>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
-                  <button :if={state == :next} phx-click="activate_certificate" phx-value-fingerprint={certificate.fingerprint_sha256}>Promote next</button>
-                  <button :if={state == :active} phx-click="retire_certificate" phx-value-fingerprint={certificate.fingerprint_sha256}>Retire active</button>
-                  <button
-                    :if={state == :retired and Map.get(@detail.certificates_by_state, :active) != []}
-                    phx-click="rollback_certificate"
-                    phx-value-restore_fingerprint={certificate.fingerprint_sha256}
-                    phx-value-retire_fingerprint={List.first(@detail.certificates_by_state.active).fingerprint_sha256}
-                  >
-                    Restore and retire current active
-                  </button>
-                </div>
+            
+            <div style="display: grid; gap: 16px;">
+              <%!-- Next Slot --%>
+              <div style="border: 1px solid #e0e0e0; padding: 16px; border-radius: 4px; background-color: #f9fafb;">
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #374151;">Next (Staged)</h4>
+                <%= if Map.get(@detail.certificates_by_state, :next, []) == [] do %>
+                  <div style="border: 2px dashed #d1d5db; padding: 16px; text-align: center; color: #6b7280; font-style: italic;">
+                    No staged certificate.
+                  </div>
+                <% else %>
+                  <div :for={certificate <- @detail.certificates_by_state.next} style="border: 1px solid #e5e7eb; padding: 12px; background: white; margin-bottom: 8px;">
+                    <div style="font-variant-numeric: tabular-nums; font-family: monospace;"><strong>{certificate.fingerprint_sha256}</strong></div>
+                    <div style={"font-size: 12px; font-variant-numeric: tabular-nums; #{if expires_soon?(certificate), do: "color: #B45309; font-weight: bold;", else: "color: #6b7280;"}"}>
+                      <span :if={expires_soon?(certificate)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                      </span>
+                      expires {certificate.not_after || "unknown"} · source {certificate.source}
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <button phx-click="activate_certificate" phx-value-fingerprint={certificate.fingerprint_sha256}>Promote next</button>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+
+              <%!-- Active Slot --%>
+              <div style="border: 1px solid #e0e0e0; padding: 16px; border-radius: 4px; background-color: #f0fdf4;">
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #166534;">Active</h4>
+                <%= if Map.get(@detail.certificates_by_state, :active, []) == [] do %>
+                  <div style="color: #991b1b;">No active certificate.</div>
+                <% else %>
+                  <div :for={certificate <- @detail.certificates_by_state.active} style="border: 1px solid #bbf7d0; padding: 12px; background: white; margin-bottom: 8px;">
+                    <div style="font-variant-numeric: tabular-nums; font-family: monospace;"><strong>{certificate.fingerprint_sha256}</strong></div>
+                    <div style={"font-size: 12px; font-variant-numeric: tabular-nums; #{if expires_soon?(certificate), do: "color: #B45309; font-weight: bold;", else: "color: #6b7280;"}"}>
+                      <span :if={expires_soon?(certificate)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                      </span>
+                      expires {certificate.not_after || "unknown"} · source {certificate.source}
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <button phx-click="retire_certificate" phx-value-fingerprint={certificate.fingerprint_sha256}>Retire active</button>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+
+              <%!-- Retired Slot --%>
+              <div style="border: 1px solid #e0e0e0; padding: 16px; border-radius: 4px; background-color: #f3f4f6;">
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #4b5563;">Retired</h4>
+                <%= if Map.get(@detail.certificates_by_state, :retired, []) == [] do %>
+                  <div style="color: #6b7280;">No retired certificates.</div>
+                <% else %>
+                  <div :for={certificate <- @detail.certificates_by_state.retired} style="border: 1px solid #e5e7eb; padding: 12px; background: white; margin-bottom: 8px; opacity: 0.8;">
+                    <div style="font-variant-numeric: tabular-nums; font-family: monospace;"><strong>{certificate.fingerprint_sha256}</strong></div>
+                    <div style={"font-size: 12px; font-variant-numeric: tabular-nums; #{if expires_soon?(certificate), do: "color: #B45309; font-weight: bold;", else: "color: #6b7280;"}"}>
+                      <span :if={expires_soon?(certificate)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                      </span>
+                      expires {certificate.not_after || "unknown"} · source {certificate.source}
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <button
+                        :if={Map.get(@detail.certificates_by_state, :active, []) != []}
+                        phx-click="rollback_certificate"
+                        phx-value-restore_fingerprint={certificate.fingerprint_sha256}
+                        phx-value-retire_fingerprint={List.first(@detail.certificates_by_state.active).fingerprint_sha256}
+                      >
+                        Restore and retire current active
+                      </button>
+                    </div>
+                  </div>
+                <% end %>
               </div>
             </div>
           </section>
@@ -173,6 +231,11 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     defp status_style(:enabled), do: "background: #e8f5e9; color: #2e7d32;"
     defp status_style(:disabled), do: "background: #ffebee; color: #c62828;"
     defp status_style(_), do: "background: #f5f5f5; color: #616161;"
+
+    defp expires_soon?(%{not_after: nil}), do: false
+    defp expires_soon?(%{not_after: not_after}) do
+      DateTime.diff(not_after, DateTime.utc_now(), :day) < 30
+    end
   end
 else
   defmodule Relyra.LiveAdmin.Components.ConnectionDetail do
