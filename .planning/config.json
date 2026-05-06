@@ -33,6 +33,9 @@
   "hooks": {
     "context_warnings": true
   },
+  "preferences": {
+    "vendor_philosophy": "opinionated"
+  },
   "project_code": null,
   "phase_naming": "sequential",
   "agent_skills": {},

@@ -9,10 +9,10 @@ Committed scope for the next milestone: enterprise configuration.
 
 ### Enterprise Configuration
 
-- [ ] **CFG-01**: User can create and maintain tenant-scoped SAML connection records backed by Ecto schemas and migrations.
-- [ ] **CFG-02**: Relyra can resolve a persisted connection into a runtime snapshot for login and metadata flows.
-- [ ] **CFG-03**: User can import and export metadata for a connection and trigger a controlled refresh with provenance.
-- [ ] **CFG-04**: User can manage certificate inventory for a connection with expiry tracking and staged rollover.
+- [x] **CFG-01**: User can create and maintain tenant-scoped SAML connection records backed by Ecto schemas and migrations.
+- [x] **CFG-02**: Relyra can resolve a persisted connection into a runtime snapshot for login and metadata flows.
+- [x] **CFG-03**: User can import and export metadata for a connection and trigger a controlled refresh with provenance.
+- [x] **CFG-04**: User can manage certificate inventory for a connection with expiry tracking and staged rollover.
 - [ ] **CFG-05**: User can persist attribute/group mapping configuration and review a durable audit history of trust changes.
 
 ## v1 Requirements
@@ -47,11 +47,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CFG-01 | Phase 07 | Pending |
-| CFG-02 | Phase 08 | Pending |
-| CFG-03 | Phase 09 | Pending |
-| CFG-04 | Phase 10 | Pending |
-| CFG-05 | Phase 11 | Pending |
+| CFG-01 | Phase 07 | Complete |
+| CFG-02 | Phase 08 | Complete |
+| CFG-03 | Phase 12 | Complete |
+| CFG-04 | Phase 13 | Complete |
+| CFG-05 | Phase 14 | Pending |
 
 **Coverage:**
 - v1 requirements: 5 total
@@ -60,4 +60,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-26*
-*Last updated: 2026-04-26 after v0.2 milestone start*
+*Last updated: 2026-05-06 after Phase 13 execution*
