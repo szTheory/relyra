@@ -5,7 +5,8 @@
 - ✅ **v0.1 — SP-initiated SSO, verified end-to-end** (shipped 2026-04-25). See `.planning/milestones/v0.1-ROADMAP.md`.
 - ✅ **v0.2 — Enterprise configuration** (shipped 2026-05-06). See `.planning/milestones/v0.2-ROADMAP.md`.
 - ✅ **v0.3 — LiveView admin** (shipped 2026-05-06). See `.planning/milestones/v0.3-ROADMAP.md`.
-- 📋 **v0.4 — IdP-initiated SSO** (planning ready 2026-05-06).
+- ✅ **v0.4 — IdP-initiated SSO** (shipped 2026-05-06). See `.planning/milestones/v0.4-ROADMAP.md`.
+- 📋 **v0.5 — Operational maturity** (planning started 2026-05-06).
 
 ## Phases
 
@@ -44,26 +45,24 @@ See `.planning/milestones/v0.3-ROADMAP.md` for full phase details, decisions, de
 
 </details>
 
-### 📋 v0.4 — IdP-initiated SSO (Planning)
+<details>
+<summary>✅ v0.4 — IdP-initiated SSO (Phase 19) — SHIPPED 2026-05-06</summary>
 
-- [x] **Phase 19: IdP-initiated SSO** - Implement unsolicited assertion support with security guardrails and opaque RelayState handling. Verified 2026-05-06.
+- [x] Phase 19: IdP-initiated SSO (3/3 plans) — verified 2026-05-06
+
+See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, deferred items, and tech debt.
+
+</details>
+
+### 📋 v0.5 — Operational maturity (Planning)
+
+- [ ] **Phase 20: TBD**
 
 ## Phase Details
 
-### Phase 19: IdP-initiated SSO
-**Goal**: Adopters can accept SAML logins initiated from the IdP dashboard without compromising security or losing RelayState context.
-**Depends on**: Phase 18
-**Requirements**: IDP-INIT-01
-**Success Criteria** (what must be TRUE):
-1. Connection can explicitly opt-in to IdP-initiated flows via `allow_idp_initiated` flag.
-2. Validation pipeline correctly handles responses missing `InResponseTo` only when allowed.
-3. System extracts and surfaces RelayState to the host application in a normalized `LoginResult` struct.
-4. XML parser handles optional `InResponseTo` attribute.
-**Plans**: 3 plans
-- [x] 19-01-PLAN.md — Data model update
-- [x] 19-02-PLAN.md — Safe redirect utility
-- [x] 19-03-PLAN.md — ACS pipeline update
-**UI hint**: no
+### Phase 20: TBD
+**Goal**: TBD
+**Depends on**: Phase 19
 
 ## Progress
 

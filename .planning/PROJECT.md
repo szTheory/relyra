@@ -15,22 +15,24 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.1 shipped 2026-04-25** — strict SP core with hardened XML, protocol validation, behaviour-backed stores, Phoenix runtime, telemetry, adopter docs.
 - **v0.2 shipped 2026-05-06** — durable enterprise configuration. 5/5 requirements verified, 168/168 serial tests green, cross-domain audit ledger live.
 - **v0.3 shipped 2026-05-06** — LiveView admin surface. All capabilities from v0.2 are now exposed via a mountable interface. 10/10 requirements verified.
-- Code state at v0.3 close: ~16,500 LOC across `lib/` and `test/` (Elixir).
+- **v0.4 shipped 2026-05-06** — IdP-initiated SSO and opaque RelayState. 1/1 requirements verified.
+- Code state at v0.4 close: ~17,200 LOC across `lib/` and `test/` (Elixir).
 
-## Current Milestone: v0.4 — IdP-initiated SSO
+## Current Milestone: v0.5 — Operational maturity
 
-**Goal:** Ship IdP-initiated SSO and opaque RelayState handling to unlock deployments where SP-initiated flows are not possible, such as enterprise dashboards and legacy portals.
+**Goal:** Ship operational improvements to ease maintenance of large-scale deployments, including bulk operations, scheduled metadata refresh, and diagnostic debug bundles.
 
 **Target features:**
 
-- **IdP-initiated SSO** — accept unsolicited assertions with security guardrails against cross-site request forgery and unsolicited assertion replay.
-- **Opaque RelayState** — map state between SP and IdP without relying on untrusted data in the response.
+- **Bulk operations** — User can run operations (enable/disable/refresh) across multiple connections at once (CFG-07).
+- **Scheduled metadata refresh** — User can enable background refresh automation with security guardrails (CFG-08).
+- **Debug bundles** — Operator can export a redacted diagnostic bundle for a connection to facilitate support.
+- **Expiry alerts** — System emits events/logs for upcoming certificate expirations.
 
-**Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the v0.4 → v1.0 plan and rationale (north star, adoption-blocker priority, milestone slotting, judgment calls).
+**Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the v0.5 → v1.0 plan and rationale.
 
 **Deferred to later milestones per arc:**
 
-- **v0.5** — Operational maturity (CFG-07 bulk ops, CFG-08 scheduled refresh, debug bundles, expiry alerts, mapping templates).
 - **v0.6** — SLO (Single Logout).
 - **v1.0** — External security review + conformance + docs polish.
 
@@ -60,11 +62,16 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 **v0.3:**
 - ✓ **CFG-06** — LiveView admin surface exposing connections, metadata, certificates, and mapping configuration — v0.3 (Phases 15-18; 10/10 requirements verified 2026-05-06)
 
+**v0.4:**
+- ✓ **IDP-INIT-01** — IdP-initiated SSO support with security guardrails and opaque RelayState handling — v0.4 (Phase 19; 1/1 requirements verified 2026-05-06)
+
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
-- [ ] **IDP-INIT-01**: User can initiate login from the IdP and rely on opaque RelayState handling.
+- [ ] **CFG-07**: User can run bulk operations across multiple connections.
+- [ ] **CFG-08**: User can enable scheduled metadata refresh automation with guardrails.
+- [ ] **DIAG-01**: Operator can generate a redacted debug bundle for troubleshooting.
 
 ### Out of Scope
 
@@ -76,8 +83,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **Production IdP implementation** — `Relyra.TestSupport.FakeIdP` is dev/CI support only, not a product IdP.
 - **SCIM lifecycle ownership** — Relyra focuses on login-time identity assertion and mapping, not full lifecycle provisioning.
 - **Security-by-marketing claims (bulletproof/unhackable/military-grade)** — brand and security discipline require precise, falsifiable claims only.
-- **IdP-initiated SSO** — deferred to v0.4+; adopters that need it today can run v0.2 alongside an existing IdP-initiated solution. The default must remain SP-initiated for trust-context clarity.
-- **SLO (Single Logout)** — deferred to v0.5; not required for the core SP value proposition.
+- **SLO (Single Logout)** — deferred to v0.6; not required for the core SP value proposition.
 
 ## Context
 

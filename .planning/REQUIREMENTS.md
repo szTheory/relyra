@@ -37,13 +37,13 @@ Committed scope for v0.4: IdP-initiated SSO and opaque RelayState handling, allo
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| IDP-INIT-01 | TBD | Pending |
+| IDP-INIT-01 | Phase 19 | Complete |
 
 **Coverage:**
 - v0.4 requirements: 1 total
-- Mapped to phases: 0
-- Unmapped: 1
+- Mapped to phases: 1
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-06*
-*Last updated: 2026-05-06 after milestone v0.3 completion*
+*Last updated: 2026-05-06 after milestone v0.4 completion*
