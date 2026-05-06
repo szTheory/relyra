@@ -87,7 +87,7 @@ defmodule Relyra.Ecto.MetadataApplyTest do
     assert {:error, %Relyra.Error{type: :invalid_connection_record}} =
              MetadataApply.apply_revision(
                connection.connection_id,
-               Map.merge(candidate(), %{certificate_fingerprints: [""], certificate_pems: [""]}),
+               invalid_candidate(),
                applied_revision_attrs(),
                repo: @repo
              )
@@ -312,6 +312,20 @@ defmodule Relyra.Ecto.MetadataApplyTest do
       cause: "manual import",
       trust_summary: %{status: "applied", certificate_count: 2}
     }
+  end
+
+  defp invalid_candidate do
+    Import.build_candidate(%{
+      entity_id: "https://metadata.idp.example.com/entity",
+      sso_services: [
+        %{
+          binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+          location: "https://metadata.idp.example.com/sso/redirect"
+        }
+      ],
+      certificates: ["INVALIDCERTIFICATEBODY"]
+    })
+    |> Map.from_struct()
   end
 
   defp pem_body(pem) do

@@ -13,6 +13,8 @@ defmodule Relyra.Ecto.MetadataApply do
   def apply_revision(connection_id, candidate, revision_attrs, opts)
       when is_binary(connection_id) and is_map(candidate) and is_map(revision_attrs) and
              is_list(opts) do
+    candidate = normalized_candidate(candidate)
+
     with {:ok, repo} <- fetch_repo(opts, :apply_revision),
          :ok <- ensure_optional_dependency!(:apply_revision, repo),
          {:ok, _connection} <- fetch_connection(repo, connection_id, :apply_revision) do
@@ -145,6 +147,22 @@ defmodule Relyra.Ecto.MetadataApply do
       sso_binding: Map.get(candidate, :sso_binding),
       status: "applied"
     }
+  end
+
+  defp normalized_candidate(candidate) do
+    certificates = Map.get(candidate, :certificates, [])
+
+    if certificates == [] do
+      candidate
+    else
+      candidate
+      |> Map.put(:certificate_facts, certificates)
+      |> Map.put(:certificate_pems, Enum.map(certificates, &Map.fetch!(&1, :pem)))
+      |> Map.put(
+        :certificate_fingerprints,
+        Enum.map(certificates, &Map.fetch!(&1, :fingerprint_sha256))
+      )
+    end
   end
 
   defp insert_revision(repo, attrs) do
