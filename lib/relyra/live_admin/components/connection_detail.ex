@@ -47,56 +47,12 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         <RiskPanel.risk_panel risk_flags={@detail.risk_flags} />
 
         <section style="display: grid; gap: 24px;">
-          <section style="border: 1px solid #ddd; padding: 16px;">
-            <h3 style="margin-top: 0;">Metadata</h3>
-            <form phx-submit="import_metadata" style="display: grid; gap: 12px; margin-bottom: 16px;">
-              <label>
-                Import XML
-                <textarea name="metadata_import[xml]" rows="6" style="width: 100%;">{@metadata_import_xml}</textarea>
-              </label>
-              <button type="submit">Import metadata XML</button>
-            </form>
-
-            <form phx-submit="register_metadata_source" style="display: grid; gap: 12px; margin-bottom: 16px;">
-              <label>
-                Metadata URL
-                <input type="text" name="metadata_source[url]" value={@metadata_source_url} style="width: 100%;" />
-              </label>
-              <button type="submit">Register metadata source</button>
-            </form>
-
-            <button phx-click="refresh_metadata">Refresh metadata now</button>
-
-            <div style="margin-top: 16px;">
-              <p><strong>Registered source:</strong> <%= if @detail.metadata_source, do: @detail.metadata_source.url, else: "None" %></p>
-              <p>
-                <strong>Last known good:</strong>
-                <%= if @detail.connection.last_known_good_metadata_revision do %>
-                  {@detail.connection.last_known_good_metadata_revision.outcome}
-                <% else %>
-                  None
-                <% end %>
-              </p>
+          <section style="border: 1px solid #ddd; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 style="margin-top: 0; margin-bottom: 8px;">Metadata</h3>
+              <p style="margin: 0; color: #555;">Manage XML imports, metadata URLs, and view revision history.</p>
             </div>
-
-            <table style="width: 100%; margin-top: 16px;">
-              <thead>
-                <tr>
-                  <th align="left">When</th>
-                  <th align="left">Trigger</th>
-                  <th align="left">Outcome</th>
-                  <th align="left">Actor</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr :for={revision <- @detail.metadata_revisions}>
-                  <td>{revision.inserted_at}</td>
-                  <td>{revision.trigger}</td>
-                  <td>{revision.outcome}</td>
-                  <td>{revision.actor || "system"}</td>
-                </tr>
-              </tbody>
-            </table>
+            <a href={"#{@base_path}/connections/#{@detail.connection.connection_id}/metadata"} style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ccc; text-decoration: none; color: #333; border-radius: 4px;">Manage Metadata</a>
           </section>
 
           <section style="border: 1px solid #ddd; padding: 16px;">

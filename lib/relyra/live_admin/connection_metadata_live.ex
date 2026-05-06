@@ -10,22 +10,17 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     @impl true
     def mount(params, session, socket) do
-      try do
-        socket = ensure_admin_assigns(socket, session)
-        connection_id = params["connection_id"] || socket.assigns[:connection_id]
+      socket = ensure_admin_assigns(socket, session)
+      connection_id = params["connection_id"] || socket.assigns[:connection_id]
 
-        {:ok,
-         socket
-         |> assign(:page_title, "Metadata Management")
-         |> assign(:connection_id, connection_id)
-         |> assign(:mode, "xml")
-         |> assign(:detail, nil)
-         |> assign(:refresh_status, :idle)}
-      rescue
-        e -> 
-          IO.inspect(e, label: "MOUNT ERROR")
-          reraise e, __STACKTRACE__
-      end
+      {:ok,
+       socket
+       |> assign(:page_title, "Metadata Management")
+       |> assign(:connection_id, connection_id)
+       |> assign(:mode, "xml")
+       |> assign(:detail, nil)
+       |> stream_configure(:metadata_revisions, dom_id: &(&1.id))
+       |> stream(:metadata_revisions, [])}
     end
 
     @impl true

@@ -19,6 +19,7 @@ defmodule Relyra.LiveAdminMetadataTest do
 
   defp build_socket(assigns \\ %{}) do
     %Phoenix.LiveView.Socket{
+      private: %{lifecycle: %Phoenix.LiveView.Lifecycle{}, live_temp: %{}},
       assigns: Map.merge(%{
         __changed__: %{},
         flash: %{},

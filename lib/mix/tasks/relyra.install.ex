@@ -12,6 +12,8 @@ defmodule Mix.Tasks.Relyra.Install do
           module: :string,
           router: :string,
           repo: :string,
+          live_admin: :boolean,
+          admin_path: :string,
           no_config: :boolean,
           force: :boolean
         ],
@@ -36,11 +38,19 @@ defmodule Mix.Tasks.Relyra.Install do
       force
     )
 
+    if Keyword.get(opts, :live_admin, false) do
+      ensure_generated_file!(
+        Path.join(["lib", root_module_path, "relyra", "admin_scope.ex"]),
+        admin_scope_template(module_name),
+        force
+      )
+    end
+
     unless no_config do
       ensure_config!()
     end
 
-    maybe_update_router(Keyword.get(opts, :router), module_name, force)
+    maybe_update_router(Keyword.get(opts, :router), module_name, force, opts)
 
     repo_label = Keyword.get(opts, :repo, "the host app")
     Mix.shell().info("Relyra install scaffolded for #{module_name} in #{repo_label}.")
@@ -84,14 +94,16 @@ defmodule Mix.Tasks.Relyra.Install do
     end
   end
 
-  defp maybe_update_router(nil, _module_name, _force), do: :ok
+  defp maybe_update_router(nil, module_name, _force, opts) do
+    maybe_print_live_admin_instructions(module_name, opts)
+  end
 
-  defp maybe_update_router(router_path, module_name, force) do
+  defp maybe_update_router(router_path, module_name, force, opts) do
     if File.exists?(router_path) do
       contents = File.read!(router_path)
 
       if String.contains?(contents, "saml_routes()") do
-        :ok
+        maybe_print_live_admin_instructions(module_name, opts)
       else
         Mix.shell().info(
           "Router found at #{router_path}, but route injection is ambiguous. Add saml_routes() manually."
@@ -100,6 +112,8 @@ defmodule Mix.Tasks.Relyra.Install do
         Mix.shell().info(
           "Generated for #{module_name}; use the router macro in the appropriate scope."
         )
+
+        maybe_print_live_admin_instructions(module_name, opts)
       end
     else
       if force do
@@ -109,6 +123,33 @@ defmodule Mix.Tasks.Relyra.Install do
           "Router file #{router_path} missing; add saml_routes() manually if needed."
         )
       end
+
+      maybe_print_live_admin_instructions(module_name, opts)
+    end
+  end
+
+  defp maybe_print_live_admin_instructions(module_name, opts) do
+    if Keyword.get(opts, :live_admin, false) do
+      admin_path = Keyword.get(opts, :admin_path, "/relyra/admin")
+
+      Mix.shell().info("""
+
+      Live admin scaffolded. Mount it in a LiveView-enabled router scope:
+
+          import Relyra.LiveAdmin.Router
+
+          relyra_admin_routes("#{admin_path}",
+            repo: #{module_name}.Repo,
+            scope_provider: #{module_name}.Relyra.AdminScope
+          )
+
+      The generated `#{module_name}.Relyra.AdminScope` reads:
+      - `session[\"admin_actor\"]`
+      - `session[\"admin_actor_label\"]`
+      - `session[\"admin_organization_id\"]`
+
+      Update that module to match your host app's authenticated session shape.
+      """)
     end
   end
 
@@ -141,6 +182,35 @@ defmodule Mix.Tasks.Relyra.Install do
       def map_attributes(_assertion, _connection, _opts) do
         {:error, Relyra.Error.new(:adapter_not_configured, "Configure #{module_name}.Relyra.UserMapper", %{})}
       end
+    end
+    """
+  end
+
+  defp admin_scope_template(module_name) do
+    """
+    defmodule #{module_name}.Relyra.AdminScope do
+      @moduledoc false
+      @behaviour Relyra.LiveAdmin.ScopeProvider
+
+      alias Relyra.LiveAdmin.Scope
+
+      @impl true
+      def resolve_admin_scope(session, _params, _opts) when is_map(session) do
+        case Map.get(session, "admin_actor") do
+          actor when is_binary(actor) and actor != "" ->
+            {:ok,
+             %Scope{
+               actor: actor,
+               actor_label: Map.get(session, "admin_actor_label"),
+               organization_id: Map.get(session, "admin_organization_id")
+             }}
+
+          _other ->
+            {:error, :unauthenticated}
+        end
+      end
+
+      def resolve_admin_scope(_session, _params, _opts), do: {:error, :unauthenticated}
     end
     """
   end

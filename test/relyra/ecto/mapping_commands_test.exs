@@ -217,6 +217,28 @@ defmodule Relyra.Ecto.MappingCommandsTest do
     assert details.reason == ":missing_audit_context"
   end
 
+  test "mapping writes roll back live rows and revision rows when audit persistence fails" do
+    connection = insert_connection!("01JV2B4ENQDJ6D44AH0R0R5XA6")
+
+    assert {:error, %Relyra.Error{type: :invalid_connection_record}} =
+             MappingCommands.replace_attribute_mappings(
+               connection.connection_id,
+               [
+                 %{
+                   source_attribute: "preferred_email",
+                   target_field: :email,
+                   multivalue_strategy: :first
+                 }
+               ],
+               repo: FailingAuditRepo,
+               audit: %{actor: "ops@example.com", cause: "force_audit_failure"}
+             )
+
+    assert attribute_rows(connection.id) == []
+    assert @repo.aggregate(MappingRevision, :count) == 0
+    assert @repo.aggregate(AuditEvent, :count) == 0
+  end
+
   defp insert_connection!(connection_id) do
     now = DateTime.utc_now()
 
@@ -262,3 +284,27 @@ defmodule Relyra.Ecto.MappingCommandsTest do
     )
   end
 end
+  defmodule FailingAuditRepo do
+    @repo Relyra.TestSupport.EctoTestRepo
+
+    def transact(fun), do: @repo.transact(fun)
+    def rollback(value), do: @repo.rollback(value)
+    def get_by(schema, clauses), do: @repo.get_by(schema, clauses)
+    def update(changeset), do: @repo.update(changeset)
+    def insert_all(schema_or_source, entries), do: @repo.insert_all(schema_or_source, entries)
+    def insert_all(schema_or_source, entries, opts), do: @repo.insert_all(schema_or_source, entries, opts)
+    def delete_all(query), do: @repo.delete_all(query)
+    def one(query), do: @repo.one(query)
+    def all(query), do: @repo.all(query)
+
+    def insert(%Ecto.Changeset{data: %Relyra.Ecto.AuditEvent{}}) do
+      {:error,
+       Ecto.Changeset.add_error(
+         Ecto.Changeset.change(%Relyra.Ecto.AuditEvent{}),
+         :actor,
+         "forced failure"
+       )}
+    end
+
+    def insert(changeset), do: @repo.insert(changeset)
+  end

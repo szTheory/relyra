@@ -47,7 +47,10 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
          |> assign_forms(detail, preset_param)}
       else
         {:error, error} ->
-          {:noreply, put_flash(socket, :error, error.message)}
+          {:noreply,
+           socket
+           |> put_flash(:error, error.message)
+           |> push_navigate(to: socket.assigns.relyra_admin_base_path)}
       end
     end
 
@@ -82,50 +85,6 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     def handle_event("disable_connection", _params, socket) do
       transition_connection(socket, :disable)
-    end
-
-    def handle_event("import_metadata", %{"metadata_import" => %{"xml" => xml}}, socket) do
-      action =
-        Metadata.import_xml(
-          socket.assigns.connection_id,
-          xml,
-          repo: socket.assigns.relyra_admin_repo,
-          actor: socket.assigns.admin_scope.actor,
-          cause: "live_admin_metadata_import"
-        )
-
-      handle_reload_result(socket, action, "Metadata imported.")
-    end
-
-    def handle_event("register_metadata_source", %{"metadata_source" => %{"url" => url}}, socket) do
-      action =
-        Metadata.register_source(
-          socket.assigns.connection_id,
-          %{
-            url: url,
-            actor: socket.assigns.admin_scope.actor,
-            cause: "live_admin_register_source"
-          },
-          repo: socket.assigns.relyra_admin_repo
-        )
-
-      handle_reload_result(socket, action, "Metadata source registered.")
-    end
-
-    def handle_event("refresh_metadata", _params, socket) do
-      opts =
-        [
-          repo: socket.assigns.relyra_admin_repo,
-          actor: socket.assigns.admin_scope.actor,
-          cause: "live_admin_metadata_refresh"
-        ]
-        |> maybe_put_req(socket.assigns.relyra_admin_req)
-
-      handle_reload_result(
-        socket,
-        Metadata.refresh(socket.assigns.connection_id, opts),
-        "Metadata refresh completed."
-      )
     end
 
     def handle_event("activate_certificate", %{"fingerprint" => fingerprint}, socket) do
@@ -375,9 +334,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       assign(socket,
         connection_form_data: connection_form_data(detail.connection, socket.assigns.admin_scope),
         attribute_mappings_json: Jason.encode!(detail.attribute_mappings, pretty: true),
-        group_mappings_json: Jason.encode!(detail.group_mappings, pretty: true),
-        metadata_source_url: if(detail.metadata_source, do: detail.metadata_source.url, else: ""),
-        metadata_import_xml: ""
+        group_mappings_json: Jason.encode!(detail.group_mappings, pretty: true)
       )
     end
 

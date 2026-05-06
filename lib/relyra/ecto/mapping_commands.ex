@@ -45,7 +45,8 @@ defmodule Relyra.Ecto.MappingCommands do
                  current_snapshot,
                  after_snapshot,
                  :attribute_mappings,
-                 revision.id
+                 revision.id,
+                 :replace_attribute_mappings
                ) do
           {:ok,
            %{
@@ -99,7 +100,8 @@ defmodule Relyra.Ecto.MappingCommands do
                  current_snapshot,
                  after_snapshot,
                  :group_mappings,
-                 revision.id
+                 revision.id,
+                 :replace_group_mappings
                ) do
           {:ok,
            %{
@@ -584,20 +586,43 @@ defmodule Relyra.Ecto.MappingCommands do
     end
   end
 
-  defp append_audit(repo, connection, audit, action, before_snapshot, after_snapshot, changed_field, revision_id) do
-    AuditWriter.append_event(repo, %{
-      connection_record_id: connection.id,
-      domain: :mapping,
-      action: action,
-      actor: Map.get(audit, :actor),
-      cause: Map.get(audit, :cause),
-      correlation_id: Map.get(audit, :correlation_id),
-      before_view: before_snapshot,
-      after_view: after_snapshot,
-      diff_summary:
-        diff_summary(before_snapshot, after_snapshot, changed_field)
-        |> Map.put(:mapping_revision_id, revision_id)
-    })
+  defp append_audit(
+         repo,
+         connection,
+         audit,
+         action,
+         before_snapshot,
+         after_snapshot,
+         changed_field,
+         revision_id,
+         operation
+       ) do
+    case AuditWriter.append_event(repo, %{
+           connection_record_id: connection.id,
+           domain: :mapping,
+           action: action,
+           actor: Map.get(audit, :actor),
+           cause: Map.get(audit, :cause),
+           correlation_id: Map.get(audit, :correlation_id),
+           before_view: before_snapshot,
+           after_view: after_snapshot,
+           diff_summary:
+             diff_summary(before_snapshot, after_snapshot, changed_field)
+             |> Map.put(:mapping_revision_id, revision_id)
+         }) do
+      {:ok, event} ->
+        {:ok, event}
+
+      {:error, %Error{} = error} ->
+        rollback(
+          repo,
+          Error.new(
+            error.type,
+            error.message,
+            Map.put(error.details, :operation, operation)
+          )
+        )
+    end
   end
 
   defp diff_summary(before_snapshot, after_snapshot, changed_field) do
@@ -655,6 +680,8 @@ defmodule Relyra.Ecto.MappingCommands do
        %{operation: operation, result: inspect(other)}
      )}
   end
+
+  defp rollback(repo, value), do: repo.rollback(value)
 
   defp conflict_error(connection, operation) do
     {:error,

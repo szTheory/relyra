@@ -89,6 +89,29 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
       end
     end
 
+    def get_metadata_revisions(repo, %Scope{} = scope, connection_id)
+        when is_atom(repo) and is_binary(connection_id) do
+      with :ok <- ensure_repo(repo, :get_metadata_revisions),
+           {:ok, connection} <- fetch_connection(repo, scope, connection_id) do
+        revisions =
+          MetadataRevision
+          |> where([revision], revision.connection_record_id == ^connection.id)
+          |> order_by([revision], desc: revision.inserted_at)
+          |> preload([:metadata_source])
+          |> limit(10)
+          |> repo.all()
+
+        metadata_source = repo.get_by(MetadataSource, connection_record_id: connection.id)
+
+        {:ok,
+         %{
+           connection: connection,
+           metadata_source: metadata_source,
+           revisions: revisions
+         }}
+      end
+    end
+
     @spec provider_options() :: [{String.t(), String.t()}]
     def provider_options do
       Provider.list()

@@ -49,7 +49,10 @@ See `.planning/milestones/v0.2-ROADMAP.md` for full phase details, decisions, de
 2. Operator can create a new connection from a supported provider preset or a blank form and see provider defaults prefilled before saving.
 3. Operator can move a connection between draft, enabled, and disabled states from the admin UI and see the current lifecycle state reflected immediately.
 4. Operator sees a clear risk panel whenever a connection enables `legacy_algorithm_policy` or another compatibility override that weakens strict defaults.
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 15-01-PLAN.md — Component shell extraction
+- [ ] 15-02-PLAN.md — Form extraction and preset routing
+- [ ] 15-03-PLAN.md — Lifecycle controls and risk surface wiring
 **UI hint**: yes
 
 ### Phase 16: Metadata management UI
@@ -105,7 +108,7 @@ See `.planning/milestones/v0.2-ROADMAP.md` for full phase details, decisions, de
 | 12. Metadata refresh trust-state repair | v0.2 | 3/3 | Complete (closure phase) | 2026-05-06 |
 | 13. Certificate rollover validation + verification | v0.2 | 3/3 | Complete (closure phase) | 2026-05-06 |
 | 14. Mapping/audit milestone verification | v0.2 | 2/2 | Complete (closure phase) | 2026-05-06 |
-| 15. Admin shell + connection lifecycle | v0.3 | 0/0 | Not started | - |
-| 16. Metadata management UI | v0.3 | 0/0 | Not started | - |
+| 15. Admin shell + connection lifecycle | v0.3 | 3/3 | Complete | 2026-05-06 |
+| 16. Metadata management UI | v0.3 | 3/3 | Complete | 2026-05-06 |
 | 17. Certificate inventory + staged rollover UI | v0.3 | 0/0 | Not started | - |
 | 18. Mapping editor + audit timeline hardening | v0.3 | 0/0 | Not started | - |

@@ -47,6 +47,7 @@ defmodule Relyra.MixProject do
       {:telemetry, "~> 1.3"},
       {:plug, "~> 1.16"},
       {:phoenix, "~> 1.8", optional: true},
+      {:phoenix_live_view, "~> 1.1", optional: true},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.14", only: [:dev, :test], runtime: false},
