@@ -2,112 +2,57 @@
 
 ## Milestones
 
-- ✅ **v0.1** - SP-initiated SSO, verified end-to-end. Archived at `.planning/milestones/v0.1-ROADMAP.md` (shipped 2026-04-25)
-- 🚧 **v0.2** - Enterprise configuration: durable trust-data for connection records, runtime snapshot hydration, metadata lifecycle, certificate rollover, and persisted mappings/auditability.
+- ✅ **v0.1 — SP-initiated SSO, verified end-to-end** (shipped 2026-04-25). See `.planning/milestones/v0.1-ROADMAP.md`.
+- ✅ **v0.2 — Enterprise configuration** (shipped 2026-05-06). See `.planning/milestones/v0.2-ROADMAP.md`.
+- 📋 **v0.3 — TBD** (planning starts via `/gsd-new-milestone`).
 
-## v0.2 Phases
+## Phases
 
-Phase numbering continues from v0.1, so v0.2 starts at Phase 07.
+<details>
+<summary>✅ v0.1 — SP-initiated SSO (Phases 1-6) — SHIPPED 2026-04-25</summary>
 
-| Phase | Name | Goal | Requirements |
-|-------|------|------|--------------|
-| 07 | Schema + connection aggregate | Add durable trust/config records and constraints. | CFG-01 |
-| 08 | Resolver adapter + snapshotting | Hydrate runtime snapshots from persisted config. | CFG-02 |
-| 09 | Metadata import/export + refresh | Support explicit metadata onboarding and controlled refresh. | CFG-03 |
-| 10 | Certificate inventory + rollover | Manage staged cert lifecycle with overlap windows. | CFG-04 |
-| 11 | Mapping persistence + audit hardening | Persist mappings and emit durable audit history. | CFG-05 |
-| 12 | Metadata refresh trust-state repair | Repair the failing refresh/apply path and re-verify metadata lifecycle behavior. | CFG-03 |
-| 13 | Certificate rollover validation + verification | Close rollover validation gaps and produce milestone verification evidence. | CFG-04 |
-| 14 | Mapping/audit milestone verification | Produce the missing mapping/audit milestone verification artifacts and close traceability. | CFG-05 |
+See `.planning/milestones/v0.1-ROADMAP.md`.
 
-### Phase Details
+</details>
 
-**Phase 07: Schema + connection aggregate**
-- Goal: establish the host-DB trust record and schema constraints first.
-- Status: complete (verified 2026-05-05).
-- Success criteria:
-  1. Connection records can be created, updated, disabled, and validated.
-  2. Migrations create the required tables, indexes, and constraints.
-  3. Invalid or incomplete config is rejected before runtime use.
+<details>
+<summary>✅ v0.2 — Enterprise configuration (Phases 7-14) — SHIPPED 2026-05-06</summary>
 
-**Phase 08: Resolver adapter + snapshotting**
-- Goal: keep runtime pure while loading persisted config through an adapter boundary.
-- Success criteria:
-  1. A persisted connection resolves into a plain runtime snapshot.
-  2. Protocol code does not read storage rows directly.
-  3. Resolver failures return typed errors and preserve clear diagnostics.
+- [x] Phase 07: Schema + connection aggregate (3/3 plans) — verified 2026-05-05 — CFG-01
+- [x] Phase 08: Resolver adapter + snapshotting (3/3 plans) — verified 2026-05-05 — CFG-02
+- [x] Phase 09: Metadata import/export + refresh (4/4 plans) — verified via Phase 12 (2026-05-06) — CFG-03
+- [x] Phase 10: Certificate inventory + rollover (3/3 plans) — verified via Phase 13 (2026-05-06) — CFG-04
+- [x] Phase 11: Mapping persistence + audit hardening (4/4 plans) — verified via Phase 14 (2026-05-06) — CFG-05
+- [x] Phase 12: Metadata refresh trust-state repair (3/3 plans, closure) — produced 09-VERIFICATION.md — 2026-05-06
+- [x] Phase 13: Certificate rollover validation + verification (3/3 plans, closure) — produced 10-VERIFICATION.md — 2026-05-06
+- [x] Phase 14: Mapping/audit milestone verification (2/2 plans, closure) — produced 11-VERIFICATION.md — 2026-05-06
 
-**Phase 09: Metadata import/export + refresh**
-- Goal: make metadata onboarding and sync explicit and reversible.
-- Plans: 4 plans.
-- Plan list:
-- [ ] `09-01-PLAN.md` — add metadata revision/source persistence and connection revision pointers.
-- [ ] `09-02-PLAN.md` — add atomic metadata apply with rollback and last-known-good preservation.
-- [ ] `09-03-PLAN.md` — add metadata import parsing, deterministic candidate normalization, and source registration APIs.
-- [ ] `09-04-PLAN.md` — add explicit remote refresh, optional Req wiring, redacted observability, and snapshot-only export regressions.
-- Success criteria:
-  1. Metadata can be imported from local XML, and a remote HTTPS source can be registered for controlled refresh.
-  2. Metadata can be exported for the configured connection.
-  3. Refresh runs with provenance and last-known-good preservation.
+See `.planning/milestones/v0.2-ROADMAP.md` for full phase details, decisions, deferred items, and tech debt.
 
-**Phase 10: Certificate inventory + rollover**
-- Goal: avoid replace-in-place cert outages by modeling overlap and promotion.
-- Success criteria:
-  1. Certificate roles and expiry are stored per connection.
-  2. Active/next/retired states support staged rollover.
-  3. Promotion and rollback keep trust windows explicit.
+</details>
 
-**Phase 11: Mapping persistence + audit hardening**
-- Goal: make authorization mapping and trust changes reviewable.
-- Status: execution complete on 2026-05-05; awaiting `$gsd-verify-work`.
-- Plans: 4 plans.
-- Plan list:
-- [x] `11-01-PLAN.md` — add runtime mapping contract, aggregate ownership boundaries, and explicit live-row plus ledger schemas.
-- [x] `11-02-PLAN.md` — add the canonical mapping/audit migration and real-Repo schema plus constraint coverage.
-- [x] `11-03-PLAN.md` — add a shared audit writer and same-transaction audit capture for connection, metadata, and certificate trust mutations.
-- [x] `11-04-PLAN.md` — add dedicated mapping commands, mapping snapshot hydration, and persisted-config-driven default mapping.
-- Success criteria:
-  1. Attribute/group mappings persist per connection.
-  2. Mapping changes are versioned or otherwise attributable.
-  3. Audit records capture actor, action, and before/after context.
+### 📋 v0.3 — TBD (Planning)
 
-**Phase 12: Metadata refresh trust-state repair**
-- Goal: close the blocking metadata refresh regression and restore verification coverage for `CFG-03`.
-- Status: execution complete on 2026-05-05; awaiting `$gsd-verify-work`.
-- Plans: 3 plans.
-- Plan list:
-- [x] `12-01-PLAN.md` — repair the canonical metadata certificate normalization contract and valid/invalid fixture coverage.
-- [x] `12-02-PLAN.md` — re-verify the shared import/refresh apply seam while preserving staged runtime trust semantics.
-- [x] `12-03-PLAN.md` — produce serial `CFG-03` verification evidence and capture manual sign-off in `09-VERIFICATION.md`.
-- Gap closure: fixes the Phase 09 `:invalid_certificate_pem` refresh/apply failure called out in `v0.2-MILESTONE-AUDIT.md`.
-- Success criteria:
-  1. Operator-triggered metadata refresh completes without certificate PEM decode failures on valid inputs.
-  2. Focused Phase 09 smoke coverage passes for import, apply, and refresh paths.
-  3. Phase 09 has a verification artifact proving `CFG-03` is satisfied.
+Next milestone scope is set via `/gsd-new-milestone`. Likely candidates from v0.2 deferred list:
 
-**Phase 13: Certificate rollover validation + verification**
-- Goal: sync Phase 10 validation truth and produce verification evidence that closes `CFG-04`.
-- Status: complete (verified after Phase 13 execution).
-- Plans: 3 plans.
-- Plan list:
-- [x] `13-01-PLAN.md` — sync `10-VALIDATION.md` to the current serial rollover proof surface and completed Wave 0 truth.
-- [x] `13-02-PLAN.md` — create `10-VERIFICATION.md` from the locked serial packet and blocking manual sign-off gate.
-- [x] `13-03-PLAN.md` — update live milestone truth in `REQUIREMENTS.md`, `ROADMAP.md`, and `STATE.md` after CFG-04 verification closure.
-- Gap closure: closes the audit orphan state for certificate lifecycle coverage and resolves the partial Nyquist status in `10-VALIDATION.md`.
-- Success criteria:
-  1. `10-VALIDATION.md` reflects the current Wave 0 proof surface and serial-only verification posture.
-  2. Phase 10 verification evidence exists for staged promotion, rollback, and expiry tracking behavior.
-  3. `CFG-04` can be marked satisfied in milestone traceability after verification.
+- LiveView admin surface (CFG-06) — config storage is now stable; adoption-UX milestone is unblocked.
+- Bulk operations across multiple connections (CFG-07).
+- Scheduled metadata refresh automation with guardrails (CFG-08).
 
-**Phase 14: Mapping/audit milestone verification**
-- Goal: close the remaining verification gap for Phase 11 without reopening already-green implementation work.
-- Status: complete (verified after Phase 14 execution).
-- Plans: 2 plans.
-- Plan list:
-- [x] `14-01-PLAN.md` — create `11-VERIFICATION.md` from the locked serial packet and blocking manual sign-off gate.
-- [x] `14-02-PLAN.md` — update live milestone truth in `REQUIREMENTS.md`, `ROADMAP.md`, and `STATE.md` after CFG-05 verification closure.
-- Gap closure: resolves the audit orphan state for `CFG-05` by producing the missing phase verification artifact.
-- Success criteria:
-  1. Phase 11 verification evidence exists for mapping persistence and audit hardening behavior.
-  2. Milestone traceability can mark `CFG-05` complete from verification evidence rather than plan completion alone.
-  3. v0.2 re-audit sees no remaining mapping/audit verification gap.
+## Progress
+
+| Phase | Milestone | Plans | Status | Completed |
+|-------|-----------|-------|--------|-----------|
+| 01. XML security ADR + guardrails | v0.1 | 3/3 | Complete | 2026-04-25 |
+| 02. Protocol + signature core | v0.1 | 5/5 | Complete | 2026-04-25 |
+| 03. Behaviour contracts + stores | v0.1 | 3/3 | Complete | 2026-04-25 |
+| 05. Observability + enforcement | v0.1 | 1/1 | Complete | 2026-04-25 |
+| 06. Delivery hardening + adoption surface | v0.1 | 1/1 | Complete | 2026-04-25 |
+| 07. Schema + connection aggregate | v0.2 | 3/3 | Complete | 2026-05-05 |
+| 08. Resolver adapter + snapshotting | v0.2 | 3/3 | Complete | 2026-05-05 |
+| 09. Metadata import/export + refresh | v0.2 | 4/4 | Complete (closure 12) | 2026-05-06 |
+| 10. Certificate inventory + rollover | v0.2 | 3/3 | Complete (closure 13) | 2026-05-06 |
+| 11. Mapping persistence + audit hardening | v0.2 | 4/4 | Complete (closure 14) | 2026-05-06 |
+| 12. Metadata refresh trust-state repair | v0.2 | 3/3 | Complete (closure phase) | 2026-05-06 |
+| 13. Certificate rollover validation + verification | v0.2 | 3/3 | Complete (closure phase) | 2026-05-06 |
+| 14. Mapping/audit milestone verification | v0.2 | 2/2 | Complete (closure phase) | 2026-05-06 |

@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
 milestone: v0.2
-milestone_name: Phases
-status: complete
-last_updated: "2026-05-06T08:46:04Z"
-last_activity: 2026-05-06 -- Phase 14 execution completed; CFG-05 verified and closed
+milestone_name: Enterprise configuration
+status: shipped
+last_updated: "2026-05-06T08:57:31Z"
+last_activity: 2026-05-06 -- v0.2 milestone closed; archived to milestones/; tag v0.2 created
 progress:
-  total_phases: 7
-  completed_phases: 7
+  total_phases: 8
+  completed_phases: 8
   total_plans: 25
   completed_plans: 25
   percent: 100
@@ -17,37 +17,33 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-04-26)
+See: `.planning/PROJECT.md` (updated 2026-05-06 after v0.2 milestone close)
 
-**Core value:** Every SAML login ends in a verified trust path or a typed rejection, never a silent compromise.  
-**Current focus:** Phase 14 — mapping-audit-milestone-verification (complete)
+**Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
+**Current focus:** Planning next milestone (v0.3 — TBD via `/gsd-new-milestone`).
 
 ## Current Position
 
-Phase: 14 (mapping-audit-milestone-verification) — COMPLETE
-Plan: 2 of 2
-Status: Execution complete; CFG-05 closed
-Last activity: 2026-05-06 -- Phase 14 execution completed; CFG-05 verified and closed
-Resume file: .planning/phases/11-mapping-persistence-audit-hardening/11-VERIFICATION.md
+Milestone: v0.2 — Enterprise configuration — SHIPPED 2026-05-06
+Status: Archived to `.planning/milestones/v0.2-ROADMAP.md` and `.planning/milestones/v0.2-REQUIREMENTS.md`
+Re-audit: passed 5/5 (`.planning/milestones/v0.2-MILESTONE-AUDIT.md`)
+Tag: v0.2
 
 Progress: [██████████] 100%
 
-## Performance Metrics
+## Accumulated Context
 
-**Velocity:**
+**Decisions log:** Full log lives in `.planning/PROJECT.md` Key Decisions table. Highlights from v0.2:
+- Connection aggregate uses internal binary PK + public `connection_id`; no Ecto rows above the resolver boundary.
+- `idp_certificates` is canonical; `cert_chain` is compatibility mirror.
+- Metadata refresh is operator-triggered only; new signing certs stage as `:next`.
+- All four mutation modules co-commit audit rows via single `Relyra.Ecto.AuditWriter.append_event` seam inside the same transaction.
+- Closure-phase pattern (12 → 09's verification, etc.) is the canonical move when an audit surfaces verification orphans.
 
-- Total plans completed: 23
-- Average duration: -
-- Total execution time: 0.7 hours
+**Open blockers:** None.
 
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1 | 3/3 | - | - |
-| 2 | 5/5 | 28 min | 6 min |
-| 3 | 3/3 | - | - |
-| 4 | 2/2 | 15 min | 7.5 min |
-| 5 | 2/2 | 1h | 30 min |
-| 6 | 4/4 | 30 min | 7.5 min |
-| 7 | 3/3 | inline verification | n/a |
+**Carryover tech debt for v0.3:**
+- `Relyra.Ecto.MappingCommands.append_audit/8` does not explicitly call `repo.rollback/1` on `AuditWriter` failure (relies on `transact/1` auto-rollback); other three co-commit sites use the explicit pattern. Modern Ecto: correct. Legacy fallback: theoretically vulnerable.
+- 09/10/12/13/14 VALIDATION.md frontmatter still says `status: ready_for_verify`; verification artifacts now exist. Cosmetic; not blocking.
+- 07/08 host-app adopter docs (migration ergonomics; resolver-config copy) want a non-code manual review pass during adopter onboarding.
+- Phase smoke suites must run serially to avoid Ecto migration bootstrap races. Operational guidance only.
