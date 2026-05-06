@@ -21,6 +21,7 @@ defmodule Relyra.LiveAdminMetadataTest do
     %Phoenix.LiveView.Socket{
       assigns: Map.merge(%{
         __changed__: %{},
+        flash: %{},
         admin_scope: %Scope{
           actor: "ops@example.com",
           actor_label: "Ops User",
@@ -37,7 +38,7 @@ defmodule Relyra.LiveAdminMetadataTest do
     socket = build_socket()
     assert {:ok, new_socket} = ConnectionMetadataLive.mount(%{"connection_id" => "conn_meta_test"}, %{}, socket)
     
-    assert new_socket.assigns.page_title == "Relyra Admin"
+    assert new_socket.assigns.page_title == "Metadata Management"
     assert new_socket.assigns.connection_id == "conn_meta_test"
     assert new_socket.assigns.mode == "xml"
   end
@@ -59,16 +60,63 @@ defmodule Relyra.LiveAdminMetadataTest do
   end
 
   test "render/1 displays xml mode" do
-    assigns = %{mode: "xml", __changed__: %{}}
+    assigns = %{
+      mode: "xml", 
+      __changed__: %{}, 
+      relyra_admin_base_path: "/admin", 
+      connection_id: "conn_meta_test", 
+      detail: %{metadata_source: nil}, 
+      streams: %{metadata_revisions: %Phoenix.LiveView.LiveStream{name: :metadata_revisions, inserts: [], deletes: []}}
+    }
     html = Phoenix.HTML.Safe.to_iodata(ConnectionMetadataLive.render(assigns)) |> IO.iodata_to_binary()
-    assert html =~ "XML Mode"
+    assert html =~ "XML Import"
     assert html =~ "Metadata Management"
   end
 
   test "render/1 displays url mode" do
-    assigns = %{mode: "url", __changed__: %{}}
+    assigns = %{
+      mode: "url", 
+      __changed__: %{}, 
+      relyra_admin_base_path: "/admin", 
+      connection_id: "conn_meta_test", 
+      refresh_status: :idle,
+      detail: %{metadata_source: nil}, 
+      streams: %{metadata_revisions: %Phoenix.LiveView.LiveStream{name: :metadata_revisions, inserts: [], deletes: []}}
+    }
     html = Phoenix.HTML.Safe.to_iodata(ConnectionMetadataLive.render(assigns)) |> IO.iodata_to_binary()
-    assert html =~ "URL Mode"
+    assert html =~ "URL Sync"
     assert html =~ "Metadata Management"
+  end
+
+  test "handle_event refresh_metadata triggers start_async and sets loading state" do
+    socket = build_socket(%{connection_id: "conn_meta_test"})
+    assert {:noreply, new_socket} = ConnectionMetadataLive.handle_event("refresh_metadata", %{}, socket)
+    
+    assert new_socket.assigns.refresh_status == :loading
+    # start_async actually puts a map in socket.private if we test with standard socket, but testing the assign is enough here
+  end
+
+  test "handle_async :metadata_refresh success updates status and flashes info" do
+    socket = build_socket(%{connection_id: "conn_meta_test"})
+    assert {:noreply, new_socket} = ConnectionMetadataLive.handle_async(:metadata_refresh, {:ok, {:ok, %{}}}, socket)
+    
+    assert new_socket.assigns.refresh_status == :idle
+    assert new_socket.assigns.flash["info"] == "Metadata refresh completed."
+  end
+
+  test "handle_async :metadata_refresh error updates status and flashes error" do
+    socket = build_socket(%{connection_id: "conn_meta_test"})
+    assert {:noreply, new_socket} = ConnectionMetadataLive.handle_async(:metadata_refresh, {:ok, {:error, %Relyra.Error{type: :metadata_refresh_failed, message: "Refresh failed"}}}, socket)
+    
+    assert new_socket.assigns.refresh_status == :idle
+    assert new_socket.assigns.flash["error"] == "Refresh failed"
+  end
+
+  test "handle_async :metadata_refresh exit updates status and flashes error" do
+    socket = build_socket(%{connection_id: "conn_meta_test"})
+    assert {:noreply, new_socket} = ConnectionMetadataLive.handle_async(:metadata_refresh, {:exit, :timeout}, socket)
+    
+    assert new_socket.assigns.refresh_status == :idle
+    assert new_socket.assigns.flash["error"] == "Metadata refresh failed to complete."
   end
 end

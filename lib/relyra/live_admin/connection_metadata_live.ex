@@ -19,7 +19,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
          |> assign(:page_title, "Metadata Management")
          |> assign(:connection_id, connection_id)
          |> assign(:mode, "xml")
-         |> assign(:detail, nil)}
+         |> assign(:detail, nil)
+         |> assign(:refresh_status, :idle)}
       rescue
         e -> 
           IO.inspect(e, label: "MOUNT ERROR")
@@ -77,11 +78,45 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         ]
         |> maybe_put_req(socket.assigns.relyra_admin_req)
 
-      handle_reload_result(
-        socket,
-        Metadata.refresh(socket.assigns.connection_id, opts),
-        "Metadata refresh completed."
-      )
+      connection_id = socket.assigns.connection_id
+
+      socket =
+        socket
+        |> assign(:refresh_status, :loading)
+        |> start_async(:metadata_refresh, fn ->
+          Metadata.refresh(connection_id, opts)
+        end)
+
+      {:noreply, socket}
+    end
+
+    @impl true
+    def handle_async(:metadata_refresh, {:ok, {:ok, _result}}, socket) do
+      socket =
+        socket
+        |> assign(:refresh_status, :idle)
+        |> put_flash(:info, "Metadata refresh completed.")
+        |> reload_detail()
+
+      {:noreply, socket}
+    end
+
+    def handle_async(:metadata_refresh, {:ok, {:error, error}}, socket) do
+      socket =
+        socket
+        |> assign(:refresh_status, :idle)
+        |> put_flash(:error, error.message)
+
+      {:noreply, socket}
+    end
+
+    def handle_async(:metadata_refresh, {:exit, _reason}, socket) do
+      socket =
+        socket
+        |> assign(:refresh_status, :idle)
+        |> put_flash(:error, "Metadata refresh failed to complete.")
+
+      {:noreply, socket}
     end
 
     @impl true
@@ -130,7 +165,12 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           </form>
 
           <div :if={@detail && @detail.metadata_source}>
-            <button phx-click="refresh_metadata" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">Refresh metadata now</button>
+            <button phx-click="refresh_metadata" disabled={@refresh_status == :loading} style={"padding: 8px 16px; border-radius: 4px; cursor: pointer; " <> if(@refresh_status == :loading, do: "background: #e0e0e0; color: #999; border: 1px solid #ccc;", else: "background: #f0f0f0; border: 1px solid #ccc;")}>
+              {if @refresh_status == :loading, do: "Refreshing...", else: "Refresh metadata now"}
+            </button>
+            <p style="color: #666; font-size: 13px; margin-top: 8px; margin-bottom: 0;">
+              Note: Newly fetched trust material (like certificates) is not implicitly promoted and requires a manual rollover step on the main connection page.
+            </p>
           </div>
         </div>
 
