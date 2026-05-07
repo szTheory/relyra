@@ -2,6 +2,41 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v0.5 — Operational maturity
+
+**Shipped:** 2026-05-07
+**Phases:** 4 (2 scope + 2 closure) | **Plans:** 15 | **Tests at close:** 358/358
+
+### What Was Built
+
+- **Bulk Operations (CFG-07).** Phase 20 delivered bulk enable/disable/refresh for connections. Enforced sequential execution to avoid DB pressure and unified audit correlation ID for batched transactions.
+- **Scheduled Metadata Refresh (CFG-08).** Phase 21 delivered an automated ticker for background metadata refresh with configurable cadences. Includes asymmetric strictness (unattended background jobs require signed metadata) and failure backoff with auto-suspension.
+- **Telemetry & Observability.** Granular `[:relyra, :saml, :metadata, :auto_refresh, ...]` telemetry namespaces and an opt-in reference `LogAlerts` handler.
+
+### What Worked
+
+- **Extending the Closure-Phase Pattern (Phases 21.1, 21.2).** The milestone audit surfaced an integration BLOCKER (bulk refresh dropping correlation_id) and scope drift (2 unbuilt features). Instead of reopening Phases 20 and 21, two small closure phases were added. This contained the blast radius, cleanly resolved the gaps, and kept the audit trail transparent.
+- **Asymmetric Strictness for Automation.** Manual overrides allow leniency, but automated background routines enforce strictness (e.g., unsigned metadata must be manually applied). This preserved UX without weakening the security posture.
+- **Single-Transaction Audit Enforcement.** The invariant that every mutation co-commits an audit log was successfully preserved through bulk processes and automated Oban workers by forcing all paths through the `transact/2` wrapper in `MetadataApply`.
+- **Wave-0 Stub Pattern.** Pre-creating test files (`:pending`) for multi-wave phases ensured that future wave plans hit real paths right away, giving a loud signal via `flunk` if a stub wasn't overwritten.
+
+### What Was Inefficient
+
+- **Scope Drift Without Re-Alignment.** v0.5 was scoped for 4 features, but only 2 were built. No canonical `v0.5-REQUIREMENTS.md` was created, making the audit flag the missing features late. Scope changes should be proactively documented when features (like Debug Bundles and Expiry Alerts) are deferred.
+- **Cross-Phase Integration Gaps.** Phase 20 (bulk ops) and Phase 9/21 (refresh) didn't seamlessly connect. The legacy `Refresh.refresh/2` failed to forward the new bulk `correlation_id` and `actor`. This integration blocker highlights the need for stronger cross-phase E2E validation earlier.
+- **Documentation Drift.** Phase 20 bulk features were entirely missed in the README. Only caught by the final milestone audit.
+
+### Patterns Established
+
+- **Audit-Gap Closure Phases.** Phases like 21.1 and 21.2 prove that closure phases work not just for tests (v0.2), but for security blockers and scope realignment as well.
+- **Wave-0 Test Stubbing.** Laying out all test files before code is written guarantees high Nyquist coverage and eliminates missed integration seams during later waves.
+- **Strict-by-Default Automation.** Unattended processes MUST be stricter than operator-driven manual overrides.
+
+### Key Lessons
+
+1. **Verify integration between isolated phases.** Two phases that pass Nyquist tests in isolation can still fail when stitched together (e.g., bulk ops executing a legacy refresh path).
+2. **Re-align scope early.** When deciding to defer work, update `PROJECT.md` immediately rather than waiting for the milestone audit to complain about orphaned requirements.
+
 ## Milestone: v0.2 — Enterprise Configuration
 
 **Shipped:** 2026-05-06
