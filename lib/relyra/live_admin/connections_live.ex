@@ -397,11 +397,21 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     def render(assigns) do
       ~H"""
       <div style="padding: 24px; font-family: Helvetica, Arial, sans-serif;">
-        <header style="margin-bottom: 24px;">
-          <h1 style="font-size: 28px; margin: 0;">Relyra Admin</h1>
-          <p style="color: #555; margin-top: 8px;">
-            {@admin_scope |> Scope.scope_label()} · acting as {@admin_scope |> Scope.actor_label()}
-          </p>
+        <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h1 style="font-size: 28px; margin: 0;">Relyra Admin</h1>
+            <p style="color: #555; margin-top: 8px;">
+              {@admin_scope |> Scope.scope_label()} · acting as {@admin_scope |> Scope.actor_label()}
+            </p>
+          </div>
+          <div>
+            <.link
+              href={"#{@relyra_admin_base_path}/diagnostic/bundle"}
+              style="padding: 6px 12px; background: #f0f4f8; border: 1px solid #d1d9e1; border-radius: 4px; text-decoration: none; color: #333; font-size: 14px; cursor: pointer; display: inline-block;"
+            >
+              Download Diagnostic Bundle
+            </.link>
+          </div>
         </header>
 
         <section style="display: grid; grid-template-columns: minmax(260px, 320px) 1fr; gap: 24px;">
