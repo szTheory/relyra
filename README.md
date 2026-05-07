@@ -48,6 +48,33 @@ mix relyra.install --module MyApp --repo my-app
 - [Google Workspace recipe](guides/recipes/google_workspace.md)
 - [Security policy](SECURITY.md)
 
+## Operations: Bulk actions
+
+Phase 20 ships a multi-select bulk-actions surface in the LiveView admin so operators can run lifecycle and metadata actions across many connections in one operator action. Each bulk run produces one shared audit `correlation_id` so the resulting per-connection ledger rows can be reconstructed as a single batch — Phase 21.1 closed the audit forwarding gap so this guarantee holds for every supported action.
+
+From the connections list, select one or more connections via the row checkboxes. The Bulk Actions menu appears once at least one row is selected and exposes three actions:
+
+- **Enable** — Move every selected connection to the `enabled` lifecycle state. Each connection's trust change co-commits its own audit row inside its own transaction.
+- **Disable** — Move every selected connection to the `disabled` lifecycle state. Existing application sessions are not revoked.
+- **Refresh Metadata** — Re-fetch metadata for every selected connection from its registered remote source. The bulk path uses the same operator-triggered manual refresh seam as a single-connection refresh; new signing certificates stage as `:next` rather than promoting implicitly.
+
+Bulk actions execute sequentially (one connection at a time) to keep database pressure bounded and audit ordering explicit. The aggregate flash message reports per-connection success and failure counts; partial failures do not abort the batch.
+
+Audit trail: every per-connection row in a bulk run shares the bulk `correlation_id` and the operator-attributed `actor` / `cause`, so an operator reviewing the audit ledger can reconstruct "who ran which bulk action across which connections" from a single shared identifier.
+
+The seam is `Relyra.Ecto.BulkActions.run/4`. Hosts that want to drive bulk actions from a Mix task, a script, or a custom admin UI can call it directly with a list of `connection_id` values and one of the three action functions:
+
+```elixir
+Relyra.Ecto.BulkActions.run(
+  MyApp.Repo,
+  ["01JT...", "01JT...", "01JT..."],
+  &Relyra.Metadata.refresh/2,
+  audit: %{actor: "ops@example.com", cause: "scripted_bulk_refresh"}
+)
+```
+
+Returns `{:ok, %{connection_id => {:ok, _} | {:error, %Relyra.Error{}}}}`. The `correlation_id` is auto-generated if not supplied in the audit map.
+
 ## Operations: Scheduled metadata refresh
 
 Phase 21 ships a dormant scheduler entry point any host scheduler can drive. Auto-refresh is opt-in per connection and requires an operator-pinned SHA-256 metadata trust fingerprint before it can be enabled. Pick the recipe that matches your deployment.
