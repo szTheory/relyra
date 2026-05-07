@@ -44,6 +44,63 @@ defmodule Relyra.Security.Signature do
      )}
   end
 
+  @doc """
+  Verifies the XMLDSig signature on a SAML metadata root (`<EntityDescriptor>`
+  or `<EntitiesDescriptor>`) using the SAME `do_verify/4` trust primitive
+  `verify/4` uses. The only difference is the telemetry payload's `:flow`
+  tag (`:metadata_refresh` instead of `:sp_initiated`) so adopters can
+  attach distinct handlers to the unattended metadata-refresh channel.
+
+  Phase 21 contract per D-16: this MUST be called BEFORE the candidate is
+  parsed deeply (no `Parser.parse` invocation between fetch and this call
+  on the scheduled path). The caller (Phase 21 wrapper) builds a
+  metadata-root-shaped `parsed_doc` map exposing the `:signed_candidates`
+  rooted at the EntityDescriptor / EntitiesDescriptor envelope.
+
+  `cert_chain` MUST be the operator-pinned PEM list resolved from
+  `MetadataSource.metadata_trust_fingerprints` per D-17 — NEVER the IdP's
+  assertion certs.
+  """
+  @spec verify_metadata_root(map(), map(), [binary()], keyword()) ::
+          {:ok, SignedNode.t()} | {:error, Error.t()}
+  def verify_metadata_root(parsed_doc, connection, cert_chain, opts \\ [])
+
+  def verify_metadata_root(parsed_doc, connection, cert_chain, opts)
+      when is_map(parsed_doc) and is_map(connection) and is_list(cert_chain) and is_list(opts) do
+    metadata = %{
+      connection_id: Map.get(connection, :connection_id) || Map.get(connection, :id),
+      flow: :metadata_refresh
+    }
+
+    Relyra.Telemetry.span([:signature, :verify], metadata, fn ->
+      result = do_verify(parsed_doc, connection, cert_chain, opts)
+
+      case result do
+        {:ok, signed_node} ->
+          {{:ok, signed_node},
+           Map.merge(metadata, %{
+             outcome: :ok,
+             signature_algorithm: signed_node.signature_method,
+             digest_algorithm: signed_node.digest_method
+           })}
+
+        {:error, %Error{} = error} ->
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      end
+    end)
+  end
+
+  def verify_metadata_root(_parsed_doc, connection, _cert_chain, _opts) do
+    details = connection_details(connection)
+
+    {:error,
+     Error.new(
+       :invalid_signature,
+       "Metadata-root signature verification inputs are invalid",
+       Map.put(details, :reason, :invalid_signature_input)
+     )}
+  end
+
   defp do_verify(parsed_doc, connection, cert_chain, opts) do
     details = connection_details(connection)
     duplicate_xml_ids = Map.get(parsed_doc, :duplicate_ids) || []
