@@ -141,4 +141,4 @@ Plans:
 - [ ] 21.2-02-PLAN.md — REQUIREMENTS.md in-place v0.4 → v0.5 refresh (do NOT create v0.5 archive — that's `/gsd-complete-milestone v0.5`'s job)
 - [ ] 21.2-03-PLAN.md — MILESTONE-ARC.md v0.6 row update + Evolution annotation (first application of the doc's annotation rule)
 - [ ] 21.2-04-PLAN.md — README.md INT-02 fix (Operations: Bulk actions subsection placed before scheduled-refresh section)
-- [ ] 21.2-05-PLAN.md — `/gsd-validate-phase 20` ride-along (produces 20-VALIDATION.md; closes Nyquist PARTIAL → compliant)
+- [x] 21.2-05-PLAN.md — `/gsd-validate-phase 20` ride-along (produces 20-VALIDATION.md; closes Nyquist PARTIAL → compliant)
