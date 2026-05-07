@@ -17,6 +17,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.3 shipped 2026-05-06** — LiveView admin surface. All capabilities from v0.2 are now exposed via a mountable interface. 10/10 requirements verified.
 - **v0.4 shipped 2026-05-06** — IdP-initiated SSO and opaque RelayState. 1/1 requirements verified.
 - Code state at v0.4 close: ~17,200 LOC across `lib/` and `test/` (Elixir).
+- **v0.5 in progress** — Operational maturity. Phase 20 (bulk operations, CFG-07) and Phase 21 (scheduled metadata refresh, CFG-08) shipped 2026-05-06 / 2026-05-07; Debug bundles and Expiry alerts remain.
 
 ## Current Milestone: v0.5 — Operational maturity
 
@@ -65,12 +66,14 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 **v0.4:**
 - ✓ **IDP-INIT-01** — IdP-initiated SSO support with security guardrails and opaque RelayState handling — v0.4 (Phase 19; 1/1 requirements verified 2026-05-06)
 
+**v0.5:**
+- ✓ **CFG-08** — Scheduled metadata refresh automation with guardrails — v0.5 (Phase 21; CFG-08 verified 2026-05-07; 22/22 must-haves verified, 344 tests + 8 ci.oban_smoke green, dual compile lanes green)
+
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
 - [ ] **CFG-07**: User can run bulk operations across multiple connections.
-- [ ] **CFG-08**: User can enable scheduled metadata refresh automation with guardrails.
 - [ ] **DIAG-01**: Operator can generate a redacted debug bundle for troubleshooting.
 
 ### Out of Scope
@@ -169,4 +172,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-06 — v0.3 LiveView admin milestone started.*
+*Last updated: 2026-05-07 — Phase 21 (CFG-08, scheduled metadata refresh) shipped; v0.5 Operational maturity in progress.*
