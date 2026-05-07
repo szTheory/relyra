@@ -1,19 +1,112 @@
 defmodule Relyra.Metadata.DriftDetectorTest do
-  @moduledoc """
-  Wave 0 stub for `Relyra.Metadata.DriftDetector` (Phase 21 W1 — `21-03-trust-boundary-helpers`).
-
-  This file exists so PLAN files can reference an `<automated>` verify command
-  pointing at this path from day one. The corresponding production module will
-  be created in Wave 1 (`21-03`); see
-  `.planning/phases/21-scheduled-metadata-refresh/21-VALIDATION.md` Per-Task
-  Verification Map for the wave assignment.
-  """
   use ExUnit.Case, async: true
+  alias Relyra.Metadata.DriftDetector
 
-  @moduletag :pending
+  describe "diff/2 — no drift" do
+    test "returns {:ok, :no_drift} when entityID and fingerprint set match exactly" do
+      candidate = %{
+        idp_entity_id: "https://idp.example/",
+        certificate_fingerprints: ["aaa", "bbb"]
+      }
 
-  @tag :pending
-  test "Wave 0 stub: replaced by Wave 1 task in Phase 21" do
-    flunk("Wave 0 stub — implement in the wave that introduces the production module")
+      state = %{
+        idp_entity_id: "https://idp.example/",
+        last_known_metadata_signing_certs: ["aaa", "bbb"]
+      }
+
+      assert {:ok, :no_drift} = DriftDetector.diff(candidate, state)
+    end
+
+    test "returns {:ok, :no_drift} when candidate fingerprints are a SUBSET of known (cert was retired upstream — not drift)" do
+      candidate = %{
+        idp_entity_id: "https://idp.example/",
+        certificate_fingerprints: ["aaa"]
+      }
+
+      state = %{
+        idp_entity_id: "https://idp.example/",
+        last_known_metadata_signing_certs: ["aaa", "bbb"]
+      }
+
+      assert {:ok, :no_drift} = DriftDetector.diff(candidate, state)
+    end
+
+    test "returns {:ok, :no_drift} on first-ever fetch (known set empty — initialization, not drift)" do
+      candidate = %{
+        idp_entity_id: "https://idp.example/",
+        certificate_fingerprints: ["aaa"]
+      }
+
+      state = %{
+        idp_entity_id: "https://idp.example/",
+        last_known_metadata_signing_certs: []
+      }
+
+      assert {:ok, :no_drift} = DriftDetector.diff(candidate, state)
+    end
+  end
+
+  describe "diff/2 — entity_id drift" do
+    test "returns {:drift, reason: :entity_id_drift} when entityID changes" do
+      candidate = %{
+        idp_entity_id: "https://NEW.example/",
+        certificate_fingerprints: ["aaa"]
+      }
+
+      state = %{
+        idp_entity_id: "https://OLD.example/",
+        last_known_metadata_signing_certs: ["aaa"]
+      }
+
+      assert {:drift, %{reason: :entity_id_drift, entity_id_changed?: true}} =
+               DriftDetector.diff(candidate, state)
+    end
+
+    test "entity_id_drift takes precedence over new_signing_cert" do
+      candidate = %{
+        idp_entity_id: "https://NEW.example/",
+        certificate_fingerprints: ["zzz"]
+      }
+
+      state = %{
+        idp_entity_id: "https://OLD.example/",
+        last_known_metadata_signing_certs: ["aaa"]
+      }
+
+      assert {:drift, %{reason: :entity_id_drift, new_signing_certs: ["zzz"]}} =
+               DriftDetector.diff(candidate, state)
+    end
+  end
+
+  describe "diff/2 — new signing cert" do
+    test "returns {:drift, reason: :new_signing_cert} when fingerprint set adds a NEW entry" do
+      candidate = %{
+        idp_entity_id: "https://idp.example/",
+        certificate_fingerprints: ["aaa", "bbb", "ccc"]
+      }
+
+      state = %{
+        idp_entity_id: "https://idp.example/",
+        last_known_metadata_signing_certs: ["aaa", "bbb"]
+      }
+
+      assert {:drift, %{reason: :new_signing_cert, new_signing_certs: new}} =
+               DriftDetector.diff(candidate, state)
+
+      assert "ccc" in new
+    end
+  end
+
+  describe "diff/2 — fingerprint-only comparison (Pitfall 7)" do
+    test "is order-insensitive (uses MapSet semantics)" do
+      candidate = %{idp_entity_id: "https://idp/", certificate_fingerprints: ["bbb", "aaa"]}
+
+      state = %{
+        idp_entity_id: "https://idp/",
+        last_known_metadata_signing_certs: ["aaa", "bbb"]
+      }
+
+      assert {:ok, :no_drift} = DriftDetector.diff(candidate, state)
+    end
   end
 end
