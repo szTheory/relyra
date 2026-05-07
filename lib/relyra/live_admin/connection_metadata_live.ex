@@ -4,6 +4,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     use Phoenix.LiveView
 
+    alias Relyra.LiveAdmin.Components.RiskPanel
     alias Relyra.LiveAdmin.Query
     alias Relyra.Metadata
 
@@ -18,7 +19,9 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
        |> assign(:connection_id, connection_id)
        |> assign(:mode, "xml")
        |> assign(:detail, nil)
-       |> stream_configure(:metadata_revisions, dom_id: &(&1.id))
+       |> assign(:refresh_status, :idle)
+       |> assign(:resume_status, :idle)
+       |> stream_configure(:metadata_revisions, dom_id: & &1.id)
        |> stream(:metadata_revisions, [])}
     end
 
@@ -84,6 +87,61 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       {:noreply, socket}
     end
 
+    # Phase 21 D-29: "Resume now" path for an auto-suspended source.
+    # Single-transaction discipline (D-28) is enforced by routing
+    # exclusively through `Relyra.Ecto.MetadataApply.resume_auto_refresh/3`
+    # (Plan 04 Task 3) — that seam co-commits the suspend-clear health
+    # write AND the operator-intent audit row inside ONE transact/2 block.
+    # The LiveView MUST NOT carry a parallel `repo.update`-based clear
+    # helper (B3 invariant); the audit/health divergence is exactly
+    # what Phase 21 is designed to prevent.
+    #
+    # After the transaction commits, we dispatch an immediate half-open
+    # probe via `Relyra.Metadata.Scheduler.run_due/2` scoped to the
+    # source via `:source_ids`. The Oban worker's `unique:` constraint
+    # absorbs concurrent scheduler ticks that fire the same source
+    # (Pitfall 3 — race with a clustered cron tick).
+    def handle_event("resume_auto_refresh", _params, socket) do
+      repo = socket.assigns.relyra_admin_repo
+      actor = socket.assigns.admin_scope.actor
+      source = get_in(socket.assigns, [:detail, :metadata_source])
+
+      cond do
+        is_nil(source) ->
+          {:noreply,
+           put_flash(socket, :error, "No metadata source is registered for this connection.")}
+
+        is_nil(source.auto_suspended_until) ->
+          {:noreply, put_flash(socket, :info, "Auto-refresh is not currently suspended.")}
+
+        true ->
+          case Relyra.Ecto.MetadataApply.resume_auto_refresh(repo, source, %{actor: actor}) do
+            {:ok, %{source: _updated_source}} ->
+              opts =
+                [
+                  repo: repo,
+                  actor: actor,
+                  cause: "live_admin_auto_refresh_resume",
+                  audit: %{actor: actor, cause: "live_admin_auto_refresh_resume"},
+                  source_ids: [source.id]
+                ]
+                |> maybe_put_req(socket.assigns.relyra_admin_req)
+
+              socket =
+                socket
+                |> assign(:resume_status, :loading)
+                |> start_async(:auto_refresh_resume, fn ->
+                  Relyra.Metadata.Scheduler.run_due(repo, opts)
+                end)
+
+              {:noreply, socket}
+
+            {:error, error} ->
+              {:noreply, put_flash(socket, :error, error.message)}
+          end
+      end
+    end
+
     @impl true
     def handle_async(:metadata_refresh, {:ok, {:ok, _result}}, socket) do
       socket =
@@ -109,6 +167,36 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         socket
         |> assign(:refresh_status, :idle)
         |> put_flash(:error, "Metadata refresh failed to complete.")
+
+      {:noreply, socket}
+    end
+
+    # Phase 21 D-29: handle_async clauses for the "Resume now" probe.
+    # Mirrors the disabled-while-loading UX of `:metadata_refresh`.
+    def handle_async(:auto_refresh_resume, {:ok, {:ok, _results}}, socket) do
+      socket =
+        socket
+        |> assign(:resume_status, :idle)
+        |> put_flash(:info, "Auto-refresh resumed; running an immediate probe.")
+        |> reload_detail()
+
+      {:noreply, socket}
+    end
+
+    def handle_async(:auto_refresh_resume, {:ok, {:error, error}}, socket) do
+      socket =
+        socket
+        |> assign(:resume_status, :idle)
+        |> put_flash(:error, error.message)
+
+      {:noreply, socket}
+    end
+
+    def handle_async(:auto_refresh_resume, {:exit, _reason}, socket) do
+      socket =
+        socket
+        |> assign(:resume_status, :idle)
+        |> put_flash(:error, "Resume probe failed to complete.")
 
       {:noreply, socket}
     end
@@ -164,6 +252,116 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
             </button>
             <p style="color: #666; font-size: 13px; margin-top: 8px; margin-bottom: 0;">
               Note: Newly fetched trust material (like certificates) is not implicitly promoted and requires a manual rollover step on the main connection page.
+            </p>
+          </div>
+        </div>
+
+        <div
+          :if={@detail && Map.get(@detail, :auto_refresh_health)}
+          style="border: 1px solid #ddd; padding: 16px; margin-bottom: 24px; background: #fafafa;"
+        >
+          <h2 style="font-size: 18px; margin-top: 0;">Auto-refresh health</h2>
+
+          <div
+            :if={Map.get(@detail, :auto_refresh_health).state == :suspended}
+            style="padding: 8px 12px; background: #ffebee; color: #c62828; border-left: 3px solid #c62828; margin-bottom: 12px;"
+          >
+            <strong>Auto-refresh suspended</strong>
+            <span :if={Map.get(@detail, :auto_refresh_health).auto_suspended_reason}>
+              ({Map.get(@detail, :auto_refresh_health).auto_suspended_reason})
+            </span>
+            <span :if={Map.get(@detail, :auto_refresh_health).auto_suspended_until}>
+              until {Map.get(@detail, :auto_refresh_health).auto_suspended_until}
+            </span>
+          </div>
+
+          <div
+            :if={Map.get(@detail, :auto_refresh_health).state == :degraded}
+            style="padding: 8px 12px; background: #fff7e6; color: #b87600; border-left: 3px solid #d98b00; margin-bottom: 12px;"
+          >
+            <strong>Auto-refresh degraded</strong>
+            — {Map.get(@detail, :auto_refresh_health).consecutive_failure_count} consecutive failures
+          </div>
+
+          <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 14px; margin: 0;">
+            <dt style="color: #666;">Schedule</dt>
+            <dd style="margin: 0;">{Map.get(@detail, :auto_refresh_health).cadence || "—"}</dd>
+
+            <dt style="color: #666;">Last success</dt>
+            <dd style="margin: 0;">
+              {Map.get(@detail, :auto_refresh_health).last_success_at || "Never"}
+            </dd>
+
+            <dt style="color: #666;">Consecutive failures</dt>
+            <dd style="margin: 0;">
+              {Map.get(@detail, :auto_refresh_health).consecutive_failure_count}
+            </dd>
+
+            <dt style="color: #666;">Last error</dt>
+            <dd style="margin: 0;">
+              {Map.get(@detail, :auto_refresh_health).last_failure_error_code || "—"}
+            </dd>
+
+            <dt
+              :if={Map.get(@detail, :auto_refresh_health).last_validity_warning_for}
+              style="color: #666;"
+            >
+              Validity warning
+            </dt>
+            <dd
+              :if={Map.get(@detail, :auto_refresh_health).last_validity_warning_for}
+              style="margin: 0;"
+            >
+              {Map.get(@detail, :auto_refresh_health).last_validity_warning_for}
+            </dd>
+
+            <dt style="color: #666;">Metadata trust fingerprints</dt>
+            <dd style="margin: 0; font-family: monospace; font-size: 12px;">
+              <span :if={Map.get(@detail, :auto_refresh_health).metadata_trust_fingerprints == []}>
+                (none pinned)
+              </span>
+              <ul
+                :if={Map.get(@detail, :auto_refresh_health).metadata_trust_fingerprints != []}
+                style="margin: 0; padding-left: 16px;"
+              >
+                <li :for={fp <- Map.get(@detail, :auto_refresh_health).metadata_trust_fingerprints}>
+                  {fp}
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <div
+            :if={Map.get(@detail, :auto_refresh_health).legacy_unsigned_metadata_policy}
+            style="margin-top: 12px;"
+          >
+            <RiskPanel.risk_panel risk_flags={[
+              %{
+                label: "Unsigned metadata escape hatch active",
+                details: Map.get(@detail, :auto_refresh_health).legacy_unsigned_metadata_policy
+              }
+            ]} />
+          </div>
+
+          <div
+            :if={Map.get(@detail, :auto_refresh_health).state == :suspended}
+            style="margin-top: 16px;"
+          >
+            <button
+              phx-click="resume_auto_refresh"
+              disabled={@resume_status == :loading}
+              style={
+                "padding: 8px 16px; border-radius: 4px; cursor: pointer; " <>
+                  if(@resume_status == :loading,
+                    do: "background: #e0e0e0; color: #999; border: 1px solid #ccc;",
+                    else: "background: #c62828; color: white; border: none;"
+                  )
+              }
+            >
+              {if @resume_status == :loading, do: "Resuming...", else: "Resume now"}
+            </button>
+            <p style="color: #666; font-size: 12px; margin-top: 8px; margin-bottom: 0;">
+              Clears the cool-off window and runs an immediate probe. The probe attempt is recorded in the audit ledger.
             </p>
           </div>
         </div>
@@ -247,7 +445,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           raise ArgumentError, "Relyra admin requires :admin_scope to be assigned before mount"
 
         is_nil(repo) ->
-          raise ArgumentError, "Relyra admin requires :relyra_admin_repo to be assigned before mount"
+          raise ArgumentError,
+                "Relyra admin requires :relyra_admin_repo to be assigned before mount"
 
         true ->
           socket
