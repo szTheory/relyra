@@ -616,6 +616,64 @@ defmodule Relyra.Ecto.MetadataApplyTest do
     end
   end
 
+  describe "Phase 21: resume_auto_refresh/3 (D-28 single-transaction Resume-now seam)" do
+    test "co-commits audit row + suspend-clear in ONE transaction (D-28)" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P19")
+      future = DateTime.add(DateTime.utc_now(), 3_600, :second)
+
+      source =
+        insert_metadata_source!(connection.id,
+          consecutive_failure_count: 5,
+          auto_suspended_until: future,
+          auto_suspended_reason: :transient_failures_exceeded
+        )
+
+      assert {:ok, %{audit_event: audit_event, source: updated}} =
+               MetadataApply.resume_auto_refresh(@repo, source, %{actor: "operator-test"})
+
+      assert is_nil(updated.auto_suspended_until)
+      assert is_nil(updated.auto_suspended_reason)
+
+      events = AuditEvent |> @repo.all()
+      resume_events = Enum.filter(events, &(&1.cause == "live_admin_auto_refresh_resume"))
+      assert length(resume_events) == 1
+
+      [event] = resume_events
+      assert event.id == audit_event.id
+      assert event.actor == "operator-test"
+      assert event.domain == :metadata
+      assert event.action == :refreshed
+      assert event.connection_record_id == connection.id
+    end
+
+    test "rolls back BOTH writes when the audit-row insert fails (rollback proof)" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P20")
+      future = DateTime.add(DateTime.utc_now(), 3_600, :second)
+
+      source =
+        insert_metadata_source!(connection.id,
+          consecutive_failure_count: 5,
+          auto_suspended_until: future,
+          auto_suspended_reason: :transient_failures_exceeded
+        )
+
+      audit_count_before = @repo.aggregate(AuditEvent, :count, :id)
+
+      # Empty actor forces AuditWriter.append_event to reject (cause/actor are
+      # required and must be present strings).
+      assert {:error, %Relyra.Error{}} =
+               MetadataApply.resume_auto_refresh(@repo, source, %{actor: "", cause: ""})
+
+      # Suspend-clear must NOT have persisted.
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert DateTime.compare(reloaded.auto_suspended_until, future) == :eq
+      assert reloaded.auto_suspended_reason == :transient_failures_exceeded
+
+      # No audit event written.
+      assert @repo.aggregate(AuditEvent, :count, :id) == audit_count_before
+    end
+  end
+
   describe "Phase 21: record_validity_warning/3 (B2)" do
     setup [:attach_phase21_telemetry]
 

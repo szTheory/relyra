@@ -182,6 +182,164 @@ defmodule Relyra.Ecto.MetadataApply do
      )}
   end
 
+  @doc """
+  Resume the auto-refresh schedule for a previously-auto-suspended source
+  per D-28: clears `auto_suspended_until` and `auto_suspended_reason` AND
+  writes the operator-intent audit row inside ONE transaction. Called by
+  Plan 06's "Resume now" LiveView button.
+
+  The LiveView MUST NOT perform a parallel `repo.update` to clear the
+  suspend — doing so would re-introduce the audit/state divergence Phase
+  21 is designed to prevent. This function is the single seam (D-35).
+
+  `opts` MUST include:
+    - `:actor` — the operator identity for the audit row
+  `opts` MAY include:
+    - `:cause` — overrides the default `"live_admin_auto_refresh_resume"`
+      (rarely needed; mostly for testing)
+    - `:correlation_id` — propagated to the audit row for cross-referencing
+  """
+  @spec resume_auto_refresh(module(), MetadataSource.t(), map()) ::
+          {:ok, %{audit_event: term(), source: MetadataSource.t()}}
+          | {:error, Error.t()}
+  def resume_auto_refresh(repo, source, opts)
+
+  def resume_auto_refresh(repo, %MetadataSource{} = source, %{} = opts)
+      when is_atom(repo) do
+    with :ok <- ensure_optional_dependency!(:resume_auto_refresh, repo),
+         {:ok, connection} <- fetch_connection_by_id(repo, source.connection_record_id) do
+      actor = Map.get(opts, :actor) || "operator"
+      cause = Map.get(opts, :cause, "live_admin_auto_refresh_resume")
+      correlation_id = Map.get(opts, :correlation_id)
+
+      transact(repo, fn ->
+        # Step 1: clear the suspend state via the SAME health_state_changeset
+        # path that record_attempt/3 uses; co-committed in this transaction.
+        health_attrs = %{auto_suspended_until: nil, auto_suspended_reason: nil}
+
+        case apply_health_changeset(repo, source, health_attrs) do
+          :ok ->
+            updated_source = repo.get(MetadataSource, source.id)
+
+            # Step 2: append the operator-intent audit row via the single
+            # audit-writer seam (D-35). Domain :metadata + action :refreshed
+            # is the closest schema-allowed shape for "schedule resumed".
+            audit_attrs = %{
+              connection_record_id: connection.id,
+              domain: :metadata,
+              action: :refreshed,
+              actor: actor,
+              cause: cause,
+              correlation_id: correlation_id,
+              before_view: %{
+                auto_suspended_until: format_datetime(source.auto_suspended_until),
+                auto_suspended_reason: format_reason(source.auto_suspended_reason)
+              },
+              after_view: %{
+                auto_suspended_until: nil,
+                auto_suspended_reason: nil
+              },
+              diff_summary: %{
+                action: "auto_refresh_resumed",
+                metadata_source_id: source.id
+              },
+              subject_ref: source.id,
+              metadata: %{metadata_source_id: source.id}
+            }
+
+            case AuditWriter.append_event(repo, audit_attrs) do
+              {:ok, audit_event} ->
+                {:ok, %{audit_event: audit_event, source: updated_source}}
+
+              {:error, %Error{} = error} ->
+                rollback(repo, error)
+
+              {:error, %Ecto.Changeset{} = invalid_changeset} ->
+                rollback(
+                  repo,
+                  changeset_error(
+                    :resume_auto_refresh_audit,
+                    "Resume audit-event write failed validation",
+                    invalid_changeset
+                  )
+                )
+            end
+
+          {:error, %Error{} = error} ->
+            rollback(repo, error)
+        end
+      end)
+      |> normalize_resume_transaction_result()
+    end
+  end
+
+  def resume_auto_refresh(_repo, _source, _opts) do
+    {:error,
+     Error.new(
+       :invalid_resume_auto_refresh_inputs,
+       "resume_auto_refresh/3 requires (repo_module, %MetadataSource{}, %{actor: _})",
+       %{}
+     )}
+  end
+
+  defp fetch_connection_by_id(repo, connection_record_id) do
+    case repo.get(Connection, connection_record_id) do
+      nil ->
+        {:error,
+         Error.new(
+           :connection_not_found,
+           "Connection record was not found",
+           %{
+             connection_record_id: connection_record_id,
+             operation: :resume_auto_refresh,
+             reason: :not_found
+           }
+         )}
+
+      connection ->
+        {:ok, connection}
+    end
+  rescue
+    exception ->
+      {:error,
+       Error.new(
+         :resolver_misconfigured,
+         "Persisted connection repo access failed",
+         %{
+           connection_record_id: connection_record_id,
+           operation: :resume_auto_refresh,
+           reason: :repo_misconfigured,
+           repo: inspect(repo),
+           failure: Exception.message(exception)
+         }
+       )}
+  end
+
+  defp format_reason(nil), do: nil
+  defp format_reason(value) when is_atom(value), do: Atom.to_string(value)
+  defp format_reason(value), do: value
+
+  defp format_datetime(nil), do: nil
+  defp format_datetime(%DateTime{} = value), do: DateTime.to_iso8601(value)
+  defp format_datetime(value), do: value
+
+  defp normalize_resume_transaction_result({:ok, {:ok, %{} = result}}), do: {:ok, result}
+  defp normalize_resume_transaction_result({:ok, %{} = result}), do: {:ok, result}
+
+  defp normalize_resume_transaction_result({:error, %Error{} = error}), do: {:error, error}
+
+  defp normalize_resume_transaction_result({:error, {:error, %Error{} = error}}),
+    do: {:error, error}
+
+  defp normalize_resume_transaction_result(other) do
+    {:error,
+     Error.new(
+       :internal_protocol_error,
+       "Metadata apply transaction returned an unexpected result",
+       %{operation: :resume_auto_refresh, result: inspect(other)}
+     )}
+  end
+
   defp already_warned_for?(%MetadataSource{last_validity_warning_for: nil}, _valid_until),
     do: false
 
