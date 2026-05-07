@@ -17,7 +17,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.3 shipped 2026-05-06** — LiveView admin surface. All capabilities from v0.2 are now exposed via a mountable interface. 10/10 requirements verified.
 - **v0.4 shipped 2026-05-06** — IdP-initiated SSO and opaque RelayState. 1/1 requirements verified.
 - Code state at v0.4 close: ~17,200 LOC across `lib/` and `test/` (Elixir).
-- **v0.5 in progress** — Operational maturity. Phase 20 (bulk operations, CFG-07) and Phase 21 (scheduled metadata refresh, CFG-08) shipped 2026-05-06 / 2026-05-07; Debug bundles and Expiry alerts remain.
+- **v0.5 in progress** — Operational maturity. Phase 20 (bulk operations, CFG-07), Phase 21 (scheduled metadata refresh, CFG-08), and Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding — closes v0.5 audit BLOCKER INT-01) shipped 2026-05-06 / 2026-05-07; Debug bundles and Expiry alerts remain.
 
 ## Current Milestone: v0.5 — Operational maturity
 
@@ -172,4 +172,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-07 — Phase 21 (CFG-08, scheduled metadata refresh) shipped; v0.5 Operational maturity in progress.*
+*Last updated: 2026-05-07 — Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding) shipped, closing v0.5 milestone audit BLOCKER INT-01; v0.5 Operational maturity in progress.*
