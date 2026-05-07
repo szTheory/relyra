@@ -10,7 +10,8 @@ defmodule Relyra.Ecto.MetadataApplyTest do
     CertificateInventory,
     Connection,
     MetadataApply,
-    MetadataRevision
+    MetadataRevision,
+    MetadataSource
   }
 
   @repo Relyra.TestSupport.EctoTestRepo
@@ -229,6 +230,535 @@ defmodule Relyra.Ecto.MetadataApplyTest do
              )
 
     assert details.reason == :last_active_certificate
+  end
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Phase 21 (W2 / Plan 21-04) — audit-seam extension coverage.
+  # D-28 single-transaction discipline: health-state co-commits with
+  # MetadataRevision row + audit row inside ONE transact/2 block.
+  # ──────────────────────────────────────────────────────────────────────
+
+  describe "Phase 21: scheduled trigger health-state side-effect" do
+    test "manual refresh path is unchanged: trigger: :manual_refresh produces a MetadataRevision row but does NOT mutate MetadataSource health fields" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P01")
+      source = insert_metadata_source!(connection.id, consecutive_failure_count: 3)
+
+      assert {:ok, _revision} =
+               MetadataApply.record_attempt(
+                 connection.connection_id,
+                 %{
+                   metadata_source_id: source.id,
+                   source_kind: :xml_import,
+                   trigger: :manual_refresh,
+                   actor: "ops@example.com",
+                   cause: "manual refresh test",
+                   outcome: :fetch_failed,
+                   details: %{error_code: :fetch_timeout}
+                 },
+                 repo: @repo
+               )
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert reloaded.consecutive_failure_count == 3
+      assert is_nil(reloaded.last_failure_error_code)
+      assert is_nil(reloaded.auto_suspended_until)
+    end
+
+    test "scheduled refresh failure with transient error_code increments consecutive_failure_count and updates last_failure_error_code" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P02")
+      source = insert_metadata_source!(connection.id)
+
+      assert {:ok, _revision} =
+               MetadataApply.record_attempt(
+                 connection.connection_id,
+                 scheduled_refresh_attrs(source.id, :fetch_timeout),
+                 repo: @repo
+               )
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert reloaded.consecutive_failure_count == 1
+      assert reloaded.last_failure_error_code == "fetch_timeout"
+      assert is_nil(reloaded.auto_suspended_until)
+      refute is_nil(reloaded.first_failure_at)
+    end
+
+    test "scheduled refresh failure with suspicious error_code does NOT increment counter (D-27)" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P03")
+      source = insert_metadata_source!(connection.id)
+
+      assert {:ok, _revision} =
+               MetadataApply.record_attempt(
+                 connection.connection_id,
+                 %{
+                   metadata_source_id: source.id,
+                   source_kind: :remote_url,
+                   trigger: :scheduled_refresh,
+                   actor: "scheduler",
+                   cause: "scheduled refresh",
+                   outcome: :validation_failed,
+                   details: %{error_code: :signature_failed}
+                 },
+                 repo: @repo
+               )
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert reloaded.consecutive_failure_count == 0
+      assert reloaded.last_failure_error_code == "signature_failed"
+      assert is_nil(reloaded.auto_suspended_until)
+    end
+
+    test "5 consecutive transient failures sets auto_suspended_until and auto_suspended_reason" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P04")
+      source = insert_metadata_source!(connection.id)
+      now_before = DateTime.utc_now()
+
+      Enum.each(1..5, fn _ ->
+        assert {:ok, _} =
+                 MetadataApply.record_attempt(
+                   connection.connection_id,
+                   scheduled_refresh_attrs(source.id, :fetch_timeout),
+                   repo: @repo
+                 )
+      end)
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert reloaded.consecutive_failure_count == 5
+      assert reloaded.auto_suspended_reason == :transient_failures_exceeded
+
+      # 1h ± 10% jitter window (3240–3960s after now_before)
+      assert %DateTime{} = reloaded.auto_suspended_until
+      diff_seconds = DateTime.diff(reloaded.auto_suspended_until, now_before, :second)
+      assert diff_seconds >= 3240
+      assert diff_seconds <= 3960
+    end
+
+    test "explicit auto_suspended_reason in attrs overrides the default (drift / corpus / signature paths set their own)" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P05")
+      source = insert_metadata_source!(connection.id)
+
+      Enum.each(1..5, fn _ ->
+        assert {:ok, _} =
+                 MetadataApply.record_attempt(
+                   connection.connection_id,
+                   scheduled_refresh_attrs(source.id, :fetch_timeout)
+                   |> Map.put(:auto_suspended_reason, :entity_id_drift),
+                   repo: @repo
+                 )
+      end)
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert reloaded.auto_suspended_reason == :entity_id_drift
+    end
+
+    test "successful scheduled apply resets every health field and advances next_refresh_at (Pitfall 6)" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P06")
+      future = DateTime.add(DateTime.utc_now(), 3_600, :second)
+
+      source =
+        insert_metadata_source!(connection.id,
+          consecutive_failure_count: 5,
+          first_failure_at: DateTime.utc_now(),
+          last_failure_error_code: "fetch_timeout",
+          auto_suspended_until: future,
+          auto_suspended_reason: :transient_failures_exceeded
+        )
+
+      assert {:ok, _revision} =
+               MetadataApply.apply_revision(
+                 connection.connection_id,
+                 candidate(),
+                 applied_revision_attrs()
+                 |> Map.put(:trigger, :scheduled_refresh)
+                 |> Map.put(:metadata_source_id, source.id),
+                 repo: @repo
+               )
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert reloaded.consecutive_failure_count == 0
+      assert is_nil(reloaded.first_failure_at)
+      assert is_nil(reloaded.last_failure_error_code)
+      assert is_nil(reloaded.auto_suspended_until)
+      assert is_nil(reloaded.auto_suspended_reason)
+      assert %DateTime{} = reloaded.last_success_at
+      assert %DateTime{} = reloaded.next_refresh_at
+
+      # default cadence :daily (86_400s) ± 15% jitter — between ~73_440 and ~99_360s ahead
+      ahead_seconds = DateTime.diff(reloaded.next_refresh_at, DateTime.utc_now(), :second)
+      assert ahead_seconds >= 73_440
+      assert ahead_seconds <= 99_360
+    end
+
+    test "successful scheduled apply unions candidate fingerprints into last_known_metadata_signing_certs" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P07")
+
+      source =
+        insert_metadata_source!(connection.id,
+          last_known_metadata_signing_certs: ["aaa"]
+        )
+
+      candidate_fingerprints = candidate().certificate_fingerprints
+
+      assert {:ok, _revision} =
+               MetadataApply.apply_revision(
+                 connection.connection_id,
+                 candidate(),
+                 applied_revision_attrs()
+                 |> Map.put(:trigger, :scheduled_refresh)
+                 |> Map.put(:metadata_source_id, source.id),
+                 repo: @repo
+               )
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+
+      assert Enum.sort(reloaded.last_known_metadata_signing_certs) ==
+               Enum.sort(["aaa" | candidate_fingerprints])
+    end
+
+    test "single-transaction guarantee: a health_state_changeset failure rolls back the MetadataRevision insert" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P08")
+      source = insert_metadata_source!(connection.id, consecutive_failure_count: 4)
+
+      # Bring count to 4 first via real failures (no suspend yet because
+      # threshold is 5).
+      revision_count_at_threshold = @repo.aggregate(MetadataRevision, :count, :id)
+
+      # The 5th attempt with an invalid auto_suspended_reason atom hits the
+      # threshold path inside compute_failure_health_state/3, so the invalid
+      # reason DOES enter the cast — health_state_changeset/2 rejects it,
+      # forcing rollback of BOTH writes.
+      assert {:error, %Relyra.Error{}} =
+               MetadataApply.record_attempt(
+                 connection.connection_id,
+                 scheduled_refresh_attrs(source.id, :fetch_timeout)
+                 |> Map.put(:auto_suspended_reason, :not_a_valid_reason),
+                 repo: @repo
+               )
+
+      revision_count_after = @repo.aggregate(MetadataRevision, :count, :id)
+      # The failed attempt must NOT have left a MetadataRevision row behind.
+      assert revision_count_after == revision_count_at_threshold
+
+      # The source row health-state must NOT have advanced past pre-attempt state.
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert reloaded.consecutive_failure_count == 4
+      assert is_nil(reloaded.auto_suspended_until)
+      assert is_nil(reloaded.auto_suspended_reason)
+    end
+
+    test "manual import path (trigger: :manual_import) does not touch health state" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P09")
+      source = insert_metadata_source!(connection.id, consecutive_failure_count: 2)
+
+      assert {:ok, _revision} =
+               MetadataApply.record_attempt(
+                 connection.connection_id,
+                 %{
+                   metadata_source_id: source.id,
+                   source_kind: :xml_import,
+                   trigger: :manual_import,
+                   actor: "operator@example.com",
+                   cause: "manual import",
+                   outcome: :fetch_failed,
+                   details: %{error_code: :fetch_timeout}
+                 },
+                 repo: @repo
+               )
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert reloaded.consecutive_failure_count == 2
+      assert is_nil(reloaded.last_failure_error_code)
+    end
+  end
+
+  describe "Phase 21: D-24 state-transition telemetry events (B1)" do
+    setup [:attach_phase21_telemetry]
+
+    test ":degraded telemetry event fires on the first transient failure (consecutive_failure_count 0 -> 1)" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P10")
+      source = insert_metadata_source!(connection.id)
+
+      assert {:ok, _} =
+               MetadataApply.record_attempt(
+                 connection.connection_id,
+                 scheduled_refresh_attrs(source.id, :fetch_timeout),
+                 repo: @repo
+               )
+
+      assert_receive {:phase21_telemetry, [:relyra, :saml, :metadata, :auto_refresh, :degraded],
+                      _measurements, metadata}
+
+      assert metadata.source_id == source.id
+      assert metadata.connection_record_id == connection.id
+      assert metadata.error_code == "fetch_timeout"
+      assert metadata.consecutive_failure_count == 1
+      assert metadata.transient? == true
+      assert metadata.counts_toward_suspend? == true
+
+      refute_received {:phase21_telemetry, [:relyra, :saml, :metadata, :auto_refresh, :suspended],
+                       _, _}
+    end
+
+    test ":degraded does NOT re-fire on the 2nd, 3rd, 4th consecutive transient failure" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P11")
+      source = insert_metadata_source!(connection.id)
+
+      Enum.each(1..4, fn _ ->
+        MetadataApply.record_attempt(
+          connection.connection_id,
+          scheduled_refresh_attrs(source.id, :fetch_timeout),
+          repo: @repo
+        )
+      end)
+
+      degraded_events =
+        drain_phase21_events([:relyra, :saml, :metadata, :auto_refresh, :degraded])
+
+      assert length(degraded_events) == 1
+    end
+
+    test ":suspended telemetry event fires on the 5th consecutive transient failure (auto_suspended_until set from nil)" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P12")
+      source = insert_metadata_source!(connection.id)
+
+      Enum.each(1..5, fn _ ->
+        MetadataApply.record_attempt(
+          connection.connection_id,
+          scheduled_refresh_attrs(source.id, :fetch_timeout),
+          repo: @repo
+        )
+      end)
+
+      suspended_events =
+        drain_phase21_events([:relyra, :saml, :metadata, :auto_refresh, :suspended])
+
+      assert length(suspended_events) == 1
+
+      [{_event, _measurements, metadata}] = suspended_events
+      assert metadata.auto_suspended_reason == :transient_failures_exceeded
+      assert metadata.consecutive_failure_count == 5
+    end
+
+    test ":recovered telemetry event fires on a successful apply against a previously-suspended source" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P13")
+      future = DateTime.add(DateTime.utc_now(), 3_600, :second)
+
+      source =
+        insert_metadata_source!(connection.id,
+          consecutive_failure_count: 5,
+          auto_suspended_until: future,
+          auto_suspended_reason: :transient_failures_exceeded
+        )
+
+      assert {:ok, _revision} =
+               MetadataApply.apply_revision(
+                 connection.connection_id,
+                 candidate(),
+                 applied_revision_attrs()
+                 |> Map.put(:trigger, :scheduled_refresh)
+                 |> Map.put(:metadata_source_id, source.id),
+                 repo: @repo
+               )
+
+      recovered_events =
+        drain_phase21_events([:relyra, :saml, :metadata, :auto_refresh, :recovered])
+
+      assert length(recovered_events) == 1
+
+      [{_event, _measurements, metadata}] = recovered_events
+      assert is_nil(metadata.auto_suspended_reason)
+      assert metadata.consecutive_failure_count == 0
+    end
+
+    test "telemetry events carry the correlation_id from revision_attrs[:audit][:correlation_id] when present" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P14")
+      source = insert_metadata_source!(connection.id)
+
+      attrs =
+        scheduled_refresh_attrs(source.id, :fetch_timeout)
+        |> Map.put(:audit, %{correlation_id: "uuid-xyz"})
+
+      assert {:ok, _} =
+               MetadataApply.record_attempt(connection.connection_id, attrs, repo: @repo)
+
+      assert_receive {:phase21_telemetry, [:relyra, :saml, :metadata, :auto_refresh, :degraded],
+                      _measurements, metadata}
+
+      assert metadata.correlation_id == "uuid-xyz"
+    end
+
+    test "no state-transition events fire when the manual path is exercised" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P15")
+      source = insert_metadata_source!(connection.id)
+
+      assert {:ok, _} =
+               MetadataApply.record_attempt(
+                 connection.connection_id,
+                 %{
+                   metadata_source_id: source.id,
+                   source_kind: :xml_import,
+                   trigger: :manual_refresh,
+                   actor: "operator@example.com",
+                   cause: "manual refresh",
+                   outcome: :fetch_failed,
+                   details: %{error_code: :fetch_timeout}
+                 },
+                 repo: @repo
+               )
+
+      refute_received {:phase21_telemetry, [:relyra, :saml, :metadata, :auto_refresh, :degraded],
+                       _, _}
+
+      refute_received {:phase21_telemetry, [:relyra, :saml, :metadata, :auto_refresh, :suspended],
+                       _, _}
+
+      refute_received {:phase21_telemetry, [:relyra, :saml, :metadata, :auto_refresh, :recovered],
+                       _, _}
+    end
+  end
+
+  describe "Phase 21: record_validity_warning/3 (B2)" do
+    setup [:attach_phase21_telemetry]
+
+    test "emits :validity_warning when slack is negative AND last_validity_warning_for is nil" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P16")
+      source = insert_metadata_source!(connection.id, last_validity_warning_for: nil)
+      valid_until = ~U[2026-06-01 00:00:00.000000Z]
+
+      assert {:ok, :emitted} =
+               MetadataApply.record_validity_warning(@repo, source, %{
+                 valid_until: valid_until,
+                 refresh_interval_seconds: 86_400,
+                 correlation_id: "uuid",
+                 slack_seconds: -1_000
+               })
+
+      assert_receive {:phase21_telemetry,
+                      [:relyra, :saml, :metadata, :auto_refresh, :validity_warning],
+                      _measurements, metadata}
+
+      assert metadata.source_id == source.id
+      assert metadata.correlation_id == "uuid"
+      assert metadata.valid_until == valid_until
+      assert metadata.refresh_interval_seconds == 86_400
+      assert metadata.slack_seconds == -1_000
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert DateTime.compare(reloaded.last_validity_warning_for, valid_until) == :eq
+    end
+
+    test "SUPPRESSES re-fire when last_validity_warning_for >= candidate valid_until (at-most-once per validUntil per source)" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P17")
+      stored = ~U[2026-06-01 00:00:00.000000Z]
+      source = insert_metadata_source!(connection.id, last_validity_warning_for: stored)
+
+      assert {:ok, :suppressed} =
+               MetadataApply.record_validity_warning(@repo, source, %{
+                 valid_until: stored,
+                 refresh_interval_seconds: 86_400,
+                 correlation_id: "uuid"
+               })
+
+      refute_received {:phase21_telemetry,
+                       [:relyra, :saml, :metadata, :auto_refresh, :validity_warning], _, _}
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert DateTime.compare(reloaded.last_validity_warning_for, stored) == :eq
+    end
+
+    test "RE-FIRES when IdP publishes a NEW (later) validUntil" do
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4P18")
+      stored = ~U[2026-06-01 00:00:00.000000Z]
+      newer = ~U[2026-07-01 00:00:00.000000Z]
+      source = insert_metadata_source!(connection.id, last_validity_warning_for: stored)
+
+      assert {:ok, :emitted} =
+               MetadataApply.record_validity_warning(@repo, source, %{
+                 valid_until: newer,
+                 refresh_interval_seconds: 86_400,
+                 correlation_id: "uuid"
+               })
+
+      assert_receive {:phase21_telemetry,
+                      [:relyra, :saml, :metadata, :auto_refresh, :validity_warning],
+                      _measurements, _metadata}
+
+      reloaded = @repo.get!(MetadataSource, source.id)
+      assert DateTime.compare(reloaded.last_validity_warning_for, newer) == :eq
+    end
+  end
+
+  defp attach_phase21_telemetry(_context) do
+    test_pid = self()
+    handler_id = "phase21-telemetry-#{System.unique_integer([:positive])}"
+
+    events = [
+      [:relyra, :saml, :metadata, :auto_refresh, :degraded],
+      [:relyra, :saml, :metadata, :auto_refresh, :suspended],
+      [:relyra, :saml, :metadata, :auto_refresh, :recovered],
+      [:relyra, :saml, :metadata, :auto_refresh, :validity_warning]
+    ]
+
+    :telemetry.attach_many(
+      handler_id,
+      events,
+      fn event, measurements, metadata, _config ->
+        send(test_pid, {:phase21_telemetry, event, measurements, metadata})
+      end,
+      nil
+    )
+
+    on_exit(fn -> :telemetry.detach(handler_id) end)
+
+    :ok
+  end
+
+  defp drain_phase21_events(target_event) do
+    drain_phase21_events(target_event, [])
+  end
+
+  defp drain_phase21_events(target_event, acc) do
+    receive do
+      {:phase21_telemetry, ^target_event, measurements, metadata} ->
+        drain_phase21_events(target_event, [{target_event, measurements, metadata} | acc])
+    after
+      0 -> Enum.reverse(acc)
+    end
+  end
+
+  defp scheduled_refresh_attrs(source_id, error_code) do
+    %{
+      metadata_source_id: source_id,
+      source_kind: :remote_url,
+      trigger: :scheduled_refresh,
+      actor: "scheduler",
+      cause: "scheduled refresh tick",
+      outcome: :fetch_failed,
+      details: %{error_code: error_code}
+    }
+  end
+
+  defp insert_metadata_source!(connection_record_id, overrides \\ []) do
+    base_attrs = %{
+      connection_record_id: connection_record_id,
+      url: "https://idp.example.com/metadata",
+      kind: :remote_url,
+      registered_by: "operator@example.com",
+      registered_reason: "phase 21 test fixture",
+      last_outcome: :registered
+    }
+
+    {:ok, source} =
+      %MetadataSource{}
+      |> MetadataSource.changeset(base_attrs)
+      |> @repo.insert()
+
+    if overrides == [] do
+      source
+    else
+      source
+      |> Ecto.Changeset.change(Map.new(overrides))
+      |> @repo.update!()
+    end
   end
 
   defp insert_enabled_connection!(connection_id) do

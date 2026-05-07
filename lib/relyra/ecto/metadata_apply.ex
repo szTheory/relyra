@@ -1,8 +1,16 @@
 defmodule Relyra.Ecto.MetadataApply do
   @moduledoc false
 
-  alias Relyra.Ecto.{AuditWriter, CertificateInventory, Connection, MetadataRevision}
+  alias Relyra.Ecto.{
+    AuditWriter,
+    CertificateInventory,
+    Connection,
+    MetadataRevision,
+    MetadataSource
+  }
+
   alias Relyra.Error
+  alias Relyra.Metadata.{Backoff, Cadence, FailureClassifier}
 
   @ecto_repo Ecto.Repo
 
@@ -38,7 +46,8 @@ defmodule Relyra.Ecto.MetadataApply do
                        before_view,
                        metadata_trust_view(latest_connection),
                        audit_context(opts, revision_attrs)
-                     ) do
+                     ),
+                   :ok <- maybe_reset_health_state_on_apply(repo, revision_attrs, candidate) do
                 {:ok, applied_revision}
               end
 
@@ -75,7 +84,15 @@ defmodule Relyra.Ecto.MetadataApply do
         |> Map.put_new(:trust_summary, %{status: "attempt_recorded"})
         |> Map.update(:details, %{}, &redact_large_binaries/1)
 
-      insert_revision(repo, attrs)
+      transact(repo, fn ->
+        with {:ok, revision} <- insert_revision(repo, attrs) do
+          case maybe_update_health_state_on_attempt(repo, attrs) do
+            :ok -> {:ok, revision}
+            {:error, %Error{} = error} -> rollback(repo, error)
+          end
+        end
+      end)
+      |> normalize_transaction_result(:record_attempt)
     end
   end
 
@@ -86,6 +103,97 @@ defmodule Relyra.Ecto.MetadataApply do
        "connection_id and revision_attrs are required for metadata attempt recording",
        error_details(opts, :record_attempt, :invalid_input)
      )}
+  end
+
+  @doc """
+  Records a `:validity_warning` for a metadata source per D-14.
+
+  At-most-once per `validUntil` window per source: if `source.last_validity_warning_for`
+  is non-nil AND equal to (or newer than) the candidate's `valid_until`, this is a
+  no-op. Otherwise, updates `last_validity_warning_for` AND emits the telemetry event
+  inside ONE `transact/2` block.
+
+  `attrs` MUST include:
+    - `:valid_until` — `DateTime.t()` from the freshly-parsed metadata root
+    - `:refresh_interval_seconds` — `pos_integer` (the source's preset interval)
+    - `:correlation_id` — the batch correlation_id (D-39)
+  `attrs` MAY include:
+    - `:slack_seconds` — `(valid_until - now) - 2 * refresh_interval_seconds`
+      (negative when warning fires)
+  """
+  @spec record_validity_warning(module(), MetadataSource.t(), map()) ::
+          {:ok, :emitted | :suppressed} | {:error, Error.t()}
+  def record_validity_warning(repo, source, attrs)
+
+  def record_validity_warning(
+        repo,
+        %MetadataSource{} = source,
+        %{valid_until: %DateTime{} = valid_until} = attrs
+      )
+      when is_atom(repo) do
+    with :ok <- ensure_optional_dependency!(:record_validity_warning, repo) do
+      if already_warned_for?(source, valid_until) do
+        {:ok, :suppressed}
+      else
+        transact(repo, fn ->
+          health_attrs = %{last_validity_warning_for: valid_until}
+
+          case source |> MetadataSource.health_state_changeset(health_attrs) |> repo.update() do
+            {:ok, _updated} ->
+              payload = %{
+                source_id: source.id,
+                connection_record_id: source.connection_record_id,
+                correlation_id: Map.get(attrs, :correlation_id),
+                valid_until: valid_until,
+                refresh_interval_seconds: Map.get(attrs, :refresh_interval_seconds),
+                slack_seconds: Map.get(attrs, :slack_seconds)
+              }
+
+              :telemetry.execute(
+                [:relyra, :saml, :metadata, :auto_refresh, :validity_warning],
+                %{},
+                payload
+              )
+
+              {:ok, :emitted}
+
+            {:error, %Ecto.Changeset{} = invalid_changeset} ->
+              rollback(
+                repo,
+                changeset_error(
+                  :record_validity_warning,
+                  "Validity-warning persistence failed validation",
+                  invalid_changeset
+                )
+              )
+          end
+        end)
+        |> normalize_transaction_result(:record_validity_warning)
+      end
+    end
+  end
+
+  def record_validity_warning(_repo, _source, _attrs) do
+    {:error,
+     Error.new(
+       :invalid_record_validity_warning_inputs,
+       "record_validity_warning/3 requires (repo, %MetadataSource{}, %{valid_until: %DateTime{}})",
+       %{}
+     )}
+  end
+
+  defp already_warned_for?(%MetadataSource{last_validity_warning_for: nil}, _valid_until),
+    do: false
+
+  defp already_warned_for?(
+         %MetadataSource{last_validity_warning_for: %DateTime{} = stored},
+         %DateTime{} = candidate
+       ) do
+    # At-most-once per D-14: warning is suppressed when we already warned for THIS
+    # validUntil (or a newer one — IdP shortened the validity window since our last
+    # warning, no need to re-fire). Re-fires only when IdP publishes a NEW (later)
+    # validUntil.
+    DateTime.compare(stored, candidate) in [:eq, :gt]
   end
 
   defp apply_candidate(repo, connection, candidate, revision) do
@@ -179,6 +287,286 @@ defmodule Relyra.Ecto.MetadataApply do
          )}
     end
   end
+
+  # D-28: Phase 21 health-state co-commit. Only fires when the attempt was
+  # part of a scheduled-refresh batch (trigger == :scheduled_refresh or
+  # :scheduled_probe). Manual triggers (:manual_refresh / :manual_import)
+  # are unaffected — Phase 21 does not change the manual path's behavior.
+  defp maybe_update_health_state_on_attempt(repo, %{outcome: outcome} = attrs) do
+    source_id = Map.get(attrs, :metadata_source_id)
+    trigger = Map.get(attrs, :trigger)
+
+    cond do
+      not is_binary(source_id) ->
+        :ok
+
+      not scheduled_trigger?(trigger) ->
+        :ok
+
+      true ->
+        do_update_health_state_on_attempt(repo, source_id, outcome, attrs)
+    end
+  end
+
+  defp maybe_update_health_state_on_attempt(_repo, _attrs), do: :ok
+
+  defp scheduled_trigger?(:scheduled_refresh), do: true
+  defp scheduled_trigger?(:scheduled_probe), do: true
+  defp scheduled_trigger?(_other), do: false
+
+  defp do_update_health_state_on_attempt(repo, source_id, outcome, attrs) do
+    case repo.get(MetadataSource, source_id) do
+      nil ->
+        # Source row was deleted between the scheduler tick and this write —
+        # nothing to update. Do not fail the transaction; the audit row is
+        # the canonical record of the attempt.
+        :ok
+
+      %MetadataSource{} = source ->
+        health_attrs = compute_failure_health_state(source, outcome, attrs)
+        apply_health_changeset(repo, source, health_attrs)
+    end
+  end
+
+  # Pitfall 1 + D-25 + D-27: every failure outcome that surfaces an
+  # error_code goes through the classifier. Transient codes increment the
+  # counter and may set auto_suspended_until via Backoff. Suspicious codes
+  # do NOT count toward suspend per D-27 (they alert immediately and
+  # require human review).
+  defp compute_failure_health_state(%MetadataSource{} = source, outcome, attrs)
+       when outcome in [
+              :fetch_failed,
+              :parse_failed,
+              :validation_failed,
+              :apply_failed
+            ] do
+    now = DateTime.utc_now()
+    error_code = error_code_from_attrs(attrs)
+    classification = FailureClassifier.classify(error_code)
+    correlation_id = correlation_id_from_attrs(attrs)
+
+    base = %{last_failure_error_code: Atom.to_string(error_code)}
+
+    cond do
+      classification.counts_toward_suspend? ->
+        new_count = (source.consecutive_failure_count || 0) + 1
+        first_failure_at = source.first_failure_at || now
+
+        base
+        |> Map.put(:consecutive_failure_count, new_count)
+        |> Map.put(:first_failure_at, first_failure_at)
+        |> maybe_put_suspend(new_count, attrs, now)
+        |> Map.put(:_phase21_classification, classification)
+        |> Map.put(:_phase21_correlation_id, correlation_id)
+
+      true ->
+        # Suspicious failure: mark the failure code but do NOT advance the
+        # counter or schedule a backoff (D-27 — these need human eyes).
+        base
+        |> Map.put(:_phase21_classification, classification)
+        |> Map.put(:_phase21_correlation_id, correlation_id)
+    end
+  end
+
+  defp compute_failure_health_state(_source, _outcome, _attrs), do: %{}
+
+  defp maybe_put_suspend(attrs, new_count, source_attrs, now) do
+    if new_count >= Backoff.suspend_threshold() do
+      attrs
+      |> Map.put(:auto_suspended_until, Backoff.backoff_until(new_count, now))
+      |> Map.put(:auto_suspended_reason, suspend_reason_from_attrs(source_attrs))
+    else
+      attrs
+    end
+  end
+
+  # Default reason when a suspend fires from accumulated transient
+  # failures (D-25). Drift / signature / corpus suspends override this
+  # at their respective call sites by setting `:auto_suspended_reason`
+  # explicitly in the attrs map BEFORE calling record_attempt/3.
+  defp suspend_reason_from_attrs(attrs) do
+    Map.get(attrs, :auto_suspended_reason, :transient_failures_exceeded)
+  end
+
+  defp error_code_from_attrs(attrs) do
+    cond do
+      is_atom(Map.get(attrs, :error_code)) and not is_nil(Map.get(attrs, :error_code)) ->
+        Map.get(attrs, :error_code)
+
+      is_binary(Map.get(attrs, :error_code)) ->
+        String.to_atom(Map.get(attrs, :error_code))
+
+      is_map(Map.get(attrs, :details)) and is_atom(Map.get(attrs.details, :error_code)) and
+          not is_nil(Map.get(attrs.details, :error_code)) ->
+        Map.get(attrs.details, :error_code)
+
+      is_map(Map.get(attrs, :details)) and is_binary(Map.get(attrs.details, :error_code)) ->
+        String.to_atom(Map.fetch!(attrs.details, :error_code))
+
+      true ->
+        :unknown
+    end
+  end
+
+  defp correlation_id_from_attrs(attrs) do
+    cond do
+      is_binary(Map.get(attrs, :correlation_id)) ->
+        Map.get(attrs, :correlation_id)
+
+      is_map(Map.get(attrs, :audit)) and is_binary(Map.get(attrs.audit, :correlation_id)) ->
+        Map.fetch!(attrs.audit, :correlation_id)
+
+      true ->
+        nil
+    end
+  end
+
+  defp apply_health_changeset(repo, source, attrs)
+
+  defp apply_health_changeset(repo, %MetadataSource{} = source, attrs) when map_size(attrs) > 0 do
+    classification_attrs =
+      Map.take(attrs, [:_phase21_classification, :_phase21_correlation_id])
+
+    cast_attrs = Map.drop(attrs, [:_phase21_classification, :_phase21_correlation_id])
+
+    case source |> MetadataSource.health_state_changeset(cast_attrs) |> repo.update() do
+      {:ok, updated} ->
+        emit_state_transitions(source, updated, Map.merge(cast_attrs, classification_attrs))
+        :ok
+
+      {:error, %Ecto.Changeset{} = invalid_changeset} ->
+        {:error,
+         changeset_error(
+           :record_attempt_health_state,
+           "Phase 21 auto-refresh health-state write failed validation",
+           invalid_changeset
+         )}
+    end
+  end
+
+  defp apply_health_changeset(_repo, _source, _empty), do: :ok
+
+  # D-24 state-transition events fire INSIDE the transact/2 block so the
+  # audit row + telemetry event are co-committed (or both rolled back).
+  # :telemetry.execute is synchronous and side-effect-only; if the
+  # surrounding transaction rolls back, the emit already happened but
+  # the listener's downstream effects are the host's responsibility (the
+  # event payload carries `correlation_id` so the host can dedupe against
+  # an audit row that never landed).
+  defp emit_state_transitions(
+         %MetadataSource{} = before_source,
+         %MetadataSource{} = updated,
+         attrs
+       ) do
+    payload = state_transition_payload(updated, attrs)
+
+    # :degraded — first transient failure that takes consecutive_failure_count from 0 -> 1
+    if (before_source.consecutive_failure_count || 0) == 0 and
+         (updated.consecutive_failure_count || 0) == 1 do
+      :telemetry.execute(
+        [:relyra, :saml, :metadata, :auto_refresh, :degraded],
+        %{},
+        payload
+      )
+    end
+
+    # :suspended — the attempt that set auto_suspended_until from nil to a value
+    if is_nil(before_source.auto_suspended_until) and not is_nil(updated.auto_suspended_until) do
+      :telemetry.execute(
+        [:relyra, :saml, :metadata, :auto_refresh, :suspended],
+        %{},
+        payload
+      )
+    end
+
+    # :recovered — successful apply on a previously-suspended source
+    # (auto_suspended_until cleared by the success path)
+    if not is_nil(before_source.auto_suspended_until) and is_nil(updated.auto_suspended_until) do
+      :telemetry.execute(
+        [:relyra, :saml, :metadata, :auto_refresh, :recovered],
+        %{},
+        payload
+      )
+    end
+
+    :ok
+  end
+
+  defp state_transition_payload(%MetadataSource{} = source, attrs) do
+    classification = classification_for(attrs)
+
+    %{
+      source_id: source.id,
+      connection_record_id: source.connection_record_id,
+      correlation_id: Map.get(attrs, :_phase21_correlation_id),
+      error_code: source.last_failure_error_code,
+      consecutive_failure_count: source.consecutive_failure_count || 0,
+      auto_suspended_reason: source.auto_suspended_reason,
+      transient?: classification.transient?,
+      counts_toward_suspend?: classification.counts_toward_suspend?
+    }
+  end
+
+  defp classification_for(attrs) do
+    case Map.get(attrs, :_phase21_classification) do
+      %{transient?: _} = c -> c
+      _ -> %{transient?: false, counts_toward_suspend?: false}
+    end
+  end
+
+  # Pitfall 6 + D-25 (recovered) + D-12 (next_refresh_at advance): on a
+  # successful scheduled apply, reset every counter, clear suspend, set
+  # last_success_at, advance next_refresh_at via Cadence, AND extend
+  # last_known_metadata_signing_certs with the candidate's fingerprints.
+  defp maybe_reset_health_state_on_apply(repo, revision_attrs, candidate) do
+    source_id = Map.get(revision_attrs, :metadata_source_id)
+    trigger = Map.get(revision_attrs, :trigger)
+
+    cond do
+      is_nil(source_id) ->
+        :ok
+
+      not scheduled_trigger?(trigger) ->
+        :ok
+
+      true ->
+        case repo.get(MetadataSource, source_id) do
+          nil ->
+            :ok
+
+          %MetadataSource{} = source ->
+            now = DateTime.utc_now()
+            correlation_id = correlation_id_from_attrs(revision_attrs)
+
+            health_attrs = %{
+              consecutive_failure_count: 0,
+              first_failure_at: nil,
+              last_success_at: now,
+              last_failure_error_code: nil,
+              auto_suspended_until: nil,
+              auto_suspended_reason: nil,
+              next_refresh_at: Cadence.next_refresh_at(source.refresh_cadence, now),
+              last_known_metadata_signing_certs:
+                union_known_certs(
+                  source.last_known_metadata_signing_certs,
+                  Map.get(candidate, :certificate_fingerprints, [])
+                ),
+              _phase21_classification: %{transient?: false, counts_toward_suspend?: false},
+              _phase21_correlation_id: correlation_id
+            }
+
+            apply_health_changeset(repo, source, health_attrs)
+        end
+    end
+  end
+
+  defp union_known_certs(existing, fresh) when is_list(existing) and is_list(fresh) do
+    MapSet.new(existing) |> MapSet.union(MapSet.new(fresh)) |> MapSet.to_list()
+  end
+
+  defp union_known_certs(_existing, fresh) when is_list(fresh), do: fresh
+  defp union_known_certs(existing, _fresh) when is_list(existing), do: existing
+  defp union_known_certs(_existing, _fresh), do: []
 
   defp fetch_repo(opts, operation) when is_list(opts) do
     case Keyword.fetch(opts, :repo) do
@@ -301,9 +689,18 @@ defmodule Relyra.Ecto.MetadataApply do
   defp format_changeset_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
       Enum.reduce(opts, message, fn {key, value}, acc ->
-        String.replace(acc, "%{#{key}}", to_string(value))
+        String.replace(acc, "%{#{key}}", safe_to_string(value))
       end)
     end)
+  end
+
+  # Ecto.Changeset error opts can include parameterized-type tuples (e.g. for
+  # Ecto.Enum casts). String.Chars is not implemented for Tuple, so guard with
+  # inspect/1 for non-stringable values.
+  defp safe_to_string(value) do
+    to_string(value)
+  rescue
+    Protocol.UndefinedError -> inspect(value)
   end
 
   defp repo_details(repo, operation, reason) do

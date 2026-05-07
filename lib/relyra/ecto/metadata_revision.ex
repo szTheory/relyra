@@ -11,8 +11,15 @@ if Code.ensure_loaded?(Ecto.Schema) do
     @primary_key {:id, :binary_id, autogenerate: true}
     @foreign_key_type :binary_id
     @source_kind_values [:xml_import, :remote_url]
-    @trigger_values [:manual_import, :manual_refresh]
-    @outcome_values [:applied, :registered, :fetch_failed, :parse_failed, :validation_failed, :apply_failed]
+    @trigger_values [:manual_import, :manual_refresh, :scheduled_refresh, :scheduled_probe]
+    @outcome_values [
+      :applied,
+      :registered,
+      :fetch_failed,
+      :parse_failed,
+      :validation_failed,
+      :apply_failed
+    ]
 
     schema "relyra_metadata_revisions" do
       field :source_kind, Ecto.Enum, values: @source_kind_values
