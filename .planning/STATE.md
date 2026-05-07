@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: — Operational maturity
-status: executing
-last_updated: "2026-05-07T13:56:14.345Z"
+status: planning
+last_updated: "2026-05-07T14:48:18.849Z"
 last_activity: 2026-05-07
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
   total_plans: 10
   completed_plans: 10
@@ -20,16 +20,16 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity milestone started)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 21.1 — close-gap-cfg-07-bulk-refresh-audit-correlation-id-forwardin
+**Current focus:** Phase 21.2 — close-v0-5-milestone-audit-gaps-and-re-scope-deferred-features-to-v0-6
 
 ## Current Position
 
-Phase: 21.1
+Phase: 21.2
 Plan: Not started
-Status: Executing Phase 21.1
+Status: Planning Phase 21.2
 Last activity: 2026-05-07
 
-Resume file: (no active resume — awaiting v0.6 milestone arc kickoff)
+Resume file: .planning/phases/21.2-close-v0-5-milestone-audit-gaps-and-re-scope-deferred-featur/21.2-CONTEXT.md
 
 Plan wave layout:
 
@@ -47,6 +47,7 @@ Progress: [==========] 100%
 ### Roadmap Evolution
 
 - Phase 21.1 inserted after Phase 21 (URGENT) — Close gap: CFG-07 — bulk-refresh audit correlation_id forwarding
+- Phase 21.2 inserted after Phase 21 (URGENT) — Close v0.5 milestone-audit gaps and re-scope deferred features to v0.6
 
 **Decisions log:** Full log lives in `.planning/PROJECT.md` Key Decisions table. Highlights from v0.5:
 
