@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: — Operational maturity
-status: planning
-last_updated: "2026-05-07T14:48:18.849Z"
-last_activity: 2026-05-07
+status: executing
+last_updated: "2026-05-07T15:43:26.317Z"
+last_activity: 2026-05-07 -- Phase 21.2 planning complete
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 10
+  total_plans: 15
   completed_plans: 10
-  percent: 100
+  percent: 67
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity mi
 
 Phase: 21.2
 Plan: Not started
-Status: Planning Phase 21.2
-Last activity: 2026-05-07
+Status: Ready to execute
+Last activity: 2026-05-07 -- Phase 21.2 planning complete
 
 Resume file: .planning/phases/21.2-close-v0-5-milestone-audit-gaps-and-re-scope-deferred-featur/21.2-CONTEXT.md
 

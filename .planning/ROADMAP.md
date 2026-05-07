@@ -128,3 +128,17 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 
 Plans:
 - [x] 21.1-01-PLAN.md — Forward `opts[:audit]` into `apply_revision/4` + `record_attempt/3` via `resolve_audit/1` helper; 3 net-new RED→GREEN tests (bulk audit-cohesion + single-connection regression + failure-path no-audit invariant); dual-compile-lane gate
+
+### Phase 21.2: Close v0.5 milestone-audit gaps and re-scope deferred features to v0.6 (INSERTED)
+
+**Goal:** Close v0.5 milestone-audit gaps and re-scope deferred features to v0.6
+**Requirements**: Documentation / scope re-alignment (closes audit gaps; no new functional REQ-ID. CFG-07 + CFG-08 already complete; DIAG-01 + CERT-EXP-01 + SLO-01 deferred to v0.6.)
+**Depends on:** Phase 21
+**Plans:** 5 plans
+
+Plans:
+- [ ] 21.2-01-PLAN.md — PROJECT.md re-scope (move DIAG-01 + Expiry alerts → v0.6 Deferred; promote CFG-07 to Validated; refresh footer)
+- [ ] 21.2-02-PLAN.md — REQUIREMENTS.md in-place v0.4 → v0.5 refresh (do NOT create v0.5 archive — that's `/gsd-complete-milestone v0.5`'s job)
+- [ ] 21.2-03-PLAN.md — MILESTONE-ARC.md v0.6 row update + Evolution annotation (first application of the doc's annotation rule)
+- [ ] 21.2-04-PLAN.md — README.md INT-02 fix (Operations: Bulk actions subsection placed before scheduled-refresh section)
+- [ ] 21.2-05-PLAN.md — `/gsd-validate-phase 20` ride-along (produces 20-VALIDATION.md; closes Nyquist PARTIAL → compliant)
