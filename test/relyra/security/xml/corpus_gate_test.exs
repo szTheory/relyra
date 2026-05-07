@@ -1,19 +1,56 @@
 defmodule Relyra.Security.XML.CorpusGateTest do
-  @moduledoc """
-  Wave 0 stub for `Relyra.Security.XML.CorpusGate` (Phase 21 W1 — `21-03-trust-boundary-helpers`).
-
-  This file exists so PLAN files can reference an `<automated>` verify command
-  pointing at this path from day one. The corresponding production module will
-  be created in Wave 1 (`21-03`); see
-  `.planning/phases/21-scheduled-metadata-refresh/21-VALIDATION.md` Per-Task
-  Verification Map for the wave assignment.
-  """
   use ExUnit.Case, async: true
+  alias Relyra.Error
+  alias Relyra.Security.XML.CorpusGate
 
-  @moduletag :pending
+  describe "manifest/0 + manifest_path/0" do
+    test "loads the priv/security_corpus.json manifest at compile time" do
+      assert is_list(CorpusGate.manifest())
+      assert String.ends_with?(CorpusGate.manifest_path(), "priv/security_corpus.json")
+    end
 
-  @tag :pending
-  test "Wave 0 stub: replaced by Wave 1 task in Phase 21" do
-    flunk("Wave 0 stub — implement in the wave that introduces the production module")
+    test "the manifest contains at least one fixture (proves the move from test/fixtures succeeded)" do
+      # The test corpus is non-trivial; if this is empty, the move broke.
+      assert length(CorpusGate.manifest()) > 0
+    end
+  end
+
+  describe "check/2 against well-formed minimal XML" do
+    test "returns :ok for a benign XML payload that does not trip any corpus fixture" do
+      # A minimal benign EntityDescriptor (no signature wrapping, no namespace confusion)
+      xml =
+        ~s(<?xml version="1.0"?><EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://example.com"></EntityDescriptor>)
+
+      # The hardened parser may reject this for OTHER reasons (missing required children),
+      # which is fine — the gate either returns :ok OR returns the parser's own error.
+      # A :corpus_violation MUST NOT fire for a benign sample.
+      case CorpusGate.check(xml) do
+        :ok -> :ok
+        {:error, %Error{type: type}} -> refute type == :corpus_violation
+      end
+    end
+  end
+
+  describe "check/2 against fixture-known-bad XML" do
+    @tag :security_corpus
+    test "returns {:error, :corpus_violation} for at least one corpus fixture (canary)" do
+      # Pick the first fixture that carries inline XML and verify the gate refuses it.
+      fixture =
+        Enum.find(CorpusGate.manifest(), fn f ->
+          is_binary(Map.get(f, "xml")) and Map.get(f, "xml") != ""
+        end)
+
+      if fixture do
+        assert {:error, %Error{type: :corpus_violation} = err} =
+                 CorpusGate.check(Map.fetch!(fixture, "xml"))
+
+        assert err.details.matched_fixture_id == Map.get(fixture, "id")
+      else
+        # If no fixture carries inline XML, the gate is misconfigured for runtime use.
+        flunk(
+          "Corpus manifest has no inline-XML fixture; CorpusGate cannot canary-test runtime refusal."
+        )
+      end
+    end
   end
 end

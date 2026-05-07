@@ -4,7 +4,7 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
   alias Relyra.Error
   alias Relyra.Security.XML.PureBeam
 
-  @manifest_path "test/fixtures/security/xml/manifest.json"
+  @manifest_path "priv/security_corpus.json"
 
   @tag :security_corpus
   test "manifest.json fixtures map to expected_error_type for each class" do
