@@ -20,11 +20,13 @@ defmodule Relyra.LiveAdmin.BulkTest do
   end
 
   defp mount_socket(scope \\ nil) do
-    scope = scope || %Scope{
-      actor: "ops@example.com",
-      actor_label: "Ops User",
-      organization_id: "org_bulk"
-    }
+    scope =
+      scope ||
+        %Scope{
+          actor: "ops@example.com",
+          actor_label: "Ops User",
+          organization_id: "org_bulk"
+        }
 
     %Phoenix.LiveView.Socket{
       assigns: %{
@@ -47,13 +49,25 @@ defmodule Relyra.LiveAdmin.BulkTest do
 
   test "Task 1: handle_event toggle_selection updates selected_ids" do
     socket = mount_socket()
-    
+
     # Toggle on
-    assert {:noreply, socket} = ConnectionsLive.handle_event("toggle_selection", %{"connection-id" => "conn1"}, socket)
+    assert {:noreply, socket} =
+             ConnectionsLive.handle_event(
+               "toggle_selection",
+               %{"connection-id" => "conn1"},
+               socket
+             )
+
     assert MapSet.member?(socket.assigns.selected_ids, "conn1")
 
     # Toggle off
-    assert {:noreply, socket} = ConnectionsLive.handle_event("toggle_selection", %{"connection-id" => "conn1"}, socket)
+    assert {:noreply, socket} =
+             ConnectionsLive.handle_event(
+               "toggle_selection",
+               %{"connection-id" => "conn1"},
+               socket
+             )
+
     refute MapSet.member?(socket.assigns.selected_ids, "conn1")
   end
 
@@ -63,25 +77,38 @@ defmodule Relyra.LiveAdmin.BulkTest do
     # Actually, the behavior says "connections list renders a checkbox for each connection".
     # I'll use Phoenix.LiveViewTest to verify rendering if possible, but I need a running LV for that usually.
     # For unit testing components, I can use render_component.
-    
+
     import Phoenix.LiveViewTest
-    
+
     connections = [
-      %{connection_id: "c1", display_name: "Conn 1", organization_id: "org", status: :active, provider_label: "Okta"},
-      %{connection_id: "c2", display_name: "Conn 2", organization_id: "org", status: :active, provider_label: "Okta"}
+      %{
+        connection_id: "c1",
+        display_name: "Conn 1",
+        organization_id: "org",
+        status: :active,
+        provider_label: "Okta"
+      },
+      %{
+        connection_id: "c2",
+        display_name: "Conn 2",
+        organization_id: "org",
+        status: :active,
+        provider_label: "Okta"
+      }
     ]
-    
-    html = render_component(&Relyra.LiveAdmin.Components.ConnectionList.connection_list/1, %{
-      connections: connections,
-      base_path: "/admin",
-      selected_ids: MapSet.new(["c1"])
-    })
-    
+
+    html =
+      render_component(&Relyra.LiveAdmin.Components.ConnectionList.connection_list/1, %{
+        connections: connections,
+        base_path: "/admin",
+        selected_ids: MapSet.new(["c1"])
+      })
+
     assert html =~ ~s(type="checkbox")
     assert html =~ ~s(phx-click="toggle_selection")
     assert html =~ ~s(phx-value-connection-id="c1")
     assert html =~ ~s(phx-value-connection-id="c2")
-    
+
     # Verify checked state
     assert html =~ ~s(checked)
   end
@@ -89,7 +116,7 @@ defmodule Relyra.LiveAdmin.BulkTest do
   test "Task 2: Bulk Actions menu appears only when IDs are selected" do
     import Phoenix.LiveViewTest
     socket = mount_socket()
-    
+
     # Empty selection
     html = render_component(ConnectionsLive, Map.put(socket.assigns, :live_action, :index))
     refute html =~ "Bulk Actions"
@@ -102,30 +129,34 @@ defmodule Relyra.LiveAdmin.BulkTest do
 
   test "Task 2: handle_event bulk_action calls BulkActions.run" do
     # We need to insert some connections to test the real run
-    c1_id = "01JKP9G6D2Q7X6Z0X4M7X6Z0X1" # Valid ULID format
-    c2_id = "01JKP9G6D2Q7X6Z0X4M7X6Z0X2" # Valid ULID format
+    # Valid ULID format
+    c1_id = "01JKP9G6D2Q7X6Z0X4M7X6Z0X1"
+    # Valid ULID format
+    c2_id = "01JKP9G6D2Q7X6Z0X4M7X6Z0X2"
 
-    c1 = @repo.insert!(%Relyra.Ecto.Connection{
-      connection_id: c1_id,
-      display_name: "C1",
-      organization_id: "org_bulk",
-      status: :disabled,
-      sp_entity_id: "sp1",
-      idp_entity_id: "idp1",
-      acs_url: "https://sp1/acs",
-      idp_sso_url: "https://idp1/sso"
-    })
+    c1 =
+      @repo.insert!(%Relyra.Ecto.Connection{
+        connection_id: c1_id,
+        display_name: "C1",
+        organization_id: "org_bulk",
+        status: :disabled,
+        sp_entity_id: "sp1",
+        idp_entity_id: "idp1",
+        acs_url: "https://sp1/acs",
+        idp_sso_url: "https://idp1/sso"
+      })
 
-    c2 = @repo.insert!(%Relyra.Ecto.Connection{
-      connection_id: c2_id,
-      display_name: "C2",
-      organization_id: "org_bulk",
-      status: :disabled,
-      sp_entity_id: "sp2",
-      idp_entity_id: "idp2",
-      acs_url: "https://sp2/acs",
-      idp_sso_url: "https://idp2/sso"
-    })
+    c2 =
+      @repo.insert!(%Relyra.Ecto.Connection{
+        connection_id: c2_id,
+        display_name: "C2",
+        organization_id: "org_bulk",
+        status: :disabled,
+        sp_entity_id: "sp2",
+        idp_entity_id: "idp2",
+        acs_url: "https://sp2/acs",
+        idp_sso_url: "https://idp2/sso"
+      })
 
     # Insert active certificates
     @repo.insert!(%Relyra.Ecto.Certificate{
@@ -149,8 +180,9 @@ defmodule Relyra.LiveAdmin.BulkTest do
     socket = mount_socket()
     socket = assign(socket, :selected_ids, MapSet.new([c1_id, c2_id]))
 
-    assert {:noreply, socket} = ConnectionsLive.handle_event("bulk_action", %{"action" => "enable"}, socket)
-    
+    assert {:noreply, socket} =
+             ConnectionsLive.handle_event("bulk_action", %{"action" => "enable"}, socket)
+
     assert %{"info" => info} = socket.assigns.flash
     assert info =~ "Processed 2 connections"
     assert info =~ "2 succeeded"

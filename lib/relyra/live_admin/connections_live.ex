@@ -6,7 +6,14 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     alias Relyra.Ecto.{BulkActions, CertificateInventory, Connections, MappingCommands}
     alias Relyra.Metadata
-    alias Relyra.LiveAdmin.Components.{ConnectionDetail, ConnectionForm, ConnectionList, PresetPicker}
+
+    alias Relyra.LiveAdmin.Components.{
+      ConnectionDetail,
+      ConnectionForm,
+      ConnectionList,
+      PresetPicker
+    }
+
     alias Relyra.LiveAdmin.Query
     alias Relyra.LiveAdmin.Scope
     alias Relyra.LiveAdmin.AttributeMappingsForm
@@ -24,9 +31,18 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
        |> assign(:connection_id, nil)
        |> assign(:provider_options, Query.provider_options())
        |> assign(:audit_filters, %{})
-       |> assign(:connection_form_data, default_connection_form_data(nil, socket.assigns.admin_scope))
-       |> assign(:attribute_mappings_changeset, AttributeMappingsForm.changeset(%AttributeMappingsForm{}, %{}))
-       |> assign(:group_mappings_changeset, GroupMappingsForm.changeset(%GroupMappingsForm{}, %{}))
+       |> assign(
+         :connection_form_data,
+         default_connection_form_data(nil, socket.assigns.admin_scope)
+       )
+       |> assign(
+         :attribute_mappings_changeset,
+         AttributeMappingsForm.changeset(%AttributeMappingsForm{}, %{})
+       )
+       |> assign(
+         :group_mappings_changeset,
+         GroupMappingsForm.changeset(%GroupMappingsForm{}, %{})
+       )
        |> assign(:metadata_import_xml, "")
        |> assign(:metadata_source_url, "")
        |> assign(:selected_ids, MapSet.new())}
@@ -66,8 +82,11 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
       result =
         case socket.assigns.live_action do
-          :new -> Connections.create(attrs, repo: repo, audit: audit)
-          _other -> Connections.update(socket.assigns.connection_id, attrs, repo: repo, audit: audit)
+          :new ->
+            Connections.create(attrs, repo: repo, audit: audit)
+
+          _other ->
+            Connections.update(socket.assigns.connection_id, attrs, repo: repo, audit: audit)
         end
 
       case result do
@@ -75,7 +94,9 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           {:noreply,
            socket
            |> put_flash(:info, "Connection saved.")
-           |> push_navigate(to: show_path(socket.assigns.relyra_admin_base_path, connection.connection_id))}
+           |> push_navigate(
+             to: show_path(socket.assigns.relyra_admin_base_path, connection.connection_id)
+           )}
 
         {:error, error} ->
           {:noreply, put_flash(socket, :error, error.message)}
@@ -121,7 +142,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       success_count = Enum.count(results, fn {_, res} -> match?({:ok, _}, res) end)
       error_count = map_size(results) - success_count
 
-      msg = "Processed #{map_size(results)} connections: #{success_count} succeeded, #{error_count} failed."
+      msg =
+        "Processed #{map_size(results)} connections: #{success_count} succeeded, #{error_count} failed."
 
       {:noreply,
        socket
@@ -130,7 +152,11 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
        |> reload_connections()}
     end
 
-    def handle_event("confirm_activate_certificate", %{"fingerprint" => fingerprint, "confirmation" => confirmation}, socket) do
+    def handle_event(
+          "confirm_activate_certificate",
+          %{"fingerprint" => fingerprint, "confirmation" => confirmation},
+          socket
+        ) do
       if confirmation == String.slice(fingerprint, 0..5) do
         try do
           handle_reload_result(
@@ -147,11 +173,15 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           Ecto.StaleEntryError ->
             {:noreply,
              socket
-             |> put_flash(:error, "The connection was modified by another operator. Please review the updated trust state.")
+             |> put_flash(
+               :error,
+               "The connection was modified by another operator. Please review the updated trust state."
+             )
              |> reload_detail()}
         end
       else
-        {:noreply, put_flash(socket, :error, "Confirmation did not match the certificate fingerprint.")}
+        {:noreply,
+         put_flash(socket, :error, "Confirmation did not match the certificate fingerprint.")}
       end
     end
 
@@ -171,14 +201,20 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         Ecto.StaleEntryError ->
           {:noreply,
            socket
-           |> put_flash(:error, "The connection was modified by another operator. Please review the updated trust state.")
+           |> put_flash(
+             :error,
+             "The connection was modified by another operator. Please review the updated trust state."
+           )
            |> reload_detail()}
       end
     end
 
     def handle_event(
           "rollback_certificate",
-          %{"restore_fingerprint" => restore_fingerprint, "retire_fingerprint" => retire_fingerprint},
+          %{
+            "restore_fingerprint" => restore_fingerprint,
+            "retire_fingerprint" => retire_fingerprint
+          },
           socket
         ) do
       try do
@@ -197,12 +233,19 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         Ecto.StaleEntryError ->
           {:noreply,
            socket
-           |> put_flash(:error, "The connection was modified by another operator. Please review the updated trust state.")
+           |> put_flash(
+             :error,
+             "The connection was modified by another operator. Please review the updated trust state."
+           )
            |> reload_detail()}
       end
     end
 
-    def handle_event("validate_attribute_mappings", %{"attribute_mappings_form" => params}, socket) do
+    def handle_event(
+          "validate_attribute_mappings",
+          %{"attribute_mappings_form" => params},
+          socket
+        ) do
       changeset =
         socket.assigns.attribute_mappings_changeset.data
         |> AttributeMappingsForm.changeset(params)
@@ -212,7 +255,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     end
 
     def handle_event("save_attribute_mappings", %{"attribute_mappings_form" => params}, socket) do
-      changeset = AttributeMappingsForm.changeset(socket.assigns.attribute_mappings_changeset.data, params)
+      changeset =
+        AttributeMappingsForm.changeset(socket.assigns.attribute_mappings_changeset.data, params)
 
       if changeset.valid? do
         mappings =
@@ -226,39 +270,45 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
             socket.assigns.connection_id,
             mappings,
             repo: socket.assigns.relyra_admin_repo,
-            audit: audit_context(socket.assigns.admin_scope, "live_admin_attribute_mapping_update")
+            audit:
+              audit_context(socket.assigns.admin_scope, "live_admin_attribute_mapping_update")
           ),
           "Attribute mappings saved."
         )
       else
-        {:noreply, assign(socket, attribute_mappings_changeset: Map.put(changeset, :action, :insert))}
+        {:noreply,
+         assign(socket, attribute_mappings_changeset: Map.put(changeset, :action, :insert))}
       end
     end
 
     def handle_event("add_attribute_mapping", _params, socket) do
       form = socket.assigns.attribute_mappings_changeset.data
-      current_mappings = Ecto.Changeset.get_field(socket.assigns.attribute_mappings_changeset, :mappings) || []
-      
+
+      current_mappings =
+        Ecto.Changeset.get_field(socket.assigns.attribute_mappings_changeset, :mappings) || []
+
       # Build params to recreate the current state + 1 new empty mapping
       params = %{
         "mappings" => current_mappings ++ [%{}]
       }
-      
+
       changeset = AttributeMappingsForm.changeset(form, params)
       {:noreply, assign(socket, :attribute_mappings_changeset, changeset)}
     end
 
     def handle_event("remove_attribute_mapping", %{"index" => index}, socket) do
       form = socket.assigns.attribute_mappings_changeset.data
-      current_mappings = Ecto.Changeset.get_field(socket.assigns.attribute_mappings_changeset, :mappings) || []
-      
+
+      current_mappings =
+        Ecto.Changeset.get_field(socket.assigns.attribute_mappings_changeset, :mappings) || []
+
       idx = String.to_integer(index)
       updated_mappings = List.delete_at(current_mappings, idx)
-      
+
       params = %{
         "mappings" => Enum.map(updated_mappings, &Map.from_struct(&1))
       }
-      
+
       changeset = AttributeMappingsForm.changeset(form, params)
       {:noreply, assign(socket, :attribute_mappings_changeset, changeset)}
     end
@@ -273,7 +323,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     end
 
     def handle_event("save_group_mappings", %{"group_mappings_form" => params}, socket) do
-      changeset = GroupMappingsForm.changeset(socket.assigns.group_mappings_changeset.data, params)
+      changeset =
+        GroupMappingsForm.changeset(socket.assigns.group_mappings_changeset.data, params)
 
       if changeset.valid? do
         mappings =
@@ -298,27 +349,31 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     def handle_event("add_group_mapping", _params, socket) do
       form = socket.assigns.group_mappings_changeset.data
-      current_mappings = Ecto.Changeset.get_field(socket.assigns.group_mappings_changeset, :mappings) || []
-      
+
+      current_mappings =
+        Ecto.Changeset.get_field(socket.assigns.group_mappings_changeset, :mappings) || []
+
       params = %{
         "mappings" => current_mappings ++ [%{}]
       }
-      
+
       changeset = GroupMappingsForm.changeset(form, params)
       {:noreply, assign(socket, :group_mappings_changeset, changeset)}
     end
 
     def handle_event("remove_group_mapping", %{"index" => index}, socket) do
       form = socket.assigns.group_mappings_changeset.data
-      current_mappings = Ecto.Changeset.get_field(socket.assigns.group_mappings_changeset, :mappings) || []
-      
+
+      current_mappings =
+        Ecto.Changeset.get_field(socket.assigns.group_mappings_changeset, :mappings) || []
+
       idx = String.to_integer(index)
       updated_mappings = List.delete_at(current_mappings, idx)
-      
+
       params = %{
         "mappings" => Enum.map(updated_mappings, &Map.from_struct(&1))
       }
-      
+
       changeset = GroupMappingsForm.changeset(form, params)
       {:noreply, assign(socket, :group_mappings_changeset, changeset)}
     end
@@ -326,12 +381,16 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     def handle_event("filter_audits", %{"filters" => filters}, socket) do
       # Make sure we don't carry over extraneous params.
       filters = Map.take(filters, ["actor", "domain", "action"])
-      
+
       # We could patch the URL to preserve the filters in query string.
       {:noreply,
        socket
        |> assign(:audit_filters, filters)
-       |> push_patch(to: show_path(socket.assigns.relyra_admin_base_path, socket.assigns.connection_id) <> "?" <> URI.encode_query(filters))}
+       |> push_patch(
+         to:
+           show_path(socket.assigns.relyra_admin_base_path, socket.assigns.connection_id) <>
+             "?" <> URI.encode_query(filters)
+       )}
     end
 
     @impl true
@@ -428,7 +487,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         {:ok, _record} ->
           {:noreply, socket |> reload_detail() |> put_flash(:info, "Connection #{transition}d.")}
 
-        {:error, %Relyra.Error{type: :invalid_connection_record, details: %{errors: errors}} = error} ->
+        {:error,
+         %Relyra.Error{type: :invalid_connection_record, details: %{errors: errors}} = error} ->
           detail = socket.assigns.detail
           connection = %{detail.connection | readiness_errors: errors}
           detail = %{detail | connection: connection}
@@ -483,14 +543,15 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     defp assign_forms(socket, nil, preset_param) do
       base_data = default_connection_form_data(nil, socket.assigns.admin_scope)
-      
+
       form_data =
         if preset_param && preset_param != "" do
           try do
             preset_atom = String.to_existing_atom(preset_param)
+
             if preset_atom in Relyra.Provider.list() do
               defaults_map = Map.new(Relyra.Provider.apply_defaults(preset_atom, []))
-              
+
               conn_map = %{
                 display_name: nil,
                 organization_id: nil,
@@ -501,6 +562,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                 idp_sso_url: Map.get(defaults_map, :idp_sso_url),
                 runtime_policy: defaults_map
               }
+
               connection_form_data(conn_map, socket.assigns.admin_scope)
             else
               base_data
@@ -517,29 +579,32 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     defp assign_forms(socket, detail, _preset_param) do
       attribute_mappings_form = %AttributeMappingsForm{
-        mappings: Enum.map(detail.attribute_mappings, fn m ->
-          %Relyra.LiveAdmin.AttributeMappingForm{
-            source_attribute: m.source_attribute,
-            target_field: m.target_field,
-            multivalue_strategy: m.multivalue_strategy
-          }
-        end)
+        mappings:
+          Enum.map(detail.attribute_mappings, fn m ->
+            %Relyra.LiveAdmin.AttributeMappingForm{
+              source_attribute: m.source_attribute,
+              target_field: m.target_field,
+              multivalue_strategy: m.multivalue_strategy
+            }
+          end)
       }
 
       group_mappings_form = %GroupMappingsForm{
-        mappings: Enum.map(detail.group_mappings, fn m ->
-          %Relyra.LiveAdmin.GroupMappingForm{
-            source_attribute: m.source_attribute,
-            source_value: m.source_value,
-            role_target: m.role_target,
-            role_value: m.role_value
-          }
-        end)
+        mappings:
+          Enum.map(detail.group_mappings, fn m ->
+            %Relyra.LiveAdmin.GroupMappingForm{
+              source_attribute: m.source_attribute,
+              source_value: m.source_value,
+              role_target: m.role_target,
+              role_value: m.role_value
+            }
+          end)
       }
 
       assign(socket,
         connection_form_data: connection_form_data(detail.connection, socket.assigns.admin_scope),
-        attribute_mappings_changeset: AttributeMappingsForm.changeset(attribute_mappings_form, %{}),
+        attribute_mappings_changeset:
+          AttributeMappingsForm.changeset(attribute_mappings_form, %{}),
         group_mappings_changeset: GroupMappingsForm.changeset(group_mappings_form, %{})
       )
     end
@@ -550,16 +615,31 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
       %{
         "display_name" => if(connection, do: connection.display_name || "", else: ""),
-        "organization_id" => if(connection, do: connection.organization_id || scope.organization_id || "", else: scope.organization_id || ""),
-        "provider_preset" => if(connection && connection.provider_preset, do: Atom.to_string(connection.provider_preset), else: ""),
+        "organization_id" =>
+          if(connection,
+            do: connection.organization_id || scope.organization_id || "",
+            else: scope.organization_id || ""
+          ),
+        "provider_preset" =>
+          if(connection && connection.provider_preset,
+            do: Atom.to_string(connection.provider_preset),
+            else: ""
+          ),
         "sp_entity_id" => if(connection, do: connection.sp_entity_id || "", else: ""),
         "acs_url" => if(connection, do: connection.acs_url || "", else: ""),
         "idp_entity_id" => if(connection, do: connection.idp_entity_id || "", else: ""),
         "idp_sso_url" => if(connection, do: connection.idp_sso_url || "", else: ""),
-        "allow_idp_initiated?" => boolean_string(Map.get(runtime_policy, :allow_idp_initiated?, false)),
-        "require_signed_assertions?" => boolean_string(Map.get(runtime_policy, :require_signed_assertions?, true)),
-        "require_signed_response?" => boolean_string(Map.get(runtime_policy, :require_signed_response?, true)),
-        "clock_skew_seconds" => if(connection && runtime_policy.clock_skew_seconds, do: Integer.to_string(runtime_policy.clock_skew_seconds), else: ""),
+        "allow_idp_initiated?" =>
+          boolean_string(Map.get(runtime_policy, :allow_idp_initiated?, false)),
+        "require_signed_assertions?" =>
+          boolean_string(Map.get(runtime_policy, :require_signed_assertions?, true)),
+        "require_signed_response?" =>
+          boolean_string(Map.get(runtime_policy, :require_signed_response?, true)),
+        "clock_skew_seconds" =>
+          if(connection && runtime_policy.clock_skew_seconds,
+            do: Integer.to_string(runtime_policy.clock_skew_seconds),
+            else: ""
+          ),
         "name_id_format" => Map.get(runtime_policy, :name_id_format) || "",
         "algorithm_policy_json" => Jason.encode!(algorithm_policy, pretty: true)
       }
@@ -570,7 +650,11 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     end
 
     defp connection_attrs(params, %Scope{} = scope) do
-      organization_id = if(scope.organization_id, do: scope.organization_id, else: blank_to_nil(params["organization_id"]))
+      organization_id =
+        if(scope.organization_id,
+          do: scope.organization_id,
+          else: blank_to_nil(params["organization_id"])
+        )
 
       %{
         display_name: blank_to_nil(params["display_name"]),
@@ -645,7 +729,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           raise ArgumentError, "Relyra admin requires :admin_scope to be assigned before mount"
 
         is_nil(repo) ->
-          raise ArgumentError, "Relyra admin requires :relyra_admin_repo to be assigned before mount"
+          raise ArgumentError,
+                "Relyra admin requires :relyra_admin_repo to be assigned before mount"
 
         true ->
           socket

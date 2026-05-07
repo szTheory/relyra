@@ -13,11 +13,16 @@ if Code.ensure_loaded?(Phoenix.LiveView.Router) do
             on_mount: [
               {Relyra.LiveAdmin.OnMount, Keyword.put(opts, :base_path, path)}
             ] do
-            live "/", Relyra.LiveAdmin.ConnectionsLive, :index
-            live "/connections/new", Relyra.LiveAdmin.ConnectionsLive, :new
-            live "/connections/:connection_id", Relyra.LiveAdmin.ConnectionsLive, :show
-            live "/connections/:connection_id/edit", Relyra.LiveAdmin.ConnectionsLive, :edit
-            live "/connections/:connection_id/metadata", Relyra.LiveAdmin.ConnectionMetadataLive, :metadata
+            live("/", Relyra.LiveAdmin.ConnectionsLive, :index)
+            live("/connections/new", Relyra.LiveAdmin.ConnectionsLive, :new)
+            live("/connections/:connection_id", Relyra.LiveAdmin.ConnectionsLive, :show)
+            live("/connections/:connection_id/edit", Relyra.LiveAdmin.ConnectionsLive, :edit)
+
+            live(
+              "/connections/:connection_id/metadata",
+              Relyra.LiveAdmin.ConnectionMetadataLive,
+              :metadata
+            )
           end
         end
       end

@@ -6,7 +6,8 @@ defmodule Relyra.Metadata.SourceRegistry do
 
   @ecto_repo Ecto.Repo
 
-  @spec register_source(binary(), map(), keyword()) :: {:ok, MetadataSource.t()} | {:error, Error.t()}
+  @spec register_source(binary(), map(), keyword()) ::
+          {:ok, MetadataSource.t()} | {:error, Error.t()}
   def register_source(connection_id, attrs, opts \\ [])
 
   def register_source(connection_id, attrs, opts)
@@ -58,15 +59,26 @@ defmodule Relyra.Metadata.SourceRegistry do
 
   defp fetch_repo(opts, operation) do
     case Keyword.fetch(opts, :repo) do
-      {:ok, repo} when is_atom(repo) -> {:ok, repo}
-      _ -> {:error, Error.new(:adapter_not_configured, "opts[:repo] is required for metadata persistence", %{operation: operation, reason: :missing_repo})}
+      {:ok, repo} when is_atom(repo) ->
+        {:ok, repo}
+
+      _ ->
+        {:error,
+         Error.new(:adapter_not_configured, "opts[:repo] is required for metadata persistence", %{
+           operation: operation,
+           reason: :missing_repo
+         })}
     end
   end
 
   defp ensure_optional_dependency!(repo, operation) do
     cond do
       not Code.ensure_loaded?(@ecto_repo) ->
-        {:error, Error.new(:optional_dependency_missing, "Ecto.Repo is unavailable", %{repo: inspect(repo), operation: operation})}
+        {:error,
+         Error.new(:optional_dependency_missing, "Ecto.Repo is unavailable", %{
+           repo: inspect(repo),
+           operation: operation
+         })}
 
       true ->
         :ok
@@ -75,8 +87,15 @@ defmodule Relyra.Metadata.SourceRegistry do
 
   defp fetch_connection(repo, connection_id, operation) do
     case repo.get_by(Connection, connection_id: connection_id) do
-      nil -> {:error, Error.new(:connection_not_found, "Connection record was not found", %{operation: operation, connection_id: connection_id})}
-      connection -> {:ok, connection}
+      nil ->
+        {:error,
+         Error.new(:connection_not_found, "Connection record was not found", %{
+           operation: operation,
+           connection_id: connection_id
+         })}
+
+      connection ->
+        {:ok, connection}
     end
   end
 

@@ -105,7 +105,9 @@ defmodule Relyra.MetadataRefreshTest do
           url: "https://idp.example.com/metadata",
           actor: "operator@example.com",
           cause: "refresh registration"
-        }, repo: @repo)
+        },
+        repo: @repo
+      )
   end
 
   defp insert_enabled_connection!(connection_id) do

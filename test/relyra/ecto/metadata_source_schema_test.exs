@@ -4,7 +4,8 @@ defmodule Relyra.Ecto.MetadataSourceSchemaTest do
   alias Relyra.Ecto.MetadataSource
 
   test "metadata source changeset rejects missing provenance fields and non-https urls" do
-    changeset = MetadataSource.changeset(%MetadataSource{}, %{url: "http://idp.example.com/metadata"})
+    changeset =
+      MetadataSource.changeset(%MetadataSource{}, %{url: "http://idp.example.com/metadata"})
 
     refute changeset.valid?
 

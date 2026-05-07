@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.5
-milestone_name: — Operational maturity
-status: executing
-last_updated: "2026-05-07T15:43:26.317Z"
-last_activity: 2026-05-07 -- Phase 21.2 planning complete
+milestone: v0.6
+milestone_name: — Operational maturity carryover + SLO
+status: planned
+last_updated: "2026-05-07T18:12:00.000Z"
+last_activity: 2026-05-07 -- v0.5 Milestone Completed
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 15
-  completed_plans: 10
-  percent: 67
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State

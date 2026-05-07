@@ -66,6 +66,7 @@ defmodule Relyra.Metadata.Refresh do
                  ) do
               {:ok, revision} ->
                 update_source(repo, source, :applied)
+
                 Log.info("metadata refresh applied",
                   connection_id: connection.connection_id,
                   metadata_xml: xml,
@@ -79,11 +80,23 @@ defmodule Relyra.Metadata.Refresh do
                 record_refresh_failure(connection, source, repo, xml, error, :apply_failed, opts)
 
                 {{:error, error},
-                 Map.merge(metadata, %{outcome: :error, error_code: error.type, certificate_count: 0})}
+                 Map.merge(metadata, %{
+                   outcome: :error,
+                   error_code: error.type,
+                   certificate_count: 0
+                 })}
             end
 
           {:error, %Error{} = error} ->
-            record_refresh_failure(connection, source, repo, xml, error, failure_outcome(error), opts)
+            record_refresh_failure(
+              connection,
+              source,
+              repo,
+              xml,
+              error,
+              failure_outcome(error),
+              opts
+            )
 
             {{:error, error},
              Map.merge(metadata, %{outcome: :error, error_code: error.type, certificate_count: 0})}
@@ -133,36 +146,65 @@ defmodule Relyra.Metadata.Refresh do
 
       {:ok, %Req.Response{status: status}} ->
         {:error,
-         Error.new(:metadata_fetch_failed, "Metadata refresh returned an unexpected status", %{status: status})}
+         Error.new(:metadata_fetch_failed, "Metadata refresh returned an unexpected status", %{
+           status: status
+         })}
 
       {:error, exception} ->
         {:error,
-         Error.new(:metadata_fetch_failed, "Metadata refresh failed", %{reason: Exception.message(exception)})}
+         Error.new(:metadata_fetch_failed, "Metadata refresh failed", %{
+           reason: Exception.message(exception)
+         })}
     end
   end
 
   defp fetch_repo(opts) do
     case Keyword.fetch(opts, :repo) do
-      {:ok, repo} when is_atom(repo) -> {:ok, repo}
-      _ -> {:error, Error.new(:adapter_not_configured, "opts[:repo] is required for metadata refresh", %{operation: :refresh, reason: :missing_repo})}
+      {:ok, repo} when is_atom(repo) ->
+        {:ok, repo}
+
+      _ ->
+        {:error,
+         Error.new(:adapter_not_configured, "opts[:repo] is required for metadata refresh", %{
+           operation: :refresh,
+           reason: :missing_repo
+         })}
     end
   end
 
   defp fetch_req(opts) do
     case Keyword.fetch(opts, :req) do
-      {:ok, %Req.Request{} = req} -> {:ok, req}
-      {:ok, req_opts} when is_list(req_opts) -> {:ok, Req.new(req_opts)}
-      _ -> {:error, Error.new(:adapter_not_configured, "opts[:req] is required for metadata refresh", %{operation: :refresh, reason: :missing_req})}
+      {:ok, %Req.Request{} = req} ->
+        {:ok, req}
+
+      {:ok, req_opts} when is_list(req_opts) ->
+        {:ok, Req.new(req_opts)}
+
+      _ ->
+        {:error,
+         Error.new(:adapter_not_configured, "opts[:req] is required for metadata refresh", %{
+           operation: :refresh,
+           reason: :missing_req
+         })}
     end
   end
 
   defp ensure_optional_dependencies(repo) do
     cond do
       not Code.ensure_loaded?(@ecto_repo) ->
-        {:error, Error.new(:optional_dependency_missing, "Ecto.Repo is unavailable", %{repo: inspect(repo), operation: :refresh})}
+        {:error,
+         Error.new(:optional_dependency_missing, "Ecto.Repo is unavailable", %{
+           repo: inspect(repo),
+           operation: :refresh
+         })}
 
       not Code.ensure_loaded?(Req) ->
-        {:error, Error.new(:optional_dependency_missing, "Req is unavailable; add optional Req dependency before using metadata refresh", %{operation: :refresh})}
+        {:error,
+         Error.new(
+           :optional_dependency_missing,
+           "Req is unavailable; add optional Req dependency before using metadata refresh",
+           %{operation: :refresh}
+         )}
 
       true ->
         :ok
@@ -171,15 +213,30 @@ defmodule Relyra.Metadata.Refresh do
 
   defp fetch_connection(repo, connection_id) do
     case repo.get_by(Connection, connection_id: connection_id) do
-      nil -> {:error, Error.new(:connection_not_found, "Connection record was not found", %{connection_id: connection_id, operation: :refresh})}
-      connection -> {:ok, connection}
+      nil ->
+        {:error,
+         Error.new(:connection_not_found, "Connection record was not found", %{
+           connection_id: connection_id,
+           operation: :refresh
+         })}
+
+      connection ->
+        {:ok, connection}
     end
   end
 
   defp fetch_source(repo, connection_record_id) do
     case repo.get_by(MetadataSource, connection_record_id: connection_record_id) do
-      nil -> {:error, Error.new(:metadata_source_not_found, "No registered metadata source exists for this connection", %{operation: :refresh})}
-      source -> {:ok, source}
+      nil ->
+        {:error,
+         Error.new(
+           :metadata_source_not_found,
+           "No registered metadata source exists for this connection",
+           %{operation: :refresh}
+         )}
+
+      source ->
+        {:ok, source}
     end
   end
 

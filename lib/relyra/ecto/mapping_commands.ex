@@ -28,14 +28,24 @@ defmodule Relyra.Ecto.MappingCommands do
          {:ok, normalized_mappings} <- normalize_attribute_mappings(mappings),
          {:ok, _connection} <- fetch_connection(repo, connection_id, :replace_attribute_mappings) do
       transact(repo, fn ->
-        with {:ok, connection} <- fetch_locked_connection(repo, connection_id, :replace_attribute_mappings),
+        with {:ok, connection} <-
+               fetch_locked_connection(repo, connection_id, :replace_attribute_mappings),
              :ok <- bump_connection_lock(repo, connection, :replace_attribute_mappings),
              {:ok, current_snapshot} <- mapping_snapshot(repo, connection.id),
              {:ok, _deleted} <- replace_attribute_rows(repo, connection.id, normalized_mappings),
              {:ok, after_snapshot} <- mapping_snapshot(repo, connection.id),
-             action = mapping_action(current_snapshot.attribute_rules, after_snapshot.attribute_rules),
+             action =
+               mapping_action(current_snapshot.attribute_rules, after_snapshot.attribute_rules),
              {:ok, revision} <-
-               insert_revision(repo, connection, audit, action, current_snapshot, after_snapshot, :attribute_mappings),
+               insert_revision(
+                 repo,
+                 connection,
+                 audit,
+                 action,
+                 current_snapshot,
+                 after_snapshot,
+                 :attribute_mappings
+               ),
              {:ok, audit_event} <-
                append_audit(
                  repo,
@@ -83,14 +93,23 @@ defmodule Relyra.Ecto.MappingCommands do
          {:ok, normalized_mappings} <- normalize_group_mappings(mappings),
          {:ok, _connection} <- fetch_connection(repo, connection_id, :replace_group_mappings) do
       transact(repo, fn ->
-        with {:ok, connection} <- fetch_locked_connection(repo, connection_id, :replace_group_mappings),
+        with {:ok, connection} <-
+               fetch_locked_connection(repo, connection_id, :replace_group_mappings),
              :ok <- bump_connection_lock(repo, connection, :replace_group_mappings),
              {:ok, current_snapshot} <- mapping_snapshot(repo, connection.id),
              {:ok, _deleted} <- replace_group_rows(repo, connection.id, normalized_mappings),
              {:ok, after_snapshot} <- mapping_snapshot(repo, connection.id),
              action = mapping_action(current_snapshot.group_rules, after_snapshot.group_rules),
              {:ok, revision} <-
-               insert_revision(repo, connection, audit, action, current_snapshot, after_snapshot, :group_mappings),
+               insert_revision(
+                 repo,
+                 connection,
+                 audit,
+                 action,
+                 current_snapshot,
+                 after_snapshot,
+                 :group_mappings
+               ),
              {:ok, audit_event} <-
                append_audit(
                  repo,
@@ -558,7 +577,15 @@ defmodule Relyra.Ecto.MappingCommands do
     end
   end
 
-  defp insert_revision(repo, connection, audit, action, before_snapshot, after_snapshot, changed_field) do
+  defp insert_revision(
+         repo,
+         connection,
+         audit,
+         action,
+         before_snapshot,
+         after_snapshot,
+         changed_field
+       ) do
     diff_summary = diff_summary(before_snapshot, after_snapshot, changed_field)
 
     attrs = %{
@@ -652,7 +679,9 @@ defmodule Relyra.Ecto.MappingCommands do
   defp normalize_transaction_result({:ok, {:ok, result}}, _operation), do: {:ok, result}
   defp normalize_transaction_result({:ok, result}, _operation), do: {:ok, result}
   defp normalize_transaction_result({:error, %Error{} = error}, _operation), do: {:error, error}
-  defp normalize_transaction_result({:error, {:error, %Error{} = error}}, _operation), do: {:error, error}
+
+  defp normalize_transaction_result({:error, {:error, %Error{} = error}}, _operation),
+    do: {:error, error}
 
   defp normalize_transaction_result({:error, _step, %Error{} = error, _changes}, _operation),
     do: {:error, error}
@@ -735,7 +764,8 @@ defmodule Relyra.Ecto.MappingCommands do
     }
   end
 
-  defp fetch_value(mapping, key), do: Map.get(mapping, key) || Map.get(mapping, Atom.to_string(key))
+  defp fetch_value(mapping, key),
+    do: Map.get(mapping, key) || Map.get(mapping, Atom.to_string(key))
 
   defp normalize_string(value) when is_binary(value), do: String.trim(value)
   defp normalize_string(nil), do: nil

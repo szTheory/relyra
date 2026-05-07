@@ -17,22 +17,22 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.3 shipped 2026-05-06** — LiveView admin surface. All capabilities from v0.2 are now exposed via a mountable interface. 10/10 requirements verified.
 - **v0.4 shipped 2026-05-06** — IdP-initiated SSO and opaque RelayState. 1/1 requirements verified.
 - Code state at v0.4 close: ~17,200 LOC across `lib/` and `test/` (Elixir).
-- **v0.5 in progress** — Operational maturity. Phase 20 (bulk operations, CFG-07), Phase 21 (scheduled metadata refresh, CFG-08), Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding), and Phase 21.2 (audit-gap closure + scope re-alignment) shipped 2026-05-06 / 2026-05-07. Debug bundles (DIAG-01) and Expiry alerts (CERT-EXP-01) re-scoped to v0.6 per the v0.5 milestone audit.
+- **v0.5 shipped** — Operational maturity. Phase 20 (bulk operations, CFG-07), Phase 21 (scheduled metadata refresh, CFG-08), Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding), and Phase 21.2 (audit-gap closure + scope re-alignment) shipped 2026-05-07. Debug bundles (DIAG-01) and Expiry alerts (CERT-EXP-01) re-scoped to v0.6 per the v0.5 milestone audit.
 
-## Current Milestone: v0.5 — Operational maturity
+## Current Milestone: v0.6 — Operational maturity carryover + SLO
 
-**Goal:** Ship operational improvements to ease maintenance of large-scale deployments, including bulk operations, scheduled metadata refresh, and diagnostic debug bundles.
+**Goal:** Ship Single Logout (SLO) and remaining operational improvements to ease maintenance of large-scale deployments.
 
 **Target features:**
 
-- **Bulk operations** — User can run operations (enable/disable/refresh) across multiple connections at once (CFG-07).
-- **Scheduled metadata refresh** — User can enable background refresh automation with security guardrails (CFG-08).
+- **Single Logout (SLO)** — Support for SP-initiated and IdP-initiated logout (SLO-01).
+- **Debug bundles** — Operator can export a redacted diagnostic bundle for troubleshooting (DIAG-01).
+- **Expiry alerts** — System emits events/logs for upcoming certificate expirations (CERT-EXP-01).
 
 **Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the v0.5 → v1.0 plan and rationale.
 
 **Deferred to later milestones per arc:**
 
-- **v0.6** — SLO (Single Logout) plus operational-maturity carryover: Debug bundles (DIAG-01) and Expiry alerts (CERT-EXP-01).
 - **v1.0** — External security review + conformance + docs polish.
 
 ## Requirements

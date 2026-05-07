@@ -120,12 +120,18 @@ defmodule Relyra.TelemetryTest do
                [:metadata, :refresh],
                %{connection_id: "conn-123", source_kind: :remote_url, trigger: :manual_refresh},
                fn ->
-                 {{:ok, :refreshed}, %{outcome: :ok, certificate_count: 2, metadata_source_id: "source-1"}}
+                 {{:ok, :refreshed},
+                  %{outcome: :ok, certificate_count: 2, metadata_source_id: "source-1"}}
                end
              )
 
-    assert_receive {:telemetry_event, [:relyra, :saml, :metadata, :refresh, :start], %{system_time: _},
-                    %{connection_id: "conn-123", source_kind: :remote_url, trigger: :manual_refresh}},
+    assert_receive {:telemetry_event, [:relyra, :saml, :metadata, :refresh, :start],
+                    %{system_time: _},
+                    %{
+                      connection_id: "conn-123",
+                      source_kind: :remote_url,
+                      trigger: :manual_refresh
+                    }},
                    100
 
     assert_receive {:telemetry_event, [:relyra, :saml, :metadata, :refresh, :stop],

@@ -139,6 +139,7 @@ defmodule Relyra.Ecto.MappingCommandsTest do
       |> @repo.one()
 
     assert latest_revision.action == :replaced
+
     assert latest_revision.before_snapshot["group_rules"] == [
              %{
                "source_attribute" => "groups",
@@ -284,27 +285,31 @@ defmodule Relyra.Ecto.MappingCommandsTest do
     )
   end
 end
-  defmodule FailingAuditRepo do
-    @repo Relyra.TestSupport.EctoTestRepo
 
-    def transact(fun), do: @repo.transact(fun)
-    def rollback(value), do: @repo.rollback(value)
-    def get_by(schema, clauses), do: @repo.get_by(schema, clauses)
-    def update(changeset), do: @repo.update(changeset)
-    def insert_all(schema_or_source, entries), do: @repo.insert_all(schema_or_source, entries)
-    def insert_all(schema_or_source, entries, opts), do: @repo.insert_all(schema_or_source, entries, opts)
-    def delete_all(query), do: @repo.delete_all(query)
-    def one(query), do: @repo.one(query)
-    def all(query), do: @repo.all(query)
+defmodule FailingAuditRepo do
+  @repo Relyra.TestSupport.EctoTestRepo
 
-    def insert(%Ecto.Changeset{data: %Relyra.Ecto.AuditEvent{}}) do
-      {:error,
-       Ecto.Changeset.add_error(
-         Ecto.Changeset.change(%Relyra.Ecto.AuditEvent{}),
-         :actor,
-         "forced failure"
-       )}
-    end
+  def transact(fun), do: @repo.transact(fun)
+  def rollback(value), do: @repo.rollback(value)
+  def get_by(schema, clauses), do: @repo.get_by(schema, clauses)
+  def update(changeset), do: @repo.update(changeset)
+  def insert_all(schema_or_source, entries), do: @repo.insert_all(schema_or_source, entries)
 
-    def insert(changeset), do: @repo.insert(changeset)
+  def insert_all(schema_or_source, entries, opts),
+    do: @repo.insert_all(schema_or_source, entries, opts)
+
+  def delete_all(query), do: @repo.delete_all(query)
+  def one(query), do: @repo.one(query)
+  def all(query), do: @repo.all(query)
+
+  def insert(%Ecto.Changeset{data: %Relyra.Ecto.AuditEvent{}}) do
+    {:error,
+     Ecto.Changeset.add_error(
+       Ecto.Changeset.change(%Relyra.Ecto.AuditEvent{}),
+       :actor,
+       "forced failure"
+     )}
   end
+
+  def insert(changeset), do: @repo.insert(changeset)
+end

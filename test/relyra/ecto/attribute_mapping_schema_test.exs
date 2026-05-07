@@ -63,7 +63,10 @@ defmodule Relyra.Ecto.AttributeMappingSchemaTest do
   test "attribute mapping only accepts explicit multivalue strategies" do
     allowed_changesets =
       Enum.map([:first, :all], fn strategy ->
-        AttributeMapping.changeset(%AttributeMapping{}, Map.put(@valid_attrs, :multivalue_strategy, strategy))
+        AttributeMapping.changeset(
+          %AttributeMapping{},
+          Map.put(@valid_attrs, :multivalue_strategy, strategy)
+        )
       end)
 
     assert Enum.all?(allowed_changesets, & &1.valid?)

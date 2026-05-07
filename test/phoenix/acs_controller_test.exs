@@ -17,7 +17,7 @@ defmodule Relyra.Phoenix.ACSControllerTest do
   defmodule FakeUserMapper do
     @behaviour Relyra.UserMapper
     def map_attributes(result, _connection, _opts) do
-      {:ok, %{id: 1, email: "user@example.com", name_id: result.name_id}}
+      {:ok, %{id: 1, email: "user@example.com", name_id: result.principal.name_id}}
     end
   end
 

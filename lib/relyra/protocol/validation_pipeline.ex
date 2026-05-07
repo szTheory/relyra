@@ -178,7 +178,13 @@ defmodule Relyra.Protocol.ValidationPipeline do
     :ok
   end
 
-  defp login_result(protocol_payload, %SignedNode{} = signed_node, request_intent, connection, opts) do
+  defp login_result(
+         protocol_payload,
+         %SignedNode{} = signed_node,
+         request_intent,
+         connection,
+         opts
+       ) do
     %{
       connection_id:
         read_field(protocol_payload, :connection_id) ||

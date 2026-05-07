@@ -282,6 +282,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     defp status_style(_), do: "background: #f5f5f5; color: #616161;"
 
     defp expires_soon?(%{not_after: nil}), do: false
+
     defp expires_soon?(%{not_after: not_after}) do
       DateTime.diff(not_after, DateTime.utc_now(), :day) < 30
     end

@@ -205,7 +205,8 @@ defmodule Relyra do
       connection: Map.get(result, :connection),
       relay_state: Map.get(result, :relay_state),
       issuer: Map.get(result, :issuer),
-      in_response_to: Map.get(result, :in_response_to)
+      in_response_to: Map.get(result, :in_response_to),
+      return_to: Map.get(result, :return_to)
     }
 
     {:ok, login_result}

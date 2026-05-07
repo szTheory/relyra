@@ -10,12 +10,16 @@ defmodule Relyra.Security.RedirectTest do
     end
 
     test "rejects protocol-relative paths" do
-      assert {:error, %Error{type: :invalid_redirect}} = Redirect.safe_local_redirect("//evil.com")
+      assert {:error, %Error{type: :invalid_redirect}} =
+               Redirect.safe_local_redirect("//evil.com")
     end
 
     test "rejects absolute URLs" do
-      assert {:error, %Error{type: :invalid_redirect}} = Redirect.safe_local_redirect("http://evil.com")
-      assert {:error, %Error{type: :invalid_redirect}} = Redirect.safe_local_redirect("https://evil.com")
+      assert {:error, %Error{type: :invalid_redirect}} =
+               Redirect.safe_local_redirect("http://evil.com")
+
+      assert {:error, %Error{type: :invalid_redirect}} =
+               Redirect.safe_local_redirect("https://evil.com")
     end
 
     test "rejects nil" do

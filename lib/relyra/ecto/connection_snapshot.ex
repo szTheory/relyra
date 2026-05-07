@@ -125,7 +125,8 @@ defmodule Relyra.Ecto.ConnectionSnapshot do
   defp normalize_mapping_config(connection, operation) do
     with {:ok, attribute_rules} <-
            normalize_attribute_rules(mapping_rows(connection, :attribute_mappings), operation),
-         {:ok, group_rules} <- normalize_group_rules(mapping_rows(connection, :group_mappings), operation) do
+         {:ok, group_rules} <-
+           normalize_group_rules(mapping_rows(connection, :group_mappings), operation) do
       config = %{
         attribute_rules: attribute_rules,
         group_rules: group_rules

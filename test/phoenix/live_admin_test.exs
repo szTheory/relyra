@@ -11,7 +11,8 @@ defmodule Relyra.LiveAdmin.TestScopeProvider do
       {:ok,
        %Scope{
          actor: actor,
-         actor_label: Map.get(session, "admin_actor_label") || Map.get(session, :admin_actor_label),
+         actor_label:
+           Map.get(session, "admin_actor_label") || Map.get(session, :admin_actor_label),
          organization_id:
            Map.get(session, "admin_organization_id") || Map.get(session, :admin_organization_id)
        }}
@@ -27,12 +28,12 @@ defmodule Relyra.LiveAdmin.TestRouter do
   import Relyra.LiveAdmin.Router
 
   pipeline :browser do
-    plug Plug.Session, store: :cookie, key: "_relyra_admin_test", signing_salt: "router-salt"
-    plug :fetch_session
+    plug(Plug.Session, store: :cookie, key: "_relyra_admin_test", signing_salt: "router-salt")
+    plug(:fetch_session)
   end
 
   scope "/" do
-    pipe_through :browser
+    pipe_through(:browser)
 
     relyra_admin_routes("/admin",
       repo: Relyra.TestSupport.EctoTestRepo,
@@ -101,25 +102,30 @@ defmodule Relyra.LiveAdminTest do
       |> put_in([Access.key!(:assigns), :live_action], :new)
 
     assert {:noreply, _socket} =
-             ConnectionsLive.handle_event("save_connection", %{
-               "connection" => %{
-                 "display_name" => "Acme SSO",
-                 "organization_id" => "org_live",
-                 "provider_preset" => "okta",
-                 "sp_entity_id" => "https://sp.example.com/metadata",
-                 "acs_url" => "https://sp.example.com/acs",
-                 "idp_entity_id" => "https://idp.example.com/metadata",
-                 "idp_sso_url" => "https://idp.example.com/sso",
-                 "allow_idp_initiated?" => "false",
-                 "require_signed_assertions?" => "true",
-                 "require_signed_response?" => "true",
-                 "clock_skew_seconds" => "60",
-                 "name_id_format" => "persistent",
-                 "algorithm_policy_json" => "{}"
-               }
-             }, socket)
+             ConnectionsLive.handle_event(
+               "save_connection",
+               %{
+                 "connection" => %{
+                   "display_name" => "Acme SSO",
+                   "organization_id" => "org_live",
+                   "provider_preset" => "okta",
+                   "sp_entity_id" => "https://sp.example.com/metadata",
+                   "acs_url" => "https://sp.example.com/acs",
+                   "idp_entity_id" => "https://idp.example.com/metadata",
+                   "idp_sso_url" => "https://idp.example.com/sso",
+                   "allow_idp_initiated?" => "false",
+                   "require_signed_assertions?" => "true",
+                   "require_signed_response?" => "true",
+                   "clock_skew_seconds" => "60",
+                   "name_id_format" => "persistent",
+                   "algorithm_policy_json" => "{}"
+                 }
+               },
+               socket
+             )
 
-    assert [%Connection{display_name: "Acme SSO", organization_id: "org_live"}] = @repo.all(Connection)
+    assert [%Connection{display_name: "Acme SSO", organization_id: "org_live"}] =
+             @repo.all(Connection)
   end
 
   test "Query.get_connection_detail/4 normalizes the legacy_sha1 risk flag" do
@@ -137,7 +143,8 @@ defmodule Relyra.LiveAdminTest do
 
     scope = %Scope{actor: "ops@example.com", organization_id: "org_risk"}
 
-    assert {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+    assert {:ok, detail} =
+             Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
 
     assert [%{label: "Legacy SHA-1 support enabled (compatibility override)"}] = detail.risk_flags
   end
@@ -154,7 +161,8 @@ defmodule Relyra.LiveAdminTest do
 
     scope = %Scope{actor: "ops@example.com", organization_id: "org_attr"}
 
-    {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+    {:ok, detail} =
+      Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
 
     socket =
       %Phoenix.LiveView.Socket{
@@ -170,29 +178,46 @@ defmodule Relyra.LiveAdminTest do
       }
       |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
       |> put_in([Access.key!(:assigns), :live_action], :edit)
-      |> then(fn socket -> ConnectionsLive.handle_params(%{"connection_id" => connection.connection_id}, "http://localhost", socket) end)
+      |> then(fn socket ->
+        ConnectionsLive.handle_params(
+          %{"connection_id" => connection.connection_id},
+          "http://localhost",
+          socket
+        )
+      end)
       |> elem(1)
 
     assert {:noreply, socket} = ConnectionsLive.handle_event("add_attribute_mapping", %{}, socket)
-    
+
     assert %Ecto.Changeset{} = socket.assigns.attribute_mappings_changeset
-    
+
     # Save mapping
-    assert {:noreply, _socket} = ConnectionsLive.handle_event("save_attribute_mappings", %{
-      "attribute_mappings_form" => %{
-        "mappings" => %{
-          "0" => %{
-            "source_attribute" => "email",
-            "target_field" => "email",
-            "multivalue_strategy" => "first"
-          }
-        }
-      }
-    }, socket)
+    assert {:noreply, _socket} =
+             ConnectionsLive.handle_event(
+               "save_attribute_mappings",
+               %{
+                 "attribute_mappings_form" => %{
+                   "mappings" => %{
+                     "0" => %{
+                       "source_attribute" => "email",
+                       "target_field" => "email",
+                       "multivalue_strategy" => "first"
+                     }
+                   }
+                 }
+               },
+               socket
+             )
 
     # Verify DB state
-    assert [%Relyra.Ecto.AttributeMapping{source_attribute: "email", target_field: :email, multivalue_strategy: :first}] = 
-      @repo.all(Relyra.Ecto.AttributeMapping)
+    assert [
+             %Relyra.Ecto.AttributeMapping{
+               source_attribute: "email",
+               target_field: :email,
+               multivalue_strategy: :first
+             }
+           ] =
+             @repo.all(Relyra.Ecto.AttributeMapping)
   end
 
   test "add_group_mapping and save_group_mappings update the connection's group mappings" do
@@ -207,7 +232,8 @@ defmodule Relyra.LiveAdminTest do
 
     scope = %Scope{actor: "ops@example.com", organization_id: "org_grp"}
 
-    {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+    {:ok, detail} =
+      Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
 
     socket =
       %Phoenix.LiveView.Socket{
@@ -223,30 +249,48 @@ defmodule Relyra.LiveAdminTest do
       }
       |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
       |> put_in([Access.key!(:assigns), :live_action], :edit)
-      |> then(fn socket -> ConnectionsLive.handle_params(%{"connection_id" => connection.connection_id}, "http://localhost", socket) end)
+      |> then(fn socket ->
+        ConnectionsLive.handle_params(
+          %{"connection_id" => connection.connection_id},
+          "http://localhost",
+          socket
+        )
+      end)
       |> elem(1)
 
     assert {:noreply, socket} = ConnectionsLive.handle_event("add_group_mapping", %{}, socket)
-    
+
     assert %Ecto.Changeset{} = socket.assigns.group_mappings_changeset
-    
+
     # Save mapping
-    assert {:noreply, _socket} = ConnectionsLive.handle_event("save_group_mappings", %{
-      "group_mappings_form" => %{
-        "mappings" => %{
-          "0" => %{
-            "source_attribute" => "groups",
-            "source_value" => "admins",
-            "role_target" => "role",
-            "role_value" => "admin"
-          }
-        }
-      }
-    }, socket)
+    assert {:noreply, _socket} =
+             ConnectionsLive.handle_event(
+               "save_group_mappings",
+               %{
+                 "group_mappings_form" => %{
+                   "mappings" => %{
+                     "0" => %{
+                       "source_attribute" => "groups",
+                       "source_value" => "admins",
+                       "role_target" => "role",
+                       "role_value" => "admin"
+                     }
+                   }
+                 }
+               },
+               socket
+             )
 
     # Verify DB state
-    assert [%Relyra.Ecto.GroupMapping{source_attribute: "groups", source_value: "admins", role_target: :role, role_value: "admin"}] = 
-      @repo.all(Relyra.Ecto.GroupMapping)
+    assert [
+             %Relyra.Ecto.GroupMapping{
+               source_attribute: "groups",
+               source_value: "admins",
+               role_target: :role,
+               role_value: "admin"
+             }
+           ] =
+             @repo.all(Relyra.Ecto.GroupMapping)
   end
 
   test "failed mapping updates trigger atomic rollback" do
@@ -261,7 +305,8 @@ defmodule Relyra.LiveAdminTest do
 
     scope = %Scope{actor: "ops@example.com", organization_id: "org"}
 
-    {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+    {:ok, detail} =
+      Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
 
     socket =
       %Phoenix.LiveView.Socket{
@@ -277,25 +322,37 @@ defmodule Relyra.LiveAdminTest do
       }
       |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
       |> put_in([Access.key!(:assigns), :live_action], :edit)
-      |> then(fn socket -> ConnectionsLive.handle_params(%{"connection_id" => connection.connection_id}, "http://localhost", socket) end)
+      |> then(fn socket ->
+        ConnectionsLive.handle_params(
+          %{"connection_id" => connection.connection_id},
+          "http://localhost",
+          socket
+        )
+      end)
       |> elem(1)
 
     # Corrupt the actor in the scope to force an audit validation failure during transaction
-    socket = Phoenix.Component.assign(socket, :admin_scope, %Scope{actor: "", organization_id: "org"})
+    socket =
+      Phoenix.Component.assign(socket, :admin_scope, %Scope{actor: "", organization_id: "org"})
 
     assert {:noreply, socket} = ConnectionsLive.handle_event("add_attribute_mapping", %{}, socket)
-    
-    assert {:noreply, socket} = ConnectionsLive.handle_event("save_attribute_mappings", %{
-      "attribute_mappings_form" => %{
-        "mappings" => %{
-          "0" => %{
-            "source_attribute" => "email",
-            "target_field" => "email",
-            "multivalue_strategy" => "first"
-          }
-        }
-      }
-    }, socket)
+
+    assert {:noreply, socket} =
+             ConnectionsLive.handle_event(
+               "save_attribute_mappings",
+               %{
+                 "attribute_mappings_form" => %{
+                   "mappings" => %{
+                     "0" => %{
+                       "source_attribute" => "email",
+                       "target_field" => "email",
+                       "multivalue_strategy" => "first"
+                     }
+                   }
+                 }
+               },
+               socket
+             )
 
     assert %{"error" => error_msg} = socket.assigns.flash
     assert String.contains?(error_msg, "validation")
@@ -315,7 +372,9 @@ defmodule Relyra.LiveAdminTest do
       })
 
     scope = %Scope{actor: "ops@example.com", organization_id: "org"}
-    {:ok, detail} = Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
+
+    {:ok, detail} =
+      Relyra.LiveAdmin.Query.get_connection_detail(@repo, scope, connection.connection_id)
 
     socket =
       %Phoenix.LiveView.Socket{
@@ -331,11 +390,26 @@ defmodule Relyra.LiveAdminTest do
       }
       |> then(fn socket -> elem(ConnectionsLive.mount(%{}, %{}, socket), 1) end)
       |> put_in([Access.key!(:assigns), :live_action], :show)
-      |> then(fn socket -> ConnectionsLive.handle_params(%{"connection_id" => connection.connection_id}, "http://localhost", socket) end)
+      |> then(fn socket ->
+        ConnectionsLive.handle_params(
+          %{"connection_id" => connection.connection_id},
+          "http://localhost",
+          socket
+        )
+      end)
       |> elem(1)
 
-    assert {:noreply, socket} = ConnectionsLive.handle_event("filter_audits", %{"filters" => %{"actor" => "audit@example.com", "domain" => "", "action" => ""}}, socket)
-    
-    assert socket.assigns.audit_filters == %{"actor" => "audit@example.com", "domain" => "", "action" => ""}
+    assert {:noreply, socket} =
+             ConnectionsLive.handle_event(
+               "filter_audits",
+               %{"filters" => %{"actor" => "audit@example.com", "domain" => "", "action" => ""}},
+               socket
+             )
+
+    assert socket.assigns.audit_filters == %{
+             "actor" => "audit@example.com",
+             "domain" => "",
+             "action" => ""
+           }
   end
 end

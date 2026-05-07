@@ -4,9 +4,9 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     use Phoenix.Component
 
-    attr :provider_options, :list, required: true
-    attr :selected_preset, :string, required: true
-    attr :base_path, :string, required: true
+    attr(:provider_options, :list, required: true)
+    attr(:selected_preset, :string, required: true)
+    attr(:base_path, :string, required: true)
 
     def preset_picker(assigns) do
       ~H"""
@@ -31,10 +31,10 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       """
     end
 
-    attr :label, :string, required: true
-    attr :value, :string, required: true
-    attr :selected, :boolean, required: true
-    attr :base_path, :string, required: true
+    attr(:label, :string, required: true)
+    attr(:value, :string, required: true)
+    attr(:selected, :boolean, required: true)
+    attr(:base_path, :string, required: true)
 
     defp preset_button(assigns) do
       assigns =

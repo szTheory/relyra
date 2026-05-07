@@ -62,8 +62,9 @@ defmodule Relyra.Ecto.ConnectionSchemaTest do
 
     refute changeset.valid?
 
-    assert "are managed through metadata apply or Relyra.Ecto.CertificateInventory" in
-             errors_on(changeset).certificates
+    assert "are managed through metadata apply or Relyra.Ecto.CertificateInventory" in errors_on(
+             changeset
+           ).certificates
   end
 
   test "publish_changeset rejects certificate payloads before enable" do
@@ -92,8 +93,9 @@ defmodule Relyra.Ecto.ConnectionSchemaTest do
 
     refute changeset.valid?
 
-    assert "are managed through metadata apply or Relyra.Ecto.CertificateInventory" in
-             errors_on(changeset).certificates
+    assert "are managed through metadata apply or Relyra.Ecto.CertificateInventory" in errors_on(
+             changeset
+           ).certificates
   end
 
   defp errors_on(changeset) do

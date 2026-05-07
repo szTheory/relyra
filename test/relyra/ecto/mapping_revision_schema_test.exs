@@ -52,7 +52,8 @@ defmodule Relyra.Ecto.MappingRevisionSchemaTest do
   end
 
   test "mapping revision allows an empty before snapshot for first-write events" do
-    changeset = MappingRevision.changeset(%MappingRevision{}, Map.put(@valid_attrs, :action, :created))
+    changeset =
+      MappingRevision.changeset(%MappingRevision{}, Map.put(@valid_attrs, :action, :created))
 
     assert changeset.valid?
   end

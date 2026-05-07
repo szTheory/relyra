@@ -140,7 +140,9 @@ defmodule Relyra.MetadataTest do
     assert {:error, %Relyra.Error{type: :invalid_connection_record, details: details}} =
              Metadata.import_xml(
                connection.connection_id,
-               metadata_xml(certificates: ["not-valid-base64"]), repo: @repo)
+               metadata_xml(certificates: ["not-valid-base64"]),
+               repo: @repo
+             )
 
     assert details.reason == :invalid_certificate_pem
   end

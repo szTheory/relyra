@@ -6,9 +6,9 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     alias Relyra.LiveAdmin.Components.RiskPanel
 
-    attr :connection_form_data, :map, required: true
-    attr :admin_scope, :map, required: true
-    attr :risk_flags, :list, default: []
+    attr(:connection_form_data, :map, required: true)
+    attr(:admin_scope, :map, required: true)
+    attr(:risk_flags, :list, default: [])
 
     def connection_form(assigns) do
       ~H"""

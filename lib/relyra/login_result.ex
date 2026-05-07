@@ -9,7 +9,8 @@ defmodule Relyra.LoginResult do
     :relay_state,
     :issuer,
     :in_response_to,
-    :validation_trace
+    :validation_trace,
+    :return_to
   ]
 
   @type t :: %__MODULE__{
@@ -19,6 +20,7 @@ defmodule Relyra.LoginResult do
           relay_state: binary() | nil,
           issuer: binary() | nil,
           in_response_to: binary() | nil,
-          validation_trace: [map()]
+          validation_trace: [map()],
+          return_to: binary() | nil
         }
 end

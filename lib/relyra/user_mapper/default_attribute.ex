@@ -67,9 +67,13 @@ defmodule Relyra.UserMapper.DefaultAttribute do
   defp apply_group_rules(attributes, rules) when is_list(rules) do
     rules
     |> Enum.reduce([], fn rule, acc ->
-      values = normalize_attribute_values(fetch_exact_attribute(attributes, Map.get(rule, :source_attribute)))
+      values =
+        normalize_attribute_values(
+          fetch_exact_attribute(attributes, Map.get(rule, :source_attribute))
+        )
 
-      if Enum.any?(values, &(&1 == Map.get(rule, :source_value))) and Map.get(rule, :role_target) == :role do
+      if Enum.any?(values, &(&1 == Map.get(rule, :source_value))) and
+           Map.get(rule, :role_target) == :role do
         acc ++ [Map.get(rule, :role_value)]
       else
         acc

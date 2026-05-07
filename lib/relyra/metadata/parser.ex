@@ -14,7 +14,10 @@ defmodule Relyra.Metadata.Parser do
 
     cond do
       byte_size(xml) > max_bytes ->
-        {:error, Error.new(:payload_too_large, "XML payload exceeds max_bytes limit", %{max_bytes: max_bytes})}
+        {:error,
+         Error.new(:payload_too_large, "XML payload exceeds max_bytes limit", %{
+           max_bytes: max_bytes
+         })}
 
       trimmed == "" ->
         malformed_xml_error()
@@ -52,7 +55,9 @@ defmodule Relyra.Metadata.Parser do
   end
 
   defp fetch_entity_id(xml) do
-    case Regex.run(~r/^<(?:\w+:)?EntityDescriptor\b[^>]*\bentityID=(["'])(.*?)\1/is, xml, capture: :all_but_first) do
+    case Regex.run(~r/^<(?:\w+:)?EntityDescriptor\b[^>]*\bentityID=(["'])(.*?)\1/is, xml,
+           capture: :all_but_first
+         ) do
       [_, entity_id] when entity_id != "" -> {:ok, String.trim(entity_id)}
       _ -> {:error, Error.new(:metadata_missing_entity_id, "Metadata entity ID is required")}
     end
@@ -68,10 +73,11 @@ defmodule Relyra.Metadata.Parser do
       |> Enum.map(fn [_, binding, _, location] ->
         %{binding: String.trim(binding), location: String.trim(location)}
       end)
-      |> Enum.reject(&(blank?(&1.location)))
+      |> Enum.reject(&blank?(&1.location))
 
     if services == [] do
-      {:error, Error.new(:metadata_missing_sso_service, "Metadata XML must include a SingleSignOnService")}
+      {:error,
+       Error.new(:metadata_missing_sso_service, "Metadata XML must include a SingleSignOnService")}
     else
       {:ok, services}
     end
@@ -79,12 +85,18 @@ defmodule Relyra.Metadata.Parser do
 
   defp fetch_certificates(xml) do
     certs =
-      Regex.scan(~r/<(?:\w+:)?X509Certificate\b[^>]*>(.*?)<\/(?:\w+:)?X509Certificate>/is, xml, capture: :all_but_first)
+      Regex.scan(~r/<(?:\w+:)?X509Certificate\b[^>]*>(.*?)<\/(?:\w+:)?X509Certificate>/is, xml,
+        capture: :all_but_first
+      )
       |> Enum.map(fn [value] -> value |> String.replace(~r/\s+/, "") |> String.trim() end)
       |> Enum.reject(&blank?/1)
 
     if certs == [] do
-      {:error, Error.new(:metadata_missing_certificate, "Metadata XML must include at least one certificate")}
+      {:error,
+       Error.new(
+         :metadata_missing_certificate,
+         "Metadata XML must include at least one certificate"
+       )}
     else
       {:ok, certs}
     end

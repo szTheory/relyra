@@ -5,7 +5,10 @@ defmodule Relyra.LiveAdmin.AttributeMappingForm do
   @primary_key false
   embedded_schema do
     field :source_attribute, :string
-    field :target_field, Ecto.Enum, values: [:email, :first_name, :last_name, :display_name, :name_id]
+
+    field :target_field, Ecto.Enum,
+      values: [:email, :first_name, :last_name, :display_name, :name_id]
+
     field :multivalue_strategy, Ecto.Enum, values: [:first, :all], default: :first
   end
 

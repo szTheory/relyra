@@ -71,8 +71,8 @@ defmodule Relyra.Ecto.CertificateFacts do
   end
 
   defp decode_utc_time(
-         <<year::binary-size(2), month::binary-size(2), day::binary-size(2),
-           hour::binary-size(2), minute::binary-size(2), second::binary-size(2), "Z">>
+         <<year::binary-size(2), month::binary-size(2), day::binary-size(2), hour::binary-size(2),
+           minute::binary-size(2), second::binary-size(2), "Z">>
        ) do
     year_int = String.to_integer(year)
     full_year = if year_int < 50, do: 2000 + year_int, else: 1900 + year_int
@@ -89,8 +89,8 @@ defmodule Relyra.Ecto.CertificateFacts do
   end
 
   defp decode_general_time(
-         <<year::binary-size(4), month::binary-size(2), day::binary-size(2),
-           hour::binary-size(2), minute::binary-size(2), second::binary-size(2), "Z">>
+         <<year::binary-size(4), month::binary-size(2), day::binary-size(2), hour::binary-size(2),
+           minute::binary-size(2), second::binary-size(2), "Z">>
        ) do
     to_datetime(String.to_integer(year), month, day, hour, minute, second)
   end
