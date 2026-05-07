@@ -31,6 +31,16 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
               <div style="font-size: 12px; color: #666; margin-top: 4px;">
                 {connection.organization_id} · {connection.status} · {connection.provider_label}
               </div>
+              <div :if={Map.get(connection, :auto_refresh_health) == :degraded} style="margin-top: 6px;">
+                <span style="display: inline-block; padding: 2px 6px; font-size: 11px; background: #fff7e6; color: #b87600; border: 1px solid #d98b00; border-radius: 3px;">
+                  Auto-refresh degraded
+                </span>
+              </div>
+              <div :if={Map.get(connection, :auto_refresh_health) == :suspended} style="margin-top: 6px;">
+                <span style="display: inline-block; padding: 2px 6px; font-size: 11px; background: #ffebee; color: #c62828; border: 1px solid #c62828; border-radius: 3px;">
+                  Auto-refresh suspended
+                </span>
+              </div>
             </div>
           </li>
         </ul>

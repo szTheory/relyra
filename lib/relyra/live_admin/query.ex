@@ -27,9 +27,29 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
           |> scope_query(scope)
           |> order_by([connection], asc: connection.organization_id, asc: connection.display_name)
           |> repo.all()
-          |> Enum.map(&connection_summary/1)
 
-        {:ok, rows}
+        # Phase 21 D-29: preload metadata sources in ONE query so the
+        # auto_refresh_health derivation is N+1-safe.
+        connection_ids = Enum.map(rows, & &1.id)
+
+        sources =
+          if connection_ids == [] do
+            %{}
+          else
+            MetadataSource
+            |> where([src], src.connection_record_id in ^connection_ids)
+            |> repo.all()
+            |> Map.new(fn src -> {src.connection_record_id, src} end)
+          end
+
+        now = DateTime.utc_now()
+
+        summaries =
+          Enum.map(rows, fn connection ->
+            connection_summary(connection, Map.get(sources, connection.id), now)
+          end)
+
+        {:ok, summaries}
       end
     end
 
@@ -102,11 +122,13 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
           |> repo.all()
 
         metadata_source = repo.get_by(MetadataSource, connection_record_id: connection.id)
+        auto_refresh_health = build_auto_refresh_health_summary(metadata_source)
 
         {:ok,
          %{
            connection: connection,
            metadata_source: metadata_source,
+           auto_refresh_health: auto_refresh_health,
            revisions: revisions
          }}
       end
@@ -146,7 +168,7 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
       where(query, [connection], connection.organization_id == ^organization_id)
     end
 
-    defp connection_summary(connection) do
+    defp connection_summary(connection, metadata_source, now) do
       %{
         connection_id: connection.connection_id,
         display_name: connection.display_name || connection.connection_id,
@@ -155,7 +177,52 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
         provider_preset: connection.provider_preset,
         provider_label: provider_label(connection.provider_preset),
         inserted_at: connection.inserted_at,
-        updated_at: connection.updated_at
+        updated_at: connection.updated_at,
+        auto_refresh_health: derive_auto_refresh_health(metadata_source, now)
+      }
+    end
+
+    # Phase 21 D-29 health derivation. Returns nil when there is nothing
+    # to badge (no source registered, or auto-refresh is disabled). The
+    # connection list component uses this to decide whether to render
+    # an amber/red micro-badge.
+    defp derive_auto_refresh_health(nil, _now), do: nil
+
+    defp derive_auto_refresh_health(%MetadataSource{auto_refresh_enabled: false}, _now), do: nil
+
+    defp derive_auto_refresh_health(%MetadataSource{} = source, now) do
+      cond do
+        not is_nil(source.auto_suspended_until) and
+            DateTime.compare(source.auto_suspended_until, now) == :gt ->
+          :suspended
+
+        (source.consecutive_failure_count || 0) >= 1 ->
+          :degraded
+
+        true ->
+          :healthy
+      end
+    end
+
+    # Phase 21 D-29 health card: structured summary used by the
+    # ConnectionMetadataLive render block. Returns nil when there is no
+    # metadata source registered.
+    defp build_auto_refresh_health_summary(nil), do: nil
+
+    defp build_auto_refresh_health_summary(%MetadataSource{} = source) do
+      %{
+        enabled?: source.auto_refresh_enabled || false,
+        cadence: source.refresh_cadence,
+        next_refresh_at: source.next_refresh_at,
+        last_success_at: source.last_success_at,
+        consecutive_failure_count: source.consecutive_failure_count || 0,
+        last_failure_error_code: source.last_failure_error_code,
+        last_validity_warning_for: source.last_validity_warning_for,
+        auto_suspended_until: source.auto_suspended_until,
+        auto_suspended_reason: source.auto_suspended_reason,
+        legacy_unsigned_metadata_policy: source.legacy_unsigned_metadata_policy,
+        metadata_trust_fingerprints: source.metadata_trust_fingerprints || [],
+        state: derive_auto_refresh_health(source, DateTime.utc_now())
       }
     end
 
@@ -181,11 +248,14 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
     end
 
     defp certificates_by_state(certificates) do
-      Enum.reduce(certificates, %{active: [], next: [], retired: []}, fn %Certificate{} = certificate, acc ->
+      Enum.reduce(certificates, %{active: [], next: [], retired: []}, fn %Certificate{} =
+                                                                           certificate,
+                                                                         acc ->
         Map.update!(acc, certificate.lifecycle_state, &[certificate | &1])
       end)
       |> Map.new(fn {state, rows} ->
-        {state, Enum.sort_by(rows, &{&1.not_after || ~U[0000-01-01 00:00:00Z], &1.fingerprint_sha256})}
+        {state,
+         Enum.sort_by(rows, &{&1.not_after || ~U[0000-01-01 00:00:00Z], &1.fingerprint_sha256})}
       end)
     end
 
@@ -265,10 +335,10 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
         not Code.ensure_loaded?(repo) ->
           {:error,
            Error.new(
-              :adapter_not_configured,
+             :adapter_not_configured,
              "Relyra admin repo is unavailable",
-              %{operation: operation, repo: inspect(repo)}
-            )}
+             %{operation: operation, repo: inspect(repo)}
+           )}
 
         true ->
           :ok
