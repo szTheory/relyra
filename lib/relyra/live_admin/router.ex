@@ -9,6 +9,10 @@ if Code.ensure_loaded?(Phoenix.LiveView.Router) do
         import Phoenix.LiveView.Router
 
         scope path, as: :relyra_admin do
+          get("/diagnostic/bundle", Relyra.Phoenix.Controllers.DiagnosticController, :download,
+            as: :diagnostic
+          )
+
           live_session :relyra_admin,
             on_mount: [
               {Relyra.LiveAdmin.OnMount, Keyword.put(opts, :base_path, path)}
