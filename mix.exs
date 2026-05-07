@@ -25,6 +25,7 @@ defmodule Relyra.MixProject do
         "ci.security": :test,
         "ci.verify": :test,
         "ci.integration": :test,
+        "ci.oban_smoke": :test,
         "ci.release": :test
       ]
     ]
@@ -54,7 +55,8 @@ defmodule Relyra.MixProject do
       {:ecto, "~> 3.13", optional: true},
       {:ecto_sql, "~> 3.13", optional: true},
       {:postgrex, ">= 0.0.0", optional: true},
-      {:req, "~> 0.5", optional: true}
+      {:req, "~> 0.5", optional: true},
+      {:oban, "~> 2.22", optional: true}
     ]
   end
 
@@ -82,6 +84,11 @@ defmodule Relyra.MixProject do
       ],
       "ci.integration": [
         "test --only integration --warnings-as-errors"
+      ],
+      "ci.oban_smoke": [
+        "compile --no-optional-deps --warnings-as-errors",
+        "compile --warnings-as-errors",
+        "test --include oban --warnings-as-errors test/relyra/optional_deps/oban_test.exs test/relyra/workers/metadata_refresh_test.exs"
       ],
       "ci.release": [
         "test test/release/release_hardening_test.exs --warnings-as-errors"

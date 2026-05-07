@@ -68,8 +68,17 @@ if Code.ensure_loaded?(Oban.Worker) do
       opts = opts_for(args)
 
       case Relyra.Metadata.Scheduler.run_due(repo, opts) do
-        {:ok, _results} -> :ok
-        {:error, _error} = err -> err
+        {:ok, _results} ->
+          :ok
+
+        # Defensive fallback for the Ecto-absent `Scheduler` stub which
+        # returns `{:error, %Relyra.Error{}}`. The Ecto-present body
+        # only returns `{:ok, _}` — Elixir's set-theoretic typer cannot
+        # see this branch in the present-Ecto compile lane, so we keep
+        # it as a wildcard rather than an explicit `{:error, _}` match
+        # that would be flagged unreachable.
+        other ->
+          other
       end
     end
 
