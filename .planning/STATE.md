@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: — Operational maturity
 status: executing
-last_updated: "2026-05-07T03:19:21.000Z"
-last_activity: 2026-05-07 -- Phase 21 plan 06 (live-admin-surface) complete
+last_updated: "2026-05-07T03:35:53.000Z"
+last_activity: 2026-05-07 -- Phase 21 plan 07 (mix-tasks-telemetry-docs) complete; CFG-08 closed; Phase 21 SHIPPED
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 9
-  completed_plans: 6
-  percent: 66
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
@@ -20,16 +20,16 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity milestone started)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 21 — scheduled-metadata-refresh (Wave 5 next — mix-tasks-telemetry-docs)
+**Current focus:** v0.5 milestone — Phase 21 SHIPPED 2026-05-07; awaiting v0.6 milestone arc.
 
 ## Current Position
 
-Phase: 21 (scheduled-metadata-refresh) — EXECUTING
-Plan: 7 of 7 (Wave 5 next — mix-tasks-telemetry-docs)
-Status: Executing Phase 21
-Last activity: 2026-05-07 -- Phase 21 plan 06 (live-admin-surface) complete
+Phase: 21 (scheduled-metadata-refresh) — COMPLETE
+Plan: 7 of 7 (mix-tasks-telemetry-docs SHIPPED)
+Status: Phase 21 complete; CFG-08 closed
+Last activity: 2026-05-07 -- Phase 21 plan 07 (mix-tasks-telemetry-docs) complete; CFG-08 closed; Phase 21 SHIPPED
 
-Resume file: `.planning/phases/21-scheduled-metadata-refresh/21-07-mix-tasks-telemetry-docs-PLAN.md` (Wave 5)
+Resume file: (no active resume — awaiting v0.6 milestone arc kickoff)
 
 Plan wave layout:
 
@@ -38,9 +38,9 @@ Plan wave layout:
 - W2: 21-04 audit-seam-extension (record_attempt extension + verify_metadata_root + resume_auto_refresh)
 - W3: 21-05 scheduler-wrapper-worker (OptionalDeps.Oban + AutoRefresh wrapper + Scheduler.run_due/2 + Workers.MetadataRefresh)
 - W4: 21-06 live-admin-surface (micro-badge + health card + Resume now button)
-- W5: 21-07 mix-tasks-telemetry-docs (relyra.refresh_due + relyra.metadata.pin + telemetry catalog + LogAlerts handler + README recipes + Oban CI smoke lane)
+- W5: 21-07 mix-tasks-telemetry-docs (relyra.refresh_due + relyra.metadata.pin + telemetry catalog + LogAlerts handler + README recipes + Oban CI smoke lane) — SHIPPED 2026-05-07
 
-Progress: [======----] 66%
+Progress: [==========] 100%
 
 ## Accumulated Context
 
@@ -67,11 +67,17 @@ Progress: [======----] 66%
 - Plan 21-06: LiveView Resume-now path enforces single-transaction discipline (D-28) by routing exclusively through `Relyra.Ecto.MetadataApply.resume_auto_refresh/3` (Plan 04 Task 3); the LiveView carries NO parallel `repo.update`-based clear helper (B3 invariant grep-enforced: `clear_suspend_for_resume` returns 0 matches across `lib/`). After the transaction commits, the LiveView dispatches an immediate scoped half-open probe via `start_async(:auto_refresh_resume, fn -> Scheduler.run_due(repo, source_ids: [source.id]) end)`. Future LiveView surfaces that mutate audit-relevant state MUST follow the same shape: delegate to a `transact/2`-wrapped `MetadataApply` seam, dispatch downstream side-effects via `start_async` only after the transaction commits.
 - Plan 21-06 (Rule 1 deviation): `Map.get/2`-guarded render-block accesses for cross-test compatibility. The pre-existing `Relyra.LiveAdminMetadataTest` render fixture passes `detail: %{metadata_source: nil}` without an `:auto_refresh_health` key — the literal `@detail.auto_refresh_health` form raises `KeyError` and breaks two pre-existing render tests. Switched the new render section to `Map.get(@detail, :auto_refresh_health)`. Production data through `Query.get_metadata_revisions/3` always carries the key; the guard is purely for test-fixture flexibility. Pattern reusable wherever a render block must tolerate partial test fixtures while production data carries the full schema.
 - Plan 21-06: Brand-voice invariant grep-enforcement at the test layer. Every operator-facing surface (`connection_list.ex`, `connection_metadata_live.ex`) is asserted to never render `polling`, `cron job`, `blocked`, `retry`, `circuit breaker`, or `MaxBackoff`. The grep is run against the rendered HTML across all four health states (nil / :healthy / :degraded / :suspended), so it catches drift in either the source or the data feeding the render. Pattern reusable for any future operator-facing component governed by the brand book.
+- Plan 21-07: Documented telemetry-event catalog inside `Relyra.Telemetry` `@moduledoc`. Every `[:relyra, :saml, ...]` event is documented with measurements + metadata payload in the central catalog; the `### metadata.refresh` block stays byte-identical so manual-path listeners are not destabilized (D-23 invariant). Future telemetry-emitting subsystems should extend the catalog rather than scatter event docs.
+- Plan 21-07: Opt-in reference telemetry handler shape (D-30). `Relyra.Telemetry.Handlers.LogAlerts` ships in `lib/` but is NOT auto-attached anywhere; adopters opt in via `Application.start/2`. The grep invariant (no `LogAlerts.attach()` outside the module itself in `lib/`) is the regression gate. Future reference handlers (metrics emitters, span exporters) MUST follow the same shape — small, redaction-aware, attach-on-demand, no vendor coupling.
+- Plan 21-07: Shared-changeset UX-symmetry pattern (D-22 + RESEARCH Q1). The `mix relyra.metadata.pin` task and the (forthcoming v0.6) admin LiveView fingerprint form both delegate to `Relyra.Metadata.pin_trust_fingerprint/3`, which itself runs `MetadataSource.auto_refresh_changeset/2`. Two surfaces, one underlying changeset → audit trail and validation rules cannot drift. Future operator-facing pairs (CLI + LiveView form, IaC + UI) should share one underlying domain-API helper.
+- Plan 21-07 (Rule 3 deviation): defensive wildcard fallthrough for typed cross-lane returns. Elixir 1.19's set-theoretic typer narrows `Relyra.Metadata.Scheduler.run_due/2`'s return type to `{:ok, _}` (only) in the present-Ecto lane — the Ecto-absent stub's `{:error, _}` is invisible at the call site. An explicit `{:error, _}` clause is flagged unreachable. Pattern adopted in BOTH `Mix.Tasks.Relyra.RefreshDue.run/1` and `Relyra.Workers.MetadataRefresh.perform/1`: `case ... do {:ok, _} -> ...; other -> ... end` preserves correctness for the absent-dep stub branch without violating the typer. Reusable wherever a function call straddles two `Code.ensure_loaded?`-gated compile lanes whose return types differ.
+- Plan 21-07 (Rule 3 deviation): worker test fixture switched to MigrationCase. Plan 21-05's `metadata_refresh_test.exs` was written assuming Oban was NOT loaded in CI (`ObanGateway.available?()` returned `false`, test took the `unless` short-circuit). Plan 21-07 added Oban as a real optional dep so `available?()` is now `true`, the present-lane delegate test actually invokes `Scheduler.run_due/2`, and the lack of an `Ecto.Adapters.SQL.Sandbox` checkout raises `OwnershipError`. Switched to `Relyra.TestSupport.MigrationCase, async: false`. Pattern reusable for any future test that exercises a code path which becomes "real" once an optional dep is added to the project's own `mix.exs`.
+- Plan 21-07: `ci.<dep>_smoke` alias as the optional-deps regression gate. The new `ci.oban_smoke` alias chains `compile --no-optional-deps --warnings-as-errors` (engineering-DNA §3 invariant) FIRST, then `compile --warnings-as-errors`, then the Oban-present worker + gateway tests. A regression in the gateway's `@compile {:no_warn_undefined, [...]}` posture is caught before the present-dep compile + tests run. Future optional-dep gateways that expose a worker / dispatcher should ship a sibling alias following this shape.
 
-**Open blockers:** None.
+**Open blockers:** None — Phase 21 is complete; CFG-08 closed; v0.5 milestone awaits v0.6 arc kickoff.
 
 **Pre-existing out-of-scope items surfaced during 21-01 (logged in `.planning/phases/21-scheduled-metadata-refresh/deferred-items.md`):**
 - `Relyra.Phoenix.ACSControllerTest` — `:name_id` KeyError pre-dates Phase 21.
 - `lib/relyra/live_admin/connections_live.ex` — pre-existing `mix format` drift from Phase 20 commit `6e75525`.
 
-**Roadmap coverage:** Phase 21 covers CFG-08 (scheduled metadata refresh automation with guardrails). Plan 21-01 lands the schema foundation; CFG-08 marks complete only after Phase 21 W5 (plan 21-07) ships.
+**Roadmap coverage:** Phase 21 covers CFG-08 (scheduled metadata refresh automation with guardrails). All 7 plans complete (21-01 schema → 21-07 mix-tasks-telemetry-docs); CFG-08 marked complete in REQUIREMENTS.md on 2026-05-07.

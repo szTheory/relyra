@@ -57,7 +57,7 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 ### 📋 v0.5 — Operational maturity (Planning)
 
 - [x] **Phase 20: Bulk operations across connections** - Add multi-select UI to the connections list and implement transactional bulk actions for metadata refresh and lifecycle toggling. Verified 2026-05-06.
-- [ ] **Phase 21: Scheduled metadata refresh** - Implement background refresh orchestration with security guardrails and operator alerts.
+- [x] **Phase 21: Scheduled metadata refresh** - Implement background refresh orchestration with security guardrails and operator alerts. Verified 2026-05-07.
 
 ## Phase Details
 
@@ -91,7 +91,7 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 - [x] 21-04-audit-seam-extension-PLAN.md — D-28 health-state co-commit inside MetadataApply transactions + Signature.verify_metadata_root/4 shim + record_validity_warning/3 + resume_auto_refresh/3 + D-24 state-transition telemetry events (completed 2026-05-07; SUMMARY: 21-04-audit-seam-extension-SUMMARY.md)
 - [x] 21-05-scheduler-wrapper-worker-PLAN.md — OptionalDeps.Oban gateway + AutoRefresh wrapper + Scheduler.run_due/2 + Workers.MetadataRefresh (completed 2026-05-07; SUMMARY: 21-05-scheduler-wrapper-worker-SUMMARY.md)
 - [x] 21-06-live-admin-surface-PLAN.md — Connection list micro-badge + Auto-refresh health card + Resume now button (completed 2026-05-07; SUMMARY: 21-06-live-admin-surface-SUMMARY.md)
-- [ ] 21-07-mix-tasks-telemetry-docs-PLAN.md — Mix tasks (relyra.refresh_due + relyra.metadata.pin) + telemetry catalog + LogAlerts handler + README recipes + ci.oban_smoke alias
+- [x] 21-07-mix-tasks-telemetry-docs-PLAN.md — Mix tasks (relyra.refresh_due + relyra.metadata.pin) + telemetry catalog + LogAlerts handler + README recipes + ci.oban_smoke alias (completed 2026-05-07; SUMMARY: 21-07-mix-tasks-telemetry-docs-SUMMARY.md)
 **UI hint**: yes
 
 ## Progress
@@ -117,4 +117,4 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 | 18. Mapping editor + audit timeline hardening | v0.3 | 2/2 | Complete | 2026-05-06 |
 | 19. IdP-initiated SSO | v0.4 | 3/3 | Complete | 2026-05-06 |
 | 20. Bulk operations across connections | v0.5 | 1/3 | In progress | |
-| 21. Scheduled metadata refresh | v0.5 | 6/7 | In Progress|  |
+| 21. Scheduled metadata refresh | v0.5 | 7/7 | Complete | 2026-05-07 |

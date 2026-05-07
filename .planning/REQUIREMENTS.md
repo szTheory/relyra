@@ -17,7 +17,7 @@ Committed scope for v0.4: IdP-initiated SSO and opaque RelayState handling, allo
 ### Adoption And Operations (v0.5)
 
 - **CFG-07**: User can run bulk operations across multiple connections. Deferred to v0.5 operational maturity.
-- **CFG-08**: User can enable scheduled metadata refresh automation with guardrails. Deferred to v0.5 operational maturity.
+- [x] **CFG-08**: User can enable scheduled metadata refresh automation with guardrails. **Complete** — Phase 21 shipped 2026-05-07.
 
 ### Protocol Surface (v0.6)
 
@@ -39,7 +39,7 @@ Committed scope for v0.4: IdP-initiated SSO and opaque RelayState handling, allo
 |-------------|-------|--------|
 | IDP-INIT-01 | Phase 19 | Complete |
 | CFG-07 | Phase 20 | In progress |
-| CFG-08 | Phase 21 | In progress (plans 21-01 → 21-06 complete: schema, pure helpers, trust-boundary helpers, audit seam + telemetry, scheduler + wrapper + worker, live-admin-surface; W5 pending: mix-tasks-telemetry-docs) |
+| CFG-08 | Phase 21 | Complete (Phase 21 shipped 2026-05-07: schema + pure helpers + trust-boundary helpers + audit seam + telemetry + scheduler + wrapper + worker + live-admin-surface + mix-tasks-telemetry-docs) |
 
 **Coverage:**
 - v0.4 requirements: 1 total
