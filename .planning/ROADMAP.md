@@ -124,7 +124,7 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 **Goal:** Restore Phase 20 D-39 batch-cohesion invariant for bulk `:refresh_metadata` by forwarding `opts[:audit]` (actor + cause + BulkActions-generated `correlation_id`) from `Relyra.Metadata.Refresh.refresh/2` into `MetadataApply.apply_revision/4` (success path) and `MetadataApply.record_attempt/3` (failure path), closing v0.5 milestone audit BLOCKER INT-01.
 **Requirements**: CFG-07
 **Depends on:** Phase 21
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 21.1-01-PLAN.md — Forward `opts[:audit]` into `apply_revision/4` + `record_attempt/3` via `resolve_audit/1` helper; 3 net-new RED→GREEN tests (bulk audit-cohesion + single-connection regression + failure-path no-audit invariant); dual-compile-lane gate
+- [x] 21.1-01-PLAN.md — Forward `opts[:audit]` into `apply_revision/4` + `record_attempt/3` via `resolve_audit/1` helper; 3 net-new RED→GREEN tests (bulk audit-cohesion + single-connection regression + failure-path no-audit invariant); dual-compile-lane gate
