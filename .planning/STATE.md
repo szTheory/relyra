@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: — Operational maturity
-status: completed
-last_updated: "2026-05-07T10:30:57.540Z"
-last_activity: 2026-05-07
+status: executing
+last_updated: "2026-05-07T13:30:26.015Z"
+last_activity: 2026-05-07 -- Phase 21.1 planning complete
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 2
-  total_plans: 9
+  total_plans: 10
   completed_plans: 9
-  percent: 100
+  percent: 90
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity mi
 
 ## Current Position
 
-Phase: 21
+Phase: 21.1
 Plan: Not started
-Status: Phase 21 complete; CFG-08 closed
-Last activity: 2026-05-07
+Status: Ready to execute
+Last activity: 2026-05-07 -- Phase 21.1 planning complete
 
 Resume file: (no active resume — awaiting v0.6 milestone arc kickoff)
 
@@ -43,6 +43,10 @@ Plan wave layout:
 Progress: [==========] 100%
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 21.1 inserted after Phase 21 (URGENT) — Close gap: CFG-07 — bulk-refresh audit correlation_id forwarding
 
 **Decisions log:** Full log lives in `.planning/PROJECT.md` Key Decisions table. Highlights from v0.5:
 
