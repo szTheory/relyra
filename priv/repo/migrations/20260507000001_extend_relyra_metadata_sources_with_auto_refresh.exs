@@ -29,6 +29,7 @@ defmodule Relyra.Repo.Migrations.ExtendRelyraMetadataSourcesWithAutoRefresh do
     # scheduler-tick work O(enabled-source-count), preserving D-12's intent.
     create index(:relyra_metadata_sources, [:next_refresh_at],
              name: :relyra_metadata_sources_due_idx,
-             where: "auto_refresh_enabled = true")
+             where: "auto_refresh_enabled = true"
+           )
   end
 end
