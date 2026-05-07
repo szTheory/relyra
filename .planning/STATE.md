@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: — Operational maturity
 status: executing
-last_updated: "2026-05-07T02:40:53.000Z"
-last_activity: 2026-05-07 -- Phase 21 plan 04 (audit-seam-extension) complete
+last_updated: "2026-05-07T03:00:51.000Z"
+last_activity: 2026-05-07 -- Phase 21 plan 05 (scheduler-wrapper-worker) complete
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 9
-  completed_plans: 4
-  percent: 44
+  completed_plans: 5
+  percent: 55
 ---
 
 # Project State
@@ -20,16 +20,16 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity milestone started)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 21 — scheduled-metadata-refresh (Wave 1 next)
+**Current focus:** Phase 21 — scheduled-metadata-refresh (Wave 4 next — live-admin-surface)
 
 ## Current Position
 
 Phase: 21 (scheduled-metadata-refresh) — EXECUTING
-Plan: 5 of 7 (Wave 3 next — scheduler-wrapper-worker)
+Plan: 6 of 7 (Wave 4 next — live-admin-surface)
 Status: Executing Phase 21
-Last activity: 2026-05-07 -- Phase 21 plan 04 (audit-seam-extension) complete
+Last activity: 2026-05-07 -- Phase 21 plan 05 (scheduler-wrapper-worker) complete
 
-Resume file: `.planning/phases/21-scheduled-metadata-refresh/21-05-scheduler-wrapper-worker-PLAN.md` (Wave 3)
+Resume file: `.planning/phases/21-scheduled-metadata-refresh/21-06-live-admin-surface-PLAN.md` (Wave 4)
 
 Plan wave layout:
 
@@ -40,7 +40,7 @@ Plan wave layout:
 - W4: 21-06 live-admin-surface (micro-badge + health card + Resume now button)
 - W5: 21-07 mix-tasks-telemetry-docs (relyra.refresh_due + relyra.metadata.pin + telemetry catalog + LogAlerts handler + README recipes + Oban CI smoke lane)
 
-Progress: [====------] 44%
+Progress: [=====-----] 55%
 
 ## Accumulated Context
 
@@ -60,6 +60,9 @@ Progress: [====------] 44%
 - Plan 21-04: D-24 telemetry events (`:degraded`, `:suspended`, `:recovered`) fire INSIDE the `transact/2` block via `emit_state_transitions/3`. Trade-off accepted: a downstream listener could see an event whose surrounding transaction later rolled back; mitigation is the `correlation_id` on every payload so hosts can dedupe against an audit row that never landed. After-commit emission would require `Ecto.Multi` rewiring — out of scope and structurally inconsistent with `Telemetry.span` around `apply_revision/4`.
 - Plan 21-04: Single-audit-writer-seam invariant (D-35) enforced numerically — exactly two `AuditWriter.append_event` call sites in `lib/relyra/ecto/metadata_apply.ex` (`apply_revision/4` + `resume_auto_refresh/3`), both inside `transact/2` blocks. Future seams MUST wrap any new audit-writing path in `transact/2`.
 - Plan 21-04 (Rule 3 deviation): `Relyra.Ecto.MetadataRevision.@trigger_values` extended with `:scheduled_refresh` and `:scheduled_probe` — Plan 21-01 added the source-side cadence/health columns but did NOT enumerate the scheduled triggers on the revision schema. Single-line edit; landed in plan 21-04's first commit so Plan 05's wrapper has the trigger atoms it needs.
+- Plan 21-05 (Rule 3 deviation): Outside-the-defmodule `Code.ensure_loaded?` gate for `use Oban.Worker` (Workers.MetadataRefresh) and `import Ecto.Query` (Metadata.Scheduler). Plan 21-05's literal in-body `if Code.ensure_loaded?(...) do use ... else def stub ... end` does NOT compile in Elixir 1.19 because Kernel.if/2 eagerly expands both branches; `use Oban.Worker` crashes with `module Oban.Worker is not loaded` regardless of the runtime branch. The canonical idiom in this codebase (Relyra.LiveAdmin / Relyra.LiveAdmin.ConnectionMetadataLive / Relyra.LiveAdmin.Query) wraps the whole `defmodule` in the gate with a stub `defmodule` in the else branch. Both compile lanes (`mix compile --warnings-as-errors` and `mix compile --no-optional-deps --warnings-as-errors`) green.
+- Plan 21-05: Five-class refusal → LOCKED `auto_suspended_reason` mapping in `Relyra.Metadata.AutoRefresh.error_to_suspend_reason/1` is the single source of truth for which refusal class produces which suspend reason. Future refusal classes MUST extend BOTH the `@suspended_reason_values` enum on `Relyra.Ecto.MetadataSource` AND this mapping in lockstep — the changeset cast will reject any new atom that bypasses the enum.
+- Plan 21-05: Asymmetric-strictness wrapper composition. `AutoRefresh.refresh/2` wraps `Refresh.refresh/2` from OUTSIDE rather than re-implementing it (D-05 invariant verified: `git diff lib/relyra/metadata/refresh.ex` is empty). Manual paths (`:manual_import` / `:manual_refresh`) flow through the existing entry points unchanged; the scheduled path adds the D-15..D-21 gates BEFORE the candidate reaches `MetadataApply.apply_revision/4`. Future "stricter automation" features should follow the same wrap-from-outside shape.
 
 **Open blockers:** None.
 
