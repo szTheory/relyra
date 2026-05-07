@@ -31,7 +31,7 @@ In descending order of how much each missing piece blocks adoption today:
 | **v0.3** | **LiveView admin surface** | Biggest adoption multiplier. v0.2 stabilized storage; exactly the moment the UI on top is unblocked. Ends "every adopter rebuilds the same admin screens." |
 | **v0.4** | **IdP-initiated SSO + opaque RelayState** | Unlocks deal types v0.1's SP-only posture excluded. Touches trust core — ships before v1.0 review so it gets time under field use. |
 | **v0.5** | **Operational maturity** | Once admin UI ships, the loudest follow-on demand is "automate the toil." Includes scheduled metadata refresh (CFG-08), bulk ops across connections (CFG-07), debug bundles, expiry alerts, mapping templates. |
-| **v0.6** | **SLO (Single Logout)** | Final SAML protocol surface piece. Kept late because it's a trust-boundary feature; pairs naturally with v1.0 security review. |
+| **v0.6** | **SLO + ops-maturity carryover** (DIAG-01 + CERT-EXP-01) | Final SAML protocol surface piece, plus the v0.5 operational-maturity carryovers (debug bundles + expiry alerts) re-scoped from v0.5 by Phase 21.2 per the v0.5 milestone audit. SLO kept late because it's a trust-boundary feature; pairs naturally with v1.0 security review. |
 | **v1.0** | **External security review + conformance + docs polish** | Kantara/Liberty conformance, third-party security audit, all CVE regression fixtures, adopter case studies, final adopter onboarding pass. |
 
 ## Two judgment calls (recorded for future-you)
@@ -68,5 +68,7 @@ In descending order of how much each missing piece blocks adoption today:
 Update at every milestone close. If the arc shifts (e.g. customer demand reorders ops vs IdP-init, or a new requirement bumps SLO earlier), capture the date, the trigger, and the new ordering. Don't delete prior versions — strike through and annotate.
 
 ---
+
+*2026-05-07 — v0.5 milestone audit (closed by Phase 21.2) re-scoped DIAG-01 (Debug bundles) and the previously-orphaned "Expiry alerts" feature (now CERT-EXP-01) from v0.5 to v0.6. v0.6 is now SLO + ops-maturity carryovers, ordered behind v1.0 security review. Trigger: scope drift surfaced by `/gsd-audit-milestone v0.5` — only 2 of 4 stated v0.5 features shipped; the v0.5 → v0.6 re-scope preserved the original arc cadence (admin → IdP-init → ops → SLO → conformance) without inserting an additional milestone.*
 
 *Last updated: 2026-05-06 — initial arc written at v0.3 kickoff.*
