@@ -825,23 +825,23 @@ end
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Trust-anchor pinning UX (D-22) — Mix task vs admin-LiveView vs both?**
    - What we know: behavior is locked (operator pins out-of-band before scheduled refresh activates); UX is the planner's call.
-   - **Recommendation (per recommendation-first DX preference): both, with admin-LiveView primary and Mix task as the scriptable fallback.** Rationale: (a) the LiveView is the natural place because operators already pin everything else through it (CFG-06 and Phase 18 audit timeline live there), and the form can show the "compute fingerprint from a fetched metadata document" affordance with a giant "VERIFY OUT-OF-BAND BEFORE SAVING" risk panel (mirroring `risk_panel.ex` already shipped in v0.3); (b) the Mix task `mix relyra.metadata.pin <source_id> --fingerprint <hex>` exists for IaC adopters who manage trust state via Terraform / Pulumi and won't click through a UI. The two share one underlying changeset (`auto_refresh_changeset`), so the risk of divergence is low. **Decision authority: planner, but the architectural shape is clear.**
+   - **RESOLVED: Recommendation (per recommendation-first DX preference): both, with admin-LiveView primary and Mix task as the scriptable fallback.** Rationale: (a) the LiveView is the natural place because operators already pin everything else through it (CFG-06 and Phase 18 audit timeline live there), and the form can show the "compute fingerprint from a fetched metadata document" affordance with a giant "VERIFY OUT-OF-BAND BEFORE SAVING" risk panel (mirroring `risk_panel.ex` already shipped in v0.3); (b) the Mix task `mix relyra.metadata.pin <source_id> --fingerprint <hex>` exists for IaC adopters who manage trust state via Terraform / Pulumi and won't click through a UI. The two share one underlying changeset (`auto_refresh_changeset`), so the risk of divergence is low. **Decision authority: planner, but the architectural shape is clear.**
 
 2. **Should the validity-warning de-dup state live as a JSON key on `MetadataSource.metadata` or a dedicated column?**
    - What we know: D-14 specifics say "fire at most once per `validUntil` window per source"; CONTEXT.md leaves the de-dup state location open.
-   - **Recommendation: dedicated `last_validity_warning_for: utc_datetime_usec` column** — explicit, queryable from `psql`, avoids the "what's in this JSON map?" guessing game later.
+   - **RESOLVED: Recommendation: dedicated `last_validity_warning_for: utc_datetime_usec` column** — explicit, queryable from `psql`, avoids the "what's in this JSON map?" guessing game later.
 
 3. **Should the security-corpus gate (D-21) reuse the test-only manifest or extract to a runtime-callable validator module?**
    - What we know: D-21 says behavior is locked; the planner decides extraction vs reuse.
-   - **Recommendation: extract.** Create `Relyra.Security.XML.CorpusGate` as a runtime-callable module that loads the manifest via `Application.app_dir(:relyra, "priv/security_corpus.json")` (move the manifest from `test/fixtures/security/xml/manifest.json` to `priv/security_corpus.json`, keep the test-side reader pointing at the new path). Rationale: the test corpus is not appropriate to call from `lib/` (cross-domain dependency), and the runtime path needs a stable, versioned set of refusal triggers. The extraction is small (~40 LOC) and the test still uses the same manifest, so coverage is preserved.
+   - **RESOLVED: Recommendation: extract.** Create `Relyra.Security.XML.CorpusGate` as a runtime-callable module that loads the manifest via `Application.app_dir(:relyra, "priv/security_corpus.json")` (move the manifest from `test/fixtures/security/xml/manifest.json` to `priv/security_corpus.json`, keep the test-side reader pointing at the new path). Rationale: the test corpus is not appropriate to call from `lib/` (cross-domain dependency), and the runtime path needs a stable, versioned set of refusal triggers. The extraction is small (~40 LOC) and the test still uses the same manifest, so coverage is preserved.
 
 4. **Should the auto-refresh wrapper be a separate `Relyra.Metadata.AutoRefresh` module or inlined into `Refresh.refresh/2`?**
    - What we know: D-05 says wrap, do not re-implement.
-   - **Recommendation: separate module** (`lib/relyra/metadata/auto_refresh.ex`) called by `Scheduler.run_due/2`. Keeps `Refresh.refresh/2` (the manual path) untouched, makes the asymmetric strictness visible at the call boundary, and isolates the new D-15..D-21 checks in one file.
+   - **RESOLVED: Recommendation: separate module** (`lib/relyra/metadata/auto_refresh.ex`) called by `Scheduler.run_due/2`. Keeps `Refresh.refresh/2` (the manual path) untouched, makes the asymmetric strictness visible at the call boundary, and isolates the new D-15..D-21 checks in one file.
 
 ---
 

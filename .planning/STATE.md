@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: Operational maturity
-status: planning
-last_updated: "2026-05-06T22:30:00Z"
-last_activity: 2026-05-06 -- Phase 21 context gathered
+status: ready_to_execute
+last_updated: "2026-05-06T23:30:00Z"
+last_activity: 2026-05-06 -- Phase 21 planned (7 plans, 6 waves, verification passed)
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 2
+  total_plans: 9
   completed_plans: 2
-  percent: 50
+  percent: 22
 ---
 
 # Project State
@@ -25,13 +25,21 @@ See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity mi
 ## Current Position
 
 Phase: 21 - Scheduled metadata refresh
-Plan: pending (CONTEXT.md complete; ready for plan-phase)
-Status: Phase 21 context gathered.
-Last activity: 2026-05-06 — Phase 21 CONTEXT.md and DISCUSSION-LOG.md written.
+Plan: 7 plans across 6 waves (W0..W5); verification passed iteration 2/3 with 1 non-blocking warning.
+Status: Ready to execute.
+Last activity: 2026-05-06 — Phase 21 RESEARCH.md, PATTERNS.md, VALIDATION.md, and 7 PLAN.md files written; plan-checker verified.
 
-Resume file: `.planning/phases/21-scheduled-metadata-refresh/21-CONTEXT.md`
+Resume file: `.planning/phases/21-scheduled-metadata-refresh/21-01-schema-extension-PLAN.md` (Wave 0 starts here)
 
-Progress: [=====-----] 50%
+Plan wave layout:
+- W0: 21-01 schema-extension (3 tasks) — migration + schema + 17 Wave-0 test stubs
+- W1 (parallel): 21-02 pure-helpers (cadence + backoff + failure_classifier), 21-03 trust-boundary-helpers (TrustAnchor + DriftDetector + CorpusGate)
+- W2: 21-04 audit-seam-extension (record_attempt extension + verify_metadata_root + resume_auto_refresh)
+- W3: 21-05 scheduler-wrapper-worker (OptionalDeps.Oban + AutoRefresh wrapper + Scheduler.run_due/2 + Workers.MetadataRefresh)
+- W4: 21-06 live-admin-surface (micro-badge + health card + Resume now button)
+- W5: 21-07 mix-tasks-telemetry-docs (relyra.refresh_due + relyra.metadata.pin + telemetry catalog + LogAlerts handler + README recipes + Oban CI smoke lane)
+
+Progress: [==--------] 22%
 
 ## Accumulated Context
 

@@ -225,6 +225,7 @@ Partial index: `WHERE auto_refresh_enabled = true AND (auto_suspended_until IS N
 - **Top-level cross-tenant auto-refresh health dashboard** in admin LiveView. Per-connection badges + per-connection health card cover v0.5; aggregate dashboard is premature. Revisit in v0.6+.
 - **TOFU mode for trust-anchor pinning** as an explicit opt-in (e.g., `metadata_trust_policy: :tofu`). Not shipping in v0.5 (D-17 rejection stands), but the schema does not preclude adding it later as a typed escape-hatch field.
 - **Mix task `mix relyra.metadata.pin <source_id> --url <url>`** as the recommended fingerprint-pinning ceremony. Decision deferred to plan-phase per D-22; this captures the candidate UX.
+- **W7 / Deferred to v0.6+: Admin-LiveView trust-anchor pinning *form*** (the operator-facing form/modal that lets you pin a SHA-256 fingerprint via the UI without dropping to the CLI). v0.5 covers D-22 via three concrete deliverables: (1) `mix relyra.metadata.pin` Mix task (Plan 07 Task 2 — IaC-friendly, scriptable), (2) the schema-level great-error from `auto_refresh_changeset/2` (Plan 01 — refuses to enable auto-refresh without pinned fingerprints, D-09), and (3) the LiveView read-only display of pinned fingerprints inside the "Auto-refresh health" card (Plan 06 Task 2). The interactive *pin-via-LiveView form* deferral is intentional and pending adopter feedback in the v0.5 → v0.6 cycle.
 
 </deferred>
 
