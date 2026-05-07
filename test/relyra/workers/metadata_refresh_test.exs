@@ -17,7 +17,8 @@ defmodule Relyra.Workers.MetadataRefreshTest do
         # "MyApp.Repo"}`). The actual scheduler behavior is covered by
         # `scheduler_test.exs`; here we just assert the worker delegates
         # cleanly without raising.
-        job_struct = struct!(Oban.Job, args: %{"repo" => to_string(Relyra.TestSupport.EctoTestRepo)})
+        job_struct =
+          struct!(Oban.Job, args: %{"repo" => to_string(Relyra.TestSupport.EctoTestRepo)})
 
         # The result depends on whether the repo is started + has a
         # sandbox checkout; in this async test we accept either :ok or
