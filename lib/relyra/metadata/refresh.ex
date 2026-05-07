@@ -61,7 +61,8 @@ defmodule Relyra.Metadata.Refresh do
                      content_hash_sha256: sha256(xml),
                      trust_summary: candidate.trust_summary
                    },
-                   repo: repo
+                   repo: repo,
+                   audit: resolve_audit(opts)
                  ) do
               {:ok, revision} ->
                 update_source(repo, source, :applied)
@@ -111,7 +112,8 @@ defmodule Relyra.Metadata.Refresh do
           details: failure_details(xml, error),
           trust_summary: %{status: "failed", error_code: error.type}
         },
-        repo: repo
+        repo: repo,
+        audit: resolve_audit(opts)
       )
 
     update_source(repo, source, outcome)
@@ -190,6 +192,40 @@ defmodule Relyra.Metadata.Refresh do
   defp failure_outcome(%Error{type: :malformed_xml}), do: :parse_failed
   defp failure_outcome(%Error{type: :metadata_wrong_root}), do: :parse_failed
   defp failure_outcome(%Error{}), do: :validation_failed
+
+  # Resolves the audit context per D-21.1-03 fallback ordering:
+  #   1. opts[:audit] map (preferred — bulk path via BulkActions, scheduled path
+  #      via AutoRefresh — already provides actor/cause/correlation_id)
+  #   2. Top-level opts[:actor] / opts[:cause] keyword opts (single-connection
+  #      callers: connection_metadata_live.ex, mix tasks, existing tests)
+  #   3. Defaults actor: "unknown", cause: "manual refresh" (last resort)
+  #
+  # Always returns a map carrying actor, cause, and correlation_id (nil when
+  # not provided by an upstream batch). The forwarded map flows into
+  # MetadataApply.audit_context/2 (metadata_apply.ex:933-944), which prefers a
+  # map opts[:audit] over revision_attrs-derived values — closing the Phase 20
+  # batch-cohesion gap (CFG-07) without changing the apply_revision contract.
+  defp resolve_audit(opts) do
+    case Keyword.get(opts, :audit) do
+      %{} = audit_map ->
+        # Bulk / scheduled path: BulkActions or Scheduler injected
+        # actor/cause/correlation_id. Merge under defaults so a partial map
+        # (e.g., audit map missing :actor) still produces a valid audit row.
+        Map.merge(
+          %{actor: "unknown", cause: "manual refresh"},
+          audit_map
+        )
+
+      _ ->
+        # Single-connection path: read top-level keyword opts and synthesize
+        # a fully-shaped audit map (correlation_id is nil — no batch context).
+        %{
+          actor: Keyword.get(opts, :actor, "unknown"),
+          cause: Keyword.get(opts, :cause, "manual refresh"),
+          correlation_id: nil
+        }
+    end
+  end
 
   defp failure_details(xml, error) do
     details =
