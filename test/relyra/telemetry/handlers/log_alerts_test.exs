@@ -163,6 +163,24 @@ defmodule Relyra.Telemetry.Handlers.LogAlertsTest do
 
       assert log =~ "auto_refresh skipped"
     end
+
+    test "certificate :expiring emits at warning" do
+      log =
+        capture_log(fn ->
+          :telemetry.execute([:relyra, :saml, :certificate, :expiring], %{days_until_expiry: 14}, %{
+            connection_id: "conn-123",
+            certificate_id: "cert-456",
+            fingerprint_sha256: "aabbcc",
+            not_after: ~U[2026-06-01 00:00:00Z]
+          })
+        end)
+
+      assert log =~ "certificate expiring"
+      assert log =~ "[warning]"
+      assert log =~ "days_until_expiry"
+      assert log =~ "14"
+      assert log =~ "conn-123"
+    end
   end
 
   describe "redaction" do

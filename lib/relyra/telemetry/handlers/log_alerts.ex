@@ -26,7 +26,8 @@ defmodule Relyra.Telemetry.Handlers.LogAlerts do
     [:relyra, :saml, :metadata, :auto_refresh, :suspended],
     [:relyra, :saml, :metadata, :auto_refresh, :recovered],
     [:relyra, :saml, :metadata, :auto_refresh, :validity_warning],
-    [:relyra, :saml, :metadata, :auto_refresh, :skipped]
+    [:relyra, :saml, :metadata, :auto_refresh, :skipped],
+    [:relyra, :saml, :certificate, :expiring]
   ]
 
   @sensitive_keys [:xml, :metadata_xml, :certificate_pem, :pem, :private_key]
@@ -38,6 +39,16 @@ defmodule Relyra.Telemetry.Handlers.LogAlerts do
 
   @spec detach() :: :ok | {:error, :not_found}
   def detach, do: :telemetry.detach(@handler_id)
+
+  @doc false
+  def handle_event(
+        [:relyra, :saml, :certificate, :expiring],
+        measurements,
+        metadata,
+        _config
+      ) do
+    Logger.warning("certificate expiring " <> inspect(redact(Map.merge(measurements, metadata))))
+  end
 
   @doc false
   def handle_event(

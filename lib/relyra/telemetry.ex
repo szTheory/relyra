@@ -103,6 +103,12 @@ defmodule Relyra.Telemetry do
     - Measurements: `%{}`
     - Metadata: `[:correlation_id, :count]`
 
+  ### certificate.expiring
+  Emitted when a SAML certificate is nearing expiration.
+  - Namespace: `[:relyra, :saml, :certificate, :expiring]`
+  - Measurements: `[:days_until_expiry]`
+  - Metadata: `[:connection_id, :certificate_id, :fingerprint_sha256, :not_after]`
+
   Optional reference handler: `Relyra.Telemetry.Handlers.LogAlerts`
   (D-30, NOT default-attached). Adopters call
   `Relyra.Telemetry.Handlers.LogAlerts.attach/0` from their
