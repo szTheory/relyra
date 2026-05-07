@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: — Operational maturity
-status: executing
-last_updated: "2026-05-07T03:35:53.000Z"
-last_activity: 2026-05-07 -- Phase 21 plan 07 (mix-tasks-telemetry-docs) complete; CFG-08 closed; Phase 21 SHIPPED
+status: completed
+last_updated: "2026-05-07T10:30:57.540Z"
+last_activity: 2026-05-07
 progress:
   total_phases: 2
   completed_phases: 2
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity mi
 
 ## Current Position
 
-Phase: 21 (scheduled-metadata-refresh) — COMPLETE
-Plan: 7 of 7 (mix-tasks-telemetry-docs SHIPPED)
+Phase: 21
+Plan: Not started
 Status: Phase 21 complete; CFG-08 closed
-Last activity: 2026-05-07 -- Phase 21 plan 07 (mix-tasks-telemetry-docs) complete; CFG-08 closed; Phase 21 SHIPPED
+Last activity: 2026-05-07
 
 Resume file: (no active resume — awaiting v0.6 milestone arc kickoff)
 
@@ -77,6 +77,7 @@ Progress: [==========] 100%
 **Open blockers:** None — Phase 21 is complete; CFG-08 closed; v0.5 milestone awaits v0.6 arc kickoff.
 
 **Pre-existing out-of-scope items surfaced during 21-01 (logged in `.planning/phases/21-scheduled-metadata-refresh/deferred-items.md`):**
+
 - `Relyra.Phoenix.ACSControllerTest` — `:name_id` KeyError pre-dates Phase 21.
 - `lib/relyra/live_admin/connections_live.ex` — pre-existing `mix format` drift from Phase 20 commit `6e75525`.
 

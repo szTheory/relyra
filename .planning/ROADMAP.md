@@ -117,4 +117,4 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 | 18. Mapping editor + audit timeline hardening | v0.3 | 2/2 | Complete | 2026-05-06 |
 | 19. IdP-initiated SSO | v0.4 | 3/3 | Complete | 2026-05-06 |
 | 20. Bulk operations across connections | v0.5 | 1/3 | In progress | |
-| 21. Scheduled metadata refresh | v0.5 | 7/7 | Complete | 2026-05-07 |
+| 21. Scheduled metadata refresh | v0.5 | 7/7 | Complete    | 2026-05-07 |
