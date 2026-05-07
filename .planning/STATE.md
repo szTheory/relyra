@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: — Operational maturity
 status: executing
-last_updated: "2026-05-07T13:30:26.015Z"
-last_activity: 2026-05-07 -- Phase 21.1 planning complete
+last_updated: "2026-05-07T13:32:02.877Z"
+last_activity: 2026-05-07 -- Phase 21.1 execution started
 progress:
   total_phases: 3
   completed_phases: 2
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity milestone started)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v0.5 milestone — Phase 21 SHIPPED 2026-05-07; awaiting v0.6 milestone arc.
+**Current focus:** Phase 21.1 — close-gap-cfg-07-bulk-refresh-audit-correlation-id-forwardin
 
 ## Current Position
 
-Phase: 21.1
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-07 -- Phase 21.1 planning complete
+Phase: 21.1 (close-gap-cfg-07-bulk-refresh-audit-correlation-id-forwardin) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 21.1
+Last activity: 2026-05-07 -- Phase 21.1 execution started
 
 Resume file: (no active resume — awaiting v0.6 milestone arc kickoff)
 
