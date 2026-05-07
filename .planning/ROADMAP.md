@@ -118,3 +118,13 @@ See `.planning/milestones/v0.4-ROADMAP.md` for full phase details, decisions, de
 | 19. IdP-initiated SSO | v0.4 | 3/3 | Complete | 2026-05-06 |
 | 20. Bulk operations across connections | v0.5 | 1/3 | In progress | |
 | 21. Scheduled metadata refresh | v0.5 | 7/7 | Complete    | 2026-05-07 |
+
+### Phase 21.1: Close gap: CFG-07 — bulk-refresh audit correlation_id forwarding (INSERTED)
+
+**Goal:** Restore Phase 20 D-39 batch-cohesion invariant for bulk `:refresh_metadata` by forwarding `opts[:audit]` (actor + cause + BulkActions-generated `correlation_id`) from `Relyra.Metadata.Refresh.refresh/2` into `MetadataApply.apply_revision/4` (success path) and `MetadataApply.record_attempt/3` (failure path), closing v0.5 milestone audit BLOCKER INT-01.
+**Requirements**: CFG-07
+**Depends on:** Phase 21
+**Plans:** 1 plan
+
+Plans:
+- [ ] 21.1-01-PLAN.md — Forward `opts[:audit]` into `apply_revision/4` + `record_attempt/3` via `resolve_audit/1` helper; 3 net-new RED→GREEN tests (bulk audit-cohesion + single-connection regression + failure-path no-audit invariant); dual-compile-lane gate
