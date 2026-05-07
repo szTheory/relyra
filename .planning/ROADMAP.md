@@ -146,8 +146,8 @@ See `.planning/milestones/v0.5-ROADMAP.md` for full phase details, decisions, de
 2. The generated bundle redacts all sensitive fields (PII, private keys, secrets) using a strict allow-list schema.
 3. The bundle can be generated using Erlang's standard `:zip` library without adding new dependencies.
 **Plans**: 2 plans
-- [ ] 23-01-PLAN.md — Core API and explicit redaction maps
-- [ ] 23-02-PLAN.md — Delivery via Mix task and LiveAdmin download button
+- [x] 23-01-PLAN.md — Core API and explicit redaction maps
+- [x] 23-02-PLAN.md — Delivery via Mix task and LiveAdmin download button
 
 ## Progress
 
@@ -173,5 +173,5 @@ See `.planning/milestones/v0.5-ROADMAP.md` for full phase details, decisions, de
 | 19. IdP-initiated SSO | v0.4 | 3/3 | Complete | 2026-05-06 |
 | 20. Bulk operations across connections | v0.5 | 2/2 | Complete | 2026-05-06 |
 | 21. Scheduled metadata refresh | v0.5 | 7/7 | Complete    | 2026-05-07 |
-| 22. Certificate expiry alerts | v0.6 | 0/1 | Planned |           | |
-| 23. Diagnostic bundles | v0.6 | 0/2 | Planned |           | |
+| 22. Certificate expiry alerts | v0.6 | 1/1 | Complete | 2026-05-07 |
+| 23. Diagnostic bundles | v0.6 | 2/2 | Complete | 2026-05-07 |

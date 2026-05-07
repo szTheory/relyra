@@ -185,12 +185,12 @@ end
 | A1 | [ASSUMED] The alert threshold should default to 30 days but be configurable via `opts`. | Summary / Code Examples | Hardcoding the threshold might annoy operators who want earlier or later alerts. |
 | A2 | [ASSUMED] We should query certificates where `lifecycle_state in [:active, :next]`. | Common Pitfalls | Checking only `:active` would miss staged (`:next`) certificates that might expire before they are rolled over. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Telemetry Event Measurements**
    - What we know: The event is `[:relyra, :saml, :certificate, :expiring]`.
    - What's unclear: Should it include a measurement like `days_until_expiry`?
-   - Recommendation: Yes, calculate `DateTime.diff(not_after, now, :day)` and include it in measurements for easier handler logic.
+   - Recommendation: Yes, calculate `DateTime.diff(not_after, now, :day)` and include it in measurements for easier handler logic. [RESOLVED]
 
 ## Environment Availability
 
