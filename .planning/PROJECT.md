@@ -17,7 +17,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.3 shipped 2026-05-06** — LiveView admin surface. All capabilities from v0.2 are now exposed via a mountable interface. 10/10 requirements verified.
 - **v0.4 shipped 2026-05-06** — IdP-initiated SSO and opaque RelayState. 1/1 requirements verified.
 - Code state at v0.4 close: ~17,200 LOC across `lib/` and `test/` (Elixir).
-- **v0.5 in progress** — Operational maturity. Phase 20 (bulk operations, CFG-07), Phase 21 (scheduled metadata refresh, CFG-08), and Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding — closes v0.5 audit BLOCKER INT-01) shipped 2026-05-06 / 2026-05-07; Debug bundles and Expiry alerts remain.
+- **v0.5 in progress** — Operational maturity. Phase 20 (bulk operations, CFG-07), Phase 21 (scheduled metadata refresh, CFG-08), Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding), and Phase 21.2 (audit-gap closure + scope re-alignment) shipped 2026-05-06 / 2026-05-07. Debug bundles (DIAG-01) and Expiry alerts (CERT-EXP-01) re-scoped to v0.6 per the v0.5 milestone audit.
 
 ## Current Milestone: v0.5 — Operational maturity
 
@@ -27,14 +27,12 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 - **Bulk operations** — User can run operations (enable/disable/refresh) across multiple connections at once (CFG-07).
 - **Scheduled metadata refresh** — User can enable background refresh automation with security guardrails (CFG-08).
-- **Debug bundles** — Operator can export a redacted diagnostic bundle for a connection to facilitate support.
-- **Expiry alerts** — System emits events/logs for upcoming certificate expirations.
 
 **Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the v0.5 → v1.0 plan and rationale.
 
 **Deferred to later milestones per arc:**
 
-- **v0.6** — SLO (Single Logout).
+- **v0.6** — SLO (Single Logout) plus operational-maturity carryover: Debug bundles (DIAG-01) and Expiry alerts (CERT-EXP-01).
 - **v1.0** — External security review + conformance + docs polish.
 
 ## Requirements
@@ -67,14 +65,12 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - ✓ **IDP-INIT-01** — IdP-initiated SSO support with security guardrails and opaque RelayState handling — v0.4 (Phase 19; 1/1 requirements verified 2026-05-06)
 
 **v0.5:**
+- ✓ **CFG-07** — Bulk operations across multiple connections — v0.5 (Phase 20; CFG-07 verified 2026-05-06; Phase 21.1 closed audit BLOCKER INT-01 by forwarding bulk correlation_id through Refresh.refresh/2)
 - ✓ **CFG-08** — Scheduled metadata refresh automation with guardrails — v0.5 (Phase 21; CFG-08 verified 2026-05-07; 22/22 must-haves verified, 344 tests + 8 ci.oban_smoke green, dual compile lanes green)
 
 ### Active
 
 <!-- Carried forward; building toward these next. -->
-
-- [ ] **CFG-07**: User can run bulk operations across multiple connections.
-- [ ] **DIAG-01**: Operator can generate a redacted debug bundle for troubleshooting.
 
 ### Out of Scope
 
@@ -153,6 +149,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 | **v0.2: all four mutation modules co-commit audit rows via a single `Relyra.Ecto.AuditWriter.append_event` seam inside the same transaction** | The audit ledger cannot drift from the data it describes; one writer = one redaction policy = one shape. | ✓ Good (verified Phase 11; cross-domain audit hardening shipped via Plan 11-03) |
 | **v0.2: closure-phase pattern (12 → 09's verification, 13 → 10's, 14 → 11's)** | When an audit surfaces verification orphans, prefer producing missing verification artifacts over re-opening implementation. Cleaner audit trail; smaller blast radius; manual sign-off captured per artifact. | ✓ Good (closed all three v0.2 audit gaps without regressions; pattern worth carrying forward) |
 | **v0.2 tech debt accepted at close: `MappingCommands.append_audit/8` lacks explicit `repo.rollback/1`** | Modern Ecto's `transact/1` auto-rolls on `{:error, _}`; legacy adapter fallback uses `repo.transaction/1` where audit failure could commit mapping rows. Other three co-commit sites use the explicit pattern. | ⚠️ Revisit (track for v0.3 cleanup; not reproducible against current dep set) |
+| **v0.5: closure-phase pattern extended (21.1 → INT-01 BLOCKER closure, 21.2 → audit-gap + scope-rescope closure)** | When an audit surfaces a BLOCKER + scope drift, prefer producing closure phases over re-opening implementation. Phase 21.1 closed the security-adjacent BLOCKER; Phase 21.2 closed the doc/scope gaps. Cleaner audit trail; smaller blast radius; milestone audit re-runs cleanly. | ✓ Good (closed v0.5 audit gaps without re-opening Phase 20 or Phase 21; pattern reusable for v0.6+) |
 
 ## Evolution
 
@@ -172,4 +169,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-07 — Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding) shipped, closing v0.5 milestone audit BLOCKER INT-01; v0.5 Operational maturity in progress.*
+*Last updated: 2026-05-07 — Phase 21.2 closed v0.5 milestone audit gaps; v0.5 re-scoped to bulk ops + scheduled refresh shipped; DIAG-01 + CERT-EXP-01 re-targeted to v0.6.*
