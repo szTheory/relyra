@@ -38,7 +38,7 @@ Committed scope for v0.4: IdP-initiated SSO and opaque RelayState handling, allo
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | IDP-INIT-01 | Phase 19 | Complete |
-| CFG-07 | Phase 20 | In progress |
+| CFG-07 | Phase 20 | Complete |
 | CFG-08 | Phase 21 | Complete (Phase 21 shipped 2026-05-07: schema + pure helpers + trust-boundary helpers + audit seam + telemetry + scheduler + wrapper + worker + live-admin-surface + mix-tasks-telemetry-docs) |
 
 **Coverage:**
