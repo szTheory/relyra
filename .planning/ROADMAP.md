@@ -128,7 +128,15 @@ See `.planning/milestones/v0.5-ROADMAP.md` for full phase details, decisions, de
 
 ### 📋 v0.6 — Operational maturity carryover + SLO (Planning)
 
-- (Phases will be planned here)
+### Phase 22: Certificate Expiry Alerts
+**Goal**: Operators receive timely alerts before SAML certificates expire, allowing proactive rollover.
+**Requirements**: CERT-EXP-01
+**Success Criteria** (what must be TRUE):
+1. The library exposes a callable function to traverse tenant connections and check certificate expiration.
+2. For any certificate near expiration, standard `:telemetry` events are emitted.
+3. The system does not force a background worker on the host app, delegating scheduling to the adopter.
+**Plans**: 1 plan
+- [x] 22-01-PLAN.md — Core Alerting Engine (TDD)
 
 ## Progress
 
@@ -154,4 +162,4 @@ See `.planning/milestones/v0.5-ROADMAP.md` for full phase details, decisions, de
 | 19. IdP-initiated SSO | v0.4 | 3/3 | Complete | 2026-05-06 |
 | 20. Bulk operations across connections | v0.5 | 2/2 | Complete | 2026-05-06 |
 | 21. Scheduled metadata refresh | v0.5 | 7/7 | Complete    | 2026-05-07 |
-
+| 22. Certificate expiry alerts | v0.6 | 0/1 | Planned |           | |
