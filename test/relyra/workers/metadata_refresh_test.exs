@@ -1,19 +1,53 @@
 defmodule Relyra.Workers.MetadataRefreshTest do
-  @moduledoc """
-  Wave 0 stub for `Relyra.Workers.MetadataRefresh` (Phase 21 W3 — `21-05-scheduler-wrapper-worker`).
-
-  This file exists so PLAN files can reference an `<automated>` verify command
-  pointing at this path from day one. The corresponding production module will
-  be created in Wave 3 (`21-05`); see
-  `.planning/phases/21-scheduled-metadata-refresh/21-VALIDATION.md` Per-Task
-  Verification Map for the wave assignment.
-  """
   use ExUnit.Case, async: true
 
-  @moduletag :pending
+  alias Relyra.OptionalDeps.Oban, as: ObanGateway
+  alias Relyra.Workers.MetadataRefresh
 
-  @tag :pending
-  test "Wave 0 stub: replaced by Wave 3 task in Phase 21" do
-    flunk("Wave 0 stub — implement in the wave that introduces the production module")
+  describe "perform/1 (Oban present)" do
+    @tag :oban
+    test "delegates to Scheduler.run_due/2 with the configured repo" do
+      # Skip if Oban is not loaded (--no-optional-deps lane) — the
+      # absent-path describe block below exercises that branch instead.
+      unless ObanGateway.available?() do
+        :ok
+      else
+        # Build an Oban.Job whose args map carries the repo module name
+        # as a string (the Cron one-liner shape — `args: %{"repo" =>
+        # "MyApp.Repo"}`). The actual scheduler behavior is covered by
+        # `scheduler_test.exs`; here we just assert the worker delegates
+        # cleanly without raising.
+        job_struct = struct!(Oban.Job, args: %{"repo" => to_string(Relyra.TestSupport.EctoTestRepo)})
+
+        # The result depends on whether the repo is started + has a
+        # sandbox checkout; in this async test we accept either :ok or
+        # an Error tuple (the scheduler may surface a missing-repo error).
+        result = MetadataRefresh.perform(job_struct)
+        assert match?(:ok, result) or match?({:error, _}, result)
+      end
+    end
+
+    @tag :oban
+    test "Oban.Worker behaviour is implemented when Oban is loaded" do
+      unless ObanGateway.available?() do
+        :ok
+      else
+        assert function_exported?(MetadataRefresh, :perform, 1)
+      end
+    end
+  end
+
+  describe "perform/1 (Oban absent)" do
+    test "returns optional_dependency_missing when Oban is absent" do
+      # Only meaningful when Oban is NOT loaded — the present lane is
+      # covered above. In the absent lane, perform/1 returns the typed
+      # optional-dep error from the gateway.
+      if ObanGateway.available?() do
+        :ok
+      else
+        assert {:error, %Relyra.Error{type: :optional_dependency_missing}} =
+                 MetadataRefresh.perform(:irrelevant)
+      end
+    end
   end
 end

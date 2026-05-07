@@ -1,19 +1,51 @@
 defmodule Relyra.OptionalDeps.ObanTest do
-  @moduledoc """
-  Wave 0 stub for `Relyra.OptionalDeps.Oban` (Phase 21 W3 — `21-05-scheduler-wrapper-worker`).
-
-  This file exists so PLAN files can reference an `<automated>` verify command
-  pointing at this path from day one. The corresponding production module will
-  be created in Wave 3 (`21-05`); see
-  `.planning/phases/21-scheduled-metadata-refresh/21-VALIDATION.md` Per-Task
-  Verification Map for the wave assignment.
-  """
   use ExUnit.Case, async: true
 
-  @moduletag :pending
+  alias Relyra.Error
+  alias Relyra.OptionalDeps.Oban, as: ObanGateway
 
-  @tag :pending
-  test "Wave 0 stub: replaced by Wave 3 task in Phase 21" do
-    flunk("Wave 0 stub — implement in the wave that introduces the production module")
+  describe "available?/0" do
+    test "returns a boolean reflecting whether all required Oban modules are loaded" do
+      # In the test environment Oban may or may not be present (Plan 07
+      # adds it as a test dep). Either way, available?/0 returns a strict
+      # boolean; the absent-path is exercised by ensure_available!/1 below.
+      assert is_boolean(ObanGateway.available?())
+    end
+  end
+
+  describe "ensure_available!/1" do
+    test "returns :ok when Oban is available" do
+      if ObanGateway.available?() do
+        assert :ok == ObanGateway.ensure_available!(:test_op)
+      end
+    end
+
+    test "returns {:error, %Relyra.Error{type: :optional_dependency_missing}} when absent" do
+      unless ObanGateway.available?() do
+        assert {:error, %Error{type: :optional_dependency_missing} = err} =
+                 ObanGateway.ensure_available!(:test_op)
+
+        assert err.details.missing_dependency == :oban
+        assert err.details.operation == :test_op
+
+        assert err.message =~ ":oban"
+      end
+    end
+
+    test "always accepts an atom operation argument without raising" do
+      assert match?(:ok, ObanGateway.ensure_available!(:probe)) or
+               match?({:error, _}, ObanGateway.ensure_available!(:probe))
+    end
+  end
+
+  describe "required_modules/0" do
+    test "lists exactly [Oban, Oban.Worker, Oban.Job, Oban.Plugins.Cron]" do
+      assert ObanGateway.required_modules() == [
+               Oban,
+               Oban.Worker,
+               Oban.Job,
+               Oban.Plugins.Cron
+             ]
+    end
   end
 end
