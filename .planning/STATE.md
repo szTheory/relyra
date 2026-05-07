@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: — Operational maturity
 status: executing
-last_updated: "2026-05-07T03:00:51.000Z"
-last_activity: 2026-05-07 -- Phase 21 plan 05 (scheduler-wrapper-worker) complete
+last_updated: "2026-05-07T03:19:21.000Z"
+last_activity: 2026-05-07 -- Phase 21 plan 06 (live-admin-surface) complete
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 9
-  completed_plans: 5
-  percent: 55
+  completed_plans: 6
+  percent: 66
 ---
 
 # Project State
@@ -20,16 +20,16 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-06 — v0.5 Operational maturity milestone started)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 21 — scheduled-metadata-refresh (Wave 4 next — live-admin-surface)
+**Current focus:** Phase 21 — scheduled-metadata-refresh (Wave 5 next — mix-tasks-telemetry-docs)
 
 ## Current Position
 
 Phase: 21 (scheduled-metadata-refresh) — EXECUTING
-Plan: 6 of 7 (Wave 4 next — live-admin-surface)
+Plan: 7 of 7 (Wave 5 next — mix-tasks-telemetry-docs)
 Status: Executing Phase 21
-Last activity: 2026-05-07 -- Phase 21 plan 05 (scheduler-wrapper-worker) complete
+Last activity: 2026-05-07 -- Phase 21 plan 06 (live-admin-surface) complete
 
-Resume file: `.planning/phases/21-scheduled-metadata-refresh/21-06-live-admin-surface-PLAN.md` (Wave 4)
+Resume file: `.planning/phases/21-scheduled-metadata-refresh/21-07-mix-tasks-telemetry-docs-PLAN.md` (Wave 5)
 
 Plan wave layout:
 
@@ -40,7 +40,7 @@ Plan wave layout:
 - W4: 21-06 live-admin-surface (micro-badge + health card + Resume now button)
 - W5: 21-07 mix-tasks-telemetry-docs (relyra.refresh_due + relyra.metadata.pin + telemetry catalog + LogAlerts handler + README recipes + Oban CI smoke lane)
 
-Progress: [=====-----] 55%
+Progress: [======----] 66%
 
 ## Accumulated Context
 
@@ -63,6 +63,10 @@ Progress: [=====-----] 55%
 - Plan 21-05 (Rule 3 deviation): Outside-the-defmodule `Code.ensure_loaded?` gate for `use Oban.Worker` (Workers.MetadataRefresh) and `import Ecto.Query` (Metadata.Scheduler). Plan 21-05's literal in-body `if Code.ensure_loaded?(...) do use ... else def stub ... end` does NOT compile in Elixir 1.19 because Kernel.if/2 eagerly expands both branches; `use Oban.Worker` crashes with `module Oban.Worker is not loaded` regardless of the runtime branch. The canonical idiom in this codebase (Relyra.LiveAdmin / Relyra.LiveAdmin.ConnectionMetadataLive / Relyra.LiveAdmin.Query) wraps the whole `defmodule` in the gate with a stub `defmodule` in the else branch. Both compile lanes (`mix compile --warnings-as-errors` and `mix compile --no-optional-deps --warnings-as-errors`) green.
 - Plan 21-05: Five-class refusal → LOCKED `auto_suspended_reason` mapping in `Relyra.Metadata.AutoRefresh.error_to_suspend_reason/1` is the single source of truth for which refusal class produces which suspend reason. Future refusal classes MUST extend BOTH the `@suspended_reason_values` enum on `Relyra.Ecto.MetadataSource` AND this mapping in lockstep — the changeset cast will reject any new atom that bypasses the enum.
 - Plan 21-05: Asymmetric-strictness wrapper composition. `AutoRefresh.refresh/2` wraps `Refresh.refresh/2` from OUTSIDE rather than re-implementing it (D-05 invariant verified: `git diff lib/relyra/metadata/refresh.ex` is empty). Manual paths (`:manual_import` / `:manual_refresh`) flow through the existing entry points unchanged; the scheduled path adds the D-15..D-21 gates BEFORE the candidate reaches `MetadataApply.apply_revision/4`. Future "stricter automation" features should follow the same wrap-from-outside shape.
+- Plan 21-06: D-29 health derivation as a pure function reused across surfaces. `Relyra.LiveAdmin.Query.derive_auto_refresh_health/2` returns `nil | :healthy | :degraded | :suspended` from a `MetadataSource` struct + `now`. The same helper feeds both the per-row connection-list micro-badge (via `connection_summary/3`) and the metadata-page health card (via `build_auto_refresh_health_summary/1`). Future surfaces that need the health enum MUST reuse the helper rather than recompute the cond branches — keeps the operator's mental model unified across views.
+- Plan 21-06: LiveView Resume-now path enforces single-transaction discipline (D-28) by routing exclusively through `Relyra.Ecto.MetadataApply.resume_auto_refresh/3` (Plan 04 Task 3); the LiveView carries NO parallel `repo.update`-based clear helper (B3 invariant grep-enforced: `clear_suspend_for_resume` returns 0 matches across `lib/`). After the transaction commits, the LiveView dispatches an immediate scoped half-open probe via `start_async(:auto_refresh_resume, fn -> Scheduler.run_due(repo, source_ids: [source.id]) end)`. Future LiveView surfaces that mutate audit-relevant state MUST follow the same shape: delegate to a `transact/2`-wrapped `MetadataApply` seam, dispatch downstream side-effects via `start_async` only after the transaction commits.
+- Plan 21-06 (Rule 1 deviation): `Map.get/2`-guarded render-block accesses for cross-test compatibility. The pre-existing `Relyra.LiveAdminMetadataTest` render fixture passes `detail: %{metadata_source: nil}` without an `:auto_refresh_health` key — the literal `@detail.auto_refresh_health` form raises `KeyError` and breaks two pre-existing render tests. Switched the new render section to `Map.get(@detail, :auto_refresh_health)`. Production data through `Query.get_metadata_revisions/3` always carries the key; the guard is purely for test-fixture flexibility. Pattern reusable wherever a render block must tolerate partial test fixtures while production data carries the full schema.
+- Plan 21-06: Brand-voice invariant grep-enforcement at the test layer. Every operator-facing surface (`connection_list.ex`, `connection_metadata_live.ex`) is asserted to never render `polling`, `cron job`, `blocked`, `retry`, `circuit breaker`, or `MaxBackoff`. The grep is run against the rendered HTML across all four health states (nil / :healthy / :degraded / :suspended), so it catches drift in either the source or the data feeding the render. Pattern reusable for any future operator-facing component governed by the brand book.
 
 **Open blockers:** None.
 
