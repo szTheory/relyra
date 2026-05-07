@@ -67,6 +67,46 @@ defmodule Relyra.Telemetry do
   - Namespace: `[:relyra, :saml, :metadata, :import]`
   - Measurements: `[:duration_ms]`
   - Metadata: `[:connection_id, :source_kind, :trigger, :outcome, :error_code, :certificate_count]`
+
+  ### metadata.auto_refresh
+  Phase 21 scheduled metadata refresh. SEPARATE namespace from
+  `metadata.refresh` per D-23: adopters can attach the "page me" handler
+  only to the unattended channel.
+
+  - Namespace: `[:relyra, :saml, :metadata, :auto_refresh]`
+
+  Per-attempt span events (`Telemetry.span/3`):
+  - `[:relyra, :saml, :metadata, :auto_refresh, :start]`
+  - `[:relyra, :saml, :metadata, :auto_refresh, :stop]`
+  - `[:relyra, :saml, :metadata, :auto_refresh, :exception]`
+    - Measurements: `[:duration_ms]`
+    - Metadata: `[:connection_id, :metadata_source_id, :source_kind, :trigger, :correlation_id, :outcome, :error_code, :certificate_count, :transient?, :counts_toward_suspend?]`
+
+  State-transition events (one-shot, not span-bracketed):
+  - `[:relyra, :saml, :metadata, :auto_refresh, :degraded]` — first
+    transient failure that increments `consecutive_failure_count` (D-24)
+  - `[:relyra, :saml, :metadata, :auto_refresh, :suspended]` — the
+    attempt that crossed `consecutive_failure_count >= 5` and set
+    `auto_suspended_until` (D-24, D-25)
+  - `[:relyra, :saml, :metadata, :auto_refresh, :recovered]` — successful
+    probe after a suspended period; counters reset to 0 (D-24, Pitfall 6)
+    - Measurements: `%{}`
+    - Metadata: `[:connection_id, :metadata_source_id, :consecutive_failure_count, :auto_suspended_until, :auto_suspended_reason, :error_code]`
+
+  Validity warning event (at-most-once per validUntil window per source):
+  - `[:relyra, :saml, :metadata, :auto_refresh, :validity_warning]` (D-14)
+    - Measurements: `%{}`
+    - Metadata: `[:connection_id, :metadata_source_id, :valid_until, :refresh_interval_seconds]`
+
+  Empty-tick event:
+  - `[:relyra, :saml, :metadata, :auto_refresh, :skipped]` (D-07)
+    - Measurements: `%{}`
+    - Metadata: `[:correlation_id, :count]`
+
+  Optional reference handler: `Relyra.Telemetry.Handlers.LogAlerts`
+  (D-30, NOT default-attached). Adopters call
+  `Relyra.Telemetry.Handlers.LogAlerts.attach/0` from their
+  `Application.start/2` to opt in.
   """
 
   @doc false
