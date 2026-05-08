@@ -7,11 +7,14 @@ defmodule Relyra.MixProject do
     [
       app: :relyra,
       version: "0.1.0",
+      description: "Strict-by-default SAML 2.0 Service Provider library for Elixir and Phoenix.",
       elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       compilers: [:parser_path_guard] ++ Mix.compilers(),
       elixirc_options: [ignore_module_conflict: true],
+      package: package(),
+      docs: docs(),
       aliases: aliases(),
       deps: deps()
     ]
@@ -52,6 +55,7 @@ defmodule Relyra.MixProject do
       {:phoenix, "~> 1.8", optional: true},
       {:phoenix_live_view, "~> 1.1", optional: true},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.14", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13", optional: true},
@@ -59,6 +63,42 @@ defmodule Relyra.MixProject do
       {:postgrex, ">= 0.0.0", optional: true},
       {:req, "~> 0.5", optional: true},
       {:oban, "~> 2.22", optional: true}
+    ]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{
+        "GitHub" => "https://github.com/szTheory/relyra",
+        "Changelog" => "https://github.com/szTheory/relyra/blob/main/CHANGELOG.md"
+      },
+      files: [
+        "lib",
+        "priv",
+        "guides",
+        ".formatter.exs",
+        "mix.exs",
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE",
+        "SECURITY.md",
+        "BATTERIES_INCLUDED.md"
+      ]
+    ]
+  end
+
+  defp docs do
+    [
+      main: "README",
+      source_url: "https://github.com/szTheory/relyra",
+      extras: [
+        "README.md",
+        "CHANGELOG.md",
+        "SECURITY.md",
+        "guides/getting_started.md",
+        "guides/batteries_included.md"
+      ]
     ]
   end
 

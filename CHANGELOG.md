@@ -7,14 +7,11 @@ and the project targets [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Added
-
-- Provider presets for Okta, Entra, and Google Workspace.
-- `Relyra.TestSupport`, `Relyra.TestSupport.FakeIdP`, and installer scaffolding.
-- Release hardening metadata, parity checks, and release-time prerequisite guidance.
-
-## [0.1.0] - 2026-04-25
+## [0.1.0] - 2026-05-08
 
 ### Added
 
 - Initial public release of the strict-by-default SAML 2.0 SP surface.
+- Provider presets for Okta, Entra, and Google Workspace.
+- `Relyra.TestSupport`, `Relyra.TestSupport.FakeIdP`, and installer scaffolding.
+- Release hardening metadata, parity checks, and release-time prerequisite guidance.
