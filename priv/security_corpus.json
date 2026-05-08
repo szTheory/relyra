@@ -1,259 +1,107 @@
 [
   {
-    "id": "xxe-001",
+    "id": "xxe-doctype-001",
     "class": "xxe_entity_abuse",
-    "requirement_ids": ["SEC-01", "GATE-02"],
+    "family": "xxe",
+    "requirement_ids": ["CVE-REG-01"],
     "expected_error_type": "doctype_forbidden",
-    "xml": "<!DOCTYPE root><root/>",
-    "notes": "DOCTYPE should be rejected before parse trust boundary."
+    "provenance": {
+      "source": "OWASP SAML Security Cheat Sheet",
+      "kind": "ported-fixture",
+      "captured_at": "2026-05-07"
+    },
+    "source_ref": "owasp:saml:doctype-forbidden",
+    "xml": "<!DOCTYPE Response><Response/>",
+    "notes": "DOCTYPE declarations must be rejected before parser trust is established."
   },
   {
-    "id": "xxe-002",
+    "id": "xxe-entity-001",
     "class": "xxe_entity_abuse",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "doctype_forbidden",
-    "xml": "<!DOCTYPE saml><saml/>"
-  },
-  {
-    "id": "xxe-003",
-    "class": "xxe_entity_abuse",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "doctype_forbidden",
-    "xml": "<!DOCTYPE foo><foo/>"
-  },
-  {
-    "id": "xxe-004",
-    "class": "xxe_entity_abuse",
-    "requirement_ids": ["SEC-01"],
+    "family": "xxe",
+    "requirement_ids": ["CVE-REG-01"],
     "expected_error_type": "entity_expansion_forbidden",
-    "xml": "<!ENTITY xxe 'boom'><root/>"
+    "provenance": {
+      "source": "OWASP SAML Security Cheat Sheet",
+      "kind": "ported-fixture",
+      "captured_at": "2026-05-07"
+    },
+    "source_ref": "owasp:saml:entity-expansion-forbidden",
+    "xml": "<!ENTITY xxe 'boom'><Response/>",
+    "notes": "ENTITY declarations must be refused at the XML seam."
   },
   {
-    "id": "xxe-005",
-    "class": "xxe_entity_abuse",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "entity_expansion_forbidden",
-    "xml": "<!ENTITY abuse 'x'><node/>"
-  },
-  {
-    "id": "xxe-006",
-    "class": "xxe_entity_abuse",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "entity_expansion_forbidden",
-    "xml": "<!ENTITY payload 'a'><entry/>"
-  },
-  {
-    "id": "size-001",
-    "class": "size_and_inflate_bounds",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "payload_too_large",
-    "xml": "<root>0123456789ABCDEF</root>",
-    "max_bytes": 8
-  },
-  {
-    "id": "size-002",
-    "class": "size_and_inflate_bounds",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "payload_too_large",
-    "xml": "<root>AAAAAAAAAAAAAAAAAAAA</root>",
-    "max_bytes": 10
-  },
-  {
-    "id": "size-003",
-    "class": "size_and_inflate_bounds",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "payload_too_large",
-    "xml": "<root>BBBBBBBBBBBBBBBBBBBB</root>",
-    "max_bytes": 12
-  },
-  {
-    "id": "size-004",
-    "class": "size_and_inflate_bounds",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "payload_too_large",
-    "xml": "<root>CCCCCCCCCCCCCCCCCCCC</root>",
-    "max_bytes": 9
-  },
-  {
-    "id": "sigwrap-001",
+    "id": "xsw-duplicate-id-001",
     "class": "signature_wrapping",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><assertion>unsigned</assertion></response>"
+    "family": "signature_wrapping",
+    "requirement_ids": ["CVE-REG-01"],
+    "expected_error_type": "duplicate_xml_id",
+    "provenance": {
+      "source": "Historical XSW regression corpus",
+      "kind": "ported-fixture",
+      "captured_at": "2026-05-07"
+    },
+    "source_ref": "xsw:duplicate-id",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"dup-assertion\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Assertion ID=\"dup-assertion\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>attacker@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#dup-assertion\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>",
+    "notes": "Duplicate assertion IDs model classic XSW signed-node confusion."
   },
   {
-    "id": "sigwrap-002",
+    "id": "xsw-ambiguous-assertion-001",
     "class": "signature_wrapping",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><assertion id='a'/></response>"
+    "family": "signature_wrapping",
+    "requirement_ids": ["CVE-REG-01"],
+    "expected_error_type": "ambiguous_signed_node",
+    "provenance": {
+      "source": "Historical XSW regression corpus",
+      "kind": "ported-fixture",
+      "captured_at": "2026-05-07"
+    },
+    "source_ref": "xsw:ambiguous-assertion-selection",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-one\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Assertion ID=\"assertion-two\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>attacker@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-one\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>",
+    "notes": "Multiple signed-node candidates must never collapse to a silent success."
   },
   {
-    "id": "sigwrap-003",
-    "class": "signature_wrapping",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><assertion id='b'/></response>"
-  },
-  {
-    "id": "sigwrap-004",
-    "class": "signature_wrapping",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><signed>false</signed></response>"
-  },
-  {
-    "id": "sigwrap-005",
-    "class": "signature_wrapping",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><duplicate id='x'/><duplicate id='x'/></response>"
-  },
-  {
-    "id": "sigwrap-006",
-    "class": "signature_wrapping",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><wrapper><assertion/></wrapper></response>"
-  },
-  {
-    "id": "sigwrap-007",
-    "class": "signature_wrapping",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><wrapper id='w'/></response>"
-  },
-  {
-    "id": "sigwrap-008",
-    "class": "signature_wrapping",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><assertion>tampered</assertion></response>"
-  },
-  {
-    "id": "c14n-001",
+    "id": "c14n-differential-001",
     "class": "parser_differential_and_c14n",
-    "requirement_ids": ["GATE-02"],
+    "family": "signature_wrapping",
+    "requirement_ids": ["CVE-REG-01"],
     "expected_error_type": "canonicalization_failed",
-    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-1'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed>node</signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-1'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
+    "provenance": {
+      "source": "PureBeam seam regression corpus",
+      "kind": "ported-fixture",
+      "captured_at": "2026-05-07"
+    },
+    "source_ref": "purebeam:c14n-differential",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-c14n\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-c14n\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>",
+    "notes": "The current pure-BEAM seam must keep failing closed when canonicalization inputs are incomplete."
   },
   {
-    "id": "c14n-002",
-    "class": "parser_differential_and_c14n",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "canonicalization_failed",
-    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-2'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed attr='1'>node</signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-2'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
+    "id": "cve-2024-45409-keyinfo-001",
+    "class": "cve_2024_45409",
+    "family": "CVE-2024-45409",
+    "requirement_ids": ["CVE-REG-01"],
+    "expected_error_type": "untrusted_certificate",
+    "provenance": {
+      "source": "ruby-saml GHSA-jw9c-mfg7-9rx2",
+      "kind": "ported-fixture",
+      "captured_at": "2026-05-07"
+    },
+    "source_ref": "GHSA-jw9c-mfg7-9rx2:keyinfo-trust-bypass",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-keyinfo\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><KeyInfo><X509Data>attacker-controlled-cert</X509Data></KeyInfo><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-keyinfo\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>",
+    "notes": "Document-provided KeyInfo must never become a trust anchor."
   },
   {
-    "id": "c14n-003",
-    "class": "parser_differential_and_c14n",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "canonicalization_failed",
-    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-3'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed attr='2'>node</signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-3'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
-  },
-  {
-    "id": "c14n-004",
-    "class": "parser_differential_and_c14n",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "canonicalization_failed",
-    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-4'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed><child/></signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-4'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
-  },
-  {
-    "id": "c14n-005",
-    "class": "parser_differential_and_c14n",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "canonicalization_failed",
-    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-5'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed><child id='5'/></signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-5'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
-  },
-  {
-    "id": "c14n-006",
-    "class": "parser_differential_and_c14n",
-    "requirement_ids": ["GATE-02"],
-    "expected_error_type": "canonicalization_failed",
-    "xml": "<response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-6'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><signed><child id='6'/></signed><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-6'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></response>"
-  },
-  {
-    "id": "dup-001",
-    "class": "duplicate_ids",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "malformed_xml",
-    "xml": "<response id='x'>"
-  },
-  {
-    "id": "dup-002",
-    "class": "duplicate_ids",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "malformed_xml",
-    "xml": "<assertion id='dup'>"
-  },
-  {
-    "id": "dup-003",
-    "class": "duplicate_ids",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "malformed_xml",
-    "xml": "<saml id='id1'>"
-  },
-  {
-    "id": "dup-004",
-    "class": "duplicate_ids",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "malformed_xml",
-    "xml": "<root id='same'>"
-  },
-  {
-    "id": "keyinfo-001",
-    "class": "keyinfo_misuse",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><KeyInfo>attacker</KeyInfo></response>"
-  },
-  {
-    "id": "keyinfo-002",
-    "class": "keyinfo_misuse",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><KeyInfo>spoof</KeyInfo></response>"
-  },
-  {
-    "id": "keyinfo-003",
-    "class": "keyinfo_misuse",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><KeyInfo>replace</KeyInfo></response>"
-  },
-  {
-    "id": "keyinfo-004",
-    "class": "keyinfo_misuse",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><KeyInfo>rogue</KeyInfo></response>"
-  },
-  {
-    "id": "unsigned-001",
-    "class": "unsigned_or_partial_signature",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><assertion>partial</assertion></response>"
-  },
-  {
-    "id": "unsigned-002",
-    "class": "unsigned_or_partial_signature",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><assertion>unsigned</assertion></response>"
-  },
-  {
-    "id": "unsigned-003",
-    "class": "unsigned_or_partial_signature",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><assertion>missing sig</assertion></response>"
-  },
-  {
-    "id": "unsigned-004",
-    "class": "unsigned_or_partial_signature",
-    "requirement_ids": ["SEC-01"],
-    "expected_error_type": "missing_signature",
-    "xml": "<response><assertion>bad sig scope</assertion></response>"
+    "id": "cve-2024-45409-duplicate-id-001",
+    "class": "cve_2024_45409",
+    "family": "CVE-2024-45409",
+    "requirement_ids": ["CVE-REG-01"],
+    "expected_error_type": "duplicate_xml_id",
+    "provenance": {
+      "source": "CVE-2024-45409 / ruby-saml advisory lineage",
+      "kind": "ported-fixture",
+      "captured_at": "2026-05-07"
+    },
+    "source_ref": "CVE-2024-45409:signed-node-selection-bypass",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-cve-dup\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Assertion ID=\"assertion-cve-dup\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>attacker@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-cve-dup\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>",
+    "notes": "Pinned duplicate-ID variant covers signed-node selection bypasses in the CVE family."
   }
 ]

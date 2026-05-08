@@ -32,6 +32,7 @@ defmodule Relyra.Security.XML.CorpusGate do
   """
 
   alias Relyra.Error
+  alias Relyra.Security.XML.PureBeam
 
   @manifest_relative "priv/security_corpus.json"
 
@@ -122,13 +123,43 @@ defmodule Relyra.Security.XML.CorpusGate do
         byte_size(xml) > max_bytes
 
       _other ->
-        # Other corpus classes (signature_wrapping, parser_differential_and_c14n,
-        # keyinfo_misuse, unsigned_or_partial_signature, duplicate_ids) carry
-        # `<Response>`-shaped XML whose detection happens upstream in the
-        # signature verifier and parser — not at the byte-level metadata
-        # gate. The wrapper will refuse those via the verifier's typed
-        # errors before reaching apply.
-        false
+        runtime_fixture_match?(xml, fixture, opts)
+    end
+  end
+
+  defp runtime_fixture_match?(xml, fixture, opts) do
+    expected_type = Map.get(fixture, "expected_error_type")
+    class = Map.get(fixture, "class")
+
+    case classify_fixture_error(xml, class, opts) do
+      {:error, %Error{type: type}} -> Atom.to_string(type) == expected_type
+      _ -> false
+    end
+  end
+
+  defp classify_fixture_error(xml, class, opts) do
+    parse_opts =
+      case Keyword.get(opts, :max_bytes) do
+        nil -> []
+        max_bytes -> [max_bytes: max_bytes]
+      end
+
+    case class do
+      "signature_wrapping" ->
+        with {:ok, parsed_doc} <- PureBeam.parse_safely(xml, parse_opts) do
+          PureBeam.select_signed_node(parsed_doc, [])
+        end
+
+      "parser_differential_and_c14n" ->
+        :ok
+
+      "cve_2024_45409" ->
+        with {:ok, parsed_doc} <- PureBeam.parse_safely(xml, parse_opts) do
+          PureBeam.select_signed_node(parsed_doc, [])
+        end
+
+      _other ->
+        PureBeam.parse_safely(xml, parse_opts)
     end
   end
 end
