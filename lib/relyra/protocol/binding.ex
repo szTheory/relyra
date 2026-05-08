@@ -3,19 +3,75 @@ defmodule Relyra.Protocol.Binding do
 
   alias Relyra.Error
 
-  @spec encode_redirect(binary(), binary()) :: {:ok, map()} | {:error, Error.t()}
-  def encode_redirect(authn_request_xml, relay_state)
-      when is_binary(authn_request_xml) and authn_request_xml != "" and is_binary(relay_state) and
+  @spec encode_redirect(binary(), binary(), keyword()) :: {:ok, map()} | {:error, Error.t()}
+  def encode_redirect(xml, relay_state, opts \\ [])
+
+  def encode_redirect(xml, relay_state, opts)
+      when is_binary(xml) and xml != "" and is_binary(relay_state) and
              relay_state != "" do
+    key = if Keyword.get(opts, :type) == :response, do: "SAMLResponse", else: "SAMLRequest"
     {:ok,
      %{
-       "SAMLRequest" => Base.encode64(authn_request_xml, padding: false),
+       key => Base.encode64(xml, padding: false),
        "RelayState" => relay_state
      }}
   end
 
-  def encode_redirect(_authn_request_xml, _relay_state) do
+  def encode_redirect(_xml, _relay_state, _opts) do
     invalid_binding_payload("Redirect binding requires XML and relay state strings")
+  end
+
+  @spec decode_redirect(map(), keyword()) :: {:ok, map()} | {:error, Error.t()}
+  def decode_redirect(params, opts \\ [])
+
+  def decode_redirect(params, opts) when is_map(params) do
+    metadata = %{binding: :redirect, flow: :sp_initiated}
+
+    Relyra.Telemetry.span([:response, :decode], metadata, fn ->
+      result = do_decode_redirect(params, opts)
+
+      case result do
+        {:ok, %{response_xml: xml} = decoded} ->
+          encoded = fetch_encoded_redirect(params) || ""
+
+          {{:ok, decoded},
+           Map.merge(metadata, %{
+             outcome: :ok,
+             xml_bytes: byte_size(xml),
+             base64_bytes: byte_size(encoded)
+           })}
+
+        {:error, %Error{} = error} ->
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      end
+    end)
+  end
+
+  def decode_redirect(_params, _opts) do
+    {:error, Error.new(:invalid_binding_payload, "Redirect binding payload must be a map")}
+  end
+
+  defp do_decode_redirect(params, opts) do
+    relay_state_key = Keyword.get(opts, :relay_state_key, "RelayState")
+
+    with {:ok, encoded_value} <- fetch_redirect_payload(params),
+         {:ok, decoded_xml} <- decode_base64(encoded_value) do
+      {:ok, %{response_xml: decoded_xml, relay_state: Map.get(params, relay_state_key)}}
+    end
+  end
+
+  defp fetch_encoded_redirect(params) do
+    Map.get(params, "SAMLRequest") || Map.get(params, "SAMLResponse")
+  end
+
+  defp fetch_redirect_payload(params) do
+    case fetch_encoded_redirect(params) do
+      value when is_binary(value) and value != "" ->
+        {:ok, value}
+
+      _ ->
+        invalid_binding_payload("SAMLRequest or SAMLResponse is required for HTTP-Redirect binding")
+    end
   end
 
   @spec decode_post(map(), keyword()) :: {:ok, map()} | {:error, Error.t()}
