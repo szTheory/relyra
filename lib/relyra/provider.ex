@@ -175,6 +175,7 @@ defmodule Relyra.Provider do
   """
   @spec hint_for(Connection.t() | nil, label_key()) :: String.t() | nil
   def hint_for(%Connection{provider_preset: nil}, _field), do: nil
+  def hint_for(%{provider_preset: nil}, _field), do: nil
   def hint_for(nil, _field), do: nil
 
   def hint_for(%Connection{provider_preset: preset_id}, field) do
@@ -192,6 +193,24 @@ defmodule Relyra.Provider do
         nil
     end
   end
+
+  def hint_for(%{provider_preset: preset_id}, field) when is_atom(preset_id) do
+    case label_entry(preset_id, field) do
+      %{idp_label: label, idp_section: section, hint: hint} ->
+        format_hint(label, section, hint)
+
+      %{idp_label: label, idp_section: section} ->
+        format_hint(label, section, nil)
+
+      %{idp_label: label} ->
+        format_hint(label, nil, nil)
+
+      _ ->
+        nil
+    end
+  end
+
+  def hint_for(%{} = _connection, _field), do: nil
 
   defp format_hint(label, nil, nil), do: "Check '#{label}' in your IdP configuration."
 

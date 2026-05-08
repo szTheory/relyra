@@ -87,7 +87,7 @@
     "rule_id": "SAMLCore-2.5.1.4",
     "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
     "status": "reject",
-    "expected_outcome": {"result": "error", "type": "audience_mismatch"},
+    "expected_outcome": {"result": "error", "type": "invalid_audience"},
     "provenance": {
       "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf",
       "section": "2.5.1.4"
