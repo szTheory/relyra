@@ -19,6 +19,10 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
 
     steps:
       - name: Checkout
@@ -27,8 +31,116 @@ jobs:
           fetch-depth: 0
 
       - name: Run Release Please
+        id: release
         uses: googleapis/release-please-action@v4
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          token: ${{ github.token }}
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  publish-hex:
+    name: Publish to Hex.pm
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      RELYRA_XML_STRATEGY: pure_beam
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      RELYRA_TEST_DATABASE: relyra_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Setup BEAM
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28"
+          elixir-version: "1.19.5"
+
+      - name: Cache library deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-relyra-${{ hashFiles('mix.lock') }}
+
+      - name: Install Hex + Rebar
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+
+      - name: Fetch library deps
+        run: mix deps.get
+
+      - name: Verify release version in mix.exs
+        run: grep -n "@version \"${{ needs.release-please.outputs.version }}\"" mix.exs
+
+      - name: Release parity lane
+        run: mix ci.release
+
+      - name: Security lane
+        run: mix ci.security
+
+      - name: Dry run Hex publish
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: mix hex.publish --dry-run --yes
+
+      - name: Skip if version already exists on Hex.pm
+        id: idempotency
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.release-please.outputs.version }}"
+
+          if mix hex.info relyra "$VERSION" 2>/dev/null | grep -q "Released:"; then
+            echo "Version $VERSION already exists on Hex.pm; skipping live publish."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to Hex
+        if: ${{ steps.idempotency.outputs.skip != 'true' }}
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: mix hex.publish --yes
+
+      - name: Verify version on Hex.pm
+        if: ${{ steps.idempotency.outputs.skip != 'true' }}
+        env:
+          VERSION: ${{ needs.release-please.outputs.version }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 36); do
+            if curl -fsS "https://hex.pm/api/packages/relyra/releases/${VERSION}" | grep -q "\"version\""; then
+              echo "Hex.pm lists relyra ${VERSION}"
+              exit 0
+            fi
+            echo "waiting for Hex index... (${i}/36)"
+            sleep 10
+          done
+          echo "Timed out waiting for https://hex.pm/api/packages/relyra/releases/${VERSION}" >&2
+          exit 1
