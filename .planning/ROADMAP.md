@@ -149,6 +149,20 @@ See `.planning/milestones/v0.5-ROADMAP.md` for full phase details, decisions, de
 - [x] 23-01-PLAN.md — Core API and explicit redaction maps
 - [x] 23-02-PLAN.md — Delivery via Mix task and LiveAdmin download button
 
+### Phase 24: Single Logout Protocol
+**Goal**: Allow host applications to perform standards-compliant Single Logout flows (IdP and SP initiated).
+**Depends on**: Phase 19
+**Requirements**: SLO-01
+**Success Criteria** (what must be TRUE):
+1. SessionAdapter defines a `revoke_session` callback and gracefully dispatches it.
+2. RequestStore enforces intent type separation.
+3. LogoutRequest builder correctly generates SAML LogoutRequest XML maps.
+4. HTTP-Redirect and HTTP-POST binding decoders handle Logout requests/responses.
+**Plans**: 3 plans
+- [ ] 24-01-PLAN.md — Session Revocation & Request Intent Schema
+- [ ] 24-02-PLAN.md — LogoutRequest Protocol Builder
+- [ ] 24-03-PLAN.md — Logout Binding Parsers
+
 ## Progress
 
 | Phase | Milestone | Plans | Status | Completed |
@@ -175,3 +189,4 @@ See `.planning/milestones/v0.5-ROADMAP.md` for full phase details, decisions, de
 | 21. Scheduled metadata refresh | v0.5 | 7/7 | Complete    | 2026-05-07 |
 | 22. Certificate expiry alerts | v0.6 | 1/1 | Complete | 2026-05-07 |
 | 23. Diagnostic bundles | v0.6 | 2/2 | Complete | 2026-05-07 |
+| 24. Single Logout Protocol | v0.6 | 0/3 | Planned | |
