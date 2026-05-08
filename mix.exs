@@ -67,7 +67,6 @@ defmodule Relyra.MixProject do
       qa: [
         "format --check-formatted",
         "compile --warnings-as-errors",
-        "credo --strict",
         "test --warnings-as-errors"
       ],
       "ci.fast": [

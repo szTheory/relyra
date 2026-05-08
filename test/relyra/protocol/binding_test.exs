@@ -20,24 +20,30 @@ defmodule Relyra.Protocol.BindingTest do
   describe "decode_redirect/2" do
     test "decodes valid SAMLRequest" do
       xml = "<xml/>"
+
       params = %{
         "SAMLRequest" => Base.encode64(xml, padding: false),
         "RelayState" => "relay456"
       }
 
-      assert {:ok, %{response_xml: decoded_xml, relay_state: rs}} = Binding.decode_redirect(params)
+      assert {:ok, %{response_xml: decoded_xml, relay_state: rs}} =
+               Binding.decode_redirect(params)
+
       assert decoded_xml == xml
       assert rs == "relay456"
     end
 
     test "decodes valid SAMLResponse" do
       xml = "<xml/>"
+
       params = %{
         "SAMLResponse" => Base.encode64(xml, padding: false),
         "RelayState" => "relay456"
       }
 
-      assert {:ok, %{response_xml: decoded_xml, relay_state: rs}} = Binding.decode_redirect(params)
+      assert {:ok, %{response_xml: decoded_xml, relay_state: rs}} =
+               Binding.decode_redirect(params)
+
       assert decoded_xml == xml
       assert rs == "relay456"
     end

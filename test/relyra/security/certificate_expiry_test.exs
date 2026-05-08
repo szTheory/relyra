@@ -111,7 +111,8 @@ defmodule Relyra.Security.CertificateExpiryTest do
   end
 
   describe "check_all/2" do
-    test "correctly queries active/next certificates approaching threshold on enabled connections", %{expiring_cert: expiring_cert} do
+    test "correctly queries active/next certificates approaching threshold on enabled connections",
+         %{expiring_cert: expiring_cert} do
       Relyra.Telemetry.Handlers.LogAlerts.attach()
 
       log =

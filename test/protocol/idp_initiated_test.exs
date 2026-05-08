@@ -7,7 +7,7 @@ defmodule Relyra.Protocol.IdpInitiatedTest do
   @fixed_now ~U[2026-04-24 16:00:00Z]
   @success_status "urn:oasis:names:tc:SAML:2.0:status:Success"
 
-  defp connection(overrides \\ %{}) do
+  defp connection(overrides) do
     overrides = Enum.into(overrides, %{})
 
     Map.merge(
@@ -24,7 +24,7 @@ defmodule Relyra.Protocol.IdpInitiatedTest do
     )
   end
 
-  defp response_xml(overrides \\ %{}) do
+  defp response_xml(overrides) do
     overrides = Enum.into(overrides, %{})
 
     fields =

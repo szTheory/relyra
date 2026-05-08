@@ -24,7 +24,11 @@ defmodule Relyra.RequestStoreTest do
     end
 
     test "preserves type when intent already has a type" do
-      assert :ok = RequestStore.put_intent("relay", %{type: :logout, foo: "bar"}, request_store: TestAdapter)
+      assert :ok =
+               RequestStore.put_intent("relay", %{type: :logout, foo: "bar"},
+                 request_store: TestAdapter
+               )
+
       assert_received {:put_intent, intent}
       assert intent.type == :logout
       assert intent.foo == "bar"

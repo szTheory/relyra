@@ -33,7 +33,7 @@ defmodule Relyra.Diagnostic.AllowListTest do
       assert result.idp_entity_id == "idp"
       assert result.idp_sso_url == "sso"
       assert result.allow_idp_initiated == true
-      
+
       refute Map.has_key?(result, :private_key)
       refute Map.has_key?(result, :password)
       refute Map.has_key?(result, :certificates)
@@ -64,10 +64,10 @@ defmodule Relyra.Diagnostic.AllowListTest do
       assert result.before_summary == %{foo: "bar"}
       assert result.after_summary == %{foo: "baz"}
       assert result.diff_summary == %{foo: ["bar", "baz"]}
-      
+
       refute Map.has_key?(result, :actor)
       refute Map.has_key?(result, :ip_address)
-      
+
       expected_hash = AllowList.hash_correlation_id("corr_456")
       assert result.correlation_id == expected_hash
     end
@@ -87,14 +87,14 @@ defmodule Relyra.Diagnostic.AllowListTest do
   describe "hash_correlation_id/1" do
     test "hashes using sha256 and base16 lowercase encoding" do
       result = AllowList.hash_correlation_id("test_id")
-      
-      expected = 
-        :crypto.hash(:sha256, "test_id") 
+
+      expected =
+        :crypto.hash(:sha256, "test_id")
         |> Base.encode16(case: :lower)
-        
+
       assert result == expected
     end
-    
+
     test "returns nil for nil input" do
       assert AllowList.hash_correlation_id(nil) == nil
     end
@@ -122,7 +122,7 @@ defmodule Relyra.Diagnostic.AllowListTest do
       assert result.issuer == "CN=Test"
       assert result.role == :signing
       assert result.lifecycle_state == :active
-      
+
       refute Map.has_key?(result, :pem)
     end
   end
@@ -144,7 +144,7 @@ defmodule Relyra.Diagnostic.AllowListTest do
       }
 
       result = AllowList.export_metadata_revision(rev)
-      
+
       assert result.id == "rev_1"
       assert result.source_kind == :xml_import
       assert result.trigger == :manual_import
@@ -155,7 +155,7 @@ defmodule Relyra.Diagnostic.AllowListTest do
       assert result.trust_summary == %{status: "trusted"}
       assert result.cause == "test"
       assert result.details == %{foo: "bar"}
-      
+
       # Should we strip actor from metadata revision? The task doesn't explicitly mention it for metadata revision, but for audit logs it does. Let's assume we keep actor out to be safe for PII, or include it if not required. The requirement says: "For audit logs, strictly hash the correlation_id and omit actor." It doesn't mention actor for metadata_revision, but maybe it's best to omit. Wait, I'll just omit actor as it could be PII.
       refute Map.has_key?(result, :actor)
     end

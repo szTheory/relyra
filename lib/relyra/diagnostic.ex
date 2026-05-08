@@ -79,6 +79,7 @@ defmodule Relyra.Diagnostic do
            "Ecto Repo is not configured for Relyra.Diagnostic",
            %{operation: :create_bundle, reason: :missing_repo}
          )}
+
       repo ->
         if Code.ensure_loaded?(repo) do
           {:ok, repo}

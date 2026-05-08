@@ -24,7 +24,9 @@ defmodule Relyra.SessionAdapterTest do
 
     test "dispatches to configured adapter" do
       assert {:ok, %{revoked: "session_123"}} =
-               SessionAdapter.revoke_session(%{}, "session_123", %{}, session_adapter: TestAdapter)
+               SessionAdapter.revoke_session(%{}, "session_123", %{},
+                 session_adapter: TestAdapter
+               )
     end
   end
 end

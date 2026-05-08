@@ -1,6 +1,6 @@
 defmodule Relyra.Phoenix.Controllers.DiagnosticController do
   @moduledoc false
-  use Phoenix.Controller
+  use Phoenix.Controller, formats: []
 
   alias Relyra.Error
 

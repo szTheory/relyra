@@ -10,6 +10,7 @@ defmodule Relyra.Protocol.Binding do
       when is_binary(xml) and xml != "" and is_binary(relay_state) and
              relay_state != "" do
     key = if Keyword.get(opts, :type) == :response, do: "SAMLResponse", else: "SAMLRequest"
+
     {:ok,
      %{
        key => Base.encode64(xml, padding: false),
@@ -70,7 +71,9 @@ defmodule Relyra.Protocol.Binding do
         {:ok, value}
 
       _ ->
-        invalid_binding_payload("SAMLRequest or SAMLResponse is required for HTTP-Redirect binding")
+        invalid_binding_payload(
+          "SAMLRequest or SAMLResponse is required for HTTP-Redirect binding"
+        )
     end
   end
 

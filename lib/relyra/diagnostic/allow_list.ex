@@ -24,7 +24,8 @@ defmodule Relyra.Diagnostic.AllowList do
       allow_idp_initiated: Map.get(connection, :allow_idp_initiated),
       lock_version: Map.get(connection, :lock_version),
       active_metadata_revision_id: Map.get(connection, :active_metadata_revision_id),
-      last_known_good_metadata_revision_id: Map.get(connection, :last_known_good_metadata_revision_id),
+      last_known_good_metadata_revision_id:
+        Map.get(connection, :last_known_good_metadata_revision_id),
       inserted_at: Map.get(connection, :inserted_at),
       updated_at: Map.get(connection, :updated_at)
     }
@@ -107,10 +108,12 @@ defmodule Relyra.Diagnostic.AllowList do
   """
   def hash_correlation_id(nil), do: nil
   def hash_correlation_id(""), do: nil
+
   def hash_correlation_id(id) when is_binary(id) do
     :crypto.hash(:sha256, id)
     |> Base.encode16(case: :lower)
   end
+
   def hash_correlation_id(id), do: hash_correlation_id(to_string(id))
 
   defp reject_nil(map) do

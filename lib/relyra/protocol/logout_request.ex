@@ -12,12 +12,14 @@ defmodule Relyra.Protocol.LogoutRequest do
     with {:ok, destination} <- required_field(connection, [:idp_slo_url], "destination"),
          {:ok, issuer} <- required_field(connection, [:issuer, :sp_entity_id], "issuer"),
          {:ok, name_id} <- required_field(subject, [:name_id], "name_id") do
-      
       session_index = Map.get(subject, :session_index)
 
       {:ok,
        %{
-         id: ensure_request_id_prefix(Base.url_encode64(:crypto.strong_rand_bytes(16), padding: false)),
+         id:
+           ensure_request_id_prefix(
+             Base.url_encode64(:crypto.strong_rand_bytes(16), padding: false)
+           ),
          issue_instant: current_issue_instant(opts),
          destination: destination,
          issuer: issuer,
@@ -35,14 +37,16 @@ defmodule Relyra.Protocol.LogoutRequest do
   end
 
   @spec to_xml(map()) :: binary()
-  def to_xml(%{
-        id: id,
-        issue_instant: issue_instant,
-        destination: destination,
-        issuer: issuer,
-        name_id: name_id
-      } = data) do
-    session_index_xml = 
+  def to_xml(
+        %{
+          id: id,
+          issue_instant: issue_instant,
+          destination: destination,
+          issuer: issuer,
+          name_id: name_id
+        } = data
+      ) do
+    session_index_xml =
       case Map.get(data, :session_index) do
         nil -> ""
         val -> ~s(<samlp:SessionIndex>#{val}</samlp:SessionIndex>)
@@ -74,7 +78,9 @@ defmodule Relyra.Protocol.LogoutRequest do
 
       _ ->
         {:error,
-         Error.new(:logout_request_invalid, "Missing required LogoutRequest field", %{field: label})}
+         Error.new(:logout_request_invalid, "Missing required LogoutRequest field", %{
+           field: label
+         })}
     end
   end
 end

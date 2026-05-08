@@ -38,6 +38,9 @@ defmodule Relyra.Telemetry.TestSessionAdapter do
 
   @impl true
   def establish_session(_subject, _context, _opts), do: {:ok, %{session_id: "session-1"}}
+
+  @impl true
+  def revoke_session(_subject, _session_index, _context, _opts), do: {:ok, :revoked}
 end
 
 defmodule Relyra.TelemetryTest do

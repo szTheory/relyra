@@ -62,7 +62,8 @@ defmodule Relyra.Security.XML.CorpusGateTest do
 
       assert fixture, "expected a pinned CVE-2024-45409 fixture in the runtime manifest"
 
-      assert {:error, %Error{type: :corpus_violation, details: %{matched_fixture_id: matched_fixture_id}}} =
+      assert {:error,
+              %Error{type: :corpus_violation, details: %{matched_fixture_id: matched_fixture_id}}} =
                CorpusGate.check(Map.fetch!(fixture, "xml"))
 
       assert matched_fixture_id == fixture["id"]

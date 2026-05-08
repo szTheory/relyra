@@ -29,14 +29,16 @@ defmodule Relyra.Protocol.LogoutRequestTest do
       connection = %{idp_slo_url: "https://idp.example.com/slo"}
       subject = %{name_id: "user@example.com"}
 
-      assert {:error, %Error{type: :logout_request_invalid}} = LogoutRequest.build(connection, subject)
+      assert {:error, %Error{type: :logout_request_invalid}} =
+               LogoutRequest.build(connection, subject)
     end
 
     test "returns error if subject is missing name_id" do
       connection = %{idp_slo_url: "https://idp.example.com/slo", sp_entity_id: "sp:example:com"}
       subject = %{}
 
-      assert {:error, %Error{type: :logout_request_invalid}} = LogoutRequest.build(connection, subject)
+      assert {:error, %Error{type: :logout_request_invalid}} =
+               LogoutRequest.build(connection, subject)
     end
   end
 

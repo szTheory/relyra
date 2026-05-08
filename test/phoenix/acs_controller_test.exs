@@ -26,6 +26,10 @@ defmodule Relyra.Phoenix.ACSControllerTest do
     def establish_session(user, _result, _opts) do
       {:ok, %{user_id: user.id}}
     end
+
+    def revoke_session(_subject, _session_index, _context, _opts) do
+      {:ok, :revoked}
+    end
   end
 
   @endpoint ACSTestRouter

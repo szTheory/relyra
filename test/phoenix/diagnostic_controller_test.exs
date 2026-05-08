@@ -29,7 +29,9 @@ defmodule Relyra.Phoenix.DiagnosticControllerTest do
 
     assert conn.status == 200
     assert {"content-type", "application/zip"} in conn.resp_headers
+
     assert {"content-disposition", ~s(attachment; filename="relyra_diagnostic_bundle.zip")} in conn.resp_headers
+
     assert is_binary(conn.resp_body)
   end
 

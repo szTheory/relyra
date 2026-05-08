@@ -50,6 +50,9 @@ defmodule Mix.Tasks.Relyra.ConformanceTest do
   end
 
   defp temp_path!(name) do
-    Path.join(System.tmp_dir!(), "relyra-conformance-task-#{System.unique_integer([:positive])}-#{name}")
+    Path.join(
+      System.tmp_dir!(),
+      "relyra-conformance-task-#{System.unique_integer([:positive])}-#{name}"
+    )
   end
 end

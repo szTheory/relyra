@@ -27,3 +27,7 @@ relyra-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Local planning scratch files.
+.planning/tmp_*
+.planning/*.bak

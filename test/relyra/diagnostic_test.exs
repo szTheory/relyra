@@ -83,14 +83,17 @@ defmodule Relyra.DiagnosticTest do
       assert length(audit_json) >= 1
       assert hd(audit_json)["domain"] == "connection"
       refute Map.has_key?(hd(audit_json), "actor")
-      
-      expected_hash = 
-        :crypto.hash(:sha256, "corr_456") 
+
+      expected_hash =
+        :crypto.hash(:sha256, "corr_456")
         |> Base.encode16(case: :lower)
+
       assert hd(audit_json)["correlation_id"] == expected_hash
-      
+
       # Verify store metrics
-      {_name, metrics_content} = Enum.find(files, fn {name, _} -> name == ~c"store_metrics.json" end)
+      {_name, metrics_content} =
+        Enum.find(files, fn {name, _} -> name == ~c"store_metrics.json" end)
+
       metrics_json = Jason.decode!(metrics_content)
       assert Map.has_key?(metrics_json, "request_store")
       assert Map.has_key?(metrics_json, "replay_store")

@@ -84,11 +84,19 @@ defmodule Relyra.TestSupport.ConformanceFixturesTest do
     ]
 
     assert Enum.map(ConformanceFixtures.executed_rows(rows), & &1["status"]) == ["pass", "reject"]
-    assert Enum.map(ConformanceFixtures.coverage_rows(rows), & &1["status"]) == ["pass", "reject", "unsupported", "deferred"]
+
+    assert Enum.map(ConformanceFixtures.coverage_rows(rows), & &1["status"]) == [
+             "pass",
+             "reject",
+             "unsupported",
+             "deferred"
+           ]
   end
 
   defp write_manifest!(rows, extra_files \\ %{}) do
-    tmp_dir = Path.join(System.tmp_dir!(), "relyra-conformance-#{System.unique_integer([:positive])}")
+    tmp_dir =
+      Path.join(System.tmp_dir!(), "relyra-conformance-#{System.unique_integer([:positive])}")
+
     File.rm_rf!(tmp_dir)
     File.mkdir_p!(tmp_dir)
     on_exit(fn -> File.rm_rf!(tmp_dir) end)

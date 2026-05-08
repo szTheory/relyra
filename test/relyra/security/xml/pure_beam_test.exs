@@ -13,7 +13,8 @@ defmodule Relyra.Security.XML.PureBeamTest do
     assert selected_node == %{
              xml_id: "assertion-1",
              xpath: "/Response/Assertion[1]",
-             signed_xml: "  <Assertion ID='assertion-1'>\r\n    signed payload\r\n  </Assertion>\r\n",
+             signed_xml:
+               "  <Assertion ID='assertion-1'>\r\n    signed payload\r\n  </Assertion>\r\n",
              signature_method: @signature_method,
              digest_method: @digest_method
            }
@@ -42,8 +43,16 @@ defmodule Relyra.Security.XML.PureBeamTest do
     parsed_doc =
       base_parsed_doc(%{
         signed_candidates: [
-          %{xml_id: "assertion-1", xpath: "/Response/Assertion[1]", signed_xml: "<Assertion>1</Assertion>"},
-          %{xml_id: "assertion-2", xpath: "/Response/Assertion[2]", signed_xml: "<Assertion>2</Assertion>"}
+          %{
+            xml_id: "assertion-1",
+            xpath: "/Response/Assertion[1]",
+            signed_xml: "<Assertion>1</Assertion>"
+          },
+          %{
+            xml_id: "assertion-2",
+            xpath: "/Response/Assertion[2]",
+            signed_xml: "<Assertion>2</Assertion>"
+          }
         ]
       })
 
@@ -82,7 +91,8 @@ defmodule Relyra.Security.XML.PureBeamTest do
           %{
             xml_id: "assertion-1",
             xpath: "/Response/Assertion[1]",
-            signed_xml: "  <Assertion ID='assertion-1'>\r\n    signed payload\r\n  </Assertion>\r\n"
+            signed_xml:
+              "  <Assertion ID='assertion-1'>\r\n    signed payload\r\n  </Assertion>\r\n"
           }
         ]
       },

@@ -13,13 +13,23 @@ defmodule Relyra.Telemetry.Handlers.LogAlertsTest do
 
   import ExUnit.CaptureLog
 
+  require Logger
+
   alias Relyra.Telemetry.Handlers.LogAlerts
 
   setup do
+    previous_level = Logger.level()
+    Logger.configure(level: :debug)
+
     # Clean slate — detach if a previous test failed mid-run.
     _ = LogAlerts.detach()
     :ok = LogAlerts.attach()
-    on_exit(fn -> _ = LogAlerts.detach() end)
+
+    on_exit(fn ->
+      _ = LogAlerts.detach()
+      Logger.configure(level: previous_level)
+    end)
+
     :ok
   end
 
@@ -43,7 +53,7 @@ defmodule Relyra.Telemetry.Handlers.LogAlertsTest do
   describe "log levels per event" do
     test "auto_refresh :start emits at info level" do
       log =
-        capture_log(fn ->
+        capture_log([level: :info], fn ->
           :telemetry.execute([:relyra, :saml, :metadata, :auto_refresh, :start], %{}, %{
             connection_id: "abc"
           })
@@ -55,7 +65,7 @@ defmodule Relyra.Telemetry.Handlers.LogAlertsTest do
 
     test "auto_refresh :stop with outcome: :ok emits at info" do
       log =
-        capture_log(fn ->
+        capture_log([level: :info], fn ->
           :telemetry.execute(
             [:relyra, :saml, :metadata, :auto_refresh, :stop],
             %{duration_ms: 120},
@@ -125,7 +135,7 @@ defmodule Relyra.Telemetry.Handlers.LogAlertsTest do
 
     test "auto_refresh :recovered emits at info" do
       log =
-        capture_log(fn ->
+        capture_log([level: :info], fn ->
           :telemetry.execute([:relyra, :saml, :metadata, :auto_refresh, :recovered], %{}, %{
             connection_id: "abc"
           })
@@ -167,12 +177,16 @@ defmodule Relyra.Telemetry.Handlers.LogAlertsTest do
     test "certificate :expiring emits at warning" do
       log =
         capture_log(fn ->
-          :telemetry.execute([:relyra, :saml, :certificate, :expiring], %{days_until_expiry: 14}, %{
-            connection_id: "conn-123",
-            certificate_id: "cert-456",
-            fingerprint_sha256: "aabbcc",
-            not_after: ~U[2026-06-01 00:00:00Z]
-          })
+          :telemetry.execute(
+            [:relyra, :saml, :certificate, :expiring],
+            %{days_until_expiry: 14},
+            %{
+              connection_id: "conn-123",
+              certificate_id: "cert-456",
+              fingerprint_sha256: "aabbcc",
+              not_after: ~U[2026-06-01 00:00:00Z]
+            }
+          )
         end)
 
       assert log =~ "certificate expiring"
@@ -186,7 +200,7 @@ defmodule Relyra.Telemetry.Handlers.LogAlertsTest do
   describe "redaction" do
     test "sensitive keys (:xml, :metadata_xml, :certificate_pem, :pem, :private_key) are dropped before logging" do
       log =
-        capture_log(fn ->
+        capture_log([level: :info], fn ->
           :telemetry.execute([:relyra, :saml, :metadata, :auto_refresh, :start], %{}, %{
             connection_id: "abc",
             xml: "<EntityDescriptor>SECRET-XML-BODY</EntityDescriptor>",

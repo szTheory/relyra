@@ -7,7 +7,8 @@ defmodule Relyra.Conformance.TestRequestStore do
   def put_intent(_relay_state, _intent, _opts), do: :ok
 
   @impl true
-  def fetch_intent(_relay_state, _opts), do: {:error, Relyra.Error.new(:request_intent_not_found, "unused")}
+  def fetch_intent(_relay_state, _opts),
+    do: {:error, Relyra.Error.new(:request_intent_not_found, "unused")}
 
   @impl true
   def consume_intent(_relay_state, _request_id, _opts), do: :ok
@@ -109,12 +110,18 @@ defmodule Relyra.Conformance.SPConformanceTest do
     %{"result" => "ok"}
   end
 
-  defp evaluate_row(%{"id" => "sp-logout-request-build", "input" => %{"connection" => connection, "subject" => subject}}) do
+  defp evaluate_row(%{
+         "id" => "sp-logout-request-build",
+         "input" => %{"connection" => connection, "subject" => subject}
+       }) do
     subject = Map.put(subject, :session_index, Map.get(subject, "session_index"))
 
     assert {:ok, logout_request} = LogoutRequest.build(connection, subject, now: @fixed_now)
     assert logout_request.issue_instant == "2026-04-24T16:00:00Z"
-    assert LogoutRequest.to_xml(logout_request) =~ "<samlp:SessionIndex>session_123</samlp:SessionIndex>"
+
+    assert LogoutRequest.to_xml(logout_request) =~
+             "<samlp:SessionIndex>session_123</samlp:SessionIndex>"
+
     %{"result" => "ok"}
   end
 
@@ -128,9 +135,15 @@ defmodule Relyra.Conformance.SPConformanceTest do
 
   defp evaluate_row(%{"id" => "sp-logout-response-redirect-decode"} = row) do
     xml = ConformanceFixtures.fixture_xml(row)
-    params = %{"SAMLResponse" => Base.encode64(xml, padding: false), "RelayState" => "relay-logout"}
 
-    assert {:ok, %{response_xml: ^xml, relay_state: "relay-logout"}} = Binding.decode_redirect(params)
+    params = %{
+      "SAMLResponse" => Base.encode64(xml, padding: false),
+      "RelayState" => "relay-logout"
+    }
+
+    assert {:ok, %{response_xml: ^xml, relay_state: "relay-logout"}} =
+             Binding.decode_redirect(params)
+
     %{"result" => "ok"}
   end
 

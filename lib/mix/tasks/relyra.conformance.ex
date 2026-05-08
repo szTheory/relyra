@@ -62,13 +62,17 @@ defmodule Mix.Tasks.Relyra.Conformance do
         :ok
 
       {:ok, _existing} ->
-        Mix.raise("relyra.conformance drift detected for #{output_path}; rerun mix relyra.conformance")
+        Mix.raise(
+          "relyra.conformance drift detected for #{output_path}; rerun mix relyra.conformance"
+        )
 
       {:error, :enoent} ->
         Mix.raise("relyra.conformance --check target is missing: #{output_path}")
 
       {:error, reason} ->
-        Mix.raise("relyra.conformance could not read #{output_path}: #{:file.format_error(reason)}")
+        Mix.raise(
+          "relyra.conformance could not read #{output_path}: #{:file.format_error(reason)}"
+        )
     end
   end
 
@@ -123,13 +127,17 @@ defmodule Mix.Tasks.Relyra.Conformance do
 
   defp requirement_summary_row(requirement_id, rows) do
     counts =
-      Enum.reduce(rows, %{"pass" => 0, "reject" => 0, "unsupported" => 0, "deferred" => 0, "total" => 0}, fn row, acc ->
-        status = Map.fetch!(row, "status")
+      Enum.reduce(
+        rows,
+        %{"pass" => 0, "reject" => 0, "unsupported" => 0, "deferred" => 0, "total" => 0},
+        fn row, acc ->
+          status = Map.fetch!(row, "status")
 
-        acc
-        |> Map.update!(status, &(&1 + 1))
-        |> Map.update!("total", &(&1 + 1))
-      end)
+          acc
+          |> Map.update!(status, &(&1 + 1))
+          |> Map.update!("total", &(&1 + 1))
+        end
+      )
 
     {requirement_id, counts}
   end
