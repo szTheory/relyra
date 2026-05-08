@@ -18,22 +18,19 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.4 shipped 2026-05-06** — IdP-initiated SSO and opaque RelayState. 1/1 requirements verified.
 - Code state at v0.4 close: ~17,200 LOC across `lib/` and `test/` (Elixir).
 - **v0.5 shipped** — Operational maturity. Phase 20 (bulk operations, CFG-07), Phase 21 (scheduled metadata refresh, CFG-08), Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding), and Phase 21.2 (audit-gap closure + scope re-alignment) shipped 2026-05-07. Debug bundles (DIAG-01) and Expiry alerts (CERT-EXP-01) re-scoped to v0.6 per the v0.5 milestone audit.
+- **v0.6 shipped 2026-05-08** — Operational maturity carryover + SLO. Phase 22 (certificate expiry alerts), Phase 23 (diagnostic bundles), and Phase 24 (Single Logout) are complete and verified.
 
-## Current Milestone: v0.6 — Operational maturity carryover + SLO
+## Current Milestone: v1.0 — External security review + conformance + docs polish
 
-**Goal:** Ship Single Logout (SLO) and remaining operational improvements to ease maintenance of large-scale deployments.
+**Goal:** Convert the shipped SAML surface into an externally reviewable, adoption-ready v1.0 release with executable conformance evidence, permanent CVE regressions, audit readiness, and polished adopter guidance.
 
-**Target features:**
+**Current status:**
 
-- **Single Logout (SLO)** — Support for SP-initiated and IdP-initiated logout (SLO-01).
-- **Debug bundles** — Operator can export a redacted diagnostic bundle for troubleshooting (DIAG-01).
-- **Expiry alerts** — System emits events/logs for upcoming certificate expirations (CERT-EXP-01).
+- **Phase 25 complete** — Manifest-backed conformance coverage, pinned CVE regressions, generated `CONFORMANCE.md`, and CI drift checks are in place.
+- **Phase 26 next** — Prepare for third-party security review and remediate findings (`SEC-REVIEW-01`).
+- **Phase 27 pending** — Finalize adopter onboarding polish and case studies (`DOCS-01`).
 
 **Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the v0.5 → v1.0 plan and rationale.
-
-**Deferred to later milestones per arc:**
-
-- **v1.0** — External security review + conformance + docs polish.
 
 ## Requirements
 
@@ -68,9 +65,22 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - ✓ **CFG-07** — Bulk operations across multiple connections — v0.5 (Phase 20; CFG-07 verified 2026-05-06; Phase 21.1 closed audit BLOCKER INT-01 by forwarding bulk correlation_id through Refresh.refresh/2)
 - ✓ **CFG-08** — Scheduled metadata refresh automation with guardrails — v0.5 (Phase 21; CFG-08 verified 2026-05-07; 22/22 must-haves verified, 344 tests + 8 ci.oban_smoke green, dual compile lanes green)
 
+**v0.6:**
+- ✓ **CERT-EXP-01** — Operator alerts for upcoming SAML signing certificate expirations — v0.6 (Phase 22 verified 2026-05-07)
+- ✓ **DIAG-01** — Operator can export redacted diagnostic bundle — v0.6 (Phase 23 verified 2026-05-07)
+- ✓ **SLO-01** — Single Logout (SP-initiated and IdP-initiated) — v0.6 (Phase 24 verified 2026-05-07)
+
+**v1.0:**
+- ✓ **CONF-01** — Protocol behavior adheres strictly to SAML conformance profiles — v1.0 (Phase 25 verified 2026-05-07)
+- ✓ **CVE-REG-01** — Regression test suite includes fixtures for known historical SAML CVEs — v1.0 (Phase 25 verified 2026-05-07)
+
 ### Active
 
 <!-- Carried forward; building toward these next. -->
+
+**v1.0:**
+- **SEC-REVIEW-01** — External security audit completion and remediation.
+- **DOCS-01** — Adopter case studies and frictionless Day-1 experience documentation.
 
 ### Out of Scope
 
@@ -82,7 +92,6 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **Production IdP implementation** — `Relyra.TestSupport.FakeIdP` is dev/CI support only, not a product IdP.
 - **SCIM lifecycle ownership** — Relyra focuses on login-time identity assertion and mapping, not full lifecycle provisioning.
 - **Security-by-marketing claims (bulletproof/unhackable/military-grade)** — brand and security discipline require precise, falsifiable claims only.
-- **SLO (Single Logout)** — deferred to v0.6; not required for the core SP value proposition.
 
 ## Context
 
@@ -169,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-07 — Phase 21.2 closed v0.5 milestone audit gaps; v0.5 re-scoped to bulk ops + scheduled refresh shipped; DIAG-01 + CERT-EXP-01 re-targeted to v0.6.*
+*Last updated: 2026-05-08 — v0.6 shipped; Phase 25 completed manifest-backed conformance coverage and CVE regressions; v1.0 is active with Phase 26 next.*
