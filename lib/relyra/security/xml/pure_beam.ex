@@ -35,13 +35,70 @@ defmodule Relyra.Security.XML.PureBeam do
   def parse_safely(_xml, _opts), do: malformed_xml_error()
 
   @impl true
-  def select_signed_node(_parsed_doc, _opts \\ []) do
-    {:error, Error.new(:missing_signature, "Signed XML node selection is not implemented yet")}
+  def select_signed_node(parsed_doc, opts \\ [])
+
+  def select_signed_node(parsed_doc, _opts) when is_map(parsed_doc) do
+    duplicate_xml_ids = Map.get(parsed_doc, :duplicate_ids, [])
+
+    cond do
+      Map.get(parsed_doc, :key_info_trust) == true ->
+        {:error,
+         Error.new(
+           :untrusted_certificate,
+           "Document-provided KeyInfo cannot be used as a trust source",
+           %{reason: :document_keyinfo_forbidden}
+         )}
+
+      duplicate_xml_ids != [] ->
+        {:error,
+         Error.new(
+           :duplicate_xml_id,
+           "Duplicate XML IDs detected in signed material",
+           %{
+             duplicate_ids: duplicate_xml_ids,
+             duplicate_count: length(duplicate_xml_ids)
+           }
+         )}
+
+      true ->
+        select_candidate(parsed_doc)
+    end
+  end
+
+  def select_signed_node(_parsed_doc, _opts) do
+    {:error, Error.new(:missing_signature, "No signed node candidates were verified", %{})}
   end
 
   @impl true
-  def canonicalize(_signed_node_handle, _opts \\ []) do
-    {:error, Error.new(:canonicalization_failed, "Canonicalization is not implemented yet")}
+  def canonicalize(signed_node_handle, opts \\ [])
+
+  def canonicalize(
+        %{
+          xml_id: xml_id,
+          xpath: xpath,
+          signed_xml: signed_xml,
+          signature_method: signature_method,
+          digest_method: digest_method
+        },
+        _opts
+      )
+      when is_binary(xml_id) and is_binary(xpath) and is_binary(signed_xml) and
+             is_binary(signature_method) and is_binary(digest_method) do
+    {:ok,
+     %{
+       canonical_xml: normalize_signed_xml(signed_xml),
+       xml_id: xml_id,
+       xpath: xpath
+     }}
+  end
+
+  def canonicalize(_signed_node_handle, _opts) do
+    {:error,
+     Error.new(
+       :canonicalization_failed,
+       "Signed node handle could not be canonicalized",
+       %{reason: :invalid_signed_node_handle}
+     )}
   end
 
   defp parse_xml(xml) do
@@ -261,6 +318,42 @@ defmodule Relyra.Security.XML.PureBeam do
       [_, value] -> String.trim(value)
       _ -> nil
     end
+  end
+
+  defp select_candidate(parsed_doc) do
+    signed_candidates = Map.get(parsed_doc, :signed_candidates, [])
+    signature_method = Map.get(parsed_doc, :signature_method)
+    digest_method = Map.get(parsed_doc, :digest_method)
+
+    case signed_candidates do
+      [] ->
+        {:error, Error.new(:missing_signature, "No signed node candidates were verified", %{})}
+
+      [candidate] when is_map(candidate) ->
+        {:ok,
+         %{
+           xml_id: Map.get(candidate, :xml_id),
+           xpath: Map.get(candidate, :xpath),
+           signed_xml: Map.get(candidate, :signed_xml),
+           signature_method: Map.get(candidate, :signature_method, signature_method),
+           digest_method: Map.get(candidate, :digest_method, digest_method)
+         }}
+
+      candidates ->
+        {:error,
+         Error.new(
+           :ambiguous_signed_node,
+           "Exactly one verified signed node is required",
+           %{candidate_count: length(candidates)}
+         )}
+    end
+  end
+
+  defp normalize_signed_xml(signed_xml) do
+    signed_xml
+    |> String.replace("\r\n", "\n")
+    |> String.replace("\r", "\n")
+    |> String.trim()
   end
 
   defp malformed_xml_error do
