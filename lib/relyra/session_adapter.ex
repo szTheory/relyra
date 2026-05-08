@@ -9,6 +9,13 @@ defmodule Relyra.SessionAdapter do
   @callback establish_session(subject :: map(), context :: map(), opts :: keyword()) ::
               {:ok, map() | Plug.Conn.t()} | {:error, Error.t()}
 
+  @callback revoke_session(
+              subject :: map(),
+              session_index :: binary() | nil,
+              context :: map(),
+              opts :: keyword()
+            ) :: {:ok, term()} | {:error, Error.t()}
+
   @spec establish_session(map(), map(), keyword()) ::
           {:ok, map() | Plug.Conn.t()} | {:error, Error.t()}
   def establish_session(subject, context, opts \\ []) do
@@ -27,6 +34,36 @@ defmodule Relyra.SessionAdapter do
 
           Code.ensure_loaded?(adapter) and function_exported?(adapter, :establish_session, 3) ->
             adapter.establish_session(subject, context, opts)
+
+          true ->
+            {:error, Error.new(:adapter_not_configured, "Session adapter is unavailable")}
+        end
+
+      case result do
+        {:ok, _} = ok ->
+          {ok, Map.put(metadata, :outcome, :ok)}
+
+        {:error, %Error{} = error} ->
+          {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
+      end
+    end)
+  end
+
+  @spec revoke_session(map(), binary() | nil, map(), keyword()) ::
+          {:ok, term()} | {:error, Error.t()}
+  def revoke_session(subject, session_index, context, opts \\ []) do
+    metadata = %{
+      connection_id: read_field(context, :connection_id),
+      flow: :idp_initiated
+    }
+
+    Relyra.Telemetry.span([:session, :revoke], metadata, fn ->
+      adapter = Keyword.get(opts, :session_adapter, Relyra.SessionAdapter.Default)
+
+      result =
+        cond do
+          Code.ensure_loaded?(adapter) and function_exported?(adapter, :revoke_session, 4) ->
+            adapter.revoke_session(subject, session_index, context, opts)
 
           true ->
             {:error, Error.new(:adapter_not_configured, "Session adapter is unavailable")}
