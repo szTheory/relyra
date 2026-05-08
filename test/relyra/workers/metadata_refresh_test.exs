@@ -39,6 +39,7 @@ defmodule Relyra.Workers.MetadataRefreshTest do
       unless ObanGateway.available?() do
         :ok
       else
+        Code.ensure_loaded?(MetadataRefresh)
         assert function_exported?(MetadataRefresh, :perform, 1)
       end
     end
