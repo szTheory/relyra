@@ -3,16 +3,20 @@ Code.require_file("lib/mix/tasks/compile/parser_path_guard.ex", __DIR__)
 defmodule Relyra.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+  @source_url "https://github.com/szTheory/relyra"
+
   def project do
     [
       app: :relyra,
-      version: "0.1.0",
+      version: @version,
       description: "Strict-by-default SAML 2.0 Service Provider library for Elixir and Phoenix.",
       elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       compilers: [:parser_path_guard] ++ Mix.compilers(),
       elixirc_options: [ignore_module_conflict: true],
+      source_url: @source_url,
       package: package(),
       docs: docs(),
       aliases: aliases(),
@@ -70,19 +74,24 @@ defmodule Relyra.MixProject do
     [
       licenses: ["MIT"],
       links: %{
-        "GitHub" => "https://github.com/szTheory/relyra",
-        "Changelog" => "https://github.com/szTheory/relyra/blob/main/CHANGELOG.md"
+        "Documentation" => "https://hexdocs.pm/relyra",
+        "GitHub" => @source_url,
+        "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
       },
       files: [
         "lib",
         "priv",
+        "docs",
         "guides",
         ".formatter.exs",
         "mix.exs",
         "README.md",
+        "CONFORMANCE.md",
         "CHANGELOG.md",
         "LICENSE",
         "SECURITY.md",
+        "SECURITY_REVIEW.md",
+        "SECURITY_REVIEW_EVIDENCE.md",
         "BATTERIES_INCLUDED.md"
       ]
     ]
@@ -90,14 +99,27 @@ defmodule Relyra.MixProject do
 
   defp docs do
     [
-      main: "README",
-      source_url: "https://github.com/szTheory/relyra",
+      main: "getting_started",
+      source_ref: "v#{@version}",
+      source_url: @source_url,
+      formatters: ["html", "markdown"],
       extras: [
         "README.md",
+        "BATTERIES_INCLUDED.md",
         "CHANGELOG.md",
+        "CONFORMANCE.md",
         "SECURITY.md",
+        "SECURITY_REVIEW.md",
+        "SECURITY_REVIEW_EVIDENCE.md",
+        "docs/security_boundary.md",
+        "docs/security_findings.md",
+        "guides/batteries_included.md",
         "guides/getting_started.md",
-        "guides/batteries_included.md"
+        "guides/case_studies/operator_managed_rollout.md",
+        "guides/case_studies/phoenix_saas_tenant_onboarding.md",
+        "guides/recipes/okta.md",
+        "guides/recipes/entra.md",
+        "guides/recipes/google_workspace.md"
       ]
     ]
   end

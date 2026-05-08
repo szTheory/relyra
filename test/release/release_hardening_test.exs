@@ -5,6 +5,8 @@ defmodule Relyra.ReleaseHardeningTest do
     assert File.exists?("CHANGELOG.md")
     assert File.exists?(".release-please-config.json")
     assert File.exists?(".release-please-manifest.json")
+    assert File.exists?(".github/workflows/release-please.yml")
+    assert File.exists?(".github/workflows/publish-hex.yml")
   end
 
   test "release prerequisites are documented" do
@@ -16,13 +18,23 @@ defmodule Relyra.ReleaseHardeningTest do
     assert security =~ "pin"
   end
 
-  test "release parity lane is wired" do
+  test "release CI/CD workflows are wired" do
     mixfile = File.read!("mix.exs")
-    workflow = File.read!(".github/workflows/release-parity.yml")
+    release_please = File.read!(".github/workflows/release-please.yml")
+    publish_hex = File.read!(".github/workflows/publish-hex.yml")
+    parity = File.read!(".github/workflows/release-parity.yml")
+    config = File.read!(".release-please-config.json")
 
     assert mixfile =~ "ci.release"
-    assert workflow =~ "release-parity"
-    assert workflow =~ "mix ci.release"
+    assert mixfile =~ "@version"
+    assert release_please =~ "googleapis/release-please-action@v4"
+    assert publish_hex =~ "release:"
+    assert publish_hex =~ "mix ci.release"
+    assert publish_hex =~ "mix ci.security"
+    assert publish_hex =~ "mix hex.publish --yes"
+    assert parity =~ "mix ci.release"
+    assert config =~ "\"release-type\": \"elixir\""
+    assert config =~ "\"include-v-in-tag\": true"
   end
 
   test "changelog exposes an unreleased section" do

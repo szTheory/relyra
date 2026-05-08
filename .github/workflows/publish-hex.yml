@@ -1,0 +1,151 @@
+name: Publish Hex
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag or commit SHA to publish from (for recovery runs)."
+        required: true
+        type: string
+      release_version:
+        description: "Expected version in mix.exs (defaults to tag without leading v)."
+        required: false
+        type: string
+      dry_run:
+        description: "Run the Hex publish flow without the live publish step."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-hex-${{ github.event.release.tag_name || github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to Hex.pm
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      RELYRA_XML_STRATEGY: pure_beam
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      RELYRA_TEST_DATABASE: relyra_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+
+      - name: Setup BEAM
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28"
+          elixir-version: "1.19.5"
+
+      - name: Cache library deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-relyra-${{ hashFiles('mix.lock') }}
+
+      - name: Install Hex + Rebar
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+
+      - name: Fetch library deps
+        run: mix deps.get
+
+      - name: Resolve release version
+        id: version
+        run: |
+          set -euo pipefail
+          REF="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          INPUT_VERSION="${{ github.event.inputs.release_version }}"
+
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          elif [ -n "$REF" ] && printf '%s' "$REF" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            VERSION="${REF#v}"
+          else
+            echo "Expected workflow_dispatch release_version or a v-prefixed release tag; got: $REF" >&2
+            exit 1
+          fi
+
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify release version in mix.exs
+        run: grep -n "@version \"${{ steps.version.outputs.version }}\"" mix.exs
+
+      - name: Release parity lane
+        run: mix ci.release
+
+      - name: Security lane
+        run: mix ci.security
+
+      - name: Dry run Hex publish
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: mix hex.publish --dry-run --yes
+
+      - name: Skip if version already exists on Hex.pm
+        id: idempotency
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+
+          if mix hex.info relyra "$VERSION" 2>/dev/null | grep -q "Released:"; then
+            echo "Version $VERSION already exists on Hex.pm; skipping live publish."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to Hex
+        if: ${{ github.event.inputs.dry_run != 'true' && steps.idempotency.outputs.skip != 'true' }}
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: mix hex.publish --yes
+
+      - name: Verify version on Hex.pm
+        if: ${{ github.event.inputs.dry_run != 'true' && steps.idempotency.outputs.skip != 'true' }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 36); do
+            if curl -fsS "https://hex.pm/api/packages/relyra/releases/${VERSION}" | grep -q "\"version\""; then
+              echo "Hex.pm lists relyra ${VERSION}"
+              exit 0
+            fi
+            echo "waiting for Hex index... (${i}/36)"
+            sleep 10
+          done
+          echo "Timed out waiting for https://hex.pm/api/packages/relyra/releases/${VERSION}" >&2
+          exit 1
