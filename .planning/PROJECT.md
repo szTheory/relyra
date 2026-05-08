@@ -19,18 +19,15 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - Code state at v0.4 close: ~17,200 LOC across `lib/` and `test/` (Elixir).
 - **v0.5 shipped** — Operational maturity. Phase 20 (bulk operations, CFG-07), Phase 21 (scheduled metadata refresh, CFG-08), Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding), and Phase 21.2 (audit-gap closure + scope re-alignment) shipped 2026-05-07. Debug bundles (DIAG-01) and Expiry alerts (CERT-EXP-01) re-scoped to v0.6 per the v0.5 milestone audit.
 - **v0.6 shipped 2026-05-08** — Operational maturity carryover + SLO. Phase 22 (certificate expiry alerts), Phase 23 (diagnostic bundles), and Phase 24 (Single Logout) are complete and verified.
+- **v1.0 shipped 2026-05-08** — Conformance, security review readiness, and adopter onboarding polish. Phase 25 added executable SP conformance and pinned CVE regressions; Phase 26 added the reviewer packet, generated evidence, and strict-default proof lanes; Phase 27 added authoritative onboarding, runbooks, case studies, and batteries-included proof.
 
-## Current Milestone: v1.0 — External security review + conformance + docs polish
+## Next Milestone
 
-**Goal:** Convert the shipped SAML surface into an externally reviewable, adoption-ready v1.0 release with executable conformance evidence, permanent CVE regressions, audit readiness, and polished adopter guidance.
+No next milestone is defined yet.
 
-**Current status:**
+Use `$gsd-new-milestone` to define the post-v1.0 roadmap, fresh requirements, and next active milestone scope.
 
-- **Phase 25 complete** — Manifest-backed conformance coverage, pinned CVE regressions, generated `CONFORMANCE.md`, and CI drift checks are in place.
-- **Phase 26 next** — Prepare for third-party security review and remediate findings (`SEC-REVIEW-01`).
-- **Phase 27 pending** — Finalize adopter onboarding polish and case studies (`DOCS-01`).
-
-**Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the v0.5 → v1.0 plan and rationale.
+**Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the shipped v0.3 → v1.0 sequence and the point where the next arc needs to be reset.
 
 ## Requirements
 
@@ -73,14 +70,14 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 **v1.0:**
 - ✓ **CONF-01** — Protocol behavior adheres strictly to SAML conformance profiles — v1.0 (Phase 25 verified 2026-05-07)
 - ✓ **CVE-REG-01** — Regression test suite includes fixtures for known historical SAML CVEs — v1.0 (Phase 25 verified 2026-05-07)
+- ✓ **SEC-REVIEW-01** — External security audit completion and remediation readiness — v1.0 (Phase 26 verified 2026-05-08)
+- ✓ **DOCS-01** — Adopter case studies and frictionless Day-1 experience documentation — v1.0 (Phase 27 verified 2026-05-08)
 
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
-**v1.0:**
-- **SEC-REVIEW-01** — External security audit completion and remediation.
-- **DOCS-01** — Adopter case studies and frictionless Day-1 experience documentation.
+No active requirements. Define the next set with the next milestone.
 
 ### Out of Scope
 
@@ -178,4 +175,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-08 — v0.6 shipped; Phase 25 completed manifest-backed conformance coverage and CVE regressions; v1.0 is active with Phase 26 next.*
+*Last updated: 2026-05-08 — v1.0 shipped; roadmap and requirements are archived and the next milestone is intentionally undefined until re-scoped.*

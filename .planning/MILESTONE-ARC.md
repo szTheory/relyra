@@ -67,8 +67,19 @@ In descending order of how much each missing piece blocks adoption today:
 
 Update at every milestone close. If the arc shifts (e.g. customer demand reorders ops vs IdP-init, or a new requirement bumps SLO earlier), capture the date, the trigger, and the new ordering. Don't delete prior versions — strike through and annotate.
 
+## Current Status
+
+- `v0.3` shipped 2026-05-06
+- `v0.4` shipped 2026-05-06
+- `v0.5` shipped 2026-05-07
+- `v0.6` shipped 2026-05-08
+- `v1.0` shipped 2026-05-08
+
+Next candidate: not defined. Start a new arc from the shipped v1.0 baseline with `$gsd-new-milestone`.
+
 ---
 
 *2026-05-07 — v0.5 milestone audit (closed by Phase 21.2) re-scoped DIAG-01 (Debug bundles) and the previously-orphaned "Expiry alerts" feature (now CERT-EXP-01) from v0.5 to v0.6. v0.6 is now SLO + ops-maturity carryovers, ordered behind v1.0 security review. Trigger: scope drift surfaced by `/gsd-audit-milestone v0.5` — only 2 of 4 stated v0.5 features shipped; the v0.5 → v0.6 re-scope preserved the original arc cadence (admin → IdP-init → ops → SLO → conformance) without inserting an additional milestone.*
+*2026-05-08 — v1.0 shipped. The v0.3 → v1.0 arc is complete: executable conformance coverage, reviewer packet artifacts, and Day-1 onboarding proof are all checked in. The next milestone arc is intentionally undefined until post-v1.0 priorities are re-scoped.*
 
-*Last updated: 2026-05-06 — initial arc written at v0.3 kickoff.*
+*Last updated: 2026-05-08 — v1.0 shipped and the next arc was reset to undefined pending new milestone planning.*
