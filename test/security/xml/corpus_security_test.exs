@@ -59,6 +59,36 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
            "GATE-02 binary gate failed: parser_differential_and_c14n zero regressions violated"
   end
 
+  @tag :security_corpus
+  test "every manifest row carries immutable provenance and requirement_ids" do
+    manifest()
+    |> Enum.each(fn fixture ->
+      assert is_list(fixture["requirement_ids"]) and fixture["requirement_ids"] != [],
+             "fixture #{fixture["id"]} is missing requirement_ids"
+
+      assert is_binary(fixture["family"]) and String.trim(fixture["family"]) != "",
+             "fixture #{fixture["id"]} is missing family"
+
+      assert is_map(fixture["provenance"]) and map_size(fixture["provenance"]) > 0,
+             "fixture #{fixture["id"]} is missing provenance"
+
+      assert is_binary(fixture["source_ref"]) and String.trim(fixture["source_ref"]) != "",
+             "fixture #{fixture["id"]} is missing source_ref"
+    end)
+  end
+
+  @tag :security_corpus
+  test "the corpus permanently covers xsw, xxe, and CVE-2024-45409 exploit families" do
+    families =
+      manifest()
+      |> Enum.map(& &1["family"])
+      |> MapSet.new()
+
+    assert MapSet.member?(families, "signature_wrapping")
+    assert MapSet.member?(families, "xxe")
+    assert MapSet.member?(families, "CVE-2024-45409")
+  end
+
   defp manifest do
     @manifest_path
     |> File.read!()
@@ -76,6 +106,11 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
         end
 
       "keyinfo_misuse" ->
+        with {:ok, parsed_doc} <- PureBeam.parse_safely(xml, opts) do
+          PureBeam.select_signed_node(parsed_doc, [])
+        end
+
+      "cve_2024_45409" ->
         with {:ok, parsed_doc} <- PureBeam.parse_safely(xml, opts) do
           PureBeam.select_signed_node(parsed_doc, [])
         end
