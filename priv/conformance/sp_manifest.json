@@ -1,0 +1,239 @@
+[
+  {
+    "id": "sp-authn-request-build",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-core",
+    "rule_id": "SAMLCore-3.4.1",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+    "status": "pass",
+    "expected_outcome": {"result": "ok"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf",
+      "section": "3.4.1"
+    },
+    "notes": "SP can build AuthnRequest fields deterministically with a fixed clock.",
+    "input": {
+      "connection": {
+        "idp_sso_url": "https://idp.example.com/sso",
+        "sp_entity_id": "https://sp.example.com/metadata",
+        "acs_url": "https://sp.example.com/saml/acs"
+      }
+    }
+  },
+  {
+    "id": "sp-authn-request-redirect-transport",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-bindings",
+    "rule_id": "SAMLBindings-3.4.4.1",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+    "status": "pass",
+    "expected_outcome": {"result": "ok"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf",
+      "section": "3.4.4.1"
+    },
+    "notes": "Redirect transport emits base64 request bytes and RelayState without live services.",
+    "xml": "<samlp:AuthnRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"id_request_123\" Version=\"2.0\" IssueInstant=\"2026-04-24T16:00:00Z\" Destination=\"https://idp.example.com/sso\" />"
+  },
+  {
+    "id": "sp-post-response-decode",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-bindings",
+    "rule_id": "SAMLBindings-3.5.4",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    "status": "pass",
+    "expected_outcome": {"result": "ok"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf",
+      "section": "3.5.4"
+    },
+    "notes": "HTTP-POST receipt decodes a base64 SAMLResponse deterministically.",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-post\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-post\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "sp-response-consume-pass",
+    "requirement_ids": ["CONF-01"],
+    "profile": "kantara-saml2int",
+    "rule_id": "saml2int-respond",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    "status": "pass",
+    "expected_outcome": {"result": "ok"},
+    "provenance": {
+      "source": "https://kantarainitiative.org/wp-content/uploads/2019/12/SAML-V2.0-Deployment-Profile-for-Federation-Interoperability-Version-2.0.pdf",
+      "section": "6"
+    },
+    "notes": "SP accepts a signed response when issuer, destination, audience, recipient, and time checks align.",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-pass\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-pass\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "sp-response-destination-reject",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-core",
+    "rule_id": "SAMLCore-3.2.2.2",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    "status": "reject",
+    "expected_outcome": {"result": "error", "type": "destination_mismatch"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf",
+      "section": "3.2.2.2"
+    },
+    "notes": "Destination mismatch must fail closed with a typed rejection.",
+    "xml": "<Response Destination=\"https://evil.example.com/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-destination\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-destination\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "sp-response-audience-reject",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-core",
+    "rule_id": "SAMLCore-2.5.1.4",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    "status": "reject",
+    "expected_outcome": {"result": "error", "type": "audience_mismatch"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf",
+      "section": "2.5.1.4"
+    },
+    "notes": "Audience restriction must match the SP entity ID.",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-audience\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://other-sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-audience\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "sp-response-recipient-reject",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-core",
+    "rule_id": "SAMLCore-2.4.1.2",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    "status": "reject",
+    "expected_outcome": {"result": "error", "type": "recipient_mismatch"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf",
+      "section": "2.4.1.2"
+    },
+    "notes": "SubjectConfirmationData recipient must resolve to the ACS URL.",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-recipient\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://evil.example.com/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-recipient\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "sp-response-time-reject",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-core",
+    "rule_id": "SAMLCore-2.5.1.2",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    "status": "reject",
+    "expected_outcome": {"result": "error", "type": "assertion_not_yet_valid"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf",
+      "section": "2.5.1.2"
+    },
+    "notes": "NotBefore outside the configured skew window must fail closed.",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-time\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T16:02:01Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-time\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "sp-idp-initiated-accept",
+    "requirement_ids": ["CONF-01"],
+    "profile": "kantara-saml2int",
+    "rule_id": "saml2int-idp-initiated",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    "status": "pass",
+    "expected_outcome": {"result": "ok"},
+    "provenance": {
+      "source": "https://kantarainitiative.org/wp-content/uploads/2019/12/SAML-V2.0-Deployment-Profile-for-Federation-Interoperability-Version-2.0.pdf",
+      "section": "8"
+    },
+    "notes": "IdP-initiated acceptance is explicit and only passes when the connection opts in.",
+    "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-idp\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-idp\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>"
+  },
+  {
+    "id": "sp-logout-request-build",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-profiles",
+    "rule_id": "SAMLProfiles-4.4.4.1",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+    "status": "pass",
+    "expected_outcome": {"result": "ok"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf",
+      "section": "4.4.4.1"
+    },
+    "notes": "SLO request generation added in Phase 24 remains executable and deterministic.",
+    "input": {
+      "connection": {
+        "idp_slo_url": "https://idp.example.com/slo",
+        "sp_entity_id": "https://sp.example.com/metadata"
+      },
+      "subject": {
+        "name_id": "user@example.com",
+        "session_index": "session_123"
+      }
+    }
+  },
+  {
+    "id": "sp-logout-request-redirect-transport",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-bindings",
+    "rule_id": "SAMLBindings-3.4.4.1",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+    "status": "pass",
+    "expected_outcome": {"result": "ok"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf",
+      "section": "3.4.4.1"
+    },
+    "notes": "SLO request transport uses the same Redirect envelope as login initiation.",
+    "xml": "<samlp:LogoutRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"id_logout_123\" Version=\"2.0\" IssueInstant=\"2026-04-24T16:00:00Z\" Destination=\"https://idp.example.com/slo\"><saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">https://sp.example.com/metadata</saml:Issuer><saml:NameID xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">user@example.com</saml:NameID></samlp:LogoutRequest>"
+  },
+  {
+    "id": "sp-logout-response-redirect-decode",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-bindings",
+    "rule_id": "SAMLBindings-3.4.4.1",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+    "status": "pass",
+    "expected_outcome": {"result": "ok"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf",
+      "section": "3.4.4.1"
+    },
+    "notes": "Redirect decoding must continue to accept either SAMLRequest or SAMLResponse payload keys after Phase 24.",
+    "xml": "<samlp:LogoutResponse xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"id_logout_response_123\" Version=\"2.0\" IssueInstant=\"2026-04-24T16:00:00Z\" InResponseTo=\"id_logout_123\" Destination=\"https://sp.example.com/slo\"><saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">https://idp.example.com/metadata</saml:Issuer><samlp:Status><samlp:StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></samlp:Status></samlp:LogoutResponse>"
+  },
+  {
+    "id": "sp-artifact-binding-unsupported",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-bindings",
+    "rule_id": "SAMLBindings-3.6",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact",
+    "status": "unsupported",
+    "expected_outcome": {"result": "unsupported"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf",
+      "section": "3.6"
+    },
+    "notes": "Artifact binding is not implemented in the shipped SP surface and remains explicitly out of coverage."
+  },
+  {
+    "id": "sp-encrypted-assertions-deferred",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-core",
+    "rule_id": "SAMLCore-2.3.4",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    "status": "deferred",
+    "expected_outcome": {"result": "deferred"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf",
+      "section": "2.3.4"
+    },
+    "notes": "Encrypted assertion handling is not claimed by this deterministic ExUnit lane yet."
+  },
+  {
+    "id": "sp-ecp-profile-unsupported",
+    "requirement_ids": ["CONF-01"],
+    "profile": "oasis-saml2-profiles",
+    "rule_id": "SAMLProfiles-4.2",
+    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:SOAP",
+    "status": "unsupported",
+    "expected_outcome": {"result": "unsupported"},
+    "provenance": {
+      "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf",
+      "section": "4.2"
+    },
+    "notes": "Enhanced Client or Proxy profile support is not part of the current SP roadmap surface."
+  }
+]
