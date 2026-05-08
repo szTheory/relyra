@@ -88,7 +88,7 @@ defmodule Relyra.MixProject do
         "ci.conformance",
         "cmd test -f SECURITY_REVIEW.md",
         "cmd test -f docs/security_boundary.md",
-        "cmd rg -n \"docs/security_findings.md|Findings Ledger\" SECURITY_REVIEW.md",
+        "cmd grep -nE \"docs/security_findings.md|Findings Ledger\" SECURITY_REVIEW.md",
         "relyra.security_review --check",
         "test test/security/strict_default_proof_test.exs --warnings-as-errors",
         "test test/relyra/ecto/escape_hatch_audit_test.exs --warnings-as-errors",
