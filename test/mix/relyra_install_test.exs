@@ -50,4 +50,22 @@ defmodule Relyra.Mix.InstallTest do
     assert File.read!(admin_scope) =~ "@behaviour Relyra.LiveAdmin.ScopeProvider"
     assert File.read!(admin_scope) =~ "admin_actor"
   end
+
+  test "mix relyra.install prints a concrete scaffold receipt" do
+    tmp_dir =
+      Path.join(System.tmp_dir!(), "relyra-install-output-#{System.unique_integer([:positive])}")
+
+    File.rm_rf!(tmp_dir)
+    File.mkdir_p!(tmp_dir)
+    on_exit(fn -> File.rm_rf!(tmp_dir) end)
+
+    output =
+      ExUnit.CaptureIO.capture_io(fn ->
+        File.cd!(tmp_dir, fn ->
+          Mix.Tasks.Relyra.Install.run(["--module", "DemoApp", "--repo", "demo-app"])
+        end)
+      end)
+
+    assert output =~ "Relyra install scaffolded for DemoApp in demo-app."
+  end
 end

@@ -22,6 +22,7 @@ defmodule Relyra.MixProject do
       preferred_envs: [
         qa: :test,
         "ci.fast": :test,
+        "ci.docs": :test,
         "ci.conformance": :test,
         "ci.security": :test,
         "ci.verify": :test,
@@ -73,12 +74,25 @@ defmodule Relyra.MixProject do
         "compile --warnings-as-errors",
         "test --warnings-as-errors --exclude integration"
       ],
+      "ci.docs": [
+        "cmd test -f guides/batteries_included.md",
+        "cmd test -f BATTERIES_INCLUDED.md",
+        "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
+        "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs --warnings-as-errors",
+        "relyra.batteries_included --check"
+      ],
       "ci.conformance": [
         "test test/conformance/sp_conformance_test.exs test/mix/tasks/relyra_conformance_test.exs --only conformance --warnings-as-errors",
         "relyra.conformance --check"
       ],
       "ci.security": [
         "ci.conformance",
+        "cmd test -f SECURITY_REVIEW.md",
+        "cmd test -f docs/security_boundary.md",
+        "cmd rg -n \"docs/security_findings.md|Findings Ledger\" SECURITY_REVIEW.md",
+        "relyra.security_review --check",
+        "test test/security/strict_default_proof_test.exs --warnings-as-errors",
+        "test test/relyra/ecto/escape_hatch_audit_test.exs --warnings-as-errors",
         "test test/security/xml/corpus_security_test.exs test/relyra/security/xml/corpus_gate_test.exs --only security_corpus --warnings-as-errors",
         "test test/security/xml/corpus_security_test.exs --only gate02_c14n --warnings-as-errors",
         "deps.audit",
@@ -86,6 +100,7 @@ defmodule Relyra.MixProject do
         "sobelow --config"
       ],
       "ci.verify": [
+        "ci.docs",
         "test test/relyra/ecto/audit_hardening_test.exs test/relyra/ecto/connection_record_test.exs test/relyra/ecto/metadata_apply_test.exs test/relyra/ecto/certificate_inventory_transition_test.exs test/relyra/ecto/mapping_commands_test.exs test/relyra/ecto/ecto_connection_resolver_test.exs test/relyra/connection_snapshot_test.exs test/relyra/user_mapper/default_attribute_test.exs --warnings-as-errors"
       ],
       "ci.integration": [

@@ -18,6 +18,13 @@ defmodule Relyra.TestSupportDemoTest do
   use ExUnit.Case, async: false
   use Relyra.TestSupport, endpoint: Relyra.TestSupportDemoRouter
 
+  test "FakeIdP metadata is available as the first local receipt" do
+    metadata = fake_idp_metadata()
+
+    assert metadata =~ "<EntityDescriptor"
+    assert metadata =~ "https://idp.example.com/metadata"
+  end
+
   test "adopters can write a tiny integration test" do
     conn = Phoenix.ConnTest.build_conn() |> setup_saml_connection(connection_id: "demo")
 
