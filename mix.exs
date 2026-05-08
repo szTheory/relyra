@@ -22,6 +22,7 @@ defmodule Relyra.MixProject do
       preferred_envs: [
         qa: :test,
         "ci.fast": :test,
+        "ci.conformance": :test,
         "ci.security": :test,
         "ci.verify": :test,
         "ci.integration": :test,
@@ -72,9 +73,14 @@ defmodule Relyra.MixProject do
         "compile --warnings-as-errors",
         "test --warnings-as-errors --exclude integration"
       ],
+      "ci.conformance": [
+        "test test/conformance/sp_conformance_test.exs test/mix/tasks/relyra_conformance_test.exs --only conformance --warnings-as-errors",
+        "relyra.conformance --check"
+      ],
       "ci.security": [
-        "test --only security_corpus --warnings-as-errors",
-        "test --only gate02_c14n --warnings-as-errors",
+        "ci.conformance",
+        "test test/security/xml/corpus_security_test.exs test/relyra/security/xml/corpus_gate_test.exs --only security_corpus --warnings-as-errors",
+        "test test/security/xml/corpus_security_test.exs --only gate02_c14n --warnings-as-errors",
         "deps.audit",
         "hex.audit",
         "sobelow --config"
