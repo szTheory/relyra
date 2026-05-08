@@ -22,6 +22,7 @@ defmodule Relyra.RequestStore do
 
   def put_intent(relay_state, intent, opts)
       when is_binary(relay_state) and is_map(intent) and is_list(opts) do
+    intent = Map.put_new(intent, :type, :authn)
     dispatch_request_store(request_store(opts), :put_intent, [relay_state, intent, opts])
   end
 
