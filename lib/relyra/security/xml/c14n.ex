@@ -53,6 +53,14 @@ defmodule Relyra.Security.XML.C14N do
   @typedoc "Options for `serialize/2`."
   @type opt :: {:prefix_list, [String.t()]}
 
+  # Transform allowlist (decision D-06, threat T-28-05): the ONLY transform URIs
+  # this engine will apply. Any other URI — XSLT, XPath/xmldsig-filter2, or even
+  # *inclusive* C14N (which this exclusive engine does NOT implement, so claiming
+  # support would emit wrong bytes) — is rejected fail-closed.
+  @enveloped_signature "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
+  @exc_c14n "http://www.w3.org/2001/10/xml-exc-c14n#"
+  @allowed_transforms [@enveloped_signature, @exc_c14n]
+
   @doc """
   Serialize a `Relyra.Security.XML.SaxyTree.Node` subtree to canonical
   exclusive-C14N 1.0 (no-comments) UTF-8 bytes.
@@ -87,6 +95,130 @@ defmodule Relyra.Security.XML.C14N do
   end
 
   def serialize(_other, _opts), do: canonicalization_failed(:invalid_signed_node_handle)
+
+  # ---------------------------------------------------------------------------
+  # Transform chain (decision D-06): enveloped-signature pruning + exclusive
+  # C14N, gated by the transform allowlist, with InclusiveNamespaces/@PrefixList
+  # threaded into the serializer.
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Apply a signed Reference's transform chain to `referenced_node` and serialize
+  the result to canonical exclusive-C14N 1.0 bytes.
+
+  `transform_uris` is the ordered list of transform `Algorithm` URIs (see
+  `transform_uris/1`). Only the enveloped-signature
+  (`#{@enveloped_signature}`) and exclusive-C14N (`#{@exc_c14n}`) transforms are
+  accepted; ANY other URI (XSLT, XPath/xmldsig-filter2, inclusive C14N) is
+  rejected fail-closed with `:canonicalization_failed` (threat T-28-05).
+
+  When the chain includes the enveloped-signature transform, the SPECIFIC
+  `signature_subtree` node (the `ds:Signature` containing the Reference being
+  processed) is pruned from `referenced_node` — and only that node; an unrelated
+  sibling `ds:Signature` survives (anti-XSW, D-10). Pass `nil` when no
+  enveloped-signature transform applies.
+
+  `opts` accepts `:prefix_list` (typically from `prefix_list_from_transforms/1`),
+  which is force-rendered per `serialize/2`.
+
+  Returns `{:ok, binary()}` or
+  `{:error, %Relyra.Error{type: :canonicalization_failed}}` (fail-closed for a
+  non-`Node` referenced value or a rejected transform).
+  """
+  @spec canonicalize_reference(term(), [String.t()], Node.t() | nil, [opt()]) ::
+          {:ok, binary()} | {:error, Error.t()}
+  def canonicalize_reference(%Node{} = referenced, transform_uris, signature_subtree, opts)
+      when is_list(transform_uris) and is_list(opts) do
+    if Enum.all?(transform_uris, &allowed_transform?/1) do
+      referenced
+      |> maybe_prune_signature(transform_uris, signature_subtree)
+      |> serialize(opts)
+    else
+      canonicalization_failed(:unsupported_transform)
+    end
+  end
+
+  def canonicalize_reference(_referenced, _transform_uris, _signature_subtree, _opts) do
+    canonicalization_failed(:non_bindable_node)
+  end
+
+  @doc """
+  Read the ordered transform `Algorithm` URIs from a `ds:Transforms` parse-tree
+  node (its `ds:Transform` children), in document order.
+  """
+  @spec transform_uris(term()) :: [String.t()]
+  def transform_uris(%Node{children: children}) do
+    for %Node{local: "Transform", attrs: attrs} <- children,
+        uri = attr_value(attrs, "Algorithm"),
+        is_binary(uri),
+        do: uri
+  end
+
+  def transform_uris(_other), do: []
+
+  @doc """
+  Read `InclusiveNamespaces/@PrefixList` from a `ds:Transforms` parse-tree node,
+  returning the whitespace-separated prefixes (e.g. `["ec", "saml"]`), or `[]`
+  when no `InclusiveNamespaces` element / `PrefixList` attribute is present.
+  """
+  @spec prefix_list_from_transforms(term()) :: [String.t()]
+  def prefix_list_from_transforms(%Node{} = transforms) do
+    case find_descendant(transforms, "InclusiveNamespaces") do
+      %Node{attrs: attrs} ->
+        case attr_value(attrs, "PrefixList") do
+          value when is_binary(value) -> String.split(value)
+          _ -> []
+        end
+
+      _ ->
+        []
+    end
+  end
+
+  def prefix_list_from_transforms(_other), do: []
+
+  defp allowed_transform?(uri), do: uri in @allowed_transforms
+
+  # Prune ONLY when the chain requests the enveloped-signature transform AND a
+  # concrete signature node is supplied; nil (or a bare exc-c14n chain) is a
+  # no-op (returns the node unchanged).
+  defp maybe_prune_signature(node, transform_uris, %Node{} = signature_subtree) do
+    if @enveloped_signature in transform_uris do
+      prune_subtree(node, signature_subtree)
+    else
+      node
+    end
+  end
+
+  defp maybe_prune_signature(node, _transform_uris, _signature_subtree), do: node
+
+  # Remove the exact `target` subtree (value-equal, so an unrelated sibling
+  # Signature with different content is left intact) wherever it appears beneath
+  # `node`, rebuilding the surrounding tree.
+  defp prune_subtree(%Node{children: children} = node, target) do
+    pruned =
+      children
+      |> Enum.reject(&(&1 == target))
+      |> Enum.map(&prune_subtree(&1, target))
+
+    %Node{node | children: pruned}
+  end
+
+  # First descendant-or-self node whose local name matches, in document order.
+  defp find_descendant(%Node{local: local} = node, local), do: node
+
+  defp find_descendant(%Node{children: children}, local) do
+    Enum.find_value(children, fn child -> find_descendant(child, local) end)
+  end
+
+  defp find_descendant(_other, _local), do: nil
+
+  defp attr_value(attrs, name) do
+    case List.keyfind(attrs, name, 0) do
+      {_name, value} -> value
+      nil -> nil
+    end
+  end
 
   # A node is bindable only if it carries the structural keys C14N needs:
   # a non-nil verbatim qname and local name, a list of attrs, an in-scope ns map,
