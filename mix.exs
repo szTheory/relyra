@@ -159,7 +159,11 @@ defmodule Relyra.MixProject do
         "test test/relyra/ecto/escape_hatch_audit_test.exs --warnings-as-errors",
         "test test/security/xml/corpus_security_test.exs test/relyra/security/xml/corpus_gate_test.exs --only security_corpus --warnings-as-errors",
         "test test/security/xml/corpus_security_test.exs --only gate02_c14n --warnings-as-errors",
-        "deps.audit",
+        # decimal advisory GHSA-rhv4-8758-jx7v (Decimal.new exponent DoS) is ignored:
+        # decimal is transitive via ecto/postgrex (both pin `decimal ~> 2.0`, so 3.0.0 — the
+        # only patched version — is unreachable), and relyra makes no direct Decimal.new/parse
+        # calls (no exposure path). Revisit when ecto/postgrex allow decimal ~> 3.0.
+        "deps.audit --ignore-advisory-ids GHSA-rhv4-8758-jx7v",
         "hex.audit",
         "sobelow --config"
       ],
