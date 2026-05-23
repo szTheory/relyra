@@ -54,6 +54,7 @@ defmodule Relyra.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:saxy, "~> 1.6"},
       {:telemetry, "~> 1.3"},
       {:plug, "~> 1.16"},
       {:phoenix, "~> 1.8", optional: true},
