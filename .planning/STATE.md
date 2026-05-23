@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: "External security review + conformance + docs polish"
-status: milestone_completed
-last_updated: "2026-05-08T15:01:04Z"
-last_activity: 2026-05-08 -- Archived the v1.0 milestone, acknowledged one deferred verification gap, and prepared the planning layer for the next milestone definition
+milestone: v1.1
+milestone_name: Verify the Trust Path
+status: planning
+last_updated: "2026-05-23T14:12:17.309Z"
+last_activity: 2026-05-23
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -24,17 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-08)
 
 ## Current Position
 
-Phase: -
-Plan: -
-Status: milestone_completed
-Last activity: 2026-05-08 -- Archived v1.0 and recorded the acknowledged deferred verification item.
-
-Resume file: `.planning/milestones/v1.0-ROADMAP.md`
-
-Plan wave layout:
-No active phase.
-
-Progress: [####################] 100% of v1.0 shipped
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-23 — Milestone v1.1 started
 
 ## Accumulated Context
 

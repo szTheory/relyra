@@ -21,13 +21,21 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.6 shipped 2026-05-08** — Operational maturity carryover + SLO. Phase 22 (certificate expiry alerts), Phase 23 (diagnostic bundles), and Phase 24 (Single Logout) are complete and verified.
 - **v1.0 shipped 2026-05-08** — Conformance, security review readiness, and adopter onboarding polish. Phase 25 added executable SP conformance and pinned CVE regressions; Phase 26 added the reviewer packet, generated evidence, and strict-default proof lanes; Phase 27 added authoritative onboarding, runbooks, case studies, and batteries-included proof.
 
-## Next Milestone
+## Current Milestone: v1.1 Verify the Trust Path
 
-No next milestone is defined yet.
+**Goal:** Make Relyra's Core Value literally true — cryptographically verify SAML response/assertion **and** metadata signatures so forged or tampered assertions are rejected, not silently accepted.
 
-Use `$gsd-new-milestone` to define the post-v1.0 roadmap, fresh requirements, and next active milestone scope.
+**Why now (P0 — confirmed 2026-05-23):** A code + empirical audit found that `Relyra.Security.Signature` performs trust-*discipline* gating (document-`KeyInfo` rejection, XSW / duplicate-ID defenses, algorithm allowlisting, single-signed-node selection) but **never cryptographically verifies the signature**: there is no `:public_key.verify`, no `DigestValue` recompute/compare, and `canonicalize/2` is a passthrough that the verify path never calls. A forged `SignatureValue` carrying an attacker-controlled `NameID` is accepted as `{:ok}` — a full SAML authentication bypass affecting published hex `1.0.0` / `1.1.0`. This invalidates the Core Value invariant until fixed; everything else waits behind it.
 
-**Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the shipped v0.3 → v1.0 sequence and the point where the next arc needs to be reset.
+**Target features:**
+- **Real XMLDSig verification** behind the existing `Relyra.Security.XML` seam: exclusive XML canonicalization (C14N 1.0 exclusive) + `:public_key.verify` against the configured IdP certificate + reference-digest recompute/compare, binding to the exact signed node consumed. Per ADR-0001: pure-BEAM; hybrid+xmlsec NIF fallback (GATE-03 matrix) only if correctness gates can't be met.
+- **The real parser path ADR-0001 intended** (`saxy`) but that was never added to `mix.exs` — today's `pure_beam.ex` is regex string-scanning, which cannot canonicalize XML correctly.
+- **Adversarial crypto corpus**: forged-signature / tampered-content / wrong-key / digest-mismatch / canonicalization-differential fixtures all REJECTED, plus a positive control that a genuinely-signed response verifies; and `FakeIdP` made to perform real cryptographic signing (so the suite exercises real verification, not structure-only).
+- **Disclosure & honesty**: correct `docs/security_boundary.md`, `SECURITY_REVIEW.md`, `docs/security_findings.md` (which overstate the guarantee); prepare a GHSA + CVE + CHANGELOG security note to publish at the fixed release, marking hex `1.0.0`/`1.1.0` affected. Fix-first on branch `security/xmldsig-real-verification`.
+
+**Out of scope for v1.1 (deferred to the next milestone, "Advanced Federation"):** encrypted assertions (EncryptedAssertion), complete Single Logout (inbound LogoutResponse / IdP-initiated / session termination), signed outbound AuthnRequests, the adoption-docs polish (generic-SAML runbook, identity-mapping guide, logout guide, incident playbook), and the runnable demo app. See `.planning/MILESTONE-ARC.md` and the approved assessment plan for the full sequence.
+
+> **Versioning note:** the planning label is milestone **v1.1**; the published Hex version remains release-please-driven (a security fix lands as its own release, expected `1.2.0`). The two are intentionally decoupled.
 
 ## Requirements
 
@@ -77,7 +85,10 @@ Use `$gsd-new-milestone` to define the post-v1.0 roadmap, fresh requirements, an
 
 <!-- Carried forward; building toward these next. -->
 
-No active requirements. Define the next set with the next milestone.
+**v1.1 — Verify the Trust Path** (see `.planning/REQUIREMENTS.md`):
+- **SIGV-01..04** — cryptographic XMLDSig verification (signature math, digest, exclusive C14N, metadata-root parity)
+- **ASSUR-01..02** — adversarial crypto corpus rejected + positive control; FakeIdP real signing
+- **DISC-01..02** — security-doc honesty correction; GHSA/CVE/advisory prepared for the fixed release
 
 ### Out of Scope
 
@@ -175,4 +186,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-08 — v1.0 shipped; roadmap and requirements are archived and the next milestone is intentionally undefined until re-scoped.*
+*Last updated: 2026-05-23 — v1.1 "Verify the Trust Path" started: P0 fix for non-cryptographic signature verification (confirmed auth bypass in hex 1.0.0/1.1.0).*
