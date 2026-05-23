@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
 status: executing
-last_updated: "2026-05-23T22:40:00.000Z"
-last_activity: 2026-05-23 -- Completed Phase 28 Plan 03 (saxy-tree seam re-wiring); Plan 04 BLOCKED on out-of-band oracle tooling
+last_updated: "2026-05-23T23:00:00.000Z"
+last_activity: 2026-05-23 -- Completed Phase 28 Plan 04 (golden-byte oracle + GATE-02); all 4 plans done. ci.security red ONLY on pre-existing deps.audit advisories (out of phase scope)
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 3
-  percent: 75
+  completed_plans: 4
+  percent: 100
 ---
 
 # Project State
@@ -24,17 +24,17 @@ See: `.planning/PROJECT.md` (updated 2026-05-23)
 
 ## Current Position
 
-Phase: 28 (real-c14n-parser-foundation) — EXECUTING
-Plan: 4 of 4
-Status: Plans 01–03 complete; Plan 04 BLOCKED at its blocking-human gate (out-of-band golden-oracle minting needs lxml + xmlsec1, neither installed)
-Last activity: 2026-05-23 -- Completed Phase 28 Plan 03
+Phase: 28 (real-c14n-parser-foundation) — ALL PLANS COMPLETE (pending /gsd:verify-phase)
+Plan: 4 of 4 done
+Status: Plans 01–04 complete. SIGV-03 correctness PROVEN (canonicalize/2 byte-equal to libxml2 golden, 887 bytes). Caveat: milestone-level `mix ci.security` is red ONLY at deps.audit (4 pre-existing dependency CVEs — postgrex/plug/phoenix/decimal — needing version bumps, outside Phase 28 scope).
+Last activity: 2026-05-23 -- Completed Phase 28 Plan 04
 
-Milestone progress: [----------] 0/4 phases complete (Phase 28: [████████░░] 3/4 plans)
+Milestone progress: [----------] 0/4 phases complete (Phase 28: [██████████] 4/4 plans, pending phase verification)
 
 ## Performance Metrics
 
 - Phases planned this milestone: 4 (28-31)
-- Plans complete: 3 (28-01, 28-02, 28-03)
+- Plans complete: 4 (28-01, 28-02, 28-03, 28-04)
 - Coverage: 8/8 v1.1 requirements mapped
 
 | Phase | Plan | Duration | Tasks | Files |
@@ -42,6 +42,7 @@ Milestone progress: [----------] 0/4 phases complete (Phase 28: [█████
 | 28 | 01 | 6m | 3 | 4 (2 created, 2 modified) |
 | 28 | 02 | — | 2 | 1 modified (c14n.ex) + 2 test files |
 | 28 | 03 | — | 2 | 1 modified (pure_beam.ex) + 1 test file |
+| 28 | 04 | — | 2 | 3 created (golden fixtures + PROVENANCE) + 1 test |
 
 ## Accumulated Context
 
@@ -79,9 +80,15 @@ Milestone progress: [----------] 0/4 phases complete (Phase 28: [█████
 - **canonicalize/2 delegates to `C14N.canonicalize_reference/4`** (not bare `serialize/2`), reading transforms + PrefixList from the bound `ds:Signature`. Current corpus fixtures carry no `ds:Transforms` (Reference holds only `DigestMethod`) → `transforms_node` nil → plain exclusive-C14N; real enveloped chains exercised once FakeIdP/real-IdP fixtures carry `ds:Transforms` (Phase 30).
 - **Trust-path hardening:** an enveloped-signature transform with an unresolved bound `ds:Signature` fails closed (`:enveloped_signature_unresolved`) rather than serialize-without-pruning — no fail-open leaving signature material in canonical bytes. 99/99 trust-path regression green (seam + v1.0 corpus + signature + auto_refresh).
 
-### Blocker carried into Phase 28 Plan 04
+### Decisions made in Phase 28 Plan 04
 
-- **Plan 04 is `autonomous: false` with a blocking-human gate (Task 1).** The golden-byte oracle must be minted OUT-OF-BAND with pinned `lxml` cross-checked against `xmlsec1` (D-12: native toolchain must never enter `mix ci.security`). On this host: `xmlsec1` NOT installed, python `lxml` NOT installed (`xmllint`/libxml2 2.9.13 present but insufficient — not an exclusive-C14N+cross-check oracle). Resolution pending user decision (install toolchain & mint here, vs. mint elsewhere, vs. defer).
+- **SIGV-03 correctness PROVEN (D-11/D-12):** golden-byte oracle minted out-of-band in Docker (no host install) and committed. `Relyra.Security.XML.C14N` (via the seam) reproduces libxml2's 887-byte exclusive-C14N output **byte-for-byte** — verified by `corpus_security_test.exs` `@tag :gate02_c14n`. Cross-checked across two libxml2 builds (lxml-bundled 2.14.6 vs system 2.9.14); the Elixir engine is the independent third agreeing implementation. Fixtures: `test/fixtures/security/xml/parser_differential_and_c14n/assertion_inherited_ns.{input.xml,c14n}` + PROVENANCE.md.
+- **GATE-02 now has a positive byte-equality assertion + a node-binding assertion (D-10)**, with the existing fail-closed c14n-00x rows preserved. CI stays pure-Elixir (committed bytes only, D-12).
+- **Known limitation (follow-up, fail-safe):** `SaxyTree.Node` has one `:text` field per element and C14N emits it before children → mixed-content / inter-element whitespace mis-orders vs libxml2. Impact is rejection (digest mismatch in Phase 29), never bypass. Follow-up: ordered text+element children + a mixed-content golden (Phase 29/30 scope).
+
+### Milestone-level blocker surfaced (NOT Phase 28 scope)
+
+- **`mix ci.security` is RED at `deps.audit`** — 4 pre-existing dependency CVE advisories, unrelated to any Phase 28 code (no Phase 28 commit touches `mix.lock`): **postgrex 0.22.0** (GHSA-r73h-97w8-m54h, channel-name SQL injection, high → 0.22.2), **plug 1.19.1** (GHSA-468c-vq7p-gh64, multipart DoS, high → 1.19.2), **phoenix 1.8.5** (GHSA-628h-q48j-jr6q, long-poll memory DoS, high → 1.8.6), **decimal 2.3.0** (GHSA-rhv4-8758-jx7v, exponent DoS, moderate → 3.0.0). `hex.audit` separately skipped (no network in this env). **Action needed (separate task, v1.1 milestone):** dependency bumps. The postgrex SQL-injection advisory is high-priority for a security milestone.
 
 **Decisions log:** Full log lives in `.planning/PROJECT.md` Key Decisions table.
 
@@ -97,6 +104,6 @@ Deferred to the next milestone ("Advanced Federation"): encrypted assertions, co
 
 ## Session Continuity
 
-Next action: execute Phase 28 Plan 04 (golden-byte oracle + GATE-02) — BLOCKED at its blocking-human gate (Task 1). Need pinned `lxml` + `xmlsec1` to mint the golden bytes out-of-band (author `assertion_inherited_ns.input.xml`, mint `assertion_inherited_ns.c14n` via `etree.tostring(..., method="c14n", exclusive=True)`, cross-check `xmlsec1 --c14n-exc`, write PROVENANCE.md), then Task 2 (auto) adds the byte-equality + node-binding assertions to `corpus_security_test.exs`. Resume-signal: "approved" once the golden fixture + PROVENANCE are committed.
+Next action: Phase 28 is plans-complete (4/4). Options: (1) `/gsd:verify-phase 28` to formally verify the phase goal; (2) address the milestone-level `deps.audit` dependency bumps (postgrex/plug/phoenix/decimal) — separate task, recommended before milestone close given the postgrex SQL-injection advisory; (3) proceed to Phase 29 (XMLDSig crypto verify), which now rests on the PROVEN canonical-bytes precondition (SIGV-03).
 
-Last session: 2026-05-23 — completed 28-01/02/03 (saxy substrate → exclusive-C14N engine → seam re-wiring). 99/99 trust-path regression green, compile clean. Stopped at: Plan 04 blocking-human gate (oracle tooling absent on host). Resume file: None.
+Last session: 2026-05-23 — completed all of Phase 28 (28-01 saxy substrate → 28-02 exclusive-C14N engine → 28-03 seam re-wiring → 28-04 golden-byte oracle proof). SIGV-03 correctness PROVEN: canonicalize/2 byte-equal to libxml2 (887 bytes, gate02_c14n green). Golden minted out-of-band in Docker (no host install). ci.security red ONLY on pre-existing deps.audit advisories. Resume file: None.
