@@ -94,7 +94,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 | 25. Conformance and CVE Regression Fixtures | v1.0 | 3/3 | Complete | 2026-05-07 |
 | 26. Security Audit Preparation and Remediation | v1.0 | 3/3 | Complete | 2026-05-08 |
 | 27. Adopter Onboarding Polish and Case Studies | v1.0 | 3/3 | Complete | 2026-05-08 |
-| 28. Real C14N parser foundation | v1.1 | TBD | Not started | - |
+| 28. Real C14N parser foundation | v1.1 | 0/4 | Not started | - |
 | 29. Cryptographic XMLDSig verification | v1.1 | TBD | Not started | - |
 | 30. Adversarial crypto assurance | v1.1 | TBD | Not started | - |
 | 31. Disclosure and docs honesty | v1.1 | TBD | Not started | - |
@@ -131,7 +131,11 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
   2. The `canonicalize/2` callback produces correct **exclusive XML canonicalization (C14N 1.0 exclusive)** output over the parse tree for a known fixture, byte-for-byte matching an independent reference (xmlsec / pyXMLSec) — the GATE-02 differential gate passes.
   3. The existing hardened guards (DOCTYPE/ENTITY rejection, pre- and post-decode size limits, document-`KeyInfo` rejection, duplicate-ID rejection, single-signed-node selection) still hold against the v1.0 corpus on the new parser — no regression, no second parser path.
   4. The verified signed node is bound to the exact element consumed downstream (no node/canonicalization differential between what is canonicalized and what is returned as the `SignedNode`).
-**Plans**: TBD
+**Plans**: 4 plans
+  - [ ] 28-01-PLAN.md — Add non-optional saxy dep (A1 checkpoint) + Saxy.Handler tree builder with in-scope ns stack + 3 infoset-normalization layers
+  - [ ] 28-02-PLAN.md — Hand-rolled exclusive C14N 1.0 engine (visibly-utilized rendering, sort, dual escaping, empty-element, no trailing newline) + enveloped-sig transform / PrefixList / transform allowlist
+  - [ ] 28-03-PLAN.md — Re-wire pure_beam seam onto the saxy tree (retire regex, re-derive all fields, port guards, additive :parse_tree, node binding D-10, canonicalize delegates to C14N)
+  - [ ] 28-04-PLAN.md — Mint + commit golden-byte oracle (lxml/xmlsec1, D-12) + GATE-02 positive byte-equality (D-11) + node-binding assertion
 
 #### Phase 29: Cryptographic XMLDSig verification
 **Goal**: A forged or tampered SAML signature is cryptographically rejected; only a genuinely-signed node from the configured IdP verifies.
