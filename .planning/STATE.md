@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: Verify the Trust Path
-status: planning
-last_updated: "2026-05-23T14:12:17.309Z"
-last_activity: 2026-05-23
+milestone_name: — Verify the Trust Path
+status: "Roadmap created; awaiting `/gsd:plan-phase 28`"
+last_updated: "2026-05-23T18:43:14.741Z"
+last_activity: 2026-05-23 — v1.1 roadmap created (Phases 28-31)
 progress:
   total_phases: 4
   completed_phases: 0
