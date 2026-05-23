@@ -190,6 +190,89 @@ defmodule Relyra.Security.XML.PureBeamTest do
     end
   end
 
+  describe "node binding (D-10, Task 2)" do
+    test "the selected handle carries a :node referencing the exact bound tree node" do
+      assert {:ok, parsed_doc} = PureBeam.parse_safely(@well_formed_response)
+      assert {:ok, handle} = PureBeam.select_signed_node(parsed_doc)
+
+      assert %Node{} = handle.node
+      assert handle.node.local == "Assertion"
+
+      # The bound node is the SAME object reachable in the parse tree (no
+      # re-found / re-parsed substring): it is the Assertion node under Response.
+      tree_assertion =
+        Enum.find(parsed_doc.parse_tree.children, fn child -> child.local == "Assertion" end)
+
+      assert handle.node == tree_assertion
+    end
+
+    test "the handle binds the document's ds:Signature node for the enveloped transform" do
+      assert {:ok, parsed_doc} = PureBeam.parse_safely(@well_formed_response)
+      assert {:ok, handle} = PureBeam.select_signed_node(parsed_doc)
+
+      assert %Node{local: "Signature"} = handle.signature_node
+    end
+  end
+
+  describe "canonicalize/2 delegates to the C14N engine (Task 2)" do
+    test "on a bound node returns {:ok, %{canonical_xml: bytes, xml_id:, xpath:}}" do
+      assert {:ok, parsed_doc} = PureBeam.parse_safely(@well_formed_response)
+      assert {:ok, handle} = PureBeam.select_signed_node(parsed_doc)
+      assert {:ok, result} = PureBeam.canonicalize(handle)
+
+      assert is_binary(result.canonical_xml)
+      assert result.xml_id == "assertion-1"
+      assert result.xpath == "/Response/Assertion[1]"
+
+      # Canonical exclusive-C14N output starts with `<`, ends with `>`, and has
+      # no trailing newline (Pitfall 4).
+      assert String.starts_with?(result.canonical_xml, "<")
+      assert String.ends_with?(result.canonical_xml, ">")
+      refute String.ends_with?(result.canonical_xml, "\n")
+    end
+
+    test "canonical bytes derive from the exact bound node (the reference transform chain)" do
+      assert {:ok, parsed_doc} = PureBeam.parse_safely(@well_formed_response)
+      assert {:ok, handle} = PureBeam.select_signed_node(parsed_doc)
+      assert {:ok, %{canonical_xml: out}} = PureBeam.canonicalize(handle)
+
+      # These fixtures carry no ds:Transforms subtree, so the transform list is
+      # empty: no prune, plain exclusive-C14N over the bound node. That equals
+      # canonicalize_reference over the same node with an empty transform list.
+      {:ok, expected} =
+        Relyra.Security.XML.C14N.canonicalize_reference(
+          handle.node,
+          [],
+          handle.signature_node,
+          prefix_list: []
+        )
+
+      assert out == expected
+    end
+  end
+
+  describe "canonicalize/2 fail-closed (Pitfall 9 / GATE-02, Task 2)" do
+    test "the whole parsed_doc map fails closed as :canonicalization_failed" do
+      assert {:ok, parsed_doc} = PureBeam.parse_safely(@well_formed_response)
+
+      assert {:error, %Error{type: :canonicalization_failed, details: details}} =
+               PureBeam.canonicalize(parsed_doc, [])
+
+      assert details.reason == :invalid_signed_node_handle
+    end
+
+    test "a bare atom handle fails closed (seam_contract contract)" do
+      assert {:error, %Error{type: :canonicalization_failed}} = PureBeam.canonicalize(:node, [])
+    end
+
+    test "a handle lacking a bindable :node fails closed" do
+      assert {:error, %Error{type: :canonicalization_failed, details: details}} =
+               PureBeam.canonicalize(%{xml_id: "assertion-1"})
+
+      assert details.reason == :invalid_signed_node_handle
+    end
+  end
+
   defp base_parsed_doc(overrides) do
     Map.merge(
       %{
