@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-23)
 
 ## Current Position
 
-Phase: 28 — Real C14N parser foundation (not started; roadmap drafted)
+Phase: 28 — Real C14N parser foundation (context gathered; not yet planned)
 Plan: —
-Status: Roadmap created; awaiting `/gsd:plan-phase 28`
-Last activity: 2026-05-23 — v1.1 roadmap created (Phases 28-31)
+Status: Context captured (assumptions mode); awaiting `/gsd:plan-phase 28`
+Last activity: 2026-05-23 — Phase 28 context gathered (12 decisions locked, D-01..D-12)
 
 Milestone progress: [----------] 0/4 phases complete
 
