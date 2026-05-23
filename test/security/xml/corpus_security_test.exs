@@ -5,6 +5,7 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
   alias Relyra.Security.XML.PureBeam
 
   @manifest_path "priv/security_corpus.json"
+  @c14n_fixtures "test/fixtures/security/xml/parser_differential_and_c14n"
 
   @tag :security_corpus
   test "manifest.json fixtures map to expected_error_type for each class" do
@@ -57,6 +58,36 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
 
     assert failures == [],
            "GATE-02 binary gate failed: parser_differential_and_c14n zero regressions violated"
+  end
+
+  @tag :gate02_c14n
+  @tag :security_corpus
+  test "GATE-02 positive: canonicalize/2 output is byte-equal to the independent golden oracle (D-11)" do
+    # The golden bytes were minted out-of-band by libxml2 (lxml, cross-checked
+    # against a different libxml2 build via xmllint --exc-c14n) and committed.
+    # CI reads the committed bytes only — no native toolchain here (D-12).
+    # See test/fixtures/.../parser_differential_and_c14n/PROVENANCE.md.
+    input = File.read!(Path.join(@c14n_fixtures, "assertion_inherited_ns.input.xml"))
+    golden = File.read!(Path.join(@c14n_fixtures, "assertion_inherited_ns.c14n"))
+
+    assert {:ok, parsed_doc} = PureBeam.parse_safely(input, [])
+    assert {:ok, signed_node} = PureBeam.select_signed_node(parsed_doc, [])
+    assert {:ok, %{canonical_xml: out}} = PureBeam.canonicalize(signed_node, [])
+
+    # Byte-for-byte against the independent reference (Pitfalls 1-8): visibly-utilized
+    # inherited ns rendered, unused inherited ns omitted, attrs sorted by resolved URI,
+    # empty element expanded, text escaped, UTF-8 preserved.
+    assert out == golden
+    # No trailing newline (Pitfall 4); canonical output ends with `>`.
+    refute String.ends_with?(out, "\n")
+
+    # Node binding (D-10, ROADMAP success #4): the verified handle's bound node is
+    # the EXACT tree node canonicalize/2 serialized — the Assertion present in
+    # parsed_doc[:parse_tree], not a re-found / re-parsed substring.
+    tree_assertion =
+      Enum.find(parsed_doc.parse_tree.children, fn child -> child.local == "Assertion" end)
+
+    assert signed_node.node == tree_assertion
   end
 
   @tag :security_corpus
