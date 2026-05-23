@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
 status: executing
-last_updated: "2026-05-23T23:00:00.000Z"
-last_activity: 2026-05-23 -- Completed Phase 28 Plan 04 (golden-byte oracle + GATE-02); all 4 plans done. ci.security red ONLY on pre-existing deps.audit advisories (out of phase scope)
+last_updated: "2026-05-23T23:30:00.000Z"
+last_activity: 2026-05-23 -- Phase 28 plans 4/4 done + post-phase cleanup (deps CVEs fixed, ci.security GREEN, mix test 486/0, tree clean, embargo memory relaxed)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -86,9 +86,11 @@ Milestone progress: [----------] 0/4 phases complete (Phase 28: [█████
 - **GATE-02 now has a positive byte-equality assertion + a node-binding assertion (D-10)**, with the existing fail-closed c14n-00x rows preserved. CI stays pure-Elixir (committed bytes only, D-12).
 - **Known limitation (follow-up, fail-safe):** `SaxyTree.Node` has one `:text` field per element and C14N emits it before children → mixed-content / inter-element whitespace mis-orders vs libxml2. Impact is rejection (digest mismatch in Phase 29), never bypass. Follow-up: ordered text+element children + a mixed-content golden (Phase 29/30 scope).
 
-### Milestone-level blocker surfaced (NOT Phase 28 scope)
+### Post-phase-28 cleanup (2026-05-23) — RESOLVED
 
-- **`mix ci.security` is RED at `deps.audit`** — 4 pre-existing dependency CVE advisories, unrelated to any Phase 28 code (no Phase 28 commit touches `mix.lock`): **postgrex 0.22.0** (GHSA-r73h-97w8-m54h, channel-name SQL injection, high → 0.22.2), **plug 1.19.1** (GHSA-468c-vq7p-gh64, multipart DoS, high → 1.19.2), **phoenix 1.8.5** (GHSA-628h-q48j-jr6q, long-poll memory DoS, high → 1.8.6), **decimal 2.3.0** (GHSA-rhv4-8758-jx7v, exponent DoS, moderate → 3.0.0). `hex.audit` separately skipped (no network in this env). **Action needed (separate task, v1.1 milestone):** dependency bumps. The postgrex SQL-injection advisory is high-priority for a security milestone.
+- **Dependency CVEs fixed:** postgrex 0.22.0→0.22.2 (channel-name SQL injection, high), plug 1.19.1→1.19.2 (multipart DoS, high), phoenix 1.8.5→1.8.7 (long-poll memory DoS, high). decimal 3.0 (the only patched version for GHSA-rhv4-8758-jx7v) is **unreachable** — ecto + postgrex pin `decimal ~> 2.0` — and relyra makes no direct `Decimal.new/parse` calls (no exposure), so that one advisory is ignored in the `ci.security` deps.audit step via `--ignore-advisory-ids` with a justification comment (revisit when ecto/postgrex allow decimal `~> 3.0`). **`mix deps.audit` and `mix ci.security` are now GREEN.**
+- **28-03 regression fixed:** protocol fixture `prot-unsigned-001` expectation corrected `malformed_xml`→`missing_protocol_field` (well-formed-but-non-SAML `<Fake>` is parsed by the saxy tree, then fails closed on missing fields — both reject; new type is accurate). Escaped 28-03 verification, which ran `test/relyra/protocol/` not `test/protocol/`. **Full `mix test` = 486/0.**
+- **jtbd docs committed** (clean tree); **disclosure-embargo memory relaxed** (solo dev, no adopters → fix openly/aggressively).
 
 **Decisions log:** Full log lives in `.planning/PROJECT.md` Key Decisions table.
 
@@ -102,8 +104,14 @@ Items acknowledged and deferred at the v1.0 milestone close (2026-05-08):
 
 Deferred to the next milestone ("Advanced Federation"): encrypted assertions, complete Single Logout, signed outbound AuthnRequests, adoption-docs polish, runnable demo app.
 
+## Tracked Follow-ups (v1.1, in-flight)
+
+- **Mixed-content / inter-element-whitespace C14N gap — FIRST NEXT TASK.** `SaxyTree.Node` carries one `:text` per element and `C14N.render_element/3` emits it before children, so pretty-printed / mixed-content signed XML mis-canonicalizes vs libxml2 → would **fail Phase 29 digest verification on real-IdP documents that aren't whitespace-free**. Fail-safe (rejects, never bypasses). **Recommended fix (Option a):** add an ordered `content: [{:text,_} | {:element,_}]` field to `SaxyTree.Node`, have `C14N` walk it in document order, keep `text`/`children` as derived views (pure_beam field-derivation untouched); re-mint a whitespace golden in Docker + add a `gate02_c14n` test. ~55 LOC, ~10 test updates; full blast radius + Option (b) comparison in `28-04-SUMMARY.md`. Do as `/gsd:quick` or fold into `/gsd:plan-phase 29`.
+
 ## Session Continuity
 
-Next action: Phase 28 is plans-complete (4/4). Options: (1) `/gsd:verify-phase 28` to formally verify the phase goal; (2) address the milestone-level `deps.audit` dependency bumps (postgrex/plug/phoenix/decimal) — separate task, recommended before milestone close given the postgrex SQL-injection advisory; (3) proceed to Phase 29 (XMLDSig crypto verify), which now rests on the PROVEN canonical-bytes precondition (SIGV-03).
+Post-phase-28 cleanup DONE (2026-05-23): dependency CVEs fixed, `mix ci.security` GREEN, full `mix test` 486/0, working tree clean, embargo memory relaxed. Phase 28 plans 4/4 complete; SIGV-03 PROVEN.
 
-Last session: 2026-05-23 — completed all of Phase 28 (28-01 saxy substrate → 28-02 exclusive-C14N engine → 28-03 seam re-wiring → 28-04 golden-byte oracle proof). SIGV-03 correctness PROVEN: canonicalize/2 byte-equal to libxml2 (887 bytes, gate02_c14n green). Golden minted out-of-band in Docker (no host install). ci.security red ONLY on pre-existing deps.audit advisories. Resume file: None.
+Next GSD command (after context clear): `/gsd:verify-phase 28` to formally verify the phase goal, then `/gsd:plan-phase 29` (XMLDSig `:public_key.verify` + DigestValue recompute), which rests on the PROVEN canonical-bytes precondition. **First follow-up to fold in:** the mixed-content C14N fix (see Tracked Follow-ups) — `/gsd:quick` or within Phase 29 planning.
+
+Last session: 2026-05-23 — completed all of Phase 28 (28-01 saxy → 28-02 exclusive-C14N → 28-03 seam re-wiring → 28-04 golden-byte oracle proof; canonicalize/2 byte-equal to libxml2, 887 bytes, gate02_c14n green), then post-phase cleanup (deps CVEs, ci.security green, 486/0, jtbd docs, memory). Resume file: None.
