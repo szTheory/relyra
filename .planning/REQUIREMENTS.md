@@ -45,4 +45,17 @@
 
 ## Traceability
 
-<!-- Filled by the roadmapper: REQ-ID → Phase mapping. -->
+REQ-ID → Phase mapping for milestone v1.1 (every v1.1 requirement maps to exactly one phase; 8/8 covered).
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SIGV-03 | Phase 28 — Real C14N parser foundation | Pending |
+| SIGV-01 | Phase 29 — Cryptographic XMLDSig verification | Pending |
+| SIGV-02 | Phase 29 — Cryptographic XMLDSig verification | Pending |
+| SIGV-04 | Phase 29 — Cryptographic XMLDSig verification | Pending |
+| ASSUR-01 | Phase 30 — Adversarial crypto assurance | Pending |
+| ASSUR-02 | Phase 30 — Adversarial crypto assurance | Pending |
+| DISC-01 | Phase 31 — Disclosure and docs honesty | Pending |
+| DISC-02 | Phase 31 — Disclosure and docs honesty | Pending |
+
+**Coverage:** 8/8 v1.1 requirements mapped. No orphans. No duplicates.
