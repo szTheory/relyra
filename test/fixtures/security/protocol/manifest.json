@@ -3,7 +3,7 @@
     "id": "prot-unsigned-001",
     "class": "unsigned_payload",
     "requirement_ids": ["PROT-02"],
-    "expected_error_type": "malformed_xml",
+    "expected_error_type": "missing_protocol_field",
     "payload": "<Fake>unsigned</Fake>"
   },
   {
