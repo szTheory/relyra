@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
 status: executing
-last_updated: "2026-05-23T19:27:00.548Z"
-last_activity: 2026-05-23 -- Completed Phase 28 Plan 01 (saxy dep + SaxyTree handler)
+last_updated: "2026-05-23T22:30:00.000Z"
+last_activity: 2026-05-23 -- Completed Phase 28 Plan 02 (exclusive-C14N engine + transform chain)
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
-  percent: 25
+  completed_plans: 2
+  percent: 50
 ---
 
 # Project State
@@ -25,21 +25,22 @@ See: `.planning/PROJECT.md` (updated 2026-05-23)
 ## Current Position
 
 Phase: 28 (real-c14n-parser-foundation) — EXECUTING
-Plan: 2 of 4
-Status: Plan 01 complete; Plan 02 ready to execute
-Last activity: 2026-05-23 -- Completed Phase 28 Plan 01
+Plan: 3 of 4
+Status: Plans 01–02 complete; Plan 03 ready to execute
+Last activity: 2026-05-23 -- Completed Phase 28 Plan 02
 
-Milestone progress: [----------] 0/4 phases complete (Phase 28: [███░░░░░░░] 1/4 plans)
+Milestone progress: [----------] 0/4 phases complete (Phase 28: [█████░░░░░] 2/4 plans)
 
 ## Performance Metrics
 
 - Phases planned this milestone: 4 (28-31)
-- Plans complete: 1 (28-01)
+- Plans complete: 2 (28-01, 28-02)
 - Coverage: 8/8 v1.1 requirements mapped
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 28 | 01 | 6m | 3 | 4 (2 created, 2 modified) |
+| 28 | 02 | — | 2 | 1 modified (c14n.ex) + 2 test files |
 
 ## Accumulated Context
 
@@ -63,6 +64,13 @@ Milestone progress: [----------] 0/4 phases complete (Phase 28: [███░░
 - **saxy 1.6.0 added non-optional** (T-28-SC supply-chain checkpoint pre-approved). The three Relyra-owned infoset-normalization layers are applied at tree-build time (in-scope ns stack; attr-value `#x9`/`#xA`/`#xD`->single space per XML 1.0 §3.3.3; line-ending `\r\n`/`\r`->`\n` per §2.11), kept strictly separate from C14N escaping (serialize-time, Plan 02). CRLF inside an attribute value collapses to a single space.
 - **SIGV-03 remains in progress** (NOT complete): Plan 01 delivers the saxy parse-tree substrate only; the exclusive-C14N engine (Plan 02) and seam re-wiring (Plan 03) are required before SIGV-03 is satisfied.
 
+### Decisions made in Phase 28 Plan 02
+
+- **Exclusive-C14N engine API (CONTRACT for Plan 03):** `Relyra.Security.XML.C14N.serialize/2` (node → canonical bytes; `:prefix_list` option) and `canonicalize_reference/4` (referenced node, ordered transform URIs, the specific `ds:Signature` to prune or `nil`, opts). Helpers `transform_uris/1` + `prefix_list_from_transforms/1` read a `ds:Transforms` node. Plan 03 wires `canonicalize/2` to these. Full API in `28-02-SUMMARY.md`.
+- **Transform allowlist is STRICT** to `{enveloped-signature, exc-c14n}` (T-28-05). Inclusive C14N is deliberately NOT allowlisted — this engine computes exclusive C14N only, so accepting an inclusive URI would emit wrong bytes (silent verification bypass).
+- **Enveloped-signature pruning is anti-XSW (D-10):** the SPECIFIC `ds:Signature` subtree (value-equal match) is pruned, leaving an unrelated sibling Signature intact.
+- **Self-checked, not yet proven:** correctness is asserted here via idempotence + per-pitfall structural tests (30/30 green). The byte-for-byte proof vs the independent lxml+xmlsec1 oracle (GATE-02) lands in Plan 04 — SIGV-03 is not satisfied until then.
+
 **Decisions log:** Full log lives in `.planning/PROJECT.md` Key Decisions table.
 
 ## Deferred Items
@@ -77,6 +85,6 @@ Deferred to the next milestone ("Advanced Federation"): encrypted assertions, co
 
 ## Session Continuity
 
-Next action: execute Phase 28 Plan 02 (exclusive-C14N engine) — consumes the `Relyra.Security.XML.SaxyTree.Node` tree-node shape established by Plan 01 (see `.planning/phases/28-real-c14n-parser-foundation/28-01-SUMMARY.md`).
+Next action: execute Phase 28 Plan 03 (seam re-wiring) — retire the regex extractors in `pure_beam.ex`, re-derive protocol fields from the `SaxyTree` tree, port the hardened guards to tree-derived queries (no second parser path), bind the verified node (D-10), and delegate `canonicalize/2` to `Relyra.Security.XML.C14N` (`serialize/2` + `canonicalize_reference/4`; see `28-02-SUMMARY.md` for the API contract).
 
-Last session: 2026-05-23 — completed 28-01-PLAN.md (saxy dep + SaxyTree handler). Stopped at: end of Plan 01. Resume file: None (Plan 02 ready).
+Last session: 2026-05-23 — completed 28-02-PLAN.md (exclusive-C14N engine + transform chain; 30/30 c14n tests green). The Task-2 RED test commit was interrupted by a host freeze and committed on resume (`4297274`), preserving RED→GREEN order. Stopped at: end of Plan 02. Resume file: None (Plan 03 ready).
