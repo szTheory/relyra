@@ -3,6 +3,7 @@ defmodule Relyra.Security.XML.PureBeamTest do
 
   alias Relyra.Error
   alias Relyra.Security.XML.PureBeam
+  alias Relyra.Security.XML.SaxyTree
   alias Relyra.Security.XML.SaxyTree.Node
 
   @signature_method "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
@@ -271,6 +272,36 @@ defmodule Relyra.Security.XML.PureBeamTest do
 
       assert details.reason == :invalid_signed_node_handle
     end
+
+    test "an enveloped-signature transform with no resolvable ds:Signature fails closed" do
+      # Trust-path hardening: a Reference requesting the enveloped-signature
+      # transform but whose bound ds:Signature node cannot be resolved MUST fail
+      # closed — never serialize-without-pruning (which would leave signature
+      # material in the canonical bytes, a fail-open on the auth path).
+      {:ok, %Node{} = node} = SaxyTree.parse("<Assertion ID='a1'><Body>x</Body></Assertion>")
+
+      handle = %{
+        xml_id: "a1",
+        xpath: "/Response/Assertion[1]",
+        signed_xml: "<Assertion/>",
+        node: node,
+        signature_node: nil,
+        transforms_node:
+          parse_transforms(
+            "<Transforms><Transform Algorithm='http://www.w3.org/2000/09/xmldsig#enveloped-signature'/></Transforms>"
+          )
+      }
+
+      assert {:error, %Error{type: :canonicalization_failed, details: details}} =
+               PureBeam.canonicalize(handle)
+
+      assert details.reason == :enveloped_signature_unresolved
+    end
+  end
+
+  defp parse_transforms(xml) do
+    {:ok, node} = SaxyTree.parse(xml)
+    node
   end
 
   defp base_parsed_doc(overrides) do

@@ -28,6 +28,11 @@ defmodule Relyra.Security.XML.PureBeam do
 
   @default_opts [max_bytes: 1_048_576]
 
+  # The enveloped-signature transform URI (XMLDSig §6.6.4). Used only to guard
+  # the canonicalize/2 fail-closed path: if a Reference requests it but the bound
+  # ds:Signature node is unresolved, refuse rather than serialize-without-pruning.
+  @enveloped_signature "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
+
   @impl true
   def parse_safely(xml, opts \\ [])
 
@@ -292,17 +297,35 @@ defmodule Relyra.Security.XML.PureBeam do
     transform_uris = C14N.transform_uris(transforms_node)
     prefix_list = C14N.prefix_list_from_transforms(transforms_node)
 
-    case C14N.canonicalize_reference(node, transform_uris, signature_node, prefix_list: prefix_list) do
-      {:ok, canonical_bytes} ->
-        {:ok,
-         %{
-           canonical_xml: canonical_bytes,
-           xml_id: Map.get(handle, :xml_id),
-           xpath: Map.get(handle, :xpath)
-         }}
+    cond do
+      # Fail-closed hardening (trust path): a Reference that requests the
+      # enveloped-signature transform but whose bound ds:Signature node cannot be
+      # resolved MUST NOT serialize-without-pruning — that would leave signature
+      # material in the canonical bytes (a fail-OPEN on the auth path). The C14N
+      # engine treats a nil signature subtree as "no prune", so guard here.
+      @enveloped_signature in transform_uris and not is_struct(signature_node, Node) ->
+        {:error,
+         Error.new(
+           :canonicalization_failed,
+           "Signed node handle could not be canonicalized",
+           %{reason: :enveloped_signature_unresolved}
+         )}
 
-      {:error, %Error{} = error} ->
-        {:error, error}
+      true ->
+        case C14N.canonicalize_reference(node, transform_uris, signature_node,
+               prefix_list: prefix_list
+             ) do
+          {:ok, canonical_bytes} ->
+            {:ok,
+             %{
+               canonical_xml: canonical_bytes,
+               xml_id: Map.get(handle, :xml_id),
+               xpath: Map.get(handle, :xpath)
+             }}
+
+          {:error, %Error{} = error} ->
+            {:error, error}
+        end
     end
   end
 
