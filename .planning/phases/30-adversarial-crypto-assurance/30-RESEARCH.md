@@ -442,17 +442,17 @@ Run `mix relyra.conformance` (regen) before running `mix ci.security` (which `--
 | A4 | `Jason` is reliably available in `:test` (transitive) for `conformance_fixtures.ex`. | Standard Stack | VERY LOW — `mix.lock:13` pins jason 1.4.5 via credo/sobelow/ecto/req; the existing conformance tests already pass using it. |
 | A5 | The ECDSA fail-closed assertion should be carried into the gated suite as a 6th assertion (not a 6th category). | Validation Architecture | LOW — discretionary recommendation; if the planner disagrees, ECDSA stays proven in `signature_crypto_test.exs` but the planner should then ensure THAT file is also gated, else `:unsupported_signature_algorithm` falls outside `ci.security`. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Which file location for the new suite — `test/security/xml/` or `test/relyra/security/`?**
    - What we know: Both conventions exist; `corpus_security_test.exs` lives in `test/security/xml/`, `signature_crypto_test.exs` in `test/relyra/security/`. CONTEXT.md leaves this to discretion (D-08 Discretion).
-   - What's unclear: Which the executor prefers.
    - Recommendation: `test/security/xml/adversarial_crypto_test.exs` — colocated with the other security-corpus suites that `ci.security` names, easiest to add to the alias line.
+   - **RESOLVED:** Plan 30-02 adopts `test/security/xml/adversarial_crypto_test.exs` (the recommended location).
 
 2. **Drive the four crypto categories through `FakeIdP.sign` end-to-end, or through `XmldsigSigner` directly?**
    - What we know: D-01 Discretion + Specific Ideas prefer FakeIdP end-to-end "where practical" so the suite literally exercises ASSUR-02. Both go through the SAME signing path post-promotion.
-   - What's unclear: Whether base64-decoding FakeIdP's output (`Base.encode64`, `fake_idp.ex:72`) adds friction vs calling the signer directly.
    - Recommendation: Positive control + at least one negative through `FakeIdP.sign` end-to-end (Base.decode64 the output, then `PureBeam.parse_safely`); the forged/wrong-key/tampered/c14n-differential negatives can use `XmldsigSigner.signed_response/1` directly (cleaner mutation seam via `tamper_name_id:` and direct `response_xml` access). This satisfies "literally exercises ASSUR-02" without contorting every recipe through base64.
+   - **RESOLVED:** Plan 30-02 drives the positive control + ≥1 negative through `FakeIdP.sign` end-to-end, with the remaining negatives mutated via `XmldsigSigner.signed_response/1` directly (the recommended split).
 
 ## Environment Availability
 
