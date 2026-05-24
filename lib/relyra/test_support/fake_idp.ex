@@ -69,10 +69,21 @@ defmodule Relyra.TestSupport.FakeIdP do
     ensure_not_prod!()
     ensure_keypair!()
     xml = response_xml(builder, opts)
-    Base.encode64(xml, padding: false)
+    %{response_xml: signed_xml} = Relyra.TestSupport.XmldsigSigner.sign_response(xml)
+    Base.encode64(signed_xml, padding: false)
   end
 
   def sign(opts, extra_opts) when is_list(opts), do: build_response(opts) |> sign(extra_opts)
+
+  @doc """
+  The self-signed certificate PEM (a single-element cert chain) callers must
+  trust to accept a `FakeIdP.sign/2`-produced Response. Derived from
+  `keypair/0` via the promoted genuine signer (D-03), so configuring a
+  connection's `cert_chain` / `idp_certificates` with this PEM lets the
+  verifier accept FakeIdP's real signatures.
+  """
+  @spec self_signed_cert_pem() :: String.t()
+  defdelegate self_signed_cert_pem(), to: Relyra.TestSupport.XmldsigSigner
 
   @spec keypair() :: term()
   def keypair do
