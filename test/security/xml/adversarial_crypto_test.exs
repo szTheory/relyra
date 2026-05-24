@@ -127,6 +127,57 @@ defmodule Relyra.Security.AdversarialCryptoTest do
   end
 
   # ---------------------------------------------------------------------------
+  # C14N-DIFFERENTIAL (D-06, T-30-05) — the genuinely-NEW case.
+  #
+  # Mint a genuine doc, then apply a post-signing C14N-PRESERVED mutation into
+  # the signed <Assertion> subtree WITHOUT recomputing the digest/signature
+  # (mirroring the signer's `maybe_tamper_name_id` String.replace seam). The
+  # mutation MUST change the recomputed exclusive-C14N digest so the Reference
+  # digest no longer matches → :digest_mismatch.
+  #
+  # CHOSEN mutation: add a non-namespace attribute (`Foo="bar"`) to the
+  # <Assertion ID="assertion-1"> apex. PROVENANCE Pitfall 8: C14N sorts
+  # attributes by resolved-URI-then-local but NEVER drops them, so an added
+  # non-namespace attribute is unambiguously C14N-PRESERVED (it appears in the
+  # canonical output) → the recomputed digest differs.
+  #
+  # AVOID-list mutations (attribute reordering / unused-ns decl / empty-element
+  # expansion / text re-escaping) are deliberately NOT used — C14N normalizes
+  # them away, leaving the digest UNCHANGED, which would falsely pass {:ok}.
+  # The assertion pins :digest_mismatch EXACTLY so a no-op surfaces as a {:ok}
+  # failure immediately.
+  #
+  # No XSW-shaped input (genuine sig over assertion-A + injected attacker
+  # assertion-B) is constructed — that would brush WR-03 (out of phase, D-10).
+  # ---------------------------------------------------------------------------
+
+  describe "c14n-differential tamper (ASSUR-01, D-06, T-30-05)" do
+    test "added non-namespace attribute on <Assertion> apex → :digest_mismatch" do
+      signed = XmldsigSigner.signed_response()
+
+      # Post-signing C14N-PRESERVED mutation: add `Foo="bar"` to the apex.
+      # `global: false` so only the apex <Assertion ID="assertion-1"> is touched.
+      mutated_xml =
+        String.replace(
+          signed.response_xml,
+          ~s(<Assertion ID="assertion-1">),
+          ~s(<Assertion ID="assertion-1" Foo="bar">),
+          global: false
+        )
+
+      # Guard: the mutation actually landed (a no-op replace would silently make
+      # this test assert against the un-mutated, still-valid doc).
+      assert mutated_xml =~ ~s(<Assertion ID="assertion-1" Foo="bar">)
+      refute mutated_xml == signed.response_xml
+
+      {:ok, parsed_doc} = PureBeam.parse_safely(mutated_xml, [])
+
+      assert {:error, %Error{type: :digest_mismatch}} =
+               Signature.verify(parsed_doc, connection(), signed.cert_chain)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # Local helpers (copied verbatim from the analog, signature_crypto_test.exs).
   # ---------------------------------------------------------------------------
 
