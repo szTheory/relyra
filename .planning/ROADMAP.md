@@ -94,7 +94,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 | 25. Conformance and CVE Regression Fixtures | v1.0 | 3/3 | Complete | 2026-05-07 |
 | 26. Security Audit Preparation and Remediation | v1.0 | 3/3 | Complete | 2026-05-08 |
 | 27. Adopter Onboarding Polish and Case Studies | v1.0 | 3/3 | Complete | 2026-05-08 |
-| 28. Real C14N parser foundation | v1.1 | 1/4 | In Progress|  |
+| 28. Real C14N parser foundation | v1.1 | 4/4 | Complete    | 2026-05-24 |
 | 29. Cryptographic XMLDSig verification | v1.1 | TBD | Not started | - |
 | 30. Adversarial crypto assurance | v1.1 | TBD | Not started | - |
 | 31. Disclosure and docs honesty | v1.1 | TBD | Not started | - |
@@ -115,7 +115,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 
 ### Phases
 
-- [ ] **Phase 28: Real C14N parser foundation** — Add the `saxy`-backed parse tree + exclusive C14N 1.0 behind the existing `Relyra.Security.XML` seam, replacing regex string-scanning, preserving callback compatibility and the hardened entity/size/DOCTYPE guards. (SIGV-03)
+- [x] **Phase 28: Real C14N parser foundation** — Add the `saxy`-backed parse tree + exclusive C14N 1.0 behind the existing `Relyra.Security.XML` seam, replacing regex string-scanning, preserving callback compatibility and the hardened entity/size/DOCTYPE guards. (SIGV-03) (completed 2026-05-24)
 - [ ] **Phase 29: Cryptographic XMLDSig verification** — Wire `:public_key.verify` of canonicalized `SignedInfo` against the configured IdP cert + `DigestValue` recompute/compare into `do_verify`, applied to both `verify/4` and `verify_metadata_root/4`; reject forged, tampered, and wrong-key inputs with typed errors. (SIGV-01, SIGV-02, SIGV-04)
 - [ ] **Phase 30: Adversarial crypto assurance** — Make `FakeIdP` perform real cryptographic signing and add the permanent adversarial corpus (forged-sig / tampered-content / wrong-key / digest-mismatch / c14n-differential REJECTED + positive control), wired into `corpus_gate` + the conformance manifest, green under `mix ci.security`. (ASSUR-01, ASSUR-02)
 - [ ] **Phase 31: Disclosure and docs honesty** — Correct the security docs that overstate the guarantee, record the finding in the ledger, and prepare the GHSA + CVE + CHANGELOG security note marking hex `1.0.0`/`1.1.0` affected (publish at fixed-release ship time). (DISC-01, DISC-02)
@@ -137,9 +137,9 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 **Plans**: 4 plans
 
   - [x] 28-01-PLAN.md — Add non-optional saxy dep (A1 checkpoint) + Saxy.Handler tree builder with in-scope ns stack + 3 infoset-normalization layers
-  - [ ] 28-02-PLAN.md — Hand-rolled exclusive C14N 1.0 engine (visibly-utilized rendering, sort, dual escaping, empty-element, no trailing newline) + enveloped-sig transform / PrefixList / transform allowlist
-  - [ ] 28-03-PLAN.md — Re-wire pure_beam seam onto the saxy tree (retire regex, re-derive all fields, port guards, additive :parse_tree, node binding D-10, canonicalize delegates to C14N)
-  - [ ] 28-04-PLAN.md — Mint + commit golden-byte oracle (lxml/xmlsec1, D-12) + GATE-02 positive byte-equality (D-11) + node-binding assertion
+  - [x] 28-02-PLAN.md — Hand-rolled exclusive C14N 1.0 engine (visibly-utilized rendering, sort, dual escaping, empty-element, no trailing newline) + enveloped-sig transform / PrefixList / transform allowlist
+  - [x] 28-03-PLAN.md — Re-wire pure_beam seam onto the saxy tree (retire regex, re-derive all fields, port guards, additive :parse_tree, node binding D-10, canonicalize delegates to C14N)
+  - [x] 28-04-PLAN.md — Mint + commit golden-byte oracle (lxml/xmlsec1, D-12) + GATE-02 positive byte-equality (D-11) + node-binding assertion
 
 #### Phase 29: Cryptographic XMLDSig verification
 

@@ -3,33 +3,33 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
 status: executing
-last_updated: "2026-05-23T23:30:00.000Z"
-last_activity: 2026-05-23 -- Phase 28 plans 4/4 done + post-phase cleanup (deps CVEs fixed, ci.security GREEN, mix test 486/0, tree clean, embargo memory relaxed)
+last_updated: "2026-05-24T10:32:54.236Z"
+last_activity: 2026-05-24 -- Phase 28 verified (UAT 8/8, suites re-run green, SECURITY threats_open 0) and marked complete; 1/4 v1.1 phases done
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
   completed_plans: 4
-  percent: 100
+  percent: 25
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-05-23)
+See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 28 — real-c14n-parser-foundation
+**Current focus:** Phase 29 — cryptographic-xmldsig-verification
 
 ## Current Position
 
-Phase: 28 (real-c14n-parser-foundation) — ALL PLANS COMPLETE (pending /gsd:verify-phase)
-Plan: 4 of 4 done
-Status: Plans 01–04 complete. SIGV-03 correctness PROVEN (canonicalize/2 byte-equal to libxml2 golden, 887 bytes). Caveat: milestone-level `mix ci.security` is red ONLY at deps.audit (4 pre-existing dependency CVEs — postgrex/plug/phoenix/decimal — needing version bumps, outside Phase 28 scope).
-Last activity: 2026-05-23 -- Completed Phase 28 Plan 04
+Phase: 29 (cryptographic-xmldsig-verification) — Ready to plan
+Plan: Not started
+Status: Phase 28 COMPLETE and verified — SIGV-03 PROVEN (canonicalize/2 byte-equal to libxml2 golden, 887 bytes); UAT 8/8 (suites re-run green 2026-05-24), 28-SECURITY.md verified (threats_open 0). Phase 29 rests on this proven canonical-bytes precondition: wire `:public_key.verify(SignedInfo)` against the configured IdP cert + `DigestValue` recompute/compare into `do_verify` (both `verify/4` and `verify_metadata_root/4`). First follow-up to fold in: the mixed-content / inter-element-whitespace C14N gap (fail-safe; see Tracked Follow-ups).
+Last activity: 2026-05-24 -- Phase 28 verified + transitioned
 
-Milestone progress: [----------] 0/4 phases complete (Phase 28: [██████████] 4/4 plans, pending phase verification)
+Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 next)
 
 ## Performance Metrics
 
@@ -110,8 +110,8 @@ Deferred to the next milestone ("Advanced Federation"): encrypted assertions, co
 
 ## Session Continuity
 
-Post-phase-28 cleanup DONE (2026-05-23): dependency CVEs fixed, `mix ci.security` GREEN, full `mix test` 486/0, working tree clean, embargo memory relaxed. Phase 28 plans 4/4 complete; SIGV-03 PROVEN.
+Phase 28 VERIFIED + COMPLETE (2026-05-24): UAT 8/8 (all deterministic security suites re-run green — compile clean, 77 XML-security tests, seam_contract 3, gate02_c14n golden-byte oracle 2, all 0 failures), 28-SECURITY.md verified (threats_open 0). ROADMAP/REQUIREMENTS/STATE marked complete; SIGV-03 PROVEN and validated. Earlier post-phase cleanup (2026-05-23): dependency CVEs fixed, `mix ci.security` GREEN, full `mix test` 486/0, embargo memory relaxed.
 
-Next GSD command (after context clear): `/gsd:verify-phase 28` to formally verify the phase goal, then `/gsd:plan-phase 29` (XMLDSig `:public_key.verify` + DigestValue recompute), which rests on the PROVEN canonical-bytes precondition. **First follow-up to fold in:** the mixed-content C14N fix (see Tracked Follow-ups) — `/gsd:quick` or within Phase 29 planning.
+Next GSD command (after context clear): `/gsd:plan-phase 29` (XMLDSig `:public_key.verify(SignedInfo)` against configured IdP cert + `DigestValue` recompute/compare, both `verify/4` and `verify_metadata_root/4`), which rests on the PROVEN canonical-bytes precondition. **First follow-up to fold in:** the mixed-content C14N fix (see Tracked Follow-ups) — `/gsd:quick` or within Phase 29 planning.
 
-Last session: 2026-05-23 — completed all of Phase 28 (28-01 saxy → 28-02 exclusive-C14N → 28-03 seam re-wiring → 28-04 golden-byte oracle proof; canonicalize/2 byte-equal to libxml2, 887 bytes, gate02_c14n green), then post-phase cleanup (deps CVEs, ci.security green, 486/0, jtbd docs, memory). Resume file: None.
+Last session: 2026-05-24 — finalized Phase 28 via /gsd:verify-work: re-ran the 8 deterministic checkpoints (all green), then ran the transition (ROADMAP [x], SIGV-03 → Complete, STATE → Phase 29, PROJECT evolved). Resume file: None.

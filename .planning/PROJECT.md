@@ -81,12 +81,15 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - ✓ **SEC-REVIEW-01** — External security audit completion and remediation readiness — v1.0 (Phase 26 verified 2026-05-08)
 - ✓ **DOCS-01** — Adopter case studies and frictionless Day-1 experience documentation — v1.0 (Phase 27 verified 2026-05-08)
 
+**v1.1 (in progress):**
+- ✓ **SIGV-03** — exclusive XML canonicalization (C14N 1.0 exclusive) over a real `saxy` parse tree behind the `Relyra.Security.XML` seam, replacing regex string-scanning; canonical bytes proven byte-for-byte against an independent libxml2/xmlsec1 golden oracle (887 bytes) — v1.1 (Phase 28; SIGV-03 verified 2026-05-24, UAT 8/8, SECURITY threats_open 0)
+
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
 **v1.1 — Verify the Trust Path** (see `.planning/REQUIREMENTS.md`):
-- **SIGV-01..04** — cryptographic XMLDSig verification (signature math, digest, exclusive C14N, metadata-root parity)
+- **SIGV-01 / SIGV-02 / SIGV-04** — cryptographic XMLDSig verification (signature math, digest recompute/compare, metadata-root parity) — Phase 29. (**SIGV-03**, exclusive C14N, ✓ shipped Phase 28 — see Validated.)
 - **ASSUR-01..02** — adversarial crypto corpus rejected + positive control; FakeIdP real signing
 - **DISC-01..02** — security-doc honesty correction; GHSA/CVE/advisory prepared for the fixed release
 
@@ -167,6 +170,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 | **v0.2: closure-phase pattern (12 → 09's verification, 13 → 10's, 14 → 11's)** | When an audit surfaces verification orphans, prefer producing missing verification artifacts over re-opening implementation. Cleaner audit trail; smaller blast radius; manual sign-off captured per artifact. | ✓ Good (closed all three v0.2 audit gaps without regressions; pattern worth carrying forward) |
 | **v0.2 tech debt accepted at close: `MappingCommands.append_audit/8` lacks explicit `repo.rollback/1`** | Modern Ecto's `transact/1` auto-rolls on `{:error, _}`; legacy adapter fallback uses `repo.transaction/1` where audit failure could commit mapping rows. Other three co-commit sites use the explicit pattern. | ⚠️ Revisit (track for v0.3 cleanup; not reproducible against current dep set) |
 | **v0.5: closure-phase pattern extended (21.1 → INT-01 BLOCKER closure, 21.2 → audit-gap + scope-rescope closure)** | When an audit surfaces a BLOCKER + scope drift, prefer producing closure phases over re-opening implementation. Phase 21.1 closed the security-adjacent BLOCKER; Phase 21.2 closed the doc/scope gaps. Cleaner audit trail; smaller blast radius; milestone audit re-runs cleanly. | ✓ Good (closed v0.5 audit gaps without re-opening Phase 20 or Phase 21; pattern reusable for v0.6+) |
+| **v1.1 Phase 28: pure-BEAM exclusive-C14N proven correct via a committed golden-byte oracle** | ADR-0001 mandated pure-BEAM canonicalization; correctness on the auth boundary demanded independent proof, not self-assertion. A `saxy` parse tree replaced regex string-scanning (one trust path, D-04), and the hand-rolled C14N engine reproduces libxml2/xmlsec1's 887-byte exclusive-C14N output byte-for-byte (cross-checked across two libxml2 builds; the Elixir engine is the third agreeing implementation). CI stays pure-Elixir against committed bytes (D-12); the verified signature is bound to the exact node consumed (D-10, anti-XSW). | ✓ Good (Phase 28; SIGV-03 verified 2026-05-24. Known fail-safe limitation: mixed-content / inter-element-whitespace mis-canonicalizes → rejection never bypass; tracked as the first Phase 29 follow-up) |
 
 ## Evolution
 
@@ -186,4 +190,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-23 — v1.1 "Verify the Trust Path" started: P0 fix for non-cryptographic signature verification (confirmed auth bypass in hex 1.0.0/1.1.0).*
+*Last updated: 2026-05-24 after Phase 28 — SIGV-03 shipped (real saxy parse tree + exclusive C14N proven byte-for-byte vs libxml2). 1/4 v1.1 phases complete; next is Phase 29 (cryptographic XMLDSig verify — the actual auth-bypass close).*

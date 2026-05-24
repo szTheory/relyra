@@ -14,7 +14,7 @@
 
 - [ ] **SIGV-01** — Response and assertion XMLDSig signatures are cryptographically verified: the canonicalized `SignedInfo` is checked with `:public_key.verify` against the **configured** IdP certificate's public key (never document `KeyInfo`), and any forged or invalid signature is rejected with a typed `%Relyra.Error{}`.
 - [ ] **SIGV-02** — The signed `Reference`'s `DigestValue` is recomputed over the canonicalized, enveloped-signature-transformed referenced element and compared; any content tampering (e.g. an altered `NameID`) is rejected even when the `SignatureValue` is otherwise well-formed.
-- [ ] **SIGV-03** — Verification uses correct **exclusive XML canonicalization (C14N 1.0 exclusive)** over a real parse tree behind the `Relyra.Security.XML` seam (the `saxy`-backed parser path ADR-0001 specified), with no parser/canonicalization differentials and the verified signature bound to the exact node consumed.
+- [x] **SIGV-03** — Verification uses correct **exclusive XML canonicalization (C14N 1.0 exclusive)** over a real parse tree behind the `Relyra.Security.XML` seam (the `saxy`-backed parser path ADR-0001 specified), with no parser/canonicalization differentials and the verified signature bound to the exact node consumed.
 - [ ] **SIGV-04** — Metadata-root signatures (`EntityDescriptor`/`EntitiesDescriptor`) are cryptographically verified using the same primitive (signature math, not fingerprint-pinning alone), preserving operator-pinned trust (`TrustAnchor`) as defense-in-depth.
 
 ### Adversarial Assurance (ASSUR)
@@ -49,7 +49,7 @@ REQ-ID → Phase mapping for milestone v1.1 (every v1.1 requirement maps to exac
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SIGV-03 | Phase 28 — Real C14N parser foundation | Pending |
+| SIGV-03 | Phase 28 — Real C14N parser foundation | Complete |
 | SIGV-01 | Phase 29 — Cryptographic XMLDSig verification | Pending |
 | SIGV-02 | Phase 29 — Cryptographic XMLDSig verification | Pending |
 | SIGV-04 | Phase 29 — Cryptographic XMLDSig verification | Pending |
