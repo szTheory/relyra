@@ -112,6 +112,14 @@ None — no new security-relevant surface. The row exercises an existing fail-cl
 - The corpus_gate + conformance-manifest leg of ASSUR-01 is satisfied and gated. The complementary `:digest_mismatch` crypto proof + `ci.security` alias wiring are owned by Plan 02 (adversarial_crypto suite + FakeIdP real signing).
 - No blockers introduced. The orchestrator owns STATE.md / ROADMAP.md / REQUIREMENTS.md updates after the wave completes.
 
+## Self-Check: PASSED
+
+- FOUND: `priv/security_corpus.json` (c14n-differential-rejection-002 row present)
+- FOUND: `CONFORMANCE.md` (regenerated, fixtures pinned 8)
+- FOUND: `.planning/phases/30-adversarial-crypto-assurance/30-03-SUMMARY.md`
+- FOUND: commit `c7ec6a2` (Task 1)
+- FOUND: commit `2ed41c1` (Task 2)
+
 ---
 *Phase: 30-adversarial-crypto-assurance*
 *Completed: 2026-05-24*
