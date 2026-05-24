@@ -42,11 +42,27 @@ defmodule Relyra.Security.XML.SaxyTree do
                                                    # in-scope namespace map: prefix => URI. The default namespace
                                                    #   uses the "" key. Inherited from ancestors + this element's
                                                    #   own declarations (layer #1).
-        children: [t()],                           # child element nodes in document order
-        text:     String.t()                       # accumulated character + CDATA content, line-ending
-                                                   #   normalized (layer #3), in document order; NOT
-                                                   #   whitespace-collapsed.
+        content:  [{:text, String.t()} | {:element, t()}],
+                                                   # ORDERED document-order content (D-09): interleaved text
+                                                   #   segments and child elements in source order, e.g.
+                                                   #   `[{:text, "x"}, {:element, %Node{}}, {:text, "y"}]`. This is
+                                                   #   the SINGLE SOURCE OF TRUTH for document order, consumed by
+                                                   #   the exclusive-C14N engine (Plan 02) so text and child
+                                                   #   elements canonicalize in source order (mixed content /
+                                                   #   inter-element whitespace). Text segments are line-ending
+                                                   #   normalized (layer #3), not whitespace-collapsed.
+        children: [t()],                           # DERIVED view: the `{:element, _}` segments of `content`, in
+                                                   #   document order (kept for downstream helpers; unchanged shape).
+        text:     String.t()                       # DERIVED view: concatenation of the `{:text, _}` segments of
+                                                   #   `content`, line-ending normalized (layer #3), in document
+                                                   #   order; NOT whitespace-collapsed.
       }
+
+  > **`content` vs `children`/`text` (D-09):** `content` is the ordered single
+  > source of truth; `children` and `text` are DERIVED views over it (the element
+  > segments and the concatenated text segments respectively), kept byte-identical
+  > to their pre-D-09 values so downstream helpers (`Relyra.Security.XML.PureBeam`
+  > field derivation) need no change.
   """
 
   @behaviour Saxy.Handler
@@ -65,6 +81,7 @@ defmodule Relyra.Security.XML.SaxyTree do
               local: nil,
               attrs: [],
               ns: %{},
+              content: [],
               children: [],
               text: ""
 
@@ -74,6 +91,7 @@ defmodule Relyra.Security.XML.SaxyTree do
             local: String.t(),
             attrs: [{String.t(), String.t()}],
             ns: %{optional(String.t()) => String.t()},
+            content: [{:text, String.t()} | {:element, t()}],
             children: [t()],
             text: String.t()
           }
@@ -119,6 +137,9 @@ defmodule Relyra.Security.XML.SaxyTree do
       local: local,
       attrs: Enum.map(attrs, fn {name, value} -> {name, normalize_attr_value(value)} end),
       ns: Map.merge(parent_ns, own_ns),
+      # ORDERED document-order content (D-09), head-first during the walk;
+      # reversed and projected to :children/:text in finalize_node/1.
+      content: [],
       children: [],
       text: ""
     }
@@ -138,7 +159,9 @@ defmodule Relyra.Security.XML.SaxyTree do
 
     case rest do
       [%Node{} = parent | tail] ->
-        updated_parent = %Node{parent | children: [finished | parent.children]}
+        # Prepend to the head-accumulated ORDERED content (D-09); :children is a
+        # derived view recomputed once the parent finalizes.
+        updated_parent = %Node{parent | content: [{:element, finished} | parent.content]}
         {:ok, %{state | stack: [updated_parent | tail]}}
 
       [] ->
@@ -151,14 +174,24 @@ defmodule Relyra.Security.XML.SaxyTree do
 
   # --- internal helpers -----------------------------------------------------
 
-  # Children are accumulated head-first during the walk; restore document order
-  # once the element is complete.
-  defp finalize_node(%Node{children: children} = node) do
-    %Node{node | children: Enum.reverse(children)}
+  # Ordered `content` is accumulated head-first during the walk (text segments and
+  # child elements interleaved in reverse document order); restore document order
+  # once the element is complete, then PROJECT the derived views (`:children` =
+  # the `{:element, _}` segments, `:text` = the concatenation of `{:text, _}`
+  # segments) so both stay byte-identical to their pre-D-09 values (D-09).
+  defp finalize_node(%Node{content: content} = node) do
+    ordered = Enum.reverse(content)
+
+    children = for {:element, child} <- ordered, do: child
+    text = ordered |> Enum.flat_map(fn {:text, t} -> [t]; _ -> [] end) |> IO.iodata_to_binary()
+
+    %Node{node | content: ordered, children: children, text: text}
   end
 
+  # Accumulate the text segment into the head-first ORDERED `content` list (D-09);
+  # the flat `:text` derived view is recomputed from `content` in finalize_node/1.
   defp append_text(%{stack: [%Node{} = node | rest]} = state, text) do
-    updated = %Node{node | text: node.text <> normalize_line_endings(text)}
+    updated = %Node{node | content: [{:text, normalize_line_endings(text)} | node.content]}
     %{state | stack: [updated | rest]}
   end
 

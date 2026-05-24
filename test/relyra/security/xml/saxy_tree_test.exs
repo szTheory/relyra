@@ -214,4 +214,61 @@ defmodule Relyra.Security.XML.SaxyTreeTest do
       assert child_qnames == ["First", "Second", "Third"]
     end
   end
+
+  describe "ordered content (D-09 document order)" do
+    test "mixed content interleaves text and child elements in source order" do
+      xml = ~s(<a>x<b/>y</a>)
+
+      {:ok, root} = parse(xml)
+
+      assert [{:text, "x"}, {:element, %Node{local: "b"} = b}, {:text, "y"}] = root.content
+      assert b.qname == "b"
+
+      # :children and :text remain DERIVED views over :content.
+      assert Enum.map(root.children, & &1.local) == ["b"]
+      assert root.text == "xy"
+    end
+
+    test "content is empty for a self-closing element with no text or children" do
+      xml = ~s(<Assertion/>)
+      {:ok, root} = parse(xml)
+
+      assert root.content == []
+      assert root.children == []
+      assert root.text == ""
+    end
+
+    test ":children is exactly the {:element, _} segments of :content, in document order" do
+      xml = """
+      <Response>
+        <First/>
+        <Second/>
+        <Third/>
+      </Response>
+      """
+
+      {:ok, root} = parse(xml)
+
+      elements_from_content = for {:element, child} <- root.content, do: child
+      assert elements_from_content == root.children
+      assert Enum.map(root.children, & &1.qname) == ["First", "Second", "Third"]
+    end
+
+    test ":text is exactly the concatenation of the {:text, _} segments of :content" do
+      xml = ~s(<Note>foo<Inner/>bar</Note>)
+
+      {:ok, root} = parse(xml)
+
+      text_from_content =
+        root.content
+        |> Enum.flat_map(fn
+          {:text, t} -> [t]
+          _ -> []
+        end)
+        |> Enum.join()
+
+      assert text_from_content == root.text
+      assert root.text == "foobar"
+    end
+  end
 end
