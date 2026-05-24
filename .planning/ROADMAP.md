@@ -191,4 +191,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
   2. The finding is recorded in the findings ledger with a disposition (confirmed → fixed in v1.1 / hex 1.2.0).
   3. A GHSA draft + requested CVE + CHANGELOG security note are prepared, marking hex `1.0.0`/`1.1.0` as affected, staged for publication at the fixed release (fix-first: not published before the fix ships).
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+  - [ ] 31-01-PLAN.md — DISC-01: correct the three security docs to the real post-fix primitive + replace the findings-ledger placeholder with the Critical RELYRA-2026-001 row + generated-evidence inspect-then-decide; closing `mix ci.security` full lane
+  - [ ] 31-02-PLAN.md — DISC-02: stage one checked-in GHSA advisory draft under docs/advisories/ (GHSA body + CVE-request subsection + exact CHANGELOG note prose), fix-first (no publication)
