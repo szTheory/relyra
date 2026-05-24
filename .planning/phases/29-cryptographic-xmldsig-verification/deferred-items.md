@@ -1,5 +1,16 @@
 # Phase 29 — Deferred Items
 
+## ✅ RESOLVED — Existing-test triage (Plan 04, 2026-05-24)
+
+**Status:** RESOLVED in Plan 04 (commit `08fbc66`). All 10 rows below were
+triaged by re-pointing each structure-only fixture at the genuine D-11 signer
+(`Relyra.TestSupport.XmldsigSigner`) so its `{:ok}`/typed-rejection now holds for
+the RIGHT reason (genuine RSA signature + real digest). No test was deleted, no
+verifier weakened, no `--warnings-as-errors` relaxation. Full
+`mix test --warnings-as-errors` = **524/0** (phase gate met). Trust-gate tests
+(`signed_node_binding_test.exs`, `signature_test.exs`) left untouched and green.
+See `29-04-SUMMARY.md`.
+
 ## Existing-test triage (deferred to Plan 04, D-11 reusable signer)
 
 **Logged by:** Plan 03 execution (2026-05-24)

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
 status: executing
-last_updated: "2026-05-24T13:09:16.697Z"
+last_updated: "2026-05-24T13:20:48.638Z"
 last_activity: 2026-05-24
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 25
 ---
 
@@ -25,11 +25,11 @@ See: `.planning/PROJECT.md` (updated 2026-05-24)
 ## Current Position
 
 Phase: 29 (cryptographic-xmldsig-verification) — EXECUTING
-Plan: 3 of 5 complete (29-01 + 29-02 + 29-03 done); next up Plan 04
+Plan: 4 of 5 complete (29-01 + 29-02 + 29-03 + 29-04 done); next up Plan 05
 Status: Ready to execute
-Last activity: 2026-05-24 — 29-03 COMPLETE. Real XMLDSig crypto wired into the verified_signed_node [candidate] arm (D-01 published-hex auth-bypass site CLOSED): :public_key.verify of the canonicalized SignedInfo against the configured cert_chain RSA key + constant-time DigestValue recompute over the canonicalized referenced element. cert_chain threaded do_verify/4 -> verify_algorithms_and_candidates/4 -> verified_signed_node/5. Two new error atoms (:digest_mismatch, :unsupported_signature_algorithm). Plan-03 lanes 100% green (signature_crypto 14/0, security regression 161/0, C14N golden 102/0, compile --warnings-as-errors clean). Genuine in-test signer positive smoke proves the wiring reaches the crypto. Full-suite blast radius = 10 structure-only-{:ok} end-to-end tests now correctly fail closed — existing-test triage DEFERRED to Plan 04 (owns D-11 reusable signer), logged in deferred-items.md. Commits: 4c3c218 (RED test), 2e45689 (GREEN crypto).
+Last activity: 2026-05-24 — 29-04 COMPLETE. Built the D-11 reusable genuine XMLDSig signer (Relyra.TestSupport.XmldsigSigner): reuses FakeIdP's RSA-2048 keypair + the verifier's own C14N engine (self-parses its emitted XML to bind the exact Assertion/SignedInfo nodes the verifier binds — D-12, anti-divergent-signer). POSITIVE control PROVEN (genuine Response → {:ok, %SignedNode{}}, the verifier is not an always-reject stub); wrong-key → :invalid_signature; tampered-NameID → :digest_mismatch. Added sign_response/1 (re-sign an existing Response in place). All 10 structure-only {:ok} tests triaged by re-pointing at the genuine signer (consume_response_pipeline x7, sp_conformance, acs_controller, telemetry) — no test deleted, no verifier weakened, no --warnings-as-errors relaxation. Full mix test --warnings-as-errors = 524/0 (phase gate met). SIGV-01/SIGV-02 marked complete. Commits: c45864f (signer), 531a4ae (positive+negatives), 08fbc66 (triage).
 
-Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 in progress, 3/5 plans)
+Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 in progress, 4/5 plans)
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29
 | 29 | 01 | ~58m | 3 | 7 (2 created, 5 modified) |
 | 29 | 02 | 2m | 2 | 4 (2 created, 2 modified) |
 | Phase 29 P03 | 24m | 2 tasks | 5 files |
+| Phase 29 P04 | ~32min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -127,7 +128,7 @@ Phase 28 VERIFIED + COMPLETE (2026-05-24): UAT 8/8 (all deterministic security s
 
 Next GSD command (after context clear): `/gsd:plan-phase 29` (XMLDSig `:public_key.verify(SignedInfo)` against configured IdP cert + `DigestValue` recompute/compare, both `verify/4` and `verify_metadata_root/4`), which rests on the PROVEN canonical-bytes precondition. **First follow-up to fold in:** the mixed-content C14N fix (see Tracked Follow-ups) — `/gsd:quick` or within Phase 29 planning.
 
-Last session: 2026-05-24T13:08:01.828Z
+Last session: 2026-05-24T13:20:27.838Z
 
 ## Decisions
 
@@ -138,3 +139,5 @@ Last session: 2026-05-24T13:08:01.828Z
 - [Phase 29-03]: Real :public_key.verify of canonicalized SignedInfo + constant-time DigestValue recompute wired into the verified_signed_node [candidate] arm (D-01 bypass site closed); cert_chain threaded do_verify/4 -> verify_algorithms_and_candidates/4 -> verified_signed_node/5; all pre-existing trust gates still run BEFORE crypto.
 - [Phase 29-03]: public_key_from_cert_chain/1 is @doc-false PUBLIC (reusable fail-closed PEM->RSA pubkey via pkix_decode_cert(:otp) -> element(8) SPKI); every malformed PEM/DER -> :untrusted_certificate, never raises (Pitfall 3). Plan 04 reuses it.
 - [Phase 29-03]: Closing the bypass correctly fails-closed 10 existing end-to-end structure-only-signature {:ok} tests (consume_response x7, conformance, acs, telemetry) — deferred to Plan 04 (owns D-11 reusable signer); logged in deferred-items.md. Plan 03 own lanes 100% green (signature_crypto 14/0, security regression 161/0, C14N golden 102/0).
+- [Phase ?]: [Phase 29-04]: D-11 genuine signer (Relyra.TestSupport.XmldsigSigner) reuses FakeIdP.keypair() + the verifier's own C14N engine and self-parses its emitted XML to bind the exact Assertion/SignedInfo nodes (D-12). Positive control proven: genuine Response -> {:ok, %SignedNode{}}; wrong-key -> :invalid_signature; tampered-NameID -> :digest_mismatch. Added sign_response/1 to re-sign existing Responses in place; all 10 structure-only {:ok} tests triaged by re-pointing at the genuine signer. Full mix test --warnings-as-errors = 524/0 (phase gate met).
+- [Phase ?]: [Phase 29-04]: D-11 genuine signer (Relyra.TestSupport.XmldsigSigner) reuses FakeIdP.keypair plus the verifier own C14N engine and self-parses its emitted XML to bind the exact Assertion/SignedInfo nodes (D-12). Positive control proven: genuine Response verifies ok; wrong-key invalid_signature; tampered-NameID digest_mismatch. Added sign_response/1 to re-sign existing Responses in place; all 10 structure-only ok tests triaged by re-pointing at the genuine signer. Full suite 524/0 (phase gate met).
