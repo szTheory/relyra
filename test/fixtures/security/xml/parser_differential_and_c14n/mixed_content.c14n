@@ -1,0 +1,24 @@
+<Assertion xmlns:md="urn:example:md" ID="assertion-mixed" md:tier="gold">
+    <Issuer>https://idp.example.com/metadata</Issuer>
+    <Subject>
+      <NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">user@example.com</NameID>
+      <SubjectConfirmation>
+        <SubjectConfirmationData NotOnOrAfter="2026-04-24T16:05:00Z" Recipient="https://sp.example.com/saml/acs"></SubjectConfirmationData>
+      </SubjectConfirmation>
+    </Subject>
+    <Conditions NotBefore="2026-04-24T15:58:00Z" NotOnOrAfter="2026-04-24T16:05:00Z">
+      <AudienceRestriction>
+        <Audience>https://sp.example.com/metadata</Audience>
+      </AudienceRestriction>
+    </Conditions>
+    <AuthnStatement SessionIndex="session-mixed">
+      <AttributeStatement>
+        <Attribute Name="email">
+          <AttributeValue>user@example.com</AttributeValue>
+        </Attribute>
+        <Attribute Name="display">
+          <AttributeValue>R&amp;D &lt;café&gt;</AttributeValue>
+        </Attribute>
+      </AttributeStatement>
+    </AuthnStatement>
+  </Assertion>

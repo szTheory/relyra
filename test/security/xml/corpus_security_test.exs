@@ -90,6 +90,38 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
     assert signed_node.node == tree_assertion
   end
 
+  @tag :gate02_c14n
+  @tag :security_corpus
+  test "GATE-02 positive: mixed-content C14N is byte-equal to the independent golden oracle (D-09/D-10)" do
+    # Pretty-printed signed XML: inter-element whitespace (newline+indent) is
+    # interleaved with child elements inside the referenced <Assertion>. This
+    # exercises the D-09/D-10 document-order fix — text segments and child
+    # elements must canonicalize in source order, byte-for-byte against libxml2.
+    # The golden was minted out-of-band by libxml2 (lxml, cross-checked against a
+    # different libxml2 build via xmllint --exc-c14n) and committed; CI reads the
+    # committed bytes only (D-12). See PROVENANCE.md.
+    input = File.read!(Path.join(@c14n_fixtures, "mixed_content.input.xml"))
+    golden = File.read!(Path.join(@c14n_fixtures, "mixed_content.c14n"))
+
+    assert {:ok, parsed_doc} = PureBeam.parse_safely(input, [])
+    assert {:ok, signed_node} = PureBeam.select_signed_node(parsed_doc, [])
+    assert {:ok, %{canonical_xml: out}} = PureBeam.canonicalize(signed_node, [])
+
+    # Byte-for-byte against the independent reference: text/element segments emitted
+    # in document order (the escape_text(node.text)-before-children bug is gone),
+    # inter-element whitespace preserved, attrs sorted, empty element expanded,
+    # text escaped, UTF-8 preserved.
+    assert out == golden
+    # No trailing newline (Pitfall 4); canonical output ends with `>`.
+    refute String.ends_with?(out, "\n")
+
+    # Node binding (D-10): the bound node is the EXACT Assertion tree node serialized.
+    tree_assertion =
+      Enum.find(parsed_doc.parse_tree.children, fn child -> child.local == "Assertion" end)
+
+    assert signed_node.node == tree_assertion
+  end
+
   @tag :security_corpus
   test "every manifest row carries immutable provenance and requirement_ids" do
     manifest()
