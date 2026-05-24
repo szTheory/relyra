@@ -27,54 +27,66 @@ defmodule Relyra.Security.CiGateIntegrityTest do
 
   # The security contract: {relative_path, tag_or_nil}.
   # tag_or_nil is the `--only <tag>` filter that ci.security applies to that suite
-  # (nil means the whole file runs). Test 4 proves the tag actually exists in the
-  # file source, so `--only <tag>` can never silently match zero tests.
+  # (nil means the whole file runs). The tag-integrity test proves the tag actually
+  # exists in the file source, so `--only <tag>` can never silently match zero tests.
   @gated_suites [
     {"test/security/ci_gate_integrity_test.exs", nil},
     {"test/security/strict_default_proof_test.exs", nil},
     {"test/relyra/ecto/escape_hatch_audit_test.exs", nil},
     {"test/security/xml/corpus_security_test.exs", "security_corpus"},
+    {"test/relyra/security/xml/corpus_gate_test.exs", "security_corpus"},
     {"test/security/xml/corpus_security_test.exs", "gate02_c14n"},
     {"test/security/xml/adversarial_crypto_test.exs", "adversarial_crypto"}
   ]
 
-  # Slice the literal `"ci.security": [ ... ]` block out of mix.exs by a bracket-depth
-  # scan starting at the alias header. Resilient to comment lines and reordering.
-  defp ci_security_block do
-    source = File.read!("mix.exs")
-    start = :binary.match(source, "\"ci.security\": [")
+  # The list of `ci.security` step strings, extracted by parsing mix.exs as actual
+  # Elixir AST (NOT byte/bracket scanning). The parser already strips comments and
+  # understands string literals, so a stray `]`/`[` in a comment, a markdown list,
+  # a CLI flag, or a literal `"ci.security": [` inside a doc string can no longer
+  # truncate, over-capture, or shadow the real alias (WR-01, WR-05). We walk the
+  # quoted tree for the `aliases/0` keyword entry `"ci.security": [ ... ]` and return
+  # its list of step strings (comments already gone, each step a quoted literal).
+  defp ci_security_steps do
+    ast = Code.string_to_quoted!(File.read!("mix.exs"))
 
-    refute start == :nomatch,
-           "could not find the `\"ci.security\": [` alias in mix.exs — the security lane may have been renamed or removed"
+    steps =
+      ast
+      |> Macro.prewalker()
+      |> Enum.find_value(fn
+        {key, list} when is_list(list) ->
+          if alias_key?(key, "ci.security") and Enum.all?(list, &is_binary/1) do
+            list
+          end
 
-    {offset, _len} = start
-    # position the cursor at the opening bracket of the alias list
-    open_idx = offset + byte_size("\"ci.security\": ")
-    rest = binary_part(source, open_idx, byte_size(source) - open_idx)
-    scan_block(rest, 0, 0, [])
+        _ ->
+          nil
+      end)
+
+    refute steps == nil,
+           "could not find the `\"ci.security\": [ ...string steps... ]` alias in mix.exs — " <>
+             "the security lane may have been renamed, removed, or restructured so its steps " <>
+             "are no longer a flat list of strings"
+
+    steps
   end
 
-  # Walk the source from the opening `[`, tracking bracket depth, until the matching
-  # `]` closes the alias list. Returns the inclusive `[ ... ]` text.
-  defp scan_block(<<>>, _depth, _idx, _acc) do
-    flunk("ci.security alias block in mix.exs is not balanced — could not find closing `]`")
-  end
+  # A keyword key in quoted form. A quoted atom keyword key like `"ci.security":`
+  # parses to the bare atom `:"ci.security"`; plain `foo:` parses to `:foo`. Accept
+  # both, and tolerate the variable-node form `{atom, _meta, ctx}` defensively.
+  defp alias_key?(key, name) when is_atom(key), do: Atom.to_string(key) == name
 
-  defp scan_block(<<char::utf8, tail::binary>>, depth, idx, acc) do
-    new_depth =
-      case char do
-        ?[ -> depth + 1
-        ?] -> depth - 1
-        _ -> depth
-      end
+  defp alias_key?({key, _meta, ctx}, name) when is_atom(key) and is_atom(ctx),
+    do: Atom.to_string(key) == name
 
-    acc = [acc | <<char::utf8>>]
+  defp alias_key?(_key, _name), do: false
 
-    if new_depth == 0 do
-      IO.iodata_to_binary(acc)
-    else
-      scan_block(tail, new_depth, idx + 1, acc)
-    end
+  # The ci.security STEP strings that reference `path`. Because steps come from the
+  # AST (comments already stripped), every returned step is a real alias step. A
+  # single `cmd mix test a.exs b.exs --only tag` step names MULTIPLE files, so a
+  # substring match on `path` correctly covers a suite that shares its step line
+  # with a sibling suite (WR-03).
+  defp steps_referencing(steps, path) do
+    Enum.filter(steps, &String.contains?(&1, path))
   end
 
   test "every gated security suite file exists on disk (T-30-14 presence)" do
@@ -85,46 +97,36 @@ defmodule Relyra.Security.CiGateIntegrityTest do
     end
   end
 
-  # The ci.security STEP lines that reference `path`, excluding comment lines (which
-  # start with `#` and may legitimately name a suite, e.g. the self-referencing
-  # anti-hollow comment). Only real alias steps are quoted string literals.
-  defp step_lines(block, path) do
-    block
-    |> String.split("\n")
-    |> Enum.reject(&(String.trim_leading(&1) |> String.starts_with?("#")))
-    |> Enum.filter(&String.contains?(&1, path))
-  end
-
   test "every gated security suite is named in the ci.security alias" do
-    block = ci_security_block()
+    steps = ci_security_steps()
 
     for {path, _tag} <- @gated_suites do
-      assert step_lines(block, path) != [],
+      assert steps_referencing(steps, path) != [],
              "gated security suite #{path} is NOT referenced in any ci.security step — " <>
                "it would never run in the security lane (hollow gate)"
     end
   end
 
   test "every gated suite runs as a `cmd mix test` step, never a bare `test` step (anti-hollow)" do
-    block = ci_security_block()
+    steps = ci_security_steps()
 
     for {path, _tag} <- @gated_suites do
-      matching_lines = step_lines(block, path)
+      matching_steps = steps_referencing(steps, path)
 
-      refute matching_lines == [],
+      refute matching_steps == [],
              "no ci.security step references #{path} (cannot verify it is a `cmd mix test` step)"
 
-      for line <- matching_lines do
-        trimmed = String.trim_leading(line)
+      for step <- matching_steps do
+        trimmed = String.trim_leading(step)
 
-        refute Regex.match?(~r/^"test\s/, trimmed),
+        refute Regex.match?(~r/^test\s/, trimmed),
                "ci.security runs #{path} via a BARE `test` step:\n\n  #{trimmed}\n\n" <>
                  "mix dedups the `test` task within one alias run and ci.conformance already " <>
                  "consumed it with `--only conformance`, so this suite would be silently skipped " <>
                  "(hollow gate). Use `cmd mix test ...` (a fresh OS process) instead."
 
-        assert Regex.match?(~r/^"cmd mix test\s/, trimmed),
-               "ci.security line for #{path} must be a `cmd mix test ...` step but is:\n\n  #{trimmed}"
+        assert Regex.match?(~r/^cmd mix test\s/, trimmed),
+               "ci.security step for #{path} must be a `cmd mix test ...` step but is:\n\n  #{trimmed}"
       end
     end
   end
@@ -133,8 +135,12 @@ defmodule Relyra.Security.CiGateIntegrityTest do
     for {path, tag} <- @gated_suites, tag != nil do
       source = File.read!(path)
 
-      assert source =~ "@tag :#{tag}" or source =~ "@moduletag :#{tag}",
-             "ci.security runs #{path} with `--only #{tag}` but the file declares no " <>
+      # Anchor on a whole-atom boundary (`\b` after the tag). A plain substring match
+      # (`source =~ "@tag :\#{tag}"`) would let a PREFIX tag pass: `--only security`
+      # would falsely match `@tag :security_corpus` yet `mix test --only security`
+      # matches ZERO tests, leaving the gate hollow (WR-02).
+      assert Regex.match?(~r/@(module)?tag\s+:#{Regex.escape(tag)}\b/, source),
+             "ci.security runs #{path} with `--only #{tag}` but the file declares no exact " <>
                "`@tag :#{tag}` or `@moduletag :#{tag}` — `--only #{tag}` would silently match " <>
                "ZERO tests, leaving the gate hollow"
     end
