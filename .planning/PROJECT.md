@@ -83,14 +83,16 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 **v1.1 (in progress):**
 - ✓ **SIGV-03** — exclusive XML canonicalization (C14N 1.0 exclusive) over a real `saxy` parse tree behind the `Relyra.Security.XML` seam, replacing regex string-scanning; canonical bytes proven byte-for-byte against an independent libxml2/xmlsec1 golden oracle (887 bytes) — v1.1 (Phase 28; SIGV-03 verified 2026-05-24, UAT 8/8, SECURITY threats_open 0)
+- ✓ **SIGV-01** — Response/assertion XMLDSig signatures cryptographically verified: canonicalized `SignedInfo` checked via `:public_key.verify` against the **configured** IdP cert (never document `KeyInfo`); forged/wrong-key signatures rejected with typed errors — v1.1 (Phase 29 verified 2026-05-24)
+- ✓ **SIGV-02** — Reference `DigestValue` recomputed over the canonicalized referenced element and compared constant-time (`:crypto.hash_equals`, length-guarded); content tampering (e.g. altered `NameID`) rejected as `:digest_mismatch` — v1.1 (Phase 29 verified 2026-05-24)
+- ✓ **SIGV-04** — Metadata-root (`EntityDescriptor`) signatures verified with the SAME crypto primitive (signature math, not pinning-alone), with operator-pinned `TrustAnchor` as defense-in-depth — v1.1 (Phase 29 verified 2026-05-24; post-review hardened so the signature is verified against the pinned cert only — CR-01 — and the pin fingerprint is DER, matching openssl — CR-02)
 
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
 **v1.1 — Verify the Trust Path** (see `.planning/REQUIREMENTS.md`):
-- **SIGV-01 / SIGV-02 / SIGV-04** — cryptographic XMLDSig verification (signature math, digest recompute/compare, metadata-root parity) — Phase 29. (**SIGV-03**, exclusive C14N, ✓ shipped Phase 28 — see Validated.)
-- **ASSUR-01..02** — adversarial crypto corpus rejected + positive control; FakeIdP real signing
+- **ASSUR-01..02** — adversarial crypto corpus rejected + positive control; FakeIdP real signing (Phase 30)
 - **DISC-01..02** — security-doc honesty correction; GHSA/CVE/advisory prepared for the fixed release
 
 ### Out of Scope
@@ -190,4 +192,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-24 after Phase 28 — SIGV-03 shipped (real saxy parse tree + exclusive C14N proven byte-for-byte vs libxml2). 1/4 v1.1 phases complete; next is Phase 29 (cryptographic XMLDSig verify — the actual auth-bypass close).*
+*Last updated: 2026-05-24 after Phase 29 — SIGV-01/02/04 shipped: genuine `:public_key.verify` of the canonicalized `SignedInfo` against the configured IdP cert + constant-time `DigestValue` recompute, on both the assertion path (`verify/4`) and the metadata-root path (`verify_metadata_root/4`). The published-hex SAML auth-bypass is closed (positive control + forged/wrong-key/tampered negatives proven; full suite 547/0, `mix ci.security` exit 0). Post-review remediation closed two metadata-path BLOCKERs (CR-01 verify-against-pinned-only, CR-02 DER fingerprint) + WR-01 (line-wrapped base64); deferred interop/defense-in-depth warnings tracked in `.planning/todos/pending/29-code-review-followups.md`. 2/4 v1.1 phases complete; next is Phase 30 (adversarial crypto assurance — permanent corpus + FakeIdP real signing).*
