@@ -1,6 +1,6 @@
 # Security Findings Ledger
 
-Current state: no external findings recorded yet.
+Current state: `RELYRA-2026-001` is recorded as resolved with regression proof and remains the canonical historical disclosure record until publication identifiers attach.
 
 ## Summary
 
@@ -13,7 +13,7 @@ Current state: no external findings recorded yet.
 
 | Finding ID | Severity | Exploit Path | Disposition | Owner | Regression Proof | Blocker State | Revisit Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| none yet | Informational | no external findings recorded yet | awaiting review | maintainers | add test, corpus fixture, or generated artifact link when a finding lands | non-blocking | next external review |
+| RELYRA-2026-001 | Critical | forged `SignatureValue` carrying an attacker-controlled `NameID` accepted as `{:ok}` -> full SAML authentication bypass | Confirmed -> Fixed in v1.1 (hex 1.2.0) | maintainers | `test/security/xml/adversarial_crypto_test.exs` (`:adversarial_crypto`) + `test/security/ci_gate_integrity_test.exs`, green under `mix ci.security` | resolved | at v1.2.0 ship / GHSA publish |
 
 ## Disposition Workflow
 
