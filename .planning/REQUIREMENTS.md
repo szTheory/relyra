@@ -50,9 +50,9 @@ REQ-ID → Phase mapping for milestone v1.1 (every v1.1 requirement maps to exac
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SIGV-03 | Phase 28 — Real C14N parser foundation | Complete |
-| SIGV-01 | Phase 29 — Cryptographic XMLDSig verification | Pending |
-| SIGV-02 | Phase 29 — Cryptographic XMLDSig verification | Pending (29-01 byte-exact C14N precondition done; compare/reject in Plan 03) |
-| SIGV-04 | Phase 29 — Cryptographic XMLDSig verification | Pending |
+| SIGV-01 | Phase 29 — Cryptographic XMLDSig verification | In progress (29-03: :public_key.verify of canonicalized SignedInfo wired into the [candidate] arm; forged/non-base64 SignatureValue → :invalid_signature proven via negative controls + genuine positive smoke. Fuller positive control + wrong-key negative + existing-test triage → Plan 04) |
+| SIGV-02 | Phase 29 — Cryptographic XMLDSig verification | In progress (29-01 byte-exact C14N precondition done; 29-03: DigestValue recompute over the canonicalized referenced element + constant-time compare wired — truncated/non-base64/wrong digest → :digest_mismatch proven. Full NameID-tamper proof → Plan 04) |
+| SIGV-04 | Phase 29 — Cryptographic XMLDSig verification | Pending (verify_metadata_root/4 inherits the 29-03 crypto via do_verify/4; metadata-root tree-bound plumbing + positive control + pinning negative → Plan 05) |
 | ASSUR-01 | Phase 30 — Adversarial crypto assurance | Pending |
 | ASSUR-02 | Phase 30 — Adversarial crypto assurance | Pending |
 | DISC-01 | Phase 31 — Disclosure and docs honesty | Pending |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
 status: executing
-last_updated: "2026-05-24T12:59:24.679Z"
+last_updated: "2026-05-24T13:09:16.697Z"
 last_activity: 2026-05-24
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 6
-  percent: 67
+  completed_plans: 7
+  percent: 25
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: `.planning/PROJECT.md` (updated 2026-05-24)
 ## Current Position
 
 Phase: 29 (cryptographic-xmldsig-verification) — EXECUTING
-Plan: 2 of 5 complete (29-01 + 29-02 done); next up Plan 03
+Plan: 3 of 5 complete (29-01 + 29-02 + 29-03 done); next up Plan 04
 Status: Ready to execute
-Last activity: 2026-05-24 -- 29-01 COMPLETE. Task 3 finished: mixed-content C14N golden minted out-of-band in Docker (mixed_content.c14n, 1056 bytes, sha256 edb5abd0…), dual-oracle agreement (lxml libxml2 2.14.6 == xmllint 2.9.14 == True), idempotent, Elixir engine byte-equal. New @tag :gate02_c14n test green; both goldens (887 + 1056) pass under --warnings-as-errors; full XML-security 102/0. Task 3 commit 621d117. D-09/D-10 document-order C14N fix is now PROVEN end-to-end (anti-XSW prune fail-OPEN regression closed in Task 2).
+Last activity: 2026-05-24 — 29-03 COMPLETE. Real XMLDSig crypto wired into the verified_signed_node [candidate] arm (D-01 published-hex auth-bypass site CLOSED): :public_key.verify of the canonicalized SignedInfo against the configured cert_chain RSA key + constant-time DigestValue recompute over the canonicalized referenced element. cert_chain threaded do_verify/4 -> verify_algorithms_and_candidates/4 -> verified_signed_node/5. Two new error atoms (:digest_mismatch, :unsupported_signature_algorithm). Plan-03 lanes 100% green (signature_crypto 14/0, security regression 161/0, C14N golden 102/0, compile --warnings-as-errors clean). Genuine in-test signer positive smoke proves the wiring reaches the crypto. Full-suite blast radius = 10 structure-only-{:ok} end-to-end tests now correctly fail closed — existing-test triage DEFERRED to Plan 04 (owns D-11 reusable signer), logged in deferred-items.md. Commits: 4c3c218 (RED test), 2e45689 (GREEN crypto).
 
-Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 in progress, 2/5 plans)
+Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 in progress, 3/5 plans)
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29
 | 28 | 04 | — | 2 | 3 created (golden fixtures + PROVENANCE) + 1 test |
 | 29 | 01 | ~58m | 3 | 7 (2 created, 5 modified) |
 | 29 | 02 | 2m | 2 | 4 (2 created, 2 modified) |
+| Phase 29 P03 | 24m | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -126,7 +127,7 @@ Phase 28 VERIFIED + COMPLETE (2026-05-24): UAT 8/8 (all deterministic security s
 
 Next GSD command (after context clear): `/gsd:plan-phase 29` (XMLDSig `:public_key.verify(SignedInfo)` against configured IdP cert + `DigestValue` recompute/compare, both `verify/4` and `verify_metadata_root/4`), which rests on the PROVEN canonical-bytes precondition. **First follow-up to fold in:** the mixed-content C14N fix (see Tracked Follow-ups) — `/gsd:quick` or within Phase 29 planning.
 
-Last session: 2026-05-24T10:59:27.091Z
+Last session: 2026-05-24T13:08:01.828Z
 
 ## Decisions
 
@@ -134,3 +135,6 @@ Last session: 2026-05-24T10:59:27.091Z
 - [Phase 29-02]: D-02 crypto inputs (`signed_info_node` / `digest_value_b64` / `signature_value_b64`) surfaced additively in `pure_beam.ex` `signed_candidates/1` and carried onto the `select_candidate/1` handle; absent base64 values are nil-safe (DATA only here — decoded + verified in Plan 03, never logged raw per T-29-06).
 - [Phase 29-01]: D-09 mixed-content C14N fix uses Option-a — ordered `content: [{:text,_} | {:element,_}]` on `SaxyTree.Node` is the single source of truth for document order; `:text`/`:children` are byte-identical derived projections (pure_beam field-derivation untouched). `C14N.render_element/3` walks `content`, so text and child elements canonicalize in source order. PROVEN byte-for-byte vs libxml2 by a new Docker-minted 1056-byte mixed-content golden (`mixed_content.c14n`); the 887-byte golden stays byte-identical. SIGV-02 byte-exactness leg satisfied.
 - [Phase 29-01]: anti-XSW `prune_subtree/1` MUST prune on `content` (not children-only) — once the serializer walks `content`, a children-only prune is fail-OPEN (leaves `ds:Signature` material in canonical bytes, re-opening D-10/T-29-03). Rewritten to drop `{:element, ^target}` from content, recurse survivors, pass text through, keep `:children` a consistent derived view. Rule-1 auto-fix, committed in Task 2 (8052658).
+- [Phase 29-03]: Real :public_key.verify of canonicalized SignedInfo + constant-time DigestValue recompute wired into the verified_signed_node [candidate] arm (D-01 bypass site closed); cert_chain threaded do_verify/4 -> verify_algorithms_and_candidates/4 -> verified_signed_node/5; all pre-existing trust gates still run BEFORE crypto.
+- [Phase 29-03]: public_key_from_cert_chain/1 is @doc-false PUBLIC (reusable fail-closed PEM->RSA pubkey via pkix_decode_cert(:otp) -> element(8) SPKI); every malformed PEM/DER -> :untrusted_certificate, never raises (Pitfall 3). Plan 04 reuses it.
+- [Phase 29-03]: Closing the bypass correctly fails-closed 10 existing end-to-end structure-only-signature {:ok} tests (consume_response x7, conformance, acs, telemetry) — deferred to Plan 04 (owns D-11 reusable signer); logged in deferred-items.md. Plan 03 own lanes 100% green (signature_crypto 14/0, security regression 161/0, C14N golden 102/0).
