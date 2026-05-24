@@ -41,6 +41,7 @@ defmodule Relyra.Metadata.AutoRefresh do
   alias Relyra.Metadata.{Cadence, DriftDetector, Import, Parser, TrustAnchor}
   alias Relyra.Security.Signature
   alias Relyra.Security.XML.CorpusGate
+  alias Relyra.Security.XML.PureBeam
   alias Relyra.Telemetry
 
   @compile {:no_warn_undefined, [Connection, MetadataSource, MetadataApply]}
@@ -186,118 +187,20 @@ defmodule Relyra.Metadata.AutoRefresh do
     end
   end
 
-  # W10 fix: real signature-binding implementation (no stubs). The
-  # metadata root is `<EntityDescriptor>` or `<EntitiesDescriptor>`. We
-  # locate the root element + its `ds:Signature` child + the `Reference
-  # URI` attribute, then return a `signed_candidates` list whose
-  # `xml_id` is the Reference URI (without the `#` prefix) and whose
-  # `xpath` is the canonical XPath to the bound element. This is the
-  # integration seam where the metadata-root signature is bound to the
-  # verified envelope per PROJECT.md security invariant.
+  # SIGV-04 (D-13): the metadata root now routes through the SAME tree
+  # builder the assertion path uses (`PureBeam.parse_metadata_root_safely/2`)
+  # rather than a regex extractor. This surfaces the SAME tree-bound crypto
+  # inputs the assertion path has (`:node` / `:signed_info_node` /
+  # `:digest_value_b64` / `:signature_value_b64` on the single signed
+  # candidate, plus tree-derived `:key_info_trust` / `:duplicate_ids`), so the
+  # shared `Signature.verify_metadata_root → do_verify` primitive performs
+  # genuine signature math + DigestValue recompute on the metadata path —
+  # closing the RESEARCH Pitfall 2 plumbing gap (one trust path, D-04, no
+  # parser differential). The byte guards (XXE/DOCTYPE/size, D-09) and the
+  # `:missing_signature` fail-closed behavior live inside
+  # `parse_metadata_root_safely/2`.
   defp pre_parse_for_signature(xml) when is_binary(xml) do
-    case extract_metadata_root_signature(xml) do
-      {:ok, root_tag, root_attrs, root_inner} ->
-        xml_id = attribute_from_fragment(root_attrs, "ID")
-        reference_uri = first_attribute_in_fragment(xml, "Reference", "URI")
-        bound_id = bound_id_from_reference(reference_uri) || xml_id
-
-        xpath =
-          cond do
-            root_tag in ["EntityDescriptor"] -> "/EntityDescriptor"
-            root_tag in ["EntitiesDescriptor"] -> "/EntitiesDescriptor"
-            true -> "/" <> root_tag
-          end
-
-        signed_xml = "<#{root_tag}#{root_attrs}>#{root_inner}</#{root_tag}>"
-
-        {:ok,
-         %{
-           signed_candidates: [
-             %{
-               xml_id: bound_id,
-               xpath: xpath,
-               signed_xml: signed_xml
-             }
-           ],
-           # Forwarded so the existing do_verify rejection at lines
-           # 113-119 of signature.ex (document-KeyInfo trust) inherits
-           # to the metadata-root path automatically (T-21-29 / T-21-21
-           # mitigation).
-           key_info_trust: Regex.match?(~r/<(?:\w+:)?KeyInfo\b/is, xml),
-           duplicate_ids: extract_duplicate_ids_in_root(xml)
-         }}
-
-      :no_root ->
-        {:error,
-         Error.new(
-           :missing_signature,
-           "Metadata XML has no <EntityDescriptor> or <EntitiesDescriptor> root with a child <ds:Signature>",
-           %{}
-         )}
-    end
-  end
-
-  defp extract_metadata_root_signature(xml) do
-    # Match `<EntityDescriptor ...>...</EntityDescriptor>` OR
-    # `<EntitiesDescriptor ...>...</EntitiesDescriptor>` (with optional
-    # namespace prefix). The body MUST contain a `<ds:Signature>` child
-    # for this to be a signed-metadata document we can verify.
-    pattern =
-      ~r/<(?:\w+:)?(EntityDescriptor|EntitiesDescriptor)\b([^>]*)>(.*?)<\/(?:\w+:)?\1>/is
-
-    case Regex.run(pattern, xml, capture: :all_but_first) do
-      [tag, attrs, inner] ->
-        if Regex.match?(~r/<(?:\w+:)?Signature\b/is, inner) do
-          {:ok, tag, attrs, inner}
-        else
-          :no_root
-        end
-
-      _ ->
-        :no_root
-    end
-  end
-
-  # Strip leading "#" from a Reference URI per XMLDSig section 4.4.3.2.
-  # An empty URI ("") means "the entire document" — we still bind by ID
-  # using the root's @ID attribute as fallback (handled by caller).
-  defp bound_id_from_reference(nil), do: nil
-  defp bound_id_from_reference(""), do: nil
-  defp bound_id_from_reference("#" <> id), do: id
-  defp bound_id_from_reference(other), do: other
-
-  defp attribute_from_fragment(attrs_fragment, attribute_name) do
-    case Regex.run(
-           ~r/\b#{attribute_name}=(["\'])([^"\']*)\1/i,
-           attrs_fragment || "",
-           capture: :all_but_first
-         ) do
-      [_quote, value] -> value
-      _ -> nil
-    end
-  end
-
-  defp first_attribute_in_fragment(xml, tag_name, attribute_name) do
-    case Regex.run(
-           ~r/<(?:\w+:)?#{tag_name}\b[^>]*\b#{attribute_name}=(["\'])([^"\']*)\1/is,
-           xml,
-           capture: :all_but_first
-         ) do
-      [_quote, value] -> value
-      _ -> nil
-    end
-  end
-
-  defp extract_duplicate_ids_in_root(xml) do
-    # Mirrors PureBeam.extract_duplicate_ids/1 so the do_verify
-    # duplicate-ID rejection (existing trust primitive) inherits to the
-    # metadata path.
-    ids =
-      Regex.scan(~r/\bID=(["\'])(.*?)\1/s, xml, capture: :all_but_first)
-      |> Enum.map(fn [_, id] -> id end)
-
-    frequencies = Enum.frequencies(ids)
-    Enum.filter(ids, fn id -> Map.get(frequencies, id, 0) > 1 end) |> Enum.uniq()
+    PureBeam.parse_metadata_root_safely(xml)
   end
 
   defp legacy_unsigned_allowed?(%{legacy_unsigned_metadata_policy: nil}), do: false

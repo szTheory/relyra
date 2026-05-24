@@ -172,8 +172,15 @@ defmodule Relyra.Security.XML.PureBeam do
            ],
            # Tree-derived so the shared do_verify/4 gates (document-KeyInfo
            # rejection, duplicate-ID rejection) inherit to the metadata path
-           # exactly as they do on the assertion path (T-29-22).
-           key_info_trust: element_present?(metadata_root, "KeyInfo"),
+           # (T-29-22). KeyInfo trust is scoped to the bound ds:Signature's OWN
+           # KeyInfo — the signature's self-asserted key (which MUST be rejected;
+           # the operator pins the trust anchor out-of-band, never the document's
+           # signature KeyInfo). A KeyDescriptor/KeyInfo elsewhere in the
+           # metadata is the legitimately PUBLISHED signing cert (gated by
+           # TrustAnchor pinning), NOT a document-trust bypass — so it is NOT
+           # flagged here. On the assertion path the only KeyInfo is the
+           # signature's, so this is the faithful semantic analogue.
+           key_info_trust: element_present?(signature_node, "KeyInfo"),
            duplicate_ids: duplicate_ids(root)
          }}
 
@@ -679,6 +686,7 @@ defmodule Relyra.Security.XML.PureBeam do
   defp attr(_other, _attribute_name), do: nil
 
   defp element_present?(%Node{} = root, local), do: find_first(root, local) != nil
+  defp element_present?(_other, _local), do: false
 
   # A plain, deterministic XML serialization of a tree node for the legacy
   # :signed_xml backward-compat key (consumed only as an opaque binary by
