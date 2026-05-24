@@ -95,7 +95,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 | 26. Security Audit Preparation and Remediation | v1.0 | 3/3 | Complete | 2026-05-08 |
 | 27. Adopter Onboarding Polish and Case Studies | v1.0 | 3/3 | Complete | 2026-05-08 |
 | 28. Real C14N parser foundation | v1.1 | 4/4 | Complete    | 2026-05-24 |
-| 29. Cryptographic XMLDSig verification | v1.1 | TBD | Not started | - |
+| 29. Cryptographic XMLDSig verification | v1.1 | 0/5 | Planned | - |
 | 30. Adversarial crypto assurance | v1.1 | TBD | Not started | - |
 | 31. Disclosure and docs honesty | v1.1 | TBD | Not started | - |
 
@@ -153,7 +153,14 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
   3. A response signed by the wrong key, or whose digest does not match, is rejected with a typed error naming the failed check — while a genuinely-signed positive control returns `{:ok, %SignedNode{}}`.
   4. `verify_metadata_root/4` uses the same signature-math primitive on `EntityDescriptor`/`EntitiesDescriptor`, with operator-pinned `TrustAnchor` fingerprint pinning preserved as defense-in-depth (signature math, not pinning alone).
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+  - [ ] 29-01-PLAN.md — Mixed-content C14N Option-a fix (ordered content field + document-order render) + new Docker-minted golden (D-09/D-10)
+  - [ ] 29-02-PLAN.md — pure_beam D-02 field extraction (SignedInfo / DigestValue / SignatureValue) + AlgorithmPolicy URI→digest-atom & ECDSA fail-closed (D-06/D-07)
+  - [ ] 29-03-PLAN.md — Wire :public_key.verify + DigestValue recompute/compare into the do_verify [candidate] arm; new error atoms; crypto negative controls (D-01/D-03/D-04/D-05/D-08)
+  - [ ] 29-04-PLAN.md — Genuine XMLDSig signer (D-11) + assertion positive control + wrong-key/tampered-NameID negatives
+  - [ ] 29-05-PLAN.md — SIGV-04 metadata-root plumbing upgrade (tree-bound candidate) + metadata positive control + pinning defense-in-depth negative (D-13)
+
 
 #### Phase 30: Adversarial crypto assurance
 
