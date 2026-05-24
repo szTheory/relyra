@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
-status: executing
-last_updated: "2026-05-24T17:16:26.490Z"
-last_activity: 2026-05-24
+status: completed
+last_updated: "2026-05-24T18:20:30.429Z"
+last_activity: 2026-05-24 -- Phase 30 executed, verified (9/9 must-haves), and marked complete
 progress:
   total_phases: 4
   completed_phases: 3
@@ -130,7 +130,7 @@ Phase 28 VERIFIED + COMPLETE (2026-05-24): UAT 8/8 (all deterministic security s
 
 Next GSD command (after context clear): `/gsd:plan-phase 29` (XMLDSig `:public_key.verify(SignedInfo)` against configured IdP cert + `DigestValue` recompute/compare, both `verify/4` and `verify_metadata_root/4`), which rests on the PROVEN canonical-bytes precondition. **First follow-up to fold in:** the mixed-content C14N fix (see Tracked Follow-ups) — `/gsd:quick` or within Phase 29 planning.
 
-Last session: 2026-05-24T15:35:08.917Z
+Last session: 2026-05-24T18:20:30.421Z
 
 ## Decisions
 
