@@ -194,14 +194,23 @@ defmodule Relyra.Security.XML.C14N do
 
   # Remove the exact `target` subtree (value-equal, so an unrelated sibling
   # Signature with different content is left intact) wherever it appears beneath
-  # `node`, rebuilding the surrounding tree.
-  defp prune_subtree(%Node{children: children} = node, target) do
-    pruned =
-      children
-      |> Enum.reject(&(&1 == target))
-      |> Enum.map(&prune_subtree(&1, target))
+  # `node`, rebuilding the surrounding tree. The serializer walks ORDERED
+  # `content` (D-09), so pruning MUST operate on `content` (text segments pass
+  # through; the matched `{:element, target}` is dropped; surviving elements are
+  # recursed); `:children` is kept as the consistent derived view so anti-XSW
+  # pruning (D-10) removes the signature material from the canonical bytes.
+  defp prune_subtree(%Node{content: content} = node, target) do
+    pruned_content =
+      content
+      |> Enum.reject(&match?({:element, ^target}, &1))
+      |> Enum.map(fn
+        {:element, child} -> {:element, prune_subtree(child, target)}
+        {:text, _} = text_segment -> text_segment
+      end)
 
-    %Node{node | children: pruned}
+    pruned_children = for {:element, child} <- pruned_content, do: child
+
+    %Node{node | content: pruned_content, children: pruned_children}
   end
 
   # First descendant-or-self node whose local name matches, in document order.
@@ -222,10 +231,20 @@ defmodule Relyra.Security.XML.C14N do
 
   # A node is bindable only if it carries the structural keys C14N needs:
   # a non-nil verbatim qname and local name, a list of attrs, an in-scope ns map,
-  # a list of children, and binary text. Anything else fails closed (Pitfall 9).
-  defp bindable?(%Node{qname: qname, local: local, attrs: attrs, ns: ns, children: children, text: text}) do
+  # an ordered `content` list (the document-order source of truth the engine now
+  # walks), a list of children, and binary text. Anything else fails closed
+  # (Pitfall 9).
+  defp bindable?(%Node{
+         qname: qname,
+         local: local,
+         attrs: attrs,
+         ns: ns,
+         content: content,
+         children: children,
+         text: text
+       }) do
     is_binary(qname) and qname != "" and is_binary(local) and local != "" and
-      is_list(attrs) and is_map(ns) and is_list(children) and is_binary(text)
+      is_list(attrs) and is_map(ns) and is_list(content) and is_list(children) and is_binary(text)
   end
 
   defp bindable?(_), do: false
@@ -250,9 +269,16 @@ defmodule Relyra.Security.XML.C14N do
       |> sort_attributes(node.ns)
       |> Enum.map(&render_attribute/1)
 
-    child_iodata =
-      node.children
-      |> Enum.map(fn child -> render_element(child, new_rendered, []) end)
+    # Walk the ORDERED `content` in document order (D-09): text segments and child
+    # elements are emitted in source order so mixed content / inter-element
+    # whitespace canonicalizes byte-for-byte against libxml2. Descendants receive
+    # the carried-down rendered-namespaces map and an EMPTY forced prefix set
+    # (the prefix_list force-render only applies to the apex), exactly as before.
+    content_iodata =
+      Enum.map(node.content, fn
+        {:text, t} -> escape_text(t)
+        {:element, child} -> render_element(child, new_rendered, [])
+      end)
 
     [
       "<",
@@ -260,8 +286,7 @@ defmodule Relyra.Security.XML.C14N do
       ns_iodata,
       attr_iodata,
       ">",
-      escape_text(node.text),
-      child_iodata,
+      content_iodata,
       "</",
       node.qname,
       ">"

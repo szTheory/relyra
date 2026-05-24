@@ -170,8 +170,20 @@ defmodule Relyra.Security.XML.C14NTest do
     test "text-escape: carriage return (#xD) becomes &#xD;" do
       # Feed a literal CR via char ref; C14N text-escape converts #xD to &#xD;.
       # SaxyTree normalizes line endings in :text, so we canonicalize a node
-      # whose text we know contains a CR by constructing it directly.
-      node = %Node{qname: "T", prefix: "", local: "T", attrs: [], ns: %{}, children: [], text: "a\rb"}
+      # whose content we know contains a CR by constructing it directly. The
+      # engine now walks the ORDERED `content` (D-09), so the CR text lives in a
+      # {:text, _} segment (the document-order single source of truth); :text is
+      # kept as the byte-identical derived view.
+      node = %Node{
+        qname: "T",
+        prefix: "",
+        local: "T",
+        attrs: [],
+        ns: %{},
+        content: [{:text, "a\rb"}],
+        children: [],
+        text: "a\rb"
+      }
 
       out = c14n!(node)
 
@@ -236,6 +248,29 @@ defmodule Relyra.Security.XML.C14NTest do
       assert is_binary(out)
       assert String.valid?(out)
       assert out == "<NameID>José Müller — café</NameID>"
+    end
+  end
+
+  describe "document-order content walk (D-09 mixed content)" do
+    test "mixed content emits text and child elements in source order, not text-before-children" do
+      # <a>x<b/>y</a> must canonicalize as <a>x<b></b>y</a> (text/element/text in
+      # source order), NOT <a>xy<b></b></a> (the pre-D-09 text-before-children bug).
+      xml = ~s(<a>x<b/>y</a>)
+
+      out = c14n!(parse!(xml))
+
+      assert out == "<a>x<b></b>y</a>"
+      refute out == "<a>xy<b></b></a>"
+    end
+
+    test "inter-element whitespace between children is preserved in document order" do
+      # Pretty-printed signed XML: the whitespace between <First/> and <Second/>
+      # must canonicalize in document position (the bug class D-09 fixes).
+      xml = "<Root>\n  <First></First>\n  <Second></Second>\n</Root>"
+
+      out = c14n!(parse!(xml))
+
+      assert out == "<Root>\n  <First></First>\n  <Second></Second>\n</Root>"
     end
   end
 
