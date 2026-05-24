@@ -58,3 +58,26 @@ Primary severity is `Critical` with CVSS 3.1 `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C
 ## Credits
 
 Maintainers (finder and reporter).
+
+## CVE request
+
+This phase does not submit a CVE request. The ship-time action is GitHub's "Request CVE" flow on the draft GHSA.
+
+- Internal tracking id: `RELYRA-2026-001`
+- Title: `Relyra SAML SignatureValue not cryptographically verified -> authentication bypass`
+- Ecosystem / package: `Erlang` / `relyra`
+- Affected versions: `>= 1.0.0, < 1.2.0`
+- First patched version: `1.2.0`
+- CVSS 3.1: `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N` (9.1 Critical)
+- Weaknesses: `CWE-347` primary, `CWE-287` companion
+- Description: forged `SignatureValue` with attacker-controlled `NameID` can be accepted as `{:ok}`, allowing arbitrary-user login until the `1.2.0` verification fix is deployed
+- Credits: maintainers
+- Request mechanism: GitHub repository advisory -> Request CVE at publication time
+
+## CHANGELOG security note
+
+Security note for the `1.2.0` release and GitHub Release body:
+
+> Fixed a critical XMLDSig verification gap where Relyra `1.0.0` and `1.1.0` could accept forged SAML signatures. `1.2.0` now verifies canonicalized `SignedInfo` with `:public_key.verify`, recomputes `DigestValue` in constant time on the consumed node, and applies the same guarantee to both response and metadata-root verification paths.
+
+Release-please's conventional-commits preset renders this change under standard Features and Bug Fixes entries and does not generate a dedicated Security section. This prose lives here and in the release notes; it is not a hand-edit to `CHANGELOG.md`.
