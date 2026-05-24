@@ -95,7 +95,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 | 26. Security Audit Preparation and Remediation | v1.0 | 3/3 | Complete | 2026-05-08 |
 | 27. Adopter Onboarding Polish and Case Studies | v1.0 | 3/3 | Complete | 2026-05-08 |
 | 28. Real C14N parser foundation | v1.1 | 4/4 | Complete    | 2026-05-24 |
-| 29. Cryptographic XMLDSig verification | v1.1 | 4/5 | In Progress|  |
+| 29. Cryptographic XMLDSig verification | v1.1 | 5/5 | Complete   | 2026-05-24 |
 | 30. Adversarial crypto assurance | v1.1 | TBD | Not started | - |
 | 31. Disclosure and docs honesty | v1.1 | TBD | Not started | - |
 
@@ -116,7 +116,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 ### Phases
 
 - [x] **Phase 28: Real C14N parser foundation** — Add the `saxy`-backed parse tree + exclusive C14N 1.0 behind the existing `Relyra.Security.XML` seam, replacing regex string-scanning, preserving callback compatibility and the hardened entity/size/DOCTYPE guards. (SIGV-03) (completed 2026-05-24)
-- [ ] **Phase 29: Cryptographic XMLDSig verification** — Wire `:public_key.verify` of canonicalized `SignedInfo` against the configured IdP cert + `DigestValue` recompute/compare into `do_verify`, applied to both `verify/4` and `verify_metadata_root/4`; reject forged, tampered, and wrong-key inputs with typed errors. (SIGV-01, SIGV-02, SIGV-04)
+- [x] **Phase 29: Cryptographic XMLDSig verification** — Wire `:public_key.verify` of canonicalized `SignedInfo` against the configured IdP cert + `DigestValue` recompute/compare into `do_verify`, applied to both `verify/4` and `verify_metadata_root/4`; reject forged, tampered, and wrong-key inputs with typed errors. (SIGV-01, SIGV-02, SIGV-04) (completed 2026-05-24)
 - [ ] **Phase 30: Adversarial crypto assurance** — Make `FakeIdP` perform real cryptographic signing and add the permanent adversarial corpus (forged-sig / tampered-content / wrong-key / digest-mismatch / c14n-differential REJECTED + positive control), wired into `corpus_gate` + the conformance manifest, green under `mix ci.security`. (ASSUR-01, ASSUR-02)
 - [ ] **Phase 31: Disclosure and docs honesty** — Correct the security docs that overstate the guarantee, record the finding in the ledger, and prepare the GHSA + CVE + CHANGELOG security note marking hex `1.0.0`/`1.1.0` affected (publish at fixed-release ship time). (DISC-01, DISC-02)
 
@@ -159,7 +159,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
   - [x] 29-02-PLAN.md — pure_beam D-02 field extraction (SignedInfo / DigestValue / SignatureValue) + AlgorithmPolicy URI→digest-atom & ECDSA fail-closed (D-06/D-07)
   - [x] 29-03-PLAN.md — Wire :public_key.verify + DigestValue recompute/compare into the do_verify [candidate] arm; new error atoms; crypto negative controls (D-01/D-03/D-04/D-05/D-08)
   - [x] 29-04-PLAN.md — Genuine XMLDSig signer (D-11) + assertion positive control + wrong-key/tampered-NameID negatives
-  - [ ] 29-05-PLAN.md — SIGV-04 metadata-root plumbing upgrade (tree-bound candidate) + metadata positive control + pinning defense-in-depth negative (D-13)
+  - [x] 29-05-PLAN.md — SIGV-04 metadata-root plumbing upgrade (tree-bound candidate) + metadata positive control + pinning defense-in-depth negative (D-13)
 
 #### Phase 30: Adversarial crypto assurance
 
