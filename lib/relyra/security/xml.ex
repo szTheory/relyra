@@ -19,6 +19,8 @@ defmodule Relyra.Security.XML do
           | :canonicalization_failed
           | :untrusted_certificate
           | :unsigned_or_partial_signature
+          | :digest_mismatch
+          | :unsupported_signature_algorithm
 
   @callback parse_safely(binary(), keyword()) ::
               {:ok, term()} | {:error, %Error{}}
