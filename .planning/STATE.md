@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
-status: verifying
-last_updated: "2026-05-24T10:59:27.094Z"
-last_activity: 2026-05-24 -- Phase 28 verified + transitioned
+status: executing
+last_updated: "2026-05-24T11:25:57.581Z"
+last_activity: 2026-05-24 -- Phase 29 planning complete
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 4
+  total_plans: 9
   completed_plans: 4
   percent: 25
 ---
@@ -26,8 +26,8 @@ See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 Phase: 29 (cryptographic-xmldsig-verification) — Ready to plan
 Plan: Not started
-Status: Phase 28 COMPLETE and verified — SIGV-03 PROVEN (canonicalize/2 byte-equal to libxml2 golden, 887 bytes); UAT 8/8 (suites re-run green 2026-05-24), 28-SECURITY.md verified (threats_open 0). Phase 29 rests on this proven canonical-bytes precondition: wire `:public_key.verify(SignedInfo)` against the configured IdP cert + `DigestValue` recompute/compare into `do_verify` (both `verify/4` and `verify_metadata_root/4`). First follow-up to fold in: the mixed-content / inter-element-whitespace C14N gap (fail-safe; see Tracked Follow-ups).
-Last activity: 2026-05-24 -- Phase 28 verified + transitioned
+Status: Ready to execute
+Last activity: 2026-05-24 -- Phase 29 planning complete
 
 Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 next)
 
