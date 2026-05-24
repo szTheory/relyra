@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
 status: executing
-last_updated: "2026-05-24T11:25:57.581Z"
-last_activity: 2026-05-24 -- Phase 29 planning complete
+last_updated: "2026-05-24T11:57:44.364Z"
+last_activity: 2026-05-24
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 4
-  percent: 25
+  completed_plans: 5
+  percent: 56
 ---
 
 # Project State
@@ -24,17 +24,17 @@ See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 ## Current Position
 
-Phase: 29 (cryptographic-xmldsig-verification) — Ready to plan
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-24 -- Phase 29 planning complete
+Phase: 29 (cryptographic-xmldsig-verification) — EXECUTING
+Plan: 2 of 5 complete (next: 03)
+Status: Executing Phase 29 — Plan 02 done (D-02 plumbing + digest-atom mapping)
+Last activity: 2026-05-24 -- 29-02 complete (SIGV-01/02 data-plumbing landed)
 
 Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 next)
 
 ## Performance Metrics
 
 - Phases planned this milestone: 4 (28-31)
-- Plans complete: 4 (28-01, 28-02, 28-03, 28-04)
+- Plans complete: 5 (28-01, 28-02, 28-03, 28-04, 29-02)
 - Coverage: 8/8 v1.1 requirements mapped
 
 | Phase | Plan | Duration | Tasks | Files |
@@ -43,6 +43,7 @@ Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29
 | 28 | 02 | — | 2 | 1 modified (c14n.ex) + 2 test files |
 | 28 | 03 | — | 2 | 1 modified (pure_beam.ex) + 1 test file |
 | 28 | 04 | — | 2 | 3 created (golden fixtures + PROVENANCE) + 1 test |
+| 29 | 02 | 2m | 2 | 4 (2 created, 2 modified) |
 
 ## Accumulated Context
 
@@ -115,3 +116,8 @@ Phase 28 VERIFIED + COMPLETE (2026-05-24): UAT 8/8 (all deterministic security s
 Next GSD command (after context clear): `/gsd:plan-phase 29` (XMLDSig `:public_key.verify(SignedInfo)` against configured IdP cert + `DigestValue` recompute/compare, both `verify/4` and `verify_metadata_root/4`), which rests on the PROVEN canonical-bytes precondition. **First follow-up to fold in:** the mixed-content C14N fix (see Tracked Follow-ups) — `/gsd:quick` or within Phase 29 planning.
 
 Last session: 2026-05-24T10:59:27.091Z
+
+## Decisions
+
+- [Phase 29-02]: ECDSA fail-closed lives in `AlgorithmPolicy.digest_atom_for_signature_method/1` (typed `:unsupported_signature_algorithm` reject, checked BEFORE the rsa-sha* match), NOT by removing ECDSA from `default/0`'s allowlist — the allowlist still permits ECDSA URIs; the reject is the contract (fail-CLOSED, not allowlist-removal; D-07, Pitfall 5, T-29-04).
+- [Phase 29-02]: D-02 crypto inputs (`signed_info_node` / `digest_value_b64` / `signature_value_b64`) surfaced additively in `pure_beam.ex` `signed_candidates/1` and carried onto the `select_candidate/1` handle; absent base64 values are nil-safe (DATA only here — decoded + verified in Plan 03, never logged raw per T-29-06).
