@@ -8,7 +8,7 @@ Generated from executable manifest state in `priv/conformance/sp_manifest.json` 
 | --- | --- | --- | --- | --- | --- |
 | CONF-01 | 8 | 4 | 2 | 1 | 15 |
 
-- `CVE-REG-01` fixtures pinned: 7
+- `CVE-REG-01` fixtures pinned: 8
 - Families covered: xxe, signature_wrapping, CVE-2024-45409
 
 ## CONF-01 SP Conformance Coverage
@@ -42,3 +42,4 @@ Generated from executable manifest state in `priv/conformance/sp_manifest.json` 
 | c14n-differential-001 | signature_wrapping | parser_differential_and_c14n | canonicalization_failed | PureBeam seam regression corpus / ported-fixture | The current pure-BEAM seam must keep failing closed when canonicalization inputs are incomplete. |
 | cve-2024-45409-keyinfo-001 | CVE-2024-45409 | cve_2024_45409 | untrusted_certificate | ruby-saml GHSA-jw9c-mfg7-9rx2 / ported-fixture | Document-provided KeyInfo must never become a trust anchor. |
 | cve-2024-45409-duplicate-id-001 | CVE-2024-45409 | cve_2024_45409 | duplicate_xml_id | CVE-2024-45409 / ruby-saml advisory lineage / ported-fixture | Pinned duplicate-ID variant covers signed-node selection bypasses in the CVE family. |
+| c14n-differential-rejection-002 | signature_wrapping | parser_differential_and_c14n | canonicalization_failed | Phase 30 adversarial crypto assurance / ported-fixture | C14N-differential REJECTION: the pure-BEAM seam fails closed with :canonicalization_failed on an incomplete canonicalization handle (the bare parsed_doc map, mirroring c14n-differential-001). The complementary :digest_mismatch crypto proof lives in the adversarial_crypto suite (ASSUR-01); the JSON evaluator routes parser_differential_and_c14n through parse_safely -> canonicalize only and never reaches Signature.verify/4. |
