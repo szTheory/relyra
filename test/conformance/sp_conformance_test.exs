@@ -21,6 +21,7 @@ defmodule Relyra.Conformance.SPConformanceTest do
   alias Relyra.Protocol.Binding
   alias Relyra.Protocol.LogoutRequest
   alias Relyra.TestSupport.ConformanceFixtures
+  alias Relyra.TestSupport.XmldsigSigner
 
   @moduletag :conformance
 
@@ -82,7 +83,7 @@ defmodule Relyra.Conformance.SPConformanceTest do
   defp evaluate_row(%{"id" => "sp-response-consume-pass"} = row) do
     assert {:ok, login_result} =
              Relyra.consume_response(
-               ConformanceFixtures.fixture_xml(row),
+               genuinely_signed_fixture_xml(row),
                request_intent(),
                consume_opts(now: @fixed_now)
              )
@@ -95,7 +96,7 @@ defmodule Relyra.Conformance.SPConformanceTest do
   defp evaluate_row(%{"id" => "sp-idp-initiated-accept"} = row) do
     assert {:ok, login_result} =
              Relyra.consume_response(
-               ConformanceFixtures.fixture_xml(row),
+               genuinely_signed_fixture_xml(row),
                consume_opts(
                  connection: Map.put(connection(), :allow_idp_initiated, true),
                  resolved_connection: Map.put(connection(), :allow_idp_initiated, true),
@@ -150,7 +151,7 @@ defmodule Relyra.Conformance.SPConformanceTest do
   defp evaluate_row(row) do
     assert {:error, %Relyra.Error{type: type}} =
              Relyra.consume_response(
-               ConformanceFixtures.fixture_xml(row),
+               genuinely_signed_fixture_xml(row),
                request_intent(),
                consume_opts(now: @fixed_now)
              )
@@ -159,6 +160,24 @@ defmodule Relyra.Conformance.SPConformanceTest do
   end
 
   defp row_status(row), do: Map.get(row, "status")
+
+  # Plan 04 triage: Phase 29 wires real cryptographic XMLDSig verification, so a
+  # conformance row that drives the CONSUME path must carry a GENUINE signature
+  # to reach its declared stage. The reject rows (destination / audience /
+  # recipient / time) all fail AFTER the crypto step, so they too must pass
+  # crypto first to assert their declared rejection for the right reason; the
+  # pass rows must verify {:ok} for the right reason. Fixtures with no signed
+  # Reference are returned verbatim (they reject before crypto).
+  defp genuinely_signed_fixture_xml(row) do
+    xml = ConformanceFixtures.fixture_xml(row)
+
+    if xml =~ ~r/<Reference\s+URI="#/ do
+      %{response_xml: signed_xml} = XmldsigSigner.sign_response(xml)
+      signed_xml
+    else
+      xml
+    end
+  end
 
   defp request_intent do
     %{
@@ -174,6 +193,9 @@ defmodule Relyra.Conformance.SPConformanceTest do
     }
   end
 
+  # Plan 04 triage: the connection carries the GENUINE FakeIdP-derived cert so
+  # the real crypto step verifies the (now genuinely-signed) conformance
+  # fixtures, instead of the structure-only "pem-cert-chain" placeholder.
   defp connection do
     %{
       connection_id: "conn-123",
@@ -181,7 +203,7 @@ defmodule Relyra.Conformance.SPConformanceTest do
       issuer: "https://idp.example.com/metadata",
       sp_entity_id: "https://sp.example.com/metadata",
       acs_url: "https://sp.example.com/saml/acs",
-      cert_chain: ["pem-cert-chain"]
+      cert_chain: [XmldsigSigner.self_signed_cert_pem()]
     }
   end
 

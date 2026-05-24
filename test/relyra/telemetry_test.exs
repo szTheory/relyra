@@ -306,6 +306,9 @@ defmodule Relyra.TelemetryTest do
     send(pid, {:telemetry_event, event_name, measurements, metadata})
   end
 
+  # Plan 04 triage: carries the GENUINE FakeIdP-derived cert so the now-real
+  # crypto step verifies the genuinely-signed response_xml/0 and the
+  # `signature.verify` telemetry emits `outcome: :ok` for the right reason.
   defp connection do
     %{
       connection_id: "conn-123",
@@ -316,7 +319,7 @@ defmodule Relyra.TelemetryTest do
       sp_entity_id: "https://sp.example.com/metadata",
       acs_url: "https://sp.example.com/saml/acs",
       idp_sso_url: "https://idp.example.com/sso",
-      cert_chain: ["pem-cert-chain"]
+      cert_chain: [Relyra.TestSupport.XmldsigSigner.self_signed_cert_pem()]
     }
   end
 
@@ -339,34 +342,40 @@ defmodule Relyra.TelemetryTest do
     }
   end
 
+  # Plan 04 triage: a GENUINELY-signed success Response (real ds:DigestValue +
+  # ds:SignatureValue from FakeIdP's keypair via the reusable D-11 signer) so the
+  # consume flow passes the now-cryptographic verify step and emits the success
+  # telemetry this test asserts. Whitespace-free so the digest canonicalizes over
+  # the exact emitted bytes.
   defp response_xml do
-    """
-    <Response Destination="https://sp.example.com/saml/acs" InResponseTo="id_request_123" ConnectionId="conn-123">
-      <Issuer>https://idp.example.com/metadata</Issuer>
-      <Status><StatusCode Value="#{@success_status}"/></Status>
-      <Assertion ID="assertion-1">
-        <Issuer>https://idp.example.com/metadata</Issuer>
-        <Subject>
-          <NameID>user@example.com</NameID>
-          <SubjectConfirmation>
-            <SubjectConfirmationData Recipient="https://sp.example.com/saml/acs" NotOnOrAfter="2026-04-24T16:05:00Z"/>
-          </SubjectConfirmation>
-        </Subject>
-        <Conditions NotBefore="2026-04-24T15:58:00Z" NotOnOrAfter="2026-04-24T16:05:00Z">
-          <AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction>
-        </Conditions>
-      </Assertion>
-      <Signature>
-        <SignedInfo>
-          <SignatureMethod Algorithm="#{@rsa_sha256}"/>
-          <Reference URI="#assertion-1">
-            <DigestMethod Algorithm="#{@digest_sha256}"/>
-          </Reference>
-        </SignedInfo>
-      </Signature>
-    </Response>
-    """
-    |> String.trim()
+    structure_only =
+      "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\">" <>
+        "<Issuer>https://idp.example.com/metadata</Issuer>" <>
+        "<Status><StatusCode Value=\"#{@success_status}\"/></Status>" <>
+        "<Assertion ID=\"assertion-1\">" <>
+        "<Issuer>https://idp.example.com/metadata</Issuer>" <>
+        "<Subject>" <>
+        "<NameID>user@example.com</NameID>" <>
+        "<SubjectConfirmation>" <>
+        "<SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/>" <>
+        "</SubjectConfirmation>" <>
+        "</Subject>" <>
+        "<Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\">" <>
+        "<AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction>" <>
+        "</Conditions>" <>
+        "</Assertion>" <>
+        "<Signature>" <>
+        "<SignedInfo>" <>
+        "<SignatureMethod Algorithm=\"#{@rsa_sha256}\"/>" <>
+        "<Reference URI=\"#assertion-1\">" <>
+        "<DigestMethod Algorithm=\"#{@digest_sha256}\"/>" <>
+        "</Reference>" <>
+        "</SignedInfo>" <>
+        "</Signature>" <>
+        "</Response>"
+
+    %{response_xml: signed_xml} = Relyra.TestSupport.XmldsigSigner.sign_response(structure_only)
+    signed_xml
   end
 
   defp encoded_response(xml), do: Base.encode64(xml, padding: false)

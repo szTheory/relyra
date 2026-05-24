@@ -130,6 +130,70 @@ defmodule Relyra.TestSupport.XmldsigSigner do
   end
 
   @doc """
+  Genuinely sign an EXISTING SAML `<Response>` XML in place, preserving its
+  exact element shape.
+
+  The input `response_xml` must contain an `<Assertion ID="...">` (the referenced
+  element) and a `<Signature>` whose `<SignedInfo>` carries a
+  `<Reference URI="#assertion_id">` with a `<DigestMethod>` but no
+  `<DigestValue>`/`<SignatureValue>` yet (the structure-only shape the suite
+  already builds). This function:
+
+    1. parses the input with the verifier's parser,
+    2. computes the genuine `DigestValue` over the canonicalized referenced
+       `<Assertion>` (the SAME engine the verifier uses),
+    3. injects `<DigestValue>…</DigestValue>` into the Reference,
+    4. re-parses, canonicalizes the `<SignedInfo>` (SAME engine), signs it with
+       `FakeIdP.keypair()`, and
+    5. injects `<SignatureValue>…</SignatureValue>` after `</SignedInfo>`.
+
+  Returns `%{response_xml: signed_xml, cert_chain: [pem]}`.
+
+  Use this to re-point structure-only fixtures (whose declared outcome fires AT
+  or AFTER the crypto step — time conditions, replay, success) at a genuine
+  signature WITHOUT changing the fixture's assertion shape (so the downstream
+  stage still sees exactly the fields it asserts on).
+
+  Requires the referenced `<Assertion>` to carry the `ID` matching the
+  Reference's `URI`. Raises if the structure cannot be located (a malformed test
+  fixture should fail loudly, not sign silently).
+  """
+  @spec sign_response(String.t()) :: signed()
+  def sign_response(response_xml) when is_binary(response_xml) do
+    ensure_not_prod!()
+
+    cert_pem = self_signed_cert_pem()
+
+    assertion_id = reference_assertion_id!(response_xml)
+
+    # 1. Genuine DigestValue over the bound <Assertion> (canonicalized via the
+    #    verifier's path), computed from the EMITTED structure-only tree.
+    tree = parse_tree!(response_xml)
+    assertion_node = find_by_local_and_id(tree, "Assertion", assertion_id)
+
+    unless is_struct(assertion_node, Node) do
+      raise ArgumentError,
+            "XmldsigSigner.sign_response/1: no <Assertion ID=\"#{assertion_id}\"> found"
+    end
+
+    digest_value_b64 = digest_for(assertion_node)
+
+    # 2. Inject the DigestValue into the Reference (before </Reference>).
+    with_digest = inject_digest_value(response_xml, digest_value_b64)
+
+    # 3. Genuine SignatureValue over the canonicalized <SignedInfo> of the
+    #    digest-bearing tree (SAME engine), signed with FakeIdP's key.
+    digest_tree = parse_tree!(with_digest)
+    signed_info_node = find_first_by_local(digest_tree, "SignedInfo")
+    signature_value_b64 = sign_signed_info(signed_info_node)
+
+    # 4. Inject the SignatureValue after </SignedInfo>.
+    signed_xml = inject_signature_value(with_digest, signature_value_b64)
+
+    %{response_xml: signed_xml, cert_chain: [cert_pem]}
+  end
+
+  @doc """
   The self-signed certificate PEM (a single-element cert chain) the verifier must
   trust to accept this signer's Responses. Derived from `FakeIdP.keypair()`.
 
@@ -214,6 +278,40 @@ defmodule Relyra.TestSupport.XmldsigSigner do
     c14n_signed_info
     |> then(&:public_key.sign(&1, :sha256, FakeIdP.keypair()))
     |> Base.encode64()
+  end
+
+  # Read the Reference's URI (#assertion_id) from the SignedInfo so sign_response/1
+  # can locate the referenced <Assertion> in any fixture shape.
+  defp reference_assertion_id!(xml) do
+    case Regex.run(~r/<Reference\s+URI="#([^"]+)"/, xml) do
+      [_, id] ->
+        id
+
+      _ ->
+        raise ArgumentError,
+              "XmldsigSigner.sign_response/1: no <Reference URI=\"#...\"> in payload"
+    end
+  end
+
+  # Insert <DigestValue>…</DigestValue> immediately before the first </Reference>.
+  defp inject_digest_value(xml, digest_value_b64) do
+    String.replace(
+      xml,
+      "</Reference>",
+      "<DigestValue>#{digest_value_b64}</DigestValue></Reference>",
+      global: false
+    )
+  end
+
+  # Insert <SignatureValue>…</SignatureValue> immediately after the first
+  # </SignedInfo>.
+  defp inject_signature_value(xml, signature_value_b64) do
+    String.replace(
+      xml,
+      "</SignedInfo>",
+      "</SignedInfo><SignatureValue>#{signature_value_b64}</SignatureValue>",
+      global: false
+    )
   end
 
   defp maybe_tamper_name_id(xml, _original, nil), do: xml
