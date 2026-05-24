@@ -23,6 +23,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
   alias Relyra.Security.XML.C14N
   alias Relyra.Security.XML.PureBeam
   alias Relyra.Security.XML.SaxyTree.Node
+  alias Relyra.TestSupport.XmldsigSigner
 
   @rsa_sha256 "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
   @rsa_sha256_digest "http://www.w3.org/2001/04/xmlenc#sha256"
@@ -183,6 +184,64 @@ defmodule Relyra.Security.SignatureCryptoTest do
       assert signed_node.signature_method == @rsa_sha256
       assert signed_node.digest_method == @rsa_sha256_digest
     end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Plan 04 Task 2 — POSITIVE control + the two negatives that require a real
+  # signature, driven by the reusable D-11 signer
+  # (Relyra.TestSupport.XmldsigSigner) through the FULL verify path:
+  # PureBeam.parse_safely → select_signed_node → Signature.verify/4.
+  #
+  # The genuine signer is the ONLY input that should return {:ok}. The signer
+  # reuses FakeIdP's keypair and the verifier's C14N engine (D-11/D-12), so a
+  # green positive here proves the verifier is NOT an always-reject stub
+  # (T-29-14) while the negatives prove it still rejects wrong-key (T-29-16)
+  # and post-signing tampering (T-29-17).
+  # ---------------------------------------------------------------------------
+
+  describe "D-11 genuine signer through the full verify path (SIGV-01/02, success #3)" do
+    test "POSITIVE control: a genuinely-signed Response verifies {:ok, %SignedNode{}}" do
+      signed = XmldsigSigner.signed_response()
+      {:ok, parsed_doc} = PureBeam.parse_safely(signed.response_xml, [])
+
+      assert {:ok, %Relyra.Security.SignedNode{} = signed_node} =
+               Signature.verify(parsed_doc, connection(), signed.cert_chain)
+
+      assert signed_node.signature_method == @rsa_sha256
+      assert signed_node.digest_method == @rsa_sha256_digest
+      assert signed_node.xml_id == "assertion-1"
+    end
+
+    test "wrong-key negative: genuine Response against a DIFFERENT cert → :invalid_signature" do
+      signed = XmldsigSigner.signed_response()
+      {:ok, parsed_doc} = PureBeam.parse_safely(signed.response_xml, [])
+
+      # A self-signed cert from a SECOND, throwaway keypair — NOT FakeIdP's.
+      wrong_cert_chain = [throwaway_cert_pem()]
+
+      assert {:error, %Error{type: :invalid_signature}} =
+               Signature.verify(parsed_doc, connection(), wrong_cert_chain)
+    end
+
+    test "tampered-NameID negative: NameID rewritten after signing → :digest_mismatch" do
+      tampered = XmldsigSigner.signed_response(tamper_name_id: "attacker@evil.example.com")
+      {:ok, parsed_doc} = PureBeam.parse_safely(tampered.response_xml, [])
+
+      # The SignatureValue is still well-formed (verifies against SignedInfo);
+      # only the referenced Assertion's content changed, so the digest recompute
+      # is what catches the tamper.
+      assert {:error, %Error{type: :digest_mismatch}} =
+               Signature.verify(parsed_doc, connection(), tampered.cert_chain)
+    end
+  end
+
+  # A self-signed cert from a throwaway RSA keypair distinct from FakeIdP's, for
+  # the wrong-key negative. Generated locally here (NOT in the signer module —
+  # the signer reuses FakeIdP's key only).
+  defp throwaway_cert_pem do
+    priv = :public_key.generate_key({:rsa, 2048, 65_537})
+    %{cert: der} = :public_key.pkix_test_root_cert(~c"CN=relyra-wrong-key", key: priv)
+    :public_key.pem_encode([{:Certificate, der, :not_encrypted}])
   end
 
   # ---------------------------------------------------------------------------
