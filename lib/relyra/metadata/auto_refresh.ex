@@ -143,19 +143,39 @@ defmodule Relyra.Metadata.AutoRefresh do
   end
 
   defp do_verify_signature(xml, source, connection) do
-    # Two-step trust per D-17:
+    # Two-step trust per D-17, hardened against CR-01:
     #   (a) extract candidate signing-cert PEMs from the XML
-    #   (b) TrustAnchor.check ensures at least one matches a pinned
-    #       SHA-256 fingerprint
-    # ONLY after that does verify_metadata_root run with that PEM as
-    # the cert chain. This preserves "operator-pinned only — no document
-    # KeyInfo trust" per D-17.
+    #   (b) TrustAnchor.matching_pems returns ONLY the PEM(s) whose DER
+    #       fingerprint is operator-pinned
+    #   (c) verify_metadata_root runs against ONLY those pinned PEM(s) — NEVER
+    #       the full document-supplied set. Verifying against an unpinned cert
+    #       (e.g. one an attacker prepended ahead of the legit, public cert)
+    #       while the pin is satisfied by a DIFFERENT cert decouples trust from
+    #       the verifying key → auth-bypass. This preserves "operator-pinned
+    #       only — no document KeyInfo trust" per D-17.
     with {:ok, candidate_pems} <- extract_candidate_signing_pems(xml),
-         :ok <- TrustAnchor.check(candidate_pems, source.metadata_trust_fingerprints),
-         {:ok, parsed_root} <- pre_parse_for_signature(xml),
-         {:ok, signed_node} <-
-           Signature.verify_metadata_root(parsed_root, connection, candidate_pems) do
-      {:ok, signed_node}
+         {:ok, pinned_pems} <-
+           TrustAnchor.matching_pems(candidate_pems, source.metadata_trust_fingerprints),
+         {:ok, parsed_root} <- pre_parse_for_signature(xml) do
+      verify_against_pinned(parsed_root, connection, pinned_pems)
+    end
+  end
+
+  # Verify the metadata root against the operator-pinned cert(s) ONLY, trying each
+  # in turn so a multi-cert rotation window still verifies. Returns the first
+  # {:ok}; if none verify, returns the last error — it NEVER falls back to an
+  # unpinned, document-supplied cert (CR-01). `pinned_pems` is always non-empty
+  # here (matching_pems returns {:error, …} otherwise).
+  defp verify_against_pinned(parsed_root, connection, [pem | rest]) do
+    case Signature.verify_metadata_root(parsed_root, connection, [pem]) do
+      {:ok, signed_node} ->
+        {:ok, signed_node}
+
+      {:error, _error} = failure ->
+        case rest do
+          [] -> failure
+          _ -> verify_against_pinned(parsed_root, connection, rest)
+        end
     end
   end
 

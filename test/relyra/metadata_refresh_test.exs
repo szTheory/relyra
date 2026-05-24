@@ -185,7 +185,14 @@ defmodule Relyra.MetadataRefreshTest do
   end
 
   defp refresh_certificate_fingerprint do
-    "af220339dfffd018417fc551af8b8c7145ece5fdf655f04feb871d6db763b339"
+    # CR-02: the stored certificate fingerprint is now the SHA-256 of the DER
+    # bytes (the openssl `x509 -outform DER | dgst -sha256` recipe the operator
+    # pin task documents), NOT the SHA-256 of the PEM text. Computed independently
+    # here (not via TrustAnchor) so this stays a real cross-check of import.ex.
+    [{:Certificate, der, :not_encrypted} | _] =
+      :public_key.pem_decode(refresh_certificate_pem())
+
+    :crypto.hash(:sha256, der) |> Base.encode16(case: :lower)
   end
 
   defp refresh_certificate_body do
