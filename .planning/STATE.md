@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
 status: executing
-last_updated: "2026-05-24T11:57:44.364Z"
+last_updated: "2026-05-24T12:59:24.679Z"
 last_activity: 2026-05-24
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 5
-  percent: 56
+  completed_plans: 6
+  percent: 67
 ---
 
 # Project State
@@ -25,16 +25,16 @@ See: `.planning/PROJECT.md` (updated 2026-05-24)
 ## Current Position
 
 Phase: 29 (cryptographic-xmldsig-verification) — EXECUTING
-Plan: 2 of 5 complete; Plan 01 IN PROGRESS — PAUSED at Task 3 blocking checkpoint
-Status: Executing Phase 29 — Plan 01 Tasks 1-2 landed (D-09 mixed-content C14N fix); awaiting human Task-3 (out-of-band Docker-minted mixed-content golden)
-Last activity: 2026-05-24 -- 29-01 Tasks 1-2 committed (4411f91 SaxyTree.Node ordered content; 8052658 C14N document-order walk + anti-XSW prune fix). 101 XML-security tests green; 887-byte golden byte-identical. Task 3 (human-action checkpoint) pending: mint mixed-content golden out-of-band via Docker libxml2, add PROVENANCE row + new @tag :gate02_c14n byte-equality test.
+Plan: 2 of 5 complete (29-01 + 29-02 done); next up Plan 03
+Status: Ready to execute
+Last activity: 2026-05-24 -- 29-01 COMPLETE. Task 3 finished: mixed-content C14N golden minted out-of-band in Docker (mixed_content.c14n, 1056 bytes, sha256 edb5abd0…), dual-oracle agreement (lxml libxml2 2.14.6 == xmllint 2.9.14 == True), idempotent, Elixir engine byte-equal. New @tag :gate02_c14n test green; both goldens (887 + 1056) pass under --warnings-as-errors; full XML-security 102/0. Task 3 commit 621d117. D-09/D-10 document-order C14N fix is now PROVEN end-to-end (anti-XSW prune fail-OPEN regression closed in Task 2).
 
-Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 next)
+Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 in progress, 2/5 plans)
 
 ## Performance Metrics
 
 - Phases planned this milestone: 4 (28-31)
-- Plans complete: 5 (28-01, 28-02, 28-03, 28-04, 29-02)
+- Plans complete: 6 (28-01, 28-02, 28-03, 28-04, 29-01, 29-02)
 - Coverage: 8/8 v1.1 requirements mapped
 
 | Phase | Plan | Duration | Tasks | Files |
@@ -43,6 +43,7 @@ Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29
 | 28 | 02 | — | 2 | 1 modified (c14n.ex) + 2 test files |
 | 28 | 03 | — | 2 | 1 modified (pure_beam.ex) + 1 test file |
 | 28 | 04 | — | 2 | 3 created (golden fixtures + PROVENANCE) + 1 test |
+| 29 | 01 | ~58m | 3 | 7 (2 created, 5 modified) |
 | 29 | 02 | 2m | 2 | 4 (2 created, 2 modified) |
 
 ## Accumulated Context
@@ -107,11 +108,13 @@ Deferred to the next milestone ("Advanced Federation"): encrypted assertions, co
 
 ## Tracked Follow-ups (v1.1, in-flight)
 
-- **Mixed-content / inter-element-whitespace C14N gap — FIRST NEXT TASK.** `SaxyTree.Node` carries one `:text` per element and `C14N.render_element/3` emits it before children, so pretty-printed / mixed-content signed XML mis-canonicalizes vs libxml2 → would **fail Phase 29 digest verification on real-IdP documents that aren't whitespace-free**. Fail-safe (rejects, never bypasses). **Recommended fix (Option a):** add an ordered `content: [{:text,_} | {:element,_}]` field to `SaxyTree.Node`, have `C14N` walk it in document order, keep `text`/`children` as derived views (pure_beam field-derivation untouched); re-mint a whitespace golden in Docker + add a `gate02_c14n` test. ~55 LOC, ~10 test updates; full blast radius + Option (b) comparison in `28-04-SUMMARY.md`. Do as `/gsd:quick` or fold into `/gsd:plan-phase 29`.
+- **Mixed-content / inter-element-whitespace C14N gap — ✅ RESOLVED in 29-01 (2026-05-24).** Option-a landed exactly as recommended: ordered `content` field on `SaxyTree.Node`, `C14N` walks it in document order, `:text`/`:children` kept as byte-identical derived views. Docker-minted 1056-byte mixed-content golden (`mixed_content.c14n`) proves byte-equality to libxml2; 887-byte golden still green. See `29-01-SUMMARY.md`.
+- **PrefixList golden cross-check (future, not blocking SIGV-02).** A future `InclusiveNamespaces/@PrefixList` golden should additionally cross-check against a non-libxml2 implementation (e.g. Apache Santuario) to fully neutralize the lxml-lineage caveat noted in `parser_differential_and_c14n/PROVENANCE.md`. Current goldons use no PrefixList, so the caveat is not yet load-bearing.
 
 ## Session Continuity
 
 **2026-05-24 — Phase 29 Plan 01 PAUSED at Task 3 (blocking human-action checkpoint).** Tasks 1-2 of the D-09 mixed-content C14N fix are committed and verified:
+
 - Task 1 (`4411f91`): `SaxyTree.Node` gains an ordered `content: [{:text,_} | {:element,_}]` field built in document order across the SAX handlers; `:text`/`:children` are projected as byte-identical DERIVED views in `finalize_node/1` (pure_beam field-derivation untouched). 99 XML-security tests green.
 - Task 2 (`8052658`): `C14N.render_element/3` walks `content` in document order (mixed-content / inter-element whitespace now canonicalize in source order); `bindable?/1` adds `is_list(content)` (Pitfall 9). **Rule-1 fix folded in:** `prune_subtree/1` was rewritten to prune on `content` (the rendered source of truth) instead of `children` — under the new content walk the old children-only prune was fail-OPEN (left `ds:Signature` material in canonical bytes), which would have re-opened the anti-XSW gap (D-10/T-29-03). 101 XML-security tests green; the 887-byte gate02_c14n golden is byte-identical; broader security regression 146/0.
 
@@ -129,3 +132,5 @@ Last session: 2026-05-24T10:59:27.091Z
 
 - [Phase 29-02]: ECDSA fail-closed lives in `AlgorithmPolicy.digest_atom_for_signature_method/1` (typed `:unsupported_signature_algorithm` reject, checked BEFORE the rsa-sha* match), NOT by removing ECDSA from `default/0`'s allowlist — the allowlist still permits ECDSA URIs; the reject is the contract (fail-CLOSED, not allowlist-removal; D-07, Pitfall 5, T-29-04).
 - [Phase 29-02]: D-02 crypto inputs (`signed_info_node` / `digest_value_b64` / `signature_value_b64`) surfaced additively in `pure_beam.ex` `signed_candidates/1` and carried onto the `select_candidate/1` handle; absent base64 values are nil-safe (DATA only here — decoded + verified in Plan 03, never logged raw per T-29-06).
+- [Phase 29-01]: D-09 mixed-content C14N fix uses Option-a — ordered `content: [{:text,_} | {:element,_}]` on `SaxyTree.Node` is the single source of truth for document order; `:text`/`:children` are byte-identical derived projections (pure_beam field-derivation untouched). `C14N.render_element/3` walks `content`, so text and child elements canonicalize in source order. PROVEN byte-for-byte vs libxml2 by a new Docker-minted 1056-byte mixed-content golden (`mixed_content.c14n`); the 887-byte golden stays byte-identical. SIGV-02 byte-exactness leg satisfied.
+- [Phase 29-01]: anti-XSW `prune_subtree/1` MUST prune on `content` (not children-only) — once the serializer walks `content`, a children-only prune is fail-OPEN (leaves `ds:Signature` material in canonical bytes, re-opening D-10/T-29-03). Rewritten to drop `{:element, ^target}` from content, recurse survivors, pass text through, keep `:children` a consistent derived view. Rule-1 auto-fix, committed in Task 2 (8052658).
