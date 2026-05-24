@@ -24,8 +24,8 @@
 
 ### Disclosure & Honesty (DISC)
 
-- [ ] **DISC-01** — `docs/security_boundary.md`, `SECURITY_REVIEW.md`, and `docs/security_findings.md` are corrected to describe the actual verification guarantee, and the finding is recorded in the findings ledger with disposition.
-- [ ] **DISC-02** — A coordinated security advisory is prepared for publication at the fixed release: GHSA + requested CVE + CHANGELOG security note, marking hex `1.0.0`/`1.1.0` as affected. (Outward publication happens at ship time per the chosen fix-first posture.)
+- [x] **DISC-01** — `docs/security_boundary.md`, `SECURITY_REVIEW.md`, and `docs/security_findings.md` are corrected to describe the actual verification guarantee, and the finding is recorded in the findings ledger with disposition.
+- [x] **DISC-02** — A coordinated security advisory is prepared for publication at the fixed release: GHSA + requested CVE + CHANGELOG security note, marking hex `1.0.0`/`1.1.0` as affected. (Outward publication happens at ship time per the chosen fix-first posture.)
 
 ---
 
@@ -55,7 +55,7 @@ REQ-ID → Phase mapping for milestone v1.1 (every v1.1 requirement maps to exac
 | SIGV-04 | Phase 29 — Cryptographic XMLDSig verification | Pending (verify_metadata_root/4 inherits the 29-03 crypto via do_verify/4; metadata-root tree-bound plumbing + positive control + pinning negative → Plan 05) |
 | ASSUR-01 | Phase 30 — Adversarial crypto assurance | Complete |
 | ASSUR-02 | Phase 30 — Adversarial crypto assurance | Complete |
-| DISC-01 | Phase 31 — Disclosure and docs honesty | Pending |
-| DISC-02 | Phase 31 — Disclosure and docs honesty | Pending |
+| DISC-01 | Phase 31 — Disclosure and docs honesty | Complete |
+| DISC-02 | Phase 31 — Disclosure and docs honesty | Complete |
 
 **Coverage:** 8/8 v1.1 requirements mapped. No orphans. No duplicates.

@@ -97,7 +97,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 | 28. Real C14N parser foundation | v1.1 | 4/4 | Complete    | 2026-05-24 |
 | 29. Cryptographic XMLDSig verification | v1.1 | 5/5 | Complete    | 2026-05-24 |
 | 30. Adversarial crypto assurance | v1.1 | 4/4 | Complete    | 2026-05-24 |
-| 31. Disclosure and docs honesty | v1.1 | TBD | Not started | - |
+| 31. Disclosure and docs honesty | v1.1 | 2/2 | Complete    | 2026-05-24 |
 
 ---
 
@@ -118,7 +118,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 - [x] **Phase 28: Real C14N parser foundation** — Add the `saxy`-backed parse tree + exclusive C14N 1.0 behind the existing `Relyra.Security.XML` seam, replacing regex string-scanning, preserving callback compatibility and the hardened entity/size/DOCTYPE guards. (SIGV-03) (completed 2026-05-24)
 - [x] **Phase 29: Cryptographic XMLDSig verification** — Wire `:public_key.verify` of canonicalized `SignedInfo` against the configured IdP cert + `DigestValue` recompute/compare into `do_verify`, applied to both `verify/4` and `verify_metadata_root/4`; reject forged, tampered, and wrong-key inputs with typed errors. (SIGV-01, SIGV-02, SIGV-04) (completed 2026-05-24)
 - [x] **Phase 30: Adversarial crypto assurance** — Make `FakeIdP` perform real cryptographic signing and add the permanent adversarial corpus (forged-sig / tampered-content / wrong-key / digest-mismatch / c14n-differential REJECTED + positive control), wired into `corpus_gate` + the conformance manifest, green under `mix ci.security`. (ASSUR-01, ASSUR-02) (completed 2026-05-24)
-- [ ] **Phase 31: Disclosure and docs honesty** — Correct the security docs that overstate the guarantee, record the finding in the ledger, and prepare the GHSA + CVE + CHANGELOG security note marking hex `1.0.0`/`1.1.0` affected (publish at fixed-release ship time). (DISC-01, DISC-02)
+- [x] **Phase 31: Disclosure and docs honesty** — Correct the security docs that overstate the guarantee, record the finding in the ledger, and prepare the GHSA + CVE + CHANGELOG security note marking hex `1.0.0`/`1.1.0` affected (publish at fixed-release ship time). (DISC-01, DISC-02) (completed 2026-05-24)
 
 ### Phase Details
 
@@ -193,5 +193,5 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 
 **Plans**: 2 plans
 
-  - [ ] 31-01-PLAN.md — DISC-01: correct the three security docs to the real post-fix primitive + replace the findings-ledger placeholder with the Critical RELYRA-2026-001 row + generated-evidence inspect-then-decide; closing `mix ci.security` full lane
-  - [ ] 31-02-PLAN.md — DISC-02: stage one checked-in GHSA advisory draft under docs/advisories/ (GHSA body + CVE-request subsection + exact CHANGELOG note prose), fix-first (no publication)
+  - [x] 31-01-PLAN.md — DISC-01: correct the three security docs to the real post-fix primitive + replace the findings-ledger placeholder with the Critical RELYRA-2026-001 row + generated-evidence inspect-then-decide; closing `mix ci.security` full lane
+  - [x] 31-02-PLAN.md — DISC-02: stage one checked-in GHSA advisory draft under docs/advisories/ (GHSA body + CVE-request subsection + exact CHANGELOG note prose), fix-first (no publication)
