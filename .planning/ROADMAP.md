@@ -96,7 +96,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 | 27. Adopter Onboarding Polish and Case Studies | v1.0 | 3/3 | Complete | 2026-05-08 |
 | 28. Real C14N parser foundation | v1.1 | 4/4 | Complete    | 2026-05-24 |
 | 29. Cryptographic XMLDSig verification | v1.1 | 5/5 | Complete    | 2026-05-24 |
-| 30. Adversarial crypto assurance | v1.1 | 4/4 | Complete   | 2026-05-24 |
+| 30. Adversarial crypto assurance | v1.1 | 4/4 | Complete    | 2026-05-24 |
 | 31. Disclosure and docs honesty | v1.1 | TBD | Not started | - |
 
 ---

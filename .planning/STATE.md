@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Verify the Trust Path
 status: executing
-last_updated: "2026-05-24T16:23:17.950Z"
-last_activity: 2026-05-24 -- Phase 30 execution started
+last_updated: "2026-05-24T17:16:26.490Z"
+last_activity: 2026-05-24
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 13
-  completed_plans: 9
-  percent: 50
+  completed_plans: 13
+  percent: 75
 ---
 
 # Project State
@@ -20,22 +20,22 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 30 — adversarial-crypto-assurance
+**Current focus:** Phase 31 — disclosure-and-docs-honesty (Phase 30 complete ✓)
 
 ## Current Position
 
-Phase: 30 (adversarial-crypto-assurance) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 30
-Last activity: 2026-05-24 -- Phase 30 execution started
+Phase: 31
+Plan: Not started
+Status: Phase 30 complete ✓ — ready to start Phase 31
+Last activity: 2026-05-24 -- Phase 30 executed, verified (9/9 must-haves), and marked complete
 
-Milestone progress: [██--------] 1/4 phases complete (Phase 28 ✓; Phase 29 in progress, 4/5 plans)
+Milestone progress: [████████--] 3/4 phases complete (Phase 28 ✓, Phase 29 ✓, Phase 30 ✓; Phase 31 pending)
 
 ## Performance Metrics
 
 - Phases planned this milestone: 4 (28-31)
-- Plans complete: 6 (28-01, 28-02, 28-03, 28-04, 29-01, 29-02)
-- Coverage: 8/8 v1.1 requirements mapped
+- Plans complete: 13/13 across Phases 28, 29, 30 (Phase 31 not yet planned)
+- Coverage: 8/8 v1.1 requirements mapped (ASSUR-01, ASSUR-02 verified in Phase 30)
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
