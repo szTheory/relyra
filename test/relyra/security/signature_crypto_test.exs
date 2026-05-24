@@ -233,6 +233,25 @@ defmodule Relyra.Security.SignatureCryptoTest do
       assert {:error, %Error{type: :digest_mismatch}} =
                Signature.verify(parsed_doc, connection(), tampered.cert_chain)
     end
+
+    test "WR-01: a newline-wrapped (64-col) SignatureValue still verifies {:ok}" do
+      # Real IdPs (ADFS, Shibboleth, OpenSAML) line-wrap base64 at 64/76 columns.
+      # The SignatureValue is a sibling of SignedInfo (NOT canonicalized for the
+      # signature math), so wrapping it post-signing exercises decode_b64 alone:
+      # without `ignore: :whitespace` this fails closed with :invalid_signature.
+      # (DigestValue decodes through the SAME decode_b64 path; it can't be wrapped
+      # post-signing because it lives inside the signed SignedInfo.)
+      signed = XmldsigSigner.signed_response()
+      wrapped_xml = wrap_b64_element(signed.response_xml, "SignatureValue")
+
+      # The wrap actually introduced internal whitespace in the element body.
+      assert wrapped_xml =~ ~r/<SignatureValue>[^<]*\n[^<]*<\/SignatureValue>/
+
+      {:ok, parsed_doc} = PureBeam.parse_safely(wrapped_xml, [])
+
+      assert {:ok, %Relyra.Security.SignedNode{}} =
+               Signature.verify(parsed_doc, connection(), signed.cert_chain)
+    end
   end
 
   # A self-signed cert from a throwaway RSA keypair distinct from FakeIdP's, for
@@ -242,6 +261,21 @@ defmodule Relyra.Security.SignatureCryptoTest do
     priv = :public_key.generate_key({:rsa, 2048, 65_537})
     %{cert: der} = :public_key.pkix_test_root_cert(~c"CN=relyra-wrong-key", key: priv)
     :public_key.pem_encode([{:Certificate, der, :not_encrypted}])
+  end
+
+  # Rewrite the base64 body of <element>…</element> wrapped at 64 columns with
+  # embedded newlines, mirroring how real IdPs emit <ds:SignatureValue>.
+  defp wrap_b64_element(xml, element) do
+    Regex.replace(~r/(<#{element}>)(.*?)(<\/#{element}>)/s, xml, fn _full, open, body, close ->
+      wrapped =
+        body
+        |> String.replace(~r/\s+/, "")
+        |> String.codepoints()
+        |> Enum.chunk_every(64)
+        |> Enum.map_join("\n", &Enum.join/1)
+
+      open <> "\n" <> wrapped <> "\n" <> close
+    end)
   end
 
   # ---------------------------------------------------------------------------

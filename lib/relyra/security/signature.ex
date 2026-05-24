@@ -381,7 +381,12 @@ defmodule Relyra.Security.Signature do
     C14N.prefix_list_from_transforms(signed_info_node)
   end
 
-  defp decode_b64(value) when is_binary(value), do: Base.decode64(value)
+  # Tolerate internal whitespace: real IdPs (ADFS, Shibboleth, OpenSAML stacks)
+  # line-wrap <ds:SignatureValue>/<ds:DigestValue> base64 at 64/76 columns
+  # (WR-01). Without `ignore: :whitespace`, Base.decode64/1 rejects embedded
+  # newlines, yielding spurious :invalid_signature / :digest_mismatch on
+  # legitimately signed material.
+  defp decode_b64(value) when is_binary(value), do: Base.decode64(value, ignore: :whitespace)
   defp decode_b64(_value), do: :error
 
   # :public_key.verify/4 returns false on a bad signature (no raise) but RAISES
