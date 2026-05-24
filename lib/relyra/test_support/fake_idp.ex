@@ -33,7 +33,6 @@ defmodule Relyra.TestSupport.FakeIdP do
   @spec metadata() :: String.t()
   def metadata do
     ensure_not_prod!()
-    ensure_keypair!()
 
     """
     <EntityDescriptor entityID="#{@default_issuer}">
