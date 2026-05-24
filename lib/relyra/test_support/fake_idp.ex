@@ -125,13 +125,13 @@ defmodule Relyra.TestSupport.FakeIdP do
       </Assertion>
       <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
         <SignedInfo>
+          <CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
           <SignatureMethod Algorithm="#{signature_method}"/>
           <Reference URI="##{assertion_id}"><DigestMethod Algorithm="#{digest_method}"/></Reference>
         </SignedInfo>
       </Signature>
     </Response>
     """
-    |> String.replace(~r/\s+/, " ")
     |> String.trim()
   end
 end
