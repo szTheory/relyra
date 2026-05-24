@@ -96,7 +96,7 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 | 27. Adopter Onboarding Polish and Case Studies | v1.0 | 3/3 | Complete | 2026-05-08 |
 | 28. Real C14N parser foundation | v1.1 | 4/4 | Complete    | 2026-05-24 |
 | 29. Cryptographic XMLDSig verification | v1.1 | 5/5 | Complete    | 2026-05-24 |
-| 30. Adversarial crypto assurance | v1.1 | TBD | Not started | - |
+| 30. Adversarial crypto assurance | v1.1 | 0/4 | Planned     | - |
 | 31. Disclosure and docs honesty | v1.1 | TBD | Not started | - |
 
 ---
@@ -173,7 +173,12 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
   3. A positive control proves a genuinely FakeIdP-signed response verifies as `{:ok}`.
   4. The corpus is wired into `corpus_gate` and the conformance manifest and is green under `mix ci.security` (no skipped/pending crypto assertions).
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+  - [ ] 30-01-PLAN.md — Promote FakeIdP to real XMLDSig signing (delegate to XmldsigSigner; add CanonicalizationMethod; expose self_signed_cert_pem/0) (ASSUR-02)
+  - [ ] 30-02-PLAN.md — New :adversarial_crypto suite: 5 categories + positive control + ECDSA carry-over + NEW c14n-differential :digest_mismatch (ASSUR-01/02)
+  - [ ] 30-03-PLAN.md — c14n-differential REJECTION row in security_corpus.json (:canonicalization_failed) + CONFORMANCE.md regen (ASSUR-01)
+  - [ ] 30-04-PLAN.md — Name the suite into ci.security (D-08) + prove the full gate green (ASSUR-01)
 
 #### Phase 31: Disclosure and docs honesty
 

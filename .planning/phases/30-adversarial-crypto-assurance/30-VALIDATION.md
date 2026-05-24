@@ -1,8 +1,8 @@
 ---
 phase: 30
 slug: adversarial-crypto-assurance
-status: draft
-nyquist_compliant: false
+status: planned
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-05-24
 ---
@@ -20,7 +20,7 @@ created: 2026-05-24
 |----------|-------|
 | **Framework** | ExUnit (bundled, Elixir 1.19.5 / OTP 28) |
 | **Config file** | none — standard `mix test`; aliases in `mix.exs:130-186` |
-| **Quick run command** | `mix test <new_suite_path> --warnings-as-errors` |
+| **Quick run command** | `mix test test/security/xml/adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors` |
 | **Full suite command** | `mix ci.security` |
 | **Estimated runtime** | new suite ~1–3s; `mix ci.security` ~30–60s (corpus + conformance + audits) |
 
@@ -28,7 +28,7 @@ created: 2026-05-24
 
 ## Sampling Rate
 
-- **After every task commit:** `mix test <new_suite> --only adversarial_crypto --warnings-as-errors` (new suite) + `mix test test/security/xml/corpus_security_test.exs --only security_corpus --warnings-as-errors` (when the JSON corpus row changed)
+- **After every task commit:** `mix test test/security/xml/adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors` (new suite) + `mix test test/security/xml/corpus_security_test.exs --only security_corpus --warnings-as-errors` (when the JSON corpus row changed)
 - **After every plan wave:** `mix relyra.conformance --check` (drift) + `mix test --only security_corpus --only gate02_c14n --only adversarial_crypto --warnings-as-errors`
 - **Before `/gsd:verify-work`:** `mix ci.security` green (full alias) AND `mix test --warnings-as-errors` (full suite — no regression to the existing baseline; new suite raises the count, never lowers it)
 - **Max feedback latency:** ~3 seconds (quick run)
@@ -37,19 +37,16 @@ created: 2026-05-24
 
 ## Per-Task Verification Map
 
-> Planner populates Task IDs / Plan / Wave once PLAN.md files exist. Requirement→behavior→command rows below are pre-derived from `30-RESEARCH.md` §Phase Requirements → Test Map.
-
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| TBD | TBD | TBD | ASSUR-02 | T-30-real-signing | `FakeIdP.sign` emits real DigestValue+SignatureValue; positive control verifies `{:ok}` via FakeIdP cert | integration | `mix test <new_suite> --only adversarial_crypto` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | ASSUR-01 (forged-sig) | T-30-forged | same-length random SignatureValue → `:invalid_signature` | unit | `mix test <new_suite> --only adversarial_crypto` | ✅ recipe `signature_crypto_test.exs:81-90` | ⬜ pending |
-| TBD | TBD | TBD | ASSUR-01 (wrong-key) | T-30-wrongkey | genuine doc vs throwaway cert → `:invalid_signature` | unit | `mix test <new_suite> --only adversarial_crypto` | ✅ `:215-224` | ⬜ pending |
-| TBD | TBD | TBD | ASSUR-01 (tampered-content) | T-30-tamper | `tamper_name_id:` → `:digest_mismatch` | unit | `mix test <new_suite> --only adversarial_crypto` | ✅ `:226-235` | ⬜ pending |
-| TBD | TBD | TBD | ASSUR-01 (c14n-differential digest) | T-30-c14n | C14N-PRESERVED post-sign mutation → `:digest_mismatch` | unit | `mix test <new_suite> --only adversarial_crypto` | ❌ W0 — NEW (D-06) | ⬜ pending |
-| TBD | TBD | TBD | ASSUR-01 (positive control) | T-30-positive | genuine FakeIdP-signed → `{:ok, %SignedNode{}}` | integration | `mix test <new_suite> --only adversarial_crypto` | ✅ `:203-213` | ⬜ pending |
-| TBD | TBD | TBD | ASSUR-01 (ECDSA fail-closed — 6th assertion) | T-30-ecdsa | unsupported alg → `:unsupported_signature_algorithm` | unit | `mix test <new_suite> --only adversarial_crypto` | ✅ `:131-141` — carry into gate | ⬜ pending |
-| TBD | TBD | TBD | ASSUR-01 (c14n REJECTION row) | T-30-corpus | JSON corpus row asserts `:canonicalization_failed` + CONFORMANCE.md regen | corpus | `mix test test/security/xml/corpus_security_test.exs --only security_corpus` + `mix relyra.conformance --check` | ❌ W0 — NEW (D-09) | ⬜ pending |
-| TBD | TBD | TBD | ASSUR-01 (gating) | T-30-gate | new suite named in `ci.security` | gate | `mix ci.security` | ❌ W0 — alias edit (D-08) | ⬜ pending |
+| 30-01-T1 | 30-01 | 1 | ASSUR-02 | T-30-02 | FakeIdP SignedInfo gains <CanonicalizationMethod>, drops whitespace-collapse, keeps SAML ns (D-02) | compile/shape | `mix compile --warnings-as-errors` | ❌ W0 (modify fake_idp.ex) | ⬜ pending |
+| 30-01-T2 | 30-01 | 1 | ASSUR-02 | T-30-01, T-30-03 | FakeIdP.sign delegates to XmldsigSigner.sign_response/1 (real DigestValue+SignatureValue); self_signed_cert_pem/0 exposed; demo test green | integration | `mix compile --warnings-as-errors && mix test test/test_support_demo_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
+| 30-02-T1 | 30-02 | 2 | ASSUR-01, ASSUR-02 | T-30-06, T-30-07, T-30-08, T-30-09 | positive control {:ok, %SignedNode{}} via FakeIdP.sign; forged/wrong-key → :invalid_signature; tampered → :digest_mismatch; ECDSA → :unsupported_signature_algorithm | unit+integration | `mix test test/security/xml/adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors` | ❌ W0 (new suite) | ⬜ pending |
+| 30-02-T2 | 30-02 | 2 | ASSUR-01 | T-30-05, T-30-10 | C14N-PRESERVED post-sign mutation (added attribute) → :digest_mismatch (NEW, D-06); no WR-03 fix | unit | `mix test test/security/xml/adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors` | ❌ W0 — NEW (D-06) | ⬜ pending |
+| 30-03-T1 | 30-03 | 1 | ASSUR-01 | T-30-11, T-30-13 | JSON corpus row asserts :canonicalization_failed (NOT :digest_mismatch); full provenance | corpus | `mix test test/security/xml/corpus_security_test.exs --only security_corpus --warnings-as-errors` | ❌ W0 — NEW row (D-09) | ⬜ pending |
+| 30-03-T2 | 30-03 | 1 | ASSUR-01 | T-30-12 | CONFORMANCE.md regenerated; drift gate green | drift | `mix relyra.conformance --check` | ❌ W0 (regen) | ⬜ pending |
+| 30-04-T1 | 30-04 | 3 | ASSUR-01 | T-30-14 | :adversarial_crypto suite named in ci.security with --warnings-as-errors (D-08) | gate-wiring | `grep -v '^#' mix.exs \| grep -c 'adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors'` (==1) | ❌ W0 (alias edit) | ⬜ pending |
+| 30-04-T2 | 30-04 | 3 | ASSUR-01 | T-30-15, T-30-16, T-30-17 | mix ci.security green end-to-end (suite executes, non-zero count); full mix test no regression | gate | `mix ci.security && mix test --warnings-as-errors` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -57,11 +54,11 @@ created: 2026-05-24
 
 ## Wave 0 Requirements
 
-- [ ] New adversarial crypto-verify suite file (recommend `test/security/xml/adversarial_crypto_test.exs`, colocated with the corpus suites the alias names) — covers ASSUR-01 (5 categories + positive control + ECDSA carry-over)
-- [ ] `FakeIdP.sign` promotion: delegate to `XmldsigSigner.sign_response/1`, add `<CanonicalizationMethod>`, drop whitespace-collapse (D-02) — ASSUR-02
-- [ ] `FakeIdP.self_signed_cert_pem/0` delegate (D-03)
-- [ ] NEW `priv/security_corpus.json` row (`canonicalization_failed` class, D-09) + `CONFORMANCE.md` regen
-- [ ] `ci.security` alias edit naming the new suite (D-08)
+- [ ] New adversarial crypto-verify suite file `test/security/xml/adversarial_crypto_test.exs` (Plan 02) — covers ASSUR-01 (5 categories + positive control + ECDSA carry-over)
+- [ ] `FakeIdP.sign` promotion: delegate to `XmldsigSigner.sign_response/1`, add `<CanonicalizationMethod>`, drop whitespace-collapse (Plan 01, D-02) — ASSUR-02
+- [ ] `FakeIdP.self_signed_cert_pem/0` delegate (Plan 01, D-03)
+- [ ] NEW `priv/security_corpus.json` row (`canonicalization_failed` class, Plan 03, D-09) + `CONFORMANCE.md` regen
+- [ ] `ci.security` alias edit naming the new suite (Plan 04, D-08)
 - [ ] Framework install: none — ExUnit bundled
 
 ---
@@ -76,11 +73,11 @@ created: 2026-05-24
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 3s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 3s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** planner — 2026-05-24
