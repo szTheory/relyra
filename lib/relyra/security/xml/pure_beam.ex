@@ -59,6 +59,56 @@ defmodule Relyra.Security.XML.PureBeam do
 
   def parse_safely(_xml, _opts), do: malformed_xml_error()
 
+  @doc """
+  Pre-parse a SAML metadata document and produce a metadata-root-shaped
+  `parsed_doc` for the signed-metadata trust path (SIGV-04, D-13).
+
+  This is the metadata sibling of `parse_safely/2`: it runs the SAME pre-parse
+  byte guards (DOCTYPE / ENTITY / size) on the raw binary BEFORE any parse
+  (XXE-before-verify, D-09), routes the well-formed arm to the SAME `SaxyTree`
+  parser (D-04, one trust path — no regex, no second parser), and emits the SAME
+  canonical signed-candidate shape `signed_candidates/1` emits (carrying the
+  D-02 crypto inputs `:signed_info_node` / `:digest_value_b64` /
+  `:signature_value_b64` plus the bound `:node`), but rooted at the metadata
+  envelope (`<EntityDescriptor>` / `<EntitiesDescriptor>`) instead of an
+  `<Assertion>`.
+
+  Returns `{:ok, parsed_doc}` whose single `:signed_candidates` entry binds the
+  EXACT metadata-root tree node `canonicalize/2` serializes (anti-XSW), plus
+  `:signature_method` / `:digest_method` (from the SignedInfo), `:key_info_trust`
+  and `:duplicate_ids` (tree-derived) so the shared `do_verify/4` gates inherit
+  to the metadata path. Returns `{:error, %Error{type: :missing_signature}}` when
+  no signed `<EntityDescriptor>` / `<EntitiesDescriptor>` root is present (fail
+  closed), or the same byte-guard / `:malformed_xml` errors `parse_safely/2`
+  returns.
+  """
+  @spec parse_metadata_root_safely(binary(), keyword()) ::
+          {:ok, map()} | {:error, Error.t()}
+  def parse_metadata_root_safely(xml, opts \\ [])
+
+  def parse_metadata_root_safely(xml, opts) when is_binary(xml) do
+    max_bytes = Keyword.get(Keyword.merge(@default_opts, opts), :max_bytes)
+
+    cond do
+      byte_size(xml) > max_bytes ->
+        {:error,
+         Error.new(:payload_too_large, "XML payload exceeds max_bytes limit", %{
+           max_bytes: max_bytes
+         })}
+
+      String.contains?(xml, "<!DOCTYPE") ->
+        {:error, Error.new(:doctype_forbidden, "DOCTYPE declarations are forbidden")}
+
+      String.contains?(xml, "<!ENTITY") ->
+        {:error, Error.new(:entity_expansion_forbidden, "ENTITY declarations are forbidden")}
+
+      true ->
+        parse_metadata_tree(xml)
+    end
+  end
+
+  def parse_metadata_root_safely(_xml, _opts), do: malformed_xml_error()
+
   # Route the well-formed arm to the saxy tree builder, then derive the flat
   # parsed_doc from the tree. The pre-parse byte guards above already ran on the
   # raw binary, so no DTD / entity / oversize payload reaches Saxy.
@@ -73,6 +123,109 @@ defmodule Relyra.Security.XML.PureBeam do
            reason: Saxy.ParseError.message(error)
          })}
     end
+  end
+
+  # The metadata sibling of parse_tree/1: parse with the SAME SaxyTree engine,
+  # then locate the signed metadata-root envelope and derive the metadata-root
+  # parsed_doc. No regex, no second parser (D-04).
+  defp parse_metadata_tree(xml) do
+    case SaxyTree.parse(xml) do
+      {:ok, %Node{} = root} ->
+        build_metadata_parsed_doc(root)
+
+      {:error, %Saxy.ParseError{} = error} ->
+        {:error,
+         Error.new(:malformed_xml, "Malformed XML payload", %{
+           reason: Saxy.ParseError.message(error)
+         })}
+    end
+  end
+
+  # Find the signed metadata-root envelope (the EntityDescriptor /
+  # EntitiesDescriptor that carries a child ds:Signature) and emit the canonical
+  # metadata-root parsed_doc. Fails closed (:missing_signature) when no such
+  # signed root is present — the metadata-path analogue of the assertion path's
+  # :missing_signature fail-closed.
+  defp build_metadata_parsed_doc(%Node{} = root) do
+    case signed_metadata_root(root) do
+      %Node{} = metadata_root ->
+        signature_node = direct_child(metadata_root, "Signature")
+        signed_info_node = maybe_find(signature_node, "SignedInfo")
+
+        signature_method = first_attr_in(signed_info_node, "SignatureMethod", "Algorithm")
+        digest_method = first_attr_in(signed_info_node, "DigestMethod", "Algorithm")
+
+        {:ok,
+         %{
+           type: :parsed_metadata_xml,
+           parse_tree: root,
+           signature_method: signature_method,
+           digest_method: digest_method,
+           signed_candidates: [
+             metadata_root_candidate(
+               metadata_root,
+               signature_node,
+               signed_info_node,
+               signature_method,
+               digest_method
+             )
+           ],
+           # Tree-derived so the shared do_verify/4 gates (document-KeyInfo
+           # rejection, duplicate-ID rejection) inherit to the metadata path
+           # exactly as they do on the assertion path (T-29-22).
+           key_info_trust: element_present?(metadata_root, "KeyInfo"),
+           duplicate_ids: duplicate_ids(root)
+         }}
+
+      nil ->
+        {:error,
+         Error.new(
+           :missing_signature,
+           "Metadata XML has no <EntityDescriptor> or <EntitiesDescriptor> root with a child <ds:Signature>",
+           %{}
+         )}
+    end
+  end
+
+  # The first EntityDescriptor / EntitiesDescriptor (document order,
+  # descendant-or-self) that carries a DIRECT-child ds:Signature — the signed
+  # metadata envelope. The signature must be a direct child (not buried inside a
+  # KeyDescriptor) so the bound node is the EXACT envelope the signature covers.
+  defp signed_metadata_root(%Node{} = root) do
+    [find_first(root, "EntityDescriptor"), find_first(root, "EntitiesDescriptor")]
+    |> Enum.find(fn
+      %Node{} = node -> is_struct(direct_child(node, "Signature"), Node)
+      _ -> false
+    end)
+  end
+
+  # The metadata-root candidate in the SAME canonical shape signed_candidates/1
+  # emits (D-02 crypto inputs + the bound :node), rooted at the metadata
+  # envelope. :node is bound to the EXACT EntityDescriptor / EntitiesDescriptor
+  # tree node canonicalize/2 serializes (anti-XSW) and transforms_node is read
+  # off the bound ds:Signature (mirroring the assertion path).
+  defp metadata_root_candidate(
+         %Node{} = metadata_root,
+         signature_node,
+         signed_info_node,
+         signature_method,
+         digest_method
+       ) do
+    transforms_node = maybe_find(signature_node, "Transforms")
+
+    %{
+      xml_id: attr(metadata_root, "ID"),
+      xpath: "/" <> metadata_root.local,
+      signed_xml: render_signed_xml(metadata_root),
+      node: metadata_root,
+      signature_node: signature_node,
+      transforms_node: transforms_node,
+      signed_info_node: signed_info_node,
+      digest_value_b64: trimmed_node_text(maybe_find(signature_node, "DigestValue")),
+      signature_value_b64: trimmed_node_text(maybe_find(signature_node, "SignatureValue")),
+      signature_method: signature_method,
+      digest_method: digest_method
+    }
   end
 
   # Single-pass derivation of every legacy parsed_doc key from the tree (D-04),
@@ -428,6 +581,27 @@ defmodule Relyra.Security.XML.PureBeam do
   end
 
   defp find_first(_other, _local), do: nil
+
+  # The first DIRECT child element with the given local name, in document order,
+  # or nil. Unlike find_first/2 (descendant-or-self), this does NOT descend past
+  # the immediate children — used to bind the metadata-root's own ds:Signature
+  # (not a Signature buried in a nested KeyDescriptor / EntityDescriptor).
+  defp direct_child(%Node{children: children}, local) do
+    Enum.find(children, fn
+      %Node{local: ^local} -> true
+      _ -> false
+    end)
+  end
+
+  defp direct_child(_other, _local), do: nil
+
+  # first_attr/3 starting from a possibly-nil parent (e.g. an absent SignedInfo):
+  # the value of the first descendant-or-self element (with this local name)
+  # carrying the given attribute, trimmed; or nil. nil-safe.
+  defp first_attr_in(%Node{} = node, local, attribute_name),
+    do: first_attr(node, local, attribute_name)
+
+  defp first_attr_in(_other, _local, _attribute_name), do: nil
 
   # All descendant-or-self elements with the given local name, in document order.
   defp find_all(%Node{} = node, local) do
