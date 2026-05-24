@@ -110,6 +110,14 @@ None - no external service configuration required.
 
 None - the modified file (`lib/relyra/test_support/fake_idp.ex`) contains no stub/placeholder patterns; `FakeIdP.sign/2` now produces a fully genuine signature (real DigestValue + SignatureValue), replacing the prior structure-only stub.
 
+## Self-Check: PASSED
+
+- FOUND: `.planning/phases/30-adversarial-crypto-assurance/30-01-SUMMARY.md`
+- FOUND: `lib/relyra/test_support/fake_idp.ex`
+- FOUND commit `f9047fe` (Task 1)
+- FOUND commit `18f5bd8` (Task 2)
+- FOUND commit `9791a75` (SUMMARY)
+
 ---
 *Phase: 30-adversarial-crypto-assurance*
 *Completed: 2026-05-24*
