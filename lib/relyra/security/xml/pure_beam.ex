@@ -186,6 +186,15 @@ defmodule Relyra.Security.XML.PureBeam do
     signature_node = find_first(root, "Signature")
     transforms_node = if signature_node, do: find_first(signature_node, "Transforms"), else: nil
 
+    # D-02: surface the inputs Plan 03's crypto needs off the bound ds:Signature.
+    # signed_info_node is the SignedInfo tree node (the bytes :public_key.verify
+    # recomputes over); digest_value_b64 / signature_value_b64 are the
+    # attacker-controlled base64 strings (DATA only here — decoded + verified in
+    # Plan 03). All three are nil-safe when the corresponding node is absent.
+    signed_info_node = if signature_node, do: find_first(signature_node, "SignedInfo"), else: nil
+    digest_value_b64 = trimmed_node_text(maybe_find(signature_node, "DigestValue"))
+    signature_value_b64 = trimmed_node_text(maybe_find(signature_node, "SignatureValue"))
+
     root
     |> find_all("Assertion")
     |> Enum.with_index(1)
@@ -202,7 +211,10 @@ defmodule Relyra.Security.XML.PureBeam do
               signed_xml: render_signed_xml(assertion),
               node: assertion,
               signature_node: signature_node,
-              transforms_node: transforms_node
+              transforms_node: transforms_node,
+              signed_info_node: signed_info_node,
+              digest_value_b64: digest_value_b64,
+              signature_value_b64: signature_value_b64
             }
           ]
       end
@@ -355,7 +367,9 @@ defmodule Relyra.Security.XML.PureBeam do
       [candidate] when is_map(candidate) ->
         # The legacy flat keys stay for backward-compat (D-08); :node /
         # :signature_node / :transforms_node are carried additively (D-10) so
-        # canonicalize/2 serializes the EXACT bound node.
+        # canonicalize/2 serializes the EXACT bound node. :signed_info_node /
+        # :digest_value_b64 / :signature_value_b64 (D-02) carry the crypto inputs
+        # onto the handle so signature.ex (Plan 03) reads them off it.
         {:ok,
          %{
            xml_id: Map.get(candidate, :xml_id),
@@ -365,7 +379,10 @@ defmodule Relyra.Security.XML.PureBeam do
            digest_method: Map.get(candidate, :digest_method, digest_method),
            node: Map.get(candidate, :node),
            signature_node: Map.get(candidate, :signature_node),
-           transforms_node: Map.get(candidate, :transforms_node)
+           transforms_node: Map.get(candidate, :transforms_node),
+           signed_info_node: Map.get(candidate, :signed_info_node),
+           digest_value_b64: Map.get(candidate, :digest_value_b64),
+           signature_value_b64: Map.get(candidate, :signature_value_b64)
          }}
 
       candidates ->
@@ -457,6 +474,16 @@ defmodule Relyra.Security.XML.PureBeam do
   end
 
   defp trimmed_text(%Node{text: text}), do: String.trim(text)
+
+  # nil-safe sibling lookup off a possibly-absent parent (e.g. no ds:Signature):
+  # returns nil instead of raising when the parent is nil.
+  defp maybe_find(%Node{} = node, local), do: find_first(node, local)
+  defp maybe_find(_other, _local), do: nil
+
+  # nil-safe trimmed text (D-02): mirrors trimmed_text/1 but returns nil when the
+  # node is absent, so an absent DigestValue / SignatureValue yields nil (no raise).
+  defp trimmed_node_text(%Node{} = node), do: trimmed_text(node)
+  defp trimmed_node_text(_other), do: nil
 
   # The value of the first descendant-or-self element (with this local name)
   # carrying the given attribute, trimmed; or nil. Matches the regex-era
