@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T19:50:56.270Z"
+last_updated: "2026-05-25T20:03:38.134Z"
 last_activity: 2026-05-25
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -25,7 +25,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-25)
 ## Current Position
 
 Phase: 34 (validationpipeline-wiring-enc-01-complete) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-05-25
 Resume: /gsd:execute-phase 34
@@ -51,6 +51,7 @@ Progress: `███░░░░░░░` 33% (2/6 v1.3 phases — 32-33 comple
 | Phase 29 P05 | ~12min | 2 tasks | 4 files |
 | Phase 34 P01 | 2m | 2 tasks | 2 files |
 | Phase 34 P02 | 3m | 2 tasks | 2 files |
+| Phase 34 P03 | 9m | 2 tasks | 3 files (1 created, 2 modified) |
 
 ## Accumulated Context
 
@@ -131,6 +132,8 @@ Items acknowledged and deferred at milestone close:
 
 ## Session Continuity
 
+**2026-05-25 — Phase 34 Plan 03 complete.** ENC-01 decrypt-then-reparse wiring landed: `:decrypt_assertion` pre-stage in `ValidationPipeline.do_run/4` (detect -> reject-ambiguity-pre-crypto -> decrypt -> prefix-aware splice -> re-parse). PureBeam now tolerates encrypted-only Responses (Rule 3 fix). SC#2 + SC#3 satisfied; end-to-end SC#1 + the 7-fixture corpus close in Plan 04 (the last plan of Phase 34). Resume: `/gsd:execute-phase 34` (Plan 4 of 4).
+
 **2026-05-25 — v1.3 roadmap created.** 6 phases defined (32-37), 10/10 requirements mapped. Ready for `/gsd:plan-phase 32`.
 
 Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schema migrations are the shared prerequisite for all ENC-01 and AUTHN-01 work. Phase 35 (AUTHN-01) can begin immediately after Phase 32 completes, in parallel with Phases 33-34. Phases 36-37 can proceed at any time.
@@ -152,3 +155,5 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 - [Phase 29-05]: metadata-root Reference carries the enveloped-signature transform (ds:Signature is a CHILD of the envelope); digest over the pruned envelope. Wrong-fingerprint negative rejects at pinning BEFORE the math (defense-in-depth); tampered-entityID rejects at digest recompute (real crypto, not pinning-alone). SIGV-04 COMPLETE; full suite 540/0.
 - [Phase ?]: [Phase 34-01]: SP metadata build_sp_metadata/2 emits both KeyDescriptors (signing then encryption) before AssertionConsumerService (schema-valid order, T-34-02); signing descriptor unconditional (D-05), Phase 35 owns toggle-gating. EncryptionMethod advertises ONLY the xmlenc# decryptor accept-list (T-34-03); PUBLIC certs only (T-34-01), cert body base64-of-DER nil-safe.
 - [Phase ?]: [Phase 34-02]: FakeIdP.encrypt/2 + encrypted_response/2 are the single canonical encrypted-assertion generator (sign-then-encrypt; self-contained xmlns on the Assertion; IV(12)||CT||Tag(16) layout). Round-trips byte-identically through the UNCHANGED XMLEnc.decrypt/3. enc_algorithm_uris/0 exposes rsa-oaep-mgf1p/aes256-gcm/rsa-1_5/aes256-cbc for Plan 04 fixtures; Signature stays a sibling of the Assertion (matches signed_candidates/1).
+- [Phase 34-03]: :decrypt_assertion pre-stage wired into ValidationPipeline.do_run/4 (D-01) between parse_safely/2 and the UNCHANGED do_run_validations/6 (D-02): prefix-agnostic tree detector -> :ambiguous_assertion reject BEFORE any crypto (D-03/SC#2) -> single-EncryptedAssertion decrypt via unchanged XMLEnc.decrypt/3 (resolver MODULE + connection threaded in opts) -> prefix-aware exactly-one-match string-splice -> re-parse SAME parse_safely/2 seam. Three-tuple contract preserved on every exit; no identity field read pre-verify (CLAUDE.md #4). New typed error :ambiguous_assertion stays distinct from opaque :decryption_failed (D-03). >1 EncryptedAssertion -> :ambiguous_assertion (RESEARCH open-q1). No-op proven dependency-free via a raise-if-invoked :key_resolver (no Mox/:meck). decrypt_assertion_test 6/6; protocol 23/0; full 617/0; ci.security exit 0.
+- [Phase 34-03] (Rule 3 blocking auto-fix): PureBeam.build_parsed_doc/1 now tolerates an encrypted-only Response (EncryptedAssertion present, no cleartext Assertion) via build_pre_decrypt_parsed_doc/1 — a minimal pre-decrypt parsed_doc carrying response_fields + :parse_tree + encrypted_pending:true. WITHOUT this, the OUTER parse_safely/2 rejected every encrypted Response with :missing_protocol_field before the pre-stage could run (D-01 unreachable). The cleartext path (build_cleartext_parsed_doc/1) keeps the strict assertion/signature gates byte-identical; strict gates re-run on the re-parsed decrypted plaintext (one parse path, CLAUDE.md #2). Plan 04's SC#1 positive control depends on this tolerance.
