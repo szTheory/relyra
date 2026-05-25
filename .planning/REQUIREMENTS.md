@@ -56,26 +56,24 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Populated by roadmapper during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENC-03 | Phase ? | Pending |
-| ENC-04 | Phase ? | Pending |
-| AUTHN-02 | Phase ? | Pending |
-| AUTHN-04 | Phase ? | Pending |
-| ENC-01 | Phase ? | Pending |
-| ENC-02 | Phase ? | Pending |
-| AUTHN-01 | Phase ? | Pending |
-| AUTHN-03 | Phase ? | Pending |
-| DOCS-02 | Phase ? | Pending |
-| DOCS-03 | Phase ? | Pending |
+| ENC-03 | Phase 32 | Pending |
+| ENC-04 | Phase 32 | Pending |
+| AUTHN-02 | Phase 32 | Pending |
+| ENC-01 | Phase 34 | Pending |
+| ENC-02 | Phase 34 | Pending |
+| AUTHN-01 | Phase 35 | Pending |
+| AUTHN-03 | Phase 35 | Pending |
+| AUTHN-04 | Phase 35 | Pending |
+| DOCS-02 | Phase 36 | Pending |
+| DOCS-03 | Phase 37 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 10 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 10 ⚠️
+- Mapped to phases: 10/10 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-25*
-*Last updated: 2026-05-25 — initial v1.3 milestone definition*
+*Last updated: 2026-05-25 — traceability populated by roadmapper (Phases 32-37)*

@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Advanced Federation
 status: planning
-last_updated: "2026-05-25T06:54:19.047Z"
+last_updated: "2026-05-25"
 last_activity: 2026-05-25
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,19 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-05-24)
+See: `.planning/PROJECT.md` (updated 2026-05-25)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.3 Advanced Federation — encrypted assertions, signed AuthnRequests, federation guides
+**Current focus:** v1.3 Advanced Federation — encrypted assertions (ENC-01..04), signed AuthnRequests (AUTHN-01..04), federation guides (DOCS-02..03)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 32 (not started — roadmap complete, awaiting `/gsd:plan-phase 32`)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-25 — Milestone v1.3 started
+Status: Roadmap created; ready to plan Phase 32
+Last activity: 2026-05-25 — v1.3 roadmap created (Phases 32-37)
+
+Progress: `░░░░░░░░░░` 0% (0/6 phases)
 
 ## Performance Metrics
 
@@ -55,13 +57,25 @@ Last activity: 2026-05-25 — Milestone v1.3 started
 - v1.1 starts at Phase 28 (continues numbering; does not reset).
 - v1.1 is a focused, URGENT security milestone derived from the 2026-05-23 P0 audit.
 - Phase sequence is dependency-ordered: foundation (28) → verification (29) → assurance (30) → disclosure (31). The verify math (SIGV-01/02) cannot land before correct canonicalization (SIGV-03), so Phase 28 must complete first.
+- v1.3 starts at Phase 32 (continues numbering after v1.1's Phase 31).
+- v1.3 dependency graph: Phase 32 (shared prerequisite) → Phase 33 (crypto core) → Phase 34 (pipeline wiring + ENC-01 complete). Phase 35 (AUTHN-01) depends only on Phase 32 and can run in parallel with Phases 33-34. Phases 36-37 (docs) have no code dependencies and are fully parallel.
 
-### Decisions / Constraints carried into v1.1
+### Decisions / Constraints carried into v1.3
 
-- **ADR-0001 governs:** pure-BEAM exclusive-C14N + XMLDSig verify behind the `Relyra.Security.XML` seam. The hybrid+xmlsec NIF (GATE-03 matrix) is a **conditional rollback** only if pure-BEAM correctness gates can't be met — NOT a planned phase.
-- **Brownfield, extend not rebuild:** work lands in `lib/relyra/security/signature.ex` (`do_verify`), `lib/relyra/security/xml/pure_beam.ex` (add `saxy` parse tree + real exclusive C14N), `lib/relyra/security/algorithm_policy.ex`, `lib/relyra/test_support/fake_idp.ex`. Reuse the existing hardened parser boundary, single-signed-node selection, duplicate-ID + document-`KeyInfo` rejection — these stay; the new work is the actual crypto + correct C14N underneath them.
-- **`saxy` is not yet in `mix.exs`** — the parser path ADR-0001 specified was never added. Phase 28 adds it.
-- **Fix-first posture:** branch `security/xmldsig-real-verification`; GHSA/CVE/CHANGELOG advisory published at the fixed release, not before.
+- **Decrypt-then-reparse invariant is non-negotiable:** decrypted assertion bytes MUST pass through `PureBeam.parse_safely/2` AND `Signature.do_verify/4` before any identity field is read. CVE-2025-54419 (node-saml, CVSS 10.0) was exactly this shortcut. No workarounds.
+- **AlgorithmPolicy gates all new crypto:** RSA-PKCS1v1.5 is permanently blocked with no escape hatch. AES-CBC is blocked by default with the same time-boxed escape-hatch pattern as SHA-1. AES-GCM auth tag must be validated as exactly 16 bytes BEFORE calling `:crypto.crypto_one_time_aead/7`.
+- **Single opaque error atom:** all decryption failure modes return `:decryption_failed` — distinct atoms would open a padding oracle. This is a hard contract, not a preference.
+- **SP private keys never in DB:** `KeyResolver.Default` reads from app config only; diagnostic bundle allow-list excludes all key material. No exceptions for "convenience" columns.
+- **Redirect-binding signature signs raw query bytes verbatim:** the `sign_redirect_query/3` function receives a pre-assembled binary; no re-serialization inside the function. Corpus golden tests enforce this.
+- **Zero new Hex dependencies:** all v1.3 crypto is OTP stdlib (`:public_key`, `:crypto`, `:zlib`). Any NIF-based XML-Enc library would bypass the hardened saxy seam — permanently out of scope.
+- **RSA-OAEP SHA-256 (`xmlenc11#rsa-oaep`) blocked at AlgorithmPolicy:** `{:rsa_oaep_hash, :sha256}` raises `{:badarg}` on OTP 26-28. AlgorithmPolicy maps this URI to `:blocked_pending_otp_support` with a clear error, not silent failure.
+- **Ambiguity guard for simultaneous cleartext+encrypted assertion:** `PureBeam.build_parsed_doc/1` must detect and reject `:ambiguous_assertion` before any crypto. CVE-2026-2092 (Keycloak) was injection of a cleartext assertion alongside an encrypted one.
+
+### Decisions / Constraints carried from v1.1
+
+- **ADR-0001 governs:** pure-BEAM exclusive-C14N + XMLDSig verify behind the `Relyra.Security.XML` seam. The hybrid+xmlsec NIF (GATE-03 matrix) is a conditional rollback only — NOT a planned path.
+- **Brownfield, extend not rebuild:** work lands in existing modules (signature.ex, pure_beam.ex, algorithm_policy.ex, validation_pipeline.ex, protocol/metadata.ex, ecto/connection.ex, ecto/certificate.ex). Reuse the existing hardened parser boundary, single-signed-node selection, duplicate-ID + document-KeyInfo rejection.
+- **`mix ci.security` hollow-gate fix (Phase 30) is permanent:** each security suite runs as its own `cmd mix test` process. Never revert to bare `test` steps. The `ci_gate_integrity_test.exs` meta-gate prevents regression.
 
 ### Decisions made in Phase 28 Plan 01
 
@@ -105,28 +119,18 @@ Items acknowledged and deferred at milestone close:
 |----------|------|--------|
 | verification_gap | Phase 15: 15-VERIFICATION.md | human_needed |
 
-## Tracked Follow-ups (v1.1, in-flight)
+## Tracked Follow-ups (carried into v1.3)
 
-- **Mixed-content / inter-element-whitespace C14N gap — ✅ RESOLVED in 29-01 (2026-05-24).** Option-a landed exactly as recommended: ordered `content` field on `SaxyTree.Node`, `C14N` walks it in document order, `:text`/`:children` kept as byte-identical derived views. Docker-minted 1056-byte mixed-content golden (`mixed_content.c14n`) proves byte-equality to libxml2; 887-byte golden still green. See `29-01-SUMMARY.md`.
-- **PrefixList golden cross-check (future, not blocking SIGV-02).** A future `InclusiveNamespaces/@PrefixList` golden should additionally cross-check against a non-libxml2 implementation (e.g. Apache Santuario) to fully neutralize the lxml-lineage caveat noted in `parser_differential_and_c14n/PROVENANCE.md`. Current goldons use no PrefixList, so the caveat is not yet load-bearing.
-- **`ci.security` was structurally HOLLOW before Phase 30 — ✅ FOUND & FIXED in 30-04 (2026-05-24).** Mix runs the `test` task at most once per `mix` invocation; `ci.security` runs `ci.conformance` first (`test --only conformance`), so every later *bare* `test` step in the lane was a silent no-op (skipped AND inheriting the `--only conformance` filter). The security lane only ever ran the conformance suite — `strict_default_proof`, `escape_hatch_audit`, `security_corpus`, `gate02_c14n` were all no-ops inside the alias. **Prior "`mix ci.security` GREEN" attestations (Phase 28 cleanup + 28 VERIFIED, this file lines ~96/~128) were green-for-the-wrong-reason.** Substance of 28/29 completion still STANDS — those suites independently passed via `ci.fast` and the full `mix test` runs on record (486/524/540). **Fix (30-04):** each security suite now runs as its own `cmd mix test` (fresh process → genuinely gates), proven by an `assert false` probe that flips `mix ci.security` to exit 1; an anti-hollow meta-gate `test/security/ci_gate_integrity_test.exs` (parses `mix.exs`, asserts every suite is named + wired non-deduped + tags exist) makes recurrence impossible; `compile --warnings-as-errors` added as first step; the standalone `gate02_c14n` CI step kept as documented belt-and-suspenders. **First honest `mix ci.security` run: exit 0**, all suites execute with real counts (conformance 6, meta-gate 4, strict_default 4, escape_hatch 1, security_corpus 9, gate02_c14n 3, adversarial 6); full `mix test` 557/0. Does NOT reopen 28/29 (solo dev, pre-release, fix-first).
+- **Mixed-content / inter-element-whitespace C14N gap — RESOLVED in 29-01 (2026-05-24).** Option-a landed exactly as recommended: ordered `content` field on `SaxyTree.Node`, `C14N` walks it in document order, `:text`/`:children` kept as byte-identical derived views. Docker-minted 1056-byte mixed-content golden (`mixed_content.c14n`) proves byte-equality to libxml2; 887-byte golden still green. See `29-01-SUMMARY.md`.
+- **PrefixList golden cross-check (future, not blocking).** A future `InclusiveNamespaces/@PrefixList` golden should additionally cross-check against a non-libxml2 implementation (e.g. Apache Santuario) to fully neutralize the lxml-lineage caveat noted in `parser_differential_and_c14n/PROVENANCE.md`. Current goldens use no PrefixList, so the caveat is not yet load-bearing.
+- **Phase 29 warning-level review items (WR-02..WR-05, IN-01..IN-03):** Non-blocking. Tracked in `.planning/todos/completed/29-code-review-followups.md`.
+- **CVE ID backfill into `docs/advisories/2026-001-...`:** Pending async GitHub assignment.
 
 ## Session Continuity
 
-**2026-05-24 — Phase 29 Plan 01 PAUSED at Task 3 (blocking human-action checkpoint).** Tasks 1-2 of the D-09 mixed-content C14N fix are committed and verified:
+**2026-05-25 — v1.3 roadmap created.** 6 phases defined (32-37), 10/10 requirements mapped. Ready for `/gsd:plan-phase 32`.
 
-- Task 1 (`4411f91`): `SaxyTree.Node` gains an ordered `content: [{:text,_} | {:element,_}]` field built in document order across the SAX handlers; `:text`/`:children` are projected as byte-identical DERIVED views in `finalize_node/1` (pure_beam field-derivation untouched). 99 XML-security tests green.
-- Task 2 (`8052658`): `C14N.render_element/3` walks `content` in document order (mixed-content / inter-element whitespace now canonicalize in source order); `bindable?/1` adds `is_list(content)` (Pitfall 9). **Rule-1 fix folded in:** `prune_subtree/1` was rewritten to prune on `content` (the rendered source of truth) instead of `children` — under the new content walk the old children-only prune was fail-OPEN (left `ds:Signature` material in canonical bytes), which would have re-opened the anti-XSW gap (D-10/T-29-03). 101 XML-security tests green; the 887-byte gate02_c14n golden is byte-identical; broader security regression 146/0.
-
-**Task 3 (NOT done — human/out-of-band):** mint the mixed-content C14N golden out-of-band via Docker libxml2/xmllint (per Phase 28 D-12; CI never runs the native toolchain), author `mixed_content.input.xml`, write `mixed_content.c14n` (UTF-8, no BOM, no trailing newline), append a PROVENANCE.md row, and add a NEW `@tag :gate02_c14n` byte-equality test. Orchestrator owns resolution; a continuation agent finishes Task 3 + writes 29-01-SUMMARY.md.
-
----
-
-Phase 28 VERIFIED + COMPLETE (2026-05-24): UAT 8/8 (all deterministic security suites re-run green — compile clean, 77 XML-security tests, seam_contract 3, gate02_c14n golden-byte oracle 2, all 0 failures), 28-SECURITY.md verified (threats_open 0). ROADMAP/REQUIREMENTS/STATE marked complete; SIGV-03 PROVEN and validated. Earlier post-phase cleanup (2026-05-23): dependency CVEs fixed, `mix ci.security` GREEN, full `mix test` 486/0, embargo memory relaxed.
-
-Next GSD command (after context clear): `/gsd:plan-phase 29` (XMLDSig `:public_key.verify(SignedInfo)` against configured IdP cert + `DigestValue` recompute/compare, both `verify/4` and `verify_metadata_root/4`), which rests on the PROVEN canonical-bytes precondition. **First follow-up to fold in:** the mixed-content C14N fix (see Tracked Follow-ups) — `/gsd:quick` or within Phase 29 planning.
-
-Last session: 2026-05-24T18:20:30.421Z
+Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schema migrations are the shared prerequisite for all ENC-01 and AUTHN-01 work. Phase 35 (AUTHN-01) can begin immediately after Phase 32 completes, in parallel with Phases 33-34. Phases 36-37 can proceed at any time.
 
 ## Decisions
 
@@ -139,8 +143,7 @@ Last session: 2026-05-24T18:20:30.421Z
 - [Phase 29-03]: Real :public_key.verify of canonicalized SignedInfo + constant-time DigestValue recompute wired into the verified_signed_node [candidate] arm (D-01 bypass site closed); cert_chain threaded do_verify/4 -> verify_algorithms_and_candidates/4 -> verified_signed_node/5; all pre-existing trust gates still run BEFORE crypto.
 - [Phase 29-03]: public_key_from_cert_chain/1 is @doc-false PUBLIC (reusable fail-closed PEM->RSA pubkey via pkix_decode_cert(:otp) -> element(8) SPKI); every malformed PEM/DER -> :untrusted_certificate, never raises (Pitfall 3). Plan 04 reuses it.
 - [Phase 29-03]: Closing the bypass correctly fails-closed 10 existing end-to-end structure-only-signature {:ok} tests (consume_response x7, conformance, acs, telemetry) — deferred to Plan 04 (owns D-11 reusable signer); logged in deferred-items.md. Plan 03 own lanes 100% green (signature_crypto 14/0, security regression 161/0, C14N golden 102/0).
-- [Phase ?]: [Phase 29-04]: D-11 genuine signer (Relyra.TestSupport.XmldsigSigner) reuses FakeIdP.keypair() + the verifier's own C14N engine and self-parses its emitted XML to bind the exact Assertion/SignedInfo nodes (D-12). Positive control proven: genuine Response -> {:ok, %SignedNode{}}; wrong-key -> :invalid_signature; tampered-NameID -> :digest_mismatch. Added sign_response/1 to re-sign existing Responses in place; all 10 structure-only {:ok} tests triaged by re-pointing at the genuine signer. Full mix test --warnings-as-errors = 524/0 (phase gate met).
-- [Phase ?]: [Phase 29-04]: D-11 genuine signer (Relyra.TestSupport.XmldsigSigner) reuses FakeIdP.keypair plus the verifier own C14N engine and self-parses its emitted XML to bind the exact Assertion/SignedInfo nodes (D-12). Positive control proven: genuine Response verifies ok; wrong-key invalid_signature; tampered-NameID digest_mismatch. Added sign_response/1 to re-sign existing Responses in place; all 10 structure-only ok tests triaged by re-pointing at the genuine signer. Full suite 524/0 (phase gate met).
-- [Phase ?]: [Phase 29-05]: SIGV-04 plumbing gap (D-13) closed — metadata-root pre_parse_for_signature/1 routes through PureBeam.parse_metadata_root_safely/2 (SAME SaxyTree builder as the assertion path); tree-bound crypto inputs surfaced, 5 regex helpers retired (one trust path); genuinely-signed EntityDescriptor verifies {:ok} via the SAME do_verify primitive.
-- [Phase ?]: [Phase 29-05]: metadata key_info_trust scoped to the bound ds:Signature's OWN KeyInfo (Rule 1 fix), NOT any-KeyInfo-anywhere — a KeyDescriptor/KeyInfo published signing cert is gated by TrustAnchor pinning, not a document-trust bypass; the literal any-KeyInfo flag would reject all real signed metadata once genuine crypto was wired. Threat T-29-22 (signature self-asserted KeyInfo) still rejected.
-- [Phase ?]: [Phase 29-05]: metadata-root Reference carries the enveloped-signature transform (ds:Signature is a CHILD of the envelope); digest over the pruned envelope. Wrong-fingerprint negative rejects at pinning BEFORE the math (defense-in-depth); tampered-entityID rejects at digest recompute (real crypto, not pinning-alone). SIGV-04 COMPLETE; full suite 540/0.
+- [Phase 29-04]: D-11 genuine signer (Relyra.TestSupport.XmldsigSigner) reuses FakeIdP.keypair() + the verifier's own C14N engine and self-parses its emitted XML to bind the exact Assertion/SignedInfo nodes (D-12). Positive control proven: genuine Response -> {:ok, %SignedNode{}}; wrong-key -> :invalid_signature; tampered-NameID -> :digest_mismatch. Added sign_response/1 to re-sign existing Responses in place; all 10 structure-only {:ok} tests triaged by re-pointing at the genuine signer. Full mix test --warnings-as-errors = 524/0 (phase gate met).
+- [Phase 29-05]: SIGV-04 plumbing gap (D-13) closed — metadata-root pre_parse_for_signature/1 routes through PureBeam.parse_metadata_root_safely/2 (SAME SaxyTree builder as the assertion path); tree-bound crypto inputs surfaced, 5 regex helpers retired (one trust path); genuinely-signed EntityDescriptor verifies {:ok} via the SAME do_verify primitive.
+- [Phase 29-05]: metadata key_info_trust scoped to the bound ds:Signature's OWN KeyInfo (Rule 1 fix), NOT any-KeyInfo-anywhere — a KeyDescriptor/KeyInfo published signing cert is gated by TrustAnchor pinning, not a document-trust bypass; the literal any-KeyInfo flag would reject all real signed metadata once genuine crypto was wired. Threat T-29-22 (signature self-asserted KeyInfo) still rejected.
+- [Phase 29-05]: metadata-root Reference carries the enveloped-signature transform (ds:Signature is a CHILD of the envelope); digest over the pruned envelope. Wrong-fingerprint negative rejects at pinning BEFORE the math (defense-in-depth); tampered-entityID rejects at digest recompute (real crypto, not pinning-alone). SIGV-04 COMPLETE; full suite 540/0.

@@ -10,6 +10,7 @@
 - ✅ **v0.6 — Operational maturity carryover + SLO** (shipped 2026-05-08). See `.planning/milestones/v0.6-ROADMAP.md`.
 - ✅ **v1.0 — External security review + conformance + docs polish** (shipped 2026-05-08). See `.planning/milestones/v1.0-ROADMAP.md`.
 - ✅ **v1.1 — Verify the Trust Path** (shipped 2026-05-25). See `.planning/milestones/v1.1-ROADMAP.md`.
+- 🔄 **v1.3 — Advanced Federation** (in progress). See `.planning/milestones/v1.3-ROADMAP.md`.
 
 ## Phases
 
@@ -69,6 +70,20 @@ See `.planning/milestones/v1.1-ROADMAP.md`.
 
 </details>
 
+<details open>
+<summary>🔄 v1.3 — Advanced Federation (Phases 32-37) — IN PROGRESS</summary>
+
+- [ ] **Phase 32: AlgorithmPolicy Extension + Schema Migrations** — Extend AlgorithmPolicy with key-transport and content-encryption algorithm fields; add cert `party`/`use` columns and connection `sign_authn_requests` field via safe additive migrations.
+- [ ] **Phase 33: KeyResolver Behaviour + XMLEnc Crypto Core** — Introduce the `KeyResolver` behaviour and `KeyResolver.Default` PEM-from-config implementation; build `Relyra.Security.XMLEnc` with RSA-OAEP + AES-GCM decryption behind the AlgorithmPolicy gate.
+- [ ] **Phase 34: ValidationPipeline Wiring + ENC-01 Complete** — Wire the decrypt-then-reparse step into `ValidationPipeline`; add ambiguity guard; publish SP encryption `KeyDescriptor`; add the 7-fixture ENC-01 adversarial corpus to `mix ci.security`.
+- [ ] **Phase 35: Signed AuthnRequests + ADFS Preset** — Implement redirect-binding query signing; add `sign_authn_requests` connection toggle; publish signing metadata fields; ship ADFS preset and runbook; add 5-fixture AUTHN-01 adversarial corpus.
+- [ ] **Phase 36: Generic SAML Runbook** — Publish `guides/recipes/generic_saml.md` covering SP/IdP metadata fields, decoder tables for non-preset IdPs, minimum-safe checklist, debugging flow, and certificate rotation.
+- [ ] **Phase 37: Identity Mapping and Provisioning Guide** — Publish `guides/identity_mapping_and_provisioning.md` covering three mapping patterns, JIT decision tree, `UserMapper` behaviour documentation, and SCIM non-goal statement.
+
+See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans | Status | Completed |
@@ -103,5 +118,11 @@ See `.planning/milestones/v1.1-ROADMAP.md`.
 | 29. Cryptographic XMLDSig verification | v1.1 | 5/5 | Complete | 2026-05-24 |
 | 30. Adversarial crypto assurance | v1.1 | 4/4 | Complete | 2026-05-24 |
 | 31. Disclosure and docs honesty | v1.1 | 2/2 | Complete | 2026-05-24 |
+| 32. AlgorithmPolicy Extension + Schema Migrations | v1.3 | 0/TBD | Not started | - |
+| 33. KeyResolver Behaviour + XMLEnc Crypto Core | v1.3 | 0/TBD | Not started | - |
+| 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 0/TBD | Not started | - |
+| 35. Signed AuthnRequests + ADFS Preset | v1.3 | 0/TBD | Not started | - |
+| 36. Generic SAML Runbook | v1.3 | 0/TBD | Not started | - |
+| 37. Identity Mapping and Provisioning Guide | v1.3 | 0/TBD | Not started | - |
 
 ---
