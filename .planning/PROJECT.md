@@ -21,6 +21,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.6 shipped 2026-05-08** — Operational maturity carryover + SLO. Phase 22 (certificate expiry alerts), Phase 23 (diagnostic bundles), and Phase 24 (Single Logout) are complete and verified.
 - **v1.0 shipped 2026-05-08** — Conformance, security review readiness, and adopter onboarding polish. Phase 25 added executable SP conformance and pinned CVE regressions; Phase 26 added the reviewer packet, generated evidence, and strict-default proof lanes; Phase 27 added authoritative onboarding, runbooks, case studies, and batteries-included proof.
 - **v1.1 shipped 2026-05-25** — Verify the Trust Path. Phase 28 proved exclusive-C14N over a real parse tree; Phase 29 wired genuine `:public_key.verify` + `DigestValue` recompute onto both response and metadata-root paths; Phase 30 made the adversarial crypto corpus permanently gate `mix ci.security`; Phase 31 aligned reviewer docs, findings ledger, and staged advisory artifacts to the shipped proof surface. Full suite remained green and the published-hex SAML auth-bypass is closed in code.
+- **v1.3 in progress** — Advanced Federation. Phase 32 (AlgorithmPolicy extension + DB schema migrations) and Phase 33 (XMLEnc decrypt core) are complete; Phase 34 (ValidationPipeline wiring) closed ENC-01 + ENC-02 — encrypted-assertion decrypt→reparse→verify, ambiguity guard, SP encryption `KeyDescriptor`, and a 7-fixture ENC-01 adversarial corpus in `mix ci.security` (5/5 verified 2026-05-25, full suite 626/0). Remaining: Phase 35 (AUTHN-01), Phases 36-37 (guides).
 
 ## Next Milestone Goals
 
@@ -106,11 +107,14 @@ Known carry-forward from v1.1 close:
 - ✓ **ASSUR-02** — `TestSupport.FakeIdP.sign` performs REAL XMLDSig signing (delegates to the genuine `XmldsigSigner`, real `DigestValue` + `SignatureValue`), so the whole suite exercises real verification, not structure-only acceptance — v1.1 (Phase 30 verified 2026-05-24, 9/9 must-haves)
 - ✓ **ASSUR-01** — permanent `@tag :adversarial_crypto` corpus proving the verifier rejects every named attack (forged-sig/wrong-key → `:invalid_signature`; tampered-content & c14n-differential → `:digest_mismatch`; ECDSA → `:unsupported_signature_algorithm`) and accepts only a genuine signature, wired into the conformance manifest and **genuinely** gated by `mix ci.security`. Found and fixed a latent hollow-gate (Mix `test`-task dedup made post-`ci.conformance` `test` lines silent no-ops); each security suite now runs as `cmd mix test` + an anti-hollow meta-gate (`ci_gate_integrity_test.exs`) prevents recurrence — v1.1 (Phase 30 verified 2026-05-24)
 
+**v1.3:**
+- ✓ **ENC-01** — Encrypted assertions (`EncryptedAssertion` / XML-Enc): single `<EncryptedAssertion>` decrypted (RSA-OAEP + AES-256-GCM), spliced, and re-parsed through the SAME `PureBeam.parse_safely/2` seam so `Signature.do_verify/4` runs before any identity field is read; cleartext+encrypted and >1-encrypted rejected `:ambiguous_assertion` before crypto; single opaque `:decryption_failed`; 7-fixture pipeline-level adversarial corpus gated by `mix ci.security` — v1.3 (Phase 34; 5/5 success criteria verified 2026-05-25)
+- ✓ **ENC-02** — SP metadata publishes distinct `<KeyDescriptor use="encryption">` and `<KeyDescriptor use="signing">` (base64-of-DER, PUBLIC certs only, schema-valid ordering) — v1.3 (Phase 34 verified 2026-05-25)
+
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
-- [ ] **ENC-01** — Encrypted assertions (`EncryptedAssertion` / XML-Enc) supported: RSA-OAEP + AES-GCM decryption, re-parsed through the hardened saxy seam, adversarial corpus expanded — v1.3
 - [ ] **AUTHN-01** — Signed AuthnRequests: HTTP-Redirect binding signing for `WantAuthnRequestsSigned` IdPs (ADFS, Shibboleth) — v1.3
 - [ ] **DOCS-02** — Generic SAML runbook (`guides/recipes/generic_saml.md`) with field-name decoder tables for top non-preset IdPs — v1.3
 - [ ] **DOCS-03** — Identity mapping & provisioning guide (`guides/identity_mapping_and_provisioning.md`): NameID vs app identity, 3 mapping patterns, JIT decision tree, explicit SCIM non-goal — v1.3
@@ -212,4 +216,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-25 — v1.3 Advanced Federation milestone started. Encrypted assertions (ENC-01), signed AuthnRequests (AUTHN-01), and two guide requirements (DOCS-02/03) defined as Active. v1.4 Full SLO deferred per milestone arc.*
+*Last updated: 2026-05-25 — Phase 34 complete: ENC-01 + ENC-02 validated and moved to Validated (encrypted-assertion decrypt pipeline + SP encryption KeyDescriptor). v1.3 now 3/6 phases done (32-34); AUTHN-01 (Phase 35) and DOCS-02/03 (Phases 36-37) remain Active. v1.4 Full SLO deferred per milestone arc.*
