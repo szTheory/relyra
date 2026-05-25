@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T14:58:37.681Z"
-last_activity: 2026-05-25 -- Phase 32 execution started
+last_updated: "2026-05-25T15:27:24.929Z"
+last_activity: 2026-05-25 -- Phase 33 execution started
 progress:
   total_phases: 34
   completed_phases: 32
-  total_plans: 99
+  total_plans: 101
   completed_plans: 98
   percent: 94
 ---
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-25)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 32 — algorithm-policy-extension-schema-migrations
+**Current focus:** Phase 33 — key-resolver-behaviour-xmlenc-crypto-core
 
 ## Current Position
 
-Phase: 32 (algorithm-policy-extension-schema-migrations) — EXECUTING
+Phase: 33 (key-resolver-behaviour-xmlenc-crypto-core) — EXECUTING
 Plan: 1 of 2
-Status: Executing Phase 32
-Last activity: 2026-05-25 -- Phase 32 execution started
+Status: Executing Phase 33
+Last activity: 2026-05-25 -- Phase 33 execution started
 
 Progress: `░░░░░░░░░░` 0% (0/6 phases)
 
