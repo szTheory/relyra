@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
-status: awaiting_next_milestone
-last_updated: 2026-05-25T06:17:48Z
-last_activity: 2026-05-25 -- shipped relyra 1.2.0 to hex; GHSA-jv46-xfwm-36j7 published; 1.1.0 retired (security)
+milestone: v1.3
+milestone_name: Advanced Federation
+status: planning
+last_updated: "2026-05-25T06:54:19.047Z"
+last_activity: 2026-05-25
 progress:
   total_phases: 0
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
   percent: 0
-stopped_at: Awaiting v1.3 Advanced Federation milestone definition
 ---
 
 # Project State
@@ -21,16 +20,14 @@ stopped_at: Awaiting v1.3 Advanced Federation milestone definition
 See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Awaiting next milestone definition
+**Current focus:** v1.3 Advanced Federation — encrypted assertions, signed AuthnRequests, federation guides
 
 ## Current Position
 
-Phase: —
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone definition
-Last activity: 2026-05-25 -- shipped relyra 1.2.0 to hex; GHSA-jv46-xfwm-36j7 published; 1.1.0 retired (security)
-
-Milestone progress: no active milestone
+Status: Defining requirements
+Last activity: 2026-05-25 — Milestone v1.3 started
 
 ## Performance Metrics
 

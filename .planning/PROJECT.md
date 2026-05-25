@@ -44,6 +44,16 @@ Known carry-forward from v1.1 close:
 - CVE ID backfill into `docs/advisories/2026-001-...` when GitHub assigns it (pending async).
 
 
+## Current Milestone: v1.3 Advanced Federation
+
+**Goal:** Extend Relyra to support encrypted assertions and signed AuthnRequests for enterprise federation scenarios, alongside authoritative guides for generic SAML onboarding and identity mapping patterns.
+
+**Target features:**
+- Encrypted assertions (`EncryptedAssertion` / XML-Enc): RSA-OAEP + AES-GCM, re-parsed through the hardened saxy seam, adversarial corpus expanded
+- Signed AuthnRequests: HTTP-Redirect binding signing for `WantAuthnRequestsSigned` IdPs (ADFS, Shibboleth)
+- Generic SAML runbook (`guides/recipes/generic_saml.md`) — first-class peer of `okta.md`, with field-name decoder tables for top non-preset IdPs
+- Identity mapping & provisioning guide (`guides/identity_mapping_and_provisioning.md`) — NameID vs app identity, 3 mapping patterns, JIT decision tree, explicit SCIM non-goal
+
 ## Requirements
 
 ### Validated
@@ -100,7 +110,10 @@ Known carry-forward from v1.1 close:
 
 <!-- Carried forward; building toward these next. -->
 
-None defined. Start the next milestone with `$gsd-new-milestone`.
+- [ ] **ENC-01** — Encrypted assertions (`EncryptedAssertion` / XML-Enc) supported: RSA-OAEP + AES-GCM decryption, re-parsed through the hardened saxy seam, adversarial corpus expanded — v1.3
+- [ ] **AUTHN-01** — Signed AuthnRequests: HTTP-Redirect binding signing for `WantAuthnRequestsSigned` IdPs (ADFS, Shibboleth) — v1.3
+- [ ] **DOCS-02** — Generic SAML runbook (`guides/recipes/generic_saml.md`) with field-name decoder tables for top non-preset IdPs — v1.3
+- [ ] **DOCS-03** — Identity mapping & provisioning guide (`guides/identity_mapping_and_provisioning.md`): NameID vs app identity, 3 mapping patterns, JIT decision tree, explicit SCIM non-goal — v1.3
 
 ### Out of Scope
 
@@ -199,4 +212,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-25 after milestone close — v1.1 shipped. The trust path is now cryptographically verified end-to-end for both login responses and signed metadata, the adversarial crypto corpus genuinely gates `mix ci.security`, and the disclosure artifacts for `RELYRA-2026-001` are staged for ship time. The next milestone is intentionally undefined pending fresh planning.*
+*Last updated: 2026-05-25 — v1.3 Advanced Federation milestone started. Encrypted assertions (ENC-01), signed AuthnRequests (AUTHN-01), and two guide requirements (DOCS-02/03) defined as Active. v1.4 Full SLO deferred per milestone arc.*
