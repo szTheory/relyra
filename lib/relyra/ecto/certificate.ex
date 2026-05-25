@@ -26,8 +26,8 @@ if Code.ensure_loaded?(Ecto.Schema) do
       field :activated_at, :utc_datetime_usec
       field :retired_at, :utc_datetime_usec
       field :metadata, :map, default: %{}
-      field :party, Ecto.Enum, values: [:idp, :sp]
-      field :use, Ecto.Enum, values: [:signing, :encryption]
+      field :party, Ecto.Enum, values: [:idp, :sp], default: :idp
+      field :use, Ecto.Enum, values: [:signing, :encryption], default: :signing
 
       belongs_to :connection, Connection,
         foreign_key: :connection_record_id,
@@ -71,6 +71,8 @@ if Code.ensure_loaded?(Ecto.Schema) do
       changeset
       |> put_change_unless_present(:role, :signing)
       |> put_change_unless_present(:lifecycle_state, :active)
+      |> put_change_unless_present(:party, :idp)
+      |> put_change_unless_present(:use, :signing)
       |> put_default_timestamp(:activated_at, :lifecycle_state, :active)
       |> put_default_timestamp(:staged_at, :lifecycle_state, :next)
       |> clear_timestamp_when_not_state(:staged_at, :lifecycle_state, :next)
