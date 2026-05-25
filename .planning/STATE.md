@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: null
 milestone_name: null
 status: awaiting_next_milestone
-last_updated: 2026-05-25T04:45:00Z
-last_activity: 2026-05-25 -- v1.1 archived and tagged
+last_updated: 2026-05-25T06:17:48Z
+last_activity: 2026-05-25 -- shipped relyra 1.2.0 to hex; GHSA-jv46-xfwm-36j7 published; 1.1.0 retired (security)
 progress:
   total_phases: 0
   completed_phases: 0
@@ -28,7 +28,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-24)
 Phase: —
 Plan: —
 Status: Awaiting next milestone definition
-Last activity: 2026-05-25 -- v1.1 archived and tagged
+Last activity: 2026-05-25 -- shipped relyra 1.2.0 to hex; GHSA-jv46-xfwm-36j7 published; 1.1.0 retired (security)
 
 Milestone progress: no active milestone
 
