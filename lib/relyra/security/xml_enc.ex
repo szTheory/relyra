@@ -137,7 +137,12 @@ defmodule Relyra.Security.XMLEnc do
 
   defp enc_method_alg(node) do
     em = find_first(node, "EncryptionMethod")
-    em && Enum.find_value(em.attrs, fn {"Algorithm", v} -> v; _ -> nil end)
+
+    em &&
+      Enum.find_value(em.attrs, fn
+        {"Algorithm", v} -> v
+        _ -> nil
+      end)
   end
 
   defp cipher_value_text(node) do
