@@ -227,8 +227,24 @@ defmodule Relyra.TestSupport.XmldsigSigner do
       not_before: Keyword.get(opts, :not_before, "2000-01-01T00:00:00Z"),
       not_on_or_after: Keyword.get(opts, :not_on_or_after, "2099-01-01T00:00:00Z"),
       subject_confirmation_not_on_or_after:
-        Keyword.get(opts, :subject_confirmation_not_on_or_after, "2099-01-01T00:00:00Z")
+        Keyword.get(opts, :subject_confirmation_not_on_or_after, "2099-01-01T00:00:00Z"),
+      # When true, the signed <Assertion> apex carries its own default namespace
+      # (`xmlns="urn:oasis:names:tc:SAML:2.0:assertion"`) so the DigestValue is
+      # computed over the NAMESPACED Assertion. This is required for the encrypted
+      # path (FakeIdP.encrypted_response): the extracted Assertion is spliced back
+      # into a Response and re-canonicalized WITH that namespace in scope, so the
+      # digest must have been computed over the same namespaced bytes (T-34-04).
+      # Defaults to false so the cleartext signer path is byte-identical.
+      assertion_namespace: Keyword.get(opts, :assertion_namespace, false)
     }
+  end
+
+  defp assertion_open_tag(fields) do
+    if fields.assertion_namespace do
+      "<Assertion xmlns=\"urn:oasis:names:tc:SAML:2.0:assertion\" ID=\"#{fields.assertion_id}\">"
+    else
+      "<Assertion ID=\"#{fields.assertion_id}\">"
+    end
   end
 
   # The Response carries the genuine ds:Signature (SignedInfo + Reference to the
@@ -237,7 +253,7 @@ defmodule Relyra.TestSupport.XmldsigSigner do
     "<Response Destination=\"#{fields.destination}\" InResponseTo=\"#{fields.in_response_to}\" ConnectionId=\"valid\">" <>
       "<Issuer>#{fields.issuer}</Issuer>" <>
       "<Status><StatusCode Value=\"#{fields.status}\"/></Status>" <>
-      "<Assertion ID=\"#{fields.assertion_id}\">" <>
+      assertion_open_tag(fields) <>
       "<Issuer>#{fields.issuer}</Issuer>" <>
       "<Subject>" <>
       "<NameID>#{fields.name_id}</NameID>" <>

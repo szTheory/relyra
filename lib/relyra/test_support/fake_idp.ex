@@ -262,26 +262,28 @@ defmodule Relyra.TestSupport.FakeIdP do
   end
 
   # Genuinely sign a Response via the canonical signer, then extract the signed
-  # <Assertion> together with its sibling <Signature>, re-declaring the SAML
-  # assertion namespace on the Assertion so the post-decrypt fragment is
-  # self-contained (Pitfall 1). The Signature stays a sibling of the Assertion —
-  # the shape PureBeam.signed_candidates/1 pairs by Assertion ID + the bound
+  # <Assertion> together with its sibling <Signature> for wrapping into an
+  # <EncryptedAssertion>. The Signature stays a sibling of the Assertion — the
+  # shape PureBeam.signed_candidates/1 pairs by Assertion ID + the bound
   # ds:Signature (find_first(root, "Signature")).
+  #
+  # CRITICAL (T-34-04): the signer emits the Assertion ALREADY carrying its own
+  # default namespace (`assertion_namespace: true`), so the genuine DigestValue is
+  # computed over the NAMESPACED Assertion. The extracted bytes are spliced back
+  # into a Response and re-canonicalized WITH that namespace in scope; computing
+  # the digest over the same namespaced bytes is what makes the post-decrypt
+  # verification succeed. We must NOT re-declare the namespace AFTER signing — that
+  # would change the canonical bytes the verifier recomputes and break the digest
+  # (the exact bug fixed in Plan 04).
   defp signed_assertion_fragment(response_opts) do
-    %{response_xml: signed_xml} = Relyra.TestSupport.XmldsigSigner.signed_response(response_opts)
+    signer_opts = Keyword.put(response_opts, :assertion_namespace, true)
+
+    %{response_xml: signed_xml} = Relyra.TestSupport.XmldsigSigner.signed_response(signer_opts)
 
     assertion = extract_element(signed_xml, "Assertion")
     signature = extract_element(signed_xml, "Signature")
 
-    namespaced_assertion =
-      String.replace(
-        assertion,
-        ~r/^<Assertion\b/,
-        ~s(<Assertion xmlns="urn:oasis:names:tc:SAML:2.0:assertion"),
-        global: false
-      )
-
-    namespaced_assertion <> signature
+    assertion <> signature
   end
 
   # Extract the first <Local ...>...</Local> element (verbatim bytes) from xml.
