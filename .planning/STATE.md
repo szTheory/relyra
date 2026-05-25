@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T19:44:31.662Z"
+last_updated: "2026-05-25T19:50:56.270Z"
 last_activity: 2026-05-25
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -25,7 +25,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-25)
 ## Current Position
 
 Phase: 34 (validationpipeline-wiring-enc-01-complete) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-05-25
 Resume: /gsd:execute-phase 34
@@ -50,6 +50,7 @@ Progress: `███░░░░░░░` 33% (2/6 v1.3 phases — 32-33 comple
 | Phase 29 P04 | ~32min | 3 tasks | 6 files |
 | Phase 29 P05 | ~12min | 2 tasks | 4 files |
 | Phase 34 P01 | 2m | 2 tasks | 2 files |
+| Phase 34 P02 | 3m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -150,3 +151,4 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 - [Phase 29-05]: metadata key_info_trust scoped to the bound ds:Signature's OWN KeyInfo (Rule 1 fix), NOT any-KeyInfo-anywhere — a KeyDescriptor/KeyInfo published signing cert is gated by TrustAnchor pinning, not a document-trust bypass; the literal any-KeyInfo flag would reject all real signed metadata once genuine crypto was wired. Threat T-29-22 (signature self-asserted KeyInfo) still rejected.
 - [Phase 29-05]: metadata-root Reference carries the enveloped-signature transform (ds:Signature is a CHILD of the envelope); digest over the pruned envelope. Wrong-fingerprint negative rejects at pinning BEFORE the math (defense-in-depth); tampered-entityID rejects at digest recompute (real crypto, not pinning-alone). SIGV-04 COMPLETE; full suite 540/0.
 - [Phase ?]: [Phase 34-01]: SP metadata build_sp_metadata/2 emits both KeyDescriptors (signing then encryption) before AssertionConsumerService (schema-valid order, T-34-02); signing descriptor unconditional (D-05), Phase 35 owns toggle-gating. EncryptionMethod advertises ONLY the xmlenc# decryptor accept-list (T-34-03); PUBLIC certs only (T-34-01), cert body base64-of-DER nil-safe.
+- [Phase ?]: [Phase 34-02]: FakeIdP.encrypt/2 + encrypted_response/2 are the single canonical encrypted-assertion generator (sign-then-encrypt; self-contained xmlns on the Assertion; IV(12)||CT||Tag(16) layout). Round-trips byte-identically through the UNCHANGED XMLEnc.decrypt/3. enc_algorithm_uris/0 exposes rsa-oaep-mgf1p/aes256-gcm/rsa-1_5/aes256-cbc for Plan 04 fixtures; Signature stays a sibling of the Assertion (matches signed_candidates/1).
