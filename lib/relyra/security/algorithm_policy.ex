@@ -85,22 +85,6 @@ defmodule Relyra.Security.AlgorithmPolicy do
     end
   end
 
-  @spec validate_method(t(), term(), keyword()) :: :ok | {:error, Error.t()}
-  def validate_method(policy, method, _opts \\ []) do
-    case enforce_signature_method(policy, method) do
-      :ok -> :ok
-      %Error{} = error -> {:error, error}
-    end
-  end
-
-  @spec validate_digest(t(), term(), keyword()) :: :ok | {:error, Error.t()}
-  def validate_digest(policy, method, _opts \\ []) do
-    case enforce_digest_method(policy, method) do
-      :ok -> :ok
-      %Error{} = error -> {:error, error}
-    end
-  end
-
   @doc """
   Map a signature-method URI to the digest atom the verifier recomputes with (D-06),
   failing CLOSED for ECDSA and any unknown / non-binary input (D-07, Pitfall 5).
