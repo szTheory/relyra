@@ -985,17 +985,17 @@ Logger, telemetry, or `Error.new/3` details.
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Gate ordering — auth tag check before or after CEK unwrap?**
    - What we know: D-04 says `enforce_content_encryption_algorithm/2` at step 3 (before key resolver), but the auth tag is only extractable after decoding the content CipherValue (step 4 in revised ordering).
    - What's unclear: Should the auth tag length check happen before or after RSA decryption of the CEK?
-   - Recommendation: Check auth tag length AFTER base64-decoding the CipherValue but BEFORE RSA unwrap. This is the safest ordering: it prevents the RSA decryption call for truncated-tag inputs (which are policy violations). The `enforce_content_encryption_algorithm/3` with `auth_tag:` handles it cleanly.
+   - RESOLVED: Check auth tag length AFTER base64-decoding the content CipherValue but BEFORE RSA unwrap. This is the safest ordering: it prevents the RSA decryption call for truncated-tag inputs (which are policy violations). The `enforce_content_encryption_algorithm/3` with `auth_tag:` handles it cleanly. Only the content CipherValue is decoded in the outer `with` chain; the key CipherValue is passed as base64 text to `do_decrypt/4` which decodes it internally.
 
 2. **`KeyResolver.Default` connection argument — used or ignored?**
    - What we know: The callback is `resolve(connection :: map())`. The default reads from `Application.get_env`, not from the connection.
    - What's unclear: Should the default implementation raise or return a structured error if the connection argument is not a map?
-   - Recommendation: Mirror `RequestStore.Default` — pattern-match on `is_map(connection)` in the main clause, return `{:error, Error.new(:key_not_configured, ...)}` in the catch-all. The connection is passed through for future adapters that might scope keys per tenant.
+   - RESOLVED: Mirror `RequestStore.Default` — pattern-match on `is_map(connection)` in the main clause, return `{:error, Error.new(:key_not_configured, ...)}` in the catch-all. The connection is passed through for future adapters that might scope keys per tenant.
 
 ---
 
