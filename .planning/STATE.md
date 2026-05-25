@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-25T20:03:38.134Z"
+status: verifying
+last_updated: "2026-05-25T20:20:31.388Z"
 last_activity: 2026-05-25
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
-  percent: 0
+  completed_plans: 4
+  percent: 25
 ---
 
 # Project State
@@ -24,13 +24,13 @@ See: `.planning/PROJECT.md` (updated 2026-05-25)
 
 ## Current Position
 
-Phase: 34 (validationpipeline-wiring-enc-01-complete) — EXECUTING
+Phase: 34 (validationpipeline-wiring-enc-01-complete) — COMPLETE (4/4 plans)
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-05-25
-Resume: /gsd:execute-phase 34
+Resume: /gsd:verify-phase 34
 
-Progress: `███░░░░░░░` 33% (2/6 v1.3 phases — 32-33 complete)
+Progress: `█████░░░░░` 50% (3/6 v1.3 phases — 32-33-34 complete)
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: `███░░░░░░░` 33% (2/6 v1.3 phases — 32-33 comple
 | Phase 34 P01 | 2m | 2 tasks | 2 files |
 | Phase 34 P02 | 3m | 2 tasks | 2 files |
 | Phase 34 P03 | 9m | 2 tasks | 3 files (1 created, 2 modified) |
+| Phase 34 P04 | 7min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,8 @@ Items acknowledged and deferred at milestone close:
 
 ## Session Continuity
 
+**2026-05-25 — Phase 34 Plan 04 complete (PHASE 34 DONE, ENC-01 closed).** The pipeline-level ENC-01 adversarial corpus (`test/security/xml_enc_adversarial_test.exs`, 9 tests) landed: positive control (SC#1) proving decrypt -> re-parse -> verify -> identity-read ordering, the 7 named fixtures each pinning their exact typed error (5 opaque `:decryption_failed`, fixture 5 `:ambiguous_assertion` before crypto), a read-before-verify guard (CVE-2025-54419 class, no identity leak before verification), and a supplemental multi-encrypted bonus. Wired into `mix ci.security` as its own non-hollow `cmd mix test` line (meta-gate enforced). Rule 1 fix: the signer now signs the Assertion WITH its default namespace (`:assertion_namespace` opt, default off) so the digest survives decrypt/splice/re-parse — Plan-02's round-trip smoke had never driven a full pipeline verify, so the `:digest_mismatch` was latent. Full suite 626/0; `mix ci.security` exit 0. SC#1 + SC#5 satisfied; ENC-01 marked complete. Resume: `/gsd:verify-phase 34`.
+
 **2026-05-25 — Phase 34 Plan 03 complete.** ENC-01 decrypt-then-reparse wiring landed: `:decrypt_assertion` pre-stage in `ValidationPipeline.do_run/4` (detect -> reject-ambiguity-pre-crypto -> decrypt -> prefix-aware splice -> re-parse). PureBeam now tolerates encrypted-only Responses (Rule 3 fix). SC#2 + SC#3 satisfied; end-to-end SC#1 + the 7-fixture corpus close in Plan 04 (the last plan of Phase 34). Resume: `/gsd:execute-phase 34` (Plan 4 of 4).
 
 **2026-05-25 — v1.3 roadmap created.** 6 phases defined (32-37), 10/10 requirements mapped. Ready for `/gsd:plan-phase 32`.
@@ -157,3 +160,5 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 - [Phase ?]: [Phase 34-02]: FakeIdP.encrypt/2 + encrypted_response/2 are the single canonical encrypted-assertion generator (sign-then-encrypt; self-contained xmlns on the Assertion; IV(12)||CT||Tag(16) layout). Round-trips byte-identically through the UNCHANGED XMLEnc.decrypt/3. enc_algorithm_uris/0 exposes rsa-oaep-mgf1p/aes256-gcm/rsa-1_5/aes256-cbc for Plan 04 fixtures; Signature stays a sibling of the Assertion (matches signed_candidates/1).
 - [Phase 34-03]: :decrypt_assertion pre-stage wired into ValidationPipeline.do_run/4 (D-01) between parse_safely/2 and the UNCHANGED do_run_validations/6 (D-02): prefix-agnostic tree detector -> :ambiguous_assertion reject BEFORE any crypto (D-03/SC#2) -> single-EncryptedAssertion decrypt via unchanged XMLEnc.decrypt/3 (resolver MODULE + connection threaded in opts) -> prefix-aware exactly-one-match string-splice -> re-parse SAME parse_safely/2 seam. Three-tuple contract preserved on every exit; no identity field read pre-verify (CLAUDE.md #4). New typed error :ambiguous_assertion stays distinct from opaque :decryption_failed (D-03). >1 EncryptedAssertion -> :ambiguous_assertion (RESEARCH open-q1). No-op proven dependency-free via a raise-if-invoked :key_resolver (no Mox/:meck). decrypt_assertion_test 6/6; protocol 23/0; full 617/0; ci.security exit 0.
 - [Phase 34-03] (Rule 3 blocking auto-fix): PureBeam.build_parsed_doc/1 now tolerates an encrypted-only Response (EncryptedAssertion present, no cleartext Assertion) via build_pre_decrypt_parsed_doc/1 — a minimal pre-decrypt parsed_doc carrying response_fields + :parse_tree + encrypted_pending:true. WITHOUT this, the OUTER parse_safely/2 rejected every encrypted Response with :missing_protocol_field before the pre-stage could run (D-01 unreachable). The cleartext path (build_cleartext_parsed_doc/1) keeps the strict assertion/signature gates byte-identical; strict gates re-run on the re-parsed decrypted plaintext (one parse path, CLAUDE.md #2). Plan 04's SC#1 positive control depends on this tolerance.
+- [Phase 34-04]: Pipeline-level ENC-01 adversarial corpus (test/security/xml_enc_adversarial_test.exs) drives end-to-end through ValidationPipeline.run/4 via the single canonical FakeIdP.encrypt/encrypted_response generator: positive control (SC#1) + 7 named fixtures + 1 bonus multi-encrypted fixture. Fixtures 1/2/3/4/6 pin the SINGLE opaque :decryption_failed (no-oracle T-34-13); fixture 5 + bonus pin :ambiguous_assertion fired BEFORE decrypt (T-34-14); fixture 7 read-before-verify proves a verification-stage typed error AND no identity leak (T-34-12, CVE-2025-54419). Wired into ci.security as its own cmd-mix-test line + ci_gate_integrity_test.exs @gated_suites (non-hollow, T-34-15). Corpus 9/9; full suite 626/0; ci.security exit 0.
+- [Phase 34-04] (Rule 1 bug fix): XmldsigSigner gained an :assertion_namespace opt (default OFF, cleartext path byte-identical); FakeIdP.signed_assertion_fragment/1 now passes assertion_namespace:true and stops re-declaring the namespace AFTER signing. WITHOUT this the encrypted positive control failed :digest_mismatch — the signer hashed a NON-namespaced Assertion but the post-decrypt/splice/re-parse Assertion carried xmlns=...assertion, so the verifier's recomputed exclusive-C14N digest differed (T-34-04). Plan-02's round-trip smoke only proved decrypt byte-identity, never a full pipeline verify, so the bug was latent until Plan 04's SC#1.

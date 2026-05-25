@@ -113,7 +113,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 34-04-PLAN.md — ENC-01: 7-fixture pipeline-level adversarial corpus + mix ci.security wiring (Wave 2, depends on 34-02 + 34-03)
+- [x] 34-04-PLAN.md — ENC-01: 7-fixture pipeline-level adversarial corpus + mix ci.security wiring (Wave 2, depends on 34-02 + 34-03)
 
 **UI hint**: no
 
@@ -196,7 +196,7 @@ Plans:
 | 31. Disclosure and docs honesty | v1.1 | 2/2 | Complete | 2026-05-24 |
 | 32. AlgorithmPolicy Extension + Schema Migrations | v1.3 | 2/2 | Complete   | 2026-05-25 |
 | 33. KeyResolver Behaviour + XMLEnc Crypto Core | v1.3 | 2/2 | Complete   | 2026-05-25 |
-| 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 3/4 | In Progress|  |
+| 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 4/4 | Complete   | 2026-05-25 |
 | 35. Signed AuthnRequests + ADFS Preset | v1.3 | 0/TBD | Not started | - |
 | 36. Generic SAML Runbook | v1.3 | 0/TBD | Not started | - |
 | 37. Identity Mapping and Provisioning Guide | v1.3 | 0/TBD | Not started | - |
