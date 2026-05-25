@@ -74,12 +74,14 @@ Update at every milestone close. If the arc shifts (e.g. customer demand reorder
 - `v0.5` shipped 2026-05-07
 - `v0.6` shipped 2026-05-08
 - `v1.0` shipped 2026-05-08
+- `v1.1` shipped 2026-05-25 as an out-of-band security milestone that closed the published XMLDSig auth-bypass and staged its disclosure trail
 
-Next candidate: not defined. Start a new arc from the shipped v1.0 baseline with `$gsd-new-milestone`.
+Next candidate: not defined. Start a new arc from the shipped v1.1 baseline with `$gsd-new-milestone`.
 
 ---
 
 *2026-05-07 — v0.5 milestone audit (closed by Phase 21.2) re-scoped DIAG-01 (Debug bundles) and the previously-orphaned "Expiry alerts" feature (now CERT-EXP-01) from v0.5 to v0.6. v0.6 is now SLO + ops-maturity carryovers, ordered behind v1.0 security review. Trigger: scope drift surfaced by `/gsd-audit-milestone v0.5` — only 2 of 4 stated v0.5 features shipped; the v0.5 → v0.6 re-scope preserved the original arc cadence (admin → IdP-init → ops → SLO → conformance) without inserting an additional milestone.*
 *2026-05-08 — v1.0 shipped. The v0.3 → v1.0 arc is complete: executable conformance coverage, reviewer packet artifacts, and Day-1 onboarding proof are all checked in. The next milestone arc is intentionally undefined until post-v1.0 priorities are re-scoped.*
+*2026-05-25 — v1.1 shipped as a focused security milestone outside the original v0.3 → v1.0 arc. Trigger: a 2026-05-23 P0 audit confirmed that published `1.0.0`/`1.1.0` accepted forged SAML signatures because XMLDSig verification math was missing. v1.1 added the real parse-tree/C14N foundation, genuine XMLDSig verification for response and metadata paths, permanent adversarial crypto gating, and staged disclosure artifacts. The next broad product arc remains intentionally undefined.*
 
-*Last updated: 2026-05-08 — v1.0 shipped and the next arc was reset to undefined pending new milestone planning.*
+*Last updated: 2026-05-25 — v1.1 shipped; next arc still undefined pending new milestone planning.*

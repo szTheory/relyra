@@ -16,8 +16,22 @@ defmodule Relyra.Metadata.AutoRefreshTest do
 
   alias Relyra.Ecto.{Connection, MetadataSource}
   alias Relyra.Metadata.AutoRefresh
+  alias Relyra.Metadata.TrustAnchor
+  alias Relyra.Security.Signature
+  alias Relyra.Security.SignedNode
+  alias Relyra.Security.XML.C14N
+  alias Relyra.Security.XML.PureBeam
+  alias Relyra.Security.XML.SaxyTree
+  alias Relyra.Security.XML.SaxyTree.Node
+  alias Relyra.TestSupport.FakeIdP
+  alias Relyra.TestSupport.XmldsigSigner
 
   @stub __MODULE__.ReqStub
+
+  @rsa_sha256 "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+  @sha256 "http://www.w3.org/2001/04/xmlenc#sha256"
+  @exc_c14n "http://www.w3.org/2001/10/xml-exc-c14n#"
+  @enveloped_signature "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
 
   describe "refresh/2 with require_signed_metadata: true and missing fingerprint trust anchor" do
     test "refuses with :trust_anchor_mismatch when the source has no pinned fingerprints (D-17 no-TOFU)" do
@@ -197,6 +211,128 @@ defmodule Relyra.Metadata.AutoRefreshTest do
     end
   end
 
+  describe "SIGV-04 metadata-root cryptographic verification (D-13)" do
+    test "POSITIVE: a genuinely-signed EntityDescriptor verifies {:ok} via the SAME do_verify primitive" do
+      # Mint a genuinely-signed <EntityDescriptor> root (real DigestValue over
+      # the canonicalized envelope + real SignatureValue over the canonicalized
+      # SignedInfo, both via the verifier's OWN C14N engine — D-12). Route it
+      # through the SAME tree builder pre_parse_for_signature/1 now uses, then
+      # through Signature.verify_metadata_root → do_verify → crypto.
+      %{metadata_xml: xml, cert_chain: cert_chain} = genuine_signed_entity_descriptor()
+
+      assert {:ok, parsed_doc} = PureBeam.parse_metadata_root_safely(xml)
+
+      # The tree-bound candidate carries the crypto inputs (the gap D-13 closes).
+      assert [candidate] = parsed_doc.signed_candidates
+      assert %Node{local: "EntityDescriptor"} = candidate.node
+      assert %Node{local: "SignedInfo"} = candidate.signed_info_node
+      assert is_binary(candidate.digest_value_b64)
+      assert is_binary(candidate.signature_value_b64)
+
+      connection = %{connection_id: "01JT71VSVCKX7RZ9KD5W6F4AR3"}
+
+      assert {:ok, %SignedNode{} = signed} =
+               Signature.verify_metadata_root(parsed_doc, connection, cert_chain)
+
+      assert signed.signature_method == @rsa_sha256
+      assert signed.digest_method == @sha256
+    end
+
+    test "POSITIVE: full do_verify_signature pipeline accepts a pinned, genuinely-signed root" do
+      # End-to-end through AutoRefresh.refresh/2: the embedded X509Certificate
+      # IS the genuine signing cert; its fingerprint IS pinned. TrustAnchor.check
+      # (pinning) passes, THEN verify_metadata_root performs the genuine signature
+      # math + digest recompute → the refresh proceeds PAST the signature stage.
+      %{metadata_xml: xml, embedded_pem: embedded_pem} =
+        genuine_signed_entity_descriptor(embed_x509: true)
+
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4AR4")
+
+      source =
+        insert_metadata_source!(connection.id,
+          require_signed_metadata: true,
+          metadata_trust_fingerprints: [TrustAnchor.fingerprint(embedded_pem)],
+          auto_refresh_enabled: false
+        )
+
+      result =
+        AutoRefresh.refresh(source,
+          repo: Repo,
+          req: stub_req_returning(xml),
+          audit: %{correlation_id: Ecto.UUID.generate()}
+        )
+
+      # The refresh fails LATER (the synthetic EntityDescriptor lacks the full
+      # entity fields the deep Parser.parse requires), but CRUCIALLY it does NOT
+      # fail at the signature / trust-anchor stage — proving the genuine
+      # metadata-root signature verified {:ok} via do_verify. Assert the error is
+      # a downstream parse/validation refusal, NOT a signature/trust rejection.
+      assert {:error, %Relyra.Error{type: type}} = result
+
+      refute type in [
+               :trust_anchor_mismatch,
+               :invalid_signature,
+               :missing_signature,
+               :untrusted_certificate,
+               :digest_mismatch,
+               :signature_failed
+             ]
+    end
+
+    test "NEGATIVE (defense-in-depth): a sig-VALID but wrong-fingerprint root is rejected by pinning BEFORE the math" do
+      # The metadata is genuinely signed (the signature math WOULD pass), but the
+      # operator-pinned fingerprint does NOT match the embedded cert. TrustAnchor
+      # .check runs FIRST and rejects with :trust_anchor_mismatch — proving
+      # pinning is enforced, not bypassed by valid signature math. This asserts
+      # the do_verify_signature/3 call order: pinning BEFORE verify_metadata_root.
+      %{metadata_xml: xml} = genuine_signed_entity_descriptor(embed_x509: true)
+
+      connection = insert_enabled_connection!("01JT71VSVCKX7RZ9KD5W6F4AR5")
+
+      # Pin a fingerprint that does NOT correspond to the embedded signing cert.
+      wrong_fingerprint = String.duplicate("a", 64)
+
+      source =
+        insert_metadata_source!(connection.id,
+          require_signed_metadata: true,
+          metadata_trust_fingerprints: [wrong_fingerprint],
+          auto_refresh_enabled: false
+        )
+
+      result =
+        AutoRefresh.refresh(source,
+          repo: Repo,
+          req: stub_req_returning(xml),
+          audit: %{correlation_id: Ecto.UUID.generate()}
+        )
+
+      # Rejected at the PINNING stage (before any signature math) — the
+      # signature is valid; only the fingerprint is wrong.
+      assert {:error, %Relyra.Error{type: :trust_anchor_mismatch}} = result
+    end
+
+    test "NEGATIVE: a tampered (post-signing) entityID is rejected by digest recompute" do
+      # Genuinely sign, then mutate the entityID AFTER signing. The signature
+      # math over SignedInfo still verifies, but the Reference digest no longer
+      # matches the (tampered) canonical envelope → :digest_mismatch. Proves the
+      # crypto is REAL on the metadata path (not pinning-alone).
+      %{metadata_xml: xml, cert_chain: cert_chain} = genuine_signed_entity_descriptor()
+
+      tampered_xml =
+        String.replace(
+          xml,
+          "entityID=\"https://idp.example.com/entity\"",
+          "entityID=\"https://attacker.example.com/entity\""
+        )
+
+      assert {:ok, parsed_doc} = PureBeam.parse_metadata_root_safely(tampered_xml)
+      connection = %{connection_id: "01JT71VSVCKX7RZ9KD5W6F4AR6"}
+
+      assert {:error, %Relyra.Error{type: :digest_mismatch}} =
+               Signature.verify_metadata_root(parsed_doc, connection, cert_chain)
+    end
+  end
+
   # --- helpers ---
 
   defp insert_enabled_connection!(connection_id) do
@@ -267,5 +403,179 @@ defmodule Relyra.Metadata.AutoRefreshTest do
       </md:IDPSSODescriptor>
     </md:EntityDescriptor>
     """
+  end
+
+  # Mint a genuinely-signed <EntityDescriptor> metadata root, reusing the
+  # XmldsigSigner's keypair + the verifier's OWN C14N engine (D-11/D-12). The
+  # signer parses its EMITTED XML and binds the EXACT EntityDescriptor /
+  # SignedInfo tree nodes the verifier binds, so signer and verifier can never
+  # canonicalize differently (anti-divergent-signer, T-29-15). This is the
+  # metadata-root analogue of XmldsigSigner.signed_response/1 (which targets a
+  # <Response>/<Assertion>); the referenced element here is the EntityDescriptor
+  # envelope, not an Assertion.
+  #
+  # Options:
+  #   * :embed_x509 — when true, embed the genuine signing cert as an
+  #     <ds:X509Certificate> in the IDPSSODescriptor's KeyDescriptor so the
+  #     do_verify_signature pipeline's extract_candidate_signing_pems + pinning
+  #     have a real candidate cert to fingerprint. Returns :embedded_pem (the
+  #     reconstructed PEM the pipeline actually fingerprints).
+  defp genuine_signed_entity_descriptor(opts \\ []) do
+    cert_pem = XmldsigSigner.self_signed_cert_pem()
+    cert_b64 = cert_der_base64(cert_pem)
+    embed_x509 = Keyword.get(opts, :embed_x509, false)
+
+    # 1. Placeholder shape (empty digest/signature) so the in-scope namespaces
+    #    the C14N engine sees match the EMITTED shape exactly. The metadata
+    #    root's ds:Signature is a CHILD of the referenced EntityDescriptor, so
+    #    the Reference MUST carry the enveloped-signature transform; the digest
+    #    is computed over the EntityDescriptor with its ds:Signature PRUNED
+    #    (exactly what the verifier's canonicalize/2 does over the bound node).
+    #    Because the Signature is pruned, the placeholder vs final DigestValue /
+    #    SignatureValue substitution does not affect the digested bytes.
+    placeholder = entity_descriptor_xml("", "", embed_x509, cert_b64)
+    placeholder_tree = parse_tree!(placeholder)
+    entity_node = find_signed_metadata_root!(placeholder_tree)
+    digest_value_b64 = digest_for_enveloped_root(entity_node)
+
+    # 2. Re-emit with the real DigestValue, re-parse, canonicalize the SignedInfo
+    #    with the SAME engine, and sign those exact bytes with FakeIdP's key.
+    digest_xml = entity_descriptor_xml(digest_value_b64, "", embed_x509, cert_b64)
+    digest_tree = parse_tree!(digest_xml)
+    signed_info_node = find_first_by_local!(digest_tree, "SignedInfo")
+    signature_value_b64 = sign_signed_info(signed_info_node)
+
+    # 3. Emit the final, genuinely-signed EntityDescriptor.
+    metadata_xml =
+      entity_descriptor_xml(digest_value_b64, signature_value_b64, embed_x509, cert_b64)
+
+    base = %{metadata_xml: metadata_xml, cert_chain: [cert_pem]}
+
+    if embed_x509 do
+      # The pipeline reconstructs the PEM from the embedded base64 body via its
+      # own to_pem/1 (64-char chunks); pin the fingerprint of THAT reconstruction.
+      Map.put(base, :embedded_pem, reconstruct_pipeline_pem(cert_b64))
+    else
+      base
+    end
+  end
+
+  # The EntityDescriptor envelope (the referenced element), with the genuine
+  # ds:Signature over it (SignedInfo + Reference to the root ID).
+  defp entity_descriptor_xml(digest_value_b64, signature_value_b64, embed_x509, cert_b64) do
+    key_descriptor =
+      if embed_x509 do
+        "<md:IDPSSODescriptor>" <>
+          "<md:KeyDescriptor use=\"signing\">" <>
+          "<ds:KeyInfo><ds:X509Data><ds:X509Certificate>#{cert_b64}</ds:X509Certificate></ds:X509Data></ds:KeyInfo>" <>
+          "</md:KeyDescriptor>" <>
+          "<md:SingleSignOnService Binding=\"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect\" Location=\"https://idp.example.com/sso/redirect\"/>" <>
+          "</md:IDPSSODescriptor>"
+      else
+        ""
+      end
+
+    "<md:EntityDescriptor xmlns:md=\"urn:oasis:names:tc:SAML:2.0:metadata\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" entityID=\"https://idp.example.com/entity\" ID=\"_root\">" <>
+      "<ds:Signature>" <>
+      "<ds:SignedInfo>" <>
+      "<ds:CanonicalizationMethod Algorithm=\"#{@exc_c14n}\"/>" <>
+      "<ds:SignatureMethod Algorithm=\"#{@rsa_sha256}\"/>" <>
+      "<ds:Reference URI=\"#_root\">" <>
+      "<ds:Transforms>" <>
+      "<ds:Transform Algorithm=\"#{@enveloped_signature}\"/>" <>
+      "<ds:Transform Algorithm=\"#{@exc_c14n}\"/>" <>
+      "</ds:Transforms>" <>
+      "<ds:DigestMethod Algorithm=\"#{@sha256}\"/>" <>
+      "<ds:DigestValue>#{digest_value_b64}</ds:DigestValue>" <>
+      "</ds:Reference>" <>
+      "</ds:SignedInfo>" <>
+      "<ds:SignatureValue>#{signature_value_b64}</ds:SignatureValue>" <>
+      "</ds:Signature>" <>
+      key_descriptor <>
+      "</md:EntityDescriptor>"
+  end
+
+  # Digest the referenced EntityDescriptor envelope via the verifier's EXACT
+  # canonicalize path: build the SAME candidate shape the verifier binds (the
+  # bound :node + its child ds:Signature + the Reference's ds:Transforms) so the
+  # enveloped-signature transform prunes the ds:Signature before exclusive-C14N.
+  # This makes the signer's DigestValue byte-identical to verify_reference_digest's
+  # recompute (D-12 anti-divergent-signer: same engine, same node, same prune).
+  defp digest_for_enveloped_root(%Node{} = entity_node) do
+    signature_node = first_child_by_local(entity_node, "Signature")
+    transforms_node = find_first_by_local(signature_node, "Transforms")
+
+    candidate = %{
+      node: entity_node,
+      signature_node: signature_node,
+      transforms_node: transforms_node
+    }
+
+    {:ok, %{canonical_xml: ref_bytes}} = PureBeam.canonicalize(candidate)
+    :sha256 |> :crypto.hash(ref_bytes) |> Base.encode64()
+  end
+
+  defp first_child_by_local(%Node{children: children}, local) do
+    Enum.find(children, fn
+      %Node{local: ^local} -> true
+      _ -> false
+    end)
+  end
+
+  defp first_child_by_local(_other, _local), do: nil
+
+  defp sign_signed_info(%Node{} = signed_info_node) do
+    {:ok, c14n_signed_info} = C14N.serialize(signed_info_node)
+
+    c14n_signed_info
+    |> then(&:public_key.sign(&1, :sha256, FakeIdP.keypair()))
+    |> Base.encode64()
+  end
+
+  defp parse_tree!(xml) do
+    {:ok, %Node{} = tree} = SaxyTree.parse(xml)
+    tree
+  end
+
+  defp find_signed_metadata_root!(tree) do
+    node = find_first_by_local!(tree, "EntityDescriptor")
+    node
+  end
+
+  defp find_first_by_local!(tree, local) do
+    case find_first_by_local(tree, local) do
+      %Node{} = node -> node
+      _ -> raise "no <#{local}> node found in test fixture"
+    end
+  end
+
+  defp find_first_by_local(%Node{local: local} = node, local), do: node
+
+  defp find_first_by_local(%Node{children: children}, local) do
+    Enum.find_value(children, fn child -> find_first_by_local(child, local) end)
+  end
+
+  defp find_first_by_local(_other, _local), do: nil
+
+  # Strip the PEM armor and whitespace to get the raw base64 DER body to embed
+  # as an <X509Certificate>.
+  defp cert_der_base64(cert_pem) do
+    cert_pem
+    |> String.replace(~r/-----BEGIN CERTIFICATE-----/, "")
+    |> String.replace(~r/-----END CERTIFICATE-----/, "")
+    |> String.replace(~r/\s+/, "")
+  end
+
+  # Reconstruct the PEM exactly as AutoRefresh.to_pem/1 does (64-char line
+  # wrapping) so the test pins the fingerprint the pipeline actually computes.
+  defp reconstruct_pipeline_pem(cert_b64) do
+    body =
+      cert_b64
+      |> String.replace(~r/\s+/, "")
+      |> String.codepoints()
+      |> Enum.chunk_every(64)
+      |> Enum.map_join("\n", &Enum.join/1)
+
+    "-----BEGIN CERTIFICATE-----\n" <> body <> "\n-----END CERTIFICATE-----"
   end
 end

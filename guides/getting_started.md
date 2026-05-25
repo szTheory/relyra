@@ -12,6 +12,10 @@ Follow the sections in order:
 If you need broader context, return to the [README](../README.md). Do not start
 with optional admin or operations surfaces before the local proof works.
 
+If you want the narrative explanation of what these steps are buying you, read
+[Jobs To Be Done And User Flows](jtbd_user_flows.md) after you finish this
+guide once.
+
 ## 1. Install
 
 Add Relyra to your host application's dependencies:
@@ -140,6 +144,7 @@ Important posture:
 
 Useful follow-on references:
 
+- [Jobs To Be Done And User Flows](jtbd_user_flows.md)
 - [`SECURITY.md`](../SECURITY.md)
 - [`SECURITY_REVIEW.md`](../SECURITY_REVIEW.md)
 

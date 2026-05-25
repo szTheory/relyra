@@ -12,7 +12,7 @@ The authoritative trust-boundary map and host-app exclusions live in [`docs/secu
 
 - Host-application authn/authz policy remains outside the library boundary.
 - Generic Phoenix router/session policy is only in scope where Relyra defines the contract.
-- Reviewer findings and dispositions are tracked in [`docs/security_findings.md`](docs/security_findings.md). No external findings are recorded yet.
+- Reviewer findings and dispositions are tracked in [`docs/security_findings.md`](docs/security_findings.md). The current ledger records the confirmed `RELYRA-2026-001` finding and its remediation status.
 
 ## Rerun
 
@@ -42,7 +42,7 @@ mix test test/relyra/ecto/escape_hatch_audit_test.exs --warnings-as-errors
 | Claim surface | Primary seam | Proof lane |
 | --- | --- | --- |
 | SHA-256+ strict defaults and time-boxed SHA-1 compatibility | `lib/relyra/security/algorithm_policy.ex` | `test/security/strict_default_proof_test.exs` |
-| Document-provided `KeyInfo` and signed-node trust rejection | `lib/relyra/security/signature.ex`, `lib/relyra/security/xml/pure_beam.ex` | `test/security/strict_default_proof_test.exs` |
+| `:public_key.verify` over canonicalized `SignedInfo`, constant-time `DigestValue` recompute on the exact consumed node, and document-provided `KeyInfo` trust rejection on `verify/4` and `verify_metadata_root/4` | `lib/relyra/security/signature.ex`, `lib/relyra/security/xml/pure_beam.ex` | `test/security/xml/adversarial_crypto_test.exs`, `test/relyra/metadata/auto_refresh_test.exs` |
 | RelayState opacity and raw-URL rejection | `lib/relyra/security/relay_state.ex` | `test/security/strict_default_proof_test.exs` |
 | Metadata trust anchors, drift review, and legacy unsigned escape hatch | `lib/relyra/metadata/auto_refresh.ex` | `test/relyra/ecto/escape_hatch_audit_test.exs` |
 | Attributable, redaction-safe audit evidence | `lib/relyra/ecto/audit_writer.ex` | `test/relyra/ecto/escape_hatch_audit_test.exs` |
@@ -50,4 +50,4 @@ mix test test/relyra/ecto/escape_hatch_audit_test.exs --warnings-as-errors
 
 ## Findings Ledger
 
-The current Findings Ledger is [`docs/security_findings.md`](docs/security_findings.md). It starts in a zero-findings state and becomes the checked-in source for external audit dispositions once findings exist.
+The current Findings Ledger is [`docs/security_findings.md`](docs/security_findings.md). It is the checked-in source for external audit dispositions, including the current `RELYRA-2026-001` record and future reviewer findings.

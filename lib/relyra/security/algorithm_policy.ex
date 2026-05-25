@@ -71,6 +71,33 @@ defmodule Relyra.Security.AlgorithmPolicy do
     end
   end
 
+  @doc """
+  Map a signature-method URI to the digest atom the verifier recomputes with (D-06),
+  failing CLOSED for ECDSA and any unknown / non-binary input (D-07, Pitfall 5).
+
+  This is the single source of truth for which hash drives the reference-digest
+  recompute in Plan 03. ECDSA is rejected here BEFORE any verify attempt — the
+  `default/0` allowlist still permits ECDSA URIs (for SHA-2 strength), so this
+  explicit reject is what prevents the RFC 6931 r‖s-vs-DER fail-OPEN (T-29-04).
+  Returns the bare `{:ok, atom} | {:error, :unsupported_signature_algorithm}`
+  shape; Plan 03 wraps the error in a typed `%Relyra.Error{}`.
+  """
+  @spec digest_atom_for_signature_method(term()) ::
+          {:ok, :sha256 | :sha384 | :sha512} | {:error, :unsupported_signature_algorithm}
+  def digest_atom_for_signature_method(uri) when is_binary(uri) do
+    cond do
+      # D-07: any ECDSA URI fails CLOSED, checked BEFORE the rsa-sha* suffix match
+      # (so an "...#ecdsa-sha256" can never fall through to a digest atom).
+      String.contains?(uri, "ecdsa") -> {:error, :unsupported_signature_algorithm}
+      String.ends_with?(uri, "rsa-sha256") -> {:ok, :sha256}
+      String.ends_with?(uri, "rsa-sha384") -> {:ok, :sha384}
+      String.ends_with?(uri, "rsa-sha512") -> {:ok, :sha512}
+      true -> {:error, :unsupported_signature_algorithm}
+    end
+  end
+
+  def digest_atom_for_signature_method(_uri), do: {:error, :unsupported_signature_algorithm}
+
   @spec enforce_signature_method(t(), term()) :: :ok | Error.t()
   def enforce_signature_method(policy, method) do
     if method_allowed?(policy.allowed_signature_methods, method) do

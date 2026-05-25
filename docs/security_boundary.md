@@ -5,7 +5,7 @@ This document defines the trust-boundary surface a third-party reviewer should a
 ## In Scope
 
 - XML parsing and parser refusal behavior, including DOCTYPE and entity rejection.
-- Signed-node selection, signature verification, and document-provided `KeyInfo` trust rejection.
+- Signed-node selection, `:public_key.verify` over exclusive-C14N canonicalized `SignedInfo` against the configured IdP certificate's public key (never document-provided `KeyInfo`), and constant-time `DigestValue` recompute/compare bound to the exact consumed node on `verify/4` and `verify_metadata_root/4`.
 - Protocol validation for issuer, destination, audience, recipient, and time checks.
 - RelayState issuance and raw-URL rejection.
 - Request tracking and replay-prevention seams.
@@ -29,7 +29,7 @@ This document defines the trust-boundary surface a third-party reviewer should a
 | Seam | Primary module(s) | Reviewer focus |
 | --- | --- | --- |
 | XML parse refusal | `lib/relyra/metadata/parser.ex`, `lib/relyra/security/xml/` | Untrusted XML must fail closed before deep processing. |
-| Signed-content trust | `lib/relyra/security/signature.ex`, `lib/relyra/security/xml/pure_beam.ex` | Signed nodes must bind to configured trust only, never document-provided `KeyInfo`. |
+| Signed-content trust | `lib/relyra/security/signature.ex`, `lib/relyra/security/xml/pure_beam.ex` | `:public_key.verify` must run over exclusive-C14N canonicalized `SignedInfo` against the configured IdP certificate's public key, `DigestValue` must be recomputed and compared in constant time over the exact consumed node, and document-provided `KeyInfo` must never become a trust source. |
 | Protocol validation | `lib/relyra/protocol/validation_pipeline.ex`, `lib/relyra.ex` | Destination, audience, recipient, time, and issuer checks stay typed and fail closed. |
 | RelayState | `lib/relyra/security/relay_state.ex` | Opaque handles only; raw URLs and tampering are rejected. |
 | Replay and request intent | `lib/relyra/request_store/`, `lib/relyra/replay_store/` | Request/response correlation and replay protection remain explicit. |

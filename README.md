@@ -16,6 +16,10 @@ Use one Day-1 route:
 The README is the router. The full onboarding narrative lives in
 [guides/getting_started.md](guides/getting_started.md).
 
+If you want the high-level map of what this library is helping you get done,
+read [Jobs To Be Done And User Flows](guides/jtbd_user_flows.md) after Getting
+Started.
+
 ## Batteries Included Support
 
 First-class batteries-included support is limited to:
@@ -69,6 +73,8 @@ Microsoft Entra ID, and Google Workspace.
 These surfaces matter after Day-1, but they should not compete with onboarding:
 
 - [Getting Started](guides/getting_started.md) for the canonical Day-1 path.
+- [Jobs To Be Done And User Flows](guides/jtbd_user_flows.md) for the
+  implementation-level mental model of the adoption and operations journey.
 - [Security policy](SECURITY.md) for supported algorithms, disclosure, and
   release posture.
 - [Security review packet](SECURITY_REVIEW.md) for auditors and release review.

@@ -9,6 +9,7 @@
 - ✅ **v0.5 — Operational maturity** (shipped 2026-05-07). See `.planning/milestones/v0.5-ROADMAP.md`.
 - ✅ **v0.6 — Operational maturity carryover + SLO** (shipped 2026-05-08). See `.planning/milestones/v0.6-ROADMAP.md`.
 - ✅ **v1.0 — External security review + conformance + docs polish** (shipped 2026-05-08). See `.planning/milestones/v1.0-ROADMAP.md`.
+- ✅ **v1.1 — Verify the Trust Path** (shipped 2026-05-25). See `.planning/milestones/v1.1-ROADMAP.md`.
 
 ## Phases
 
@@ -61,6 +62,13 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 
 </details>
 
+<details>
+<summary>✅ v1.1 — Verify the Trust Path (Phases 28-31) — SHIPPED 2026-05-25</summary>
+
+See `.planning/milestones/v1.1-ROADMAP.md`.
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans | Status | Completed |
@@ -91,3 +99,9 @@ See `.planning/milestones/v1.0-ROADMAP.md`.
 | 25. Conformance and CVE Regression Fixtures | v1.0 | 3/3 | Complete | 2026-05-07 |
 | 26. Security Audit Preparation and Remediation | v1.0 | 3/3 | Complete | 2026-05-08 |
 | 27. Adopter Onboarding Polish and Case Studies | v1.0 | 3/3 | Complete | 2026-05-08 |
+| 28. Real C14N parser foundation | v1.1 | 4/4 | Complete | 2026-05-24 |
+| 29. Cryptographic XMLDSig verification | v1.1 | 5/5 | Complete | 2026-05-24 |
+| 30. Adversarial crypto assurance | v1.1 | 4/4 | Complete | 2026-05-24 |
+| 31. Disclosure and docs honesty | v1.1 | 2/2 | Complete | 2026-05-24 |
+
+---

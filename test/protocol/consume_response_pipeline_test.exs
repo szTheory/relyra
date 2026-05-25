@@ -93,6 +93,7 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
   alias Relyra.Protocol.TestConnectionResolver
   alias Relyra.Protocol.TestReplayStore
   alias Relyra.Protocol.TestRequestStore
+  alias Relyra.TestSupport.XmldsigSigner
 
   @manifest_path "test/fixtures/security/protocol/manifest.json"
   @fixed_now ~U[2026-04-24 16:00:00Z]
@@ -316,7 +317,7 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
 
   defp run_manifest_fixture(fixture) do
     opts = fixture_opts(fixture)
-    payload = fixture["payload"]
+    payload = genuinely_signed_payload(fixture["payload"])
     request_mode = Map.get(fixture, "request_mode", "explicit")
 
     case request_mode do
@@ -325,6 +326,21 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
 
       _ ->
         Relyra.consume_response(payload, fixture_request_intent(fixture), opts)
+    end
+  end
+
+  # Plan 04 triage: re-point each manifest fixture at a GENUINE signature so the
+  # crypto step passes for the right reason and execution reaches the stage whose
+  # `expected_error_type` the manifest declares (or the `expected_success` row).
+  # Fixtures with no signed Reference (the unsigned `<Fake>` / missing-field
+  # rows, which fail closed BEFORE the crypto step at parse) are left verbatim —
+  # they already reject for their declared reason without a signature.
+  defp genuinely_signed_payload(payload) do
+    if payload =~ ~r/<Reference\s+URI="#/ do
+      %{response_xml: signed_xml} = XmldsigSigner.sign_response(payload)
+      signed_xml
+    else
+      payload
     end
   end
 
@@ -380,6 +396,12 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
     }
   end
 
+  # Plan 04 triage: the connection now carries the GENUINE FakeIdP-derived cert
+  # (XmldsigSigner.self_signed_cert_pem/0) instead of the structure-only
+  # "pem-cert-chain" placeholder, because Phase 29 wires real cryptographic
+  # XMLDSig verification — the signed candidates these tests feed are now
+  # genuinely signed (see signed_response_xml/1) and must verify against a real
+  # trust key.
   defp connection do
     %{
       connection_id: "conn-123",
@@ -387,7 +409,7 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
       issuer: "https://idp.example.com/metadata",
       sp_entity_id: "https://sp.example.com/metadata",
       acs_url: "https://sp.example.com/saml/acs",
-      cert_chain: ["pem-cert-chain"]
+      cert_chain: [XmldsigSigner.self_signed_cert_pem()]
     }
   end
 
@@ -409,7 +431,18 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
   defp relay_state_for_fixture(%{"class" => "relay_state_mismatch"}), do: "rs_wrong"
   defp relay_state_for_fixture(_fixture), do: request_intent().relay_state
 
+  # Plan 04 triage: every Response this helper produces is now GENUINELY signed
+  # (real ds:DigestValue + ds:SignatureValue from FakeIdP's keypair, via the
+  # reusable D-11 signer) so the crypto step (now wired into Signature.verify/4)
+  # passes for the RIGHT reason and execution reaches the downstream stage each
+  # test actually asserts (status / time-conditions / replay / request-consume).
+  # The structure shape is unchanged; only the empty SignedInfo is filled.
   defp response_xml(overrides \\ %{}) do
+    %{response_xml: signed_xml} = XmldsigSigner.sign_response(structure_only_xml(overrides))
+    signed_xml
+  end
+
+  defp structure_only_xml(overrides) do
     fields =
       Map.merge(
         %{
@@ -430,33 +463,33 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
         overrides
       )
 
-    """
-    <Response Destination="#{fields.destination}" InResponseTo="#{fields.in_response_to}" ConnectionId="#{fields.connection_id}">
-      <Issuer>#{fields.issuer}</Issuer>
-      <Status><StatusCode Value="#{fields.status}"/></Status>
-      <Assertion ID="#{fields.assertion_id}">
-        <Issuer>#{fields.issuer}</Issuer>
-        <Subject>
-          <NameID>user@example.com</NameID>
-          <SubjectConfirmation>
-            <SubjectConfirmationData Recipient="#{fields.recipient}" NotOnOrAfter="#{fields.subject_confirmation_not_on_or_after}"/>
-          </SubjectConfirmation>
-        </Subject>
-        <Conditions NotBefore="#{fields.not_before}" NotOnOrAfter="#{fields.not_on_or_after}">
-          <AudienceRestriction><Audience>#{fields.audience}</Audience></AudienceRestriction>
-        </Conditions>
-      </Assertion>
-      <Signature>
-        <SignedInfo>
-          <SignatureMethod Algorithm="#{fields.signature_method}"/>
-          <Reference URI="##{fields.assertion_id}">
-            <DigestMethod Algorithm="#{fields.digest_method}"/>
-          </Reference>
-        </SignedInfo>
-      </Signature>
-    </Response>
-    """
-    |> String.trim()
+    # Whitespace-free so the injected DigestValue is canonicalized over the exact
+    # emitted bytes (no inter-element whitespace ambiguity between the signer's
+    # parse and the verifier's parse).
+    "<Response Destination=\"#{fields.destination}\" InResponseTo=\"#{fields.in_response_to}\" ConnectionId=\"#{fields.connection_id}\">" <>
+      "<Issuer>#{fields.issuer}</Issuer>" <>
+      "<Status><StatusCode Value=\"#{fields.status}\"/></Status>" <>
+      "<Assertion ID=\"#{fields.assertion_id}\">" <>
+      "<Issuer>#{fields.issuer}</Issuer>" <>
+      "<Subject>" <>
+      "<NameID>user@example.com</NameID>" <>
+      "<SubjectConfirmation>" <>
+      "<SubjectConfirmationData Recipient=\"#{fields.recipient}\" NotOnOrAfter=\"#{fields.subject_confirmation_not_on_or_after}\"/>" <>
+      "</SubjectConfirmation>" <>
+      "</Subject>" <>
+      "<Conditions NotBefore=\"#{fields.not_before}\" NotOnOrAfter=\"#{fields.not_on_or_after}\">" <>
+      "<AudienceRestriction><Audience>#{fields.audience}</Audience></AudienceRestriction>" <>
+      "</Conditions>" <>
+      "</Assertion>" <>
+      "<Signature>" <>
+      "<SignedInfo>" <>
+      "<SignatureMethod Algorithm=\"#{fields.signature_method}\"/>" <>
+      "<Reference URI=\"##{fields.assertion_id}\">" <>
+      "<DigestMethod Algorithm=\"#{fields.digest_method}\"/>" <>
+      "</Reference>" <>
+      "</SignedInfo>" <>
+      "</Signature>" <>
+      "</Response>"
   end
 
   defp manifest do

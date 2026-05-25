@@ -71,5 +71,10 @@ jobs:
       - name: Integration lane
         run: mix ci.integration
 
+      # intentional belt-and-suspenders: this re-runs the C14N golden-oracle gate
+      # directly, independent of the `mix ci.security` alias above being correctly
+      # wired. if the alias ever regresses (e.g. a suite is silently dedup-skipped),
+      # this standalone step still fails the build on a gate02_c14n regression.
+      # keep it even though ci.security also runs `--only gate02_c14n`.
       - name: GATE-02 binary gate (gate02_c14n zero regressions)
         run: mix test --only gate02_c14n --warnings-as-errors

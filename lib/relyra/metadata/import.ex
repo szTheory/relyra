@@ -4,7 +4,7 @@ defmodule Relyra.Metadata.Import do
   alias Relyra.Ecto.CertificateFacts
   alias Relyra.Ecto.MetadataApply
   alias Relyra.Error
-  alias Relyra.Metadata.{Candidate, Parser}
+  alias Relyra.Metadata.{Candidate, Parser, TrustAnchor}
 
   @redirect_binding "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
   @post_binding "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
@@ -84,7 +84,12 @@ defmodule Relyra.Metadata.Import do
 
   defp normalize_certificate(base64) do
     pem = to_pem(base64)
-    fingerprint_sha256 = sha256(pem)
+    # Certificate fingerprint = SHA-256 of the DER bytes (CR-02), via the canonical
+    # TrustAnchor compute, so the admin-displayed / drift-detector fingerprint
+    # equals the operator-pinned (openssl DER) fingerprint. NOTE: the generic
+    # sha256/1 below still hashes XML CONTENT (not certs) and is intentionally
+    # unchanged.
+    fingerprint_sha256 = TrustAnchor.fingerprint(pem)
 
     case CertificateFacts.extract(pem) do
       {:ok, facts} ->

@@ -60,15 +60,21 @@ defmodule Relyra.Security.SignedNodeBindingTest do
     assert details.connection_id == "conn-1"
   end
 
-  test "verify/4 returns the exact verified signed node when candidate count is one" do
-    assert {:ok, %Relyra.Security.SignedNode{} = signed_node} =
+  # Phase 29 Plan 03 triage (Rule 1/3): once real crypto is wired into the
+  # [candidate] arm (D-01), a SINGLE structure-only candidate that selects past
+  # all trust gates can no longer return {:ok} — it carries no SignedInfo /
+  # SignatureValue / DigestValue, so the crypto fails CLOSED. This is the
+  # bypass being closed: the selection path reaches exactly one candidate, then
+  # rejects it for lacking signature material instead of trusting structure
+  # alone. The genuine {:ok, %SignedNode{}} positive lives in
+  # test/relyra/security/signature_crypto_test.exs (the in-test genuine signer);
+  # the fuller end-to-end pipeline triage is Plan 04.
+  test "verify/4 fails closed on a single structure-only candidate (no crypto inputs)" do
+    assert {:error, %Error{type: :missing_signature, details: details}} =
              Signature.verify(base_parsed_doc(), connection(), cert_chain())
 
-    assert signed_node.xml_id == "assertion-1"
-    assert signed_node.xpath == "/Response/Assertion[1]"
-    assert signed_node.signed_xml == "<Assertion>signed</Assertion>"
-    assert signed_node.signature_method == @allowed_signature_method
-    assert signed_node.digest_method == @allowed_digest_method
+    assert details.reason == :missing_signature_input
+    assert details.connection_id == "conn-1"
   end
 
   defp base_parsed_doc(overrides \\ %{}) do

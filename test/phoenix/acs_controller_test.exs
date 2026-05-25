@@ -11,7 +11,7 @@ defmodule Relyra.Phoenix.ACSControllerTest do
   use ExUnit.Case, async: false
   import Phoenix.ConnTest
 
-  alias Relyra.TestSupport.FakeConnectionResolver
+  alias Relyra.TestSupport.XmldsigSigner
   alias Relyra.Phoenix.ACSTestRouter
 
   defmodule FakeUserMapper do
@@ -29,6 +29,39 @@ defmodule Relyra.Phoenix.ACSControllerTest do
 
     def revoke_session(_subject, _session_index, _context, _opts) do
       {:ok, :revoked}
+    end
+  end
+
+  # Plan 04 triage: a connection resolver that returns the GENUINE
+  # FakeIdP-derived cert (instead of the shared resolver's "fake-cert"
+  # placeholder), so the now-cryptographic verify step accepts the
+  # genuinely-signed @valid_xml in the success test.
+  defmodule GenuineCertConnectionResolver do
+    @behaviour Relyra.ConnectionResolver
+    alias Relyra.Connection
+
+    def resolve_connection(%{connection_id: "valid"}, _opts) do
+      cert = Relyra.TestSupport.XmldsigSigner.self_signed_cert_pem()
+
+      {:ok,
+       %Connection{
+         id: "valid",
+         connection_id: "valid",
+         idp_sso_url: "https://idp.example.com/sso",
+         sp_entity_id: "https://sp.example.com",
+         idp_entity_id: "https://idp.example.com",
+         acs_url: "https://sp.example.com/acs",
+         idp_certificates: [cert],
+         cert_chain: [cert]
+       }}
+    end
+
+    def resolve_connection(_, _opts) do
+      {:error,
+       Relyra.Error.new(:connection_unavailable, "Unknown connection", %{
+         reason: :not_found,
+         operation: :resolve_connection
+       })}
     end
   end
 
@@ -63,7 +96,12 @@ defmodule Relyra.Phoenix.ACSControllerTest do
       expires_at: DateTime.utc_now() |> DateTime.add(3600)
     }
 
-    Application.put_env(:relyra, :connection_resolver, FakeConnectionResolver)
+    # Plan 04 triage: real cryptographic XMLDSig verification now runs, so the
+    # ACS success path needs a GENUINELY-signed Response verified against the
+    # genuine FakeIdP-derived cert (returned by GenuineCertConnectionResolver).
+    %{response_xml: signed_xml} = XmldsigSigner.sign_response(@valid_xml)
+
+    Application.put_env(:relyra, :connection_resolver, GenuineCertConnectionResolver)
     Application.put_env(:relyra, :request_store, Relyra.RequestStore.ETS)
     Application.put_env(:relyra, :replay_store, Relyra.ReplayStore.ETS)
     Application.put_env(:relyra, :user_mapper, FakeUserMapper)
@@ -77,7 +115,7 @@ defmodule Relyra.Phoenix.ACSControllerTest do
 
     conn =
       post(conn, "/valid/acs", %{
-        "SAMLResponse" => Base.encode64(@valid_xml),
+        "SAMLResponse" => Base.encode64(signed_xml),
         "RelayState" => "rs_123"
       })
 

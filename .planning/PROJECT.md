@@ -20,14 +20,17 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.5 shipped** — Operational maturity. Phase 20 (bulk operations, CFG-07), Phase 21 (scheduled metadata refresh, CFG-08), Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding), and Phase 21.2 (audit-gap closure + scope re-alignment) shipped 2026-05-07. Debug bundles (DIAG-01) and Expiry alerts (CERT-EXP-01) re-scoped to v0.6 per the v0.5 milestone audit.
 - **v0.6 shipped 2026-05-08** — Operational maturity carryover + SLO. Phase 22 (certificate expiry alerts), Phase 23 (diagnostic bundles), and Phase 24 (Single Logout) are complete and verified.
 - **v1.0 shipped 2026-05-08** — Conformance, security review readiness, and adopter onboarding polish. Phase 25 added executable SP conformance and pinned CVE regressions; Phase 26 added the reviewer packet, generated evidence, and strict-default proof lanes; Phase 27 added authoritative onboarding, runbooks, case studies, and batteries-included proof.
+- **v1.1 shipped 2026-05-25** — Verify the Trust Path. Phase 28 proved exclusive-C14N over a real parse tree; Phase 29 wired genuine `:public_key.verify` + `DigestValue` recompute onto both response and metadata-root paths; Phase 30 made the adversarial crypto corpus permanently gate `mix ci.security`; Phase 31 aligned reviewer docs, findings ledger, and staged advisory artifacts to the shipped proof surface. Full suite remained green and the published-hex SAML auth-bypass is closed in code.
 
-## Next Milestone
+## Next Milestone Goals
 
-No next milestone is defined yet.
+- Next milestone is intentionally undefined.
+- Start with `$gsd-new-milestone` to define fresh requirements, roadmap scope, and a new milestone arc from the shipped `v1.1` baseline.
+- Known carry-forward debt:
+  - Mixed-content / inter-element-whitespace canonicalization follow-up (fail-closed today).
+  - Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`).
+  - Ship-time GHSA/CVE publication and release-note execution for `RELYRA-2026-001`.
 
-Use `$gsd-new-milestone` to define the post-v1.0 roadmap, fresh requirements, and next active milestone scope.
-
-**Multi-milestone arc:** See `.planning/MILESTONE-ARC.md` for the shipped v0.3 → v1.0 sequence and the point where the next arc needs to be reset.
 
 ## Requirements
 
@@ -73,11 +76,19 @@ Use `$gsd-new-milestone` to define the post-v1.0 roadmap, fresh requirements, an
 - ✓ **SEC-REVIEW-01** — External security audit completion and remediation readiness — v1.0 (Phase 26 verified 2026-05-08)
 - ✓ **DOCS-01** — Adopter case studies and frictionless Day-1 experience documentation — v1.0 (Phase 27 verified 2026-05-08)
 
+**v1.1:**
+- ✓ **SIGV-03** — exclusive XML canonicalization (C14N 1.0 exclusive) over a real `saxy` parse tree behind the `Relyra.Security.XML` seam, replacing regex string-scanning; canonical bytes proven byte-for-byte against an independent libxml2/xmlsec1 golden oracle (887 bytes) — v1.1 (Phase 28; SIGV-03 verified 2026-05-24, UAT 8/8, SECURITY threats_open 0)
+- ✓ **SIGV-01** — Response/assertion XMLDSig signatures cryptographically verified: canonicalized `SignedInfo` checked via `:public_key.verify` against the **configured** IdP cert (never document `KeyInfo`); forged/wrong-key signatures rejected with typed errors — v1.1 (Phase 29 verified 2026-05-24)
+- ✓ **SIGV-02** — Reference `DigestValue` recomputed over the canonicalized referenced element and compared constant-time (`:crypto.hash_equals`, length-guarded); content tampering (e.g. altered `NameID`) rejected as `:digest_mismatch` — v1.1 (Phase 29 verified 2026-05-24)
+- ✓ **SIGV-04** — Metadata-root (`EntityDescriptor`) signatures verified with the SAME crypto primitive (signature math, not pinning-alone), with operator-pinned `TrustAnchor` as defense-in-depth — v1.1 (Phase 29 verified 2026-05-24; post-review hardened so the signature is verified against the pinned cert only — CR-01 — and the pin fingerprint is DER, matching openssl — CR-02)
+- ✓ **ASSUR-02** — `TestSupport.FakeIdP.sign` performs REAL XMLDSig signing (delegates to the genuine `XmldsigSigner`, real `DigestValue` + `SignatureValue`), so the whole suite exercises real verification, not structure-only acceptance — v1.1 (Phase 30 verified 2026-05-24, 9/9 must-haves)
+- ✓ **ASSUR-01** — permanent `@tag :adversarial_crypto` corpus proving the verifier rejects every named attack (forged-sig/wrong-key → `:invalid_signature`; tampered-content & c14n-differential → `:digest_mismatch`; ECDSA → `:unsupported_signature_algorithm`) and accepts only a genuine signature, wired into the conformance manifest and **genuinely** gated by `mix ci.security`. Found and fixed a latent hollow-gate (Mix `test`-task dedup made post-`ci.conformance` `test` lines silent no-ops); each security suite now runs as `cmd mix test` + an anti-hollow meta-gate (`ci_gate_integrity_test.exs`) prevents recurrence — v1.1 (Phase 30 verified 2026-05-24)
+
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
-No active requirements. Define the next set with the next milestone.
+None defined. Start the next milestone with `$gsd-new-milestone`.
 
 ### Out of Scope
 
@@ -156,6 +167,7 @@ No active requirements. Define the next set with the next milestone.
 | **v0.2: closure-phase pattern (12 → 09's verification, 13 → 10's, 14 → 11's)** | When an audit surfaces verification orphans, prefer producing missing verification artifacts over re-opening implementation. Cleaner audit trail; smaller blast radius; manual sign-off captured per artifact. | ✓ Good (closed all three v0.2 audit gaps without regressions; pattern worth carrying forward) |
 | **v0.2 tech debt accepted at close: `MappingCommands.append_audit/8` lacks explicit `repo.rollback/1`** | Modern Ecto's `transact/1` auto-rolls on `{:error, _}`; legacy adapter fallback uses `repo.transaction/1` where audit failure could commit mapping rows. Other three co-commit sites use the explicit pattern. | ⚠️ Revisit (track for v0.3 cleanup; not reproducible against current dep set) |
 | **v0.5: closure-phase pattern extended (21.1 → INT-01 BLOCKER closure, 21.2 → audit-gap + scope-rescope closure)** | When an audit surfaces a BLOCKER + scope drift, prefer producing closure phases over re-opening implementation. Phase 21.1 closed the security-adjacent BLOCKER; Phase 21.2 closed the doc/scope gaps. Cleaner audit trail; smaller blast radius; milestone audit re-runs cleanly. | ✓ Good (closed v0.5 audit gaps without re-opening Phase 20 or Phase 21; pattern reusable for v0.6+) |
+| **v1.1 Phase 28: pure-BEAM exclusive-C14N proven correct via a committed golden-byte oracle** | ADR-0001 mandated pure-BEAM canonicalization; correctness on the auth boundary demanded independent proof, not self-assertion. A `saxy` parse tree replaced regex string-scanning (one trust path, D-04), and the hand-rolled C14N engine reproduces libxml2/xmlsec1's 887-byte exclusive-C14N output byte-for-byte (cross-checked across two libxml2 builds; the Elixir engine is the third agreeing implementation). CI stays pure-Elixir against committed bytes (D-12); the verified signature is bound to the exact node consumed (D-10, anti-XSW). | ✓ Good (Phase 28; SIGV-03 verified 2026-05-24. Known fail-safe limitation: mixed-content / inter-element-whitespace mis-canonicalizes → rejection never bypass; tracked as the first Phase 29 follow-up) |
 
 ## Evolution
 
@@ -175,4 +187,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-08 — v1.0 shipped; roadmap and requirements are archived and the next milestone is intentionally undefined until re-scoped.*
+*Last updated: 2026-05-25 after milestone close — v1.1 shipped. The trust path is now cryptographically verified end-to-end for both login responses and signed metadata, the adversarial crypto corpus genuinely gates `mix ci.security`, and the disclosure artifacts for `RELYRA-2026-001` are staged for ship time. The next milestone is intentionally undefined pending fresh planning.*
