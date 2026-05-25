@@ -10,7 +10,7 @@ Requirements for this milestone. Each maps to a roadmap phase.
 ### Encryption (XML-Enc)
 
 - [ ] **ENC-01**: SP can decrypt `EncryptedAssertion` (and `EncryptedAttribute`) using RSA-OAEP key transport and AES-GCM content encryption; decrypted bytes pass through `PureBeam.parse_safely/2` (hardened saxy seam) and `Signature.do_verify/4` (XMLDSig verification) before any identity fields are read; all decryption failures return opaque `:decryption_failed` atom regardless of failure mode
-- [ ] **ENC-02**: SP metadata endpoint publishes `KeyDescriptor use="encryption"` with the SP encryption certificate so IdPs can encrypt assertions
+- [x] **ENC-02**: SP metadata endpoint publishes `KeyDescriptor use="encryption"` with the SP encryption certificate so IdPs can encrypt assertions
 - [ ] **ENC-03**: Algorithm policy hard-rejects RSA-PKCS1v1.5 key transport (no escape hatch — no legitimate production use case) and rejects AES-CBC content encryption by default with a time-boxed escape hatch (identical to SHA-1 override pattern) for legacy IdP compatibility; AES-GCM auth tag length is validated (== 16 bytes) before any call to `:crypto.crypto_one_time_aead/7`
 - [ ] **ENC-04**: Operator can configure SP decryption private key via `KeyResolver` behaviour (PEM config default implementation ships; KMS extension point is documented for v1.4+); SP private key material is never stored in any Ecto schema column or surfaced in diagnostic bundles; cert inventory `party`/`use` fields isolate encryption certs from signing certs
 
@@ -62,7 +62,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | ENC-04 | Phase 32 | Pending |
 | AUTHN-02 | Phase 32 | Pending |
 | ENC-01 | Phase 34 | Pending |
-| ENC-02 | Phase 34 | Pending |
+| ENC-02 | Phase 34 | Complete |
 | AUTHN-01 | Phase 35 | Pending |
 | AUTHN-03 | Phase 35 | Pending |
 | AUTHN-04 | Phase 35 | Pending |
@@ -70,6 +70,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | DOCS-03 | Phase 37 | Pending |
 
 **Coverage:**
+
 - v1.3 requirements: 10 total
 - Mapped to phases: 10/10 ✓
 - Unmapped: 0

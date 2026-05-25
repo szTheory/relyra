@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T19:30:26.200Z"
-last_activity: 2026-05-25 -- Phase 34 planning complete
+last_updated: "2026-05-25T19:44:31.662Z"
+last_activity: 2026-05-25
 progress:
-  total_phases: 34
-  completed_phases: 32
-  total_plans: 105
-  completed_plans: 98
-  percent: 94
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 4
+  completed_plans: 1
+  percent: 0
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-25)
 
 ## Current Position
 
-Phase: 34 (validationpipeline-wiring-enc-01-complete) — PLANNED
-Plan: 4 plans in 2 waves (Wave 1: 34-01 metadata · 34-02 FakeIdP encrypt · 34-03 decrypt pipeline; Wave 2: 34-04 ENC-01 corpus)
+Phase: 34 (validationpipeline-wiring-enc-01-complete) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-05-25 -- Phase 34 planning complete
+Last activity: 2026-05-25
 Resume: /gsd:execute-phase 34
 
 Progress: `███░░░░░░░` 33% (2/6 v1.3 phases — 32-33 complete)
@@ -49,6 +49,7 @@ Progress: `███░░░░░░░` 33% (2/6 v1.3 phases — 32-33 comple
 | Phase 29 P03 | 24m | 2 tasks | 5 files |
 | Phase 29 P04 | ~32min | 3 tasks | 6 files |
 | Phase 29 P05 | ~12min | 2 tasks | 4 files |
+| Phase 34 P01 | 2m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -148,3 +149,4 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 - [Phase 29-05]: SIGV-04 plumbing gap (D-13) closed — metadata-root pre_parse_for_signature/1 routes through PureBeam.parse_metadata_root_safely/2 (SAME SaxyTree builder as the assertion path); tree-bound crypto inputs surfaced, 5 regex helpers retired (one trust path); genuinely-signed EntityDescriptor verifies {:ok} via the SAME do_verify primitive.
 - [Phase 29-05]: metadata key_info_trust scoped to the bound ds:Signature's OWN KeyInfo (Rule 1 fix), NOT any-KeyInfo-anywhere — a KeyDescriptor/KeyInfo published signing cert is gated by TrustAnchor pinning, not a document-trust bypass; the literal any-KeyInfo flag would reject all real signed metadata once genuine crypto was wired. Threat T-29-22 (signature self-asserted KeyInfo) still rejected.
 - [Phase 29-05]: metadata-root Reference carries the enveloped-signature transform (ds:Signature is a CHILD of the envelope); digest over the pruned envelope. Wrong-fingerprint negative rejects at pinning BEFORE the math (defense-in-depth); tampered-entityID rejects at digest recompute (real crypto, not pinning-alone). SIGV-04 COMPLETE; full suite 540/0.
+- [Phase ?]: [Phase 34-01]: SP metadata build_sp_metadata/2 emits both KeyDescriptors (signing then encryption) before AssertionConsumerService (schema-valid order, T-34-02); signing descriptor unconditional (D-05), Phase 35 owns toggle-gating. EncryptionMethod advertises ONLY the xmlenc# decryptor accept-list (T-34-03); PUBLIC certs only (T-34-01), cert body base64-of-DER nil-safe.

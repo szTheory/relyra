@@ -107,7 +107,7 @@ See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 Plans:
 **Wave 1**
 
-- [ ] 34-01-PLAN.md — ENC-02: emit SP signing + encryption KeyDescriptors in metadata (Wave 1)
+- [x] 34-01-PLAN.md — ENC-02: emit SP signing + encryption KeyDescriptors in metadata (Wave 1)
 - [ ] 34-02-PLAN.md — ENC-01: FakeIdP.encrypt/encrypted_response canonical encrypted-assertion generator (Wave 1)
 - [ ] 34-03-PLAN.md — ENC-01: :decrypt_assertion pre-stage in ValidationPipeline.do_run/4 (decrypt → reparse → verify; ambiguity guard) (Wave 1)
 
@@ -196,7 +196,7 @@ Plans:
 | 31. Disclosure and docs honesty | v1.1 | 2/2 | Complete | 2026-05-24 |
 | 32. AlgorithmPolicy Extension + Schema Migrations | v1.3 | 2/2 | Complete   | 2026-05-25 |
 | 33. KeyResolver Behaviour + XMLEnc Crypto Core | v1.3 | 2/2 | Complete   | 2026-05-25 |
-| 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 0/TBD | Not started | - |
+| 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 1/4 | In Progress|  |
 | 35. Signed AuthnRequests + ADFS Preset | v1.3 | 0/TBD | Not started | - |
 | 36. Generic SAML Runbook | v1.3 | 0/TBD | Not started | - |
 | 37. Identity Mapping and Provisioning Guide | v1.3 | 0/TBD | Not started | - |
