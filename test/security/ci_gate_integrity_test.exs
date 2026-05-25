@@ -37,7 +37,8 @@ defmodule Relyra.Security.CiGateIntegrityTest do
     {"test/relyra/security/xml/corpus_gate_test.exs", "security_corpus"},
     {"test/security/xml/corpus_security_test.exs", "gate02_c14n"},
     {"test/security/xml/adversarial_crypto_test.exs", "adversarial_crypto"},
-    {"test/security/xml_enc_test.exs", nil}
+    {"test/security/xml_enc_test.exs", nil},
+    {"test/security/xml_enc_adversarial_test.exs", nil}
   ]
 
   # The list of `ci.security` step strings, extracted by parsing mix.exs as actual
