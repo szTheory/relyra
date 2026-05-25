@@ -18,6 +18,13 @@ defmodule Relyra.KeyResolver.Default do
 
       pem when is_binary(pem) ->
         {:ok, pem}
+
+      _other ->
+        {:error,
+         Error.new(:key_not_configured, "SP decryption private key is not configured", %{
+           hint:
+             "Set config :relyra, :sp_private_key_pem to the PEM binary of the SP RSA private key"
+         })}
     end
   end
 

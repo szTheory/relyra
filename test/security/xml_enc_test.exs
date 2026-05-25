@@ -32,6 +32,33 @@ defmodule Relyra.Security.XMLEncTest do
     |> String.trim()
   end
 
+  describe "happy path" do
+    test "valid RSA-OAEP + AES-256-GCM returns {:ok, plaintext}", %{pub_key: pub_key} do
+      plaintext = "Hello, XMLEnc roundtrip!"
+
+      # Generate random CEK and encrypt it with RSA-OAEP using the SP public key
+      cek = :crypto.strong_rand_bytes(32)
+
+      enc_key_bytes =
+        :public_key.encrypt_public(cek, pub_key, [{:rsa_padding, :rsa_pkcs1_oaep_padding}])
+
+      enc_key_b64 = Base.encode64(enc_key_bytes)
+
+      # Encrypt plaintext with AES-256-GCM; produce IV(12) || CT || Tag(16)
+      iv = :crypto.strong_rand_bytes(12)
+
+      {ciphertext, auth_tag} =
+        :crypto.crypto_one_time_aead(:aes_256_gcm, cek, iv, plaintext, <<>>, 16, true)
+
+      cipher_value_b64 = Base.encode64(iv <> ciphertext <> auth_tag)
+
+      bytes =
+        build_encrypted_assertion(@rsa_oaep_uri, @aes256_gcm_uri, enc_key_b64, cipher_value_b64)
+
+      assert XMLEnc.decrypt(bytes, Relyra.KeyResolver.Default, []) == {:ok, plaintext}
+    end
+  end
+
   describe "failure paths all return :decryption_failed" do
     test "RSA-PKCS1v1.5 key transport returns :decryption_failed", %{pub_key: pub_key} do
       # Any CEK — AlgorithmPolicy gate fires before RSA is attempted

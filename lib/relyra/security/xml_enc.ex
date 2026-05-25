@@ -122,7 +122,7 @@ defmodule Relyra.Security.XMLEnc do
          key_transport_alg when is_binary(key_transport_alg) <- enc_method_alg(enc_key),
          content_alg when is_binary(content_alg) <- enc_method_alg(enc_data),
          key_cv when is_binary(key_cv) <- cipher_value_text(enc_key),
-         content_cv when is_binary(content_cv) <- cipher_value_text(enc_data) do
+         content_cv when is_binary(content_cv) <- direct_cipher_value_text(enc_data) do
       {:ok,
        %{
          key_transport_alg: key_transport_alg,
@@ -150,6 +150,20 @@ defmodule Relyra.Security.XMLEnc do
     cv = cd && find_first(cd, "CipherValue")
     cv && cv.text
   end
+
+  # Direct-child-only search — used for content CipherData on EncryptedData to avoid
+  # descending into KeyInfo → EncryptedKey → CipherData (which depth-first would find first).
+  defp direct_cipher_value_text(node) do
+    cd = find_child(node, "CipherData")
+    cv = cd && find_child(cd, "CipherValue")
+    cv && cv.text
+  end
+
+  defp find_child(%{children: children}, local) do
+    Enum.find(children, fn child -> Map.get(child, :local) == local end)
+  end
+
+  defp find_child(_other, _local), do: nil
 
   # Depth-first traversal by local element name (prefix-agnostic).
   # Returns the first matching node or nil.
