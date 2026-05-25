@@ -11,7 +11,7 @@ progress:
   total_plans: 0
   completed_plans: 0
   percent: 0
-stopped_at: Awaiting next milestone definition
+stopped_at: Awaiting v1.3 Advanced Federation milestone definition
 ---
 
 # Project State
@@ -133,6 +133,8 @@ Last session: 2026-05-24T18:20:30.421Z
 
 ## Decisions
 
+- [Assessment 2026-05-25]: Done-% estimated at 85% (band: "strong, meaningful wedges remain"). Next milestone recommended: v1.3 "Advanced Federation" — encrypted assertions (B1) + signed AuthnRequests (B3) + generic SAML runbook (D1) + identity mapping guide (D2). Full SLO (B2) deferred to v1.4 (complex; not an adoption blocker at the same tier). Investigations retained in `.planning/threads/`.
+- [Assessment 2026-05-25]: Diminishing-returns line drawn at HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, full demo app. After B1+B2+B3+C the lib is "done enough"; further work is demand-gated, not coverage-gated.
 - [Phase 29-02]: ECDSA fail-closed lives in `AlgorithmPolicy.digest_atom_for_signature_method/1` (typed `:unsupported_signature_algorithm` reject, checked BEFORE the rsa-sha* match), NOT by removing ECDSA from `default/0`'s allowlist — the allowlist still permits ECDSA URIs; the reject is the contract (fail-CLOSED, not allowlist-removal; D-07, Pitfall 5, T-29-04).
 - [Phase 29-02]: D-02 crypto inputs (`signed_info_node` / `digest_value_b64` / `signature_value_b64`) surfaced additively in `pure_beam.ex` `signed_candidates/1` and carried onto the `select_candidate/1` handle; absent base64 values are nil-safe (DATA only here — decoded + verified in Plan 03, never logged raw per T-29-06).
 - [Phase 29-01]: D-09 mixed-content C14N fix uses Option-a — ordered `content: [{:text,_} | {:element,_}]` on `SaxyTree.Node` is the single source of truth for document order; `:text`/`:children` are byte-identical derived projections (pure_beam field-derivation untouched). `C14N.render_element/3` walks `content`, so text and child elements canonicalize in source order. PROVEN byte-for-byte vs libxml2 by a new Docker-minted 1056-byte mixed-content golden (`mixed_content.c14n`); the 887-byte golden stays byte-identical. SIGV-02 byte-exactness leg satisfied.

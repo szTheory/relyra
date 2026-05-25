@@ -24,12 +24,24 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 ## Next Milestone Goals
 
-- Next milestone is intentionally undefined.
-- Start with `$gsd-new-milestone` to define fresh requirements, roadmap scope, and a new milestone arc from the shipped `v1.1` baseline.
-- Known carry-forward debt:
-  - Mixed-content / inter-element-whitespace canonicalization follow-up (fail-closed today).
-  - Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`).
-  - Ship-time GHSA/CVE publication and release-note execution for `RELYRA-2026-001`.
+**v1.3 — Advanced Federation** (recommended next; not yet committed to a milestone arc):
+- Encrypted assertions (`EncryptedAssertion` / XML-Enc): RSA-OAEP + AES-GCM, re-parse through hardened saxy seam, adversarial corpus. Investigations: `.planning/threads/encrypted-assertions-investigation.md`.
+- Signed AuthnRequests: HTTP-Redirect binding signing for `WantAuthnRequestsSigned` IdPs (ADFS, Shibboleth). Investigations: `.planning/threads/signed-authn-requests-investigation.md`.
+- Generic SAML runbook (`guides/recipes/generic_saml.md`) + minimum-safe checklist — first-class peer of okta.md, with field-name decoder tables for top non-preset IdPs.
+- Identity mapping & provisioning guide (`guides/identity_mapping_and_provisioning.md`) — NameID vs app identity, 3 mapping patterns, JIT decision tree, explicit SCIM non-goal.
+
+**v1.4 — Full SLO + Ops Polish** (after v1.3):
+- Full SLO round-trip: SP-initiated + IdP-initiated, `SessionIndex` correlation, `SessionAdapter` extension (`index_session/4` + `terminate_by_session_index/4`).
+- `guides/recipes/logout.md` — when to enable SLO, session-model implications, 3rd-party-cookie caveat, absolute-timeout guidance.
+- `guides/operations/incident_playbook.md` — one narrative stitching telemetry → audit → admin UI → mix task.
+- `guides/troubleshooting.md` — SAML error atom decoder, drift-checked against live error taxonomy.
+
+**After v1.3 + v1.4: declare done-enough.** Add "Scope boundary & diminishing returns" section to CONFORMANCE.md. Future additions demand-gated only (HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, full standalone app — all explicitly out of scope at that point).
+
+Known carry-forward from v1.1 close:
+- Mixed-content / inter-element-whitespace C14N follow-up (fail-closed, safe; document interop story in v1.3).
+- Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`) — non-blocking.
+- CVE ID backfill into `docs/advisories/2026-001-...` when GitHub assigns it (pending async).
 
 
 ## Requirements

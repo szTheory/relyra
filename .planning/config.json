@@ -34,7 +34,10 @@
     "context_warnings": true
   },
   "preferences": {
-    "vendor_philosophy": "opinionated"
+    "vendor_philosophy": "opinionated",
+    "milestone_assessment_lens": "adopter_first_phoenix_saas",
+    "research_style": "parallel_subagents",
+    "investigations_retention": "threads_dir"
   },
   "project_code": null,
   "phase_naming": "sequential",
