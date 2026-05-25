@@ -100,7 +100,12 @@ See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
   3. Non-encrypted response paths are structurally unchanged — the `:decrypt_assertion` pipeline step is a strict no-op when no encrypted assertion is present.
   4. SP metadata endpoint publishes `<KeyDescriptor use="encryption">` containing the SP encryption certificate; `<KeyDescriptor use="signing">` is present and distinct from the encryption entry.
   5. All 7 ENC-01 adversarial corpus fixtures (wrong-key, truncated tag, PKCS1v1.5, CBC, cleartext-injection, malformed ciphertext, read-before-verify attempt) are wired into `mix ci.security` and each returns the correct typed error.
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 34-01-PLAN.md — ENC-02: emit SP signing + encryption KeyDescriptors in metadata (Wave 1)
+- [ ] 34-02-PLAN.md — ENC-01: FakeIdP.encrypt/encrypted_response canonical encrypted-assertion generator (Wave 1)
+- [ ] 34-03-PLAN.md — ENC-01: :decrypt_assertion pre-stage in ValidationPipeline.do_run/4 (decrypt → reparse → verify; ambiguity guard) (Wave 1)
+- [ ] 34-04-PLAN.md — ENC-01: 7-fixture pipeline-level adversarial corpus + mix ci.security wiring (Wave 2, depends on 34-02 + 34-03)
 **UI hint**: no
 
 ### Phase 35: Signed AuthnRequests + ADFS Preset
