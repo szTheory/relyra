@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.2.0](https://github.com/szTheory/relyra/compare/v1.1.0...v1.2.0) (2026-05-25)
+
+
+### Features
+
+* **28-01:** implement SaxyTree handler with ns stack + 3 normalizations ([8738532](https://github.com/szTheory/relyra/commit/87385326a3c3d34c758be6e6ed9554aeee26816c))
+* **28-02:** enveloped-sig transform pruning + PrefixList forced render + transform allowlist ([ae9f16f](https://github.com/szTheory/relyra/commit/ae9f16feb5f7a201b05c1a99500ca2240c2fdd69))
+* **28-02:** implement exclusive C14N 1.0 serialization core ([b666926](https://github.com/szTheory/relyra/commit/b666926e17674916ca77f4cc0938aaa907a161be))
+* **28-03:** bind exact tree node + delegate canonicalize/2 to the C14N engine ([5565df5](https://github.com/szTheory/relyra/commit/5565df50d7b68abdaad88fe8db6f556d8458c106))
+* **28-03:** route parse_safely onto the saxy tree, retire regex extractors ([915d460](https://github.com/szTheory/relyra/commit/915d4604b0daa89e39279aa03acb04aa970dc0b1))
+* **29-01:** add ordered content field to SaxyTree.Node (D-09) ([4411f91](https://github.com/szTheory/relyra/commit/4411f91ea1785c9ba99d46e58b4c90f122d7bb90))
+* **29-02:** add AlgorithmPolicy.digest_atom_for_signature_method/1 (RSA→atom, ECDSA fail-closed) ([e63216e](https://github.com/szTheory/relyra/commit/e63216eafbee4e463e6e3995ef78160d9ed1aba3))
+* **29-02:** surface D-02 fields (SignedInfo node, base64 Digest/SignatureValue) per candidate ([5d1cfc9](https://github.com/szTheory/relyra/commit/5d1cfc9a41c732be0f360175781d319c49e3fec0))
+* **29-03:** wire real XMLDSig crypto into the [candidate] arm (D-01) ([2e45689](https://github.com/szTheory/relyra/commit/2e456897af3158c175bb490ce7fc51d6241c8922))
+* **29-04:** build genuine XMLDSig test-signer (D-11) ([c45864f](https://github.com/szTheory/relyra/commit/c45864fd00b3d6a201b184da21453a53626c0bde))
+* **29-05:** add metadata-root signed-candidates producer in pure_beam ([502417f](https://github.com/szTheory/relyra/commit/502417f7b4811ad71aa5bbd29522c55a005cf67c))
+* **29-05:** rewire metadata pre-parse onto tree builder + prove SIGV-04 ([6d4931e](https://github.com/szTheory/relyra/commit/6d4931eba1d925b2f1ecea2d99dc101e75b4dcaa))
+* **30-01:** delegate FakeIdP.sign to genuine signer + expose trust cert (D-01/D-03) ([18f5bd8](https://github.com/szTheory/relyra/commit/18f5bd8d2c95ea68142b9929a8cf06daec31c29d))
+* **30-03:** add c14n-differential rejection row to security corpus ([c7ec6a2](https://github.com/szTheory/relyra/commit/c7ec6a261f4297fe59930d9a7aaaa11adc612a6b))
+
+
+### Bug Fixes
+
+* **28-03:** correct prot-unsigned-001 expectation to missing_protocol_field ([63c5ca5](https://github.com/szTheory/relyra/commit/63c5ca5ad0b6513ec5b3f88c7beffb8f734ddafc))
+* **29-01:** walk content in document order in C14N.render_element/3 (D-09) ([8052658](https://github.com/szTheory/relyra/commit/8052658e07933e2a322393afb1a8c9bf267c78b7))
+* **29:** close metadata trust bypass (CR-01) and pin over DER (CR-02) ([8910200](https://github.com/szTheory/relyra/commit/8910200edc77a502d4cbce7ec88188b4bd636f99))
+* **29:** thread cert_chain in plan 03 + add existing-test triage task to plan 04 ([13094ef](https://github.com/szTheory/relyra/commit/13094ef1232fcd2fdaedccf942d99788840b3516))
+* **29:** tolerate line-wrapped base64 in Signature/DigestValue (WR-01) ([ef44482](https://github.com/szTheory/relyra/commit/ef444820bf09d994547ae7fef6692eccba722916))
+* **30-01:** reconcile FakeIdP response_xml shape for genuine signing (D-02) ([f9047fe](https://github.com/szTheory/relyra/commit/f9047fe77145a4039c69b693863dd5c5da868ab1))
+* **30-04:** make ci.security honestly gate every security suite (cmd mix test per line) ([8a144ed](https://github.com/szTheory/relyra/commit/8a144ed23a50036a05e124cd4311afd6b8450ac8))
+* **30:** harden ci.security meta-gate (AST parse, tag anchor, corpus_gate coverage) ([07f4727](https://github.com/szTheory/relyra/commit/07f4727967b2183637b35b4481167d703b7ec5bd))
+* **deps:** bump postgrex/plug/phoenix for CVEs; ignore unreachable decimal advisory ([520d713](https://github.com/szTheory/relyra/commit/520d713f8b124b6029a297c814ed0ba7d365cffb))
+
 ## [1.1.0](https://github.com/szTheory/relyra/compare/v1.0.0...v1.1.0) (2026-05-08)
 
 
