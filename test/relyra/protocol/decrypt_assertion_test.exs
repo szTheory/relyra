@@ -190,11 +190,23 @@ defmodule Relyra.Protocol.DecryptAssertionTest do
   end
 
   describe "prefix-aware splice locator (RESEARCH A1)" do
+    test "a single UNPREFIXED <EncryptedAssertion> travels the splice/re-parse path" do
+      # Baseline: the unprefixed tag the FakeIdP fixtures emit reaches decrypt. A
+      # garbage ciphertext fails -> :decryption_failed, proving the locator matched
+      # and drove the single EncryptedAssertion into XMLEnc.decrypt/3.
+      xml = response_with(garbage_encrypted_assertion())
+
+      assert {:error, %Error{type: :decryption_failed}} =
+               ValidationPipeline.run(xml, nil, connection(), now: @fixed_now)
+    end
+
     test "a single <saml:EncryptedAssertion> travels the splice/re-parse path" do
       # The FakeIdP fixtures only ever emit the UNPREFIXED tag, so a prefixed tag
       # exercises a path that would otherwise be unverified. A garbage ciphertext is
       # fine — the point is the prefix-aware locator FOUND the prefixed substring and
-      # drove it into decrypt (-> :decryption_failed), not that it decrypted.
+      # drove it into decrypt (-> :decryption_failed), not that it decrypted. Seeing
+      # :decryption_failed (not :missing_protocol_field) proves the prefixed tag was
+      # detected as {:single, node} and the prefixed locator matched its substring.
       xml = response_with(garbage_encrypted_assertion("saml"))
 
       assert {:error, %Error{type: :decryption_failed}} =
