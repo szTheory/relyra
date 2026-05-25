@@ -7,6 +7,7 @@ key-files:
   created:
     - docs/advisories/2026-001-xmldsig-signature-not-verified.md
   modified: []
+requirements-completed: [DISC-02]
 metrics:
   completed: 2026-05-24
 ---

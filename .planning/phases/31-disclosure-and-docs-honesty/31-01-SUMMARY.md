@@ -9,6 +9,7 @@ key-files:
     - docs/security_boundary.md
     - SECURITY_REVIEW.md
     - docs/security_findings.md
+requirements-completed: [DISC-01]
 metrics:
   completed: 2026-05-24
 ---

@@ -33,6 +33,7 @@ metrics:
   files_created: 3
   files_modified: 1
   tests_added: 1
+requirements-completed: [SIGV-03]
   completed_date: "2026-05-23"
 ---
 

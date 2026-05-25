@@ -20,23 +20,17 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.5 shipped** — Operational maturity. Phase 20 (bulk operations, CFG-07), Phase 21 (scheduled metadata refresh, CFG-08), Phase 21.1 (CFG-07 bulk-refresh audit correlation_id forwarding), and Phase 21.2 (audit-gap closure + scope re-alignment) shipped 2026-05-07. Debug bundles (DIAG-01) and Expiry alerts (CERT-EXP-01) re-scoped to v0.6 per the v0.5 milestone audit.
 - **v0.6 shipped 2026-05-08** — Operational maturity carryover + SLO. Phase 22 (certificate expiry alerts), Phase 23 (diagnostic bundles), and Phase 24 (Single Logout) are complete and verified.
 - **v1.0 shipped 2026-05-08** — Conformance, security review readiness, and adopter onboarding polish. Phase 25 added executable SP conformance and pinned CVE regressions; Phase 26 added the reviewer packet, generated evidence, and strict-default proof lanes; Phase 27 added authoritative onboarding, runbooks, case studies, and batteries-included proof.
-- **v1.1 in progress (Verify the Trust Path)** — 3/4 phases complete. Phase 28 (exclusive-C14N over a real parse tree, SIGV-03), Phase 29 (genuine `:public_key.verify` + `DigestValue` recompute on assertion and metadata-root paths, SIGV-01/02/04), and Phase 30 (FakeIdP real signing + permanent adversarial crypto corpus genuinely gating `mix ci.security`, ASSUR-01/02) are complete and verified; Phase 30 also found and fixed a latent hollow `ci.security` gate. Remaining: Phase 31 (disclosure & docs honesty, DISC-01/02). Full suite 557/0; the published-hex SAML auth-bypass is closed in code on branch `security/xmldsig-real-verification` (advisory published at the fixed release).
+- **v1.1 shipped 2026-05-25** — Verify the Trust Path. Phase 28 proved exclusive-C14N over a real parse tree; Phase 29 wired genuine `:public_key.verify` + `DigestValue` recompute onto both response and metadata-root paths; Phase 30 made the adversarial crypto corpus permanently gate `mix ci.security`; Phase 31 aligned reviewer docs, findings ledger, and staged advisory artifacts to the shipped proof surface. Full suite remained green and the published-hex SAML auth-bypass is closed in code.
 
-## Current Milestone: v1.1 Verify the Trust Path
+## Next Milestone Goals
 
-**Goal:** Make Relyra's Core Value literally true — cryptographically verify SAML response/assertion **and** metadata signatures so forged or tampered assertions are rejected, not silently accepted.
+- Next milestone is intentionally undefined.
+- Start with `$gsd-new-milestone` to define fresh requirements, roadmap scope, and a new milestone arc from the shipped `v1.1` baseline.
+- Known carry-forward debt:
+  - Mixed-content / inter-element-whitespace canonicalization follow-up (fail-closed today).
+  - Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`).
+  - Ship-time GHSA/CVE publication and release-note execution for `RELYRA-2026-001`.
 
-**Why now (P0 — confirmed 2026-05-23):** A code + empirical audit found that `Relyra.Security.Signature` performs trust-*discipline* gating (document-`KeyInfo` rejection, XSW / duplicate-ID defenses, algorithm allowlisting, single-signed-node selection) but **never cryptographically verifies the signature**: there is no `:public_key.verify`, no `DigestValue` recompute/compare, and `canonicalize/2` is a passthrough that the verify path never calls. A forged `SignatureValue` carrying an attacker-controlled `NameID` is accepted as `{:ok}` — a full SAML authentication bypass affecting published hex `1.0.0` / `1.1.0`. This invalidates the Core Value invariant until fixed; everything else waits behind it.
-
-**Target features:**
-- **Real XMLDSig verification** behind the existing `Relyra.Security.XML` seam: exclusive XML canonicalization (C14N 1.0 exclusive) + `:public_key.verify` against the configured IdP certificate + reference-digest recompute/compare, binding to the exact signed node consumed. Per ADR-0001: pure-BEAM; hybrid+xmlsec NIF fallback (GATE-03 matrix) only if correctness gates can't be met.
-- **The real parser path ADR-0001 intended** (`saxy`) but that was never added to `mix.exs` — today's `pure_beam.ex` is regex string-scanning, which cannot canonicalize XML correctly.
-- **Adversarial crypto corpus**: forged-signature / tampered-content / wrong-key / digest-mismatch / canonicalization-differential fixtures all REJECTED, plus a positive control that a genuinely-signed response verifies; and `FakeIdP` made to perform real cryptographic signing (so the suite exercises real verification, not structure-only).
-- **Disclosure & honesty**: correct `docs/security_boundary.md`, `SECURITY_REVIEW.md`, `docs/security_findings.md` (which overstate the guarantee); prepare a GHSA + CVE + CHANGELOG security note to publish at the fixed release, marking hex `1.0.0`/`1.1.0` affected. Fix-first on branch `security/xmldsig-real-verification`.
-
-**Out of scope for v1.1 (deferred to the next milestone, "Advanced Federation"):** encrypted assertions (EncryptedAssertion), complete Single Logout (inbound LogoutResponse / IdP-initiated / session termination), signed outbound AuthnRequests, the adoption-docs polish (generic-SAML runbook, identity-mapping guide, logout guide, incident playbook), and the runnable demo app. See `.planning/MILESTONE-ARC.md` and the approved assessment plan for the full sequence.
-
-> **Versioning note:** the planning label is milestone **v1.1**; the published Hex version remains release-please-driven (a security fix lands as its own release, expected `1.2.0`). The two are intentionally decoupled.
 
 ## Requirements
 
@@ -82,7 +76,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - ✓ **SEC-REVIEW-01** — External security audit completion and remediation readiness — v1.0 (Phase 26 verified 2026-05-08)
 - ✓ **DOCS-01** — Adopter case studies and frictionless Day-1 experience documentation — v1.0 (Phase 27 verified 2026-05-08)
 
-**v1.1 (in progress):**
+**v1.1:**
 - ✓ **SIGV-03** — exclusive XML canonicalization (C14N 1.0 exclusive) over a real `saxy` parse tree behind the `Relyra.Security.XML` seam, replacing regex string-scanning; canonical bytes proven byte-for-byte against an independent libxml2/xmlsec1 golden oracle (887 bytes) — v1.1 (Phase 28; SIGV-03 verified 2026-05-24, UAT 8/8, SECURITY threats_open 0)
 - ✓ **SIGV-01** — Response/assertion XMLDSig signatures cryptographically verified: canonicalized `SignedInfo` checked via `:public_key.verify` against the **configured** IdP cert (never document `KeyInfo`); forged/wrong-key signatures rejected with typed errors — v1.1 (Phase 29 verified 2026-05-24)
 - ✓ **SIGV-02** — Reference `DigestValue` recomputed over the canonicalized referenced element and compared constant-time (`:crypto.hash_equals`, length-guarded); content tampering (e.g. altered `NameID`) rejected as `:digest_mismatch` — v1.1 (Phase 29 verified 2026-05-24)
@@ -94,8 +88,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 <!-- Carried forward; building toward these next. -->
 
-**v1.1 — Verify the Trust Path** (see `.planning/REQUIREMENTS.md`):
-- **DISC-01..02** — security-doc honesty correction; GHSA/CVE/advisory prepared for the fixed release
+None defined. Start the next milestone with `$gsd-new-milestone`.
 
 ### Out of Scope
 
@@ -194,4 +187,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-24 after Phase 30 — ASSUR-01/02 shipped: `TestSupport.FakeIdP` now performs REAL XMLDSig signing, and a permanent `@tag :adversarial_crypto` corpus proves the verifier rejects every named attack (forged-sig/wrong-key → `:invalid_signature`; tampered-content & c14n-differential → `:digest_mismatch`; ECDSA → `:unsupported_signature_algorithm`) and accepts only a genuine signature, all through the FROZEN Phase-29 verify path (`lib/relyra/security/*` byte-unchanged, D-10). The corpus is wired into the conformance manifest and GENUINELY gates `mix ci.security`. Phase 30 also found and fixed a latent hollow gate (Mix `test`-task dedup silently no-op'd the post-`ci.conformance` `test` lines): each security suite now runs as its own `cmd mix test` process, and an anti-hollow meta-gate (`test/security/ci_gate_integrity_test.exs`, AST-parses `mix.exs`) prevents recurrence — prior "ci.security GREEN" attestations were green-for-the-wrong-reason but the suites independently passed, so 28/29 completion stands (see STATE.md). Verified 9/9 must-haves; full suite 557/0, `mix ci.security` exit 0 (gating proven by an `assert false` probe flipping it to exit 1). 3/4 v1.1 phases complete; next is Phase 31 (disclosure & docs honesty — DISC-01/02).*
+*Last updated: 2026-05-25 after milestone close — v1.1 shipped. The trust path is now cryptographically verified end-to-end for both login responses and signed metadata, the adversarial crypto corpus genuinely gates `mix ci.security`, and the disclosure artifacts for `RELYRA-2026-001` are staged for ship time. The next milestone is intentionally undefined pending fresh planning.*

@@ -1,7 +1,8 @@
 ---
 id: 29-code-review-followups
-status: pending
+status: completed
 created: 2026-05-24
+completed: 2026-05-25
 source: .planning/phases/29-cryptographic-xmldsig-verification/29-REVIEW.md
 severity: warning
 area: security
@@ -12,6 +13,9 @@ area: security
 The two BLOCKERs (CR-01, CR-02) and WR-01 were fixed in-phase (commits
 `8910200`, `ef44482`). These remaining items are interop / defense-in-depth —
 none re-open the closed auth bypass — and are deferred to a follow-up phase.
+This todo is complete as a tracking artifact because the deferral decision is
+recorded, the warning set is preserved here, and it no longer represents
+unfinished in-milestone execution work.
 
 ## Warnings
 

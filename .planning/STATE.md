@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: — Verify the Trust Path
-status: milestone_complete
-last_updated: 2026-05-24T18:40:57.944Z
-last_activity: 2026-05-24 -- Phase 31 execution complete
+milestone: null
+milestone_name: null
+status: awaiting_next_milestone
+last_updated: 2026-05-25T04:45:00Z
+last_activity: 2026-05-25 -- v1.1 archived and tagged
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 15
-  completed_plans: 15
-  percent: 100
-stopped_at: Milestone complete (Phase 31 was final phase)
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
+stopped_at: Awaiting next milestone definition
 ---
 
 # Project State
@@ -21,22 +21,22 @@ stopped_at: Milestone complete (Phase 31 was final phase)
 See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Milestone complete
+**Current focus:** Awaiting next milestone definition
 
 ## Current Position
 
-Phase: 31
-Plan: Complete
-Status: Milestone complete
-Last activity: 2026-05-24 -- Phase 31 execution complete
+Phase: —
+Plan: —
+Status: Awaiting next milestone definition
+Last activity: 2026-05-25 -- v1.1 archived and tagged
 
-Milestone progress: [██████████] 4/4 phases complete (Phase 28 ✓, Phase 29 ✓, Phase 30 ✓, Phase 31 ✓)
+Milestone progress: no active milestone
 
 ## Performance Metrics
 
-- Phases planned this milestone: 4 (28-31)
-- Plans complete: 15/15 across Phases 28, 29, 30, and 31
-- Coverage: 8/8 v1.1 requirements mapped and completed
+- Last shipped milestone: v1.1 (Phases 28-31)
+- Plans complete in last shipped milestone: 15/15
+- Coverage in last shipped milestone: 8/8 requirements mapped and completed
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -102,13 +102,11 @@ Milestone progress: [██████████] 4/4 phases complete (Phase 
 
 ## Deferred Items
 
-Items acknowledged and deferred at the v1.0 milestone close (2026-05-08):
+Items acknowledged and deferred at milestone close:
 
 | Category | Item | Status |
 |----------|------|--------|
 | verification_gap | Phase 15: 15-VERIFICATION.md | human_needed |
-
-Deferred to the next milestone ("Advanced Federation"): encrypted assertions, complete Single Logout, signed outbound AuthnRequests, adoption-docs polish, runnable demo app.
 
 ## Tracked Follow-ups (v1.1, in-flight)
 

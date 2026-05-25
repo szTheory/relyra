@@ -52,6 +52,7 @@ Primary severity is `Critical` with CVSS 3.1 `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C
 - Fix commit `8910200` (`fix(29): close metadata trust bypass (CR-01) and pin over DER (CR-02)`)
 - Gate hardening commit `07f4727` (`fix(30): harden ci.security meta-gate (AST parse, tag anchor, corpus_gate coverage)`)
 - Regression proof: `test/security/xml/adversarial_crypto_test.exs`
+- Regression proof: `test/relyra/metadata/auto_refresh_test.exs`
 - Regression proof: `test/security/ci_gate_integrity_test.exs`
 - Findings ledger cross-reference: [`docs/security_findings.md`](../security_findings.md)
 

@@ -42,7 +42,7 @@ mix test test/relyra/ecto/escape_hatch_audit_test.exs --warnings-as-errors
 | Claim surface | Primary seam | Proof lane |
 | --- | --- | --- |
 | SHA-256+ strict defaults and time-boxed SHA-1 compatibility | `lib/relyra/security/algorithm_policy.ex` | `test/security/strict_default_proof_test.exs` |
-| `:public_key.verify` over canonicalized `SignedInfo`, constant-time `DigestValue` recompute on the exact consumed node, and document-provided `KeyInfo` trust rejection on `verify/4` and `verify_metadata_root/4` | `lib/relyra/security/signature.ex`, `lib/relyra/security/xml/pure_beam.ex` | `test/security/strict_default_proof_test.exs` |
+| `:public_key.verify` over canonicalized `SignedInfo`, constant-time `DigestValue` recompute on the exact consumed node, and document-provided `KeyInfo` trust rejection on `verify/4` and `verify_metadata_root/4` | `lib/relyra/security/signature.ex`, `lib/relyra/security/xml/pure_beam.ex` | `test/security/xml/adversarial_crypto_test.exs`, `test/relyra/metadata/auto_refresh_test.exs` |
 | RelayState opacity and raw-URL rejection | `lib/relyra/security/relay_state.ex` | `test/security/strict_default_proof_test.exs` |
 | Metadata trust anchors, drift review, and legacy unsigned escape hatch | `lib/relyra/metadata/auto_refresh.ex` | `test/relyra/ecto/escape_hatch_audit_test.exs` |
 | Attributable, redaction-safe audit evidence | `lib/relyra/ecto/audit_writer.ex` | `test/relyra/ecto/escape_hatch_audit_test.exs` |
