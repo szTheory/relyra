@@ -61,13 +61,31 @@ defmodule Relyra.Protocol.DecryptAssertionTest do
   # drive the detector/splice without a real encrypted fixture.
   defp response_with(encrypted_assertion_blocks, opts \\ []) do
     cleartext = Keyword.get(opts, :cleartext_assertion, "")
+    signature = Keyword.get(opts, :signature, "")
 
     """
     <Response Destination="https://sp.example.com/saml/acs" InResponseTo="id_request_123" ConnectionId="valid">
       <Issuer xmlns="urn:oasis:names:tc:SAML:2.0:assertion">#{@idp_entity_id}</Issuer>
       <Status><StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/></Status>
-      #{cleartext}#{encrypted_assertion_blocks}
+      #{cleartext}#{encrypted_assertion_blocks}#{signature}
     </Response>
+    """
+    |> String.trim()
+  end
+
+  # A structurally-complete <Signature> block (no real crypto) so a cleartext
+  # Assertion satisfies parse_safely/2's signature gate, letting the pre-stage reach
+  # the ambiguity detection. The signature never verifies — the point is reaching the
+  # ambiguity reject, which fires before any verification.
+  defp signature_block do
+    """
+    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+      <SignedInfo>
+        <CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+        <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+        <Reference URI="#a1"><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/></Reference>
+      </SignedInfo>
+    </Signature>
     """
     |> String.trim()
   end
@@ -88,6 +106,25 @@ defmodule Relyra.Protocol.DecryptAssertionTest do
     open <>
       "<xenc:EncryptedData><xenc:EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#aes256-gcm\"/><ds:KeyInfo><xenc:EncryptedKey><xenc:EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p\"/><xenc:CipherData><xenc:CipherValue>#{Base.encode64(:crypto.strong_rand_bytes(256))}</xenc:CipherValue></xenc:CipherData></xenc:EncryptedKey></ds:KeyInfo><xenc:CipherData><xenc:CipherValue>#{Base.encode64(:crypto.strong_rand_bytes(64))}</xenc:CipherValue></xenc:CipherData></xenc:EncryptedData>" <>
       close
+  end
+
+  # A cleartext <Assertion> complete enough to satisfy parse_safely/2's field gates.
+  defp cleartext_assertion do
+    """
+    <Assertion xmlns="urn:oasis:names:tc:SAML:2.0:assertion" ID="a1">
+      <Issuer>#{@idp_entity_id}</Issuer>
+      <Subject>
+        <NameID>user@example.com</NameID>
+        <SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+          <SubjectConfirmationData Recipient="https://sp.example.com/saml/acs" NotOnOrAfter="2099-01-01T00:00:00Z"/>
+        </SubjectConfirmation>
+      </Subject>
+      <Conditions NotBefore="2000-01-01T00:00:00Z" NotOnOrAfter="2099-01-01T00:00:00Z">
+        <AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction>
+      </Conditions>
+    </Assertion>
+    """
+    |> String.trim()
   end
 
   setup do
@@ -126,10 +163,17 @@ defmodule Relyra.Protocol.DecryptAssertionTest do
 
   describe "ambiguity is rejected BEFORE any crypto (D-03 / SC#2)" do
     test "cleartext <Assertion> + <EncryptedAssertion> -> :ambiguous_assertion" do
-      cleartext =
-        ~s(<Assertion xmlns="urn:oasis:names:tc:SAML:2.0:assertion" ID="a1"><Issuer>#{@idp_entity_id}</Issuer></Assertion>)
+      # The cleartext Assertion is COMPLETE enough to pass parse_safely/2's field
+      # gates, so the pre-stage reaches the ambiguity check (rather than the outer
+      # parse rejecting on missing assertion fields). This is the cleartext-injection
+      # attack shape (CVE-2026-2092 class).
+      cleartext = cleartext_assertion()
 
-      xml = response_with(garbage_encrypted_assertion(), cleartext_assertion: cleartext)
+      xml =
+        response_with(garbage_encrypted_assertion(),
+          cleartext_assertion: cleartext,
+          signature: signature_block()
+        )
 
       # The ciphertext WOULD :decryption_failed; seeing :ambiguous_assertion proves
       # the ambiguity check fired FIRST (Pitfall 2 / SC#2).

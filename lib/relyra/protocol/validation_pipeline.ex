@@ -3,6 +3,7 @@ defmodule Relyra.Protocol.ValidationPipeline do
 
   alias Relyra.Error
   alias Relyra.Security.SignedNode
+  alias Relyra.Security.XML.SaxyTree.Node
 
   @ordered_stages [
     :parse_safely,
@@ -65,13 +66,158 @@ defmodule Relyra.Protocol.ValidationPipeline do
 
     case Relyra.Security.XML.PureBeam.parse_safely(response_payload, parse_opts(opts)) do
       {:ok, parsed_doc} ->
-        case do_run_validations(parsed_doc, request_intent, connection, cert_chain, opts, now) do
-          {:ok, login_result} -> {:ok, login_result, assertion_count(parsed_doc)}
-          {:error, %Error{} = error} -> {:error, error, assertion_count(parsed_doc)}
+        # :decrypt_assertion pre-stage (D-01): detect EncryptedAssertion from the
+        # OUTER parse tree, reject the cleartext+encrypted ambiguity BEFORE any
+        # crypto (D-03), decrypt a single EncryptedAssertion via the unchanged
+        # XMLEnc.decrypt/3, string-splice the plaintext into the Response binary,
+        # and re-parse through the SAME parse_safely/2 seam. The :none path is a
+        # byte-identical no-op — the original parsed_doc flows straight through
+        # (D-02). The pre-stage reads NO identity field (Pitfall 3 / CLAUDE.md #4).
+        case decrypt_assertion(response_payload, parsed_doc, connection, opts) do
+          {:ok, effective_doc} ->
+            case do_run_validations(
+                   effective_doc,
+                   request_intent,
+                   connection,
+                   cert_chain,
+                   opts,
+                   now
+                 ) do
+              {:ok, login_result} -> {:ok, login_result, assertion_count(effective_doc)}
+              {:error, %Error{} = error} -> {:error, error, assertion_count(effective_doc)}
+            end
+
+          {:error, %Error{} = error} ->
+            # No re-parse happened on the ambiguity / decryption-failure arms, so
+            # the count is taken off the OUTER parsed_doc still in scope.
+            {:error, error, assertion_count(parsed_doc)}
         end
 
       {:error, %Error{} = error} ->
         {:error, error, 0}
+    end
+  end
+
+  # The :decrypt_assertion pre-stage (D-01). Returns {:ok, parsed_doc} (the
+  # effective doc do_run_validations/6 will consume) or {:error, %Error{}}.
+  #
+  #   :none        -> {:ok, parsed_doc}  byte-identical no-op (D-02): NO re-parse,
+  #                   NO XMLEnc.decrypt/3 call.
+  #   :ambiguous   -> {:error, :ambiguous_assertion}  produced BEFORE any decrypt
+  #                   (D-03 / SC#2 / Pitfall 2).
+  #   {:single, _} -> resolve the key-resolver MODULE (pass the module, never the
+  #                   resolved PEM — XMLEnc.decrypt/3 re-resolves via apply), splice
+  #                   the prefix-aware exactly-one-match EncryptedAssertion substring,
+  #                   decrypt, re-parse the recomposed binary via parse_safely/2.
+  #                   Any decryption failure collapses to the opaque
+  #                   :decryption_failed (no oracle).
+  defp decrypt_assertion(response_payload, parsed_doc, connection, opts) do
+    case detect_encrypted(Map.get(parsed_doc, :parse_tree)) do
+      :none ->
+        {:ok, parsed_doc}
+
+      :ambiguous ->
+        {:error,
+         Error.new(
+           :ambiguous_assertion,
+           "Response contains both cleartext and encrypted assertions",
+           %{}
+         )}
+
+      {:single, _node} ->
+        case locate_encrypted_assertion(response_payload) do
+          {:ok, enc_bytes} ->
+            resolver = Keyword.get(opts, :key_resolver, Relyra.KeyResolver.Default)
+            decrypt_opts = Keyword.put(opts, :connection, connection)
+
+            case Relyra.Security.XMLEnc.decrypt(enc_bytes, resolver, decrypt_opts) do
+              {:ok, plaintext} ->
+                recomposed = String.replace(response_payload, enc_bytes, plaintext, global: false)
+                Relyra.Security.XML.PureBeam.parse_safely(recomposed, parse_opts(opts))
+
+              :decryption_failed ->
+                {:error,
+                 Error.new(
+                   :decryption_failed,
+                   "Encrypted assertion could not be decrypted",
+                   %{}
+                 )}
+            end
+
+          # The prefix-aware locator found zero or >1 EncryptedAssertion substrings
+          # in the raw binary — reject as ambiguous rather than splicing the first
+          # (exactly-one-match guard, RESEARCH A1; consistent with the >1 detector
+          # branch).
+          :ambiguous ->
+            {:error,
+             Error.new(
+               :ambiguous_assertion,
+               "Response contains both cleartext and encrypted assertions",
+               %{}
+             )}
+        end
+    end
+  end
+
+  # Tree-walk detector over the OUTER parse tree (prefix-agnostic, by local name).
+  # Models the RESEARCH code example; reuses the prefix-agnostic find_first/find_all
+  # shape (pure_beam.ex:584-618) — NO second parser (CLAUDE.md invariant #2).
+  defp detect_encrypted(%Node{} = parse_tree) do
+    enc = find_first(parse_tree, "EncryptedAssertion")
+    cleartext = find_first(parse_tree, "Assertion")
+    encs = find_all(parse_tree, "EncryptedAssertion")
+
+    cond do
+      is_nil(enc) -> :none
+      not is_nil(cleartext) -> :ambiguous
+      length(encs) > 1 -> :ambiguous
+      true -> {:single, enc}
+    end
+  end
+
+  defp detect_encrypted(_other), do: :none
+
+  # The first descendant-or-self element with the given local name, document order,
+  # or nil (prefix-agnostic).
+  defp find_first(%Node{local: local} = node, local), do: node
+
+  defp find_first(%Node{children: children}, local) do
+    Enum.find_value(children, fn child -> find_first(child, local) end)
+  end
+
+  defp find_first(_other, _local), do: nil
+
+  # All descendant-or-self elements with the given local name, document order.
+  defp find_all(%Node{} = node, local) do
+    node
+    |> collect_nodes(local, [])
+    |> Enum.reverse()
+  end
+
+  defp collect_nodes(%Node{local: local, children: children} = node, local, acc) do
+    Enum.reduce(children, [node | acc], fn child, a -> collect_nodes(child, local, a) end)
+  end
+
+  defp collect_nodes(%Node{children: children}, local, acc) do
+    Enum.reduce(children, acc, fn child, a -> collect_nodes(child, local, a) end)
+  end
+
+  defp collect_nodes(_other, _local, acc), do: acc
+
+  # Prefix-aware, exactly-one-match locator for the <EncryptedAssertion>...</...>
+  # substring in the RAW Response binary (RESEARCH Pattern 1 + A1). Matches both an
+  # unprefixed <EncryptedAssertion>...</EncryptedAssertion> AND a namespace-prefixed
+  # <saml:EncryptedAssertion>...</saml:EncryptedAssertion> (any prefix), requiring the
+  # closing tag's prefix to match the opening tag's. EncryptedAssertion cannot nest
+  # another EncryptedAssertion (XML-Enc), so a non-greedy match is unambiguous for a
+  # single element. If zero or >1 substrings are present, return :ambiguous rather
+  # than silently splicing the first (exactly-one-match guard).
+  defp locate_encrypted_assertion(response_payload) do
+    regex = ~r/<(?:([\w.-]+):)?EncryptedAssertion\b.*?<\/(?:\1:)?EncryptedAssertion>/s
+
+    case Regex.scan(regex, response_payload) do
+      [[whole | _]] -> {:ok, whole}
+      _ -> :ambiguous
     end
   end
 

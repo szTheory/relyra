@@ -240,6 +240,48 @@ defmodule Relyra.Security.XML.PureBeam do
   # require_present_fields/4 so the :missing_protocol_field / :missing_signature
   # error shapes stay byte-identical to the regex era.
   defp build_parsed_doc(%Node{} = root) do
+    # ENC-01 (D-01): a Response whose ONLY assertion is encrypted carries no
+    # cleartext <Assertion> / <Signature>, so the strict assertion/signature gates
+    # below would reject it BEFORE the ValidationPipeline :decrypt_assertion
+    # pre-stage can decrypt and re-parse. Emit a minimal pre-decrypt parsed_doc
+    # (response_fields + the :parse_tree the pre-stage detects on) WITHOUT relaxing
+    # any gate for the cleartext path — the strict gates re-run on the re-parsed
+    # decrypted plaintext (one parse path, CLAUDE.md #2). A cleartext+encrypted
+    # ambiguity still hits the full cleartext path here (cleartext Assertion present)
+    # and is rejected by the pre-stage as :ambiguous_assertion.
+    if encrypted_only?(root) do
+      build_pre_decrypt_parsed_doc(root)
+    else
+      build_cleartext_parsed_doc(root)
+    end
+  end
+
+  # True iff the document carries at least one <EncryptedAssertion> and NO cleartext
+  # <Assertion> (prefix-agnostic, by local name). This is the encrypted-only shape
+  # the :decrypt_assertion pre-stage must be allowed to reach.
+  defp encrypted_only?(%Node{} = root) do
+    not is_nil(find_first(root, "EncryptedAssertion")) and
+      is_nil(find_first(root, "Assertion"))
+  end
+
+  # The minimal pre-decrypt parsed_doc: response_fields (Issuer/Status/Destination
+  # ARE present on the outer encrypted Response) + the :parse_tree. No assertion /
+  # signature fields are derived — they live inside the still-encrypted blob and are
+  # derived from the re-parsed plaintext after the pre-stage decrypts. No identity
+  # field is surfaced here (CLAUDE.md #4 / Pitfall 3).
+  defp build_pre_decrypt_parsed_doc(%Node{} = root) do
+    with {:ok, response_fields} <- response_fields(root) do
+      {:ok,
+       %{
+         type: :parsed_xml,
+         encrypted_pending: true,
+         parse_tree: root
+       }
+       |> Map.merge(response_fields)}
+    end
+  end
+
+  defp build_cleartext_parsed_doc(%Node{} = root) do
     with {:ok, response_fields} <- response_fields(root),
          {:ok, assertion_fields} <- assertion_fields(root),
          {:ok, signature_fields} <- signature_fields(root) do
