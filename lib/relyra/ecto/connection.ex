@@ -79,7 +79,7 @@ if Code.ensure_loaded?(Ecto.Schema) do
 
     @type t :: %__MODULE__{}
 
-    @active_signing_cert_filters [role: :signing, lifecycle_state: :active]
+    @active_signing_cert_filters [role: :signing, lifecycle_state: :active, party: :idp]
 
     @spec draft_changeset(t(), map()) :: Ecto.Changeset.t()
     def draft_changeset(connection, attrs) do
