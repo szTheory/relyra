@@ -84,7 +84,8 @@ defmodule Relyra.Ecto.ConnectionSnapshot do
       clock_skew_seconds: Map.get(runtime_policy, :clock_skew_seconds),
       provider_preset: connection.provider_preset,
       display_name: connection.display_name,
-      organization_id: connection.organization_id
+      organization_id: connection.organization_id,
+      sign_authn_requests: Map.get(connection, :sign_authn_requests, false)
     }
   end
 

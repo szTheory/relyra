@@ -20,7 +20,8 @@ defmodule Relyra.Connection do
     :provider_preset,
     :display_name,
     :organization_id,
-    :mapping_config
+    :mapping_config,
+    sign_authn_requests: false
   ]
 
   @type t :: %__MODULE__{
@@ -41,6 +42,7 @@ defmodule Relyra.Connection do
           provider_preset: atom() | nil,
           display_name: binary() | nil,
           organization_id: binary() | nil,
-          mapping_config: map() | nil
+          mapping_config: map() | nil,
+          sign_authn_requests: boolean()
         }
 end
