@@ -26,6 +26,8 @@ if Code.ensure_loaded?(Ecto.Schema) do
       field :activated_at, :utc_datetime_usec
       field :retired_at, :utc_datetime_usec
       field :metadata, :map, default: %{}
+      field :party, Ecto.Enum, values: [:idp, :sp]
+      field :use, Ecto.Enum, values: [:signing, :encryption]
 
       belongs_to :connection, Connection,
         foreign_key: :connection_record_id,
@@ -52,7 +54,9 @@ if Code.ensure_loaded?(Ecto.Schema) do
         :staged_at,
         :activated_at,
         :retired_at,
-        :metadata
+        :metadata,
+        :party,
+        :use
       ])
       |> validate_required([:fingerprint_sha256, :pem, :source])
       |> put_defaults()
