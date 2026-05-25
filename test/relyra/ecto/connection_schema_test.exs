@@ -98,6 +98,54 @@ defmodule Relyra.Ecto.ConnectionSchemaTest do
            ).certificates
   end
 
+  # ---------------------------------------------------------------------------
+  # T6c — AUTHN-02 / T-32-06: Connection :sign_authn_requests field
+  # ---------------------------------------------------------------------------
+
+  describe "sign_authn_requests field (boolean, default false)" do
+    test "draft_changeset casts sign_authn_requests true from attrs" do
+      changeset =
+        Connection.draft_changeset(%Connection{}, %{sign_authn_requests: true})
+
+      assert Ecto.Changeset.get_change(changeset, :sign_authn_requests) == true,
+             "expected draft_changeset to cast sign_authn_requests: true but field was not changed"
+    end
+
+    test "draft_changeset casts sign_authn_requests false from attrs" do
+      changeset =
+        Connection.draft_changeset(%Connection{}, %{sign_authn_requests: false})
+
+      # get_change returns nil when no change (field value matches struct default).
+      # Use get_field which reads through to the struct default.
+      assert Ecto.Changeset.get_field(changeset, :sign_authn_requests) == false,
+             "expected draft_changeset to reflect sign_authn_requests: false"
+    end
+
+    test "draft_changeset defaults sign_authn_requests to false when not provided" do
+      changeset = Connection.draft_changeset(%Connection{}, %{})
+
+      assert Ecto.Changeset.get_field(changeset, :sign_authn_requests) == false,
+             "expected sign_authn_requests to default to false when absent from attrs"
+    end
+
+    test "update_changeset casts sign_authn_requests true from attrs" do
+      changeset =
+        Connection.update_changeset(%Connection{}, %{sign_authn_requests: true})
+
+      assert Ecto.Changeset.get_change(changeset, :sign_authn_requests) == true,
+             "expected update_changeset to cast sign_authn_requests: true but field was not changed"
+    end
+
+    test "update_changeset casts sign_authn_requests false from attrs" do
+      # Start from a struct with sign_authn_requests: true to make false a real change.
+      connection = %Connection{sign_authn_requests: true}
+      changeset = Connection.update_changeset(connection, %{sign_authn_requests: false})
+
+      assert Ecto.Changeset.get_change(changeset, :sign_authn_requests) == false,
+             "expected update_changeset to cast sign_authn_requests: false but field was not changed"
+    end
+  end
+
   defp errors_on(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} -> message end)
   end
