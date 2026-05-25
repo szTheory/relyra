@@ -183,7 +183,14 @@ defmodule Relyra.Security.XML.SaxyTree do
     ordered = Enum.reverse(content)
 
     children = for {:element, child} <- ordered, do: child
-    text = ordered |> Enum.flat_map(fn {:text, t} -> [t]; _ -> [] end) |> IO.iodata_to_binary()
+
+    text =
+      ordered
+      |> Enum.flat_map(fn
+        {:text, t} -> [t]
+        _ -> []
+      end)
+      |> IO.iodata_to_binary()
 
     %Node{node | content: ordered, children: children, text: text}
   end
@@ -214,9 +221,14 @@ defmodule Relyra.Security.XML.SaxyTree do
   defp ns_declarations(attrs) do
     Enum.reduce(attrs, %{}, fn {name, value}, acc ->
       cond do
-        name == "xmlns" -> Map.put(acc, "", value)
-        String.starts_with?(name, "xmlns:") -> Map.put(acc, String.replace_prefix(name, "xmlns:", ""), value)
-        true -> acc
+        name == "xmlns" ->
+          Map.put(acc, "", value)
+
+        String.starts_with?(name, "xmlns:") ->
+          Map.put(acc, String.replace_prefix(name, "xmlns:", ""), value)
+
+        true ->
+          acc
       end
     end)
   end

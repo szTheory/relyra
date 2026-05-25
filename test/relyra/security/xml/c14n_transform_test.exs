@@ -211,12 +211,15 @@ defmodule Relyra.Security.XML.C14NTransformTest do
     end
 
     test "#default in the PrefixList force-renders the default namespace" do
-      xml = ~s(<saml:Body xmlns="urn:default" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">payload</saml:Body>)
+      xml =
+        ~s(<saml:Body xmlns="urn:default" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">payload</saml:Body>)
 
       body = parse!(xml)
 
       assert {:ok, bytes} =
-               C14N.canonicalize_reference(body, [@exc_c14n], nil, prefix_list: ["#default", "saml"])
+               C14N.canonicalize_reference(body, [@exc_c14n], nil,
+                 prefix_list: ["#default", "saml"]
+               )
 
       assert bytes =~ ~s(xmlns="urn:default")
       assert bytes =~ ~s(xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion")

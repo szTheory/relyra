@@ -72,6 +72,7 @@ defmodule Relyra.Security.XML.C14NTest do
       # The apex utilizes ds (attribute name) -> renders once. <Plain> does not
       # utilize ds at all -> the declaration must NOT appear on the child.
       apex_and_child = out
+
       occurrences =
         apex_and_child
         |> String.split(~s(xmlns:ds=))
@@ -120,7 +121,8 @@ defmodule Relyra.Security.XML.C14NTest do
 
   describe "sort order — ns before attrs; attrs by resolved URI then local (Pitfall 8)" do
     test "namespace nodes always precede attribute nodes; ns sorted by local name (default least)" do
-      xml = ~s(<E xmlns:zeta="urn:z" xmlns="urn:def" xmlns:alpha="urn:a" alpha:a="1" zeta:z="2"></E>)
+      xml =
+        ~s(<E xmlns:zeta="urn:z" xmlns="urn:def" xmlns:alpha="urn:a" alpha:a="1" zeta:z="2"></E>)
 
       out = c14n!(parse!(xml))
 
@@ -298,7 +300,8 @@ defmodule Relyra.Security.XML.C14NTest do
 
   describe "fail-closed on incomplete / non-bindable nodes (Pitfall 9)" do
     test "a non-Node value returns {:error, :canonicalization_failed} (no invented atom)" do
-      assert {:error, %Error{type: :canonicalization_failed}} = C14N.serialize(%{not: :a_node}, [])
+      assert {:error, %Error{type: :canonicalization_failed}} =
+               C14N.serialize(%{not: :a_node}, [])
     end
 
     test "a node missing required structural keys fails closed as :canonicalization_failed" do

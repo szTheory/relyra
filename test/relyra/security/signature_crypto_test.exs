@@ -43,6 +43,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
   describe "new error atoms (xml_error_type union, D-08)" do
     test "Relyra.Error accepts :digest_mismatch and :unsupported_signature_algorithm" do
       assert %Error{type: :digest_mismatch} = Error.new(:digest_mismatch, "x")
+
       assert %Error{type: :unsupported_signature_algorithm} =
                Error.new(:unsupported_signature_algorithm, "x")
     end
@@ -165,7 +166,11 @@ defmodule Relyra.Security.SignatureCryptoTest do
       signed = genuine_signed_doc()
       parsed_doc = Map.put(signed.parsed_doc, :key_info_trust, true)
 
-      assert {:error, %Error{type: :untrusted_certificate, details: %{reason: :document_keyinfo_forbidden}}} =
+      assert {:error,
+              %Error{
+                type: :untrusted_certificate,
+                details: %{reason: :document_keyinfo_forbidden}
+              }} =
                Signature.verify(parsed_doc, connection(), signed.cert_chain)
     end
   end
