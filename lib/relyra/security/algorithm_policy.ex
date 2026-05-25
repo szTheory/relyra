@@ -217,9 +217,15 @@ defmodule Relyra.Security.AlgorithmPolicy do
         :ok
 
       _ ->
+        label =
+          case method_type do
+            :content_encryption_algorithm -> "AES-CBC"
+            _ -> "SHA-1"
+          end
+
         Error.new(
           :legacy_algorithm_override_expired,
-          "Legacy SHA-1 override has expired",
+          "Legacy #{label} override has expired",
           %{
             algorithm: method,
             algorithm_type: method_type,
@@ -230,7 +236,7 @@ defmodule Relyra.Security.AlgorithmPolicy do
     end
   end
 
-  defp enforce_legacy_override(_legacy_sha1, method, method_type) do
+  defp enforce_legacy_override(_legacy_override, method, method_type) do
     deprecated_algorithm(method, method_type)
   end
 
