@@ -8,6 +8,8 @@ defmodule Relyra.Security.StrictDefaultProofTest do
   @digest_sha1 "http://www.w3.org/2000/09/xmldsig#sha1"
   @allowed_signature_method "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
   @allowed_digest_method "http://www.w3.org/2001/04/xmlenc#sha256"
+  @rsa_pkcs1_uri "http://www.w3.org/2001/04/xmlenc#rsa-1_5"
+  @aes128_cbc_uri "http://www.w3.org/2001/04/xmlenc#aes128-cbc"
 
   test "deprecated_algorithm stays fail-closed for SHA-1 by default" do
     policy = AlgorithmPolicy.default()
@@ -39,6 +41,20 @@ defmodule Relyra.Security.StrictDefaultProofTest do
              RelayState.validate("https://tenant.example.com/dashboard")
 
     assert details.reason == :raw_url
+  end
+
+  test "enforce_key_transport_algorithm/2 hard-rejects PKCS1v1.5 by default" do
+    policy = AlgorithmPolicy.default()
+
+    assert %Error{type: :deprecated_algorithm} =
+             AlgorithmPolicy.enforce_key_transport_algorithm(policy, @rsa_pkcs1_uri)
+  end
+
+  test "enforce_content_encryption_algorithm/3 rejects AES-CBC by default" do
+    policy = AlgorithmPolicy.default()
+
+    assert %Error{type: :deprecated_algorithm} =
+             AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes128_cbc_uri)
   end
 
   test "signed content rejects document-provided key_info trust elevation" do

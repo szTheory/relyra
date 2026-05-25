@@ -20,6 +20,10 @@ defmodule Relyra.Security.AlgorithmPolicyTest do
 
   @rsa_pkcs1_uri "http://www.w3.org/2001/04/xmlenc#rsa-1_5"
   @rsa_oaep_uri "http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"
+  @aes128_gcm_uri "http://www.w3.org/2001/04/xmlenc#aes128-gcm"
+  @aes256_gcm_uri "http://www.w3.org/2001/04/xmlenc#aes256-gcm"
+  @aes128_cbc_uri "http://www.w3.org/2001/04/xmlenc#aes128-cbc"
+  @aes256_cbc_uri "http://www.w3.org/2001/04/xmlenc#aes256-cbc"
 
   describe "digest_atom_for_signature_method/1 (D-06 RSA → atom)" do
     test "rsa-sha256 URI maps to :sha256" do
@@ -126,6 +130,99 @@ defmodule Relyra.Security.AlgorithmPolicyTest do
     test "default/0 has legacy_aes_cbc: nil" do
       policy = AlgorithmPolicy.default()
       assert policy.legacy_aes_cbc == nil
+    end
+  end
+
+  describe "enforce_content_encryption_algorithm/3 (AES-GCM allowed by default)" do
+    test "AES-128-GCM is allowed by default" do
+      policy = AlgorithmPolicy.default()
+      assert :ok = AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes128_gcm_uri)
+    end
+
+    test "AES-256-GCM is allowed by default" do
+      policy = AlgorithmPolicy.default()
+      assert :ok = AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes256_gcm_uri)
+    end
+  end
+
+  describe "enforce_content_encryption_algorithm/3 (AES-CBC default reject + hatch)" do
+    test "AES-128-CBC is rejected by default" do
+      policy = AlgorithmPolicy.default()
+
+      result = AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes128_cbc_uri)
+      assert %Relyra.Error{type: :deprecated_algorithm} = result
+    end
+
+    test "AES-256-CBC is rejected by default" do
+      policy = AlgorithmPolicy.default()
+
+      result = AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes256_cbc_uri)
+      assert %Relyra.Error{type: :deprecated_algorithm} = result
+    end
+
+    test "AES-128-CBC is allowed when legacy_aes_cbc hatch is active and not expired" do
+      policy = %{
+        AlgorithmPolicy.default()
+        | legacy_aes_cbc: %{
+            reason: "Legacy IdP compatibility",
+            expires_at: DateTime.add(DateTime.utc_now(), 3600, :second)
+          }
+      }
+
+      assert :ok = AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes128_cbc_uri)
+    end
+
+    test "AES-128-CBC is rejected with :legacy_algorithm_override_expired when hatch is expired" do
+      policy = %{
+        AlgorithmPolicy.default()
+        | legacy_aes_cbc: %{
+            reason: "Expired window",
+            expires_at: DateTime.add(DateTime.utc_now(), -60, :second)
+          }
+      }
+
+      result = AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes128_cbc_uri)
+      assert %Relyra.Error{type: :legacy_algorithm_override_expired} = result
+    end
+  end
+
+  describe "enforce_content_encryption_algorithm/3 (auth tag guard — D-03)" do
+    test "auth_tag of 3 bytes (< 16) returns :decryption_failed" do
+      policy = AlgorithmPolicy.default()
+
+      assert :decryption_failed =
+               AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes128_gcm_uri,
+                 auth_tag: <<1, 2, 3>>
+               )
+    end
+
+    test "auth_tag of 15 bytes (one short) returns :decryption_failed" do
+      policy = AlgorithmPolicy.default()
+
+      assert :decryption_failed =
+               AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes128_gcm_uri,
+                 auth_tag: :binary.copy(<<0>>, 15)
+               )
+    end
+
+    test "auth_tag of exactly 16 bytes returns :ok for AES-GCM" do
+      policy = AlgorithmPolicy.default()
+
+      assert :ok =
+               AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes128_gcm_uri,
+                 auth_tag: :binary.copy(<<0>>, 16)
+               )
+    end
+
+    test "auth_tag < 16 bytes returns :decryption_failed even for AES-CBC (guard fires FIRST)" do
+      policy = AlgorithmPolicy.default()
+
+      # AES-256-CBC would normally be rejected as :deprecated_algorithm,
+      # but the auth tag guard fires FIRST and returns the opaque :decryption_failed atom.
+      assert :decryption_failed =
+               AlgorithmPolicy.enforce_content_encryption_algorithm(policy, @aes256_cbc_uri,
+                 auth_tag: <<1, 2, 3>>
+               )
     end
   end
 end

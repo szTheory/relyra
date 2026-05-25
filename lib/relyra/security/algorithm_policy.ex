@@ -15,6 +15,11 @@ defmodule Relyra.Security.AlgorithmPolicy do
 
   @rsa_pkcs1_uri "http://www.w3.org/2001/04/xmlenc#rsa-1_5"
 
+  @aes_cbc_uris MapSet.new([
+                  "http://www.w3.org/2001/04/xmlenc#aes128-cbc",
+                  "http://www.w3.org/2001/04/xmlenc#aes256-cbc"
+                ])
+
   defstruct [
     :allowed_signature_methods,
     :allowed_digest_methods,
@@ -155,6 +160,29 @@ defmodule Relyra.Security.AlgorithmPolicy do
       :ok
     else
       deprecated_algorithm(method, :key_transport_algorithm)
+    end
+  end
+
+  @spec enforce_content_encryption_algorithm(t(), term(), keyword()) ::
+          :ok | Error.t() | :decryption_failed
+  def enforce_content_encryption_algorithm(policy, method, opts \\ []) do
+    auth_tag = Keyword.get(opts, :auth_tag)
+
+    cond do
+      # D-03: auth tag guard fires FIRST — before allowlist and AES-CBC hatch checks.
+      # Returns opaque atom :decryption_failed (never an %Error{}) to prevent padding oracle.
+      is_binary(auth_tag) and byte_size(auth_tag) < 16 ->
+        :decryption_failed
+
+      method_allowed?(policy.allowed_content_encryption_algorithms, method) ->
+        :ok
+
+      # D-05: AES-CBC may be allowed via legacy_aes_cbc hatch (mirrors legacy_sha1 pattern)
+      MapSet.member?(@aes_cbc_uris, method) ->
+        enforce_legacy_override(policy.legacy_aes_cbc, method, :content_encryption_algorithm)
+
+      true ->
+        deprecated_algorithm(method, :content_encryption_algorithm)
     end
   end
 
