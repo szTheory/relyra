@@ -1,6 +1,6 @@
 # RELYRA-2026-001: Relyra SAML `SignatureValue` not cryptographically verified -> authentication bypass
 
-Status: STAGED - not published. This draft is fix-first release material for the `1.2.0` ship. GHSA and CVE identifiers attach at publication and replace `RELYRA-2026-001`.
+Status: PUBLISHED 2026-05-25 as [`GHSA-jv46-xfwm-36j7`](https://github.com/szTheory/relyra/security/advisories/GHSA-jv46-xfwm-36j7), shipped with `relyra 1.2.0`. CVE requested via GitHub's CNA flow on 2026-05-25 — identifier pending assignment (will replace the `pending` note below). Internal tracking id: `RELYRA-2026-001`.
 
 Affected product: hex ecosystem `Erlang` [ASSUMED GitHub label], package `relyra`
 Affected versions: `>= 1.0.0, < 1.2.0`
@@ -62,7 +62,7 @@ Maintainers (finder and reporter).
 
 ## CVE request
 
-This phase does not submit a CVE request. The ship-time action is GitHub's "Request CVE" flow on the draft GHSA.
+CVE requested 2026-05-25 via GitHub's "Request CVE" flow on `GHSA-jv46-xfwm-36j7`; the identifier is pending assignment by GitHub (CNA) and will be backfilled here and on the GHSA when issued.
 
 - Internal tracking id: `RELYRA-2026-001`
 - Title: `Relyra SAML SignatureValue not cryptographically verified -> authentication bypass`
