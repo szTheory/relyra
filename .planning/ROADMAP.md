@@ -91,53 +91,71 @@ See `.planning/milestones/v1.1-ROADMAP.md`.
 See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 
 ### Phase 34: ValidationPipeline Wiring + ENC-01 Complete
+
 **Goal**: An SP configured against an encryption-enabled IdP can successfully log in; a malformed, tampered, or policy-violating encrypted assertion is rejected before any identity field is read.
 **Depends on**: Phase 33 (XMLEnc.decrypt/3 must exist).
 **Requirements**: ENC-01, ENC-02
 **Success Criteria** (what must be TRUE):
+
   1. A response containing a valid `EncryptedAssertion` completes login successfully: the plaintext is decrypted, re-parsed through `PureBeam.parse_safely/2`, and then `Signature.do_verify/4` succeeds before any identity field (NameID, attributes) is accessible.
   2. A response containing both a cleartext assertion and an encrypted assertion is rejected with `:ambiguous_assertion` before any crypto operation runs.
   3. Non-encrypted response paths are structurally unchanged — the `:decrypt_assertion` pipeline step is a strict no-op when no encrypted assertion is present.
   4. SP metadata endpoint publishes `<KeyDescriptor use="encryption">` containing the SP encryption certificate; `<KeyDescriptor use="signing">` is present and distinct from the encryption entry.
   5. All 7 ENC-01 adversarial corpus fixtures (wrong-key, truncated tag, PKCS1v1.5, CBC, cleartext-injection, malformed ciphertext, read-before-verify attempt) are wired into `mix ci.security` and each returns the correct typed error.
+
 **Plans**: 4 plans
 Plans:
+**Wave 1**
+
 - [ ] 34-01-PLAN.md — ENC-02: emit SP signing + encryption KeyDescriptors in metadata (Wave 1)
 - [ ] 34-02-PLAN.md — ENC-01: FakeIdP.encrypt/encrypted_response canonical encrypted-assertion generator (Wave 1)
 - [ ] 34-03-PLAN.md — ENC-01: :decrypt_assertion pre-stage in ValidationPipeline.do_run/4 (decrypt → reparse → verify; ambiguity guard) (Wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 34-04-PLAN.md — ENC-01: 7-fixture pipeline-level adversarial corpus + mix ci.security wiring (Wave 2, depends on 34-02 + 34-03)
+
 **UI hint**: no
 
 ### Phase 35: Signed AuthnRequests + ADFS Preset
+
 **Goal**: An SP targeting an ADFS or locked-down Shibboleth IdP that requires `WantAuthnRequestsSigned` can complete login; the redirect-binding signature is byte-exact and verified against a committed golden output.
 **Depends on**: Phase 32 (needs `AlgorithmPolicy.signing_digest_atom/1`; can run in parallel with Phases 33-34).
 **Requirements**: AUTHN-01, AUTHN-02, AUTHN-03, AUTHN-04
 **Success Criteria** (what must be TRUE):
+
   1. A connection with `sign_authn_requests: true` produces a redirect URL whose `SAMLRequest`, `RelayState`, and `SigAlg` query parameters are signed verbatim in that spec-canonical order; the `Signature` parameter base64-encodes the raw RSA-SHA256 output over the pre-assembled query-string binary.
   2. The bit-for-bit golden output corpus fixture and an ADFS-style `+`-encoded variant both pass in `mix ci.security`; re-serialization of the query string before signing causes the corpus fixture to fail (validates the raw-octet invariant).
   3. A connection with `sign_authn_requests: false` (the default) produces an unsigned redirect URL; no existing Okta, Google, or non-ADFS tests regress.
   4. SP metadata for a signing-enabled connection emits `AuthnRequestsSigned="true"` and a `<KeyDescriptor use="signing">` element; SP metadata for a non-signing connection omits both.
   5. The ADFS provider preset defaults to `sign_authn_requests: true`; `guides/providers/adfs.md` covers claim rules, PowerShell `Set-ADFSRelyingPartyTrust` commands, SHA-1 vs SHA-256 redirect binding interop notes, and the `WantAuthnRequestsSigned` flag.
+
 **Plans**: TBD
 
 ### Phase 36: Generic SAML Runbook
+
 **Goal**: An operator integrating a non-preset IdP (IBM Security Verify, CyberArk, Oracle Access Manager, PingFederate, CA SiteMinder, ADFS custom, or Shibboleth) has one authoritative runbook that gets them through setup without reading the SAML spec.
 **Depends on**: Nothing (pure documentation; no code dependency; can run in parallel with any phase after Phase 32).
 **Requirements**: DOCS-02
 **Success Criteria** (what must be TRUE):
+
   1. `guides/recipes/generic_saml.md` is published and covers: SP metadata field reference with plain-English descriptions, IdP metadata import checklist, attribute/claim decoder tables for IBM Security Verify, CyberArk, Oracle Access Manager, PingFederate, and CA SiteMinder.
   2. The guide includes ADFS-specific and Shibboleth-specific subsections, a NameID format decision guide, and sections on when to enable signing and encryption.
   3. A minimum-safe security settings checklist, a step-by-step debugging flow, and a certificate rotation procedure are included, written at the operator level (no SAML spec knowledge assumed).
+
 **Plans**: TBD
 
 ### Phase 37: Identity Mapping and Provisioning Guide
+
 **Goal**: An operator implementing JIT provisioning or attribute-to-user mapping has one authoritative guide covering the three canonical patterns and an explicit decision tree — and knows exactly where Relyra's responsibility ends and their application's begins.
 **Depends on**: Nothing (pure documentation; no code dependency; can run in parallel with any phase).
 **Requirements**: DOCS-03
 **Success Criteria** (what must be TRUE):
+
   1. `guides/identity_mapping_and_provisioning.md` is published and covers all three mapping patterns: NameID-as-local-identifier, attribute-as-local-identifier, and JIT create-or-update.
   2. A JIT decision tree helps operators choose between patterns based on their identity model; the `UserMapper` behaviour is fully documented with at least one complete implementation example per pattern.
   3. The guide explicitly states the SCIM lifecycle non-goal, warns about JIT+SCIM simultaneous-use conflicts, and explains anchor stability guidance (what breaks when NameID format changes between logins).
+
 **Plans**: TBD
 
 </details>
