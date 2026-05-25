@@ -83,7 +83,7 @@ See `.planning/milestones/v1.1-ROADMAP.md`.
 
   - [x] 33-01-PLAN.md — KeyResolver behaviour + dispatch function + KeyResolver.Default PEM-from-config + key_resolver_test.exs (ENC-04)
   - [x] 33-02-PLAN.md — XMLEnc.decrypt/3 RSA-OAEP + AES-GCM + 4-case security corpus + ci.security registration (ENC-04)
-- [ ] **Phase 34: ValidationPipeline Wiring + ENC-01 Complete** — Wire the decrypt-then-reparse step into `ValidationPipeline`; add ambiguity guard; publish SP encryption `KeyDescriptor`; add the 7-fixture ENC-01 adversarial corpus to `mix ci.security`.
+- [x] **Phase 34: ValidationPipeline Wiring + ENC-01 Complete** — Wire the decrypt-then-reparse step into `ValidationPipeline`; add ambiguity guard; publish SP encryption `KeyDescriptor`; add the 7-fixture ENC-01 adversarial corpus to `mix ci.security`. (completed 2026-05-25)
 - [ ] **Phase 35: Signed AuthnRequests + ADFS Preset** — Implement redirect-binding query signing; add `sign_authn_requests` connection toggle; publish signing metadata fields; ship ADFS preset and runbook; add 5-fixture AUTHN-01 adversarial corpus.
 - [ ] **Phase 36: Generic SAML Runbook** — Publish `guides/recipes/generic_saml.md` covering SP/IdP metadata fields, decoder tables for non-preset IdPs, minimum-safe checklist, debugging flow, and certificate rotation.
 - [ ] **Phase 37: Identity Mapping and Provisioning Guide** — Publish `guides/identity_mapping_and_provisioning.md` covering three mapping patterns, JIT decision tree, `UserMapper` behaviour documentation, and SCIM non-goal statement.
@@ -196,7 +196,7 @@ Plans:
 | 31. Disclosure and docs honesty | v1.1 | 2/2 | Complete | 2026-05-24 |
 | 32. AlgorithmPolicy Extension + Schema Migrations | v1.3 | 2/2 | Complete   | 2026-05-25 |
 | 33. KeyResolver Behaviour + XMLEnc Crypto Core | v1.3 | 2/2 | Complete   | 2026-05-25 |
-| 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 4/4 | Complete   | 2026-05-25 |
+| 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 4/4 | Complete    | 2026-05-25 |
 | 35. Signed AuthnRequests + ADFS Preset | v1.3 | 0/TBD | Not started | - |
 | 36. Generic SAML Runbook | v1.3 | 0/TBD | Not started | - |
 | 37. Identity Mapping and Provisioning Guide | v1.3 | 0/TBD | Not started | - |
