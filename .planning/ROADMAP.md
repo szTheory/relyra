@@ -195,7 +195,7 @@ Plans:
 
 **Wave 2**
 
-- [ ] 37-02-PLAN.md — docs publication, routing, and docs CI gate
+- [x] 37-02-PLAN.md — docs publication, routing, and docs CI gate
 
 </details>
 
@@ -238,6 +238,6 @@ Plans:
 | 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 4/4 | Complete    | 2026-05-25 |
 | 35. Signed AuthnRequests + ADFS Preset | v1.3 | 9/9 | Complete | 2026-05-26 |
 | 36. Generic SAML Runbook | v1.3 | 2/2 | Complete    | 2026-05-26 |
-| 37. Identity Mapping and Provisioning Guide | v1.3 | 1/2 | In Progress|  |
+| 37. Identity Mapping and Provisioning Guide | v1.3 | 2/2 | Complete   | 2026-05-26 |
 
 ---

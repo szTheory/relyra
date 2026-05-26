@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Advanced Federation
-status: executing
-last_updated: "2026-05-26T13:37:06.329Z"
+status: verifying
+last_updated: "2026-05-26T13:45:16.775Z"
 last_activity: 2026-05-26
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 17
-  completed_plans: 7
-  percent: 41
+  completed_plans: 8
+  percent: 47
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-05-25)
 
 Phase: 37 (identity-mapping-and-provisioning-guide) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-05-26
 Resume: /gsd:plan-phase 37
 
-Progress: [████░░░░░░] 41%
+Progress: [█████░░░░░] 47%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [████░░░░░░] 41%
 | Phase 34 P03 | 9m | 2 tasks | 3 files (1 created, 2 modified) |
 | Phase 34 P04 | 7min | 2 tasks | 4 files |
 | Phase 37 P01 | 4m | 2 tasks | 2 files (1 created, 1 modified) |
+| Phase 37 P02 | 9min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -165,3 +166,6 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 - [Phase 34-03] (Rule 3 blocking auto-fix): PureBeam.build_parsed_doc/1 now tolerates an encrypted-only Response (EncryptedAssertion present, no cleartext Assertion) via build_pre_decrypt_parsed_doc/1 — a minimal pre-decrypt parsed_doc carrying response_fields + :parse_tree + encrypted_pending:true. WITHOUT this, the OUTER parse_safely/2 rejected every encrypted Response with :missing_protocol_field before the pre-stage could run (D-01 unreachable). The cleartext path (build_cleartext_parsed_doc/1) keeps the strict assertion/signature gates byte-identical; strict gates re-run on the re-parsed decrypted plaintext (one parse path, CLAUDE.md #2). Plan 04's SC#1 positive control depends on this tolerance.
 - [Phase 34-04]: Pipeline-level ENC-01 adversarial corpus (test/security/xml_enc_adversarial_test.exs) drives end-to-end through ValidationPipeline.run/4 via the single canonical FakeIdP.encrypt/encrypted_response generator: positive control (SC#1) + 7 named fixtures + 1 bonus multi-encrypted fixture. Fixtures 1/2/3/4/6 pin the SINGLE opaque :decryption_failed (no-oracle T-34-13); fixture 5 + bonus pin :ambiguous_assertion fired BEFORE decrypt (T-34-14); fixture 7 read-before-verify proves a verification-stage typed error AND no identity leak (T-34-12, CVE-2025-54419). Wired into ci.security as its own cmd-mix-test line + ci_gate_integrity_test.exs @gated_suites (non-hollow, T-34-15). Corpus 9/9; full suite 626/0; ci.security exit 0.
 - [Phase 34-04] (Rule 1 bug fix): XmldsigSigner gained an :assertion_namespace opt (default OFF, cleartext path byte-identical); FakeIdP.signed_assertion_fragment/1 now passes assertion_namespace:true and stops re-declaring the namespace AFTER signing. WITHOUT this the encrypted positive control failed :digest_mismatch — the signer hashed a NON-namespaced Assertion but the post-decrypt/splice/re-parse Assertion carried xmlns=...assertion, so the verifier's recomputed exclusive-C14N digest differed (T-34-04). Plan-02's round-trip smoke only proved decrypt byte-identity, never a full pipeline verify, so the bug was latent until Plan 04's SC#1.
+- [Phase 37]: Ground every UserMapper example in the real Phoenix ACS seam using LoginResult and Principal.
+- [Phase 37]: Route identity mapping only from Day-2 and production follow-on docs, not Day-1 onboarding.
+- [Phase 37]: Publish the guide in ExDoc extras and gate its presence in ci.docs.
