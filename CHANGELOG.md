@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.3.0](https://github.com/szTheory/relyra/compare/v1.2.0...v1.3.0) (2026-05-26)
+
+
+### Features
+
+* **32-01:** add enforce_content_encryption_algorithm/3 with auth tag guard and AES-CBC hatch; extend proof tests ([88ea124](https://github.com/szTheory/relyra/commit/88ea1244811c43b323e818da751c9599c342fcc3))
+* **32-01:** extend AlgorithmPolicy struct with key-transport fields and enforce_key_transport_algorithm/2 ([94d14a9](https://github.com/szTheory/relyra/commit/94d14a90fb1f04a6ae79284397439cca678a2274))
+* **32-02:** add party and use columns to cert table with Ecto.Enum schema fields ([bf830c8](https://github.com/szTheory/relyra/commit/bf830c8292bc759a027af1e485ba63536c485fff))
+* **32-02:** add sign_authn_requests column to connections table with Connection schema field ([ed07372](https://github.com/szTheory/relyra/commit/ed073723cb4450cb9cd1bce0fca910a62e474275))
+* **33-01:** KeyResolver behaviour module with dispatch function ([d52b461](https://github.com/szTheory/relyra/commit/d52b461267e9a4553060de9faeeaee5e6e1d0b47))
+* **33-01:** KeyResolver.Default implementation + key_resolver_test.exs unit corpus ([515570b](https://github.com/szTheory/relyra/commit/515570bd9ff92747e63c7be6f3236d83724e52b7))
+* **33-02:** implement XMLEnc.decrypt/3 — RSA-OAEP + AES-GCM decryption ([95803a8](https://github.com/szTheory/relyra/commit/95803a81c45025f3a53dbba4e1228e94cfab5848))
+* **33-02:** register xml_enc_test.exs in ci.security and ci_gate_integrity ([81f302c](https://github.com/szTheory/relyra/commit/81f302c62e43e906fac7ea0add4479efe5ff355a))
+* **34-01:** emit signing + encryption KeyDescriptors in SP metadata ([b562482](https://github.com/szTheory/relyra/commit/b56248215c9070518ccf58be5d6f9e2ac2008b2d))
+* **34-02:** add FakeIdP.encrypt/2 + encrypted_response/2 canonical generators ([8d0c560](https://github.com/szTheory/relyra/commit/8d0c560b1453c6d0127d4d402e4ad617bd61eb21))
+* **34-03:** wire :decrypt_assertion pre-stage into do_run/4 (ENC-01) ([ba86699](https://github.com/szTheory/relyra/commit/ba86699cac923f12794bf65d0f0b70b692f53287))
+
+
+### Bug Fixes
+
+* **32:** CR-01 derive error label from method_type in enforce_legacy_override ([a8a4d9a](https://github.com/szTheory/relyra/commit/a8a4d9a222aad28c52e3f9297ce09996b6cdca06))
+* **32:** WR-01 add Elixir-side defaults for party and use fields ([495796e](https://github.com/szTheory/relyra/commit/495796ebe78ce4c027c080a33cc9b1ad6b74cf28))
+* **32:** WR-02 add party: :idp to [@active](https://github.com/active)_signing_cert_filters ([8f2cc3e](https://github.com/szTheory/relyra/commit/8f2cc3efaf24606b0fba66075516924b78b8f34b))
+* **32:** WR-03 project sign_authn_requests into Relyra.Connection runtime struct ([9c66a88](https://github.com/szTheory/relyra/commit/9c66a88e79ff05b763eb53d05cdff3dc8aef6922))
+* **32:** WR-04 remove dead validate_method/3 and validate_digest/3 ([708e519](https://github.com/szTheory/relyra/commit/708e51915ffe77e60a6f8a8eecd3ad5d6a4350a8))
+* **33:** correct depth-first CipherData extraction bug in XMLEnc.decrypt/3 ([c32b72e](https://github.com/szTheory/relyra/commit/c32b72e0e489b56a5065baac969e53660042ba20))
+
 ## [1.2.0](https://github.com/szTheory/relyra/compare/v1.1.0...v1.2.0) (2026-05-25)
 
 
