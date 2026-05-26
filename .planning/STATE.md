@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: milestone
 status: verifying
-last_updated: "2026-05-25T20:35:47.860Z"
+last_updated: "2026-05-26T04:43:56.279Z"
 last_activity: 2026-05-25
 progress:
   total_phases: 4
@@ -20,15 +20,15 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-25)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 34 — validationpipeline-wiring-enc-01-complete
+**Current focus:** Phase 35 — signed-authnrequests-adfs-preset (AUTHN-01..04)
 
 ## Current Position
 
 Phase: 35
 Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-05-25
-Resume: /gsd:verify-phase 34
+Status: Context gathered (assumptions mode) — ready for planning
+Last activity: 2026-05-26
+Resume: /gsd:plan-phase 35
 
 Progress: `█████░░░░░` 50% (3/6 v1.3 phases — 32-33-34 complete)
 
