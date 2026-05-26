@@ -73,6 +73,9 @@ Microsoft Entra ID, and Google Workspace.
 These surfaces matter after Day-1, but they should not compete with onboarding:
 
 - [Getting Started](guides/getting_started.md) for the canonical Day-1 path.
+- [Identity Mapping And Provisioning](guides/identity_mapping_and_provisioning.md)
+  for the host-owned decision about local account anchors, login-time JIT, and
+  the `Relyra.UserMapper` seam after the first provider works.
 - [Jobs To Be Done And User Flows](guides/jtbd_user_flows.md) for the
   implementation-level mental model of the adoption and operations journey.
 - [Security policy](SECURITY.md) for supported algorithms, disclosure, and

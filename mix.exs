@@ -117,6 +117,7 @@ defmodule Relyra.MixProject do
         "docs/jtbd_gap_map.md",
         "guides/batteries_included.md",
         "guides/getting_started.md",
+        "guides/identity_mapping_and_provisioning.md",
         "guides/jtbd_user_flows.md",
         "guides/case_studies/operator_managed_rollout.md",
         "guides/case_studies/phoenix_saas_tenant_onboarding.md",
@@ -141,6 +142,7 @@ defmodule Relyra.MixProject do
       "ci.docs": [
         "cmd test -f guides/batteries_included.md",
         "cmd test -f BATTERIES_INCLUDED.md",
+        "cmd test -f guides/identity_mapping_and_provisioning.md",
         "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
         "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs --warnings-as-errors",
         "relyra.batteries_included --check"

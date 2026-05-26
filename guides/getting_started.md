@@ -144,6 +144,9 @@ Important posture:
 
 Useful follow-on references:
 
+- [guides/identity_mapping_and_provisioning.md](identity_mapping_and_provisioning.md)
+  for the host-owned anchor, lookup, and JIT decisions that come after a
+  working provider path.
 - [Jobs To Be Done And User Flows](jtbd_user_flows.md)
 - [`SECURITY.md`](../SECURITY.md)
 - [`SECURITY_REVIEW.md`](../SECURITY_REVIEW.md)
