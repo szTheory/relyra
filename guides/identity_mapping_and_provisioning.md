@@ -21,6 +21,46 @@ Treat this guide as a local identity policy document, not as a SAML theory
 overview. The question is not "what can the IdP emit?" The question is "which
 verified value should our app trust as the durable local anchor?"
 
+## `UserMapper` behaviour
+
+`Relyra.UserMapper.map_attributes/3` is the host-owned seam between verified
+SAML identity and your application's account policy.
+
+On the Phoenix ACS success path, Relyra calls the mapper like this:
+
+```elixir
+{:ok, login_result} = Relyra.consume_response(response_xml, consume_opts)
+{:ok, mapped_user} = Relyra.UserMapper.map_attributes(login_result, login_result.connection, opts)
+```
+
+That means the adapter receives the verified `%Relyra.LoginResult{}` plus the
+resolved connection. In the ACS path, read identity data from
+`login_result.principal`, not from invented top-level fields:
+
+```elixir
+%Relyra.LoginResult{
+  principal: %Relyra.Principal{
+    name_id: name_id,
+    name_id_format: name_id_format,
+    attributes: attributes
+  },
+  connection: connection
+}
+```
+
+Keep one contract explicit in host code and operator docs:
+
+- Relyra verifies the response, the signature, the replay constraints, and the
+  normalized identity payload.
+- Your mapper decides how to interpret those verified facts for local account
+  lookup, linking, creation, update, and authorization policy.
+- Relyra does not ship a user database, background provisioning engine, or SCIM
+  lifecycle controller.
+
+The examples below are intentionally host-owned. They show real adapter modules
+that read from `%Relyra.LoginResult{principal: %Relyra.Principal{...}}` and
+then call application code to enforce local identity rules.
+
 ## Relyra owns / Host owns
 
 ## Relyra owns
@@ -107,6 +147,69 @@ What breaks this pattern:
 If you pick NameID, make the exact source and format part of the deployment
 contract. "Whatever the IdP currently sends" is not a stable policy.
 
+## Example: NameID as local identifier
+
+Use this pattern when `principal.name_id` is already the durable account anchor
+your host app wants to trust.
+
+```elixir
+defmodule MyApp.Relyra.NameIdUserMapper do
+  @behaviour Relyra.UserMapper
+
+  alias MyApp.Accounts
+  alias Relyra.Error
+  alias Relyra.LoginResult
+  alias Relyra.Principal
+
+  @transient_name_id "urn:oasis:names:tc:SAML:2.0:nameid-format:transient"
+
+  @impl true
+  def map_attributes(
+        %LoginResult{
+          principal: %Principal{
+            name_id: name_id,
+            name_id_format: name_id_format,
+            attributes: attributes
+          }
+        },
+        connection,
+        _opts
+      ) do
+    cond do
+      is_nil(name_id) or name_id == "" ->
+        {:error, Error.new(:invalid_identity_anchor, "NameID is required for this connection")}
+
+      name_id_format == @transient_name_id ->
+        {:error, Error.new(:invalid_identity_anchor, "Transient NameID cannot anchor local users")}
+
+      user = Accounts.get_user_by_saml_subject(connection.connection_id, name_id) ->
+        {:ok,
+         %{
+           user_id: user.id,
+           identity_anchor: %{type: :name_id, value: name_id, format: name_id_format},
+           email: first_attribute(attributes, ["email", "mail", "EmailAddress"]),
+           roles: normalize_list(attributes["groups"] || attributes[:groups])
+         }}
+
+      true ->
+        {:error, Error.new(:user_not_found, "No local account is linked to this NameID")}
+    end
+  end
+
+  defp first_attribute(attributes, keys) do
+    Enum.find_value(keys, fn key -> attributes[key] || attributes[String.to_atom(key)] end)
+  end
+
+  defp normalize_list(nil), do: []
+  defp normalize_list(values) when is_list(values), do: values
+  defp normalize_list(value), do: [value]
+end
+```
+
+This stays inside the real seam: Relyra already proved the SAML identity, and
+the host app decides whether that verified NameID is allowed to resolve a local
+account.
+
 ## Pattern 2: Attribute as local identifier
 
 Use this pattern when NameID is not the right durable anchor for your app, but
@@ -132,6 +235,70 @@ field that may look stable in one directory but be mutable in another. Ask:
 If the answer is "sometimes," document the migration and relinking plan now.
 Attribute anchors are viable, but they are only safe when the host application
 owns the consequences of churn.
+
+## Example: Attribute as local identifier
+
+Use this pattern when your host app anchors on a verified attribute such as an
+employee number or another durable directory key instead of NameID.
+
+```elixir
+defmodule MyApp.Relyra.EmployeeNumberUserMapper do
+  @behaviour Relyra.UserMapper
+
+  alias MyApp.Accounts
+  alias Relyra.Error
+  alias Relyra.LoginResult
+  alias Relyra.Principal
+
+  @employee_number_keys ["employeeNumber", "employee_id", "EmployeeNumber"]
+
+  @impl true
+  def map_attributes(
+        %LoginResult{
+          principal: %Principal{
+            name_id: name_id,
+            name_id_format: name_id_format,
+            attributes: attributes
+          }
+        },
+        connection,
+        _opts
+      ) do
+    with {:ok, employee_number} <- required_attribute(attributes, @employee_number_keys),
+         %{} = user <- Accounts.get_user_by_employee_number(connection.connection_id, employee_number) do
+      {:ok,
+       %{
+         user_id: user.id,
+         identity_anchor: %{type: :employee_number, value: employee_number},
+         saml_subject: %{name_id: name_id, name_id_format: name_id_format},
+         email: first_attribute(attributes, ["email", "mail", "EmailAddress"]),
+         display_name: first_attribute(attributes, ["display_name", "DisplayName", "cn"])
+       }}
+    else
+      {:error, :missing_attribute} ->
+        {:error, Error.new(:invalid_identity_anchor, "Required employee number attribute is missing")}
+
+      nil ->
+        {:error, Error.new(:user_not_found, "No local account is linked to this employee number")}
+    end
+  end
+
+  defp required_attribute(attributes, keys) do
+    case first_attribute(attributes, keys) do
+      nil -> {:error, :missing_attribute}
+      value -> {:ok, value}
+    end
+  end
+
+  defp first_attribute(attributes, keys) do
+    Enum.find_value(keys, fn key -> attributes[key] || attributes[String.to_atom(key)] end)
+  end
+end
+```
+
+This is still host-owned policy. Relyra does not decide that employee number is
+the right local anchor. Your app makes that decision and owns the migration plan
+if the IdP ever changes the released field.
 
 ## Pattern 3: JIT create or update
 
@@ -166,6 +333,97 @@ Keep the output of `Relyra.UserMapper.map_attributes/3` narrow and
 host-shaped. The mapper should return the identity data your app needs for local
 lookup or create-or-update decisions, not pretend to be a full provisioning
 engine.
+
+## Example: JIT create or update
+
+Use this pattern when the host application allows login-time account creation or
+limited profile projection after a successful lookup decision.
+
+```elixir
+defmodule MyApp.Relyra.JitUserMapper do
+  @behaviour Relyra.UserMapper
+
+  alias MyApp.Accounts
+  alias Relyra.Error
+  alias Relyra.LoginResult
+  alias Relyra.Principal
+
+  @impl true
+  def map_attributes(
+        %LoginResult{
+          principal: %Principal{
+            name_id: name_id,
+            name_id_format: name_id_format,
+            attributes: attributes
+          }
+        },
+        connection,
+        _opts
+      ) do
+    with {:ok, email} <- required_attribute(attributes, ["email", "mail", "EmailAddress"]),
+         {:ok, anchor} <- stable_anchor(name_id, name_id_format, email) do
+      projected_user = %{
+        saml_subject: %{name_id: name_id, name_id_format: name_id_format},
+        email: email,
+        first_name: first_attribute(attributes, ["given_name", "givenname", "FirstName"]),
+        last_name: first_attribute(attributes, ["family_name", "sn", "LastName"]),
+        roles: normalize_list(attributes["groups"] || attributes[:groups])
+      }
+
+      case Accounts.find_user_for_saml_login(connection.connection_id, anchor) do
+        nil ->
+          create_user_if_allowed(connection, anchor, projected_user)
+
+        user ->
+          update_allowed_fields(user, projected_user)
+      end
+    end
+  end
+
+  defp create_user_if_allowed(connection, anchor, projected_user) do
+    if Accounts.jit_enabled_for_connection?(connection.connection_id) do
+      Accounts.create_saml_user(connection.connection_id, anchor, projected_user)
+    else
+      {:error, Error.new(:user_not_found, "JIT is disabled for this connection")}
+    end
+  end
+
+  defp update_allowed_fields(user, projected_user) do
+    Accounts.update_user_from_saml(user, Map.take(projected_user, [:email, :first_name, :last_name]))
+  end
+
+  defp stable_anchor(name_id, _name_id_format, _email) when is_binary(name_id) and name_id != "" do
+    {:ok, {:name_id, name_id}}
+  end
+
+  defp stable_anchor(_name_id, _name_id_format, email) when is_binary(email) and email != "" do
+    {:ok, {:email, email}}
+  end
+
+  defp stable_anchor(_name_id, _name_id_format, _email) do
+    {:error, Error.new(:invalid_identity_anchor, "JIT requires a documented stable anchor")}
+  end
+
+  defp required_attribute(attributes, keys) do
+    case first_attribute(attributes, keys) do
+      nil -> {:error, Error.new(:invalid_identity_anchor, "Required email attribute is missing")}
+      value -> {:ok, value}
+    end
+  end
+
+  defp first_attribute(attributes, keys) do
+    Enum.find_value(keys, fn key -> attributes[key] || attributes[String.to_atom(key)] end)
+  end
+
+  defp normalize_list(nil), do: []
+  defp normalize_list(values) when is_list(values), do: values
+  defp normalize_list(value), do: [value]
+end
+```
+
+This is still not Relyra-owned provisioning. The host app chooses whether JIT is
+enabled, which fields may change on login, and whether some other lifecycle
+system is the real source of truth.
 
 ## JIT decision tree
 
