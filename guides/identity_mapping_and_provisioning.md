@@ -70,6 +70,10 @@ Anchor-stability warning:
 - If you anchor on a convenient attribute now and later move to a different
   source, plan that as an account-migration project, not as a docs cleanup.
 
+Before enabling any automatic create-or-update flow, capture the chosen anchor
+in operator docs the same way you would capture an ACS URL or signing
+certificate. Anchor drift is a trust-boundary change, not a cosmetic IdP edit.
+
 Keep this aligned with the [generic SAML runbook](recipes/generic_saml.md),
 which already treats NameID choice as a trust-boundary decision rather than an
 admin-console default.
@@ -135,6 +139,11 @@ JIT means your host application decides, during a successful login, whether to
 create a new local account or update a subset of fields on an existing one.
 Relyra does not provision the user for you. It gives you verified identity input
 and a mapper seam.
+
+In the Phoenix path, that input arrives as the verified login result passed into
+`Relyra.UserMapper.map_attributes/3`. The host app can read stable identity data
+from `login_result.principal` and then decide whether local account creation or
+update is allowed.
 
 Use JIT only after you are confident about the anchor decision. Otherwise you
 will automate duplicate-account creation at login speed.
@@ -203,6 +212,8 @@ Safety warning:
   source of truth can create duplicate accounts, broken links, or account drift.
 - The risk is highest when JIT uses one anchor and SCIM uses another, or when
   one system updates fields the other treats as authoritative.
+- A safe mixed model needs one written owner for account existence, one written
+  anchor for linking, and one explicit rule for which fields may change at login.
 
 If you need both, define the authoritative anchor and lifecycle owner first.
 Without that decision, simultaneous JIT and SCIM is not additive resilience. It

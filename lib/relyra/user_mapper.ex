@@ -1,6 +1,27 @@
 defmodule Relyra.UserMapper do
   @moduledoc """
-  Public extension contract for mapping validated assertion data into user attributes.
+  Public extension contract for mapping verified login data into a host-shaped
+  user map.
+
+  Relyra owns SAML validation before this seam. On the Phoenix ACS success path,
+  `map_attributes/3` receives the verified `%Relyra.LoginResult{}` plus the
+  resolved connection that produced it. The mapper can read verified identity
+  fields from `login_result.principal`, including `name_id`,
+  `name_id_format`, and released attributes.
+
+  The mapper does not establish the session and does not turn Relyra into a
+  provisioning engine. It returns the application-shaped user data that the host
+  app wants to pass into its later session step.
+
+  The runtime contract remains:
+
+  - Input: verified login result payload plus resolved connection
+  - Output: `{:ok, map()}` or `{:error, Relyra.Error.t()}`
+  - Next step: `Relyra.SessionAdapter.establish_session/3`
+
+  This seam is for host-owned identity mapping. Local account lookup, linking,
+  create-or-update policy, authorization, and lifecycle ownership stay outside
+  Relyra core.
   """
 
   alias Relyra.Error
