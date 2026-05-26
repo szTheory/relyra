@@ -23,8 +23,8 @@ Requirements for this milestone. Each maps to a roadmap phase.
 
 ### Documentation
 
-- [ ] **DOCS-02**: Generic SAML runbook (`guides/recipes/generic_saml.md`) published as a first-class peer of `okta.md` — covering: SP metadata field reference, IdP metadata import checklist, attribute decoder tables for IBM Security Verify / CyberArk / Oracle Access Manager / PingFederate / CA SiteMinder, ADFS-specific and Shibboleth-specific subsections, minimum-safe security checklist, certificate rotation procedure, debugging flow
-- [ ] **DOCS-03**: Identity mapping and provisioning guide (`guides/identity_mapping_and_provisioning.md`) published — covering: NameID vs app identity (three mapping patterns: NameID-as-local-id, attribute-as-local-id, JIT create-or-update), JIT decision tree, `UserMapper` behaviour documentation with examples, JIT+SCIM simultaneous-use conflict warning, explicit SCIM-lifecycle non-goal statement
+- [x] **DOCS-02**: Generic SAML runbook (`guides/recipes/generic_saml.md`) published as a first-class peer of `okta.md` — covering: SP metadata field reference, IdP metadata import checklist, attribute decoder tables for IBM Security Verify / CyberArk / Oracle Access Manager / PingFederate / CA SiteMinder, ADFS-specific and Shibboleth-specific subsections, minimum-safe security checklist, certificate rotation procedure, debugging flow
+- [x] **DOCS-03**: Identity mapping and provisioning guide (`guides/identity_mapping_and_provisioning.md`) published — covering: NameID vs app identity (three mapping patterns: NameID-as-local-id, attribute-as-local-id, JIT create-or-update), JIT decision tree, `UserMapper` behaviour documentation with examples, JIT+SCIM simultaneous-use conflict warning, explicit SCIM-lifecycle non-goal statement
 
 ## Future Requirements
 
@@ -66,8 +66,8 @@ Explicitly excluded. Documented to prevent scope creep.
 | AUTHN-01 | Phase 35 | Pending |
 | AUTHN-03 | Phase 35 | Pending |
 | AUTHN-04 | Phase 35 | Pending |
-| DOCS-02 | Phase 36 | Pending |
-| DOCS-03 | Phase 37 | Pending |
+| DOCS-02 | Phase 36 | Complete |
+| DOCS-03 | Phase 37 | Complete |
 
 **Coverage:**
 

@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.3
-milestone_name: milestone
-status: verifying
-last_updated: "2026-05-26T04:43:56.279Z"
-last_activity: 2026-05-25
+milestone_name: — Advanced Federation
+status: executing
+last_updated: "2026-05-26T13:37:06.329Z"
+last_activity: 2026-05-26
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 25
+  completed_phases: 2
+  total_plans: 17
+  completed_plans: 7
+  percent: 41
 ---
 
 # Project State
@@ -20,17 +20,17 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-25)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 35 — signed-authnrequests-adfs-preset (AUTHN-01..04)
+**Current focus:** Phase 37 — identity-mapping-and-provisioning-guide
 
 ## Current Position
 
-Phase: 35
-Plan: Not started
-Status: Context gathered (assumptions mode) — ready for planning
+Phase: 37 (identity-mapping-and-provisioning-guide) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-05-26
-Resume: /gsd:plan-phase 35
+Resume: /gsd:plan-phase 37
 
-Progress: `█████░░░░░` 50% (3/6 v1.3 phases — 32-33-34 complete)
+Progress: [████░░░░░░] 41%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: `█████░░░░░` 50% (3/6 v1.3 phases — 32-33-34 com
 | Phase 34 P02 | 3m | 2 tasks | 2 files |
 | Phase 34 P03 | 9m | 2 tasks | 3 files (1 created, 2 modified) |
 | Phase 34 P04 | 7min | 2 tasks | 4 files |
+| Phase 37 P01 | 4m | 2 tasks | 2 files (1 created, 1 modified) |
 
 ## Accumulated Context
 
@@ -132,6 +133,8 @@ Items acknowledged and deferred at milestone close:
 - **CVE ID backfill into `docs/advisories/2026-001-...`:** Pending async GitHub assignment.
 
 ## Session Continuity
+
+**2026-05-26 — Phase 37 Plan 01 complete.** Added `guides/identity_mapping_and_provisioning.md` as the authoritative operator guide for anchor selection, NameID-vs-attribute identity policy, JIT create-or-update decisions, and the SCIM non-goal boundary. Tightened `Relyra.UserMapper` moduledoc so ExDoc now reflects the real ACS seam: verified `%Relyra.LoginResult{}` in, host-shaped user map out, later session establishment by `Relyra.SessionAdapter`. All plan verification `rg` checks passed. Resume: `/gsd:execute-phase 37` (Plan 2 of 2).
 
 **2026-05-25 — Phase 34 Plan 04 complete (PHASE 34 DONE, ENC-01 closed).** The pipeline-level ENC-01 adversarial corpus (`test/security/xml_enc_adversarial_test.exs`, 9 tests) landed: positive control (SC#1) proving decrypt -> re-parse -> verify -> identity-read ordering, the 7 named fixtures each pinning their exact typed error (5 opaque `:decryption_failed`, fixture 5 `:ambiguous_assertion` before crypto), a read-before-verify guard (CVE-2025-54419 class, no identity leak before verification), and a supplemental multi-encrypted bonus. Wired into `mix ci.security` as its own non-hollow `cmd mix test` line (meta-gate enforced). Rule 1 fix: the signer now signs the Assertion WITH its default namespace (`:assertion_namespace` opt, default off) so the digest survives decrypt/splice/re-parse — Plan-02's round-trip smoke had never driven a full pipeline verify, so the `:digest_mismatch` was latent. Full suite 626/0; `mix ci.security` exit 0. SC#1 + SC#5 satisfied; ENC-01 marked complete. Resume: `/gsd:verify-phase 34`.
 

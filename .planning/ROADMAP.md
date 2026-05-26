@@ -84,8 +84,8 @@ See `.planning/milestones/v1.1-ROADMAP.md`.
   - [x] 33-01-PLAN.md — KeyResolver behaviour + dispatch function + KeyResolver.Default PEM-from-config + key_resolver_test.exs (ENC-04)
   - [x] 33-02-PLAN.md — XMLEnc.decrypt/3 RSA-OAEP + AES-GCM + 4-case security corpus + ci.security registration (ENC-04)
 - [x] **Phase 34: ValidationPipeline Wiring + ENC-01 Complete** — Wire the decrypt-then-reparse step into `ValidationPipeline`; add ambiguity guard; publish SP encryption `KeyDescriptor`; add the 7-fixture ENC-01 adversarial corpus to `mix ci.security`. (completed 2026-05-25)
-- [ ] **Phase 35: Signed AuthnRequests + ADFS Preset** — Implement redirect-binding query signing; add `sign_authn_requests` connection toggle; publish signing metadata fields; ship ADFS preset and runbook; add 5-fixture AUTHN-01 adversarial corpus.
-- [ ] **Phase 36: Generic SAML Runbook** — Publish `guides/recipes/generic_saml.md` covering SP/IdP metadata fields, decoder tables for non-preset IdPs, minimum-safe checklist, debugging flow, and certificate rotation.
+- [x] **Phase 35: Signed AuthnRequests + ADFS Preset** — Implement redirect-binding query signing; add `sign_authn_requests` connection toggle; publish signing metadata fields; ship ADFS preset and runbook; add 5-fixture AUTHN-01 adversarial corpus. (completed 2026-05-26)
+- [x] **Phase 36: Generic SAML Runbook** — Publish `guides/recipes/generic_saml.md` covering SP/IdP metadata fields, decoder tables for non-preset IdPs, minimum-safe checklist, debugging flow, and certificate rotation. (completed 2026-05-26)
 - [ ] **Phase 37: Identity Mapping and Provisioning Guide** — Publish `guides/identity_mapping_and_provisioning.md` covering three mapping patterns, JIT decision tree, `UserMapper` behaviour documentation, and SCIM non-goal statement.
 
 See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
@@ -128,9 +128,30 @@ Plans:
   2. The bit-for-bit golden output corpus fixture and an ADFS-style `+`-encoded variant both pass in `mix ci.security`; re-serialization of the query string before signing causes the corpus fixture to fail (validates the raw-octet invariant).
   3. A connection with `sign_authn_requests: false` (the default) produces an unsigned redirect URL; no existing Okta, Google, or non-ADFS tests regress.
   4. SP metadata for a signing-enabled connection emits `AuthnRequestsSigned="true"` and a `<KeyDescriptor use="signing">` element; SP metadata for a non-signing connection omits both.
-  5. The ADFS provider preset defaults to `sign_authn_requests: true`; `guides/providers/adfs.md` covers claim rules, PowerShell `Set-ADFSRelyingPartyTrust` commands, SHA-1 vs SHA-256 redirect binding interop notes, and the `WantAuthnRequestsSigned` flag.
+  5. The ADFS provider preset defaults to `sign_authn_requests: true`; `guides/recipes/adfs.md` covers claim rules, PowerShell `Set-ADFSRelyingPartyTrust` commands, SHA-1 vs SHA-256 redirect binding interop notes, and the `WantAuthnRequestsSigned` flag.
 
-**Plans**: TBD
+**Plans**: 9 plans
+Plans:
+**Wave 0**
+
+- [x] 35-01-PLAN.md — outbound signing digest gate + `Signature.sign_redirect_query/3` + deterministic signing PEM
+
+**Wave 1**
+
+- [x] 35-02-PLAN.md — raw-DEFLATE redirect binding + signed query assembly + ADFS lowercase encoding
+- [x] 35-03-PLAN.md — persisted `signed_request_encoding` schema/runtime field + migration
+- [x] 35-04-PLAN.md — `:adfs` provider preset registration + defaults
+
+**Wave 2**
+
+- [x] 35-05-PLAN.md — `start_login/3` signed redirect flow + controller verbatim append + `idp_sso_url` collision guard
+- [x] 35-06-PLAN.md — metadata gating for `AuthnRequestsSigned` and signing `KeyDescriptor`
+
+**Wave 3**
+
+- [x] 35-07-PLAN.md — AUTHN-01 golden corpus + committed redirect fixtures + provenance
+- [x] 35-08-PLAN.md — `mix ci.security` wiring + meta-gate registration
+- [x] 35-09-PLAN.md — ADFS operator runbook + `ci.docs` presence guard
 
 ### Phase 36: Generic SAML Runbook
 
@@ -143,7 +164,16 @@ Plans:
   2. The guide includes ADFS-specific and Shibboleth-specific subsections, a NameID format decision guide, and sections on when to enable signing and encryption.
   3. A minimum-safe security settings checklist, a step-by-step debugging flow, and a certificate rotation procedure are included, written at the operator level (no SAML spec knowledge assumed).
 
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+
+**Wave 1**
+
+- [x] 36-01-PLAN.md — canonical generic/custom-SAML routing + core runbook skeleton
+
+**Wave 2**
+
+- [x] 36-02-PLAN.md — vendor decoder tables + operator-safety spine + ci.docs gate
 
 ### Phase 37: Identity Mapping and Provisioning Guide
 
@@ -156,7 +186,16 @@ Plans:
   2. A JIT decision tree helps operators choose between patterns based on their identity model; the `UserMapper` behaviour is fully documented with at least one complete implementation example per pattern.
   3. The guide explicitly states the SCIM lifecycle non-goal, warns about JIT+SCIM simultaneous-use conflicts, and explains anchor stability guidance (what breaks when NameID format changes between logins).
 
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+
+**Wave 1**
+
+- [x] 37-01-PLAN.md — core identity mapping guide + `UserMapper` seam wording
+
+**Wave 2**
+
+- [ ] 37-02-PLAN.md — docs publication, routing, and docs CI gate
 
 </details>
 
@@ -197,8 +236,8 @@ Plans:
 | 32. AlgorithmPolicy Extension + Schema Migrations | v1.3 | 2/2 | Complete   | 2026-05-25 |
 | 33. KeyResolver Behaviour + XMLEnc Crypto Core | v1.3 | 2/2 | Complete   | 2026-05-25 |
 | 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 4/4 | Complete    | 2026-05-25 |
-| 35. Signed AuthnRequests + ADFS Preset | v1.3 | 0/TBD | Not started | - |
-| 36. Generic SAML Runbook | v1.3 | 0/TBD | Not started | - |
-| 37. Identity Mapping and Provisioning Guide | v1.3 | 0/TBD | Not started | - |
+| 35. Signed AuthnRequests + ADFS Preset | v1.3 | 9/9 | Complete | 2026-05-26 |
+| 36. Generic SAML Runbook | v1.3 | 2/2 | Complete    | 2026-05-26 |
+| 37. Identity Mapping and Provisioning Guide | v1.3 | 1/2 | In Progress|  |
 
 ---
