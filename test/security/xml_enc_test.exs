@@ -4,6 +4,14 @@ defmodule Relyra.Security.XMLEncTest do
   alias Relyra.Security.XMLEnc
   alias Relyra.TestSupport.FakeIdP
 
+  defmodule TestKeyResolver do
+    @behaviour Relyra.KeyResolver
+
+    @impl true
+    def resolve(%{pem: pem}) when is_binary(pem), do: {:ok, pem}
+    def resolve(_connection), do: {:error, :key_not_configured}
+  end
+
   @rsa_oaep_uri "http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"
   @rsa_pkcs1_uri "http://www.w3.org/2001/04/xmlenc#rsa-1_5"
   @aes256_gcm_uri "http://www.w3.org/2001/04/xmlenc#aes256-gcm"
@@ -19,9 +27,6 @@ defmodule Relyra.Security.XMLEncTest do
         {:RSAPrivateKey, :public_key.der_encode(:RSAPrivateKey, keypair), :not_encrypted}
       ])
 
-    Application.put_env(:relyra, :sp_private_key_pem, pem)
-    on_exit(fn -> Application.delete_env(:relyra, :sp_private_key_pem) end)
-
     {:ok, keypair: keypair, pub_key: pub_key, pem: pem}
   end
 
@@ -33,7 +38,7 @@ defmodule Relyra.Security.XMLEncTest do
   end
 
   describe "happy path" do
-    test "valid RSA-OAEP + AES-256-GCM returns {:ok, plaintext}", %{pub_key: pub_key} do
+    test "valid RSA-OAEP + AES-256-GCM returns {:ok, plaintext}", %{pub_key: pub_key, pem: pem} do
       plaintext = "Hello, XMLEnc roundtrip!"
 
       # Generate random CEK and encrypt it with RSA-OAEP using the SP public key
@@ -55,12 +60,13 @@ defmodule Relyra.Security.XMLEncTest do
       bytes =
         build_encrypted_assertion(@rsa_oaep_uri, @aes256_gcm_uri, enc_key_b64, cipher_value_b64)
 
-      assert XMLEnc.decrypt(bytes, Relyra.KeyResolver.Default, []) == {:ok, plaintext}
+      assert XMLEnc.decrypt(bytes, TestKeyResolver, connection: %{pem: pem}) ==
+               {:ok, plaintext}
     end
   end
 
   describe "failure paths all return :decryption_failed" do
-    test "RSA-PKCS1v1.5 key transport returns :decryption_failed", %{pub_key: pub_key} do
+    test "RSA-PKCS1v1.5 key transport returns :decryption_failed", %{pub_key: pub_key, pem: pem} do
       # Any CEK — AlgorithmPolicy gate fires before RSA is attempted
       cek = :crypto.strong_rand_bytes(32)
 
@@ -77,10 +83,11 @@ defmodule Relyra.Security.XMLEncTest do
       bytes =
         build_encrypted_assertion(@rsa_pkcs1_uri, @aes256_gcm_uri, enc_key_b64, cipher_value_b64)
 
-      assert XMLEnc.decrypt(bytes, Relyra.KeyResolver.Default, []) == :decryption_failed
+      assert XMLEnc.decrypt(bytes, TestKeyResolver, connection: %{pem: pem}) ==
+               :decryption_failed
     end
 
-    test "AES-CBC content encryption returns :decryption_failed", %{pub_key: pub_key} do
+    test "AES-CBC content encryption returns :decryption_failed", %{pub_key: pub_key, pem: pem} do
       cek = :crypto.strong_rand_bytes(32)
 
       enc_key_bytes =
@@ -94,10 +101,14 @@ defmodule Relyra.Security.XMLEncTest do
       bytes =
         build_encrypted_assertion(@rsa_oaep_uri, @aes256_cbc_uri, enc_key_b64, cipher_value_b64)
 
-      assert XMLEnc.decrypt(bytes, Relyra.KeyResolver.Default, []) == :decryption_failed
+      assert XMLEnc.decrypt(bytes, TestKeyResolver, connection: %{pem: pem}) ==
+               :decryption_failed
     end
 
-    test "truncated GCM auth tag (< 16 bytes) returns :decryption_failed", %{pub_key: pub_key} do
+    test "truncated GCM auth tag (< 16 bytes) returns :decryption_failed", %{
+      pub_key: pub_key,
+      pem: pem
+    } do
       cek = :crypto.strong_rand_bytes(32)
 
       enc_key_bytes =
@@ -118,10 +129,11 @@ defmodule Relyra.Security.XMLEncTest do
           cipher_value_b64
         )
 
-      assert XMLEnc.decrypt(bytes, Relyra.KeyResolver.Default, []) == :decryption_failed
+      assert XMLEnc.decrypt(bytes, TestKeyResolver, connection: %{pem: pem}) ==
+               :decryption_failed
     end
 
-    test "malformed ciphertext base64 returns :decryption_failed", %{pub_key: pub_key} do
+    test "malformed ciphertext base64 returns :decryption_failed", %{pub_key: pub_key, pem: pem} do
       cek = :crypto.strong_rand_bytes(32)
 
       enc_key_bytes =
@@ -140,7 +152,8 @@ defmodule Relyra.Security.XMLEncTest do
           malformed_cipher_b64
         )
 
-      assert XMLEnc.decrypt(bytes, Relyra.KeyResolver.Default, []) == :decryption_failed
+      assert XMLEnc.decrypt(bytes, TestKeyResolver, connection: %{pem: pem}) ==
+               :decryption_failed
     end
   end
 end

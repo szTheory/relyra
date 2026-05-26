@@ -16,6 +16,14 @@ defmodule Relyra.TestSupport.FakeIdPEncryptTest do
   alias Relyra.Security.XMLEnc
   alias Relyra.TestSupport.FakeIdP
 
+  defmodule TestKeyResolver do
+    @behaviour Relyra.KeyResolver
+
+    @impl true
+    def resolve(%{pem: pem}) when is_binary(pem), do: {:ok, pem}
+    def resolve(_connection), do: {:error, :key_not_configured}
+  end
+
   setup do
     keypair = FakeIdP.keypair()
     {:RSAPrivateKey, _, n, e, _, _, _, _, _, _, _} = keypair
@@ -25,9 +33,6 @@ defmodule Relyra.TestSupport.FakeIdPEncryptTest do
       :public_key.pem_encode([
         {:RSAPrivateKey, :public_key.der_encode(:RSAPrivateKey, keypair), :not_encrypted}
       ])
-
-    Application.put_env(:relyra, :sp_private_key_pem, pem)
-    on_exit(fn -> Application.delete_env(:relyra, :sp_private_key_pem) end)
 
     {:ok, keypair: keypair, pub_key: pub_key, pem: pem}
   end
@@ -55,13 +60,14 @@ defmodule Relyra.TestSupport.FakeIdPEncryptTest do
 
   describe "encrypt/2 round-trip" do
     test "FakeIdP.encrypt -> XMLEnc.decrypt returns the original signed bytes", %{
-      pub_key: pub_key
+      pub_key: pub_key,
+      pem: pem
     } do
       signed_xml = signed_assertion_plaintext()
 
       encrypted = FakeIdP.encrypt(signed_xml, pub_key)
 
-      assert XMLEnc.decrypt(encrypted, Relyra.KeyResolver.Default, connection: %{}) ==
+      assert XMLEnc.decrypt(encrypted, TestKeyResolver, connection: %{pem: pem}) ==
                {:ok, signed_xml}
     end
   end
@@ -90,14 +96,16 @@ defmodule Relyra.TestSupport.FakeIdPEncryptTest do
       assert response =~ "<Status"
     end
 
-    test "the EncryptedAssertion inside the Response round-trips to the signed inner bytes" do
+    test "the EncryptedAssertion inside the Response round-trips to the signed inner bytes", %{
+      pem: pem
+    } do
       response = FakeIdP.encrypted_response()
 
       [encrypted_assertion] =
         Regex.run(~r/<EncryptedAssertion\b.*<\/EncryptedAssertion>/s, response)
 
       assert {:ok, decrypted} =
-               XMLEnc.decrypt(encrypted_assertion, Relyra.KeyResolver.Default, connection: %{})
+               XMLEnc.decrypt(encrypted_assertion, TestKeyResolver, connection: %{pem: pem})
 
       # The decrypted plaintext is the self-contained signed Assertion fragment.
       assert decrypted =~ ~s(xmlns="urn:oasis:names:tc:SAML:2.0:assertion")

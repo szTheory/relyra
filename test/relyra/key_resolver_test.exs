@@ -1,8 +1,28 @@
 defmodule Relyra.KeyResolverTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Relyra.Error
   alias Relyra.KeyResolver
+
+  defp with_sp_private_key_pem(value, fun) do
+    previous = Application.get_env(:relyra, :sp_private_key_pem)
+
+    if is_nil(value) do
+      Application.delete_env(:relyra, :sp_private_key_pem)
+    else
+      Application.put_env(:relyra, :sp_private_key_pem, value)
+    end
+
+    try do
+      fun.()
+    after
+      if is_nil(previous) do
+        Application.delete_env(:relyra, :sp_private_key_pem)
+      else
+        Application.put_env(:relyra, :sp_private_key_pem, previous)
+      end
+    end
+  end
 
   # A fake adapter that correctly returns {:ok, "pem"}
   defmodule FakeAdapter do
@@ -30,18 +50,15 @@ defmodule Relyra.KeyResolverTest do
 
   describe "KeyResolver.resolve/2 dispatch" do
     test "dispatches to KeyResolver.Default when no opts given" do
-      # With nil config, Default returns {:error, %Error{type: :key_not_configured}}
-      Application.delete_env(:relyra, :sp_private_key_pem)
-
-      assert {:error, %Error{type: :key_not_configured}} = KeyResolver.resolve(%{}, [])
+      with_sp_private_key_pem(nil, fn ->
+        assert {:error, %Error{type: :key_not_configured}} = KeyResolver.resolve(%{}, [])
+      end)
     end
 
     test "dispatches to KeyResolver.Default by default with binary pem config" do
-      Application.put_env(:relyra, :sp_private_key_pem, "-----BEGIN RSA PRIVATE KEY-----")
-
-      on_exit(fn -> Application.delete_env(:relyra, :sp_private_key_pem) end)
-
-      assert {:ok, "-----BEGIN RSA PRIVATE KEY-----"} = KeyResolver.resolve(%{}, [])
+      with_sp_private_key_pem("-----BEGIN RSA PRIVATE KEY-----", fn ->
+        assert {:ok, "-----BEGIN RSA PRIVATE KEY-----"} = KeyResolver.resolve(%{}, [])
+      end)
     end
 
     test "dispatches to custom adapter module in :key_resolver opt" do
