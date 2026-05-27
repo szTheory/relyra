@@ -94,8 +94,12 @@ To connect SAML SLO to your stateful sessions, implement the `Relyra.SessionAdap
 behaviour. Specifically, you must implement `index_session/4` and
 `terminate_by_session_index/4`.
 
-When a user logs in, the IdP may provide a `SessionIndex` in the `AuthnStatement`.
-Relyra extracts this and passes it to your adapter.
+When a user logs in, the IdP may provide a `SessionIndex` inside the
+`AuthnStatement`. Relyra surfaces this value at
+`login_result.principal.session_index` on the `%Relyra.LoginResult{}` returned
+from `Relyra.consume_response/3`. The host application is responsible for
+invoking `index_session/4` to map the SAML `SessionIndex` to its local
+durable session — see the host-linkage note after the code example below.
 
 ```elixir
 defmodule MyApp.Relyra.SessionAdapter do
@@ -104,24 +108,32 @@ defmodule MyApp.Relyra.SessionAdapter do
   alias MyApp.Accounts.SessionStore
 
   @impl true
-  def index_session(connection, login_result, local_session_id, opts) do
-    # Store the mapping between the SAML SessionIndex and your local session ID
-    if session_index = login_result.principal.session_index do
-      SessionStore.map_saml_index(
-        connection.connection_id,
-        session_index,
-        local_session_id
-      )
+  def index_session(session_index, issuer, context, _opts) do
+    # Called by the host's ACS controller (NOT auto-invoked by Relyra)
+    # to map the IdP-issued SessionIndex to the host's local session.
+    # `context` typically carries the host-side local session id and the
+    # Relyra connection id; shape is host-defined.
+    case SessionStore.map_saml_index(
+           context.connection_id,
+           session_index,
+           issuer,
+           context.local_session_id
+         ) do
+      :ok -> {:ok, %{session_index: session_index}}
+      {:error, reason} -> {:error, Relyra.Error.new(:session_index_store_failed, inspect(reason))}
     end
-    
-    :ok
   end
 
   @impl true
-  def terminate_by_session_index(connection, session_index, _name_id, _opts) do
-    # The IdP has requested logout. Terminate the local session by the index.
-    SessionStore.delete_by_saml_index(connection.connection_id, session_index)
-    :ok
+  def terminate_by_session_index(session_index, issuer, context, _opts) do
+    # Called automatically by Relyra.consume_logout/3 when a valid
+    # IdP-initiated LogoutRequest arrives carrying this SessionIndex.
+    # `context` carries the Relyra connection_id derived from the inbound
+    # message; the host looks up its local session and terminates it.
+    case SessionStore.delete_by_saml_index(context.connection_id, session_index, issuer) do
+      :ok -> {:ok, %{terminated: session_index}}
+      {:error, reason} -> {:error, Relyra.Error.new(:session_terminate_failed, inspect(reason))}
+    end
   end
 end
 ```
@@ -129,6 +141,20 @@ end
 By linking the `SessionIndex` to your durable session record, you bypass the
 need for the browser to send the session cookie during the `LogoutRequest`. The
 termination happens entirely server-side.
+
+### Host-owned linkage (you must invoke `index_session/4` yourself)
+
+Relyra does not auto-invoke `index_session/4` from `Relyra.consume_response/3`.
+Session-index registration is host-owned: after a successful login, your ACS
+controller reads `login_result.principal.session_index` from the
+`%Relyra.LoginResult{}` Relyra returns, derives a `context` map containing the
+host-side `local_session_id` and the Relyra `connection_id`, then calls
+`MyApp.Relyra.SessionAdapter.index_session/4` directly. Relyra _does_
+auto-invoke `terminate_by_session_index/4` from `Relyra.consume_logout/3`
+because terminate operates entirely on inbound-message data (the IdP's
+`LogoutRequest` carries the `SessionIndex` and issuer Relyra needs); index has
+no such inbound trigger and depends on a host-only value (the local session
+id), so the host owns the call site.
 
 ## 4. The Real Security Boundary
 

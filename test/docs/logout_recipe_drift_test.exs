@@ -45,15 +45,15 @@ defmodule Relyra.Docs.LogoutRecipeDriftTest do
   `ci.security` lane; `ci.docs` follows the same convention by
   convention rather than by gate.
 
-  ## Skip-tag during Phase 40.1 Wave 1
+  ## Drift gate is live (Phase 40.1 Wave 2)
 
-  Phase 40.1 ships this test skip-tagged because Wave 1 lands the gate
-  scaffold against a `logout.md` whose example heads still have the
-  wrong signatures (lines 107/121 — see
-  `.planning/v1.4-MILESTONE-AUDIT.md` BLOCKER 1). Wave 2 (Plan 05)
-  rewrites `logout.md` AND removes the `@tag :skip` in the same commit,
-  flipping the gate live. The Phase 40 troubleshooting drift test
-  followed the same land-test-first-then-unskip pattern (D-12).
+  Phase 40.1 Wave 1 landed the gate scaffold skip-tagged because the
+  `logout.md` example heads still had the wrong signatures (lines
+  107/121 — see `.planning/v1.4-MILESTONE-AUDIT.md` BLOCKER 1). Wave 2
+  (Plan 05) rewrote `logout.md` AND flipped the skip tag off in the
+  same commit, making this gate live. The Phase 40 troubleshooting
+  drift test followed the same land-test-first-then-unskip pattern
+  (D-12).
   """
   use ExUnit.Case, async: true
 
@@ -62,7 +62,6 @@ defmodule Relyra.Docs.LogoutRecipeDriftTest do
   @head_pattern ~r/^\s*def\s+(index_session|terminate_by_session_index)\s*\(([^)]*)\)/m
   @behaviour_module Relyra.SessionAdapter
 
-  @tag :skip
   test "logout.md SessionAdapter example function heads match Relyra.SessionAdapter callback arities" do
     callbacks = @behaviour_module.behaviour_info(:callbacks)
 
