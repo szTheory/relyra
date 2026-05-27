@@ -139,7 +139,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 2. Cross-links from Getting Started Day-2 or `guides/overview.md` point to the updated playbook section.
 3. `mix ci.docs` stays green.
 
-**Plans:** 2 plans (48-01 playbook tables/scenarios, 48-02 cross-doc + ci.docs)
+**Plans:** 1/2 plans executed
 
 ### Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy
 
@@ -212,7 +212,7 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 45. Post-publish parity verification | v1.5 | 2/2 | Complete    | 2026-05-27 |
 | 46. Adopter DX & ergonomics | v1.5 | 3/3 | Complete    | 2026-05-27 |
 | 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 3/3 | Complete    | 2026-05-27 |
-| 48. Operator completeness — incident playbook trace tools | v1.6 | 0/? | Not started | — |
+| 48. Operator completeness — incident playbook trace tools | v1.6 | 1/2 | In Progress|  |
 | 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 0/? | Not started | — |
 
 ---

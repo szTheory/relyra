@@ -18,7 +18,7 @@ Requirements for this milestone. Each maps to one roadmap phase.
 
 ### Operator Completeness
 
-- [ ] **ADOPT-03**: `guides/operations/incident_playbook.md` tool table includes the login-trace LiveView route (`/relyra/admin/connections/:id/trace`) and `mix relyra.trace` with when-to-use guidance aligned to the six Triage→Diagnose scenarios.
+- [x] **ADOPT-03**: `guides/operations/incident_playbook.md` tool table includes the login-trace LiveView route (`/relyra/admin/connections/:id/trace`) and `mix relyra.trace` with when-to-use guidance aligned to the six Triage→Diagnose scenarios.
 
 ### Conformance & Planning Honesty
 
@@ -61,7 +61,7 @@ Explicitly excluded. Documented to prevent scope creep.
 |-------------|-------|--------|
 | ADOPT-01 | 47 | Complete |
 | ADOPT-02 | 47 | Complete |
-| ADOPT-03 | 48 | Pending |
+| ADOPT-03 | 48 | Complete |
 | ADOPT-04 | 49 | Pending |
 | ADOPT-05 | 49 | Pending |
 | ADOPT-06 | 49 | Pending |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: — Adoption Truth
 status: executing
-last_updated: "2026-05-27T22:13:15.209Z"
-last_activity: 2026-05-27 -- Phase 48 planning complete
+last_updated: "2026-05-27T22:26:00Z"
+last_activity: 2026-05-27 -- Completed 48-01-PLAN.md
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
-  percent: 33
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 ## Current Position
 
-Phase: 48
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-27 -- Phase 48 planning complete
+Phase: 48 (operator-completeness-incident-playbook-trace-tools) — EXECUTING
+Plan: 2 of 2 (48-02 next)
+Status: Ready to execute 48-02
+Last activity: 2026-05-27 -- Completed 48-01-PLAN.md
 
 ## Performance Metrics
 
@@ -50,6 +50,11 @@ Last activity: 2026-05-27 -- Phase 48 planning complete
 - **CONFORMANCE manifest must track shipped features:** ENC-01 shipped Phase 34; `sp-encrypted-assertions-deferred` row is stale and must flip to pass.
 - **ci.docs gates apply:** doc drift tests (troubleshooting, logout recipe pattern) stay on `cmd mix test` per Phase 30 hollow-gate invariant when adding new drift tests.
 
+### Decisions from Phase 48-01
+
+- **Login trace vs audit ledger callout** under Evidence surfaces — `domain: :login` trace rows are not trust-mutation audit vocabulary; replays appear in trace/telemetry only.
+- **Diagnostic bundle ≠ login trace** in When in doubt — `mix relyra.diagnostic` for external handoff; LiveView/`mix relyra.trace` for active step-timeline triage.
+
 ### Decisions carried from v1.5
 
 - TRACE LiveView reuses telemetry + audit ledger only (no parallel trace store).
@@ -67,6 +72,8 @@ Last activity: 2026-05-27 -- Phase 48 planning complete
 
 ## Session Continuity
 
-**2026-05-27 — Phase 48 context gathered.** Assumptions mode; all assumptions confirmed without correction. Resume: `.planning/phases/48-operator-completeness-incident-playbook-trace-tools/48-CONTEXT.md`. Next: `/gsd-plan-phase 48`.
+**2026-05-27 — Completed 48-01-PLAN.md.** Playbook tables/scenarios/When in doubt updated for login trace. Resume: execute `48-02-PLAN.md` (overview + getting_started cross-links, `mix ci.docs`).
+
+**2026-05-27 — Phase 48 context gathered.** Assumptions mode; all assumptions confirmed without correction. Resume: `.planning/phases/48-operator-completeness-incident-playbook-trace-tools/48-CONTEXT.md`.
 
 **2026-05-27 — Phase 47 context gathered.** Assumptions mode; all assumptions confirmed without correction. Resume: `.planning/phases/47-onboarding-truth-getting-started-production-ecto-path/47-CONTEXT.md`.
