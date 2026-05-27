@@ -187,7 +187,7 @@ See `.planning/milestones/v1.4-ROADMAP.md`.
   3. `guides/overview.md` is published as a job-shaped index with Day-1 / Day-2 / Reference sections and is wired into the ExDoc `extras:` list; the existing "5-footer-chase" navigation friction is eliminated for a new adopter (manually verified via a fresh `mix docs` build).
   4. `BATTERIES_INCLUDED.md` (root, drift-tested) and `guides/batteries_included.md` (hand-written) are deduplicated — one becomes the primary source of truth, the other becomes a stub link pointing to the primary. The decision is documented in the relevant phase SUMMARY so reviewers know which copy is canonical.
 
-**Plans**: TBD
+**Plans**: 3 plans (46-01..46-03)
 
 ## Progress
 
