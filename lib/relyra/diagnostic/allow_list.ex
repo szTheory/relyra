@@ -116,6 +116,16 @@ defmodule Relyra.Diagnostic.AllowList do
 
   def hash_correlation_id(id), do: hash_correlation_id(to_string(id))
 
+  @doc """
+  Exports a login trace audit row via `Relyra.LoginTrace.Export`.
+  """
+  def export_login_trace(event), do: Relyra.LoginTrace.Export.export_login(event)
+
+  @doc """
+  Exports a single login trace step via `Relyra.LoginTrace.Export`.
+  """
+  def export_trace_step(step), do: Relyra.LoginTrace.Export.export_step(step)
+
   defp reject_nil(map) do
     map
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
