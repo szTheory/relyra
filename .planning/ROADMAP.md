@@ -298,7 +298,7 @@ Plans:
 
 **Wave 2** *(depends on 40.1-03 — flips drift gate live in same commit as doc rewrite)*
 
-- [ ] 40.1-05-PLAN.md — `guides/recipes/logout.md` rewrite (D-02/D-03/D-04 — canonical SessionAdapter signatures, host-linkage subsection) + unskip drift test from Plan 03
+- [x] 40.1-05-PLAN.md — `guides/recipes/logout.md` rewrite (D-02/D-03/D-04 — canonical SessionAdapter signatures, host-linkage subsection) + unskip drift test from Plan 03
 
 </details>
 
@@ -345,6 +345,6 @@ Plans:
 | 38. Single Logout (SLO) Core & Security | v1.4 | 4/4 | Complete (verification deferred) | 2026-05-27 |
 | 39. Logout Strategy & Operational Guidance | v1.4 | 1/1 | Complete (verification deferred) | 2026-05-27 |
 | 40. Operational Polish & Error Taxonomy | v1.4 | 2/2 | Complete    | 2026-05-27 |
-| 40.1. Close v1.4 audit gaps (INSERTED) | v1.4 | 4/5 | In Progress|  |
+| 40.1. Close v1.4 audit gaps (INSERTED) | v1.4 | 5/5 | Complete   | 2026-05-27 |
 
 ---
