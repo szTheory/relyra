@@ -141,12 +141,12 @@ to compare several admins in parallel.
 
 Support taxonomy:
 
-- **Batteries included:** Okta, Microsoft Entra ID, and Google Workspace only.
+- **Batteries included:** Okta, Microsoft Entra ID, Google Workspace, and ADFS — each has a shipped preset module and repo-native runbook (Okta, Entra, Google, [ADFS](recipes/adfs.md)).
 - **Custom SAML:** use the generic operator runbook at
   [guides/recipes/generic_saml.md](recipes/generic_saml.md) when you own the
   provider-specific mapping and verification work yourself.
-- **ADFS special case:** use [guides/recipes/adfs.md](recipes/adfs.md) when signed
-  AuthnRequests or ADFS-specific encoding behavior are part of the contract.
+- **ADFS note:** prefer [guides/recipes/adfs.md](recipes/adfs.md) when signed
+  AuthnRequests or ADFS-specific encoding are part of the contract.
 - **Not yet shipped:** any provider without a shipped preset module and verified
   repo-native runbook.
 

@@ -5,10 +5,10 @@ preset or that need custom operator mapping on top of a vendor admin surface.
 Use it only after the local `FakeIdP` proof in
 [Getting Started](../getting_started.md) is green.
 
-Relyra's batteries-included support still stops at Okta, Microsoft Entra ID, and
-Google Workspace. ADFS keeps a specialized runbook at
-[guides/recipes/adfs.md](adfs.md). Everything else stays on this generic/custom-SAML
-path unless the repo ships a preset and a verified provider runbook later.
+Relyra's first-class batteries-included support covers **Okta, Microsoft Entra ID,
+Google Workspace, and ADFS** (each has a shipped preset module and verified runbook).
+ADFS also has a dedicated runbook at [guides/recipes/adfs.md](adfs.md). All other IdPs
+use this generic/custom-SAML path.
 
 ## Overview
 
