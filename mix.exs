@@ -191,6 +191,7 @@ defmodule Relyra.MixProject do
         "cmd mix test test/security/authn_request_signing_test.exs --only authn_request_signing --warnings-as-errors",
         "cmd mix test test/security/xml_enc_test.exs --warnings-as-errors",
         "cmd mix test test/security/xml_enc_adversarial_test.exs --warnings-as-errors",
+        "cmd mix test test/security/metadata_attribute_injection_test.exs --warnings-as-errors",
         # decimal advisory GHSA-rhv4-8758-jx7v (Decimal.new exponent DoS) is ignored:
         # decimal is transitive via ecto/postgrex (both pin `decimal ~> 2.0`, so 3.0.0 — the
         # only patched version — is unreachable), and relyra makes no direct Decimal.new/parse
