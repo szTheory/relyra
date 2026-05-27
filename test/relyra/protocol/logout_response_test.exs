@@ -39,7 +39,7 @@ defmodule Relyra.Protocol.LogoutResponseTest do
     """
 
     {:ok, tree} = SaxyTree.parse(xml)
-    
+
     assert {:ok, resp} = LogoutResponse.from_parsed_doc(tree)
     assert resp.issuer == "https://sp.example.com/metadata"
     assert resp.destination == "https://idp.example.com/slo"
@@ -62,9 +62,13 @@ defmodule Relyra.Protocol.LogoutResponseTest do
     assert String.contains?(xml, "ID=\"id_456\"")
     assert String.contains?(xml, "InResponseTo=\"id_123\"")
     assert String.contains?(xml, "<saml:Issuer>https://sp.example.com/metadata</saml:Issuer>")
-    assert String.contains?(xml, "<samlp:StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"")
+
+    assert String.contains?(
+             xml,
+             "<samlp:StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\""
+           )
   end
-  
+
   test "validate_issuer/2 delegates to Relyra.Protocol.Response or works correctly" do
     assert :ok == LogoutResponse.validate_issuer("issuer", "issuer")
     assert {:error, _} = LogoutResponse.validate_issuer("actual", "expected")

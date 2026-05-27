@@ -98,21 +98,22 @@ defmodule Relyra.MixProject do
         "GitHub" => @source_url,
         "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
       },
-      files: [
-        "priv",
-        "docs",
-        "guides",
-        ".formatter.exs",
-        "mix.exs",
-        "README.md",
-        "CONFORMANCE.md",
-        "CHANGELOG.md",
-        "LICENSE",
-        "SECURITY.md",
-        "SECURITY_REVIEW.md",
-        "SECURITY_REVIEW_EVIDENCE.md",
-        "BATTERIES_INCLUDED.md"
-      ] ++ package_lib_files()
+      files:
+        [
+          "priv",
+          "docs",
+          "guides",
+          ".formatter.exs",
+          "mix.exs",
+          "README.md",
+          "CONFORMANCE.md",
+          "CHANGELOG.md",
+          "LICENSE",
+          "SECURITY.md",
+          "SECURITY_REVIEW.md",
+          "SECURITY_REVIEW_EVIDENCE.md",
+          "BATTERIES_INCLUDED.md"
+        ] ++ package_lib_files()
     ]
   end
 

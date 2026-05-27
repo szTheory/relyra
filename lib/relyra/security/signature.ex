@@ -148,12 +148,18 @@ defmodule Relyra.Security.Signature do
     if safe_verify(raw_query_string, digest_atom, signature_bytes, public_key) do
       :ok
     else
-      {:error, Error.new(:invalid_signature, "Redirect signature failed cryptographic verification", %{reason: :redirect_signature_mismatch})}
+      {:error,
+       Error.new(:invalid_signature, "Redirect signature failed cryptographic verification", %{
+         reason: :redirect_signature_mismatch
+       })}
     end
   end
 
   def verify_redirect_signature(_raw_query_string, _digest_atom, _signature_bytes, _public_key) do
-    {:error, Error.new(:invalid_signature, "Invalid inputs to redirect signature verification", %{reason: :invalid_signature_input})}
+    {:error,
+     Error.new(:invalid_signature, "Invalid inputs to redirect signature verification", %{
+       reason: :invalid_signature_input
+     })}
   end
 
   defp do_verify(parsed_doc, connection, cert_chain, opts) do

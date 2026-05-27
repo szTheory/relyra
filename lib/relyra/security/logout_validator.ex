@@ -50,6 +50,7 @@ defmodule Relyra.Security.LogoutValidator do
   end
 
   defp require_xml_signature(%{signature_method: _}), do: :ok
+
   defp require_xml_signature(_) do
     {:error,
      Error.new(
@@ -84,21 +85,22 @@ defmodule Relyra.Security.LogoutValidator do
   defp check_replay(message, connection, opts) do
     # Extract ID differently for request vs response
     id = Map.get(message, :id) || Map.get(message, :in_response_to)
-    
+
     if is_nil(id) do
-      {:error, Error.new(:missing_protocol_field, "Message ID is required for replay protection", %{})}
+      {:error,
+       Error.new(:missing_protocol_field, "Message ID is required for replay protection", %{})}
     else
       metadata = %{
         connection_id: expected_connection_id(connection),
         issuer: Map.get(message, :issuer)
       }
-      
+
       ReplayStore.consume_replay_key(id, metadata, opts)
     end
   end
 
   defp check_status(:request, _message), do: :ok
-  
+
   defp check_status(:response, message) do
     # LogoutResponse has a status to validate.
     status = Map.get(message, :status)
@@ -129,19 +131,32 @@ defmodule Relyra.Security.LogoutValidator do
     signature_b64 = query_parts["Signature"]
 
     if is_nil(sig_alg) or is_nil(signature_b64) do
-      {:error, Error.new(:missing_signature, "Redirect query is missing SigAlg or Signature parameters", %{})}
+      {:error,
+       Error.new(
+         :missing_signature,
+         "Redirect query is missing SigAlg or Signature parameters",
+         %{}
+       )}
     else
       policy = Keyword.get(opts, :algorithm_policy, AlgorithmPolicy.default())
-      
-      with :ok <- evaluate_policy(AlgorithmPolicy.enforce_signature_method(policy, sig_alg), connection),
+
+      with :ok <-
+             evaluate_policy(
+               AlgorithmPolicy.enforce_signature_method(policy, sig_alg),
+               connection
+             ),
            {:ok, digest_atom} <- signing_digest_atom(sig_alg, connection),
            {:ok, signature_bytes} <- decode_signature(signature_b64) do
-        
         # We need the raw query BEFORE the Signature parameter.
         # It's usually everything before &Signature=
         raw_signed_query = extract_signed_query(raw_query)
-        
-        Signature.verify_redirect_signature(raw_signed_query, digest_atom, signature_bytes, public_key)
+
+        Signature.verify_redirect_signature(
+          raw_signed_query,
+          digest_atom,
+          signature_bytes,
+          public_key
+        )
       end
     end
   end
@@ -149,7 +164,8 @@ defmodule Relyra.Security.LogoutValidator do
   defp extract_signed_query(raw_query) do
     case String.split(raw_query, "&Signature=") do
       [signed_part, _sig_part] -> signed_part
-      _ -> raw_query # fallback, but verify_redirect_signature will fail
+      # fallback, but verify_redirect_signature will fail
+      _ -> raw_query
     end
   end
 
@@ -170,14 +186,23 @@ defmodule Relyra.Security.LogoutValidator do
          Error.new(
            error_type,
            "Unsupported signature algorithm in redirect binding",
-           %{connection_id: expected_connection_id(connection), signature_method: signature_method}
+           %{
+             connection_id: expected_connection_id(connection),
+             signature_method: signature_method
+           }
          )}
     end
   end
 
   defp evaluate_policy(:ok, _connection), do: :ok
+
   defp evaluate_policy(%Error{} = error, connection) do
-    {:error, Error.new(error.type, error.message, Map.put(error.details, :connection_id, expected_connection_id(connection)))}
+    {:error,
+     Error.new(
+       error.type,
+       error.message,
+       Map.put(error.details, :connection_id, expected_connection_id(connection))
+     )}
   end
 
   defp parse_raw_query(raw_query) do
@@ -201,22 +226,27 @@ defmodule Relyra.Security.LogoutValidator do
 
   defp inflate_payload(b64) do
     # Try with padding, then without
-    decoded = case Base.decode64(b64) do
-      {:ok, bytes} -> {:ok, bytes}
-      :error -> Base.decode64(b64, padding: false)
-    end
+    decoded =
+      case Base.decode64(b64) do
+        {:ok, bytes} -> {:ok, bytes}
+        :error -> Base.decode64(b64, padding: false)
+      end
 
     case decoded do
       {:ok, deflated} ->
         z = :zlib.open()
+
         try do
           :ok = :zlib.inflateInit(z, -15)
           {:ok, :zlib.inflate(z, deflated) |> IO.iodata_to_binary()}
         rescue
-          _ -> {:error, Error.new(:invalid_binding_payload, "Failed to inflate deflate payload", %{})}
+          _ ->
+            {:error,
+             Error.new(:invalid_binding_payload, "Failed to inflate deflate payload", %{})}
         after
           :zlib.close(z)
         end
+
       :error ->
         {:error, Error.new(:invalid_binding_payload, "Invalid base64 payload", %{})}
     end

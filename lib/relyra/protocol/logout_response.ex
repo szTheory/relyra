@@ -17,7 +17,6 @@ defmodule Relyra.Protocol.LogoutResponse do
     with {:ok, destination} <-
            required_field(connection, [:destination, :idp_slo_url], "destination"),
          {:ok, issuer} <- required_field(connection, [:issuer, :sp_entity_id], "issuer") do
-      
       in_response_to = Keyword.get(opts, :in_response_to)
       status = Keyword.get(opts, :status, @success_status)
 
@@ -54,10 +53,10 @@ defmodule Relyra.Protocol.LogoutResponse do
     destination = attr(root, "Destination")
     in_response_to = attr(root, "InResponseTo")
     issue_instant = attr(root, "IssueInstant")
-    
+
     issuer = first_text(root, "Issuer")
     status = first_attr(root, "StatusCode", "Value")
-    
+
     fields = %{
       id: id,
       destination: destination,
@@ -66,7 +65,7 @@ defmodule Relyra.Protocol.LogoutResponse do
       issuer: issuer,
       status: status
     }
-    
+
     require_present_fields(
       fields,
       [:id, :issuer, :status],
@@ -75,23 +74,27 @@ defmodule Relyra.Protocol.LogoutResponse do
     )
   end
 
-  def from_parsed_doc(parsed_doc) when is_map(parsed_doc) and is_map_key(parsed_doc, :parse_tree) do
+  def from_parsed_doc(parsed_doc)
+      when is_map(parsed_doc) and is_map_key(parsed_doc, :parse_tree) do
     from_parsed_doc(parsed_doc.parse_tree)
   end
 
-  def from_parsed_doc(_), do: {:error, Error.new(:invalid_parsed_doc, "Invalid parsed document format", %{})}
+  def from_parsed_doc(_),
+    do: {:error, Error.new(:invalid_parsed_doc, "Invalid parsed document format", %{})}
 
   @spec to_xml(map()) :: binary()
-  def to_xml(%{
-        id: id,
-        issue_instant: issue_instant,
-        destination: destination,
-        issuer: issuer,
-        status: status
-      } = map) do
+  def to_xml(
+        %{
+          id: id,
+          issue_instant: issue_instant,
+          destination: destination,
+          issuer: issuer,
+          status: status
+        } = map
+      ) do
     in_response_to = Map.get(map, :in_response_to)
     in_response_to_attr = if in_response_to, do: ~s( InResponseTo="#{in_response_to}"), else: ""
-    
+
     ~s(<samlp:LogoutResponse xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="#{id}" Version="2.0" IssueInstant="#{issue_instant}" Destination="#{destination}"#{in_response_to_attr}><saml:Issuer>#{issuer}</saml:Issuer><samlp:Status><samlp:StatusCode Value="#{status}" /></samlp:Status></samlp:LogoutResponse>)
   end
 
@@ -120,10 +123,12 @@ defmodule Relyra.Protocol.LogoutResponse do
 
       _ ->
         {:error,
-         Error.new(:logout_response_invalid, "Missing required LogoutResponse field", %{field: label})}
+         Error.new(:logout_response_invalid, "Missing required LogoutResponse field", %{
+           field: label
+         })}
     end
   end
-  
+
   defp require_present_fields(fields, required_keys, error_type, message) do
     missing =
       Enum.reject(required_keys, fn key ->

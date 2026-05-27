@@ -53,11 +53,11 @@ defmodule Relyra.Protocol.LogoutRequest do
     id = attr(root, "ID")
     destination = attr(root, "Destination")
     issue_instant = attr(root, "IssueInstant")
-    
+
     issuer = first_text(root, "Issuer")
     name_id = first_text(root, "NameID")
     session_index = first_text(root, "SessionIndex")
-    
+
     fields = %{
       id: id,
       destination: destination,
@@ -66,7 +66,7 @@ defmodule Relyra.Protocol.LogoutRequest do
       name_id: name_id,
       session_index: session_index
     }
-    
+
     require_present_fields(
       fields,
       [:id, :issuer, :name_id, :session_index],
@@ -75,23 +75,27 @@ defmodule Relyra.Protocol.LogoutRequest do
     )
   end
 
-  def from_parsed_doc(parsed_doc) when is_map(parsed_doc) and is_map_key(parsed_doc, :parse_tree) do
+  def from_parsed_doc(parsed_doc)
+      when is_map(parsed_doc) and is_map_key(parsed_doc, :parse_tree) do
     from_parsed_doc(parsed_doc.parse_tree)
   end
 
-  def from_parsed_doc(_), do: {:error, Error.new(:invalid_parsed_doc, "Invalid parsed document format", %{})}
+  def from_parsed_doc(_),
+    do: {:error, Error.new(:invalid_parsed_doc, "Invalid parsed document format", %{})}
 
   @spec to_xml(map()) :: binary()
-  def to_xml(%{
-        id: id,
-        issue_instant: issue_instant,
-        destination: destination,
-        issuer: issuer,
-        name_id: name_id,
-        session_index: session_index
-      } = map) do
+  def to_xml(
+        %{
+          id: id,
+          issue_instant: issue_instant,
+          destination: destination,
+          issuer: issuer,
+          name_id: name_id,
+          session_index: session_index
+        } = map
+      ) do
     name_id_format = Map.get(map, :name_id_format, @default_name_id_format)
-    
+
     ~s(<samlp:LogoutRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="#{id}" Version="2.0" IssueInstant="#{issue_instant}" Destination="#{destination}"><saml:Issuer>#{issuer}</saml:Issuer><saml:NameID Format="#{name_id_format}">#{name_id}</saml:NameID><samlp:SessionIndex>#{session_index}</samlp:SessionIndex></samlp:LogoutRequest>)
   end
 
@@ -118,7 +122,9 @@ defmodule Relyra.Protocol.LogoutRequest do
 
       _ ->
         {:error,
-         Error.new(:logout_request_invalid, "Missing required LogoutRequest field", %{field: label})}
+         Error.new(:logout_request_invalid, "Missing required LogoutRequest field", %{
+           field: label
+         })}
     end
   end
 
@@ -129,10 +135,12 @@ defmodule Relyra.Protocol.LogoutRequest do
 
       _ ->
         {:error,
-         Error.new(:logout_request_invalid, "Missing required LogoutRequest option", %{field: label})}
+         Error.new(:logout_request_invalid, "Missing required LogoutRequest option", %{
+           field: label
+         })}
     end
   end
-  
+
   defp require_present_fields(fields, required_keys, error_type, message) do
     missing =
       Enum.reject(required_keys, fn key ->

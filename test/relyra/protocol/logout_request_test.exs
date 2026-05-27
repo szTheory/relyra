@@ -38,7 +38,7 @@ defmodule Relyra.Protocol.LogoutRequestTest do
     """
 
     {:ok, tree} = SaxyTree.parse(xml)
-    
+
     assert {:ok, req} = LogoutRequest.from_parsed_doc(tree)
     assert req.issuer == "https://sp.example.com/metadata"
     assert req.name_id == "user@example.com"
@@ -61,7 +61,12 @@ defmodule Relyra.Protocol.LogoutRequestTest do
     xml = LogoutRequest.to_xml(req)
     assert String.contains?(xml, "ID=\"id_123\"")
     assert String.contains?(xml, "<saml:Issuer>https://sp.example.com/metadata</saml:Issuer>")
-    assert String.contains?(xml, "<saml:NameID Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\">user@example.com</saml:NameID>")
+
+    assert String.contains?(
+             xml,
+             "<saml:NameID Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\">user@example.com</saml:NameID>"
+           )
+
     assert String.contains?(xml, "<samlp:SessionIndex>session-123</samlp:SessionIndex>")
   end
 end

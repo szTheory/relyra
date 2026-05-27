@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.5
-milestone_name: Publish, Prove, Polish
-status: planning
-last_updated: "2026-05-27T20:00:00.000Z"
+milestone_name: — Publish, Prove, Polish
+status: executing
+last_updated: "2026-05-27T19:27:02.160Z"
 last_activity: 2026-05-27
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 0
+  completed_plans: 2
   percent: 0
 ---
 
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.5 "Publish, Prove, Polish" — bring Hex up to 1.4.0, ship login-trace LiveView (brand-promise UI receipt), close residual DX + warning-level tech-debt items.
+**Current focus:** Phase 41 — Pre-publish hygiene tech-debt sweep security hardening
 
 ## Current Position
 
-Phase: 41 (planned)
-Plan: 41-01 (next)
-Status: Plans created (2026-05-27) — ready for `/gsd:execute-phase 41`
-Last activity: 2026-05-27 — v1.5 roadmap created. 6 phases (41-46), 15/15 requirements mapped. Reordered same day so trace LiveView (Phase 42) precedes publish prep (Phase 43); trace ships in v1.4.0 tarball by construction.
+Phase: 41 (Pre-publish hygiene tech-debt sweep security hardening) — EXECUTING
+Plan: 3 of 5
+Status: Ready to execute
+Last activity: 2026-05-27
 
 ## Performance Metrics
 

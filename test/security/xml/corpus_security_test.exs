@@ -12,9 +12,11 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
     manifest()
     |> Enum.each(fn fixture ->
       assert {:error, %Error{type: type}} = evaluate_fixture(fixture)
+
       if type != String.to_atom(fixture["expected_error_type"]) do
         IO.inspect(fixture, label: "FAILING FIXTURE")
       end
+
       assert type == String.to_atom(fixture["expected_error_type"])
     end)
   end

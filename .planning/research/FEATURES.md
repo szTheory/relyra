@@ -156,7 +156,7 @@ DOCS-03 (Identity mapping guide)
     requires── existing UserMapper behaviour — DONE
     enhances── DOCS-02 (cross-referenced; attribute decoder tables feed the identity mapping section)
 
-EncryptedAttribute (inside ENC-01)
+EncryptedAttribute (historical research — not shipped in v1.3 ENC-01)
     requires── ENC-01 decrypt pipeline (same primitive)
     enhances── ENC-01 (completeness for Shibboleth academic federations)
 ```
@@ -174,7 +174,7 @@ EncryptedAttribute (inside ENC-01)
 
 ### Launch With (all four requirements)
 
-- [ ] **ENC-01:** `EncryptedAssertion` decryption (RSA-OAEP + AES-GCM, reject AES-CBC/PKCS1v1.5, opaque error atom, decrypt-then-reparse, `EncryptedAttribute` included, KeyResolver behaviour, SP metadata KeyDescriptor) — required for Entra/Okta/Shibboleth enterprise customers who have encryption enabled.
+- [ ] **ENC-01:** `EncryptedAssertion` decryption (RSA-OAEP + AES-GCM, reject AES-CBC/PKCS1v1.5, opaque error atom, decrypt-then-reparse, KeyResolver behaviour, SP metadata KeyDescriptor) — required for Entra/Okta/Shibboleth enterprise customers who have encryption enabled. (Historical research also considered `EncryptedAttribute`; v1.3 shipped `EncryptedAssertion` only.)
 - [ ] **AUTHN-01:** Signed AuthnRequests, HTTP-Redirect binding only, raw-octet signing, per-connection toggle, SP metadata publication — required for ADFS and locked-down Shibboleth deployments.
 - [ ] **ADFS preset** — primary motivation for AUTHN-01; ships with the feature to make it immediately useful.
 - [ ] **DOCS-02:** Generic SAML runbook with field-name decoder tables — high adopter value at low cost; needed before v1.3 is the "go-to" library.
@@ -199,7 +199,7 @@ EncryptedAttribute (inside ENC-01)
 | Feature | Adopter Value | Implementation Cost | Priority |
 |---------|--------------|---------------------|----------|
 | ENC-01: EncryptedAssertion (OAEP + GCM) | HIGH (enterprise blocker for Entra/Shibboleth/ADFS users) | HIGH (KeyResolver, crypto pipeline, re-parse, corpus) | P1 |
-| ENC-01: EncryptedAttribute | MEDIUM (Shibboleth academic federations) | LOW (same pipeline as EncryptedAssertion) | P1 (rides on ENC-01) |
+| ENC-01: EncryptedAttribute | MEDIUM (Shibboleth academic federations) | LOW (same pipeline as EncryptedAssertion) | **Not shipped** (research only; v1.3 = EncryptedAssertion) |
 | ENC-01: AES-CBC/PKCS1v1.5 rejection + escape hatch | HIGH (security posture; differentiator) | LOW (AlgorithmPolicy extension) | P1 |
 | ENC-01: Adversarial corpus (padding oracle, XSW4) | HIGH (security assurance claim) | MEDIUM (6 corpus fixtures) | P1 |
 | AUTHN-01: HTTP-Redirect signed AuthnRequests | HIGH (ADFS blocker; Shibboleth enterprise) | HIGH (raw-octet signing, signature construction, footgun prevention) | P1 |

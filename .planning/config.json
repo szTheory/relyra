@@ -1,13 +1,29 @@
 {
-  "model_profile": "balanced",
+  "model_profile": "inherit",
+  "runtime": "cursor",
+  "model_profile_overrides": {
+    "cursor": {
+      "opus": "inherit",
+      "sonnet": "composer-2.5-fast",
+      "haiku": "composer-2.5-fast"
+    }
+  },
   "models": {
     "planning": "opus",
+    "discuss": "opus",
+    "research": "sonnet",
     "execution": "sonnet",
     "verification": "sonnet",
-    "research": "sonnet"
+    "completion": "sonnet"
   },
   "model_overrides": {
-    "gsd-codebase-mapper": "haiku"
+    "gsd-codebase-mapper": "haiku",
+    "gsd-roadmapper": "sonnet",
+    "gsd-pattern-mapper": "sonnet",
+    "gsd-executor": "sonnet",
+    "gsd-code-reviewer": "sonnet",
+    "gsd-code-fixer": "sonnet",
+    "gsd-doc-classifier": "sonnet"
   },
   "commit_docs": true,
   "parallelization": true,

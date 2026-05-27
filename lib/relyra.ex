@@ -213,55 +213,71 @@ defmodule Relyra do
     opts_with_session = Keyword.put(opts, :session_index, session_index)
     relay_context = %{}
 
-    with {:ok, request_fields} <- Relyra.Protocol.LogoutRequest.build(connection, relay_context, opts_with_session),
+    with {:ok, request_fields} <-
+           Relyra.Protocol.LogoutRequest.build(connection, relay_context, opts_with_session),
          request_id <- Map.fetch!(request_fields, :id),
          logout_request_xml <- Relyra.Protocol.LogoutRequest.to_xml(request_fields) do
-      
       binding = Keyword.get(opts, :binding, :redirect)
       sign = read_field(connection, :sign_authn_requests) == true
-      
+
       encoding = read_field(connection, :signed_request_encoding) || :rfc3986_upper
 
       binding_opts = [
         sign: sign,
-        signature_method: Keyword.get(opts, :signature_method, "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"),
+        signature_method:
+          Keyword.get(
+            opts,
+            :signature_method,
+            "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+          ),
         signing_key_pem: Keyword.get(opts, :signing_key_pem),
         encoding: encoding,
         connection_id: read_field(connection, :connection_id),
         type: :request
       ]
-      
+
       relay_state = Keyword.get(opts, :relay_state)
-      
+
       case binding do
         :redirect ->
           case Binding.encode_redirect(logout_request_xml, relay_state, binding_opts) do
             {:ok, %{redirect_query: redirect_query}} ->
-              {:ok, %{
-                request_id: request_id,
-                logout_request: logout_request_xml,
-                redirect_query: redirect_query,
-                relay_state: relay_state
-              }}
+              {:ok,
+               %{
+                 request_id: request_id,
+                 logout_request: logout_request_xml,
+                 redirect_query: redirect_query,
+                 relay_state: relay_state
+               }}
+
             {:ok, redirect_params} ->
-              {:ok, %{
-                request_id: request_id,
-                logout_request: logout_request_xml,
-                redirect_params: redirect_params,
-                relay_state: relay_state
-              }}
-            {:error, error} -> {:error, error}
+              {:ok,
+               %{
+                 request_id: request_id,
+                 logout_request: logout_request_xml,
+                 redirect_params: redirect_params,
+                 relay_state: relay_state
+               }}
+
+            {:error, error} ->
+              {:error, error}
           end
-          
+
         :post ->
           b64 = Base.encode64(logout_request_xml)
-          params = if relay_state, do: %{"SAMLRequest" => b64, "RelayState" => relay_state}, else: %{"SAMLRequest" => b64}
-          {:ok, %{
-            request_id: request_id,
-            logout_request: logout_request_xml,
-            post_params: params,
-            relay_state: relay_state
-          }}
+
+          params =
+            if relay_state,
+              do: %{"SAMLRequest" => b64, "RelayState" => relay_state},
+              else: %{"SAMLRequest" => b64}
+
+          {:ok,
+           %{
+             request_id: request_id,
+             logout_request: logout_request_xml,
+             post_params: params,
+             relay_state: relay_state
+           }}
       end
     end
   end
@@ -281,10 +297,12 @@ defmodule Relyra do
 
         case result do
           {:ok, logout_result} ->
-            final_metadata = Map.merge(metadata, %{
-              outcome: :ok,
-              type: logout_result.type
-            })
+            final_metadata =
+              Map.merge(metadata, %{
+                outcome: :ok,
+                type: logout_result.type
+              })
+
             {{:ok, logout_result}, final_metadata}
 
           {:error, %Error{} = error} ->
@@ -292,11 +310,22 @@ defmodule Relyra do
         end
       rescue
         exception ->
-          error = Error.new(:internal_protocol_error, "consume_logout/3 raised an unexpected exception", %{reason: Exception.message(exception)})
+          error =
+            Error.new(
+              :internal_protocol_error,
+              "consume_logout/3 raised an unexpected exception",
+              %{reason: Exception.message(exception)}
+            )
+
           {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
       catch
         kind, reason ->
-          error = Error.new(:internal_protocol_error, "consume_logout/3 trapped a non-local exit", %{kind: kind, reason: inspect(reason)})
+          error =
+            Error.new(:internal_protocol_error, "consume_logout/3 trapped a non-local exit", %{
+              kind: kind,
+              reason: inspect(reason)
+            })
+
           {{:error, error}, Map.merge(metadata, %{outcome: :error, error_code: error.type})}
       end
     end)
@@ -305,26 +334,42 @@ defmodule Relyra do
   defp do_consume_logout(connection, raw_payload, opts) do
     binding = Keyword.get(opts, :binding, :post)
     type = detect_logout_type(raw_payload, binding)
-    
+
     case type do
       :request ->
-        with {:ok, message} <- Relyra.Security.LogoutValidator.validate_logout_request(raw_payload, connection, opts),
+        with {:ok, message} <-
+               Relyra.Security.LogoutValidator.validate_logout_request(
+                 raw_payload,
+                 connection,
+                 opts
+               ),
              :ok <- handle_idp_initiated_logout(message, connection, opts) do
           {:ok, %{type: :request, message: message}}
         end
-        
+
       :response ->
-        with {:ok, message} <- Relyra.Security.LogoutValidator.validate_logout_response(raw_payload, connection, opts) do
+        with {:ok, message} <-
+               Relyra.Security.LogoutValidator.validate_logout_response(
+                 raw_payload,
+                 connection,
+                 opts
+               ) do
           {:ok, %{type: :response, message: message}}
         end
-        
+
       :unknown ->
-        {:error, Error.new(:invalid_logout_payload, "Could not detect SAMLRequest or SAMLResponse in payload", %{})}
+        {:error,
+         Error.new(
+           :invalid_logout_payload,
+           "Could not detect SAMLRequest or SAMLResponse in payload",
+           %{}
+         )}
     end
   end
 
   defp detect_logout_type(payload, :redirect) do
     parts = URI.decode_query(payload)
+
     cond do
       Map.has_key?(parts, "SAMLRequest") -> :request
       Map.has_key?(parts, "SAMLResponse") -> :response
@@ -343,10 +388,12 @@ defmodule Relyra do
   defp handle_idp_initiated_logout(message, connection, opts) do
     session_index = Map.get(message, :session_index)
     issuer = Map.get(message, :issuer)
-    
+
     if session_index do
-      context = %{connection_id: read_field(connection, :connection_id) || read_field(connection, :id)}
-      
+      context = %{
+        connection_id: read_field(connection, :connection_id) || read_field(connection, :id)
+      }
+
       # We attempt to terminate the session using the configured adapter.
       # If the adapter is not configured, we ignore the error as per adapter contract,
       # but we MUST NOT fail the SAML protocol verification itself.

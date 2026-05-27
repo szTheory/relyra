@@ -140,7 +140,8 @@ defmodule Relyra.SessionAdapter do
           is_nil(adapter) ->
             {:error, Error.new(:adapter_not_configured, "Session adapter is not configured")}
 
-          Code.ensure_loaded?(adapter) and function_exported?(adapter, :terminate_by_session_index, 4) ->
+          Code.ensure_loaded?(adapter) and
+              function_exported?(adapter, :terminate_by_session_index, 4) ->
             adapter.terminate_by_session_index(session_index, issuer, context, opts)
 
           true ->

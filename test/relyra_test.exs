@@ -331,7 +331,12 @@ defmodule RelyraTest do
       sp_entity_id: "https://sp.example.com/metadata"
     }
 
-    opts = [now: ~U[2026-05-26 00:00:00Z], name_id: "user123", session_index: "sess123", binding: :redirect]
+    opts = [
+      now: ~U[2026-05-26 00:00:00Z],
+      name_id: "user123",
+      session_index: "sess123",
+      binding: :redirect
+    ]
 
     assert {:ok, %{redirect_params: params, request_id: _id, logout_request: xml}} =
              Relyra.start_logout(connection, "sess123", opts)
@@ -348,7 +353,12 @@ defmodule RelyraTest do
       sp_entity_id: "https://sp.example.com/metadata"
     }
 
-    opts = [now: ~U[2026-05-26 00:00:00Z], name_id: "user123", session_index: "sess123", binding: :post]
+    opts = [
+      now: ~U[2026-05-26 00:00:00Z],
+      name_id: "user123",
+      session_index: "sess123",
+      binding: :post
+    ]
 
     assert {:ok, %{post_params: params, request_id: _id, logout_request: xml}} =
              Relyra.start_logout(connection, "sess123", opts)
@@ -359,8 +369,7 @@ defmodule RelyraTest do
   end
 
   test "consume_logout/3 returns typed error for invalid payload" do
-    assert {:error, %Relyra.Error{type: :invalid_logout_payload}} = 
+    assert {:error, %Relyra.Error{type: :invalid_logout_payload}} =
              Relyra.consume_logout(%{}, "invalid-payload", [])
   end
 end
-
