@@ -124,8 +124,8 @@ defmodule Relyra.Protocol.ValidationPipeline do
            %{}
          )}
 
-      {:single, _node} ->
-        case locate_encrypted_assertion(response_payload) do
+      {:single, node} ->
+        case locate_encrypted_assertion(response_payload, node) do
           {:ok, enc_bytes} ->
             resolver = Keyword.get(opts, :key_resolver, Relyra.KeyResolver.Default)
             decrypt_opts = Keyword.put(opts, :connection, connection)
@@ -204,22 +204,25 @@ defmodule Relyra.Protocol.ValidationPipeline do
 
   defp collect_nodes(_other, _local, acc), do: acc
 
-  # Prefix-aware, exactly-one-match locator for the <EncryptedAssertion>...</...>
-  # substring in the RAW Response binary (RESEARCH Pattern 1 + A1). Matches both an
-  # unprefixed <EncryptedAssertion>...</EncryptedAssertion> AND a namespace-prefixed
-  # <saml:EncryptedAssertion>...</saml:EncryptedAssertion> (any prefix), requiring the
-  # closing tag's prefix to match the opening tag's. EncryptedAssertion cannot nest
-  # another EncryptedAssertion (XML-Enc), so a non-greedy match is unambiguous for a
-  # single element. If zero or >1 substrings are present, return :ambiguous rather
-  # than silently splicing the first (exactly-one-match guard).
-  defp locate_encrypted_assertion(response_payload) do
-    regex = ~r/<(?:([\w.-]+):)?EncryptedAssertion\b.*?<\/(?:\1:)?EncryptedAssertion>/s
+  # Tree-bound wire-format slice for the EncryptedAssertion element detected by
+  # `detect_encrypted/1`. Uses byte spans recorded during the single parse pass
+  # (TD-03) — no regex on the raw binary.
+  defp locate_encrypted_assertion(response_payload, %Node{
+         start_byte: start_byte,
+         end_byte: end_byte
+       })
+       when is_binary(response_payload) and is_integer(start_byte) and is_integer(end_byte) and
+              start_byte >= 0 and end_byte > start_byte do
+    payload_size = byte_size(response_payload)
 
-    case Regex.scan(regex, response_payload) do
-      [[whole | _]] -> {:ok, whole}
-      _ -> :ambiguous
+    if end_byte <= payload_size do
+      {:ok, binary_part(response_payload, start_byte, end_byte - start_byte)}
+    else
+      :ambiguous
     end
   end
+
+  defp locate_encrypted_assertion(_response_payload, _node), do: :ambiguous
 
   defp do_run_validations(parsed_doc, request_intent, connection, cert_chain, opts, now) do
     with :ok <- validate_request_correlation(parsed_doc, request_intent, connection, opts),
