@@ -6,7 +6,7 @@ Generated from executable manifest state in `priv/conformance/sp_manifest.json` 
 
 | Requirement | pass | reject | unsupported | deferred | total |
 | --- | --- | --- | --- | --- | --- |
-| CONF-01 | 8 | 4 | 2 | 1 | 15 |
+| CONF-01 | 9 | 4 | 2 | 0 | 15 |
 
 - `CVE-REG-01` fixtures pinned: 8
 - Families covered: xxe, signature_wrapping, CVE-2024-45409
@@ -28,7 +28,7 @@ Generated from executable manifest state in `priv/conformance/sp_manifest.json` 
 | sp-logout-request-redirect-transport | pass | oasis-saml2-bindings | SAMLBindings-3.4.4.1 | urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect | https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf / 3.4.4.1 | SLO request transport uses the same Redirect envelope as login initiation. |
 | sp-logout-response-redirect-decode | pass | oasis-saml2-bindings | SAMLBindings-3.4.4.1 | urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect | https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf / 3.4.4.1 | Redirect decoding must continue to accept either SAMLRequest or SAMLResponse payload keys after Phase 24. |
 | sp-artifact-binding-unsupported | unsupported | oasis-saml2-bindings | SAMLBindings-3.6 | urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact | https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf / 3.6 | Artifact binding is not implemented in the shipped SP surface and remains explicitly out of coverage. |
-| sp-encrypted-assertions-deferred | deferred | oasis-saml2-core | SAMLCore-2.3.4 | urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST | https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf / 2.3.4 | Encrypted assertion handling is not claimed by this deterministic ExUnit lane yet. |
+| sp-encrypted-assertions-pass | pass | oasis-saml2-core | SAMLCore-2.3.4 | urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST | https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf / 2.3.4 | Encrypted assertion positive control via FakeIdP.encrypted_response/2 — ENC-01 shipped Phase 34. |
 | sp-ecp-profile-unsupported | unsupported | oasis-saml2-profiles | SAMLProfiles-4.2 | urn:oasis:names:tc:SAML:2.0:bindings:SOAP | https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf / 4.2 | Enhanced Client or Proxy profile support is not part of the current SP roadmap surface. |
 
 ## CVE-REG-01 Regression Coverage
@@ -43,3 +43,10 @@ Generated from executable manifest state in `priv/conformance/sp_manifest.json` 
 | cve-2024-45409-keyinfo-001 | CVE-2024-45409 | cve_2024_45409 | untrusted_certificate | ruby-saml GHSA-jw9c-mfg7-9rx2 / ported-fixture | Document-provided KeyInfo must never become a trust anchor. |
 | cve-2024-45409-duplicate-id-001 | CVE-2024-45409 | cve_2024_45409 | duplicate_xml_id | CVE-2024-45409 / ruby-saml advisory lineage / ported-fixture | Pinned duplicate-ID variant covers signed-node selection bypasses in the CVE family. |
 | c14n-differential-rejection-002 | signature_wrapping | parser_differential_and_c14n | canonicalization_failed | Phase 30 adversarial crypto assurance / ported-fixture | C14N-differential REJECTION: the pure-BEAM seam fails closed with :canonicalization_failed on an incomplete canonicalization handle (the bare parsed_doc map, mirroring c14n-differential-001). The complementary :digest_mismatch crypto proof lives in the adversarial_crypto suite (ASSUR-01); the JSON evaluator routes parser_differential_and_c14n through parse_safely -> canonicalize only and never reaches Signature.verify/4. |
+
+## Scope boundary & diminishing returns
+
+- **v0.x through v1.5 shipping arc:** strict SAML SP library with cryptographic verification, first-class provider presets, generic SAML runbook, Single Logout (SLO), encrypted assertions (ENC-01), login trace tooling, and an operator incident playbook.
+- **Explicit out-of-scope / demand-gated (not missing):** HTTP-Artifact binding, ECP profile, Attribute Query, SCIM-in-core, additional first-class presets without generic-path investment, standalone demo app, customer-admin self-service portal.
+- **Demand-gated protocol extensions:** AUTHN-POST-01 (HTTP-POST signed AuthnRequests), KMS-01 (KMS-native KeyResolver adapters), SIGNED-META-01 (signed SP metadata and federation extensions).
+- **Done-enough framing:** ~92–95% JTBD coverage for enterprise SAML adoption; further work is demand-gated, not coverage-gated (v1.6 Adoption Truth milestone).
