@@ -12,9 +12,9 @@ Requirements for this milestone. Each maps to one roadmap phase.
 
 ### Onboarding Truth
 
-- [ ] **ADOPT-01**: `guides/getting_started.md` promotes the `TestSupport` macro pattern (`setup_saml_connection/2`, `post_saml_response/2` from `test/test_support_demo_test.exs`) as the primary path to first verified browser login, replacing or demoting the low-level FakeIdP PEM/signing snippet that leaves adopters between "scaffold compiles" and "login works."
+- [x] **ADOPT-01**: `guides/getting_started.md` promotes the `TestSupport` macro pattern (`setup_saml_connection/2`, `post_saml_response/2` from `test/test_support_demo_test.exs`) as the primary path to first verified browser login, replacing or demoting the low-level FakeIdP PEM/signing snippet that leaves adopters between "scaffold compiles" and "login works."
 
-- [ ] **ADOPT-02**: A new **"Production Ecto path"** section (in Getting Started or a linked guide) documents: running Relyra migrations, wiring `Relyra.ConnectionResolver.Ecto`, swapping RequestStore/ReplayStore from ETS to Ecto adapters, and the production replay-store warning (`ETS` warns in prod). An adopter can follow it without reading source.
+- [x] **ADOPT-02**: A new **"Production Ecto path"** section (in Getting Started or a linked guide) documents: running Relyra migrations, wiring `Relyra.ConnectionResolver.Ecto`, swapping RequestStore/ReplayStore from ETS to Ecto adapters, and the production replay-store warning (`ETS` warns in prod). An adopter can follow it without reading source.
 
 ### Operator Completeness
 
@@ -59,8 +59,8 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ADOPT-01 | 47 | Pending |
-| ADOPT-02 | 47 | Pending |
+| ADOPT-01 | 47 | Complete |
+| ADOPT-02 | 47 | Complete |
 | ADOPT-03 | 48 | Pending |
 | ADOPT-04 | 49 | Pending |
 | ADOPT-05 | 49 | Pending |

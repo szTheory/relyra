@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: — Adoption Truth
 status: executing
-last_updated: "2026-05-27T21:53:20.700Z"
-last_activity: 2026-05-27 -- Phase 47 planning complete
+last_updated: "2026-05-27T21:55:55.208Z"
+last_activity: 2026-05-27
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 3
+  percent: 33
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.6 Adoption Truth — doc-only onboarding and operator completeness (no new protocol)
+**Current focus:** Phase 47 — onboarding-truth-getting-started-production-ecto-path
 
 ## Current Position
 
-Phase: 47 — Onboarding truth (context gathered)
-Plan: —
-Status: Ready to execute
-Last activity: 2026-05-27 -- Phase 47 planning complete
+Phase: 48
+Plan: Not started
+Status: Executing Phase 47
+Last activity: 2026-05-27
 
 ## Performance Metrics
 

@@ -109,7 +109,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 
 **Summary checklist:**
 
-- [ ] **Phase 47: Onboarding truth — Getting Started & production Ecto path** — TestSupport macro pattern for first browser login; production Ecto path section.
+- [x] **Phase 47: Onboarding truth — Getting Started & production Ecto path** — TestSupport macro pattern for first browser login; production Ecto path section. (completed 2026-05-27)
 - [ ] **Phase 48: Operator completeness — incident playbook trace tools** — Login-trace LiveView route + `mix relyra.trace` in incident playbook tool table.
 - [ ] **Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy** — Scope boundary section, ENC manifest fix, jtbd_gap_map refresh, README/runbook taxonomy alignment.
 
@@ -126,7 +126,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 2. A **"Production Ecto path"** section exists (in Getting Started or a linked guide wired into `guides/overview.md` Day-2) covering migrations, `ConnectionResolver.Ecto`, ETS→Ecto RequestStore/ReplayStore swap, and the production replay-store warning.
 3. `mix ci.docs` stays green after doc changes (presence guards + any new drift tests follow Phase 30 `cmd mix test` pattern if added).
 
-**Plans:** TBD
+**Plans:** 3/3 plans complete
 
 ### Phase 48: Operator completeness — incident playbook trace tools
 
@@ -211,7 +211,7 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 44. Release-please pipeline diagnosis & v1.4.0 Hex publish | v1.5 | 3/3 | Complete    | 2026-05-27 |
 | 45. Post-publish parity verification | v1.5 | 2/2 | Complete    | 2026-05-27 |
 | 46. Adopter DX & ergonomics | v1.5 | 3/3 | Complete    | 2026-05-27 |
-| 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 0/? | Not started | — |
+| 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 3/3 | Complete    | 2026-05-27 |
 | 48. Operator completeness — incident playbook trace tools | v1.6 | 0/? | Not started | — |
 | 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 0/? | Not started | — |
 
