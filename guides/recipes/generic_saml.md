@@ -119,6 +119,10 @@ decoder ring for the core Relyra seams above.
 - If your admin surface uses different labels, map the concept back to the Relyra
   seam first, then update the local operator notes.
 
+Seven IdP families named in README (Ping, OneLogin, Shibboleth, Keycloak, IBM Security
+Verify, CyberArk, Oracle) — decoder rows below; Shibboleth-specific notes follow the
+table.
+
 | Vendor | SP entity / audience label | ACS / reply label | Login URL / SSO label | Signing cert label | Common claim labels | Typical NameID default | Footgun to watch |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | IBM Security Verify | `Service provider entity ID` | `Assertion consumer service URL` | `SSO URL` or `Single sign-on service URL` | `Signing certificate` | email, givenName, surname, groups | Often unspecified or email-style | IBM screens can expose several profile/claim layers; verify the effective NameID, not just the mapping editor |
@@ -126,6 +130,8 @@ decoder ring for the core Relyra seams above.
 | Oracle Access Manager | `SP Entity ID` | `Assertion Consumer Service URL` | `Single Sign-On URL` | `Signing certificate` | mail, givenname, sn, groups/memberOf | Often unspecified | Oracle deployments often have multiple partner profiles; make sure the runtime partner matches the exported metadata |
 | PingFederate | `Partner's Entity ID` | `Assertion Consumer Service URL` | `SSO Service URL` or `IdP SSO endpoint` | `Signing certificate` | mail, givenName, sn, memberOf | Often persistent or unspecified | Ping lets admins mix profile data and adapter contracts; verify which source actually feeds NameID |
 | CA SiteMinder | `SP Entity ID` | `Assertion Consumer Service URL` | `SSO URL` | `Signing certificate` | mail, givenName, sn, groups | Often unspecified | SiteMinder deployments frequently inherit older policy defaults; reject SHA-1 or lax signing expectations instead of matching them |
+| Keycloak | `Client ID` or `Entity ID` | `Client authentication / ACS URL` or `Valid redirect URIs` (map to ACS) | `Sign-in URL` or `Master SAML Processing URL` | `Signing certificate` or realm keys export | email, given_name, family_name, groups | Often persistent or email-style | Keycloak realm vs client SAML settings split — verify ACS URL on the client, not just realm metadata |
+| OneLogin | `Audience (Entity ID)` | `ACS (Consumer) URL` | `SAML 2.0 Endpoint (HTTP)` | `X.509 Certificate` | Email, First Name, Last Name, Member Of | Often email-style | OneLogin connector vs custom SAML app templates use different label sets — match the connector you created |
 
 Common claim decoder:
 
