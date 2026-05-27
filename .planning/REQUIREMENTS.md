@@ -22,7 +22,7 @@ Requirements for this milestone. Each maps to one roadmap phase.
 
 ### Conformance & Planning Honesty
 
-- [ ] **ADOPT-04**: `CONFORMANCE.md` gains a **"Scope boundary & diminishing returns"** section recording the v0.x→v1.5 shipping arc and explicit out-of-scope boundary (HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, standalone demo app). `priv/conformance/sp_manifest.json` updates `sp-encrypted-assertions-deferred` to reflect ENC-01 shipped (Phase 34) — not deferred.
+- [x] **ADOPT-04**: `CONFORMANCE.md` gains a **"Scope boundary & diminishing returns"** section recording the v0.x→v1.5 shipping arc and explicit out-of-scope boundary (HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, standalone demo app). `priv/conformance/sp_manifest.json` updates `sp-encrypted-assertions-deferred` to reflect ENC-01 shipped (Phase 34) — not deferred.
 
 - [ ] **ADOPT-05**: `docs/jtbd_gap_map.md` refreshed to v1.5 reality — incident playbook, generic SAML runbook, login trace, encrypted assertions, and SLO are marked shipped; stale "missing" rows removed.
 
@@ -62,7 +62,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | ADOPT-01 | 47 | Complete |
 | ADOPT-02 | 47 | Complete |
 | ADOPT-03 | 48 | Complete |
-| ADOPT-04 | 49 | Pending |
+| ADOPT-04 | 49 | Complete |
 | ADOPT-05 | 49 | Pending |
 | ADOPT-06 | 49 | Pending |
 

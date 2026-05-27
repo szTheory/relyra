@@ -153,7 +153,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 3. README, Getting Started §4 (or equivalent), and `guides/recipes/generic_saml.md` agree on preset taxonomy — Keycloak/OneLogin either appear in the decoder table or are removed from over-broad README claims.
 4. `mix ci.conformance` (or equivalent manifest gate) stays green with the updated ENC row.
 
-**Plans:** TBD
+**Plans:** 1/3 plans complete
 
 ## Progress
 
@@ -213,6 +213,6 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 46. Adopter DX & ergonomics | v1.5 | 3/3 | Complete    | 2026-05-27 |
 | 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 3/3 | Complete    | 2026-05-27 |
 | 48. Operator completeness — incident playbook trace tools | v1.6 | 2/2 | Complete    | 2026-05-27 |
-| 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 0/? | Not started | — |
+| 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 1/3 | In Progress | — |
 
 ---

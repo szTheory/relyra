@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: — Adoption Truth
 status: executing
-last_updated: "2026-05-27T22:25:23.306Z"
-last_activity: 2026-05-27 -- Phase 49 planning complete
+last_updated: "2026-05-27T22:28:14.620Z"
+last_activity: 2026-05-27 -- Completed 49-01-PLAN.md (ADOPT-04)
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 8
-  completed_plans: 5
-  percent: 63
+  completed_plans: 6
+  percent: 75
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 49 — adoption-honesty (CONFORMANCE, jtbd map, preset taxonomy)
+**Current focus:** Phase 49 — adoption-honesty-conformance-jtbd-map-preset-taxonomy
 
 ## Current Position
 
-Phase: 49
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-27 -- Phase 49 planning complete
+Phase: 49 (adoption-honesty-conformance-jtbd-map-preset-taxonomy) — EXECUTING
+Plan: 2 of 3 (49-01 complete)
+Status: Ready for 49-02-PLAN (ADOPT-05)
+Last activity: 2026-05-27 -- Completed 49-01-PLAN.md (ADOPT-04)
 
 ## Performance Metrics
 
@@ -67,6 +67,12 @@ Last activity: 2026-05-27 -- Phase 49 planning complete
 - `mix ci.security` hollow-gate invariant is permanent — each security suite is its own `cmd mix test` process.
 - Demand-gated protocol work (AUTHN-POST-01, KMS-01, SIGNED-META-01) stays out of v1.6 unless a real GitHub issue materializes.
 
+### Decisions from Phase 49-01
+
+- **CONFORMANCE scope boundary in generator:** `scope_boundary_section/0` appended after CVE-REG-01 table — never hand-edit CONFORMANCE.md.
+- **ENC manifest honesty:** `sp-encrypted-assertions-pass` with `FakeIdP.encrypted_response/2` evaluate_row; requirement summary 9 pass / 0 deferred.
+- **SPConformanceTest async: false:** SP private key via `Application.put_env` requires serial execution.
+
 ## Deferred Items
 
 | Category | Item | Status |
@@ -75,8 +81,11 @@ Last activity: 2026-05-27 -- Phase 49 planning complete
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand (investigation stub only) |
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
+| Phase 49-adoption-honesty-conformance-jtbd-map-preset-taxonomy P01 | 5min | 4 tasks | 4 files |
 
 ## Session Continuity
+
+**2026-05-27 — Completed 49-01-PLAN.md.** ADOPT-04: scope boundary section, ENC manifest pass row, CONFORMANCE.md regen. `mix ci.conformance` green. Resume: 49-02-PLAN (ADOPT-05 jtbd_gap_map).
 
 **2026-05-27 — Phase 49 context gathered (assumptions mode).** All assumptions confirmed without correction. Resume: `.planning/phases/49-adoption-honesty-conformance-jtbd-map-preset-taxonomy/49-CONTEXT.md` → `/gsd-plan-phase 49`.
 
