@@ -40,7 +40,8 @@ defmodule Relyra.Security.CiGateIntegrityTest do
     {"test/security/authn_request_signing_test.exs", "authn_request_signing"},
     {"test/security/xml_enc_test.exs", nil},
     {"test/security/xml_enc_adversarial_test.exs", nil},
-    {"test/security/metadata_attribute_injection_test.exs", nil}
+    {"test/security/metadata_attribute_injection_test.exs", nil},
+    {"test/security/login_trace_test.exs", nil}
   ]
 
   # The list of `ci.security` step strings, extracted by parsing mix.exs as actual
