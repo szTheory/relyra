@@ -337,12 +337,18 @@ attribute set).
 
 ## When in doubt
 
-Every login resolves to a verified trust path or a typed rejection — and
-when in doubt, the diagnostic bundle is the trace. Run
-`mix relyra.diagnostic` to capture a redacted, attributable snapshot of
-the connection state, recent audit rows, and the failing response
-payload. Route the bundle to your IdP support contact when the symptom is
-a signing-cert regression, to your security review queue when an active
-attack is suspected, or attach it to a Relyra issue when you suspect a
-library bug. The bundle is designed to be safe to share — Phase 23's
-redactor strips secret material before the archive is written.
+Every login resolves to a verified trust path or a typed rejection. Two
+operator tools answer different questions — do not conflate them:
+
+- **`mix relyra.diagnostic`** — redacted diagnostic **bundle** for IdP/vendor
+  handoff, security review, or Relyra issue filing (connection state + recent
+  audit + failing response snapshot). Safe to share externally after redaction.
+  Route the bundle to your IdP support contact when the symptom is a
+  signing-cert regression, to your security review queue when an active attack
+  is suspected, or attach it to a Relyra issue when you suspect a library bug.
+  Phase 23's redactor strips secret material before the archive is written.
+- **Login trace** (LiveView `/relyra/admin/connections/:connection_id/trace`
+  or `mix relyra.trace --repo MyApp.Repo --connection CONNECTION_ID`) —
+  per-attempt **step timeline** answering "which pipeline stage failed and
+  with what `:error_code`?" Use during active triage before escalating with a
+  diagnostic bundle.
