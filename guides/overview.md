@@ -17,6 +17,7 @@ Receipt: host-side test passes with `assert_saml_login/2`, then one hosted IdP l
 
 ## Day-2 — Operate in production
 
+- [Production Ecto path](production_ecto_path.md) — migrations, Ecto adapters, and replay-store production wiring
 - [Okta runbook](recipes/okta.md)
 - [Microsoft Entra ID runbook](recipes/entra.md)
 - [Google Workspace runbook](recipes/google_workspace.md)

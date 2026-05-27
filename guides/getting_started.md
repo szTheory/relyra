@@ -160,7 +160,8 @@ metadata import, or equivalent provider-specific success proof from that runbook
 ## 5. Production follow-ons
 
 Once one provider path works, move to the operator-owned follow-ons that make the
-integration production-ready.
+integration production-ready. After your first provider login, follow the
+[Production Ecto path](production_ecto_path.md) before scaling to multi-node production.
 
 Recommended order:
 
@@ -180,6 +181,8 @@ Important posture:
 
 Useful follow-on references:
 
+- [Production Ecto path](production_ecto_path.md) — migrate from install ETS defaults to
+  cluster-safe ConnectionResolver and RequestStore/ReplayStore Ecto adapters.
 - [guides/identity_mapping_and_provisioning.md](identity_mapping_and_provisioning.md)
   for the host-owned anchor, lookup, and JIT decisions that come after a
   working provider path.
