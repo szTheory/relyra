@@ -323,4 +323,44 @@ defmodule RelyraTest do
     assert {:error, %Relyra.Error{type: :adapter_not_configured}} =
              Relyra.consume_response(@valid_response, consume_opts)
   end
+
+  test "start_logout/3 generates a valid HTTP-Redirect payload" do
+    connection = %{
+      connection_id: "conn-123",
+      idp_slo_url: "https://idp.example.com/slo",
+      sp_entity_id: "https://sp.example.com/metadata"
+    }
+
+    opts = [now: ~U[2026-05-26 00:00:00Z], name_id: "user123", session_index: "sess123", binding: :redirect]
+
+    assert {:ok, %{redirect_params: params, request_id: _id, logout_request: xml}} =
+             Relyra.start_logout(connection, "sess123", opts)
+
+    assert is_map(params)
+    assert Map.has_key?(params, "SAMLRequest")
+    assert String.contains?(xml, "LogoutRequest")
+  end
+
+  test "start_logout/3 generates a valid HTTP-POST payload" do
+    connection = %{
+      connection_id: "conn-123",
+      idp_slo_url: "https://idp.example.com/slo",
+      sp_entity_id: "https://sp.example.com/metadata"
+    }
+
+    opts = [now: ~U[2026-05-26 00:00:00Z], name_id: "user123", session_index: "sess123", binding: :post]
+
+    assert {:ok, %{post_params: params, request_id: _id, logout_request: xml}} =
+             Relyra.start_logout(connection, "sess123", opts)
+
+    assert is_map(params)
+    assert Map.has_key?(params, "SAMLRequest")
+    assert String.contains?(xml, "LogoutRequest")
+  end
+
+  test "consume_logout/3 returns typed error for invalid payload" do
+    assert {:error, %Relyra.Error{type: :invalid_logout_payload}} = 
+             Relyra.consume_logout(%{}, "invalid-payload", [])
+  end
 end
+
