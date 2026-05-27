@@ -119,8 +119,14 @@ defmodule MyApp.Relyra.SessionAdapter do
            issuer,
            context.local_session_id
          ) do
-      :ok -> {:ok, %{session_index: session_index}}
-      {:error, reason} -> {:error, Relyra.Error.new(:session_index_store_failed, inspect(reason))}
+      :ok ->
+        {:ok, %{session_index: session_index}}
+
+      {:error, reason} ->
+        # Host-namespaced error atom (`:host_*`); Relyra reserves the typed
+        # atoms documented in `guides/troubleshooting.md`. Pick your own
+        # vocabulary for host-owned failure modes.
+        {:error, Relyra.Error.new(:host_session_index_store_failed, inspect(reason))}
     end
   end
 
@@ -131,8 +137,12 @@ defmodule MyApp.Relyra.SessionAdapter do
     # `context` carries the Relyra connection_id derived from the inbound
     # message; the host looks up its local session and terminates it.
     case SessionStore.delete_by_saml_index(context.connection_id, session_index, issuer) do
-      :ok -> {:ok, %{terminated: session_index}}
-      {:error, reason} -> {:error, Relyra.Error.new(:session_terminate_failed, inspect(reason))}
+      :ok ->
+        {:ok, %{terminated: session_index}}
+
+      {:error, reason} ->
+        # Host-namespaced error atom; see comment above.
+        {:error, Relyra.Error.new(:host_session_terminate_failed, inspect(reason))}
     end
   end
 end
