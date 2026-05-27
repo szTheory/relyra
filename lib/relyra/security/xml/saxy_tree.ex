@@ -53,9 +53,13 @@ defmodule Relyra.Security.XML.SaxyTree do
                                                    #   normalized (layer #3), not whitespace-collapsed.
         children: [t()],                           # DERIVED view: the `{:element, _}` segments of `content`, in
                                                    #   document order (kept for downstream helpers; unchanged shape).
-        text:     String.t()                       # DERIVED view: concatenation of the `{:text, _}` segments of
+        text:     String.t(),                      # DERIVED view: concatenation of the `{:text, _}` segments of
                                                    #   `content`, line-ending normalized (layer #3), in document
                                                    #   order; NOT whitespace-collapsed.
+        start_byte: non_neg_integer() | nil,       # OPTIONAL wire-format span: inclusive start offset of the
+                                                   #   opening `<` in the source binary (nil when unavailable).
+        end_byte:   non_neg_integer() | nil        # OPTIONAL wire-format span: exclusive end offset after the
+                                                   #   element's closing `>` (or `/>`) in the source binary.
       }
 
   > **`content` vs `children`/`text` (D-09):** `content` is the ordered single
@@ -83,7 +87,9 @@ defmodule Relyra.Security.XML.SaxyTree do
               ns: %{},
               content: [],
               children: [],
-              text: ""
+              text: "",
+              start_byte: nil,
+              end_byte: nil
 
     @type t :: %__MODULE__{
             qname: String.t(),
@@ -93,7 +99,9 @@ defmodule Relyra.Security.XML.SaxyTree do
             ns: %{optional(String.t()) => String.t()},
             content: [{:text, String.t()} | {:element, t()}],
             children: [t()],
-            text: String.t()
+            text: String.t(),
+            start_byte: non_neg_integer() | nil,
+            end_byte: non_neg_integer() | nil
           }
   end
 
@@ -110,7 +118,7 @@ defmodule Relyra.Security.XML.SaxyTree do
   """
   @spec parse(binary()) :: {:ok, t()} | {:error, Saxy.ParseError.t()}
   def parse(xml) when is_binary(xml) do
-    case Saxy.parse_string(xml, __MODULE__, %{stack: [], root: nil}) do
+    case Saxy.parse_string(xml, __MODULE__, %{stack: [], root: nil, source: xml, pos: 0}) do
       {:ok, %{root: %Node{} = root}} -> {:ok, root}
       {:error, %Saxy.ParseError{} = error} -> {:error, error}
     end
@@ -120,7 +128,11 @@ defmodule Relyra.Security.XML.SaxyTree do
   def handle_event(:start_document, _prolog, state), do: {:ok, state}
 
   @impl true
-  def handle_event(:start_element, {qname, attrs}, %{stack: stack} = state) do
+  def handle_event(
+        :start_element,
+        {qname, attrs},
+        %{stack: stack, source: source, pos: pos} = state
+      ) do
     {prefix, local} = split_qname(qname)
 
     parent_ns =
@@ -130,6 +142,19 @@ defmodule Relyra.Security.XML.SaxyTree do
       end
 
     own_ns = ns_declarations(attrs)
+
+    {start_byte, end_byte, pos} =
+      case locate_open_tag(source, pos, qname) do
+        {:ok, open_start, after_tag} ->
+          if self_closing_tag?(source, after_tag) do
+            {open_start, after_tag, after_tag}
+          else
+            {open_start, nil, after_tag}
+          end
+
+        :error ->
+          {nil, nil, pos}
+      end
 
     node = %Node{
       qname: qname,
@@ -141,20 +166,47 @@ defmodule Relyra.Security.XML.SaxyTree do
       # reversed and projected to :children/:text in finalize_node/1.
       content: [],
       children: [],
-      text: ""
+      text: "",
+      start_byte: start_byte,
+      end_byte: end_byte
     }
 
-    {:ok, %{state | stack: [node | stack]}}
+    {:ok, %{state | stack: [node | stack], pos: pos}}
   end
 
   @impl true
-  def handle_event(:characters, text, state), do: {:ok, append_text(state, text)}
+  def handle_event(:characters, text, %{source: source, pos: pos} = state) do
+    new_pos = advance_past_text(source, pos, text)
+    {:ok, append_text(%{state | pos: new_pos}, text)}
+  end
 
   @impl true
-  def handle_event(:cdata, text, state), do: {:ok, append_text(state, text)}
+  def handle_event(:cdata, text, %{source: source, pos: pos} = state) do
+    new_pos = advance_past_cdata(source, pos, text)
+    {:ok, append_text(%{state | pos: new_pos}, text)}
+  end
 
   @impl true
-  def handle_event(:end_element, _qname, %{stack: [%Node{} = node | rest]} = state) do
+  def handle_event(
+        :end_element,
+        qname,
+        %{stack: [%Node{} = node | rest], source: source, pos: pos} = state
+      ) do
+    {node, pos} =
+      case node.end_byte do
+        end_byte when is_integer(end_byte) ->
+          {node, pos}
+
+        _ ->
+          case locate_close_tag(source, pos, qname) do
+            {:ok, end_byte, after_tag} ->
+              {%Node{node | end_byte: end_byte}, after_tag}
+
+            :error ->
+              {node, pos}
+          end
+      end
+
     finished = finalize_node(node)
 
     case rest do
@@ -162,10 +214,10 @@ defmodule Relyra.Security.XML.SaxyTree do
         # Prepend to the head-accumulated ORDERED content (D-09); :children is a
         # derived view recomputed once the parent finalizes.
         updated_parent = %Node{parent | content: [{:element, finished} | parent.content]}
-        {:ok, %{state | stack: [updated_parent | tail]}}
+        {:ok, %{state | stack: [updated_parent | tail], pos: pos}}
 
       [] ->
-        {:ok, %{state | stack: [], root: finished}}
+        {:ok, %{state | stack: [], root: finished, pos: pos}}
     end
   end
 
@@ -251,5 +303,154 @@ defmodule Relyra.Security.XML.SaxyTree do
     text
     |> String.replace("\r\n", "\n")
     |> String.replace("\r", "\n")
+  end
+
+  # --- wire-format byte span tracking ---------------------------------------
+
+  defp locate_open_tag(source, pos, qname) do
+    needle = "<" <> qname
+    rest = binary_part(source, pos, byte_size(source) - pos)
+
+    case :binary.match(rest, needle) do
+      {rel_start, _} ->
+        open_start = pos + rel_start
+        after_name = open_start + byte_size(needle)
+
+        case byte_size(source) > after_name && :binary.at(source, after_name) do
+          char when char in [?\s, ?>, ?/, ?\t, ?\n, ?\r] ->
+            case scan_to_tag_close(source, after_name) do
+              {:ok, after_tag} -> {:ok, open_start, after_tag}
+              :error -> :error
+            end
+
+          _ ->
+            :error
+        end
+
+      :nomatch ->
+        :error
+    end
+  end
+
+  defp locate_close_tag(source, pos, qname) do
+    needle = "</" <> qname
+    rest = binary_part(source, pos, byte_size(source) - pos)
+
+    case :binary.match(rest, needle) do
+      {rel_start, _} ->
+        close_start = pos + rel_start
+        after_name = close_start + byte_size(needle)
+
+        case byte_size(source) > after_name && :binary.at(source, after_name) do
+          char when char in [?\s, ?>, ?\t, ?\n, ?\r] ->
+            case scan_to_tag_close(source, after_name) do
+              {:ok, after_tag} -> {:ok, after_tag, after_tag}
+              :error -> :error
+            end
+
+          _ ->
+            :error
+        end
+
+      :nomatch ->
+        :error
+    end
+  end
+
+  defp self_closing_tag?(source, after_tag) when after_tag >= 2 do
+    :binary.at(source, after_tag - 2) == ?/
+  end
+
+  defp self_closing_tag?(_source, _after_tag), do: false
+
+  defp scan_to_tag_close(source, pos) when pos >= byte_size(source), do: :error
+
+  defp scan_to_tag_close(source, pos) do
+    scan_to_tag_close(source, pos, false, ?")
+  end
+
+  defp scan_to_tag_close(source, pos, _in_quote, _quote_char) when pos >= byte_size(source),
+    do: :error
+
+  defp scan_to_tag_close(source, pos, in_quote, quote_char) do
+    <<char, _rest::binary>> = binary_part(source, pos, byte_size(source) - pos)
+
+    cond do
+      not in_quote and char == ?> ->
+        {:ok, pos + 1}
+
+      not in_quote and char in [?", ?'] ->
+        scan_to_tag_close(source, pos + 1, true, char)
+
+      in_quote and char == quote_char ->
+        scan_to_tag_close(source, pos + 1, false, ?")
+
+      true ->
+        scan_to_tag_close(source, pos + 1, in_quote, quote_char)
+    end
+  end
+
+  defp advance_past_text(source, pos, text) do
+    rest = binary_part(source, pos, byte_size(source) - pos)
+
+    case :binary.match(rest, text) do
+      {0, len} ->
+        pos + len
+
+      _ ->
+        case consume_normalized_text(source, pos, text) do
+          {:ok, new_pos} -> new_pos
+          :error -> pos + byte_size(text)
+        end
+    end
+  end
+
+  defp advance_past_cdata(source, pos, text) do
+    rest = binary_part(source, pos, byte_size(source) - pos)
+    marker = "<![CDATA["
+
+    case :binary.match(rest, marker) do
+      {rel_start, _} ->
+        cdata_start = pos + rel_start + byte_size(marker)
+
+        case :binary.match(
+               binary_part(source, cdata_start, byte_size(source) - cdata_start),
+               "]]>"
+             ) do
+          {rel_end, end_len} ->
+            cdata_start + rel_end + end_len
+
+          :nomatch ->
+            advance_past_text(source, pos, text)
+        end
+
+      :nomatch ->
+        advance_past_text(source, pos, text)
+    end
+  end
+
+  defp consume_normalized_text(source, pos, target) do
+    consume_normalized_text(source, pos, target, "")
+  end
+
+  defp consume_normalized_text(source, pos, target, acc) when pos >= byte_size(source) do
+    if normalize_line_endings(acc) == target, do: {:ok, pos}, else: :error
+  end
+
+  defp consume_normalized_text(source, pos, target, acc) do
+    <<char, _rest::binary>> = binary_part(source, pos, byte_size(source) - pos)
+    next_acc = acc <> <<char>>
+    normalized = normalize_line_endings(next_acc)
+
+    cond do
+      normalized == target ->
+        {:ok, pos + 1}
+
+      String.starts_with?(target, normalized) ->
+        consume_normalized_text(source, pos + 1, target, next_acc)
+
+      true ->
+        :error
+    end
   end
 end
