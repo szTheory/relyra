@@ -22,7 +22,7 @@ Requirements for this milestone. Each maps to one roadmap phase.
 
 ### Login Trace LiveView (Wedge 2)
 
-- [ ] **TRACE-01**: Stepwise login-trace LiveView mounted at `/relyra/admin/connections/:connection_id/trace`. Shows the last N logins for that connection, each expandable into the eight telemetry-span outcomes (decode → validate → signature → replay → user_map → session_establish), each step labelled with `:outcome`, `:error_code` (if any), and post-mapping role/attribute result. Reuses the existing telemetry catalog and audit ledger; no new schemas. Mounted via the existing LiveAdmin scaffold.
+- [x] **TRACE-01**: Stepwise login-trace LiveView mounted at `/relyra/admin/connections/:connection_id/trace`. Shows the last N logins for that connection, each expandable into the eight telemetry-span outcomes (decode → validate → signature → replay → user_map → session_establish), each step labelled with `:outcome`, `:error_code` (if any), and post-mapping role/attribute result. Reuses the existing telemetry catalog and audit ledger; no new schemas. Mounted via the existing LiveAdmin scaffold.
 
 - [ ] **TRACE-02**: Security gate test `test/security/login_trace_test.exs` asserts the trace LiveView never renders raw XML, PEM, base64 cert bodies, signature values, or key material — extending the redaction discipline already enforced by `diagnostic/allow_list.ex`. Wired into `mix ci.security` as its own `cmd mix test` line (Phase 30 hollow-gate invariant preserved).
 
@@ -83,7 +83,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | PUB-02      | 43    | Pending |
 | PUB-03      | 44    | Pending |
 | PUB-04      | 45    | Pending |
-| TRACE-01    | 42    | Pending |
+| TRACE-01    | 42    | Complete |
 | TRACE-02    | 42    | Pending |
 | TRACE-03    | 42    | Pending |
 | DX-01       | 46    | Pending |
