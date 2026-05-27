@@ -28,6 +28,8 @@ defmodule Relyra.Protocol.DecryptAssertionTest do
 
   alias Relyra.Error
   alias Relyra.Protocol.ValidationPipeline
+  alias Relyra.Security.XML.SaxyTree
+  alias Relyra.Security.XML.SaxyTree.Node
   alias Relyra.TestSupport.FakeIdP
 
   @fixed_now ~U[2026-04-24 16:00:00Z]
@@ -127,6 +129,12 @@ defmodule Relyra.Protocol.DecryptAssertionTest do
     |> String.trim()
   end
 
+  defp find_encrypted_assertion(%Node{local: "EncryptedAssertion"} = node), do: node
+
+  defp find_encrypted_assertion(%Node{children: children}) do
+    Enum.find_value(children, &find_encrypted_assertion/1)
+  end
+
   setup do
     keypair = FakeIdP.keypair()
 
@@ -223,6 +231,31 @@ defmodule Relyra.Protocol.DecryptAssertionTest do
 
       assert {:error, %Error{type: :ambiguous_assertion}} =
                ValidationPipeline.run(xml, nil, connection(), now: @fixed_now)
+    end
+  end
+
+  describe "tree-bound EncryptedAssertion byte spans (TD-03 span fidelity)" do
+    test "parse-tree span slice equals the wire-format EncryptedAssertion element" do
+      for {label, enc_block} <- [
+            {"unprefixed", garbage_encrypted_assertion()},
+            {"prefixed", garbage_encrypted_assertion("saml")}
+          ] do
+        xml = response_with(enc_block)
+        {:ok, root} = SaxyTree.parse(xml)
+        %Node{start_byte: start_byte, end_byte: end_byte} = find_encrypted_assertion(root)
+
+        assert is_integer(start_byte), "expected non-nil start_byte for #{label} fixture"
+        assert is_integer(end_byte), "expected non-nil end_byte for #{label} fixture"
+        assert end_byte > start_byte
+
+        slice = binary_part(xml, start_byte, end_byte - start_byte)
+
+        assert slice == enc_block,
+               "tree-bound slice must match the verbatim EncryptedAssertion wire bytes (#{label})"
+
+        assert {:error, %Error{type: :decryption_failed}} =
+                 ValidationPipeline.run(xml, nil, connection(), now: @fixed_now)
+      end
     end
   end
 end
