@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: — Adoption Truth
-status: Defining requirements
-last_updated: "2026-05-27T21:47:01.407Z"
-last_activity: 2026-05-27 — Milestone v1.6 Adoption Truth started
+status: Ready for planning
+last_updated: "2026-05-27T23:30:00.000Z"
+last_activity: 2026-05-27 — Phase 47 context gathered (assumptions mode)
 progress:
   total_phases: 3
   completed_phases: 0
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 47 — Onboarding truth (context gathered)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-27 — Milestone v1.6 Adoption Truth started
+Status: Ready for planning
+Last activity: 2026-05-27 — Phase 47 context gathered (assumptions mode)
 
 ## Performance Metrics
 
@@ -67,4 +67,4 @@ Last activity: 2026-05-27 — Milestone v1.6 Adoption Truth started
 
 ## Session Continuity
 
-**2026-05-27 — v1.6 milestone initialized.** User confirmed scope via `/gsd-new-milestone v1.6 Adoption Truth`. Requirements and roadmap (Phases 47-49) defined. Research skipped (doc-only; no new domain capabilities). Ready for `/gsd-discuss-phase 47` or `/gsd-plan-phase 47`.
+**2026-05-27 — Phase 47 context gathered.** Assumptions mode; all assumptions confirmed without correction. Resume: `.planning/phases/47-onboarding-truth-getting-started-production-ecto-path/47-CONTEXT.md`. Next: `/gsd-plan-phase 47`.
