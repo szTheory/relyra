@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: — Publish, Prove, Polish
 status: completed
-last_updated: "2026-05-27T19:59:30.895Z"
+last_updated: "2026-05-27T20:15:00.000Z"
 last_activity: 2026-05-27
 progress:
   total_phases: 6
@@ -20,13 +20,13 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 42 — stepwise-login-trace-liveview
+**Current focus:** Phase 43 — hex-publish-prep-version-bump-changelog-backfill
 
 ## Current Position
 
 Phase: 43
 Plan: Not started
-Status: Phase 42 complete — ready for Phase 43 (Hex publish prep)
+Status: Phase 43 context gathered (assumptions mode) — ready for `/gsd-plan-phase 43`
 Last activity: 2026-05-27
 
 ## Performance Metrics
@@ -149,6 +149,8 @@ Items acknowledged and deferred at milestone close:
 - **CVE ID backfill into `docs/advisories/2026-001-...`:** Pending async GitHub assignment.
 
 ## Session Continuity
+
+**2026-05-27 — Phase 43 context gathered (assumptions mode).** Generated `43-CONTEXT.md` locking version bump (`mix.exs` + `.release-please-manifest.json` → `1.4.0`), `getting_started.md` pin `~> 1.4`, hand-written `[1.3.0]`/`[1.4.0]` CHANGELOG backfill (milestone summaries, not release-please dump), single-jump rationale, single release-prep commit packaging, and explicit deferral of git tag + Hex publish to Phase 44. Ready for `/gsd-plan-phase 43`.
 
 **2026-05-27 — v1.5 roadmap reordered.** Phase 42 and Phase 45 swapped after user review: trace LiveView is now Phase 42 (was 45) and sequenced before publish prep (Phase 43, was 42), so the trace UI ships in the v1.4.0 Hex tarball by construction — no separate coordination needed. New linear order: 41 (tech-debt sweep) → 42 (trace LiveView) → 43 (version + CHANGELOG) → 44 (release-please publish) → 45 (parity verify) → 46 (DX). Phase 41 still must complete first because TD-02 (test_support prod exclusion) is load-bearing for the published 1.4.0 tarball — if test_support shipped in 1.4.0, parity verification (45) would still pass but the tarball itself would be wrong. Ready for `/gsd:plan-phase 41`.
 
