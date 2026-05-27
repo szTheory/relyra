@@ -42,7 +42,22 @@ defmodule Relyra.MixProject do
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(:prod), do: prod_elixirc_paths()
   defp elixirc_paths(_), do: ["lib"]
+
+  # Production compiles an explicit lib/**/*.ex list omitting test_support (Mix accepts file paths).
+  defp prod_elixirc_paths do
+    Path.wildcard("lib/**/*.ex")
+    |> Enum.reject(&String.contains?(&1, "test_support"))
+    |> Enum.sort()
+  end
+
+  defp package_lib_files do
+    Path.wildcard("lib/**/*")
+    |> Enum.reject(&String.contains?(&1, "test_support"))
+    |> Enum.filter(&File.regular?/1)
+    |> Enum.sort()
+  end
 
   # Run "mix help compile.app" to learn about applications.
   def application do
@@ -84,7 +99,6 @@ defmodule Relyra.MixProject do
         "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
       },
       files: [
-        "lib",
         "priv",
         "docs",
         "guides",
@@ -98,7 +112,7 @@ defmodule Relyra.MixProject do
         "SECURITY_REVIEW.md",
         "SECURITY_REVIEW_EVIDENCE.md",
         "BATTERIES_INCLUDED.md"
-      ]
+      ] ++ package_lib_files()
     ]
   end
 
