@@ -3,7 +3,6 @@ defmodule Relyra.Security.LogoutValidatorTest do
 
   alias Relyra.Security.LogoutValidator
   alias Relyra.Error
-  alias Relyra.ReplayStore
   alias Relyra.TestSupport.FakeIdP
 
   @issuer "https://idp.example.com/metadata"

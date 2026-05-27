@@ -3,7 +3,6 @@ defmodule Relyra.Protocol.LogoutResponseTest do
 
   alias Relyra.Protocol.LogoutResponse
   alias Relyra.Security.XML.SaxyTree
-  alias Relyra.Security.XML.SaxyTree.Node
 
   @connection %{
     idp_slo_url: "https://idp.example.com/slo",

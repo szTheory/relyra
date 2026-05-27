@@ -115,9 +115,13 @@ defmodule Relyra.Conformance.SPConformanceTest do
          "id" => "sp-logout-request-build",
          "input" => %{"connection" => connection, "subject" => subject}
        }) do
-    subject = Map.put(subject, :session_index, Map.get(subject, "session_index"))
+    opts = [
+      now: @fixed_now,
+      name_id: Map.get(subject, "name_id"),
+      session_index: Map.get(subject, "session_index")
+    ]
 
-    assert {:ok, logout_request} = LogoutRequest.build(connection, subject, now: @fixed_now)
+    assert {:ok, logout_request} = LogoutRequest.build(connection, subject, opts)
     assert logout_request.issue_instant == "2026-04-24T16:00:00Z"
 
     assert LogoutRequest.to_xml(logout_request) =~

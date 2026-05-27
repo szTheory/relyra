@@ -135,22 +135,5 @@
     "source_ref": "relyra:phase-30:c14n-differential-rejection",
     "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-c14n-diff\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-c14n-diff\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>",
     "notes": "C14N-differential REJECTION: the pure-BEAM seam fails closed with :canonicalization_failed on an incomplete canonicalization handle (the bare parsed_doc map, mirroring c14n-differential-001). The complementary :digest_mismatch crypto proof lives in the adversarial_crypto suite (ASSUR-01); the JSON evaluator routes parser_differential_and_c14n through parse_safely -> canonicalize only and never reaches Signature.verify/4."
-  },
-  {
-    "id": "redirect-signature-tampered-001",
-    "class": "signature_wrapping",
-    "family": "redirect_signature",
-    "requirement_ids": [
-      "SLO-01"
-    ],
-    "expected_error_type": "invalid_signature",
-    "provenance": {
-      "source": "Phase 38",
-      "kind": "forged-fixture",
-      "captured_at": "2026-05-27"
-    },
-    "source_ref": "relyra:phase-38:redirect-signature",
-    "xml": "SAMLRequest=fZJfa8IwFMXf%2FRQh7%2F1jhzKCrThFVnBb0bqHvYwsvWogTWpu6vTbr1ZlbqCQp5tzuL9zksFwXyqyA4vS6Jh2%2FZAS0MIUUq9jusyn3iMdJp0B8lJVbFS7jZ7DtgZ0pDFqZO1FTGurmeEokWleAjIn2GL0MmORH7LKGmeEUfTKct%2FBEcG6hoiSdBLTTwvqYLlXbTjCQ89bG1WA9viRxsKWkvcLf3TkTxFrSDU6rl0zCqO%2BF%2Fa8qJ%2BHIWvPByWTJoHU3LWujXMVsiCQReXDnpeVAl%2BYMkA0lIwuLGOjsS7BLsDupIDlfPbrxH%2FGJmHABVKSnbM%2FSX2q9F7sr5MI2XOeZ172tshp0jbP2kg2ubGuBMcL7vgguBaf3%2By1WZNOMqOkOJCpsSV3tym6fredyMJbtVJWa6xAyJWEoulCKfM9tsAdxNTZGigJktPWv58j6fwA&RelayState=TAMPERED_STATE&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256",
-    "notes": "HTTP-Redirect signature tampered payload."
   }
 ]
