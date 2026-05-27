@@ -47,7 +47,14 @@
 
 ## Corrections Made
 
-No corrections — all assumptions confirmed via "Yes, proceed".
+### Persistence model (post-discussion refinement)
+- **Original assumption:** `:login` audit domain (confirmed at discuss-phase).
+- **Refinement:** Rejected `cause: "login_trace"` on existing domains after deep research (audit timeline pollution, LiveAdmin filter mismatch, lifecycle action misuse).
+- **Locked additions:** `:succeeded`/`:failed` actions; `cause` for flow context only; default-on LoginTrace handler; exclude `:login` from connection-detail audit preload.
+
+## Initial confirmation
+
+All baseline assumptions confirmed via "Yes, proceed" before persistence refinement.
 
 ## Auto-Resolved
 
