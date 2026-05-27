@@ -59,18 +59,29 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ADOPT-01 | 47 | Complete |
-| ADOPT-02 | 47 | Complete |
-| ADOPT-03 | 48 | Complete |
+| ADOPT-01 | 47 (+ 49.1 polish) | Complete |
+| ADOPT-02 | 47 (+ 49.1 polish) | Complete |
+| ADOPT-03 | 48 (+ 49.1 polish) | Complete |
 | ADOPT-04 | 49 | Complete |
 | ADOPT-05 | 49 | Complete |
 | ADOPT-06 | 49 | Complete |
+
+### Gap Closure (v1.6 audit)
+
+| Closure item | Phase | Status | Audit source |
+|--------------|-------|--------|--------------|
+| Ecto path → Day-2 ops forward handoff | 49.1 | Pending | integration 47→48; flow "Adopter onboarding" |
+| README / jtbd_user_flows cross-link alignment | 49.1 | Pending | tech_debt milestone-cross-cutting |
+| Getting Started §5 `#evidence-surfaces` anchor | 49.1 | Pending | tech_debt phase-48 |
+| Phase 47 Nyquist VALIDATION.md | 49.2 | Pending | nyquist missing_phases: 47 |
+| Editorial skim (playbook, jtbd_gap_map, SiteMinder) | 49.2 | Pending | tech_debt phases 48-49 |
 
 **Coverage:**
 
 - v1.6 requirements: 6 total
 - Mapped to phases: 6/6 ✓
 - Unmapped: 0
+- Gap closure phases: 2 (49.1, 49.2) — 5 closure items pending
 
 **Phase ↔ Requirement summary:**
 
@@ -79,7 +90,9 @@ Explicitly excluded. Documented to prevent scope creep.
 | 47 | Onboarding truth — Getting Started & production Ecto path | ADOPT-01, ADOPT-02 | 2 |
 | 48 | Operator completeness — incident playbook trace tools | ADOPT-03 | 1 |
 | 49 | Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | ADOPT-04, ADOPT-05, ADOPT-06 | 3 |
+| 49.1 | Close v1.6 audit doc handoff gaps (INSERTED) | ADOPT-01, ADOPT-02, ADOPT-03 (polish) | — |
+| 49.2 | v1.6 Nyquist retro + editorial polish (INSERTED) | — | — |
 
 ---
 *Requirements defined: 2026-05-27*
-*Last updated: 2026-05-27 after milestone v1.6 roadmap creation*
+*Last updated: 2026-05-27 after v1.6 gap closure phases 49.1-49.2 added*

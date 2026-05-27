@@ -13,7 +13,7 @@
 - ✅ **v1.3 — Advanced Federation** (shipped 2026-05-27). See `.planning/milestones/v1.3-ROADMAP.md`.
 - ✅ **v1.4 — Full SLO + Ops Polish** (shipped 2026-05-27). See `.planning/milestones/v1.4-ROADMAP.md`.
 - ✅ **v1.5 — Publish, Prove, Polish** (shipped 2026-05-27). See `.planning/milestones/v1.5-ROADMAP.md`.
-- ✅ **v1.6 — Adoption Truth** — Phases 47-49 (shipped 2026-05-27).
+- 🔄 **v1.6 — Adoption Truth** — Phases 47-49 shipped 2026-05-27; Phases 49.1-49.2 gap closure in progress.
 
 ## Phases
 
@@ -101,17 +101,19 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 
 </details>
 
-### ✅ v1.6 — Adoption Truth (Shipped 2026-05-27)
+### 🔄 v1.6 — Adoption Truth (Phases 47-49 shipped; gap closure 49.1-49.2)
 
 **Milestone Goal:** Close the gap between codebase strength and adopter-facing documentation — onboarding, production Ecto path, ops trace tools, CONFORMANCE honesty, planning-doc refresh, preset taxonomy alignment. **No new SAML protocol surface area.** Full assessment: `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`.
 
-**Phase numbering:** v1.5 ended at Phase 46; v1.6 continues at Phase **47**.
+**Phase numbering:** v1.5 ended at Phase 46; v1.6 continues at Phase **47**. Gap closure phases **49.1** and **49.2** inserted after Phase 49 per `.planning/v1.6-MILESTONE-AUDIT.md`.
 
 **Summary checklist:**
 
 - [x] **Phase 47: Onboarding truth — Getting Started & production Ecto path** — TestSupport macro pattern for first browser login; production Ecto path section. (completed 2026-05-27)
 - [x] **Phase 48: Operator completeness — incident playbook trace tools** — Login-trace LiveView route + `mix relyra.trace` in incident playbook tool table; Day-2 cross-links. (completed 2026-05-27)
 - [x] **Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy** — Scope boundary section, ENC manifest fix, jtbd_gap_map refresh, README/runbook taxonomy alignment. (completed 2026-05-27)
+- [ ] **Phase 49.1: Close v1.6 audit doc handoff gaps (INSERTED)** — Ecto path → Day-2 ops forward links; README/jtbd_user_flows cross-link alignment.
+- [ ] **Phase 49.2: v1.6 Nyquist retro + editorial polish (INSERTED)** — Retroactive Phase 47 VALIDATION.md; optional editorial skim per audit.
 
 ## Phase Details (v1.6)
 
@@ -155,10 +157,39 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 
 **Plans:** 3/3 plans complete
 
+### Phase 49.1: Close v1.6 audit doc handoff gaps (INSERTED)
+
+**Goal:** Close the integration and E2E flow gaps identified in `.planning/v1.6-MILESTONE-AUDIT.md` — adopters following `production_ecto_path.md` should forward-navigate to Day-2 ops without backtracking via Getting Started §5 or overview.
+**Depends on:** Phase 49
+**Requirements:** ADOPT-01, ADOPT-02, ADOPT-03 (integration polish — requirements satisfied; handoff incomplete)
+**Gap Closure:** Closes gaps from audit
+**Success Criteria** (what must be TRUE):
+
+1. `guides/production_ecto_path.md` ends with a **Related Day-2 guides** footer linking to incident playbook `#evidence-surfaces`, troubleshooting, and overview.
+2. README step 3 promotes TestSupport (aligned with Getting Started §3); `guides/jtbd_user_flows.md` Related docs includes `production_ecto_path.md` and incident playbook links.
+3. Getting Started §5 incident playbook link uses `#evidence-surfaces` anchor (parity with overview Day-2).
+4. `mix ci.docs` stays green.
+
+**Plans:** 0/4 plans
+
+### Phase 49.2: v1.6 Nyquist retro + editorial polish (INSERTED)
+
+**Goal:** Bring Nyquist compliance to full for v1.6 and address optional editorial tech debt from the milestone audit.
+**Depends on:** Phase 49.1 (soft — can run after handoff lands)
+**Requirements:** None (process + editorial polish)
+**Gap Closure:** Closes gaps from audit
+**Success Criteria** (what must be TRUE):
+
+1. Phase 47 has retroactive `47-VALIDATION.md` (Nyquist parity with Phases 48-49).
+2. Optional editorial skim completed or explicitly waived in VERIFICATION: playbook Scenarios 3–6 Diagnose prose; `jtbd_gap_map` persona tone; SiteMinder decoder row note.
+3. `mix ci.docs` stays green if doc edits land.
+
+**Plans:** 0/3 plans
+
 ## Progress
 
 **Execution Order (v1.6):**
-Phases execute in numeric order: 47 → 48 → 49. Phase 48 may overlap Phase 49 after Phase 47 lands.
+Phases execute in numeric order: 47 → 48 → 49 → 49.1 → 49.2. Phase 48 may overlap Phase 49 after Phase 47 lands.
 
 **Execution Order (v1.5, shipped):**
 Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace LiveView (Phase 42) now precedes publish prep (Phase 43), so the trace UI ships in the v1.4.0 Hex tarball by construction — no separate coordination required.
@@ -214,5 +245,7 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 3/3 | Complete    | 2026-05-27 |
 | 48. Operator completeness — incident playbook trace tools | v1.6 | 2/2 | Complete    | 2026-05-27 |
 | 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 3/3 | Complete    | 2026-05-27 |
+| 49.1. Close v1.6 audit doc handoff gaps (INSERTED) | v1.6 | 0/4 | Pending | — |
+| 49.2. v1.6 Nyquist retro + editorial polish (INSERTED) | v1.6 | 0/3 | Pending | — |
 
 ---

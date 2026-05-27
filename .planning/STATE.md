@@ -20,13 +20,13 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 49 — adoption-honesty-conformance-jtbd-map-preset-taxonomy
+**Current focus:** Phase 49.1 — close v1.6 audit doc handoff gaps
 
 ## Current Position
 
-Phase: 49
+Phase: 49.1
 Plan: Not started
-Status: Phase 49 complete — v1.6 Adoption Truth milestone ready for audit
+Status: v1.6 gap closure — Phases 49.1-49.2 added from milestone audit
 Last activity: 2026-05-27
 
 ## Performance Metrics
