@@ -31,5 +31,4 @@ relyra-*.tar
 # Local planning scratch files.
 .planning/tmp_*
 .planning/*.bak
-\nnode_modules/
 node_modules/
