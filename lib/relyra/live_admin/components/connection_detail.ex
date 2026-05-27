@@ -66,6 +66,20 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
             <a href={"#{@base_path}/connections/#{@detail.connection.connection_id}/metadata"} style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ccc; text-decoration: none; color: #333; border-radius: 4px;">Manage Metadata</a>
           </section>
 
+          <section style="border: 1px solid #ddd; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 style="margin-top: 0; margin-bottom: 8px;">Login Trace</h3>
+              <p style="margin: 0; color: #555;">View step-by-step outcomes for recent SAML login attempts.</p>
+            </div>
+            <a
+              data-testid="view-login-trace-link"
+              href={"#{@base_path}/connections/#{@detail.connection.connection_id}/trace"}
+              style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ccc; text-decoration: none; color: #333; border-radius: 4px;"
+            >
+              View Login Trace
+            </a>
+          </section>
+
           <section style="border: 1px solid #ddd; padding: 16px;">
             <h3 style="margin-top: 0;">Certificates</h3>
             

@@ -27,6 +27,12 @@ if Code.ensure_loaded?(Phoenix.LiveView.Router) do
               Relyra.LiveAdmin.ConnectionMetadataLive,
               :metadata
             )
+
+            live(
+              "/connections/:connection_id/trace",
+              Relyra.LiveAdmin.ConnectionTraceLive,
+              :trace
+            )
           end
         end
       end
