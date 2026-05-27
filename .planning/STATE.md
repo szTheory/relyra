@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: — Publish, Prove, Polish
-status: executing
-last_updated: "2026-05-27T19:57:55Z"
+status: completed
+last_updated: "2026-05-27T19:59:30.895Z"
 last_activity: 2026-05-27
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 9
   completed_plans: 9
-  percent: 22
+  percent: 33
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 ## Current Position
 
-Phase: 42 (stepwise-login-trace-liveview) — COMPLETE
-Plan: 4 of 4 complete (42-04)
+Phase: 43
+Plan: Not started
 Status: Phase 42 complete — ready for Phase 43 (Hex publish prep)
-Last activity: 2026-05-27 -- Completed 42-04 mix relyra.trace CLI and login trace security corpus
+Last activity: 2026-05-27
 
 ## Performance Metrics
 
