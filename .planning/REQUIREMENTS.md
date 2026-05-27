@@ -14,8 +14,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 ### Documentation & Operations
 
 - [x] **DOCS-04**: Publish `guides/recipes/logout.md` detailing when to enable SLO, session-model implications, 3rd-party cookie caveats, and absolute-timeout fallbacks.
-- [ ] **DOCS-05**: Publish `guides/operations/incident_playbook.md` providing a narrative playbook that stitches together telemetry, audit events, the LiveView admin, and Mix tasks.
-- [ ] **DOCS-06**: Publish `guides/troubleshooting.md` acting as a SAML error atom decoder, paired with an automated drift-check test to ensure the documentation matches the code's error taxonomy.
+- [x] **DOCS-05**: Publish `guides/operations/incident_playbook.md` providing a narrative playbook that stitches together telemetry, audit events, the LiveView admin, and Mix tasks.
+- [x] **DOCS-06**: Publish `guides/troubleshooting.md` acting as a SAML error atom decoder, paired with an automated drift-check test to ensure the documentation matches the code's error taxonomy.
 
 ## Traceability
 
@@ -23,8 +23,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 |-------------|-------|--------|
 | SLO-01      | Phase 38 | Complete |
 | DOCS-04     | Phase 39 | Complete |
-| DOCS-05     | Phase 40 | Pending |
-| DOCS-06     | Phase 40 | Pending |
+| DOCS-05     | Phase 40 | Complete |
+| DOCS-06     | Phase 40 | Complete |
 
 **Coverage:**
 

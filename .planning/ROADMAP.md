@@ -206,7 +206,7 @@ Plans:
 
 - [ ] **Phase 38: Single Logout (SLO) Core & Security** — SP and IdP initiated logout flows, strict signature verification, replay protection, and `SessionAdapter` extensibility for indexing.
 - [ ] **Phase 39: Logout Strategy & Operational Guidance** — Explicit operator documentation (`guides/recipes/logout.md`) detailing SLO enablement, 3rd-party cookie caveats, and absolute timeouts.
-- [ ] **Phase 40: Operational Polish & Error Taxonomy** — Error Atom Decoder, automated drift-check, and comprehensive Incident Response Playbook (`guides/operations/incident_playbook.md`).
+- [x] **Phase 40: Operational Polish & Error Taxonomy** — Error Atom Decoder, automated drift-check, and comprehensive Incident Response Playbook (`guides/operations/incident_playbook.md`). (completed 2026-05-27)
 
 ### Phase 38: Single Logout (SLO) Core & Security
 
@@ -324,6 +324,6 @@ Plans:
 | 37. Identity Mapping and Provisioning Guide | v1.3 | 2/2 | Complete    | 2026-05-26 |
 | 38. Single Logout (SLO) Core & Security | v1.4 | 2/4 | In Progress|  |
 | 39. Logout Strategy & Operational Guidance | v1.4 | 1/1 | Complete   | 2026-05-27 |
-| 40. Operational Polish & Error Taxonomy | v1.4 | 2/2 | Complete   | 2026-05-27 |
+| 40. Operational Polish & Error Taxonomy | v1.4 | 2/2 | Complete    | 2026-05-27 |
 
 ---
