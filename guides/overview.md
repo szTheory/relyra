@@ -10,10 +10,10 @@ Use this page to navigate Relyra docs by job instead of chasing footers.
 **Proof journey (in order):**
 
 1. Run `mix relyra.install --module MyApp --repo MyApp.Repo` and confirm scaffold files land in the host app.
-2. Prove local sign-in with `Relyra.TestSupport.FakeIdP` before touching a real IdP (see Getting Started §3).
+2. Prove local sign-in with the `Relyra.TestSupport` macro (`setup_saml_connection/2`, `post_saml_response/2`) and stub ACS router — see [Getting Started §3](getting_started.md#3-prove-local-login-with-testsupport).
 3. Pick exactly one first-class provider runbook (Okta, Entra, Google Workspace, or ADFS) and finish it end-to-end.
 
-Receipt: local FakeIdP proof passes, then one hosted IdP login works with a concrete operator receipt.
+Receipt: host-side test passes with `assert_saml_login/2`, then one hosted IdP login works with a concrete operator receipt.
 
 ## Day-2 — Operate in production
 
