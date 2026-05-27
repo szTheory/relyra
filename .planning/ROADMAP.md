@@ -139,7 +139,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 2. Cross-links from Getting Started Day-2 or `guides/overview.md` point to the updated playbook section.
 3. `mix ci.docs` stays green.
 
-**Plans:** TBD
+**Plans:** 2 plans (48-01 playbook tables/scenarios, 48-02 cross-doc + ci.docs)
 
 ### Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy
 
