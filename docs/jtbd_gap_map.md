@@ -9,7 +9,18 @@ This document answers a different question:
 **How complete is Relyra's user-flow map, what is still missing, and where do
 future milestones stop paying for themselves?**
 
-Last refreshed: 2026-05-23
+Last refreshed: 2026-05-27
+
+## What changed since last refresh
+
+- **v1.3:** Generic SAML runbook (`guides/recipes/generic_saml.md`), identity mapping guide
+  (`guides/identity_mapping_and_provisioning.md`), ENC-01 encrypted assertions (Phase 34).
+- **v1.4:** Logout recipe (`guides/recipes/logout.md`), incident playbook
+  (`guides/operations/incident_playbook.md`), SLO core (Phases 38–40).
+- **v1.5:** login trace LiveView + `mix relyra.trace` (Phase 42), adopter DX polish (Phase 46),
+  Hex publish (Phases 43–45).
+- **v1.6:** Onboarding truth (Getting Started, production Ecto path — Phase 47), operator trace
+  playbook wiring (Phase 48).
 
 ## Current coverage map
 
