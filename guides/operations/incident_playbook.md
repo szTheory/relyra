@@ -223,12 +223,14 @@ in logs, repeating across many login attempts in a short window.
    calls. Operators rely on `[:relyra, :saml, :replay, :check]`
    telemetry alone for replay-storm detection; the audit ledger will
    not corroborate.
-2. Diagnose — there is no admin LiveView surface for replay activity
-   in v1.4. Volume, source-IP analysis, and per-connection grouping
-   must come from your host application's log infrastructure (the
-   telemetry handler that writes structured replay events into your
-   logging stack). Use `:connection_id` in the telemetry metadata to
-   localize the storm to a single connection if possible.
+2. Diagnose — open `/relyra/admin/connections/:connection_id/trace`
+   (or `mix relyra.trace --repo MyApp.Repo --connection CONNECTION_ID`)
+   and inspect **`replay.check`** step outcomes and volume across recent
+   attempts. Replays still write no audit rows — login trace and telemetry
+   are the primary evidence surfaces for replay storms. Host log
+   infrastructure remains useful for source-IP grouping as a secondary
+   signal; use `:connection_id` in telemetry metadata to localize the
+   storm to a single connection when possible.
 3. Recover — apply host-app-level rate limiting on the ACS endpoint;
    replays are protocol-correct messages that the SAML library cannot
    refuse to receive (only refuse to accept). If the storm correlates
@@ -253,7 +255,12 @@ returning from every login attempt for a specific connection.
    failure indicates an algorithm-policy change, not a key rotation.
 2. Diagnose — open `/relyra/admin/connections/:connection_id` and
    review the signing certificate inventory; the IdP may have rotated
-   to a key Relyra does not yet trust. Run `mix relyra.diagnostic` to
+   to a key Relyra does not yet trust. Open login trace
+   (`/relyra/admin/connections/:connection_id/trace` or
+   `mix relyra.trace --repo MyApp.Repo --connection CONNECTION_ID`) and
+   inspect the **`signature.verify`** step for the exact `:error_code`
+   (`:digest_mismatch`, `:invalid_signature`, `:trust_anchor_mismatch`)
+   before or alongside cert inventory review. Run `mix relyra.diagnostic` to
    bundle the connection state plus a redacted copy of the failing
    response payload for the IdP vendor's support team. Cross-reference
    the atom decoder at
@@ -285,7 +292,11 @@ on every login for a new or freshly reconfigured connection.
    `InResponseTo` attribute against the request store.
 2. Diagnose — open `/relyra/admin/connections/:connection_id/edit` and
    verify `acs_url`, `sp_entity_id`, `idp_entity_id`, and `idp_sso_url`
-   match what the IdP's published metadata advertises. The IdP-side
+   match what the IdP's published metadata advertises. Login trace
+   **`response.validate`** step shows which field failed
+   (`:destination_mismatch`, `:recipient_mismatch`,
+   `:in_response_to_mismatch`) — use before or alongside connection edit
+   field verification. The IdP-side
    error message will reveal the mismatched value. Cross-reference
    [`../troubleshooting.md#destination_mismatch`](../troubleshooting.md#destination_mismatch)
    for the exact field semantics.
@@ -308,7 +319,9 @@ attribute set).
    `[:created, :updated]` to see recent mapping changes on the
    connection — a recent mapping edit is the most common cause.
 2. Diagnose — open `/relyra/admin/connections/:connection_id` and
-   review the mapping section plus the audit timeline. Cross-reference
+   review the mapping section plus the audit timeline. When mapping-stage
+   telemetry is insufficient, open login trace and inspect the **`user.map`**
+   step for mapper-stage outcome and error detail. Cross-reference
    [`../troubleshooting.md#invalid_audience`](../troubleshooting.md#invalid_audience)
    for the audience-mismatch case. If the issue is in the host's
    `UserMapper` callback rather than in the connection's mapping
