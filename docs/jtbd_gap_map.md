@@ -157,77 +157,38 @@ adoption gap inside the current product boundary.
 ## Biggest gaps by user and job
 
 These are the highest-value remaining JTBD gaps, ordered by expected adopter
-value rather than by protocol novelty.
+value rather than by protocol novelty. Several former top gaps are now **Shipped
+(v1.3–v1.6)** — listed first for historical context, then active gaps.
 
-### 1. First-class custom or generic SAML path
+### 1. First-class custom or generic SAML path — **Shipped (v1.3)**
 
-Why it matters:
-The current support matrix is intentionally narrow, but real SaaS teams will
-encounter Ping, ADFS, Shibboleth, Keycloak, OneLogin, and internal enterprise
-IdPs. Today the library can often support those cases technically, but the
-adoption story drops from "guided" to "you own the synthesis."
+**Artifact:** `guides/recipes/generic_saml.md` (decoder tables, minimum-safe checklist).
 
-What "done enough" looks like:
-- one generic SAML runbook
-- one explicit minimum-safe checklist
-- one clear explanation of what the adopter must supply when there is no preset
+Former priority: Highest. Closed in v1.3 Phase 36; persona reassessment in v1.6
+Phase 49 confirms **Strong** with honest non-preset caveat.
 
-Priority:
-**Highest**
+### 2. Identity mapping and provisioning story — **Shipped (v1.3)**
 
-### 2. Identity mapping and provisioning story
+**Artifact:** `guides/identity_mapping_and_provisioning.md`.
 
-Why it matters:
-Getting a valid assertion is only half the real application job. Teams still
-need help reasoning about:
+Former priority: High. Closed in v1.3 Phase 37; host-owned boundary documented.
 
-- NameID versus application identity
-- required attributes
-- account linking
-- group-to-role mapping posture
-- when to create or reject users
+### 3. Logout as an adopter workflow — **Shipped (v1.4)**
 
-What "done enough" looks like:
-- one guide that explains the host-owned identity boundary
-- example mapping patterns for common SaaS cases
-- explicit non-goals around SCIM ownership
+**Artifact:** `guides/recipes/logout.md`.
 
-Priority:
-**High**
+Former priority: Medium-high. Closed in v1.4 Phase 39.
 
-### 3. Logout as an adopter workflow, not just a protocol surface
+### 4. Operator incident and recovery playbook — **Shipped (v1.4 + v1.6)**
+
+**Artifact:** `guides/operations/incident_playbook.md` (login trace wiring Phase 48).
+
+Former priority: Medium. Closed in v1.4 Phase 40; trace tools documented Phase 48.
+
+### 5. Customer-admin self-service polish — **Partial / Medium-low**
 
 Why it matters:
-SLO support exists, but many adopters will ask a practical question:
-"what does it mean for my Phoenix app and session model?"
-
-What "done enough" looks like:
-- one doc explaining when SLO is worth enabling
-- clear warning about stateful versus stateless session implications
-- one end-to-end host integration story
-
-Priority:
-**Medium-high**
-
-### 4. Operator incident and recovery playbook
-
-Why it matters:
-The parts exist: telemetry, audit, diagnostics, refresh controls, certificate
-lifecycle. What is missing is a single narrative for "something drifted or
-broke; now what?"
-
-What "done enough" looks like:
-- one operational playbook
-- recommended first checks for common production failures
-- linkages between diagnostics, audit, telemetry, and admin UI
-
-Priority:
-**Medium**
-
-### 5. Customer-admin self-service polish
-
-Why it matters:
-This reduces support load, but only after the previous gaps are addressed.
+This reduces support load but is intentionally out of scope for a library SP.
 
 What "done enough" looks like:
 - clearer self-service setup flow
@@ -235,98 +196,69 @@ What "done enough" looks like:
 - more customer-admin-facing affordances around attributes and setup receipts
 
 Priority:
-**Medium-low**
+**Medium-low** (intentionally not a v1.6 blocker)
 
-### 6. Broader preset catalog
+### 6. Broader preset catalog — **Lower priority / demand-gated**
 
 Why it matters:
-Provider breadth is visible and useful, but it is not the highest-leverage next
-step if the generic path is still weak.
-
-What "done enough" looks like:
-- add presets only when code, runbook, field vocabulary, and proof all ship
-  together
+Four batteries-included presets plus the generic runbook cover most real-world
+cases. Additional first-class presets ship only when code, runbook, field
+vocabulary, and proof all ship together — justified by real adopter demand.
 
 Priority:
-**Lower than generic-path and identity-story work**
+**Lower / demand-gated**
 
 ## Recommended next milestones in order
 
-If future milestone planning is guided by JTBD coverage, the best order is:
+Future milestone planning should follow **demand-gated protocol and extension
+work**, not coverage-gated doc gaps (those shipped in v1.3–v1.6):
 
-### 1. Close the custom/generic SAML onboarding gap
-
-Reason:
-This unlocks a much wider real-world adoption surface without committing the
-project to a long tail of provider-specific promises.
-
-Likely outputs:
-- generic SAML runbook
-- custom-provider checklist
-- stronger support taxonomy and expectation-setting
-
-### 2. Document and sharpen the identity mapping boundary
+### 1. AUTHN-POST-01 (HTTP-POST AuthnRequest binding) — save-for-demand
 
 Reason:
-This is where many SaaS teams still make product-critical mistakes even after
-protocol validation is correct.
+Redirect binding is the default shipped path. POST binding remains out of scope
+until a real GitHub issue or adopter request materializes.
 
-Likely outputs:
-- mapping and provisioning guide
-- host-owned decision framework
-- better examples for common tenant/user linking patterns
-
-### 3. Promote logout from "implemented capability" to "adopter-ready flow"
+### 2. KMS-01 (KMS KeyResolver adapters) — save-for-demand
 
 Reason:
-The protocol work exists. The missing piece is a crisp host-app story that
-helps teams decide whether and how to use it.
+File-based and application-env key resolution covers current adopters. KMS
+adapters ship when enterprise key-management demand appears.
 
-Likely outputs:
-- SLO guide
-- session-adapter examples
-- operational caveats and receipts
-
-### 4. Package the operator incident workflow
+### 3. SIGNED-META-01 (signed metadata) — save-for-demand
 
 Reason:
-This improves production usability without broadening scope.
+Metadata import/export works unsigned today. Signed metadata is investigation
+stub only until external demand.
 
-Likely outputs:
-- operations playbook
-- common-failure troubleshooting guide
-- cross-links between telemetry, diagnostics, audit, and admin UI
-
-### 5. Re-evaluate provider expansion only after the above
+### 4. Optional polish — only on real demand
 
 Reason:
-A broader preset catalog is valuable, but only if the project can support the
-operating burden honestly.
-
-Likely outputs:
-- one or two high-demand presets, or
-- an explicit decision to invest in the generic path instead
+Case study FakeIdP reference cleanup and customer-admin workflow polish are
+worthwhile but not JTBD-coverage-gated. Pursue when a concrete adopter or
+support signal appears.
 
 ## Diminishing-returns threshold
 
 Relyra does not need to model every possible SAML situation to have a
 practically complete JTBD map.
 
-The project is close to "feature-complete enough" for user-flow coverage once
-all of the following are true:
+**v1.6 Adoption Truth criteria are MET** for doc/onboarding/ops coverage:
 
-- Day-1 onboarding is crisp for both shipped presets and generic SAML
-- Day-2 operations are understandable as one coherent production story
-- identity mapping and provisioning boundaries are documented well enough that
-  adopters stop guessing
-- logout has a clear host-app integration story
-- security and reviewer docs remain exact and current
+- Day-1 onboarding is crisp for four batteries-included presets and generic SAML
+- Day-2 operations are documented as one coherent production story (playbook +
+  login trace)
+- identity mapping and provisioning boundaries are documented
+  (`guides/identity_mapping_and_provisioning.md`)
+- logout has a clear host-app integration story (`guides/recipes/logout.md`)
+- security and reviewer docs remain exact and current (CONFORMANCE scope
+  boundary, ENC-01 manifest pass — Phase 49)
 
-After that point, most additional JTBD work becomes lower-yield:
+Remaining work is **demand-gated**, not JTBD-coverage-gated:
 
-- one more provider preset
-- one more case study variant
-- one more edge-case flow for a niche enterprise setup
+- AUTHN-POST-01, KMS-01, SIGNED-META-01 (protocol/extensions)
+- customer-admin self-service polish (intentionally out of scope)
+- one more provider preset or case study variant (only on real adopter demand)
 
 Those can still be worthwhile, but they should be justified by real adopter
 demand rather than by a desire to "cover the map."
