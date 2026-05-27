@@ -114,7 +114,7 @@ See `.planning/milestones/v1.4-ROADMAP.md`.
   3. `locate_encrypted_assertion/1` and any other detector still pairing a regex with the parse-tree are unified on the parse-tree alone; the regex-alongside-tree pattern is fully retired from the encrypted-assertion path (CLAUDE.md non-negotiable #2 "one parse path" holds without exception).
   4. `REQUIREMENTS.md` and other legacy docs no longer reference `EncryptedAttribute` in ENC-01 context (scoped to `EncryptedAssertion` only); `PROJECT.md` "What This Is" and `README.md` provider-count copy read "4 first-class presets + a generic SAML runbook covering 7 IdP families" (Ping, OneLogin, Shibboleth, Keycloak, IBM Security Verify, CyberArk, Oracle Access Manager), not "8 presets".
   5. `mix format --check-formatted` exits 0 across the full repo, including `test/security/xml/adversarial_crypto_test.exs` lines 188-200; `mix qa` (or equivalent full gate) stays green; no semantic changes introduced by the formatting fix.
-**Plans**: TBD
+**Plans**: 5 plans (41-01..41-05)
 
 ### Phase 42: Stepwise login-trace LiveView
 
