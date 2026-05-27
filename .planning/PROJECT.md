@@ -25,19 +25,31 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v1.4 shipped 2026-05-27** — Full SLO + Ops Polish. Phase 38 shipped SLO core + security (SLO-01), Phase 39 shipped the logout strategy guide (DOCS-04), Phase 40 shipped the operator incident playbook + Error Atom Decoder (DOCS-05, DOCS-06), and Phase 40.1 closed the v1.4 milestone-audit gaps: retroactive 38/39 VERIFICATIONs, `guides/recipes/logout.md` rewritten to canonical 4-arg `SessionAdapter` signatures with a host-owned-linkage subsection, and a live `test/docs/logout_recipe_drift_test.exs` wired into `ci.docs`. With v1.4 shipped, Relyra has crossed the "done-enough" line drawn in PROJECT.md: future scope is demand-gated, not coverage-gated.
 - **v1.5 shipped 2026-05-27** — Publish, Prove, Polish. Phases 41-46 complete (18/18 plans, 15/15 requirements). Hex `1.4.0` published via release-please automation; `mix verify.release_parity 1.4.0` **PASS** (path-set matches tag `v1.4.0`, zero `test_support` in tarball). Stepwise login-trace LiveView at `/relyra/admin/connections/:id/trace` plus `mix relyra.trace` headless companion (TRACE-01/02/03). Pre-publish tech-debt sweep closed (TD-01..TD-05). Adopter DX: README Okta snippet above the fold, `mix relyra.install` auto-injects `saml_routes()` when unambiguous, `guides/overview.md` job-shaped index. **Done-enough line reached:** future scope is demand-gated, not coverage-gated.
 
+## Current Milestone: v1.6 Adoption Truth
+
+**Goal:** Close the gap between codebase strength and adopter-facing documentation — no new SAML protocol surface area.
+
+**Target features:**
+- Getting Started: promote `TestSupport` macro pattern (`setup_saml_connection/2`, `post_saml_response/2`) over low-level FakeIdP snippets
+- New "Production Ecto path" section (migrations, `ConnectionResolver.Ecto`, ETS→Ecto store swap, prod replay-store warning)
+- Ops: login-trace route + `mix relyra.trace` in `guides/operations/incident_playbook.md` tool table
+- CONFORMANCE: "Scope boundary & diminishing returns" section; fix `sp-encrypted-assertions-deferred` manifest (ENC-01 shipped Phase 34)
+- Refresh `docs/jtbd_gap_map.md` to v1.5 reality
+- README / Getting Started preset taxonomy honesty (Keycloak/OneLogin decoder rows or narrowed claims)
+
+**Explicitly out of scope:** AUTHN-POST-01, KMS-01, SIGNED-META-01, new presets, HTTP-Artifact, ECP, SCIM-in-core, standalone demo app.
+
+Full assessment: `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`.
+
 ## Next Milestone Goals
 
-**Planning next milestone.** v1.5 closed the publish-and-polish gap — adopters on `{:relyra, "~> 1.4"}` now get the full v1.3/v1.4 feature surface plus login-trace UI. No active roadmap phases until `/gsd-new-milestone` defines the next scope.
+**After v1.6:** pause until external demand signal (GitHub issue, adopter request). Protocol work is demand-gated, not coverage-gated.
 
-Three demand-gated candidates remain explicitly out-of-active-scope; each has a pre-baked plan ready to ship after a real GitHub issue lands:
+**Demand-gated future candidates** (investigation threads in `.planning/threads/`; trigger = real GitHub issue):
 
-A "Scope boundary & diminishing returns" section in `CONFORMANCE.md` should record the shipping milestone arc and the explicit "no more" boundary (HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, full standalone app — all explicitly out of scope at this stage).
-
-**Demand-gated future candidates** (do NOT plan unless adoption signal materializes; assessment 2026-05-27 reconfirmed all three as save-for-demand):
-
-- **AUTHN-POST-01** — HTTP-POST binding signed AuthnRequests (enveloped XML signature + C14N). Carry-forward from v1.3.
-- **KMS-01** — KMS-native `KeyResolver` adapters (AWS KMS, GCP KMS). Carry-forward from v1.3.
-- **SIGNED-META-01** — Signed SP metadata (`EntityDescriptor`) for academic federation / InCommon. Carry-forward from v1.3.
+- **AUTHN-POST-01** — HTTP-POST binding signed AuthnRequests (enveloped XML signature + C14N). Redirect AUTHN-01 shipped Phase 35; POST deferral valid. Thread: `signed-authn-requests-investigation.md`.
+- **KMS-01** — KMS-native `KeyResolver` adapters (AWS KMS, GCP KMS). ENC-01 shipped Phase 34; KMS extension guidance in thread. Thread: `encrypted-assertions-investigation.md`.
+- **SIGNED-META-01** — Signed SP metadata (`EntityDescriptor`) + federation extensions + InCommon runbook. Investigation stub only (no plan count until triggered). Thread: `signed-sp-metadata-investigation.md`.
 
 **Known carry-forward maintenance items (low priority, surface only on need):**
 
@@ -139,7 +151,13 @@ The v1.x milestone arc closed with v1.5:
 
 <!-- Carried forward; building toward these next. -->
 
-(None — v1.5 shipped. Next scope defined via `/gsd-new-milestone`. Demand-gated candidates: AUTHN-POST-01, KMS-01, SIGNED-META-01.)
+**v1.6 Adoption Truth (doc-only):**
+- **ADOPT-01** — Getting Started promotes TestSupport macro pattern for first browser login
+- **ADOPT-02** — "Production Ecto path" guide section (migrations, resolver, stores, replay warning)
+- **ADOPT-03** — Incident playbook documents login-trace LiveView + `mix relyra.trace`
+- **ADOPT-04** — CONFORMANCE scope boundary + ENC manifest honesty (`sp_manifest.json`)
+- **ADOPT-05** — `docs/jtbd_gap_map.md` refreshed to v1.5 shipped reality
+- **ADOPT-06** — Preset taxonomy honesty (README / Getting Started / generic runbook alignment)
 
 ### Out of Scope
 
@@ -220,6 +238,8 @@ The v1.x milestone arc closed with v1.5:
 | **v0.5: closure-phase pattern extended (21.1 → INT-01 BLOCKER closure, 21.2 → audit-gap + scope-rescope closure)** | When an audit surfaces a BLOCKER + scope drift, prefer producing closure phases over re-opening implementation. Phase 21.1 closed the security-adjacent BLOCKER; Phase 21.2 closed the doc/scope gaps. Cleaner audit trail; smaller blast radius; milestone audit re-runs cleanly. | ✓ Good (closed v0.5 audit gaps without re-opening Phase 20 or Phase 21; pattern reusable for v0.6+) |
 | **v1.1 Phase 28: pure-BEAM exclusive-C14N proven correct via a committed golden-byte oracle** | ADR-0001 mandated pure-BEAM canonicalization; correctness on the auth boundary demanded independent proof, not self-assertion. A `saxy` parse tree replaced regex string-scanning (one trust path, D-04), and the hand-rolled C14N engine reproduces libxml2/xmlsec1's 887-byte exclusive-C14N output byte-for-byte (cross-checked across two libxml2 builds; the Elixir engine is the third agreeing implementation). CI stays pure-Elixir against committed bytes (D-12); the verified signature is bound to the exact node consumed (D-10, anti-XSW). | ✓ Good (Phase 28; SIGV-03 verified 2026-05-24. Known fail-safe limitation: mixed-content / inter-element-whitespace mis-canonicalizes → rejection never bypass; tracked as the first Phase 29 follow-up) |
 | **Assessment 2026-05-27: v1.x done-enough verdict re-confirmed; next milestone is publish+polish, not new protocol** | Adopter-first assessment with parallel candidate research (AUTHN-POST-01 / KMS-01 / SIGNED-META-01) and a DX audit through the lens of a Phoenix SaaS adopter. All three demand-gated candidates verdict = save-for-demand (zero adopter pull, all tractable when needed; pre-baked plans retained in `.planning/threads/`). The single high-leverage finding is **Hex publishing lag**: mix.exs at 1.2.0 while git/PROJECT.md say v1.4 — Hex audience cannot see v1.3 or v1.4 features. Brand-defining gap also surfaced: no stepwise login-trace LiveView for the "every login explains itself" promise. Recommended single pick: **v1.5 polish milestone** bundling Hex publish + trace LiveView + README/installer ergonomics + warning-level tech-debt sweep. ~1 week. After v1.5: pause until external demand signal. | ✓ Good (v1.5 shipped 2026-05-27; Hex 1.4.0 live, trace UI shipped, tech-debt sweep closed; pause until demand signal) |
+| **Assessment 2026-05-27 (post-v1.5): done-enough at ~92–95%; pause default; optional v1.6 Adoption Truth doc wedge** | Post-v1.5 adopter-first milestone-next assessment. Protocol-feature complete; Hex current; remaining delta is IMPORTANT-BUT-NARROW doc/onboarding (Ecto path, TestSupport macro, trace in ops docs, CONFORMANCE honesty) not foundational protocol. All three demand-gated candidates remain save-for-demand. SIGNED-META-01 has investigation stub only (not full pre-baked plan). Rational default: wait for GitHub issue. Optional v1.6 closes adoption-truth asymmetry without new SAML surface area. | ✓ Good (assessment recorded in `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`; user chose v1.6 via `/gsd-new-milestone` 2026-05-27) |
+| **v1.6 Adoption Truth = doc-only wedge at done-enough line** | No new protocol bindings, presets, or crypto. Closes adoption-truth asymmetry (code stronger than onboarding story) via Getting Started, production Ecto path, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy alignment. ~1 week. After v1.6: pause until demand signal. | — Pending (milestone started 2026-05-27) |
 
 ## Evolution
 
@@ -239,4 +259,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-27 after v1.5 milestone — Publish, Prove, Polish shipped (Phases 41-46). Hex 1.4.0 live; login-trace UI + CLI; 15/15 requirements verified. Planning next milestone.*
+*Last updated: 2026-05-27 — milestone v1.6 Adoption Truth started (doc-only; phases 47+). See `.planning/REQUIREMENTS.md` and `.planning/ROADMAP.md`.*

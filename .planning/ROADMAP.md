@@ -13,6 +13,7 @@
 - ✅ **v1.3 — Advanced Federation** (shipped 2026-05-27). See `.planning/milestones/v1.3-ROADMAP.md`.
 - ✅ **v1.4 — Full SLO + Ops Polish** (shipped 2026-05-27). See `.planning/milestones/v1.4-ROADMAP.md`.
 - ✅ **v1.5 — Publish, Prove, Polish** (shipped 2026-05-27). See `.planning/milestones/v1.5-ROADMAP.md`.
+- 🚧 **v1.6 — Adoption Truth** — Phases 47-49 (in progress).
 
 ## Phases
 
@@ -100,9 +101,66 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 
 </details>
 
+### 🚧 v1.6 — Adoption Truth (In Progress)
+
+**Milestone Goal:** Close the gap between codebase strength and adopter-facing documentation — onboarding, production Ecto path, ops trace tools, CONFORMANCE honesty, planning-doc refresh, preset taxonomy alignment. **No new SAML protocol surface area.** Full assessment: `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`.
+
+**Phase numbering:** v1.5 ended at Phase 46; v1.6 continues at Phase **47**.
+
+**Summary checklist:**
+
+- [ ] **Phase 47: Onboarding truth — Getting Started & production Ecto path** — TestSupport macro pattern for first browser login; production Ecto path section.
+- [ ] **Phase 48: Operator completeness — incident playbook trace tools** — Login-trace LiveView route + `mix relyra.trace` in incident playbook tool table.
+- [ ] **Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy** — Scope boundary section, ENC manifest fix, jtbd_gap_map refresh, README/runbook taxonomy alignment.
+
+## Phase Details (v1.6)
+
+### Phase 47: Onboarding truth — Getting Started & production Ecto path
+
+**Goal:** A new adopter follows Getting Started from install to first verified browser login using the `TestSupport` macro pattern, then can find a single authoritative production Ecto deployment path without reading source.
+**Depends on:** Nothing (entry phase for v1.6).
+**Requirements:** ADOPT-01, ADOPT-02
+**Success Criteria** (what must be TRUE):
+
+1. `guides/getting_started.md` links to and explains `setup_saml_connection/2` and `post_saml_response/2` (from `test/test_support_demo_test.exs`) as the recommended first-login path; the low-level FakeIdP PEM/signing walkthrough is demoted or moved to an appendix.
+2. A **"Production Ecto path"** section exists (in Getting Started or a linked guide wired into `guides/overview.md` Day-2) covering migrations, `ConnectionResolver.Ecto`, ETS→Ecto RequestStore/ReplayStore swap, and the production replay-store warning.
+3. `mix ci.docs` stays green after doc changes (presence guards + any new drift tests follow Phase 30 `cmd mix test` pattern if added).
+
+**Plans:** TBD
+
+### Phase 48: Operator completeness — incident playbook trace tools
+
+**Goal:** An operator running the incident playbook knows when to open the login-trace LiveView or run `mix relyra.trace` without discovering those tools only from source or v1.5 release notes.
+**Depends on:** Phase 47 (onboarding docs should reference trace for Day-2 debugging; soft dependency).
+**Requirements:** ADOPT-03
+**Success Criteria** (what must be TRUE):
+
+1. `guides/operations/incident_playbook.md` tool/surface table includes `/relyra/admin/connections/:id/trace` and `mix relyra.trace --connection ID --last N` with when-to-use notes tied to at least two of the six playbook scenarios.
+2. Cross-links from Getting Started Day-2 or `guides/overview.md` point to the updated playbook section.
+3. `mix ci.docs` stays green.
+
+**Plans:** TBD
+
+### Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy
+
+**Goal:** External-facing honesty catches up to shipped code — CONFORMANCE records the done-enough boundary, the conformance manifest reflects ENC-01, internal planning docs stop claiming missing features, and preset taxonomy is consistent across README, Getting Started, and the generic SAML runbook.
+**Depends on:** Phases 47-48 (soft — can run in parallel if doc authors coordinate).
+**Requirements:** ADOPT-04, ADOPT-05, ADOPT-06
+**Success Criteria** (what must be TRUE):
+
+1. `CONFORMANCE.md` contains a **"Scope boundary & diminishing returns"** section with explicit out-of-scope list; `priv/conformance/sp_manifest.json` no longer marks encrypted assertions as deferred when ENC-01 is shipped.
+2. `docs/jtbd_gap_map.md` reflects v1.5 shipped state (incident playbook, generic runbook, login trace, ENC, SLO) with no stale "missing" rows for shipped features.
+3. README, Getting Started §4 (or equivalent), and `guides/recipes/generic_saml.md` agree on preset taxonomy — Keycloak/OneLogin either appear in the decoder table or are removed from over-broad README claims.
+4. `mix ci.conformance` (or equivalent manifest gate) stays green with the updated ENC row.
+
+**Plans:** TBD
+
 ## Progress
 
-**Execution Order:**
+**Execution Order (v1.6):**
+Phases execute in numeric order: 47 → 48 → 49. Phase 48 may overlap Phase 49 after Phase 47 lands.
+
+**Execution Order (v1.5, shipped):**
 Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace LiveView (Phase 42) now precedes publish prep (Phase 43), so the trace UI ships in the v1.4.0 Hex tarball by construction — no separate coordination required.
 
 | Phase | Milestone | Plans | Status | Completed |
@@ -153,5 +211,8 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 44. Release-please pipeline diagnosis & v1.4.0 Hex publish | v1.5 | 3/3 | Complete    | 2026-05-27 |
 | 45. Post-publish parity verification | v1.5 | 2/2 | Complete    | 2026-05-27 |
 | 46. Adopter DX & ergonomics | v1.5 | 3/3 | Complete    | 2026-05-27 |
+| 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 0/? | Not started | — |
+| 48. Operator completeness — incident playbook trace tools | v1.6 | 0/? | Not started | — |
+| 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 0/? | Not started | — |
 
 ---

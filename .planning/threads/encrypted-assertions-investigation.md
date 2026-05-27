@@ -1,8 +1,8 @@
 # Investigation: Encrypted Assertions (EncryptedAssertion / XML-Enc)
 
-Status: OPEN — researched 2026-05-25; not yet in a milestone
-Priority: High (B1 from Strategic Assessment 2026-05-23)
-Depends: v1.1 XMLDSig verification (DONE — v1.2.0)
+Status: PARTIAL — ENC-01 shipped Phase 34 (2026-05-25); KMS-01 extension guidance still save-for-demand
+Priority: Low (demand-gated — KMS-01 only)
+Depends: v1.1 XMLDSig verification (DONE); ENC-01 pipeline (DONE — Phase 34)
 
 ## Technical approach
 

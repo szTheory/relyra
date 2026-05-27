@@ -1,6 +1,6 @@
 # Investigation: v1.5 Polish Milestone — "Publish, prove, polish"
 
-Status: OPEN — assessment 2026-05-27, post v1.4 ship; NOT YET in a milestone
+Status: COMPLETE — v1.5 shipped 2026-05-27 (Phases 41-46, Hex 1.4.0 live)
 Priority: HIGH (highest-leverage non-feature work)
 Depends: nothing (all wedges are self-contained)
 

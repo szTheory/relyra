@@ -1,8 +1,8 @@
 # Investigation: Signed AuthnRequests (WantAuthnRequestsSigned)
 
-Status: OPEN — researched 2026-05-25; not yet in a milestone
-Priority: Medium-High (B3 from Strategic Assessment 2026-05-23)
-Depends: v1.1 XMLDSig (DONE — signing primitives exist); encrypted assertions B1 (recommended to ship first)
+Status: PARTIAL — redirect AUTHN-01 shipped Phase 35 (2026-05-26); POST deferral (AUTHN-POST-01) still save-for-demand
+Priority: Low (demand-gated — save-for-demand)
+Depends: v1.1 XMLDSig (DONE); redirect signing (DONE — Phase 35); encrypted assertions (DONE — Phase 34)
 
 ## Technical approach
 
