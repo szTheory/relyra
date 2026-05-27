@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Full SLO + Ops Polish
-status: Ready for /gsd-plan-phase 38
+status: Ready for /gsd-plan-phase 39
 last_updated: "2026-05-27T07:33:41.429Z"
 last_activity: 2026-05-27
 progress:
@@ -20,15 +20,15 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.4 (Full SLO + Ops Polish) — Phase 38 Single Logout Core & Security
+**Current focus:** v1.4 (Full SLO + Ops Polish) — Phase 39 Logout Strategy & Operational Guidance
 
 ## Current Position
 
-Phase: 38
+Phase: 39
 Plan: Not started
-Status: Ready for /gsd-plan-phase 38
+Status: Ready for /gsd-plan-phase 39
 Last activity: 2026-05-27
-Resume: /gsd-plan-phase 38
+Resume: /gsd-plan-phase 39
 
 Progress: [█████░░░░░] 50%
 
@@ -134,6 +134,8 @@ Items acknowledged and deferred at milestone close:
 - **CVE ID backfill into `docs/advisories/2026-001-...`:** Pending async GitHub assignment.
 
 ## Session Continuity
+
+**2026-05-27 — Phase 39 discussed.** Generated `39-CONTEXT.md` locking in the authoritative strategy for front-channel SLO caveats, Ecto-backed session requirement, and absolute-timeout fallbacks. Ready for `/gsd-plan-phase 39`.
 
 **2026-05-27 — Phase 38 planning complete.** Generated 4 execution plans covering Single Logout Core & Security, strict XML parsing, replay protection, and signature verification. Generated `38-VALIDATION.md` for goal-backward verification. Ready for `/gsd-execute-phase 38`.
 

@@ -240,7 +240,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. `guides/recipes/logout.md` is published and details explicit guidance on SLO tradeoffs and modern 3rd-party cookie blocking (Safari ITP, Firefox ETP, Chrome Privacy Sandbox).
   2. The guide provides concrete strategies for configuring host-application absolute-timeout fallbacks when SLO silently fails over the front channel.
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+
+**Wave 1**
+- [ ] 39-01-PLAN.md — SLO strategy, ITP/ETP caveats, and operational fallbacks
 
 ### Phase 40: Operational Polish & Error Taxonomy
 **Goal**: Operators can instantly decode cryptic SAML failures and have a clear playbook for incident response.
@@ -250,7 +254,11 @@ Plans:
   1. `guides/troubleshooting.md` is published, acting as an Error Atom Decoder.
   2. An automated drift-check test enforces that every `:error_type` in `Relyra.Error` has a corresponding documented entry in the troubleshooting guide.
   3. `guides/operations/incident_playbook.md` is published, outlining end-to-end response workflows that stitch together Relyra telemetry, audit trails, the LiveView admin UI, and Mix tasks.
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+
+**Wave 1**
+- [ ] 39-01-PLAN.md — SLO strategy, ITP/ETP caveats, and operational fallbacks
 **UI hint**: yes
 
 </details>
