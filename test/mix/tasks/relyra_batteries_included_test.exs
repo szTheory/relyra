@@ -17,7 +17,11 @@ defmodule Mix.Tasks.Relyra.BatteriesIncludedTest do
 
     assert report =~ "# Batteries Included Proof"
     assert report =~ "FakeIdP"
-    assert report =~ "Okta, Microsoft Entra ID, Google Workspace"
+
+    assert report =~
+             "Okta, Microsoft Entra ID, Google Workspace, Active Directory Federation Services"
+
+    assert report =~ "guides/recipes/adfs.md"
     assert report =~ "scheduled refresh"
     assert report =~ "diagnostic"
   end

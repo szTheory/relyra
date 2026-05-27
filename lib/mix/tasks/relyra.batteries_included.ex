@@ -73,7 +73,7 @@ defmodule Mix.Tasks.Relyra.BatteriesIncluded do
 
   defp render_report do
     providers =
-      [:okta, :entra, :google_workspace]
+      [:okta, :entra, :google_workspace, :adfs]
       |> Enum.map(&Relyra.Provider.fetch!/1)
 
     [
@@ -108,13 +108,13 @@ defmodule Mix.Tasks.Relyra.BatteriesIncluded do
       "| --- | --- | --- | --- | --- |",
       "| install path is blessed and reproducible | `mix relyra.install` scaffolds the host integration surface and optional LiveAdmin contract | `Mix.Tasks.Relyra.Install.run/1` | `mix test #{@install_test} --warnings-as-errors` | `#{@install_test}` |",
       "| local-first proof starts with FakeIdP | a tiny host-side ACS flow succeeds before any real IdP setup | `Relyra.TestSupport` + `Relyra.TestSupport.FakeIdP` | `mix test #{@demo_test} --warnings-as-errors` | `#{@demo_test}` |",
-      "| supported provider scope stays narrow | first-class scope is limited to #{provider_scope} | `Relyra.Provider.list/0` | `mix test #{@task_test} --warnings-as-errors` | `guides/recipes/okta.md`, `guides/recipes/entra.md`, `guides/recipes/google_workspace.md` |",
-      "| provider runbooks stay tied to repo reality | Day-1 routing points to three authoritative runbooks and no broader preset catalog | `guides/getting_started.md` + `Relyra.Provider.guide_url/1` | `mix test #{@task_test} --warnings-as-errors` | `guides/getting_started.md` |",
+      "| supported provider scope stays narrow | first-class scope is limited to #{provider_scope} | `Relyra.Provider.list/0` | `mix test #{@task_test} --warnings-as-errors` | `guides/recipes/okta.md`, `guides/recipes/entra.md`, `guides/recipes/google_workspace.md`, `guides/recipes/adfs.md` |",
+      "| provider runbooks stay tied to repo reality | Day-1 routing points to authoritative runbooks and no broader preset catalog | `guides/getting_started.md` + `Relyra.Provider.guide_url/1` | `mix test #{@task_test} --warnings-as-errors` | `guides/getting_started.md` |",
       "| optional admin remains a later receipt | LiveAdmin is optional and the installer can scaffold its host-side scope contract | `Relyra.LiveAdmin.ScopeProvider` | `mix test #{@install_test} --warnings-as-errors` | `#{@install_test}` |",
       "| metadata and certificate lifecycle stay observable | metadata refresh and certificate transitions have focused proof lanes and operator-facing docs | `Relyra.Metadata.AutoRefresh` + `Relyra.Ecto.CertificateInventory` | `mix test test/relyra/metadata/auto_refresh_test.exs test/relyra/ecto/certificate_inventory_transition_test.exs --warnings-as-errors` | `guides/case_studies/operator_managed_rollout.md` |",
-      "| audit and telemetry are explicit follow-ons | operator receipts include audit evidence and telemetry-facing proof seams | `Relyra.Ecto.AuditWriter` + `Relyra.Telemetry` | `mix test test/relyra/ecto/audit_hardening_test.exs test/relyra/telemetry_test.exs --warnings-as-errors` | `guides/batteries_included.md` |",
-      "| scheduled refresh is not a marketing claim | background refresh remains backed by focused tests and explicit operator review posture | `Relyra.Metadata.AutoRefresh` + `Relyra.Workers.MetadataRefresh` | `mix test test/relyra/metadata/scheduler_test.exs test/relyra/workers/metadata_refresh_test.exs --warnings-as-errors` | `guides/batteries_included.md` |",
-      "| diagnostic bundle support is real and bounded | diagnostic export exists as a library-owned surface with controller and allow-list coverage | `Relyra.Diagnostic` + `Relyra.Diagnostic.AllowList` | `mix test test/phoenix/diagnostic_controller_test.exs test/relyra/diagnostic_test.exs test/relyra/diagnostic/allow_list_test.exs --warnings-as-errors` | `guides/batteries_included.md` |"
+      "| audit and telemetry are explicit follow-ons | operator receipts include audit evidence and telemetry-facing proof seams | `Relyra.Ecto.AuditWriter` + `Relyra.Telemetry` | `mix test test/relyra/ecto/audit_hardening_test.exs test/relyra/telemetry_test.exs --warnings-as-errors` | `BATTERIES_INCLUDED.md` |",
+      "| scheduled refresh is not a marketing claim | background refresh remains backed by focused tests and explicit operator review posture | `Relyra.Metadata.AutoRefresh` + `Relyra.Workers.MetadataRefresh` | `mix test test/relyra/metadata/scheduler_test.exs test/relyra/workers/metadata_refresh_test.exs --warnings-as-errors` | `BATTERIES_INCLUDED.md` |",
+      "| diagnostic bundle support is real and bounded | diagnostic export exists as a library-owned surface with controller and allow-list coverage | `Relyra.Diagnostic` + `Relyra.Diagnostic.AllowList` | `mix test test/phoenix/diagnostic_controller_test.exs test/relyra/diagnostic_test.exs test/relyra/diagnostic/allow_list_test.exs --warnings-as-errors` | `BATTERIES_INCLUDED.md` |"
     ]
     |> Enum.join("\n")
   end
@@ -136,4 +136,5 @@ defmodule Mix.Tasks.Relyra.BatteriesIncluded do
   defp local_guide_path(:okta), do: "guides/recipes/okta.md"
   defp local_guide_path(:entra), do: "guides/recipes/entra.md"
   defp local_guide_path(:google_workspace), do: "guides/recipes/google_workspace.md"
+  defp local_guide_path(:adfs), do: "guides/recipes/adfs.md"
 end

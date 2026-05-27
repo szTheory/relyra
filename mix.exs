@@ -125,6 +125,7 @@ defmodule Relyra.MixProject do
       formatters: ["html", "markdown"],
       extras: [
         "README.md",
+        "guides/overview.md",
         "BATTERIES_INCLUDED.md",
         "CHANGELOG.md",
         "CONFORMANCE.md",
@@ -164,6 +165,7 @@ defmodule Relyra.MixProject do
         "test --warnings-as-errors --exclude integration"
       ],
       "ci.docs": [
+        "cmd test -f guides/overview.md",
         "cmd test -f guides/batteries_included.md",
         "cmd test -f BATTERIES_INCLUDED.md",
         "cmd test -f guides/identity_mapping_and_provisioning.md",
