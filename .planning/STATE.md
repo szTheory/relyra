@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: — Adoption Truth
 status: executing
-last_updated: "2026-05-27T22:26:00Z"
-last_activity: 2026-05-27 -- Completed 48-01-PLAN.md
+last_updated: "2026-05-27T22:16:02Z"
+last_activity: 2026-05-27 -- Completed 48-02-PLAN.md; Phase 48 complete
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 67
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 48 — operator-completeness-incident-playbook-trace-tools
+**Current focus:** Phase 49 — adoption-honesty (CONFORMANCE, jtbd map, preset taxonomy)
 
 ## Current Position
 
-Phase: 48 (operator-completeness-incident-playbook-trace-tools) — EXECUTING
-Plan: 2 of 2 (48-02 next)
-Status: Ready to execute 48-02
-Last activity: 2026-05-27 -- Completed 48-01-PLAN.md
+Phase: 48 (operator-completeness-incident-playbook-trace-tools) — COMPLETE
+Plan: 2/2 (48-02 done)
+Status: Ready to execute Phase 49
+Last activity: 2026-05-27 -- Completed 48-02-PLAN.md; Phase 48 complete
 
 ## Performance Metrics
 
@@ -49,6 +49,12 @@ Last activity: 2026-05-27 -- Completed 48-01-PLAN.md
 - **Adoption Truth != feature milestone:** closes asymmetry between shipped code and adopter-facing story; reusable pattern at the done-enough line (~92–95%).
 - **CONFORMANCE manifest must track shipped features:** ENC-01 shipped Phase 34; `sp-encrypted-assertions-deferred` row is stale and must flip to pass.
 - **ci.docs gates apply:** doc drift tests (troubleshooting, logout recipe pattern) stay on `cmd mix test` per Phase 30 hollow-gate invariant when adding new drift tests.
+
+### Decisions from Phase 48-02
+
+- **Day-2 hub pattern:** overview Day-2 links `operations/incident_playbook.md#evidence-surfaces` immediately after Production Ecto path.
+- **Getting Started §5:** incident playbook + `mix relyra.trace` + LiveView trace route; optional intro bookmarks playbook after first login.
+- **No new ci.docs drift test:** D-15 presence guard sufficient; `login_trace_test.exs` stays in `mix ci.security` only.
 
 ### Decisions from Phase 48-01
 
@@ -72,8 +78,10 @@ Last activity: 2026-05-27 -- Completed 48-01-PLAN.md
 
 ## Session Continuity
 
-**2026-05-27 — Completed 48-01-PLAN.md.** Playbook tables/scenarios/When in doubt updated for login trace. Resume: execute `48-02-PLAN.md` (overview + getting_started cross-links, `mix ci.docs`).
+**2026-05-27 — Phase 48 complete (48-01 + 48-02).** Playbook trace tables/scenarios + Day-2 cross-links. Resume: Phase 49 (ADOPT-04/05/06).
 
-**2026-05-27 — Phase 48 context gathered.** Assumptions mode; all assumptions confirmed without correction. Resume: `.planning/phases/48-operator-completeness-incident-playbook-trace-tools/48-CONTEXT.md`.
+**2026-05-27 — Completed 48-01-PLAN.md.** Playbook tables/scenarios/When in doubt updated for login trace.
 
-**2026-05-27 — Phase 47 context gathered.** Assumptions mode; all assumptions confirmed without correction. Resume: `.planning/phases/47-onboarding-truth-getting-started-production-ecto-path/47-CONTEXT.md`.
+**2026-05-27 — Phase 48 context gathered.** Assumptions mode; all assumptions confirmed without correction.
+
+**2026-05-27 — Phase 47 context gathered.** Assumptions mode; all assumptions confirmed without correction.

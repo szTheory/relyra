@@ -110,7 +110,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 **Summary checklist:**
 
 - [x] **Phase 47: Onboarding truth — Getting Started & production Ecto path** — TestSupport macro pattern for first browser login; production Ecto path section. (completed 2026-05-27)
-- [ ] **Phase 48: Operator completeness — incident playbook trace tools** — Login-trace LiveView route + `mix relyra.trace` in incident playbook tool table.
+- [x] **Phase 48: Operator completeness — incident playbook trace tools** — Login-trace LiveView route + `mix relyra.trace` in incident playbook tool table; Day-2 cross-links. (completed 2026-05-27)
 - [ ] **Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy** — Scope boundary section, ENC manifest fix, jtbd_gap_map refresh, README/runbook taxonomy alignment.
 
 ## Phase Details (v1.6)
@@ -139,7 +139,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 2. Cross-links from Getting Started Day-2 or `guides/overview.md` point to the updated playbook section.
 3. `mix ci.docs` stays green.
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 ### Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy
 
