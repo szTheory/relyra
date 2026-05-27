@@ -151,6 +151,38 @@ defmodule Relyra.Security.SignatureTest do
     end
   end
 
+  describe "verify_redirect_signature/4 (Phase 38 SLO)" do
+    test "verifies a golden redirect signature with valid parameters" do
+      raw_query = "SAMLRequest=fZJfa8IwFMXf%2FRQh7%2F1jhzKCrThFVnBb0bqHvYwsvWogTWpu6vTbr1ZlbqCQp5tzuL9zksFwXyqyA4vS6Jh2%2FZAS0MIUUq9jusyn3iMdJp0B8lJVbFS7jZ7DtgZ0pDFqZO1FTGurmeEokWleAjIn2GL0MmORH7LKGmeEUfTKct%2FBEcG6hoiSdBLTTwvqYLlXbTjCQ89bG1WA9viRxsKWkvcLf3TkTxFrSDU6rl0zCqO%2BF%2Fa8qJ%2BHIWvPByWTJoHU3LWujXMVsiCQReXDnpeVAl%2BYMkA0lIwuLGOjsS7BLsDupIDlfPbrxH%2FGJmHABVKSnbM%2FSX2q9F7sr5MI2XOeZ172tshp0jbP2kg2ubGuBMcL7vgguBaf3%2By1WZNOMqOkOJCpsSV3tym6fredyMJbtVJWa6xAyJWEoulCKfM9tsAdxNTZGigJktPWv58j6fwA&RelayState=rs_relyra_phase35_golden&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256"
+      signature_b64_url = "pVBo9GCensNYwFWmcqMvInMx6e65BQeeUE%2FtW%2FjByVmSk4tFGFVRAYRGuz0NMzpvYARVpg1hniD8bOkUpGZifEf3C2Pr26r4rdFzWtLoYSHruANnXpYnJVvaT4VFnPBEun4tRYqNyVz5NZ%2FxmoossFnlHxbamy9FSnukDzZHaA4l6lsvsJRpEHCAc6nCe3Umq02xxg0A1ujfzpyGxsI46UZu4AcEv4HAcyFxHpU6Ij1aFi%2B37zg6UF7tSmlEOuK6styi1WD%2Brta3xnMUtddD2eFT9cl%2F85KBNryORonup0hMUQmQhgpe%2F6tpGafFg7V5hBYU0wuJnKZm6h1NfBl7vQ%3D%3D"
+      
+      signature_bytes = signature_b64_url |> URI.decode_www_form() |> Base.decode64!()
+      public_key = fixture_public_key()
+
+      assert :ok = Signature.verify_redirect_signature(raw_query, :sha256, signature_bytes, public_key)
+    end
+
+    test "rejects a tampered query string" do
+      raw_query = "SAMLRequest=fZJfa8IwFMXf%2FRQh7%2F1jhzKCrThFVnBb0bqHvYwsvWogTWpu6vTbr1ZlbqCQp5tzuL9zksFwXyqyA4vS6Jh2%2FZAS0MIUUq9jusyn3iMdJp0B8lJVbFS7jZ7DtgZ0pDFqZO1FTGurmeEokWleAjIn2GL0MmORH7LKGmeEUfTKct%2FBEcG6hoiSdBLTTwvqYLlXbTjCQ89bG1WA9viRxsKWkvcLf3TkTxFrSDU6rl0zCqO%2BF%2Fa8qJ%2BHIWvPByWTJoHU3LWujXMVsiCQReXDnpeVAl%2BYMkA0lIwuLGOjsS7BLsDupIDlfPbrxH%2FGJmHABVKSnbM%2FSX2q9F7sr5MI2XOeZ172tshp0jbP2kg2ubGuBMcL7vgguBaf3%2By1WZNOMqOkOJCpsSV3tym6fredyMJbtVJWa6xAyJWEoulCKfM9tsAdxNTZGigJktPWv58j6fwA&RelayState=TAMPERED_STATE&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256"
+      signature_b64_url = "pVBo9GCensNYwFWmcqMvInMx6e65BQeeUE%2FtW%2FjByVmSk4tFGFVRAYRGuz0NMzpvYARVpg1hniD8bOkUpGZifEf3C2Pr26r4rdFzWtLoYSHruANnXpYnJVvaT4VFnPBEun4tRYqNyVz5NZ%2FxmoossFnlHxbamy9FSnukDzZHaA4l6lsvsJRpEHCAc6nCe3Umq02xxg0A1ujfzpyGxsI46UZu4AcEv4HAcyFxHpU6Ij1aFi%2B37zg6UF7tSmlEOuK6styi1WD%2Brta3xnMUtddD2eFT9cl%2F85KBNryORonup0hMUQmQhgpe%2F6tpGafFg7V5hBYU0wuJnKZm6h1NfBl7vQ%3D%3D"
+      
+      signature_bytes = signature_b64_url |> URI.decode_www_form() |> Base.decode64!()
+      public_key = fixture_public_key()
+
+      assert {:error, %Error{type: :invalid_signature}} =
+               Signature.verify_redirect_signature(raw_query, :sha256, signature_bytes, public_key)
+    end
+    
+    test "rejects an invalid signature format" do
+      raw_query = "SAMLRequest=x&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256"
+      signature_bytes = "not a valid signature"
+      public_key = fixture_public_key()
+
+      assert {:error, %Error{type: :invalid_signature}} =
+               Signature.verify_redirect_signature(raw_query, :sha256, signature_bytes, public_key)
+    end
+  end
+
   defp attach_signature_telemetry(_context) do
     test_pid = self()
     handler_id = "phase21-signature-test-#{System.unique_integer([:positive])}"
@@ -179,5 +211,13 @@ defmodule Relyra.Security.SignatureTest do
     File.read!(
       Path.join([__DIR__, "../../fixtures/security/authn_request_signing/golden_signing_key.pem"])
     )
+  end
+
+  defp fixture_public_key do
+    pem = fixture_pem()
+    [entry | _] = :public_key.pem_decode(pem)
+    private_key = :public_key.pem_entry_decode(entry)
+    {:RSAPrivateKey, _version, modulus, public_exponent, _d, _p, _q, _exp1, _exp2, _coeff, _other} = private_key
+    {:RSAPublicKey, modulus, public_exponent}
   end
 end

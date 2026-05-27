@@ -134,6 +134,28 @@ defmodule Relyra.Security.Signature do
      )}
   end
 
+  @doc """
+  Verifies an HTTP-Redirect binding signature mathematically.
+
+  `raw_query_string` MUST be the exact octets of the query parameters
+  before the `&Signature=...` parameter (e.g. `SAMLRequest=...&RelayState=...&SigAlg=...`).
+  This function does NOT decode or manipulate the string.
+  """
+  @spec verify_redirect_signature(binary(), atom(), binary(), term()) ::
+          :ok | {:error, Error.t()}
+  def verify_redirect_signature(raw_query_string, digest_atom, signature_bytes, public_key)
+      when is_binary(raw_query_string) and is_atom(digest_atom) and is_binary(signature_bytes) do
+    if safe_verify(raw_query_string, digest_atom, signature_bytes, public_key) do
+      :ok
+    else
+      {:error, Error.new(:invalid_signature, "Redirect signature failed cryptographic verification", %{reason: :redirect_signature_mismatch})}
+    end
+  end
+
+  def verify_redirect_signature(_raw_query_string, _digest_atom, _signature_bytes, _public_key) do
+    {:error, Error.new(:invalid_signature, "Invalid inputs to redirect signature verification", %{reason: :invalid_signature_input})}
+  end
+
   defp do_verify(parsed_doc, connection, cert_chain, opts) do
     details = connection_details(connection)
     duplicate_xml_ids = Map.get(parsed_doc, :duplicate_ids) || []

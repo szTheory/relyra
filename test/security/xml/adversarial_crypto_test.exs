@@ -178,6 +178,30 @@ defmodule Relyra.Security.AdversarialCryptoTest do
   end
 
   # ---------------------------------------------------------------------------
+  # HTTP-REDIRECT BINDING TAMPERING (Phase 38 SLO)
+  #
+  # Ensure verify_redirect_signature/4 strictly rejects tampered query string bytes.
+  # ---------------------------------------------------------------------------
+
+  describe "HTTP-Redirect binding signature tampering (SLO-01, T-38-01)" do
+    test "tampered query string → :invalid_signature" do
+      raw_query = "SAMLRequest=fZJfa8IwFMXf%2FRQh7%2F1jhzKCrThFVnBb0bqHvYwsvWogTWpu6vTbr1ZlbqCQp5tzuL9zksFwXyqyA4vS6Jh2%2FZAS0MIUUq9jusyn3iMdJp0B8lJVbFS7jZ7DtgZ0pDFqZO1FTGurmeEokWleAjIn2GL0MmORH7LKGmeEUfTKct%2FBEcG6hoiSdBLTTwvqYLlXbTjCQ89bG1WA9viRxsKWkvcLf3TkTxFrSDU6rl0zCqO%2BF%2Fa8qJ%2BHIWvPByWTJoHU3LWujXMVsiCQReXDnpeVAl%2BYMkA0lIwuLGOjsS7BLsDupIDlfPbrxH%2FGJmHABVKSnbM%2FSX2q9F7sr5MI2XOeZ172tshp0jbP2kg2ubGuBMcL7vgguBaf3%2By1WZNOMqOkOJCpsSV3tym6fredyMJbtVJWa6xAyJWEoulCKfM9tsAdxNTZGigJktPWv58j6fwA&RelayState=TAMPERED_STATE&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256"
+      signature_b64_url = "pVBo9GCensNYwFWmcqMvInMx6e65BQeeUE%2FtW%2FjByVmSk4tFGFVRAYRGuz0NMzpvYARVpg1hniD8bOkUpGZifEf3C2Pr26r4rdFzWtLoYSHruANnXpYnJVvaT4VFnPBEun4tRYqNyVz5NZ%2FxmoossFnlHxbamy9FSnukDzZHaA4l6lsvsJRpEHCAc6nCe3Umq02xxg0A1ujfzpyGxsI46UZu4AcEv4HAcyFxHpU6Ij1aFi%2B37zg6UF7tSmlEOuK6styi1WD%2Brta3xnMUtddD2eFT9cl%2F85KBNryORonup0hMUQmQhgpe%2F6tpGafFg7V5hBYU0wuJnKZm6h1NfBl7vQ%3D%3D"
+      
+      signature_bytes = signature_b64_url |> URI.decode_www_form() |> Base.decode64!()
+      
+      pem = File.read!(Path.join([__DIR__, "../../fixtures/security/authn_request_signing/golden_signing_key.pem"]))
+      [entry | _] = :public_key.pem_decode(pem)
+      private_key = :public_key.pem_entry_decode(entry)
+      {:RSAPrivateKey, _version, modulus, public_exponent, _d, _p, _q, _exp1, _exp2, _coeff, _other} = private_key
+      public_key = {:RSAPublicKey, modulus, public_exponent}
+
+      assert {:error, %Error{type: :invalid_signature}} =
+               Signature.verify_redirect_signature(raw_query, :sha256, signature_bytes, public_key)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # Local helpers (copied verbatim from the analog, signature_crypto_test.exs).
   # ---------------------------------------------------------------------------
 
