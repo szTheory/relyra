@@ -244,7 +244,7 @@ Plans:
 Plans:
 
 **Wave 1**
-- [ ] 39-01-PLAN.md — SLO strategy, ITP/ETP caveats, and operational fallbacks
+- [x] 39-01-PLAN.md — SLO strategy, ITP/ETP caveats, and operational fallbacks
 
 ### Phase 40: Operational Polish & Error Taxonomy
 **Goal**: Operators can instantly decode cryptic SAML failures and have a clear playbook for incident response.
@@ -304,7 +304,7 @@ Plans:
 | 36. Generic SAML Runbook | v1.3 | 2/2 | Complete    | 2026-05-26 |
 | 37. Identity Mapping and Provisioning Guide | v1.3 | 2/2 | Complete    | 2026-05-26 |
 | 38. Single Logout (SLO) Core & Security | v1.4 | 2/4 | In Progress|  |
-| 39. Logout Strategy & Operational Guidance | v1.4 | 0/0 | Not started | - |
+| 39. Logout Strategy & Operational Guidance | v1.4 | 1/1 | Complete   | 2026-05-27 |
 | 40. Operational Polish & Error Taxonomy | v1.4 | 0/0 | Not started | - |
 
 ---

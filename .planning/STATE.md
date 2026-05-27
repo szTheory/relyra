@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Full SLO + Ops Polish
 status: Ready for /gsd-plan-phase 39
-last_updated: "2026-05-27T07:33:41.429Z"
+last_updated: "2026-05-27T10:21:49.094Z"
 last_activity: 2026-05-27
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 4
-  completed_plans: 2
-  percent: 0
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 5
+  percent: 67
 ---
 
 # Project State
@@ -25,12 +25,13 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 ## Current Position
 
 Phase: 39
-Plan: Not started
-Status: Ready for /gsd-plan-phase 39
+Plan: 01
+Status: In Progress
+
 Last activity: 2026-05-27
 Resume: /gsd-plan-phase 39
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -40,6 +41,7 @@ Progress: [█████░░░░░] 50%
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
+| 39 | 01 | 10m | 2 | 2 |
 | 28 | 01 | 6m | 3 | 4 (2 created, 2 modified) |
 | 28 | 02 | — | 2 | 1 modified (c14n.ex) + 2 test files |
 | 28 | 03 | — | 2 | 1 modified (pure_beam.ex) + 1 test file |
@@ -153,6 +155,9 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 
 ## Decisions
 
+- [Phase 39-01]: Positioned front-channel SLO as structurally unreliable due to modern browser privacy mechanisms (ITP/ETP/Privacy Sandbox).
+- [Phase 39-01]: Mandated durable/stateful sessions as a strict prerequisite for SLO functionality.
+- [Phase 39-01]: Established absolute session timeouts as the true security boundary, discouraging IdP polling.
 - [Assessment 2026-05-25]: Done-% estimated at 85% (band: "strong, meaningful wedges remain"). Next milestone recommended: v1.3 "Advanced Federation" — encrypted assertions (B1) + signed AuthnRequests (B3) + generic SAML runbook (D1) + identity mapping guide (D2). Full SLO (B2) deferred to v1.4 (complex; not an adoption blocker at the same tier). Investigations retained in `.planning/threads/`.
 - [Assessment 2026-05-25]: Diminishing-returns line drawn at HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, full demo app. After B1+B2+B3+C the lib is "done enough"; further work is demand-gated, not coverage-gated.
 - [Phase 29-02]: ECDSA fail-closed lives in `AlgorithmPolicy.digest_atom_for_signature_method/1` (typed `:unsupported_signature_algorithm` reject, checked BEFORE the rsa-sha* match), NOT by removing ECDSA from `default/0`'s allowlist — the allowlist still permits ECDSA URIs; the reject is the contract (fail-CLOSED, not allowlist-removal; D-07, Pitfall 5, T-29-04).
