@@ -34,6 +34,7 @@ defmodule Relyra.MixProject do
         "ci.security": :test,
         "ci.verify": :test,
         "ci.integration": :test,
+        "ci.admin_ui": :test,
         "ci.oban_smoke": :test,
         "ci.release": :test
       ]
@@ -58,7 +59,10 @@ defmodule Relyra.MixProject do
       {:telemetry, "~> 1.3"},
       {:plug, "~> 1.16"},
       {:phoenix, "~> 1.8", optional: true},
+      {:phoenix_ecto, "~> 4.6", optional: true},
       {:phoenix_live_view, "~> 1.1", optional: true},
+      {:bandit, "~> 1.5", only: :test, runtime: false},
+      {:lazy_html, ">= 0.1.0", only: :test, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
@@ -121,6 +125,8 @@ defmodule Relyra.MixProject do
         "guides/jtbd_user_flows.md",
         "guides/case_studies/operator_managed_rollout.md",
         "guides/case_studies/phoenix_saas_tenant_onboarding.md",
+        "guides/recipes/adfs.md",
+        "guides/recipes/generic_saml.md",
         "guides/recipes/okta.md",
         "guides/recipes/entra.md",
         "guides/recipes/google_workspace.md"
@@ -143,6 +149,8 @@ defmodule Relyra.MixProject do
         "cmd test -f guides/batteries_included.md",
         "cmd test -f BATTERIES_INCLUDED.md",
         "cmd test -f guides/identity_mapping_and_provisioning.md",
+        "cmd test -f guides/recipes/adfs.md",
+        "cmd test -f guides/recipes/generic_saml.md",
         "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
         "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs --warnings-as-errors",
         "relyra.batteries_included --check"
@@ -172,6 +180,7 @@ defmodule Relyra.MixProject do
         "cmd mix test test/security/xml/corpus_security_test.exs test/relyra/security/xml/corpus_gate_test.exs --only security_corpus --warnings-as-errors",
         "cmd mix test test/security/xml/corpus_security_test.exs --only gate02_c14n --warnings-as-errors",
         "cmd mix test test/security/xml/adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors",
+        "cmd mix test test/security/authn_request_signing_test.exs --only authn_request_signing --warnings-as-errors",
         "cmd mix test test/security/xml_enc_test.exs --warnings-as-errors",
         "cmd mix test test/security/xml_enc_adversarial_test.exs --warnings-as-errors",
         # decimal advisory GHSA-rhv4-8758-jx7v (Decimal.new exponent DoS) is ignored:
@@ -188,6 +197,9 @@ defmodule Relyra.MixProject do
       ],
       "ci.integration": [
         "test --only integration --warnings-as-errors"
+      ],
+      "ci.admin_ui": [
+        "test test/phoenix/live_admin_test.exs test/relyra/live_admin/connections_live_test.exs test/relyra/live_admin/connection_metadata_live_test.exs test/relyra/live_admin/phase15_ui_contract_test.exs --warnings-as-errors"
       ],
       "ci.oban_smoke": [
         "compile --no-optional-deps --warnings-as-errors",

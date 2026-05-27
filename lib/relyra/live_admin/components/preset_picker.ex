@@ -10,7 +10,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     def preset_picker(assigns) do
       ~H"""
-      <div style="margin-bottom: 24px;">
+      <div data-testid="preset-picker" style="margin-bottom: 24px;">
         <h3 style="font-size: 16px; margin-bottom: 8px; margin-top: 0;">Select Provider Preset</h3>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <.preset_button
@@ -49,6 +49,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       ~H"""
       <.link
         patch={@href}
+        data-testid={if @value == "", do: "preset-custom", else: "preset-#{@value}"}
         style={"padding: 8px 16px; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; color: inherit; background-color: " <> if(@selected, do: "#e0e0e0", else: "transparent")}
       >
         {@label}

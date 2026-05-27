@@ -1,9 +1,9 @@
 ---
 phase: 35
 slug: signed-authnrequests-adfs-preset
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: passed
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-05-26
 ---
 
@@ -99,4 +99,4 @@ created: 2026-05-26
 - [ ] Feedback latency < 5s per task commit (corpus runs in isolation; full suite < 30s)
 - [ ] `nyquist_compliant: true` set in frontmatter after Wave 0 completes and corpus rows go green
 
-**Approval:** pending
+**Approval:** complete

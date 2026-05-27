@@ -18,6 +18,22 @@ defmodule Relyra.TestSupport.FakeConnectionResolver do
      }}
   end
 
+  def resolve_connection(%{connection_id: "valid_signed"}, _opts) do
+    {:ok,
+     %Connection{
+       id: "valid_signed",
+       connection_id: "valid_signed",
+       idp_sso_url: "https://idp.example.com/sso",
+       sp_entity_id: "https://sp.example.com",
+       idp_entity_id: "https://idp.example.com",
+       acs_url: "https://sp.example.com/acs",
+       idp_certificates: ["fake-cert"],
+       cert_chain: ["fake-cert"],
+       sign_authn_requests: true,
+       signed_request_encoding: :rfc3986_upper
+     }}
+  end
+
   def resolve_connection(_, _opts) do
     {:error,
      Relyra.Error.new(:connection_unavailable, "Unknown connection", %{

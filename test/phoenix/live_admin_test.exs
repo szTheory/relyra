@@ -1,47 +1,3 @@
-defmodule Relyra.LiveAdmin.TestScopeProvider do
-  @behaviour Relyra.LiveAdmin.ScopeProvider
-
-  alias Relyra.LiveAdmin.Scope
-
-  @impl true
-  def resolve_admin_scope(session, _params, _opts) when is_map(session) do
-    actor = Map.get(session, "admin_actor") || Map.get(session, :admin_actor)
-
-    if is_binary(actor) and actor != "" do
-      {:ok,
-       %Scope{
-         actor: actor,
-         actor_label:
-           Map.get(session, "admin_actor_label") || Map.get(session, :admin_actor_label),
-         organization_id:
-           Map.get(session, "admin_organization_id") || Map.get(session, :admin_organization_id)
-       }}
-    else
-      {:error, :unauthenticated}
-    end
-  end
-end
-
-defmodule Relyra.LiveAdmin.TestRouter do
-  use Phoenix.Router
-
-  import Relyra.LiveAdmin.Router
-
-  pipeline :browser do
-    plug(Plug.Session, store: :cookie, key: "_relyra_admin_test", signing_salt: "router-salt")
-    plug(:fetch_session)
-  end
-
-  scope "/" do
-    pipe_through(:browser)
-
-    relyra_admin_routes("/admin",
-      repo: Relyra.TestSupport.EctoTestRepo,
-      scope_provider: Relyra.LiveAdmin.TestScopeProvider
-    )
-  end
-end
-
 defmodule Relyra.LiveAdminTest do
   use ExUnit.Case, async: false
 
@@ -65,7 +21,7 @@ defmodule Relyra.LiveAdminTest do
   end
 
   test "relyra_admin_routes registers the admin paths" do
-    paths = Enum.map(Relyra.LiveAdmin.TestRouter.__routes__(), & &1.path)
+    paths = Enum.map(Relyra.TestSupport.LiveAdminRouter.__routes__(), & &1.path)
 
     assert "/admin" in paths
     assert "/admin/connections/new" in paths
@@ -76,7 +32,7 @@ defmodule Relyra.LiveAdminTest do
   test "on_mount halts and redirects unauthenticated callers" do
     assert {:halt, %Phoenix.LiveView.Socket{redirected: {:redirect, %{to: "/"}}}} =
              Relyra.LiveAdmin.OnMount.on_mount(
-               [repo: @repo, scope_provider: Relyra.LiveAdmin.TestScopeProvider],
+               [repo: @repo, scope_provider: Relyra.TestSupport.LiveAdminScopeProvider],
                %{},
                %{},
                %Phoenix.LiveView.Socket{}

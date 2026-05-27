@@ -109,14 +109,17 @@ to compare several admins in parallel.
 Support taxonomy:
 
 - **Batteries included:** Okta, Microsoft Entra ID, and Google Workspace only.
-- **Custom SAML:** viable when you own the provider-specific mapping and
-  verification work yourself.
+- **Custom SAML:** use the generic operator runbook at
+  [guides/recipes/generic_saml.md](recipes/generic_saml.md) when you own the
+  provider-specific mapping and verification work yourself.
+- **ADFS special case:** use [guides/recipes/adfs.md](recipes/adfs.md) when signed
+  AuthnRequests or ADFS-specific encoding behavior are part of the contract.
 - **Not yet shipped:** any provider without a shipped preset module and verified
   repo-native runbook.
 
 For custom SAML providers, adapt the same install -> scaffold -> local proof ->
-real provider pattern, but do not treat that path as first-class batteries
-included support.
+real provider pattern, starting from `guides/recipes/generic_saml.md`, but do not
+treat that path as first-class batteries included support.
 
 Receipt: one provider runbook is completed and you have one real-provider login,
 metadata import, or equivalent provider-specific success proof from that runbook.

@@ -21,11 +21,11 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.6 shipped 2026-05-08** — Operational maturity carryover + SLO. Phase 22 (certificate expiry alerts), Phase 23 (diagnostic bundles), and Phase 24 (Single Logout) are complete and verified.
 - **v1.0 shipped 2026-05-08** — Conformance, security review readiness, and adopter onboarding polish. Phase 25 added executable SP conformance and pinned CVE regressions; Phase 26 added the reviewer packet, generated evidence, and strict-default proof lanes; Phase 27 added authoritative onboarding, runbooks, case studies, and batteries-included proof.
 - **v1.1 shipped 2026-05-25** — Verify the Trust Path. Phase 28 proved exclusive-C14N over a real parse tree; Phase 29 wired genuine `:public_key.verify` + `DigestValue` recompute onto both response and metadata-root paths; Phase 30 made the adversarial crypto corpus permanently gate `mix ci.security`; Phase 31 aligned reviewer docs, findings ledger, and staged advisory artifacts to the shipped proof surface. Full suite remained green and the published-hex SAML auth-bypass is closed in code.
-- **v1.3 in progress** — Advanced Federation. Phase 32 (AlgorithmPolicy extension + DB schema migrations) and Phase 33 (XMLEnc decrypt core) are complete; Phase 34 (ValidationPipeline wiring) closed ENC-01 + ENC-02 — encrypted-assertion decrypt→reparse→verify, ambiguity guard, SP encryption `KeyDescriptor`, and a 7-fixture ENC-01 adversarial corpus in `mix ci.security` (5/5 verified 2026-05-25, full suite 626/0). Remaining: Phase 35 (AUTHN-01), Phases 36-37 (guides).
+- **v1.3 implementation complete** — Advanced Federation. Phase 32 extended AlgorithmPolicy and schema support, Phase 33 shipped the `KeyResolver` / XMLEnc core, Phase 34 closed ENC-01 + ENC-02, Phase 35 shipped signed redirect-binding AuthnRequests plus the ADFS preset/runbook and AUTHN-01 corpus, and Phases 36-37 completed the generic SAML and identity-mapping operator guides. Milestone archival is still pending.
 
 ## Next Milestone Goals
 
-**v1.3 — Advanced Federation** (recommended next; not yet committed to a milestone arc):
+**v1.3 — Advanced Federation** (current milestone; implementation complete, archival pending):
 - Encrypted assertions (`EncryptedAssertion` / XML-Enc): RSA-OAEP + AES-GCM, re-parse through hardened saxy seam, adversarial corpus. Investigations: `.planning/threads/encrypted-assertions-investigation.md`.
 - Signed AuthnRequests: HTTP-Redirect binding signing for `WantAuthnRequestsSigned` IdPs (ADFS, Shibboleth). Investigations: `.planning/threads/signed-authn-requests-investigation.md`.
 - Generic SAML runbook (`guides/recipes/generic_saml.md`) + minimum-safe checklist — first-class peer of okta.md, with field-name decoder tables for top non-preset IdPs.
@@ -216,4 +216,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-25 — Phase 34 complete: ENC-01 + ENC-02 validated and moved to Validated (encrypted-assertion decrypt pipeline + SP encryption KeyDescriptor). v1.3 now 3/6 phases done (32-34); AUTHN-01 (Phase 35) and DOCS-02/03 (Phases 36-37) remain Active. v1.4 Full SLO deferred per milestone arc.*
+*Last updated: 2026-05-26 — Phase 15 re-verification closed the stale admin UI human-verification artifact. v1.3 remains implementation-complete and no longer carries that external milestone-close blocker.*

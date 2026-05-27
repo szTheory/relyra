@@ -20,7 +20,7 @@ if Code.ensure_loaded?(Ecto.Schema) do
 
     @primary_key {:id, :binary_id, autogenerate: true}
     @foreign_key_type :binary_id
-    @provider_presets [:okta, :entra, :google_workspace]
+    @provider_presets [:okta, :entra, :google_workspace, :adfs]
     @ulid_length 26
     @ulid_alphabet ~c"0123456789ABCDEFGHJKMNPQRSTVWXYZ"
     @ulid_pattern ~r/^[0-9A-HJKMNP-TV-Z]{26}$/
@@ -38,6 +38,7 @@ if Code.ensure_loaded?(Ecto.Schema) do
       field :idp_sso_url, :string
       field :allow_idp_initiated, :boolean, default: false
       field :sign_authn_requests, :boolean, default: false
+      field :signed_request_encoding, Ecto.Enum, values: [:rfc3986_upper, :adfs_lower]
       field :lock_version, :integer, default: 1
 
       belongs_to :active_metadata_revision, MetadataRevision,
@@ -96,6 +97,7 @@ if Code.ensure_loaded?(Ecto.Schema) do
         :idp_sso_url,
         :allow_idp_initiated,
         :sign_authn_requests,
+        :signed_request_encoding,
         :active_metadata_revision_id,
         :last_known_good_metadata_revision_id
       ])
@@ -123,6 +125,7 @@ if Code.ensure_loaded?(Ecto.Schema) do
         :idp_sso_url,
         :allow_idp_initiated,
         :sign_authn_requests,
+        :signed_request_encoding,
         :active_metadata_revision_id,
         :last_known_good_metadata_revision_id
       ])

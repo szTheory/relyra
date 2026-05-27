@@ -52,6 +52,15 @@ jobs:
           mix local.rebar --force
           mix deps.get
 
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install browser dependencies
+        run: npm install
+
       - name: Quality gate
         run: mix qa
 
@@ -70,6 +79,15 @@ jobs:
 
       - name: Integration lane
         run: mix ci.integration
+
+      - name: Admin UI contract lane
+        run: mix ci.admin_ui
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Admin UI browser smoke
+        run: npm run admin-ui:smoke
 
       # intentional belt-and-suspenders: this re-runs the C14N golden-oracle gate
       # directly, independent of the `mix ci.security` alias above being correctly

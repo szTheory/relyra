@@ -22,9 +22,10 @@ defmodule Relyra.Phoenix.Controllers.LoginController do
     case resolve_connection(connection_id, conn, opts) do
       {:ok, connection} ->
         case Relyra.start_login(connection, relay_context, opts) do
+          {:ok, %{redirect_query: redirect_query}} ->
+            redirect_to_idp_signed(conn, connection.idp_sso_url, redirect_query)
+
           {:ok, %{redirect_params: redirect_params}} ->
-            # Assuming HTTP-Redirect binding for now as it's common for start_login
-            # Binding.encode_redirect returns a query string or map of params
             redirect_to_idp(conn, connection.idp_sso_url, redirect_params)
 
           {:error, %Error{} = error} ->
@@ -47,6 +48,15 @@ defmodule Relyra.Phoenix.Controllers.LoginController do
     existing_query = URI.decode_query(uri.query || "")
     new_query = Map.merge(existing_query, redirect_params)
     target = %{uri | query: URI.encode_query(new_query)} |> URI.to_string()
+
+    conn
+    |> redirect(external: target)
+    |> halt()
+  end
+
+  defp redirect_to_idp_signed(conn, sso_url, redirect_query) when is_binary(redirect_query) do
+    separator = if String.contains?(sso_url, "?"), do: "&", else: "?"
+    target = sso_url <> separator <> redirect_query
 
     conn
     |> redirect(external: target)

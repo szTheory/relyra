@@ -87,6 +87,51 @@ defmodule Relyra.Security.AlgorithmPolicyTest do
     end
   end
 
+  describe "signing_digest_atom/1 (Phase 35 D-05 RSA -> atom)" do
+    test "rsa-sha256 URI maps to :sha256" do
+      assert AlgorithmPolicy.signing_digest_atom(@rsa_sha256) == {:ok, :sha256}
+    end
+
+    test "rsa-sha384 URI maps to :sha384" do
+      assert AlgorithmPolicy.signing_digest_atom(@rsa_sha384) == {:ok, :sha384}
+    end
+
+    test "rsa-sha512 URI maps to :sha512" do
+      assert AlgorithmPolicy.signing_digest_atom(@rsa_sha512) == {:ok, :sha512}
+    end
+  end
+
+  describe "signing_digest_atom/1 (Phase 35 D-05 fail-closed)" do
+    test "ecdsa-sha256 URI fails closed" do
+      assert AlgorithmPolicy.signing_digest_atom(@ecdsa_sha256) ==
+               {:error, :unsupported_signing_algorithm}
+    end
+
+    test "all ECDSA URIs fail closed (sha384 / sha512 too)" do
+      assert AlgorithmPolicy.signing_digest_atom(@ecdsa_sha384) ==
+               {:error, :unsupported_signing_algorithm}
+
+      assert AlgorithmPolicy.signing_digest_atom(@ecdsa_sha512) ==
+               {:error, :unsupported_signing_algorithm}
+    end
+
+    test "an unknown URI fails closed" do
+      assert AlgorithmPolicy.signing_digest_atom("http://www.w3.org/2000/09/xmldsig#rsa-sha1") ==
+               {:error, :unknown_signing_algorithm}
+
+      assert AlgorithmPolicy.signing_digest_atom("urn:example:not-a-real-alg") ==
+               {:error, :unknown_signing_algorithm}
+    end
+
+    test "non-binary input fails closed (no raise)" do
+      assert AlgorithmPolicy.signing_digest_atom(nil) == {:error, :unknown_signing_algorithm}
+      assert AlgorithmPolicy.signing_digest_atom(123) == {:error, :unknown_signing_algorithm}
+
+      assert AlgorithmPolicy.signing_digest_atom(:rsa_sha256) ==
+               {:error, :unknown_signing_algorithm}
+    end
+  end
+
   describe "enforce_key_transport_algorithm/2 (PKCS1v1.5 hard-reject)" do
     test "RSA-PKCS1v1.5 URI is hard-rejected with default policy" do
       policy = AlgorithmPolicy.default()

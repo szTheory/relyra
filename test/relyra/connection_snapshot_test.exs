@@ -43,6 +43,31 @@ defmodule Relyra.ConnectionSnapshotTest do
     assert snapshot.algorithm_policy == %{signing: :rsa_sha256, digest: :sha256}
   end
 
+  test "hydrate threads signed_request_encoding through runtime attrs and provider defaults" do
+    aggregate = %Connection{
+      id: Ecto.UUID.generate(),
+      connection_id: "01JT6Z2R8QG2QK9S8JQ8RQW7Y7",
+      provider_preset: :adfs,
+      sp_entity_id: "https://sp.example.com/metadata",
+      acs_url: "https://sp.example.com/saml/acs",
+      idp_entity_id: "https://idp.example.com/metadata",
+      idp_sso_url: "https://idp.example.com/sso",
+      runtime_policy: %RuntimePolicy{},
+      certificates: [
+        %Certificate{
+          fingerprint_sha256: "abc123",
+          pem: "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----",
+          source: "manual",
+          lifecycle_state: :active,
+          role: :signing
+        }
+      ]
+    }
+
+    assert {:ok, snapshot} = ConnectionSnapshot.hydrate(aggregate)
+    assert snapshot.signed_request_encoding == :adfs_lower
+  end
+
   test "hydrate excludes next and retired certificates from the runtime trust set" do
     aggregate = %Connection{
       id: Ecto.UUID.generate(),

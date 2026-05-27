@@ -80,6 +80,93 @@ defmodule RelyraTest do
     end
   end
 
+  test "start_login/3 returns :redirect_query for signed AuthnRequests" do
+    pem = File.read!("test/fixtures/security/authn_request_signing/golden_signing_key.pem")
+    Application.put_env(:relyra, :sp_signing_key_pem, pem)
+    on_exit(fn -> Application.delete_env(:relyra, :sp_signing_key_pem) end)
+
+    connection = %{
+      idp_sso_url: "https://idp.example.com/sso",
+      sp_entity_id: "https://sp.example.com/metadata",
+      acs_url: "https://sp.example.com/saml/acs",
+      sign_authn_requests: true,
+      signed_request_encoding: :rfc3986_upper
+    }
+
+    opts = [request_store: Relyra.TestSupport.NoopRequestStore, now: ~U[2026-05-26 00:00:00Z]]
+
+    assert {:ok, %{redirect_query: bytes, request_id: _, relay_state: _}} =
+             Relyra.start_login(connection, %{return_to: "/"}, opts)
+
+    assert is_binary(bytes)
+    assert String.starts_with?(bytes, "SAMLRequest=")
+    assert String.contains?(bytes, "&SigAlg=")
+    assert String.contains?(bytes, "&Signature=")
+  end
+
+  test "start_login/3 keeps :redirect_params for unsigned AuthnRequests" do
+    connection = %{
+      idp_sso_url: "https://idp.example.com/sso",
+      sp_entity_id: "https://sp.example.com/metadata",
+      acs_url: "https://sp.example.com/saml/acs",
+      sign_authn_requests: false
+    }
+
+    opts = [request_store: Relyra.TestSupport.NoopRequestStore, now: ~U[2026-05-26 00:00:00Z]]
+
+    assert {:ok, %{redirect_params: params, request_id: _, relay_state: _}} =
+             Relyra.start_login(connection, %{return_to: "/"}, opts)
+
+    assert is_map(params)
+    refute Map.has_key?(params, :redirect_query)
+  end
+
+  test "start_login/3 rejects idp_sso_url collisions with reserved SAML keys" do
+    opts = [request_store: Relyra.TestSupport.NoopRequestStore, now: ~U[2026-05-26 00:00:00Z]]
+
+    for key <- ["SAMLRequest", "Signature", "SigAlg", "RelayState"] do
+      connection = %{
+        connection_id: "conn-123",
+        idp_sso_url: "https://idp.example.com/sso?#{key}=stale",
+        sp_entity_id: "https://sp.example.com/metadata",
+        acs_url: "https://sp.example.com/saml/acs"
+      }
+
+      assert {:error, %Relyra.Error{type: :invalid_idp_sso_url}} =
+               Relyra.start_login(connection, %{return_to: "/"}, opts)
+    end
+  end
+
+  test "start_login/3 allows benign existing idp_sso_url query params" do
+    connection = %{
+      idp_sso_url: "https://idp.example.com/sso?tenant=acme&realm=prod",
+      sp_entity_id: "https://sp.example.com/metadata",
+      acs_url: "https://sp.example.com/saml/acs"
+    }
+
+    opts = [request_store: Relyra.TestSupport.NoopRequestStore, now: ~U[2026-05-26 00:00:00Z]]
+
+    refute match?(
+             {:error, %Relyra.Error{type: :invalid_idp_sso_url}},
+             Relyra.start_login(connection, %{return_to: "/"}, opts)
+           )
+  end
+
+  test "start_login/3 emitted AuthnRequest includes Destination attribute" do
+    connection = %{
+      idp_sso_url: "https://idp.example.com/sso",
+      sp_entity_id: "https://sp.example.com/metadata",
+      acs_url: "https://sp.example.com/saml/acs"
+    }
+
+    opts = [request_store: Relyra.TestSupport.NoopRequestStore, now: ~U[2026-05-26 00:00:00Z]]
+
+    assert {:ok, %{authn_request: xml}} =
+             Relyra.start_login(connection, %{return_to: "/"}, opts)
+
+    assert xml =~ ~s(Destination="https://idp.example.com/sso")
+  end
+
   test "consume_response/3 returns typed tuple contract" do
     request_intent = %{
       request_id: "id_request_123",

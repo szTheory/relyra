@@ -33,6 +33,27 @@ defmodule Relyra.Phoenix.LoginControllerTest do
     assert redirected_to(conn) =~ "RelayState="
   end
 
+  test "GET /:connection_id/login appends signed query verbatim" do
+    conn = Phoenix.ConnTest.build_conn()
+
+    Application.put_env(:relyra, :connection_resolver, FakeConnectionResolver)
+    Application.put_env(:relyra, :request_store, Relyra.RequestStore.ETS)
+    pem = File.read!("test/fixtures/security/authn_request_signing/golden_signing_key.pem")
+    Application.put_env(:relyra, :sp_signing_key_pem, pem)
+
+    on_exit(fn -> Application.delete_env(:relyra, :sp_signing_key_pem) end)
+
+    Relyra.RequestStore.ETS.ensure_table!()
+
+    conn = get(conn, "/valid_signed/login")
+    url = redirected_to(conn)
+
+    assert url =~ "https://idp.example.com/sso?"
+    assert url =~ "Signature="
+    assert url =~ "SigAlg="
+    refute url =~ "Signature%3D"
+  end
+
   test "GET /:connection_id/login with unknown connection returns error" do
     conn = Phoenix.ConnTest.build_conn()
     Application.put_env(:relyra, :connection_resolver, FakeConnectionResolver)

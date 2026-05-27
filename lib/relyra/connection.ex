@@ -21,7 +21,8 @@ defmodule Relyra.Connection do
     :display_name,
     :organization_id,
     :mapping_config,
-    sign_authn_requests: false
+    sign_authn_requests: false,
+    signed_request_encoding: nil
   ]
 
   @type t :: %__MODULE__{
@@ -43,6 +44,7 @@ defmodule Relyra.Connection do
           display_name: binary() | nil,
           organization_id: binary() | nil,
           mapping_config: map() | nil,
-          sign_authn_requests: boolean()
+          sign_authn_requests: boolean(),
+          signed_request_encoding: :rfc3986_upper | :adfs_lower | nil
         }
 end

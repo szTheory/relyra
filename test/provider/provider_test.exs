@@ -5,7 +5,8 @@ defmodule Relyra.ProviderTest do
   alias Relyra.Provider
 
   test "supported preset ids are registered" do
-    assert Provider.list() == [:entra, :google_workspace, :okta]
+    assert Provider.list() == [:adfs, :entra, :google_workspace, :okta]
+    assert Provider.fetch!(:adfs) == Relyra.Provider.ADFS
     assert Provider.fetch!(:okta) == Relyra.Provider.Okta
     assert Provider.fetch!(:entra) == Relyra.Provider.Entra
     assert Provider.fetch!(:google_workspace) == Relyra.Provider.GoogleWorkspace
@@ -25,8 +26,20 @@ defmodule Relyra.ProviderTest do
   end
 
   test "translate_label/2 uses IdP labels" do
+    assert Provider.translate_label(:adfs, :sp_entity_id) == "Relying Party Trust Identifier"
+    assert Provider.translate_label(:adfs, :idp_certificate) == "Token-signing certificate"
     assert Provider.translate_label(:okta, :sp_entity_id) == "Audience URI (SP Entity ID)"
     assert Provider.translate_label(:entra, :sp_entity_id) == "Identifier (Entity ID)"
+  end
+
+  test "apply_defaults/2 returns ADFS-specific defaults" do
+    config = Provider.apply_defaults(:adfs, sp_entity_id: "https://sp.example.com/metadata")
+
+    assert Keyword.fetch!(config, :provider_preset) == :adfs
+    assert Keyword.fetch!(config, :sign_authn_requests) == true
+    assert Keyword.fetch!(config, :signed_request_encoding) == :adfs_lower
+    assert Keyword.fetch!(config, :require_signed_assertions?) == true
+    assert Provider.guide_url(:adfs) =~ "learn.microsoft.com"
   end
 
   test "from_metadata_url/2 preserves preset defaults and records metadata URL" do

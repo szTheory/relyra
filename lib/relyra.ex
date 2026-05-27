@@ -46,7 +46,8 @@ defmodule Relyra do
     }
 
     Relyra.Telemetry.span([:authn_request], metadata, fn ->
-      with {:ok, request_fields} <- AuthnRequest.build(connection, relay_context, opts),
+      with :ok <- validate_idp_sso_url(connection),
+           {:ok, request_fields} <- AuthnRequest.build(connection, relay_context, opts),
            request_id <- Map.fetch!(request_fields, :id),
            authn_request_xml <- AuthnRequest.to_xml(request_fields),
            {:ok, relay_state} <-
@@ -61,7 +62,41 @@ defmodule Relyra do
 
         case request_store_result do
           :ok ->
-            case Binding.encode_redirect(authn_request_xml, relay_state) do
+            sign = read_field(connection, :sign_authn_requests) == true
+            encoding = read_field(connection, :signed_request_encoding) || :rfc3986_upper
+
+            binding_opts =
+              [
+                sign: sign,
+                signature_method:
+                  Keyword.get(
+                    opts,
+                    :signature_method,
+                    "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+                  ),
+                signing_key_pem: Keyword.get(opts, :signing_key_pem),
+                encoding: encoding,
+                connection_id: read_field(connection, :connection_id)
+              ]
+
+            case Binding.encode_redirect(authn_request_xml, relay_state, binding_opts) do
+              {:ok, %{redirect_query: redirect_query}} ->
+                {
+                  {:ok,
+                   %{
+                     request_id: request_id,
+                     authn_request: authn_request_xml,
+                     relay_state: relay_state,
+                     redirect_query: redirect_query
+                   }},
+                  Map.merge(metadata, %{
+                    outcome: :ok,
+                    xml_bytes: byte_size(authn_request_xml),
+                    redirect_query_bytes: byte_size(redirect_query),
+                    request_store_latency_ms: request_store_latency_ms
+                  })
+                }
+
               {:ok, redirect_params} ->
                 base64_request = Map.get(redirect_params, "SAMLRequest") || ""
 
@@ -356,6 +391,36 @@ defmodule Relyra do
 
   defp duration_ms(start_time) do
     System.convert_time_unit(System.monotonic_time() - start_time, :native, :millisecond)
+  end
+
+  defp validate_idp_sso_url(connection) do
+    details = %{connection_id: read_field(connection, :connection_id)}
+
+    case read_field(connection, :idp_sso_url) do
+      url when is_binary(url) and url != "" ->
+        reserved_keys = ["SAMLRequest", "SAMLResponse", "RelayState", "SigAlg", "Signature"]
+        query = URI.parse(url).query || ""
+
+        case Enum.find(reserved_keys, &Map.has_key?(URI.decode_query(query), &1)) do
+          nil ->
+            :ok
+
+          reserved_key ->
+            {:error,
+             Error.new(
+               :invalid_idp_sso_url,
+               "idp_sso_url query string already contains a reserved SAML parameter",
+               Map.merge(details, %{
+                 reserved_key: reserved_key,
+                 hint:
+                   "Configure idp_sso_url without SAML query parameters; SAML parameters are appended at sign time"
+               })
+             )}
+        end
+
+      _ ->
+        :ok
+    end
   end
 
   defp read_field(map, key) when is_map(map) and is_atom(key) do

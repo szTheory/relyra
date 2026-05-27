@@ -103,6 +103,37 @@ defmodule Relyra.Security.Signature do
      )}
   end
 
+  @doc """
+  Sign the pre-assembled HTTP-Redirect-binding query-string binary and return
+  the URL-encoded base64 Signature value to append.
+
+  `octets` must be the exact wire bytes before `&Signature=` is appended. This
+  function signs those bytes verbatim and MUST NOT re-encode the query.
+  """
+  @spec sign_redirect_query(binary(), String.t(), keyword()) ::
+          {:ok, binary()} | {:error, Error.t()}
+  def sign_redirect_query(octets, signature_method, opts \\ [])
+
+  def sign_redirect_query(octets, signature_method, opts)
+      when is_binary(octets) and octets != "" and is_binary(signature_method) and is_list(opts) do
+    details = %{signature_method: signature_method}
+
+    with {:ok, digest_atom} <- signing_digest_atom(signature_method, details),
+         {:ok, private_key} <- load_signing_key(opts, details),
+         {:ok, sig_bytes} <- safe_sign(octets, digest_atom, private_key) do
+      {:ok, sig_bytes |> Base.encode64() |> URI.encode_www_form()}
+    end
+  end
+
+  def sign_redirect_query(_octets, signature_method, _opts) do
+    {:error,
+     Error.new(
+       :invalid_signature,
+       "Redirect signing inputs are invalid",
+       %{signature_method: signature_method, reason: :invalid_signature_input}
+     )}
+  end
+
   defp do_verify(parsed_doc, connection, cert_chain, opts) do
     details = connection_details(connection)
     duplicate_xml_ids = Map.get(parsed_doc, :duplicate_ids) || []
@@ -299,6 +330,57 @@ defmodule Relyra.Security.Signature do
 
   def public_key_from_cert_chain(_cert_chain), do: {:error, :untrusted_certificate}
 
+  defp signing_digest_atom(signature_method, details) do
+    case AlgorithmPolicy.signing_digest_atom(signature_method) do
+      {:ok, atom} ->
+        {:ok, atom}
+
+      {:error, error_type} ->
+        {:error,
+         Error.new(
+           error_type,
+           "Signing algorithm is not supported for outbound redirect signing",
+           Map.put(details, :signature_method, signature_method)
+         )}
+    end
+  end
+
+  defp load_signing_key(opts, details) do
+    signing_key_pem =
+      Keyword.get(opts, :signing_key_pem) ||
+        Application.get_env(:relyra, :sp_signing_key_pem)
+
+    with pem when is_binary(pem) <- signing_key_pem,
+         [entry | _] <- :public_key.pem_decode(pem),
+         private_key <- :public_key.pem_entry_decode(entry) do
+      {:ok, private_key}
+    else
+      _ ->
+        {:error,
+         Error.new(
+           :key_not_configured,
+           "SP signing key is not configured",
+           Map.put(
+             details,
+             :hint,
+             "Set config :relyra, :sp_signing_key_pem to the PEM binary of the SP RSA private key"
+           )
+         )}
+    end
+  rescue
+    _ ->
+      {:error,
+       Error.new(
+         :key_not_configured,
+         "SP signing key is not configured",
+         Map.put(
+           details,
+           :hint,
+           "Set config :relyra, :sp_signing_key_pem to the PEM binary of the SP RSA private key"
+         )
+       )}
+  end
+
   # D-03: canonicalize the SignedInfo (bare exclusive-C14N — SignedInfo carries
   # NO enveloped-signature transform; reading its own ds:CanonicalizationMethod
   # InclusiveNamespaces PrefixList when present, empty list otherwise) and verify
@@ -397,6 +479,18 @@ defmodule Relyra.Security.Signature do
     :public_key.verify(message, digest_atom, signature, public_key)
   rescue
     _ -> false
+  end
+
+  defp safe_sign(message, digest_atom, private_key) do
+    {:ok, :public_key.sign(message, digest_atom, private_key)}
+  rescue
+    _ ->
+      {:error,
+       Error.new(
+         :key_not_configured,
+         "SP signing key could not produce a redirect signature",
+         %{reason: :private_key_sign_failed}
+       )}
   end
 
   defp merge_error_details(%Error{details: error_details} = error, details)

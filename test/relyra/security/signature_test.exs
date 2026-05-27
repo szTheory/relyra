@@ -87,6 +87,70 @@ defmodule Relyra.Security.SignatureTest do
     end
   end
 
+  describe "sign_redirect_query/3 (Phase 35 AUTHN-01)" do
+    test "signs raw octets verbatim and returns URL-encoded base64 signature" do
+      Application.put_env(:relyra, :sp_signing_key_pem, fixture_pem())
+      on_exit(fn -> Application.delete_env(:relyra, :sp_signing_key_pem) end)
+
+      octets =
+        "SAMLRequest=abc%2B123&RelayState=return%2Fto&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256"
+
+      assert {:ok, sig} =
+               Signature.sign_redirect_query(
+                 octets,
+                 "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+               )
+
+      assert is_binary(sig)
+      refute String.contains?(sig, "+")
+      assert URI.decode_www_form(sig) |> Base.decode64!() |> is_binary()
+    end
+
+    test "returns :key_not_configured when :sp_signing_key_pem is unset" do
+      Application.delete_env(:relyra, :sp_signing_key_pem)
+
+      assert {:error, %Error{type: :key_not_configured}} =
+               Signature.sign_redirect_query(
+                 "SAMLRequest=x",
+                 "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+               )
+    end
+
+    test "returns :unsupported_signing_algorithm for ECDSA URI" do
+      Application.put_env(:relyra, :sp_signing_key_pem, fixture_pem())
+      on_exit(fn -> Application.delete_env(:relyra, :sp_signing_key_pem) end)
+
+      assert {:error, %Error{type: :unsupported_signing_algorithm}} =
+               Signature.sign_redirect_query(
+                 "SAMLRequest=x",
+                 "http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256"
+               )
+    end
+
+    test "returns :unknown_signing_algorithm for unknown URI" do
+      Application.put_env(:relyra, :sp_signing_key_pem, fixture_pem())
+      on_exit(fn -> Application.delete_env(:relyra, :sp_signing_key_pem) end)
+
+      assert {:error, %Error{type: :unknown_signing_algorithm}} =
+               Signature.sign_redirect_query("SAMLRequest=x", "urn:bogus")
+    end
+
+    test "signs different octets differently even when they decode to the same logical params" do
+      pem = fixture_pem()
+      signature_method = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+      octets_a = "SAMLRequest=abc%2B123&SigAlg=http%3A%2F%2Fexample.com%2Frsa-sha256"
+      octets_b = "SAMLRequest=abc+123&SigAlg=http%3A%2F%2Fexample.com%2Frsa-sha256"
+
+      assert {:ok, sig_a} =
+               Signature.sign_redirect_query(octets_a, signature_method, signing_key_pem: pem)
+
+      assert {:ok, sig_b} =
+               Signature.sign_redirect_query(octets_b, signature_method, signing_key_pem: pem)
+
+      refute sig_a == sig_b
+    end
+  end
+
   defp attach_signature_telemetry(_context) do
     test_pid = self()
     handler_id = "phase21-signature-test-#{System.unique_integer([:positive])}"
@@ -109,5 +173,11 @@ defmodule Relyra.Security.SignatureTest do
     on_exit(fn -> :telemetry.detach(handler_id) end)
 
     :ok
+  end
+
+  defp fixture_pem do
+    File.read!(
+      Path.join([__DIR__, "../../fixtures/security/authn_request_signing/golden_signing_key.pem"])
+    )
   end
 end

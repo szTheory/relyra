@@ -7,7 +7,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     def connection_detail(%{detail: nil} = assigns) do
       ~H"""
-      <div style="padding: 16px; border: 1px solid #ddd;">
+      <div data-testid="connection-detail-empty-state" style="padding: 16px; border: 1px solid #ddd;">
         Connection not found.
       </div>
       """
@@ -15,25 +15,36 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     def connection_detail(assigns) do
       ~H"""
-      <section>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <section data-testid="connection-detail-region">
+        <div
+          data-testid="connection-detail-header"
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"
+        >
           <div>
-            <h2 style="font-size: 20px; margin: 0;">{@detail.connection.display_name || @detail.connection.connection_id}</h2>
+            <h2 data-testid="connection-detail-title" style="font-size: 20px; margin: 0;">{@detail.connection.display_name || @detail.connection.connection_id}</h2>
             <p style="color: #666; margin-top: 6px;">
               {@detail.connection.organization_id} ·
-              <span style={"padding: 2px 8px; border-radius: 4px; font-weight: bold; #{status_style(@detail.connection.status)}"}>
+              <span
+                data-testid="connection-status-badge"
+                data-status={@detail.connection.status}
+                style={"padding: 2px 8px; border-radius: 4px; font-weight: bold; #{status_style(@detail.connection.status)}"}
+              >
                 {@detail.connection.status}
               </span>
               · {@detail.provider_label}
             </p>
           </div>
-          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+          <div data-testid="connection-detail-actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
             <div style="display: flex; gap: 12px;">
-              <a href={edit_path(@base_path, @detail.connection.connection_id)}>Edit</a>
-              <button :if={@detail.connection.status != :enabled} phx-click="enable_connection">Enable</button>
-              <button :if={@detail.connection.status == :enabled} phx-click="disable_connection">Disable</button>
+              <a data-testid="edit-connection-link" href={edit_path(@base_path, @detail.connection.connection_id)}>Edit</a>
+              <button :if={@detail.connection.status != :enabled} data-testid="enable-connection-button" phx-click="enable_connection">Enable</button>
+              <button :if={@detail.connection.status == :enabled} data-testid="disable-connection-button" phx-click="disable_connection">Disable</button>
             </div>
-            <div :if={map_size(@detail.connection.readiness_errors || %{}) > 0} style="color: #d32f2f; font-size: 14px; text-align: right; background: #ffebee; padding: 8px; border-radius: 4px; border: 1px solid #ffcdd2;">
+            <div
+              :if={map_size(@detail.connection.readiness_errors || %{}) > 0}
+              data-testid="connection-readiness-errors"
+              style="color: #d32f2f; font-size: 14px; text-align: right; background: #ffebee; padding: 8px; border-radius: 4px; border: 1px solid #ffcdd2;"
+            >
               <strong style="display: block; margin-bottom: 4px;">Cannot enable connection:</strong>
               <ul style="margin: 0; padding-left: 20px; text-align: left;">
                 <li :for={{field, messages} <- @detail.connection.readiness_errors}>
@@ -161,9 +172,15 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           <section style="border: 1px solid #ddd; padding: 16px;">
             <h3 style="margin-top: 0;">Mappings</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-              <.form for={@attribute_mappings_changeset} phx-change="validate_attribute_mappings" phx-submit="save_attribute_mappings" style="display: grid; gap: 12px; border: 1px solid #ddd; padding: 16px; border-radius: 4px;">
+              <.form
+                :let={attribute_mappings_form}
+                for={to_form(@attribute_mappings_changeset, as: :attribute_mappings_form)}
+                phx-change="validate_attribute_mappings"
+                phx-submit="save_attribute_mappings"
+                style="display: grid; gap: 12px; border: 1px solid #ddd; padding: 16px; border-radius: 4px;"
+              >
                 <h4 style="margin: 0; font-size: 16px;">Attribute Mappings</h4>
-                <.inputs_for :let={m} field={@attribute_mappings_changeset[:mappings]}>
+                <.inputs_for :let={m} field={attribute_mappings_form[:mappings]}>
                   <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: center; border: 1px solid #eee; padding: 8px; background: #fafafa; border-radius: 4px;">
                     <input type="text" name={m[:source_attribute].name} value={m[:source_attribute].value} placeholder="Source (e.g. email)" required style="padding: 4px; width: 100%; box-sizing: border-box;" />
                     <select name={m[:target_field].name} style="padding: 4px; width: 100%; box-sizing: border-box;">
@@ -179,9 +196,15 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                 <button type="submit" style="margin-top: 12px; padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer;">Save attribute mappings</button>
               </.form>
 
-              <.form for={@group_mappings_changeset} phx-change="validate_group_mappings" phx-submit="save_group_mappings" style="display: grid; gap: 12px; border: 1px solid #ddd; padding: 16px; border-radius: 4px;">
+              <.form
+                :let={group_mappings_form}
+                for={to_form(@group_mappings_changeset, as: :group_mappings_form)}
+                phx-change="validate_group_mappings"
+                phx-submit="save_group_mappings"
+                style="display: grid; gap: 12px; border: 1px solid #ddd; padding: 16px; border-radius: 4px;"
+              >
                 <h4 style="margin: 0; font-size: 16px;">Group Mappings</h4>
-                <.inputs_for :let={m} field={@group_mappings_changeset[:mappings]}>
+                <.inputs_for :let={m} field={group_mappings_form[:mappings]}>
                   <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; border: 1px solid #eee; padding: 8px; background: #fafafa; border-radius: 4px;">
                     <input type="text" name={m[:source_attribute].name} value={m[:source_attribute].value} placeholder="Attribute" required style="padding: 4px; width: 100%; box-sizing: border-box;" />
                     <input type="text" name={m[:source_value].name} value={m[:source_value].value} placeholder="Value" required style="padding: 4px; width: 100%; box-sizing: border-box;" />

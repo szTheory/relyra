@@ -41,8 +41,11 @@ Use these runbooks only after you complete the local FakeIdP proof in Getting St
 ## Custom SAML And Not-Yet-Shipped Providers
 
 - **Custom SAML:** Supported as a generic integration path when you bring your own
-  IdP-specific field mapping and operator verification. Start from the canonical
-  onboarding flow, then adapt it to your provider's metadata and claim vocabulary.
+  IdP-specific field mapping and operator verification. Use the operator runbook at
+  [guides/recipes/generic_saml.md](guides/recipes/generic_saml.md) after the local
+  `FakeIdP` proof and before you start translating your provider's admin vocabulary.
+- **Specialized fallback:** [ADFS](guides/recipes/adfs.md) keeps its own runbook because
+  signed AuthnRequests and encoding interop differ from the default generic path.
 - **Not yet shipped:** Any provider without a shipped preset module and verified
   runbook is not first-class batteries included support.
 

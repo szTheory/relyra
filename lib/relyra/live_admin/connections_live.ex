@@ -396,7 +396,10 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     @impl true
     def render(assigns) do
       ~H"""
-      <div style="padding: 24px; font-family: Helvetica, Arial, sans-serif;">
+      <div
+        data-testid="admin-shell"
+        style="padding: 24px; font-family: Helvetica, Arial, sans-serif;"
+      >
         <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
           <div>
             <h1 style="font-size: 28px; margin: 0;">Relyra Admin</h1>
@@ -414,14 +417,17 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           </div>
         </header>
 
-        <section style="display: grid; grid-template-columns: minmax(260px, 320px) 1fr; gap: 24px;">
+        <section
+          data-testid="admin-shell-grid"
+          style="display: grid; grid-template-columns: minmax(260px, 320px) 1fr; gap: 24px;"
+        >
           <ConnectionList.connection_list
             connections={@connections}
             base_path={@relyra_admin_base_path}
             selected_ids={@selected_ids}
           />
 
-          <main>
+          <main data-testid="admin-main-region">
             <div :if={MapSet.size(@selected_ids) > 0} style="margin-bottom: 20px; padding: 12px; background: #f0f4f8; border: 1px solid #d1d9e1; border-radius: 4px; display: flex; align-items: center; gap: 16px;">
               <span style="font-weight: bold;">Bulk Actions ({MapSet.size(@selected_ids)} selected):</span>
               <button phx-click="bulk_action" phx-value-action="enable" style="padding: 4px 8px; cursor: pointer;">Enable</button>
@@ -445,7 +451,10 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                   audit_filters={@audit_filters}
                 />
               <% _ -> %>
-                <div style="padding: 16px; border: 1px solid #ddd;">
+                <div
+                  data-testid="connection-selection-empty-state"
+                  style="padding: 16px; border: 1px solid #ddd;"
+                >
                   Select a connection or create a new one.
                 </div>
             <% end %>
@@ -459,8 +468,11 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       assigns = assign(assigns, :mode, mode)
 
       ~H"""
-      <section>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <section data-testid="connection-editor-region">
+        <div
+          data-testid="connection-editor-header"
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"
+        >
           <h2 style="font-size: 20px; margin: 0;">
             <%= if @mode == :new, do: "New connection", else: "Edit connection" %>
           </h2>
@@ -646,8 +658,8 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
         "require_signed_response?" =>
           boolean_string(Map.get(runtime_policy, :require_signed_response?, true)),
         "clock_skew_seconds" =>
-          if(connection && runtime_policy.clock_skew_seconds,
-            do: Integer.to_string(runtime_policy.clock_skew_seconds),
+          if(connection && Map.get(runtime_policy, :clock_skew_seconds),
+            do: Integer.to_string(Map.get(runtime_policy, :clock_skew_seconds)),
             else: ""
           ),
         "name_id_format" => Map.get(runtime_policy, :name_id_format) || "",

@@ -17,12 +17,15 @@ defmodule Relyra.Protocol.Metadata do
   def build_sp_metadata(connection, _opts \\ []) do
     issuer = Map.get(connection, :sp_entity_id) || Map.get(connection, :issuer)
     acs_url = Map.get(connection, :acs_url)
+    sign_authn_requests = Map.get(connection, :sign_authn_requests, false) == true
 
     # T-34-01: PUBLIC certs only — read :sp_signing_cert_pem / :sp_encryption_cert_pem.
     # The SP private key is the KeyResolver's concern, never metadata's; this builder
     # must not source any private key material.
     signing_cert_b64 = cert_body(Application.get_env(:relyra, :sp_signing_cert_pem))
     encryption_cert_b64 = cert_body(Application.get_env(:relyra, :sp_encryption_cert_pem))
+    signing_descriptor = signing_key_descriptor(sign_authn_requests, signing_cert_b64)
+    authn_requests_attr = authn_requests_signed_attr(sign_authn_requests)
 
     # T-34-02: schema-valid SPSSODescriptor child order — KeyDescriptor [0..*] BEFORE
     # AssertionConsumerService [1..*]; signing descriptor before encryption descriptor;
@@ -30,10 +33,8 @@ defmodule Relyra.Protocol.Metadata do
     """
     <?xml version="1.0" encoding="UTF-8"?>
     <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="#{issuer}">
-      <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-        <md:KeyDescriptor use="signing">
-          <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>#{signing_cert_b64}</ds:X509Certificate></ds:X509Data></ds:KeyInfo>
-        </md:KeyDescriptor>
+      <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol"#{authn_requests_attr}>
+    #{signing_descriptor}
         <md:KeyDescriptor use="encryption">
           <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>#{encryption_cert_b64}</ds:X509Certificate></ds:X509Data></ds:KeyInfo>
     #{encryption_methods()}
@@ -64,6 +65,20 @@ defmodule Relyra.Protocol.Metadata do
   end
 
   defp cert_body(_), do: ""
+
+  defp signing_key_descriptor(true, signing_cert_b64) do
+    """
+        <md:KeyDescriptor use="signing">
+          <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>#{signing_cert_b64}</ds:X509Certificate></ds:X509Data></ds:KeyInfo>
+        </md:KeyDescriptor>
+    """
+    |> String.trim_trailing()
+  end
+
+  defp signing_key_descriptor(false, _signing_cert_b64), do: ""
+
+  defp authn_requests_signed_attr(true), do: ~s( AuthnRequestsSigned="true")
+  defp authn_requests_signed_attr(false), do: ""
 
   defp encryption_methods do
     @encryption_method_uris

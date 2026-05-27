@@ -25,14 +25,14 @@ defmodule Relyra.Protocol.MetadataTest do
 
   describe "build_sp_metadata/2 KeyDescriptors (SC#4)" do
     test "emits both a signing and an encryption KeyDescriptor" do
-      xml = Metadata.build_sp_metadata(connection())
+      xml = Metadata.build_sp_metadata(connection_signed())
 
       assert String.contains?(xml, ~s(use="signing"))
       assert String.contains?(xml, ~s(use="encryption"))
     end
 
     test "signing descriptor precedes encryption descriptor, both precede ACS" do
-      xml = Metadata.build_sp_metadata(connection())
+      xml = Metadata.build_sp_metadata(connection_signed())
 
       signing_at = index_of!(xml, ~s(use="signing"))
       encryption_at = index_of!(xml, ~s(use="encryption"))
@@ -45,7 +45,7 @@ defmodule Relyra.Protocol.MetadataTest do
     end
 
     test "each KeyDescriptor carries a KeyInfo/X509Data/X509Certificate chain" do
-      xml = Metadata.build_sp_metadata(connection())
+      xml = Metadata.build_sp_metadata(connection_signed())
 
       assert String.contains?(xml, "<ds:KeyInfo")
       assert String.contains?(xml, "<ds:X509Data>")
@@ -53,7 +53,7 @@ defmodule Relyra.Protocol.MetadataTest do
     end
 
     test "X509Certificate body is base64-of-DER: no PEM armor, no embedded newline" do
-      xml = Metadata.build_sp_metadata(connection())
+      xml = Metadata.build_sp_metadata(connection_signed())
 
       for body <- x509_cert_bodies(xml) do
         assert body != ""
@@ -67,7 +67,7 @@ defmodule Relyra.Protocol.MetadataTest do
     end
 
     test "KeyInfo precedes EncryptionMethod inside the encryption descriptor" do
-      xml = Metadata.build_sp_metadata(connection())
+      xml = Metadata.build_sp_metadata(connection_signed())
 
       enc_block = encryption_descriptor_block(xml)
       keyinfo_at = index_of!(enc_block, "<ds:KeyInfo")
@@ -77,7 +77,7 @@ defmodule Relyra.Protocol.MetadataTest do
     end
 
     test "encryption descriptor advertises the xmlenc# aes256-gcm accept-list URI" do
-      xml = Metadata.build_sp_metadata(connection())
+      xml = Metadata.build_sp_metadata(connection_signed())
 
       assert String.contains?(xml, @aes256_gcm_uri)
       # The decryptor accept-list, not the later-spec OAEP menu.
@@ -90,13 +90,35 @@ defmodule Relyra.Protocol.MetadataTest do
       Application.delete_env(:relyra, :sp_signing_cert_pem)
       Application.delete_env(:relyra, :sp_encryption_cert_pem)
 
-      xml = Metadata.build_sp_metadata(connection())
+      xml = Metadata.build_sp_metadata(connection_signed())
 
       assert is_binary(xml)
-      # Descriptors are still emitted (D-05 unconditional signing), just with empty bodies.
+      # Signing remains toggle-controlled; encryption remains unconditional.
       assert String.contains?(xml, ~s(use="signing"))
       assert String.contains?(xml, ~s(use="encryption"))
       assert String.contains?(xml, "<ds:X509Certificate></ds:X509Certificate>")
+    end
+  end
+
+  describe "build_sp_metadata/2 sign_authn_requests gating (Phase 35 AUTHN-03)" do
+    test "toggle on emits AuthnRequestsSigned=\"true\" and signing KeyDescriptor" do
+      xml = Metadata.build_sp_metadata(connection_signed())
+      assert String.contains?(xml, ~s(AuthnRequestsSigned="true"))
+      assert String.contains?(xml, ~s(use="signing"))
+    end
+
+    test "toggle off omits both AuthnRequestsSigned and signing KeyDescriptor" do
+      xml = Metadata.build_sp_metadata(connection_unsigned())
+      refute String.contains?(xml, "AuthnRequestsSigned")
+      refute String.contains?(xml, ~s(use="signing"))
+      assert String.contains?(xml, ~s(use="encryption"))
+    end
+
+    test "child order is preserved when both descriptors are present" do
+      xml = Metadata.build_sp_metadata(connection_signed())
+      signing_at = index_of!(xml, ~s(use="signing"))
+      encryption_at = index_of!(xml, ~s(use="encryption"))
+      assert signing_at < encryption_at
     end
   end
 
@@ -104,9 +126,10 @@ defmodule Relyra.Protocol.MetadataTest do
   # Helpers
   # ---------------------------------------------------------------------------
 
-  defp connection do
-    %{sp_entity_id: "https://sp.example.com/saml", acs_url: "https://sp.example.com/saml/acs"}
-  end
+  defp connection_unsigned,
+    do: %{sp_entity_id: "https://sp.example.com/saml", acs_url: "https://sp.example.com/saml/acs"}
+
+  defp connection_signed, do: Map.put(connection_unsigned(), :sign_authn_requests, true)
 
   # Two DISTINCT real self-signed cert PEMs (fresh keypair per call).
   defp real_cert_pem(common_name) do

@@ -85,7 +85,8 @@ defmodule Relyra.Ecto.ConnectionSnapshot do
       provider_preset: connection.provider_preset,
       display_name: connection.display_name,
       organization_id: connection.organization_id,
-      sign_authn_requests: Map.get(connection, :sign_authn_requests, false)
+      sign_authn_requests: Map.get(connection, :sign_authn_requests, false),
+      signed_request_encoding: Map.get(connection, :signed_request_encoding)
     }
   end
 

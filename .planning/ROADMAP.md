@@ -73,12 +73,12 @@ See `.planning/milestones/v1.1-ROADMAP.md`.
 <details open>
 <summary>🔄 v1.3 — Advanced Federation (Phases 32-37) — IN PROGRESS</summary>
 
-- [ ] **Phase 32: AlgorithmPolicy Extension + Schema Migrations** — Extend AlgorithmPolicy with key-transport and content-encryption algorithm fields; add cert `party`/`use` columns and connection `sign_authn_requests` field via safe additive migrations.
+- [x] **Phase 32: AlgorithmPolicy Extension + Schema Migrations** — Extend AlgorithmPolicy with key-transport and content-encryption algorithm fields; add cert `party`/`use` columns and connection `sign_authn_requests` field via safe additive migrations. (completed 2026-05-25)
   **Plans:** 2 plans
 
   - [x] 32-01-PLAN.md — AlgorithmPolicy struct extension + enforce_key_transport_algorithm/2 + enforce_content_encryption_algorithm/3 (ENC-03)
   - [x] 32-02-PLAN.md — Cert party/use migration + Connection sign_authn_requests migration + Ecto schema fields (ENC-04, AUTHN-02)
-- [ ] **Phase 33: KeyResolver Behaviour + XMLEnc Crypto Core** — Introduce the `KeyResolver` behaviour and `KeyResolver.Default` PEM-from-config implementation; build `Relyra.Security.XMLEnc` with RSA-OAEP + AES-GCM decryption behind the AlgorithmPolicy gate.
+- [x] **Phase 33: KeyResolver Behaviour + XMLEnc Crypto Core** — Introduce the `KeyResolver` behaviour and `KeyResolver.Default` PEM-from-config implementation; build `Relyra.Security.XMLEnc` with RSA-OAEP + AES-GCM decryption behind the AlgorithmPolicy gate. (completed 2026-05-25)
   **Plans:** 2 plans
 
   - [x] 33-01-PLAN.md — KeyResolver behaviour + dispatch function + KeyResolver.Default PEM-from-config + key_resolver_test.exs (ENC-04)
@@ -86,7 +86,7 @@ See `.planning/milestones/v1.1-ROADMAP.md`.
 - [x] **Phase 34: ValidationPipeline Wiring + ENC-01 Complete** — Wire the decrypt-then-reparse step into `ValidationPipeline`; add ambiguity guard; publish SP encryption `KeyDescriptor`; add the 7-fixture ENC-01 adversarial corpus to `mix ci.security`. (completed 2026-05-25)
 - [x] **Phase 35: Signed AuthnRequests + ADFS Preset** — Implement redirect-binding query signing; add `sign_authn_requests` connection toggle; publish signing metadata fields; ship ADFS preset and runbook; add 5-fixture AUTHN-01 adversarial corpus. (completed 2026-05-26)
 - [x] **Phase 36: Generic SAML Runbook** — Publish `guides/recipes/generic_saml.md` covering SP/IdP metadata fields, decoder tables for non-preset IdPs, minimum-safe checklist, debugging flow, and certificate rotation. (completed 2026-05-26)
-- [ ] **Phase 37: Identity Mapping and Provisioning Guide** — Publish `guides/identity_mapping_and_provisioning.md` covering three mapping patterns, JIT decision tree, `UserMapper` behaviour documentation, and SCIM non-goal statement.
+- [x] **Phase 37: Identity Mapping and Provisioning Guide** — Publish `guides/identity_mapping_and_provisioning.md` covering three mapping patterns, JIT decision tree, `UserMapper` behaviour documentation, and SCIM non-goal statement. (completed 2026-05-26)
 
 See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 

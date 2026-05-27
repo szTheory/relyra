@@ -11,15 +11,15 @@ Requirements for this milestone. Each maps to a roadmap phase.
 
 - [x] **ENC-01**: SP can decrypt `EncryptedAssertion` (and `EncryptedAttribute`) using RSA-OAEP key transport and AES-GCM content encryption; decrypted bytes pass through `PureBeam.parse_safely/2` (hardened saxy seam) and `Signature.do_verify/4` (XMLDSig verification) before any identity fields are read; all decryption failures return opaque `:decryption_failed` atom regardless of failure mode
 - [x] **ENC-02**: SP metadata endpoint publishes `KeyDescriptor use="encryption"` with the SP encryption certificate so IdPs can encrypt assertions
-- [ ] **ENC-03**: Algorithm policy hard-rejects RSA-PKCS1v1.5 key transport (no escape hatch — no legitimate production use case) and rejects AES-CBC content encryption by default with a time-boxed escape hatch (identical to SHA-1 override pattern) for legacy IdP compatibility; AES-GCM auth tag length is validated (== 16 bytes) before any call to `:crypto.crypto_one_time_aead/7`
-- [ ] **ENC-04**: Operator can configure SP decryption private key via `KeyResolver` behaviour (PEM config default implementation ships; KMS extension point is documented for v1.4+); SP private key material is never stored in any Ecto schema column or surfaced in diagnostic bundles; cert inventory `party`/`use` fields isolate encryption certs from signing certs
+- [x] **ENC-03**: Algorithm policy hard-rejects RSA-PKCS1v1.5 key transport (no escape hatch — no legitimate production use case) and rejects AES-CBC content encryption by default with a time-boxed escape hatch (identical to SHA-1 override pattern) for legacy IdP compatibility; AES-GCM auth tag length is validated (== 16 bytes) before any call to `:crypto.crypto_one_time_aead/7`
+- [x] **ENC-04**: Operator can configure SP decryption private key via `KeyResolver` behaviour (PEM config default implementation ships; KMS extension point is documented for v1.4+); SP private key material is never stored in any Ecto schema column or surfaced in diagnostic bundles; cert inventory `party`/`use` fields isolate encryption certs from signing certs
 
 ### Signed AuthnRequests
 
-- [ ] **AUTHN-01**: SP can sign AuthnRequests for HTTP-Redirect binding by signing the raw pre-assembled query-string binary verbatim (RSA-SHA256 default; never re-serialized); adversarial corpus includes a bit-for-bit golden output test and an ADFS-style `+`-encoding variant
-- [ ] **AUTHN-02**: Operator can enable or disable signed AuthnRequests per connection via `sign_authn_requests` boolean field (default: `false`; additive and backward-compatible with all existing connections)
-- [ ] **AUTHN-03**: SP metadata endpoint publishes `KeyDescriptor use="signing"` and sets `AuthnRequestsSigned="true"` when `sign_authn_requests: true` is configured for a connection; SP metadata omits signing `KeyDescriptor` when the toggle is off
-- [ ] **AUTHN-04**: ADFS provider preset ships with `sign_authn_requests: true` by default and includes an ADFS-specific runbook (`guides/providers/adfs.md`) covering claim rules, PowerShell `Set-ADFSRelyingPartyTrust` commands, SHA-1 vs SHA-256 redirect binding interop notes, and the `WantAuthnRequestsSigned` flag behavior
+- [x] **AUTHN-01**: SP can sign AuthnRequests for HTTP-Redirect binding by signing the raw pre-assembled query-string binary verbatim (RSA-SHA256 default; never re-serialized); adversarial corpus includes a bit-for-bit golden output test and an ADFS-style `+`-encoding variant
+- [x] **AUTHN-02**: Operator can enable or disable signed AuthnRequests per connection via `sign_authn_requests` boolean field (default: `false`; additive and backward-compatible with all existing connections)
+- [x] **AUTHN-03**: SP metadata endpoint publishes `KeyDescriptor use="signing"` and sets `AuthnRequestsSigned="true"` when `sign_authn_requests: true` is configured for a connection; SP metadata omits signing `KeyDescriptor` when the toggle is off
+- [x] **AUTHN-04**: ADFS provider preset ships with `sign_authn_requests: true` by default and includes an ADFS-specific runbook (`guides/recipes/adfs.md`) covering claim rules, PowerShell `Set-AdfsRelyingPartyTrust` commands, SHA-1 vs SHA-256 redirect binding interop notes, and the `WantAuthnRequestsSigned` flag behavior
 
 ### Documentation
 
@@ -58,14 +58,14 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENC-03 | Phase 32 | Pending |
-| ENC-04 | Phase 32 | Pending |
-| AUTHN-02 | Phase 32 | Pending |
+| ENC-03 | Phase 32 | Complete |
+| ENC-04 | Phase 33 | Complete |
+| AUTHN-02 | Phase 35 | Complete |
 | ENC-01 | Phase 34 | Complete |
 | ENC-02 | Phase 34 | Complete |
-| AUTHN-01 | Phase 35 | Pending |
-| AUTHN-03 | Phase 35 | Pending |
-| AUTHN-04 | Phase 35 | Pending |
+| AUTHN-01 | Phase 35 | Complete |
+| AUTHN-03 | Phase 35 | Complete |
+| AUTHN-04 | Phase 35 | Complete |
 | DOCS-02 | Phase 36 | Complete |
 | DOCS-03 | Phase 37 | Complete |
 
@@ -77,4 +77,4 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ---
 *Requirements defined: 2026-05-25*
-*Last updated: 2026-05-25 — traceability populated by roadmapper (Phases 32-37)*
+*Last updated: 2026-05-26 — Phase 35 verification completed and the stale Phase 15 admin UI verification blocker is now closed.*

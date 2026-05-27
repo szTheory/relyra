@@ -112,6 +112,29 @@ defmodule Relyra.Security.AlgorithmPolicy do
 
   def digest_atom_for_signature_method(_uri), do: {:error, :unsupported_signature_algorithm}
 
+  @doc """
+  Map a signature-method URI to the digest atom :public_key.sign/3 will use for
+  outbound HTTP-Redirect-binding AuthnRequest signing (Phase 35 D-05).
+
+  Mirrors `digest_atom_for_signature_method/1` but emits a distinct error
+  taxonomy so outbound signing failures remain separate from inbound signature
+  verification failures. Outbound MUST NEVER voluntarily downgrade to SHA-1.
+  """
+  @spec signing_digest_atom(term()) ::
+          {:ok, :sha256 | :sha384 | :sha512}
+          | {:error, :unsupported_signing_algorithm | :unknown_signing_algorithm}
+  def signing_digest_atom(uri) when is_binary(uri) do
+    cond do
+      String.contains?(uri, "ecdsa") -> {:error, :unsupported_signing_algorithm}
+      String.ends_with?(uri, "rsa-sha256") -> {:ok, :sha256}
+      String.ends_with?(uri, "rsa-sha384") -> {:ok, :sha384}
+      String.ends_with?(uri, "rsa-sha512") -> {:ok, :sha512}
+      true -> {:error, :unknown_signing_algorithm}
+    end
+  end
+
+  def signing_digest_atom(_uri), do: {:error, :unknown_signing_algorithm}
+
   @spec enforce_signature_method(t(), term()) :: :ok | Error.t()
   def enforce_signature_method(policy, method) do
     if method_allowed?(policy.allowed_signature_methods, method) do

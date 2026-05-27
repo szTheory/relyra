@@ -68,7 +68,7 @@ defmodule Relyra.Conformance.SPConformanceTest do
 
     assert {:ok, encoded} = Binding.encode_redirect(xml, request_intent().relay_state)
     assert encoded["RelayState"] == request_intent().relay_state
-    assert encoded["SAMLRequest"] == Base.encode64(xml, padding: false)
+    assert inflate_b64(encoded["SAMLRequest"]) == xml
     %{"result" => "ok"}
   end
 
@@ -130,7 +130,7 @@ defmodule Relyra.Conformance.SPConformanceTest do
     xml = ConformanceFixtures.fixture_xml(row)
 
     assert {:ok, encoded} = Binding.encode_redirect(xml, "relay-logout")
-    assert encoded["SAMLRequest"] == Base.encode64(xml, padding: false)
+    assert inflate_b64(encoded["SAMLRequest"]) == xml
     %{"result" => "ok"}
   end
 
@@ -219,5 +219,17 @@ defmodule Relyra.Conformance.SPConformanceTest do
       ],
       extra_opts
     )
+  end
+
+  defp inflate_b64(b64) do
+    {:ok, deflated} = Base.decode64(b64, padding: false)
+    z = :zlib.open()
+
+    try do
+      :ok = :zlib.inflateInit(z, -15)
+      :zlib.inflate(z, deflated) |> IO.iodata_to_binary()
+    after
+      :zlib.close(z)
+    end
   end
 end

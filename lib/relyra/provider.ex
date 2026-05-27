@@ -86,7 +86,8 @@ defmodule Relyra.Provider do
   @presets %{
     okta: Relyra.Provider.Okta,
     entra: Relyra.Provider.Entra,
-    google_workspace: Relyra.Provider.GoogleWorkspace
+    google_workspace: Relyra.Provider.GoogleWorkspace,
+    adfs: Relyra.Provider.ADFS
   }
 
   @doc "List supported preset ids."

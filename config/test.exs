@@ -32,3 +32,12 @@ repo_config =
 
 config :relyra, ecto_repos: [Relyra.TestSupport.EctoTestRepo]
 config :relyra, Relyra.TestSupport.EctoTestRepo, repo_config
+
+config :relyra, Relyra.TestSupport.LiveAdminEndpoint,
+  url: [host: "127.0.0.1"],
+  adapter: Bandit.PhoenixAdapter,
+  render_errors: [formats: [html: Relyra.TestSupport.LiveAdminErrorHTML], layout: false],
+  pubsub_server: Relyra.TestSupport.LiveAdminPubSub,
+  secret_key_base: String.duplicate("a", 64),
+  live_view: [signing_salt: "live-admin-signing-salt"],
+  server: false
