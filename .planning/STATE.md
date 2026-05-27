@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: — Adoption Truth
-status: complete
-last_updated: "2026-05-27T22:32:01Z"
+milestone: v0.1
+milestone_name: milestone
+status: completed
+last_updated: "2026-05-27T22:33:56.253Z"
 last_activity: 2026-05-27
 progress:
   total_phases: 3
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 ## Current Position
 
-Phase: 49 (adoption-honesty-conformance-jtbd-map-preset-taxonomy) — COMPLETE
-Plan: 3 of 3 (49-03 complete)
+Phase: 49
+Plan: Not started
 Status: Phase 49 complete — v1.6 Adoption Truth milestone ready for audit
-Last activity: 2026-05-27 — Completed 49-03-PLAN.md (ADOPT-06)
+Last activity: 2026-05-27
 
 ## Performance Metrics
 
@@ -94,6 +94,7 @@ Last activity: 2026-05-27 — Completed 49-03-PLAN.md (ADOPT-06)
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand (investigation stub only) |
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
+
 ## Session Continuity
 
 **2026-05-27 — Completed 49-03-PLAN.md.** ADOPT-06: preset taxonomy aligned across generic_saml, Getting Started §4, README verify-only. `mix ci.docs` green. Phase 49 complete — v1.6 Adoption Truth ready for milestone audit.
