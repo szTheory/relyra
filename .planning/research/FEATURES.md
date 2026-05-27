@@ -8,6 +8,10 @@
 
 ## Scope Clarification: EncryptedAssertion vs EncryptedAttribute
 
+> **Historical — superseded by v1.3 ship scope:** v1.3 shipped `EncryptedAssertion`
+> decryption only. The `EncryptedAttribute` discussion below informed early research but
+> is not part of the verified ENC-01 delivery.
+
 These are two distinct XML-Enc targets that are frequently conflated.
 
 **`EncryptedAssertion`** wraps the entire `<saml:Assertion>` element. The entire assertion blob —
@@ -24,10 +28,8 @@ attributes instead). Shibboleth SP3 supports it; Okta does not widely document i
 investigation thread recommends handling both in v1.3 since the pipeline is shared ("same
 pipeline; smaller effort than a separate milestone").
 
-**For v1.3, both `EncryptedAssertion` and `EncryptedAttribute` should be in scope**. They share
-the decrypt-then-reparse pipeline; separating them would require maintaining two incomplete
-code paths. `EncryptedAssertion` drives the security requirement; `EncryptedAttribute` rides
-along for completeness at low marginal cost.
+**For v1.3 research, both targets were considered**; **shipped scope is
+`EncryptedAssertion` only** (see `.planning/milestones/v1.3-REQUIREMENTS.md` ENC-01).
 
 ---
 

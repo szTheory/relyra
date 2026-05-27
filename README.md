@@ -22,11 +22,14 @@ Started.
 
 ## Batteries Included Support
 
-First-class batteries-included support is limited to:
+Relyra ships **4 first-class presets** plus a **generic SAML runbook** covering **7 IdP families**.
+
+First-class batteries-included support (shipped preset module + verified runbook):
 
 - Okta
 - Microsoft Entra ID
 - Google Workspace
+- ADFS
 
 In this repo, "batteries included" means the provider has a shipped preset module,
 a repo-native runbook, provider-specific field vocabulary, and Day-1 guidance that
@@ -37,26 +40,30 @@ Use these runbooks only after you complete the local FakeIdP proof in Getting St
 - [Okta runbook](guides/recipes/okta.md)
 - [Microsoft Entra ID runbook](guides/recipes/entra.md)
 - [Google Workspace runbook](guides/recipes/google_workspace.md)
+- [ADFS runbook](guides/recipes/adfs.md)
 
-## Custom SAML And Not-Yet-Shipped Providers
+## Custom SAML And Generic Runbook Providers
 
-- **Custom SAML:** Supported as a generic integration path when you bring your own
-  IdP-specific field mapping and operator verification. Use the operator runbook at
-  [guides/recipes/generic_saml.md](guides/recipes/generic_saml.md) after the local
-  `FakeIdP` proof and before you start translating your provider's admin vocabulary.
-- **Specialized fallback:** [ADFS](guides/recipes/adfs.md) keeps its own runbook because
-  signed AuthnRequests and encoding interop differ from the default generic path.
+- **Generic SAML runbook:** Supported for IdP families without a first-class preset.
+  The operator runbook at [guides/recipes/generic_saml.md](guides/recipes/generic_saml.md)
+  covers **Ping, OneLogin, Shibboleth, Keycloak, IBM Security Verify, CyberArk, and
+  Oracle Access Manager** with vendor decoder tables and field-mapping guidance. Use it
+  after the local `FakeIdP` proof and before you start translating your provider's
+  admin vocabulary.
+- **Custom SAML:** Supported when you bring your own IdP-specific field mapping and
+  operator verification beyond the generic runbook tables.
 - **Not yet shipped:** Any provider without a shipped preset module and verified
-  runbook is not first-class batteries included support.
+  runbook is not first-class batteries-included support.
 
-Relyra does not claim batteries-included support for providers outside Okta,
-Microsoft Entra ID, and Google Workspace.
+Relyra does not claim batteries-included support beyond the four first-class presets
+and the generic SAML runbook families named above.
 
 ## What Ships In The Library
 
 - Strict SP-initiated login and ACS validation.
 - Hardened XML, signature, and protocol checks.
-- Provider presets for Okta, Microsoft Entra ID, and Google Workspace.
+- Provider presets for Okta, Microsoft Entra ID, Google Workspace, and ADFS, plus a
+  generic SAML runbook for seven additional IdP families.
 - `Relyra.TestSupport` and `Relyra.TestSupport.FakeIdP` for local proof.
 - `mix relyra.install` for minimal host-app scaffolding.
 - Optional LiveAdmin, metadata lifecycle, certificate lifecycle, telemetry,
@@ -68,8 +75,8 @@ Microsoft Entra ID, and Google Workspace.
 - OIDC or OAuth flows.
 - A hosted broker runtime.
 - SCIM lifecycle ownership.
-- First-class batteries-included support for providers beyond Okta,
-  Microsoft Entra ID, and Google Workspace.
+- First-class batteries-included support for providers beyond the four shipped presets
+  and the generic SAML runbook families.
 
 ## Day-2 And Operator Guides
 

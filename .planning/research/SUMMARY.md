@@ -32,7 +32,6 @@ One OTP limitation: RSA-OAEP with SHA-256 hash (`xmlenc11#rsa-oaep`) is not expo
 
 **Must have (table stakes):**
 - EncryptedAssertion decryption (RSA-OAEP + AES-GCM) — enterprise IdP blocker; Entra, Okta, Shibboleth, ADFS all support encryption; SP is unusable with encrypted-assertion configs without this
-- EncryptedAttribute handled alongside EncryptedAssertion — same decrypt pipeline, marginal additional cost, required for Shibboleth academic federation completeness
 - SP metadata `KeyDescriptor use="encryption"` publication — IdPs cannot encrypt without this; Entra ID raises explicit `AADB2C90164` error when missing
 - Decrypt-then-reparse through hardened saxy seam — not optional; CVE-class if shortcut
 - Single opaque `:decryption_failed` atom for all decryption failures — padding oracle is open if error paths differ
@@ -106,7 +105,7 @@ Based on combined research, the dependency graph mandates six phases. Minimum se
 ### Phase 3: ValidationPipeline Wiring + PureBeam ENC Detection + Metadata + ENC-01 Corpus
 
 **Rationale:** Depends on Phase 2 (XMLEnc.decrypt/3 must exist). Completes ENC-01 end-to-end.
-**Delivers:** `PureBeam.build_parsed_doc/1` detecting EncryptedAssertion + ambiguity guard (`:ambiguous_assertion` on simultaneous cleartext + encrypted); `ValidationPipeline` with `:decrypt_assertion` step (no-op for non-encrypted paths, second `parse_safely/2` call for encrypted); `Protocol.Metadata` emitting `KeyDescriptor use="encryption"`; EncryptedAttribute handled inside same pipeline; full 7-fixture ENC-01 adversarial corpus in `mix ci.security`.
+**Delivers:** `PureBeam.build_parsed_doc/1` detecting EncryptedAssertion + ambiguity guard (`:ambiguous_assertion` on simultaneous cleartext + encrypted); `ValidationPipeline` with `:decrypt_assertion` step (no-op for non-encrypted paths, second `parse_safely/2` call for encrypted); `Protocol.Metadata` emitting `KeyDescriptor use="encryption"`; full 7-fixture ENC-01 adversarial corpus in `mix ci.security`. (Historical research mentioned `EncryptedAttribute`; v1.3 shipped `EncryptedAssertion` only.)
 **Avoids:** Read-before-verify (P1), parser differential after decrypt (P10), cleartext+encrypted coexistence injection (P6)
 
 ### Phase 4: Signed AuthnRequests (AUTHN-01) + ADFS Preset
