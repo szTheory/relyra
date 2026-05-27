@@ -31,18 +31,19 @@ Status: **Strong**
 What is clearly supported:
 - install and scaffold into a Phoenix app
 - prove the path locally with `FakeIdP`
-- land one real-provider path with a shipped preset
+- land one real-provider path with a shipped preset (Okta, Entra, Google Workspace, or ADFS)
 - persist tenant-scoped connection state
 - use a clear Day-1 -> Day-2 onboarding spine
+- logout as an adopter workflow (`guides/recipes/logout.md`)
+- custom/generic SAML via the generic runbook (`guides/recipes/generic_saml.md`)
 
 What is still rough:
-- the custom/generic SAML path is real, but not yet as smooth or confidence-
-  building as the three shipped presets
-- logout exists in the code surface, but not yet as a polished adopter workflow
+- the generic SAML path is supported but not preset-backed — adopter owns vendor
+  label mapping and synthesis beyond the four batteries-included presets
 
 Assessment:
-This is already a serious adoption story for teams using Okta, Entra, or Google
-Workspace and willing to own the host seams.
+This is already a serious adoption story for teams using Okta, Entra, Google
+Workspace, or ADFS, with a documented generic path for other IdP families.
 
 ### Platform or auth owner
 
@@ -56,15 +57,15 @@ What is clearly supported:
 - attribute and group mapping persistence
 - audit-backed trust mutation history
 - scheduled refresh automation with guardrails
+- identity mapping and provisioning guide (`guides/identity_mapping_and_provisioning.md`)
 
 What is still rough:
-- the "how do I shape provisioning policy around this?" story is still mostly a
-  host concern rather than a first-class Relyra guide
-- the custom-provider operating model is not yet as crisp as the preset model
+- the custom-provider operating model could use minor polish compared to the
+  preset model (host-owned provisioning policy remains a host concern)
 
 Assessment:
-The capability set is strong. The main gap is not raw implementation depth; it
-is making the operating model easier to understand and easier to adopt safely.
+The capability set is strong and the identity boundary is documented. Remaining
+work is minor polish, not foundational capability gaps.
 
 ### Operator, support, or SRE
 
@@ -79,14 +80,15 @@ What is clearly supported:
 - diagnostic bundle export
 - optional admin surfaces for common operations
 - bulk actions across connections
+- incident response playbook (`guides/operations/incident_playbook.md`)
+- login trace LiveView and `mix relyra.trace` for step-timeline triage (Phases 42/48)
 
 What is still rough:
-- there is not yet one canonical "incident response / support playbook" guide
-  that stitches telemetry, audit, diagnostics, and rollout recovery together
+- optional polish on playbook cross-links as new ops surfaces ship
 
 Assessment:
-This is one of Relyra's strongest areas. The remaining work is primarily
-workflow packaging, not foundational capability.
+Workflow packaging is complete for v1.5/v1.6 — playbook, trace tools, and
+diagnostics are documented as one coherent production story.
 
 ### Security reviewer
 
@@ -114,16 +116,18 @@ area.
 Status: **Partial**
 
 What is clearly supported:
-- exact vendor runbooks for three providers
+- exact vendor runbooks for four batteries-included presets (Okta, Entra, Google
+  Workspace, ADFS) plus generic SAML decoder tables
 - provider-specific labels and hints
 - metadata and SP/IdP field vocabulary
 - optional admin surface for operators
 
 What is still rough:
-- there is no fully self-service "customer admin portal" story
+- there is no fully self-service "customer admin portal" story (intentionally
+  out of scope)
 - connection testing and attribute preview are not yet presented as a polished
   customer-admin workflow
-- support for providers beyond the shipped three requires more operator
+- support for providers beyond the four presets requires more operator
   interpretation than most customer IT teams would want
 
 Assessment:
@@ -132,21 +136,23 @@ fully independent, and it does not claim to.
 
 ### Custom or generic SAML adopter
 
-Status: **Partial**
+Status: **Strong**
 
 What is clearly supported:
 - the library can support non-preset SAML integrations
 - the durable connection, metadata, certificate, mapping, and validation
-  surfaces are reusable beyond the three presets
+  surfaces are reusable beyond the four batteries-included presets
+- generic SAML runbook with decoder tables (`guides/recipes/generic_saml.md`)
+- minimum-safe checklist and attribute vocabulary guidance in the generic runbook
 
 What is still rough:
-- there is no first-class generic runbook with the same confidence level as the
-  shipped provider docs
-- there is no clear "minimum safe checklist" doc for teams bringing their own
-  attribute vocabulary and operator process
+- not preset-backed — adopter owns vendor label mapping and operator process
+  synthesis for IdPs outside Okta, Entra, Google Workspace, and ADFS
 
 Assessment:
-This is the biggest adoption gap inside the current product boundary.
+Generic SAML adoption is documented and guided. Remaining roughness is the
+honest non-preset caveat, not a missing runbook — this is no longer the biggest
+adoption gap inside the current product boundary.
 
 ## Biggest gaps by user and job
 
