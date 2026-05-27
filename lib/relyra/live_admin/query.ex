@@ -17,6 +17,7 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
 
     alias Relyra.Error
     alias Relyra.LiveAdmin.Scope
+    alias Relyra.LoginTrace.Export
     alias Relyra.Provider
 
     @spec list_connections(module(), Scope.t()) :: {:ok, [map()]} | {:error, Error.t()}
@@ -88,6 +89,7 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
         audit_events =
           AuditEvent
           |> where([event], event.connection_record_id == ^connection.id)
+          |> where([event], event.domain != ^:login)
           |> apply_audit_filters(audit_filters)
           |> order_by([event], desc: event.inserted_at)
           |> limit(50)
@@ -106,6 +108,27 @@ if Code.ensure_loaded?(Ecto.Query) and Code.ensure_loaded?(Ecto.Schema) do
            risk_flags: risk_flags(connection),
            provider_label: provider_label(connection.provider_preset)
          }}
+      end
+    end
+
+    @spec get_login_traces(module(), Scope.t(), binary(), keyword()) ::
+            {:ok, [map()]} | {:error, Error.t()}
+    def get_login_traces(repo, %Scope{} = scope, connection_id, opts \\ [])
+        when is_atom(repo) and is_binary(connection_id) and is_list(opts) do
+      limit = Keyword.get(opts, :limit, 20)
+
+      with :ok <- ensure_repo(repo, :get_login_traces),
+           {:ok, connection} <- fetch_connection(repo, scope, connection_id) do
+        traces =
+          AuditEvent
+          |> where([event], event.connection_record_id == ^connection.id)
+          |> where([event], event.domain == ^:login)
+          |> order_by([event], desc: event.inserted_at)
+          |> limit(^limit)
+          |> repo.all()
+          |> Enum.map(&Export.export_login/1)
+
+        {:ok, traces}
       end
     end
 
