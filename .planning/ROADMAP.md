@@ -212,7 +212,7 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 45. Post-publish parity verification | v1.5 | 2/2 | Complete    | 2026-05-27 |
 | 46. Adopter DX & ergonomics | v1.5 | 3/3 | Complete    | 2026-05-27 |
 | 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 3/3 | Complete    | 2026-05-27 |
-| 48. Operator completeness — incident playbook trace tools | v1.6 | 1/2 | In Progress|  |
+| 48. Operator completeness — incident playbook trace tools | v1.6 | 2/2 | Complete    | 2026-05-27 |
 | 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 0/? | Not started | — |
 
 ---

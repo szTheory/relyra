@@ -32,7 +32,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 **Target features:**
 - ~~Getting Started: promote `TestSupport` macro pattern~~ — **done Phase 47**
 - ~~New "Production Ecto path" section~~ — **done Phase 47** (`guides/production_ecto_path.md`)
-- Ops: login-trace route + `mix relyra.trace` in `guides/operations/incident_playbook.md` tool table
+- ~~Ops: login-trace route + `mix relyra.trace` in `guides/operations/incident_playbook.md` tool table~~ — **done Phase 48** (evidence surfaces, scenarios 3–6, Day-2 cross-links)
 - CONFORMANCE: "Scope boundary & diminishing returns" section; fix `sp-encrypted-assertions-deferred` manifest (ENC-01 shipped Phase 34)
 - Refresh `docs/jtbd_gap_map.md` to v1.5 reality
 - README / Getting Started preset taxonomy honesty (Keycloak/OneLogin decoder rows or narrowed claims)
@@ -148,13 +148,13 @@ The v1.x milestone arc closed with v1.5:
 - ✓ **TD-05** — `mix format --check-formatted` clean repo-wide — v1.5 (Phase 41)
 - ✓ **ADOPT-01** — Getting Started promotes TestSupport macro pattern for first browser login — v1.6 (Phase 47)
 - ✓ **ADOPT-02** — "Production Ecto path" guide (migrations, resolver, stores, replay warning) — v1.6 (Phase 47)
+- ✓ **ADOPT-03** — Incident playbook documents login-trace LiveView + `mix relyra.trace` — v1.6 (Phase 48)
 
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
 **v1.6 Adoption Truth (doc-only):**
-- **ADOPT-03** — Incident playbook documents login-trace LiveView + `mix relyra.trace`
 - **ADOPT-04** — CONFORMANCE scope boundary + ENC manifest honesty (`sp_manifest.json`)
 - **ADOPT-05** — `docs/jtbd_gap_map.md` refreshed to v1.5 shipped reality
 - **ADOPT-06** — Preset taxonomy honesty (README / Getting Started / generic runbook alignment)
@@ -259,4 +259,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-27 — Phase 47 complete (ADOPT-01/02); v1.6 continues at Phase 48. See `.planning/REQUIREMENTS.md` and `.planning/ROADMAP.md`.*
+*Last updated: 2026-05-27 — Phase 48 complete (ADOPT-03); v1.6 continues at Phase 49. See `.planning/REQUIREMENTS.md` and `.planning/ROADMAP.md`.*
