@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.6
-milestone_name: Adoption Truth
+milestone_name: — Adoption Truth
 status: Defining requirements
-last_updated: "2026-05-27T23:00:00.000Z"
+last_updated: "2026-05-27T21:47:01.407Z"
 last_activity: 2026-05-27 — Milestone v1.6 Adoption Truth started
 progress:
   total_phases: 3
