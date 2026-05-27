@@ -2,7 +2,7 @@
 
 **Captured:** 2026-05-27  
 **Phase:** 44 — release-please-pipeline-diagnosis-v1-4-0-hex-publish  
-**Status:** Pre-push draft (Plans 44-02/44-03 own remote unstall + publish)
+**Status:** Post-push (Plan 44-02 complete); awaiting merge of PR #6 (Plan 44-03)
 
 ## Summary
 
@@ -39,9 +39,17 @@ Hex.pm remains on **1.2.0** while local `main` carries Phase 41–43 work staged
 
 ## Observed Release-Please Behavior
 
-`TBD — complete in Plan 44-03 after push and merge.`
+**Outcome B + partial C (RESEARCH §3):** After push to `origin/main` (2026-05-27), release-please run **26538214135** opened **PR #6** targeting **1.5.0** (not 1.4.0). Log: manifest already at `1.4.0` with no `v1.4.0` tag → release-please treated `1.4.0` as baseline and bumped to `1.5.0` with conventional-commit CHANGELOG dump.
 
-Initial post-push notes will be appended by Plan 44-02 (push timestamp, PR #5 close, first `release-please.yml` run after push).
+| Step | Result |
+|------|--------|
+| Push `main` | `c2a8e08..38827e8` — 115 commits landed |
+| Close PR #5 | `CLOSED`, `mergedAt=null` — superseded comment posted |
+| `release-please.yml` run | **26538214135** — success; `release_created=false`; publish-hex **skipped** |
+| New release PR | **#6** opened as `chore(main): release 1.5.0` |
+| Reconciliation (pre-merge) | PR #6 branch restored to **1.4.0** + narrative CHANGELOG; title edited to `release 1.4.0`; commit `7cdc09a` |
+
+**Plan 44-03:** Merge PR #6 → expect `v1.4.0` tag + `publish-hex` job with `release_created=true`.
 
 ## Recurrence Checklist
 
