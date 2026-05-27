@@ -173,7 +173,7 @@ See `.planning/milestones/v1.4-ROADMAP.md`.
   3. The published tarball's `lib/` listing contains no `lib/relyra/test_support/` paths and no `test_support` module entries — chains the Phase 41 TD-02 fix onto the actual published artifact (defense-in-depth verification).
   4. `mix hex.audit` or equivalent surfaces no fixable warnings on the published artifact (e.g. missing license, missing CHANGELOG link, malformed metadata).
 
-**Plans**: TBD
+**Plans**: 2 plans (45-01..45-02)
 
 ### Phase 46: Adopter DX & ergonomics
 
