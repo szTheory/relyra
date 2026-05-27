@@ -5,8 +5,8 @@ when a Relyra deployment is live. Every login resolves to a verified trust
 path or a typed rejection; this playbook is what to do when the rejection
 recurs, when a metadata refresh suspends, when a signing cert rotates, or
 when a replay storm hits the ACS endpoint. Relyra owns the typed-rejection
-contract and the five evidence surfaces (telemetry, audit ledger, LiveView
-admin, Mix tasks, troubleshooting decoder); the host owns the operational
+contract and the six evidence surfaces (telemetry, audit ledger, LiveView
+admin, Mix tasks, login trace, troubleshooting decoder); the host owns the operational
 response. The reference table below is the centerpiece — every scenario
 runbook in this guide points back into it rather than restating where the
 evidence lives.
@@ -21,7 +21,7 @@ evidence lives.
   trust-state mutation: connection, metadata, certificate, and mapping.
 - Publishing the `/relyra/admin` LiveView routes for connection / metadata /
   certificate / mapping inspection and mutation.
-- Shipping the 7 `mix relyra.*` operator hand-tools.
+- Shipping the 8 `mix relyra.*` operator hand-tools.
 - Documenting the canonical `Relyra.Error` atom taxonomy in
   [`../troubleshooting.md`](../troubleshooting.md).
 
@@ -49,8 +49,17 @@ should never need to grep the source to find the right evidence.
 | Telemetry events | Structured `:start` / `:stop` / `:exception` spans for every trust-pipeline stage, plus auto-refresh state-transition events and certificate-expiry warnings | `lib/relyra/telemetry.ex` |
 | Audit ledger | Append-only `relyra_audit_events` rows recording every trust-state mutation (connection / metadata / certificate / mapping) | `lib/relyra/ecto/audit_event.ex` |
 | LiveView admin routes | Operator UI for connection, metadata, certificate, and mapping inspection and mutation | `lib/relyra/live_admin/router.ex` |
-| Mix tasks | 7 operator hand-tools for drift checks, diagnostic bundles, scaffolding, metadata pinning, scheduled refresh, and security-review evidence | `lib/mix/tasks/relyra.*.ex` |
+| Mix tasks | 8 operator hand-tools for drift checks, diagnostic bundles, login-trace inspection, scaffolding, metadata pinning, scheduled refresh, and security-review evidence | `lib/mix/tasks/relyra.*.ex` |
 | Troubleshooting decoder | Per-atom decoder with the four-field micro-block (Means / Likely root cause / Operator action / Source) for every `Relyra.Error` atom | [`../troubleshooting.md`](../troubleshooting.md) |
+| Login trace | Per-login-attempt step timeline (`response.decode` → `response.validate` → `signature.verify` → `replay.check` → `user.map` → `session.establish`) with `:error_code` on failed stages; browser UI or headless CLI | `lib/relyra/live_admin/connection_trace_live.ex`, `lib/mix/tasks/relyra.trace.ex`, `lib/relyra/live_admin/query.ex` |
+
+### Login trace vs audit ledger
+
+Login traces persist as `domain: :login` rows in `relyra_audit_events` — they
+record per-attempt pipeline steps, not trust-state mutations. Trust mutations
+use the audit vocabulary in the table above (`:connection`, `:metadata`,
+`:certificate`, `:mapping`). Replays do not mutate trust state and write no
+audit row; replay outcomes appear in login trace and telemetry only.
 
 ### Telemetry event catalog
 
