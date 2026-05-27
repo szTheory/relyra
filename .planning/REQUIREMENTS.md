@@ -16,7 +16,7 @@ Requirements for this milestone. Each maps to one roadmap phase.
 
 - [x] **PUB-02**: `CHANGELOG.md` contains a `[1.3.0]` section reconstructed from v1.3 milestone summaries (Advanced Federation — ENC-01, ENC-02, AUTHN-01, DOCS-02, DOCS-03) and a `[1.4.0]` section reconstructed from v1.4 milestone summaries (SLO-01, DOCS-04, DOCS-05, DOCS-06). Both sections follow Keep-a-Changelog format and the existing `[1.2.0]` precedent.
 
-- [ ] **PUB-03**: Stalled release-please pipeline diagnosed and unstalled; `1.4.0` published to Hex via the release-please automation (NOT manual `mix hex.publish`, per CLAUDE.md). Diagnosis written up in `.planning/phases/<NN>/RELEASE-PLEASE-DIAGNOSIS.md` so the same failure mode cannot silently recur.
+- [x] **PUB-03**: Stalled release-please pipeline diagnosed and unstalled; `1.4.0` published to Hex via the release-please automation (NOT manual `mix hex.publish`, per CLAUDE.md). Diagnosis written up in `.planning/phases/<NN>/RELEASE-PLEASE-DIAGNOSIS.md` so the same failure mode cannot silently recur.
 
 - [ ] **PUB-04**: Post-publish parity verification — the Hex `relyra-1.4.0` tarball is byte-equal to the `v1.4.0` git tag (per the OSS-discipline contract in PROJECT.md). Verification script and result live under `.planning/phases/<NN>/`; any drift fails the milestone close.
 
@@ -81,7 +81,7 @@ Explicitly excluded. Documented to prevent scope creep.
 |-------------|-------|--------|
 | PUB-01      | 43    | Complete |
 | PUB-02      | 43    | Complete |
-| PUB-03      | 44    | Pending |
+| PUB-03      | 44    | Complete |
 | PUB-04      | 45    | Pending |
 | TRACE-01    | 42    | Complete |
 | TRACE-02    | 42    | Complete |

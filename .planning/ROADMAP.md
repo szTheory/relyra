@@ -97,7 +97,7 @@ See `.planning/milestones/v1.4-ROADMAP.md`.
 - [x] **Phase 41: Pre-publish hygiene — Tech-debt sweep & security hardening** — Close v1.3 audit warnings (WR-01/02/03, WR-04, WR-ENC-ATTR) and Phase 40 formatting drift before the first published tarball ships. (completed 2026-05-27)
 - [x] **Phase 42: Stepwise login-trace LiveView** — `/relyra/admin/connections/:id/trace`, redaction-gated, plus `mix relyra.trace` headless companion. The brand-promise UI receipt — sequenced before publish prep so it ships in the v1.4.0 tarball.
 - [x] **Phase 43: Hex publish prep — version bump & CHANGELOG backfill** — `mix.exs` 1.2.0 → 1.4.0, fix `~> 0.1.0` pin, backfill `[1.3.0]` + `[1.4.0]` CHANGELOG sections. (completed 2026-05-27)
-- [ ] **Phase 44: Release-please pipeline diagnosis & v1.4.0 Hex publish** — Diagnose stalled release-please flow; publish via automation (NOT manual `mix hex.publish`).
+- [x] **Phase 44: Release-please pipeline diagnosis & v1.4.0 Hex publish** — Diagnose stalled release-please flow; publish via automation (NOT manual `mix hex.publish`). (completed 2026-05-27)
 - [ ] **Phase 45: Post-publish parity verification** — Hex `relyra-1.4.0` tarball is byte-equal to the `v1.4.0` git tag; published tarball contains no `test_support` artifacts.
 - [ ] **Phase 46: Adopter DX & ergonomics** — README leads with `apply_defaults(:okta, …)` snippet, `mix relyra.install` auto-injects `saml_routes()`, `guides/overview.md` job-shaped index, BATTERIES_INCLUDED dedupe.
 
@@ -239,7 +239,7 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 41. Pre-publish hygiene — Tech-debt sweep & security hardening | v1.5 | 5/5 | Complete    | 2026-05-27 |
 | 42. Stepwise login-trace LiveView | v1.5 | 4/4 | Complete    | 2026-05-27 |
 | 43. Hex publish prep — version bump & CHANGELOG backfill | v1.5 | 1/1 | Complete    | 2026-05-27 |
-| 44. Release-please pipeline diagnosis & v1.4.0 Hex publish | v1.5 | 0/TBD | Not started | - |
+| 44. Release-please pipeline diagnosis & v1.4.0 Hex publish | v1.5 | 3/3 | Complete    | 2026-05-27 |
 | 45. Post-publish parity verification | v1.5 | 0/TBD | Not started | - |
 | 46. Adopter DX & ergonomics | v1.5 | 0/TBD | Not started | - |
 
