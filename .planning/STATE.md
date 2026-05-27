@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.4
-milestone_name: — Full SLO + Ops Polish
-status: executing
-last_updated: "2026-05-27T15:37:23.318Z"
+milestone_name: milestone audit gaps
+status: planning
+last_updated: "2026-05-27T16:13:13.876Z"
 last_activity: 2026-05-27
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
   total_plans: 7
   completed_plans: 7
-  percent: 100
+  percent: 75
 ---
 
 # Project State
@@ -20,18 +20,18 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 40 — operational-polish-error-taxonomy
+**Current focus:** Phase 40.1 — close v1.4 milestone audit gaps (logout.md signature drift, index_session/4 policy, retroactive 38/39 VERIFICATIONs, 38-04 SUMMARY name drift)
 
 ## Current Position
 
-Phase: 40
+Phase: 40.1
 Plan: Not started
-Status: Executing Phase 40
+Status: Phase 40.1 context gathered (assumptions mode); ready for planning
 
 Last activity: 2026-05-27
-Resume: /gsd-plan-phase 40
+Resume: /gsd:plan-phase 40.1
 
-Progress: [██████████] 100%
+Progress: [███████░░░] 75%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [██████████] 100%
 - Phase sequence is dependency-ordered: foundation (28) → verification (29) → assurance (30) → disclosure (31). The verify math (SIGV-01/02) cannot land before correct canonicalization (SIGV-03), so Phase 28 must complete first.
 - v1.3 starts at Phase 32 (continues numbering after v1.1's Phase 31).
 - v1.3 dependency graph: Phase 32 (shared prerequisite) → Phase 33 (crypto core) → Phase 34 (pipeline wiring + ENC-01 complete). Phase 35 (AUTHN-01) depends only on Phase 32 and can run in parallel with Phases 33-34. Phases 36-37 (docs) have no code dependencies and are fully parallel.
+- **Phase 40.1 inserted after Phase 40 on 2026-05-27 (URGENT — v1.4 audit closure):** Close four findings from `.planning/v1.4-MILESTONE-AUDIT.md` (status: `gaps_found`) — logout.md SessionAdapter signature drift (BLOCKER 1, affects DOCS-04 + SLO-01), `SessionAdapter.index_session/4` policy resolution (WARNING 2, affects SLO-01), missing 38/39 VERIFICATIONs, and 38-04 SUMMARY `consume_logout_response/3` → `consume_logout/3` name drift. Required before `/gsd:complete-milestone v1.4`.
 
 ### Decisions / Constraints carried into v1.3
 
@@ -136,6 +137,8 @@ Items acknowledged and deferred at milestone close:
 - **CVE ID backfill into `docs/advisories/2026-001-...`:** Pending async GitHub assignment.
 
 ## Session Continuity
+
+**2026-05-27 — Phase 40.1 context gathered (assumptions mode).** Generated `40.1-CONTEXT.md` locking the four audit-closure decisions: D-01 host-owned `index_session/4` linkage (no auto-wire in `consume_response/3`); D-02..D-04 minimal `logout.md` rewrite (lines 91-127 + host-linkage paragraph); D-05/D-06 drift-prevention CI test using `behaviour_info(:callbacks)` introspection wired into `ci.docs` per Phase 30 hollow-gate invariant; D-07..D-10 retroactive `38-/39-VERIFICATION.md` generation following `40-VERIFICATION.md` template and closure-phase pattern; D-11 cosmetic `38-04-SUMMARY.md` fix; D-12 two-wave structure (Wave 1: A/C/D/E parallel; Wave 2: B gated on A). Ready for `/gsd-plan-phase 40.1`.
 
 **2026-05-27 — Phase 39 discussed.** Generated `39-CONTEXT.md` locking in the authoritative strategy for front-channel SLO caveats, Ecto-backed session requirement, and absolute-timeout fallbacks. Ready for `/gsd-plan-phase 39`.
 
