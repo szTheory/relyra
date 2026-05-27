@@ -11,6 +11,7 @@ defmodule Relyra.Security.XML.CorpusGateTest do
 
     test "the manifest contains at least one fixture (proves the move from test/fixtures succeeded)" do
       # The test corpus is non-trivial; if this is empty, the move broke.
+      # credo:disable-for-next-line
       assert length(CorpusGate.manifest()) > 0
     end
   end

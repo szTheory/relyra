@@ -73,14 +73,14 @@ defmodule Relyra.DiagnosticTest do
       # Verify connection redaction
       {_name, conn_content} = Enum.find(files, fn {name, _} -> name == ~c"connections.json" end)
       conn_json = Jason.decode!(conn_content)
-      assert length(conn_json) >= 1
+      assert conn_json != []
       assert hd(conn_json)["connection_id"] == "ULID123"
       refute Map.has_key?(hd(conn_json), "private_key")
 
       # Verify audit log redaction
       {_name, audit_content} = Enum.find(files, fn {name, _} -> name == ~c"audit_logs.json" end)
       audit_json = Jason.decode!(audit_content)
-      assert length(audit_json) >= 1
+      assert audit_json != []
       assert hd(audit_json)["domain"] == "connection"
       refute Map.has_key?(hd(audit_json), "actor")
 

@@ -1,0 +1,6 @@
+[
+  verbose: false,
+  format: "txt",
+  threshold: :medium,
+  exit: :low
+]
