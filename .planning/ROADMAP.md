@@ -245,7 +245,7 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 3/3 | Complete    | 2026-05-27 |
 | 48. Operator completeness — incident playbook trace tools | v1.6 | 2/2 | Complete    | 2026-05-27 |
 | 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 3/3 | Complete    | 2026-05-27 |
-| 49.1. Close v1.6 audit doc handoff gaps (INSERTED) | v1.6 | 4/4 | Complete   | 2026-05-27 |
+| 49.1. Close v1.6 audit doc handoff gaps (INSERTED) | v1.6 | 4/4 | Complete    | 2026-05-27 |
 | 49.2. v1.6 Nyquist retro + editorial polish (INSERTED) | v1.6 | 0/3 | Pending | — |
 
 ---
