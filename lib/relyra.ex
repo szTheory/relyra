@@ -424,6 +424,7 @@ defmodule Relyra do
       {:ok, login_result}
     else
       {:error, %Error{} = error} ->
+        Process.delete(:relyra_validation_trace)
         {:error, error}
     end
   end
@@ -451,6 +452,9 @@ defmodule Relyra do
   defp maybe_parse_iso8601(_), do: DateTime.from_unix!(0)
 
   defp normalize_consume_result(result) when is_map(result) do
+    validation_trace = Process.get(:relyra_validation_trace, [])
+    Process.delete(:relyra_validation_trace)
+
     principal = %Relyra.Principal{
       name_id: Map.get(result, :name_id),
       name_id_format: Map.get(result, :name_id_format),
@@ -465,7 +469,8 @@ defmodule Relyra do
       relay_state: Map.get(result, :relay_state),
       issuer: Map.get(result, :issuer),
       in_response_to: Map.get(result, :in_response_to),
-      return_to: Map.get(result, :return_to)
+      return_to: Map.get(result, :return_to),
+      validation_trace: validation_trace
     }
 
     {:ok, login_result}
