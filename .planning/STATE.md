@@ -1,43 +1,42 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: — Advanced Federation
-status: milestone_complete
-last_updated: 2026-05-26T13:48:32.294Z
-last_activity: 2026-05-26
+milestone: v1.4
+milestone_name: Full SLO + Ops Polish
+status: Ready for /gsd-plan-phase 38
+last_updated: "2026-05-27T07:33:41.429Z"
+last_activity: 2026-05-27
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 17
-  completed_plans: 108
-  percent: 75
-stopped_at: Milestone complete (Phase 37 was final phase)
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 4
+  completed_plans: 2
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-05-25)
+See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Milestone complete
+**Current focus:** v1.4 (Full SLO + Ops Polish) — Phase 38 Single Logout Core & Security
 
 ## Current Position
 
-Phase: 37
+Phase: 38
 Plan: Not started
-Status: Milestone complete
-Last activity: 2026-05-26
-Resume: /gsd:plan-phase 37
+Status: Ready for /gsd-plan-phase 38
+Last activity: 2026-05-27
+Resume: /gsd-plan-phase 38
 
-Progress: [█████░░░░░] 47%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
-- Last shipped milestone: v1.1 (Phases 28-31)
-- Plans complete in last shipped milestone: 15/15
-- Coverage in last shipped milestone: 8/8 requirements mapped and completed
+- Last shipped milestone: v1.3 (Phases 32-37)
+- Plans complete in last shipped milestone: 21/21
+- Coverage in last shipped milestone: 10/10 requirements mapped and completed
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -136,6 +135,10 @@ Items acknowledged and deferred at milestone close:
 
 ## Session Continuity
 
+**2026-05-27 — Phase 38 planning complete.** Generated 4 execution plans covering Single Logout Core & Security, strict XML parsing, replay protection, and signature verification. Generated `38-VALIDATION.md` for goal-backward verification. Ready for `/gsd-execute-phase 38`.
+
+**2026-05-27 — v1.4 roadmap created.** 3 phases defined (38-40), 4 requirements mapped. Ready for `/gsd-plan-phase 38`.
+
 **2026-05-26 — Phase 37 Plan 01 complete.** Added `guides/identity_mapping_and_provisioning.md` as the authoritative operator guide for anchor selection, NameID-vs-attribute identity policy, JIT create-or-update decisions, and the SCIM non-goal boundary. Tightened `Relyra.UserMapper` moduledoc so ExDoc now reflects the real ACS seam: verified `%Relyra.LoginResult{}` in, host-shaped user map out, later session establishment by `Relyra.SessionAdapter`. All plan verification `rg` checks passed. Resume: `/gsd:execute-phase 37` (Plan 2 of 2).
 
 **2026-05-25 — Phase 34 Plan 04 complete (PHASE 34 DONE, ENC-01 closed).** The pipeline-level ENC-01 adversarial corpus (`test/security/xml_enc_adversarial_test.exs`, 9 tests) landed: positive control (SC#1) proving decrypt -> re-parse -> verify -> identity-read ordering, the 7 named fixtures each pinning their exact typed error (5 opaque `:decryption_failed`, fixture 5 `:ambiguous_assertion` before crypto), a read-before-verify guard (CVE-2025-54419 class, no identity leak before verification), and a supplemental multi-encrypted bonus. Wired into `mix ci.security` as its own non-hollow `cmd mix test` line (meta-gate enforced). Rule 1 fix: the signer now signs the Assertion WITH its default namespace (`:assertion_namespace` opt, default off) so the digest survives decrypt/splice/re-parse — Plan-02's round-trip smoke had never driven a full pipeline verify, so the `:digest_mismatch` was latent. Full suite 626/0; `mix ci.security` exit 0. SC#1 + SC#5 satisfied; ENC-01 marked complete. Resume: `/gsd:verify-phase 34`.
@@ -170,3 +173,5 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 - [Phase 37]: Ground every UserMapper example in the real Phoenix ACS seam using LoginResult and Principal.
 - [Phase 37]: Route identity mapping only from Day-2 and production follow-on docs, not Day-1 onboarding.
 - [Phase 37]: Publish the guide in ExDoc extras and gate its presence in ci.docs.
+
+s.

@@ -10,7 +10,9 @@
 - ✅ **v0.6 — Operational maturity carryover + SLO** (shipped 2026-05-08). See `.planning/milestones/v0.6-ROADMAP.md`.
 - ✅ **v1.0 — External security review + conformance + docs polish** (shipped 2026-05-08). See `.planning/milestones/v1.0-ROADMAP.md`.
 - ✅ **v1.1 — Verify the Trust Path** (shipped 2026-05-25). See `.planning/milestones/v1.1-ROADMAP.md`.
-- 🔄 **v1.3 — Advanced Federation** (in progress). See `.planning/milestones/v1.3-ROADMAP.md`.
+- ✅ **v1.3 — Advanced Federation** (shipped 2026-05-27). See `.planning/milestones/v1.3-ROADMAP.md`.
+- 🚧 **v1.4 — Full SLO + Ops Polish** (current). See `.planning/milestones/v1.4-ROADMAP.md`.
+- 🚧 **v1.4 — Full SLO + Ops Polish** (current). See `.planning/milestones/v1.4-ROADMAP.md`.
 
 ## Phases
 
@@ -70,8 +72,8 @@ See `.planning/milestones/v1.1-ROADMAP.md`.
 
 </details>
 
-<details open>
-<summary>🔄 v1.3 — Advanced Federation (Phases 32-37) — IN PROGRESS</summary>
+<details>
+<summary>✅ v1.3 — Advanced Federation (Phases 32-37) — SHIPPED 2026-05-27</summary>
 
 - [x] **Phase 32: AlgorithmPolicy Extension + Schema Migrations** — Extend AlgorithmPolicy with key-transport and content-encryption algorithm fields; add cert `party`/`use` columns and connection `sign_authn_requests` field via safe additive migrations. (completed 2026-05-25)
   **Plans:** 2 plans
@@ -197,6 +199,60 @@ Plans:
 
 - [x] 37-02-PLAN.md — docs publication, routing, and docs CI gate
 
+
+</details>
+
+<details open>
+<summary>🚧 v1.4 — Full SLO + Ops Polish (Phases 38-40) — CURRENT</summary>
+
+- [ ] **Phase 38: Single Logout (SLO) Core & Security** — SP and IdP initiated logout flows, strict signature verification, replay protection, and `SessionAdapter` extensibility for indexing.
+- [ ] **Phase 39: Logout Strategy & Operational Guidance** — Explicit operator documentation (`guides/recipes/logout.md`) detailing SLO enablement, 3rd-party cookie caveats, and absolute timeouts.
+- [ ] **Phase 40: Operational Polish & Error Taxonomy** — Error Atom Decoder, automated drift-check, and comprehensive Incident Response Playbook (`guides/operations/incident_playbook.md`).
+
+### Phase 38: Single Logout (SLO) Core & Security
+**Goal**: Users and Identity Providers can securely terminate sessions across the federation via verified SAML Single Logout flows.
+**Depends on**: Phase 37
+**Requirements**: SLO-01
+**Success Criteria** (what must be TRUE):
+  1. `Relyra.SessionAdapter` is successfully extended with `index_session/4` and `terminate_by_session_index/4` to decouple Relyra from the host app's session implementation.
+  2. SP-initiated and IdP-initiated logout flows reliably parse, generate, and process `LogoutRequest` and `LogoutResponse` for HTTP-Redirect and HTTP-POST bindings.
+  3. All logout messages enforce strict XMLDSig signature verification before any session is terminated.
+  4. Strict replay protection prevents the re-use of previously submitted logout messages.
+**Plans**: 4 plans
+Plans:
+
+**Wave 1**
+- [x] 38-01-PLAN.md — SessionAdapter contracts & HTTP-Redirect signature verification
+
+**Wave 2**
+- [x] 38-02-PLAN.md — LogoutRequest and LogoutResponse protocol models
+
+**Wave 3**
+- [ ] 38-03-PLAN.md — Strict Logout Validation Pipeline
+
+**Wave 4**
+- [ ] 38-04-PLAN.md — Relyra facade integration and end-to-end security tests
+
+### Phase 39: Logout Strategy & Operational Guidance
+**Goal**: Operators understand when to deploy SLO and how to mitigate browser-level cookie constraints.
+**Depends on**: Phase 38
+**Requirements**: DOCS-04
+**Success Criteria** (what must be TRUE):
+  1. `guides/recipes/logout.md` is published and details explicit guidance on SLO tradeoffs and modern 3rd-party cookie blocking (Safari ITP, Firefox ETP, Chrome Privacy Sandbox).
+  2. The guide provides concrete strategies for configuring host-application absolute-timeout fallbacks when SLO silently fails over the front channel.
+**Plans**: TBD
+
+### Phase 40: Operational Polish & Error Taxonomy
+**Goal**: Operators can instantly decode cryptic SAML failures and have a clear playbook for incident response.
+**Depends on**: Phase 39
+**Requirements**: DOCS-05, DOCS-06
+**Success Criteria** (what must be TRUE):
+  1. `guides/troubleshooting.md` is published, acting as an Error Atom Decoder.
+  2. An automated drift-check test enforces that every `:error_type` in `Relyra.Error` has a corresponding documented entry in the troubleshooting guide.
+  3. `guides/operations/incident_playbook.md` is published, outlining end-to-end response workflows that stitch together Relyra telemetry, audit trails, the LiveView admin UI, and Mix tasks.
+**Plans**: TBD
+**UI hint**: yes
+
 </details>
 
 ## Progress
@@ -239,5 +295,8 @@ Plans:
 | 35. Signed AuthnRequests + ADFS Preset | v1.3 | 9/9 | Complete | 2026-05-26 |
 | 36. Generic SAML Runbook | v1.3 | 2/2 | Complete    | 2026-05-26 |
 | 37. Identity Mapping and Provisioning Guide | v1.3 | 2/2 | Complete    | 2026-05-26 |
+| 38. Single Logout (SLO) Core & Security | v1.4 | 2/4 | In Progress|  |
+| 39. Logout Strategy & Operational Guidance | v1.4 | 0/0 | Not started | - |
+| 40. Operational Polish & Error Taxonomy | v1.4 | 0/0 | Not started | - |
 
 ---
