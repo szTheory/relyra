@@ -209,18 +209,18 @@
     "notes": "Artifact binding is not implemented in the shipped SP surface and remains explicitly out of coverage."
   },
   {
-    "id": "sp-encrypted-assertions-deferred",
+    "id": "sp-encrypted-assertions-pass",
     "requirement_ids": ["CONF-01"],
     "profile": "oasis-saml2-core",
     "rule_id": "SAMLCore-2.3.4",
     "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
-    "status": "deferred",
-    "expected_outcome": {"result": "deferred"},
+    "status": "pass",
+    "expected_outcome": {"result": "ok"},
     "provenance": {
       "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf",
       "section": "2.3.4"
     },
-    "notes": "Encrypted assertion handling is not claimed by this deterministic ExUnit lane yet."
+    "notes": "Encrypted assertion positive control via FakeIdP.encrypted_response/2 — ENC-01 shipped Phase 34."
   },
   {
     "id": "sp-ecp-profile-unsupported",
