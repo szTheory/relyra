@@ -233,3 +233,11 @@ Warnings stop once both stores use Ecto wrappers.
 - [ ] `MyApp.Relyra.Connections` resolves connections via Ecto
 - [ ] Production config points at Ecto wrappers, not ETS defaults
 - [ ] Login succeeds with Ecto stores; no ETS warning after swap
+
+## Related Day-2 guides
+
+After completing the Ecto upgrade, continue with production operations:
+
+- [Incident playbook — login trace & evidence surfaces](operations/incident_playbook.md#evidence-surfaces) — per-login step timeline (`mix relyra.trace` / LiveView) for Diagnose steps in SAML incidents
+- [Troubleshooting](troubleshooting.md) — `Relyra.Error` atom decoder for symptom → operator action
+- [Documentation overview](overview.md) — Day-2 hub for production operators (Ecto path, runbooks, identity mapping)
