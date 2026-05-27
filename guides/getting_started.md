@@ -5,7 +5,7 @@ Follow the sections in order:
 
 1. Install
 2. Scaffold
-3. Prove local login with FakeIdP
+3. Prove local login with TestSupport
 4. Choose one provider runbook
 5. Production follow-ons
 
@@ -64,35 +64,68 @@ At this stage you should have:
 Receipt: the installer runs cleanly, the generated files exist, and your host app
 still boots after you apply the scaffold instructions.
 
-## 3. Prove local login with FakeIdP
+## 3. Prove local login with TestSupport
 
 Before touching a real IdP, prove the local trust path with
-`Relyra.TestSupport.FakeIdP`. This is the default first proof because it signs
-real SAML responses with deterministic local fixtures.
+`use Relyra.TestSupport, endpoint: …`. FakeIdP signing is internal to the macro
+helpers — you focus on wiring a stub ACS route and asserting the login receipt.
 
-Use `Relyra.TestSupport` helpers in a host-side test so you can verify the core
-flow without provider admin work:
+Prerequisites:
+
+- A host ExUnit test module with Phoenix test deps (`Phoenix.ConnTest`, router).
+- A minimal test router and ACS controller (not production `saml_routes()`).
+
+Stub router and controller (adapt module names to your host app):
 
 ```elixir
-metadata = Relyra.TestSupport.fake_idp_metadata()
+defmodule MyAppWeb.TestRouter do
+  use Phoenix.Router
 
-response =
-  []
-  |> Relyra.TestSupport.build_saml_response()
-  |> Relyra.TestSupport.sign_saml_response()
+  post("/:connection_id/acs", MyAppWeb.TestAcsController, :acs)
+end
+
+defmodule MyAppWeb.TestAcsController do
+  use Phoenix.Controller, formats: [html: "Phoenix.HTML"]
+
+  def acs(conn, _params) do
+    conn
+    |> Plug.Conn.assign(:current_user, %{email: "alice@example.com"})
+    |> Phoenix.Controller.text("ok")
+  end
+end
 ```
 
-What this proof should establish:
+Integration test using the TestSupport macro:
 
-- Your host app can consume Relyra's local test-support seam.
-- The ACS flow succeeds against a deterministic SAML response.
-- You can see the same trust-boundary behavior before involving a real provider.
+```elixir
+defmodule MyAppWeb.SamlLoginTest do
+  use ExUnit.Case, async: false
+  use Relyra.TestSupport, endpoint: MyAppWeb.TestRouter
+
+  test "local SAML login round-trip" do
+    conn = Phoenix.ConnTest.build_conn() |> setup_saml_connection(connection_id: "demo")
+
+    response = build_saml_response() |> sign_saml_response()
+    conn = post_saml_response(conn, Base.decode64!(response, padding: false))
+
+    assert_saml_login(conn, %{email: "alice@example.com"})
+  end
+end
+```
+
+Copy-paste source of truth: `test/test_support_demo_test.exs` in the Relyra repo
+(also gated in `mix ci.docs`).
+
+**Stub vs production ACS:** The §3 stub assigns `:current_user` directly for a
+fast receipt. The §2 install scaffold wires `import Relyra.Phoenix.Router;
+saml_routes()` to `Relyra.Phoenix.Controllers.ACSController` and
+`consume_response/3` — use that for real integration after this proof.
 
 If this step fails, fix it here. Do not move to a hosted IdP until the local
 proof is stable.
 
-Receipt: a host-side test or local smoke path succeeds with `FakeIdP`, and you
-can point to the passing test or successful login result as your first SAML proof.
+Receipt: a host-side test passes with `assert_saml_login/2` (or `saml_login/1`
+returns `{:ok, …}`) after `post_saml_response/2` dispatches to your stub ACS route.
 
 ## 4. Choose one provider runbook
 
@@ -156,3 +189,22 @@ Useful follow-on references:
 
 Receipt: you have one working provider path plus a written production follow-on
 plan for metadata, certificates, audit/telemetry, and any optional admin surface.
+
+## Appendix: Advanced manual response construction
+
+Power users may call FakeIdP builders directly when debugging signing or metadata
+without ConnTest dispatch. This path skips router dispatch — prefer §3 for the
+recommended round-trip.
+
+```elixir
+metadata = Relyra.TestSupport.fake_idp_metadata()
+
+response =
+  []
+  |> Relyra.TestSupport.build_saml_response()
+  |> Relyra.TestSupport.sign_saml_response()
+```
+
+`sign_saml_response/2` returns base64; decode before `post_saml_response/2` in
+macro tests. See [§3. Prove local login with TestSupport](#3-prove-local-login-with-testsupport)
+for the full integration path.
