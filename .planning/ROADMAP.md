@@ -130,8 +130,7 @@ See `.planning/milestones/v1.4-ROADMAP.md`.
   3. `mix relyra.trace --connection ID --last N` exists, prints the same step-by-step trace data as the LiveView (same audit + telemetry data sources), and applies the same redaction discipline; output is verifiably redaction-equivalent to the LiveView output (a comparison test or shared redaction helper proves it).
   4. The trace LiveView is part of the `v1.4.0` git tag cut in Phase 44, so the published Hex tarball ships the trace UI. An adopter on `{:relyra, "~> 1.4"}` can see the trace UI without an additional install.
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 4 plans (42-01..42-04)
 
 ### Phase 43: Hex publish prep — version bump & CHANGELOG backfill
 
