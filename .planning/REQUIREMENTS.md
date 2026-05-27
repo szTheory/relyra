@@ -30,11 +30,11 @@ Requirements for this milestone. Each maps to one roadmap phase.
 
 ### Adopter DX & Ergonomics (Wedge 3)
 
-- [ ] **DX-01**: `README.md` opens with a runnable `apply_defaults(:okta, …)` snippet before the Day-1 router walkthrough — single-snippet pitch in the oban/bandit landing-page tradition. Above-the-fold answer to "what does relyra look like in 30 seconds?"
+- [x] **DX-01**: `README.md` opens with a runnable `apply_defaults(:okta, …)` snippet before the Day-1 router walkthrough — single-snippet pitch in the oban/bandit landing-page tradition. Above-the-fold answer to "what does relyra look like in 30 seconds?"
 
-- [ ] **DX-02**: `mix relyra.install` auto-injects `saml_routes()` into the host application's router when an unambiguous insertion point is detected, falling back to the existing print-instructions behaviour only when ambiguous. Detection logic and fallback path covered by tests; no router corruption on edge cases.
+- [x] **DX-02**: `mix relyra.install` auto-injects `saml_routes()` into the host application's router when an unambiguous insertion point is detected, falling back to the existing print-instructions behaviour only when ambiguous. Detection logic and fallback path covered by tests; no router corruption on edge cases.
 
-- [ ] **DX-03**: `guides/overview.md` published as a job-shaped index (Day-1 / Day-2 / Reference sections) — fixes the existing "5-footer-chase" navigation friction. `BATTERIES_INCLUDED.md` deduplicated: one of the two (root vs `guides/`) becomes primary, the other becomes a stub link.
+- [x] **DX-03**: `guides/overview.md` published as a job-shaped index (Day-1 / Day-2 / Reference sections) — fixes the existing "5-footer-chase" navigation friction. `BATTERIES_INCLUDED.md` deduplicated: one of the two (root vs `guides/`) becomes primary, the other becomes a stub link.
 
 ### Warning-Level Tech-Debt Sweep (Wedge 3)
 
@@ -86,9 +86,9 @@ Explicitly excluded. Documented to prevent scope creep.
 | TRACE-01    | 42    | Complete |
 | TRACE-02    | 42    | Complete |
 | TRACE-03    | 42    | Complete |
-| DX-01       | 46    | Pending |
-| DX-02       | 46    | Pending |
-| DX-03       | 46    | Pending |
+| DX-01       | 46    | Complete |
+| DX-02       | 46    | Complete |
+| DX-03       | 46    | Complete |
 | TD-01       | 41    | Complete |
 | TD-02       | 41    | Complete |
 | TD-03       | 41    | Complete |
