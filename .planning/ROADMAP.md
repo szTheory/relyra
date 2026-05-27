@@ -12,7 +12,6 @@
 - ✅ **v1.1 — Verify the Trust Path** (shipped 2026-05-25). See `.planning/milestones/v1.1-ROADMAP.md`.
 - ✅ **v1.3 — Advanced Federation** (shipped 2026-05-27). See `.planning/milestones/v1.3-ROADMAP.md`.
 - 🚧 **v1.4 — Full SLO + Ops Polish** (current). See `.planning/milestones/v1.4-ROADMAP.md`.
-- 🚧 **v1.4 — Full SLO + Ops Polish** (current). See `.planning/milestones/v1.4-ROADMAP.md`.
 
 ## Phases
 
@@ -202,11 +201,12 @@ Plans:
 </details>
 
 <details open>
-<summary>🚧 v1.4 — Full SLO + Ops Polish (Phases 38-40) — CURRENT</summary>
+<summary>🚧 v1.4 — Full SLO + Ops Polish (Phases 38-40.1) — CURRENT</summary>
 
-- [ ] **Phase 38: Single Logout (SLO) Core & Security** — SP and IdP initiated logout flows, strict signature verification, replay protection, and `SessionAdapter` extensibility for indexing.
-- [ ] **Phase 39: Logout Strategy & Operational Guidance** — Explicit operator documentation (`guides/recipes/logout.md`) detailing SLO enablement, 3rd-party cookie caveats, and absolute timeouts.
+- [x] **Phase 38: Single Logout (SLO) Core & Security** — SP and IdP initiated logout flows, strict signature verification, replay protection, and `SessionAdapter` extensibility for indexing. (completed 2026-05-27 — 4/4 plans done; VERIFICATION.md deferred to Phase 40.1)
+- [x] **Phase 39: Logout Strategy & Operational Guidance** — Explicit operator documentation (`guides/recipes/logout.md`) detailing SLO enablement, 3rd-party cookie caveats, and absolute timeouts. (completed 2026-05-27 — VERIFICATION.md deferred to Phase 40.1)
 - [x] **Phase 40: Operational Polish & Error Taxonomy** — Error Atom Decoder, automated drift-check, and comprehensive Incident Response Playbook (`guides/operations/incident_playbook.md`). (completed 2026-05-27)
+- [ ] **Phase 40.1: Close v1.4 milestone audit gaps (INSERTED)** — Fix `logout.md` SessionAdapter signature drift, resolve `index_session/4` policy, generate 38/39 VERIFICATIONs retroactively, fix 38-04 SUMMARY name drift.
 
 ### Phase 38: Single Logout (SLO) Core & Security
 
@@ -280,6 +280,26 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 40.1: Close v1.4 milestone audit gaps (INSERTED)
+
+**Goal:** Close the four findings raised by the v1.4 milestone audit (`.planning/v1.4-MILESTONE-AUDIT.md`): (1) rewrite `guides/recipes/logout.md:107,121` SessionAdapter code example to match the actual 4-arg callback signature; (2) resolve `SessionAdapter.index_session/4` policy — either wire `consume_response/3` to call it, or document host-owned linkage; (3) fix `38-04-SUMMARY.md` `consume_logout_response/3` → `consume_logout/3` nomenclature drift; (4) generate `38-VERIFICATION.md` and `39-VERIFICATION.md` retroactively.
+**Depends on:** Phase 40
+**Requirements:** SLO-01 (re-verify), DOCS-04 (re-verify)
+**Plans:** 5 plans
+
+Plans:
+
+**Wave 1** *(four parallel plans — all touch only `.planning/`, `test/docs/`, `mix.exs`)*
+
+- [ ] 40.1-01-PLAN.md — Retroactive `38-VERIFICATION.md` from existing Phase 38 evidence (D-07/D-08/D-09/D-10; SLO-01 re-verify)
+- [ ] 40.1-02-PLAN.md — Retroactive `39-VERIFICATION.md` from existing Phase 39 evidence (D-07/D-08/D-09/D-10; DOCS-04 re-verify)
+- [ ] 40.1-03-PLAN.md — New `test/docs/logout_recipe_drift_test.exs` skip-tagged + `mix.exs` `ci.docs` wiring (D-05/D-06)
+- [ ] 40.1-04-PLAN.md — Cosmetic `38-04-SUMMARY.md:4` `consume_logout_response/3` → `consume_logout/3` typo fix (D-11)
+
+**Wave 2** *(depends on 40.1-03 — flips drift gate live in same commit as doc rewrite)*
+
+- [ ] 40.1-05-PLAN.md — `guides/recipes/logout.md` rewrite (D-02/D-03/D-04 — canonical SessionAdapter signatures, host-linkage subsection) + unskip drift test from Plan 03
+
 </details>
 
 ## Progress
@@ -322,8 +342,9 @@ Plans:
 | 35. Signed AuthnRequests + ADFS Preset | v1.3 | 9/9 | Complete | 2026-05-26 |
 | 36. Generic SAML Runbook | v1.3 | 2/2 | Complete    | 2026-05-26 |
 | 37. Identity Mapping and Provisioning Guide | v1.3 | 2/2 | Complete    | 2026-05-26 |
-| 38. Single Logout (SLO) Core & Security | v1.4 | 2/4 | In Progress|  |
-| 39. Logout Strategy & Operational Guidance | v1.4 | 1/1 | Complete   | 2026-05-27 |
+| 38. Single Logout (SLO) Core & Security | v1.4 | 4/4 | Complete (verification deferred) | 2026-05-27 |
+| 39. Logout Strategy & Operational Guidance | v1.4 | 1/1 | Complete (verification deferred) | 2026-05-27 |
 | 40. Operational Polish & Error Taxonomy | v1.4 | 2/2 | Complete    | 2026-05-27 |
+| 40.1. Close v1.4 audit gaps (INSERTED) | v1.4 | 0/5 | Planned |  |
 
 ---
