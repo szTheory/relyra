@@ -64,7 +64,11 @@
     "research_style": "parallel_subagents",
     "investigations_retention": "threads_dir",
     "milestone_pause_when_done_enough": true,
-    "demand_gated_requirements": ["AUTHN-POST-01", "KMS-01", "SIGNED-META-01"],
+    "demand_gated_requirements": [
+      "AUTHN-POST-01",
+      "KMS-01",
+      "SIGNED-META-01"
+    ],
     "adoption_truth_doc_wedge": true
   },
   "project_code": null,
