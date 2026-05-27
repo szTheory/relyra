@@ -181,8 +181,14 @@ Important posture:
 
 Useful follow-on references:
 
+After your first successful login, bookmark the
+[incident playbook](operations/incident_playbook.md) for on-call Diagnose workflows.
+
 - [Production Ecto path](production_ecto_path.md) — migrate from install ETS defaults to
   cluster-safe ConnectionResolver and RequestStore/ReplayStore Ecto adapters.
+- [Incident playbook](operations/incident_playbook.md) — evidence surfaces, `mix relyra.trace`,
+  and scenario runbooks for Day-2 SAML incidents (login-trace LiveView at
+  `/relyra/admin/connections/:connection_id/trace`).
 - [guides/identity_mapping_and_provisioning.md](identity_mapping_and_provisioning.md)
   for the host-owned anchor, lookup, and JIT decisions that come after a
   working provider path.
