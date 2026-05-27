@@ -30,8 +30,8 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 **Goal:** Close the gap between codebase strength and adopter-facing documentation — no new SAML protocol surface area.
 
 **Target features:**
-- Getting Started: promote `TestSupport` macro pattern (`setup_saml_connection/2`, `post_saml_response/2`) over low-level FakeIdP snippets
-- New "Production Ecto path" section (migrations, `ConnectionResolver.Ecto`, ETS→Ecto store swap, prod replay-store warning)
+- ~~Getting Started: promote `TestSupport` macro pattern~~ — **done Phase 47**
+- ~~New "Production Ecto path" section~~ — **done Phase 47** (`guides/production_ecto_path.md`)
 - Ops: login-trace route + `mix relyra.trace` in `guides/operations/incident_playbook.md` tool table
 - CONFORMANCE: "Scope boundary & diminishing returns" section; fix `sp-encrypted-assertions-deferred` manifest (ENC-01 shipped Phase 34)
 - Refresh `docs/jtbd_gap_map.md` to v1.5 reality
@@ -146,14 +146,14 @@ The v1.x milestone arc closed with v1.5:
 - ✓ **TD-03** — regex-alongside-tree retired from encrypted-assertion path — v1.5 (Phase 41)
 - ✓ **TD-04** — doc drift fixes (preset count, ENC-01 scope) — v1.5 (Phase 41)
 - ✓ **TD-05** — `mix format --check-formatted` clean repo-wide — v1.5 (Phase 41)
+- ✓ **ADOPT-01** — Getting Started promotes TestSupport macro pattern for first browser login — v1.6 (Phase 47)
+- ✓ **ADOPT-02** — "Production Ecto path" guide (migrations, resolver, stores, replay warning) — v1.6 (Phase 47)
 
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
 **v1.6 Adoption Truth (doc-only):**
-- **ADOPT-01** — Getting Started promotes TestSupport macro pattern for first browser login
-- **ADOPT-02** — "Production Ecto path" guide section (migrations, resolver, stores, replay warning)
 - **ADOPT-03** — Incident playbook documents login-trace LiveView + `mix relyra.trace`
 - **ADOPT-04** — CONFORMANCE scope boundary + ENC manifest honesty (`sp_manifest.json`)
 - **ADOPT-05** — `docs/jtbd_gap_map.md` refreshed to v1.5 shipped reality
@@ -259,4 +259,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-27 — milestone v1.6 Adoption Truth started (doc-only; phases 47+). See `.planning/REQUIREMENTS.md` and `.planning/ROADMAP.md`.*
+*Last updated: 2026-05-27 — Phase 47 complete (ADOPT-01/02); v1.6 continues at Phase 48. See `.planning/REQUIREMENTS.md` and `.planning/ROADMAP.md`.*
