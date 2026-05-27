@@ -21,40 +21,32 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v0.6 shipped 2026-05-08** — Operational maturity carryover + SLO. Phase 22 (certificate expiry alerts), Phase 23 (diagnostic bundles), and Phase 24 (Single Logout) are complete and verified.
 - **v1.0 shipped 2026-05-08** — Conformance, security review readiness, and adopter onboarding polish. Phase 25 added executable SP conformance and pinned CVE regressions; Phase 26 added the reviewer packet, generated evidence, and strict-default proof lanes; Phase 27 added authoritative onboarding, runbooks, case studies, and batteries-included proof.
 - **v1.1 shipped 2026-05-25** — Verify the Trust Path. Phase 28 proved exclusive-C14N over a real parse tree; Phase 29 wired genuine `:public_key.verify` + `DigestValue` recompute onto both response and metadata-root paths; Phase 30 made the adversarial crypto corpus permanently gate `mix ci.security`; Phase 31 aligned reviewer docs, findings ledger, and staged advisory artifacts to the shipped proof surface. Full suite remained green and the published-hex SAML auth-bypass is closed in code.
-- **v1.3 implementation complete** — Advanced Federation. Phase 32 extended AlgorithmPolicy and schema support, Phase 33 shipped the `KeyResolver` / XMLEnc core, Phase 34 closed ENC-01 + ENC-02, Phase 35 shipped signed redirect-binding AuthnRequests plus the ADFS preset/runbook and AUTHN-01 corpus, and Phases 36-37 completed the generic SAML and identity-mapping operator guides. Milestone archival is still pending.
-- **v1.4 implementation complete** — Full SLO + Ops Polish. Phase 38 shipped SLO core + security (SLO-01), Phase 39 shipped the logout strategy guide (DOCS-04), Phase 40 shipped the operator incident playbook + Error Atom Decoder (DOCS-05, DOCS-06), and Phase 40.1 closed the v1.4 milestone-audit gaps: retroactive 38/39 VERIFICATIONs, `guides/recipes/logout.md` rewritten to canonical 4-arg `SessionAdapter` signatures with a host-owned-linkage subsection, and a live `test/docs/logout_recipe_drift_test.exs` wired into `ci.docs`. Milestone archival is still pending.
+- **v1.3 shipped 2026-05-27** — Advanced Federation. Phase 32 extended AlgorithmPolicy and schema support, Phase 33 shipped the `KeyResolver` / XMLEnc core, Phase 34 closed ENC-01 + ENC-02, Phase 35 shipped signed redirect-binding AuthnRequests plus the ADFS preset/runbook and AUTHN-01 corpus, and Phases 36-37 completed the generic SAML and identity-mapping operator guides.
+- **v1.4 shipped 2026-05-27** — Full SLO + Ops Polish. Phase 38 shipped SLO core + security (SLO-01), Phase 39 shipped the logout strategy guide (DOCS-04), Phase 40 shipped the operator incident playbook + Error Atom Decoder (DOCS-05, DOCS-06), and Phase 40.1 closed the v1.4 milestone-audit gaps: retroactive 38/39 VERIFICATIONs, `guides/recipes/logout.md` rewritten to canonical 4-arg `SessionAdapter` signatures with a host-owned-linkage subsection, and a live `test/docs/logout_recipe_drift_test.exs` wired into `ci.docs`. With v1.4 shipped, Relyra has crossed the "done-enough" line drawn in PROJECT.md: future scope is demand-gated, not coverage-gated.
 
 ## Next Milestone Goals
 
-**v1.3 — Advanced Federation** (current milestone; implementation complete, archival pending):
-- Encrypted assertions (`EncryptedAssertion` / XML-Enc): RSA-OAEP + AES-GCM, re-parse through hardened saxy seam, adversarial corpus. Investigations: `.planning/threads/encrypted-assertions-investigation.md`.
-- Signed AuthnRequests: HTTP-Redirect binding signing for `WantAuthnRequestsSigned` IdPs (ADFS, Shibboleth). Investigations: `.planning/threads/signed-authn-requests-investigation.md`.
-- Generic SAML runbook (`guides/recipes/generic_saml.md`) + minimum-safe checklist — first-class peer of okta.md, with field-name decoder tables for top non-preset IdPs.
-- Identity mapping & provisioning guide (`guides/identity_mapping_and_provisioning.md`) — NameID vs app identity, 3 mapping patterns, JIT decision tree, explicit SCIM non-goal.
+**Done-enough line reached at v1.4.** All v1.x core scope (Verify-the-Trust-Path → Advanced Federation → Full SLO + Ops Polish) is shipped. Future milestones are demand-gated, not coverage-gated. A "Scope boundary & diminishing returns" section in `CONFORMANCE.md` should record the shipping milestone arc and the explicit "no more" boundary (HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, full standalone app — all explicitly out of scope at this stage).
 
-**v1.4 — Full SLO + Ops Polish** (after v1.3):
-- Full SLO round-trip: SP-initiated + IdP-initiated, `SessionIndex` correlation, `SessionAdapter` extension (`index_session/4` + `terminate_by_session_index/4`).
-- `guides/recipes/logout.md` — when to enable SLO, session-model implications, 3rd-party-cookie caveat, absolute-timeout guidance.
-- `guides/operations/incident_playbook.md` — one narrative stitching telemetry → audit → admin UI → mix task.
-- `guides/troubleshooting.md` — SAML error atom decoder, drift-checked against live error taxonomy.
+**Demand-gated future candidates** (do NOT plan unless adoption signal materializes):
 
-**After v1.3 + v1.4: declare done-enough.** Add "Scope boundary & diminishing returns" section to CONFORMANCE.md. Future additions demand-gated only (HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, full standalone app — all explicitly out of scope at that point).
+- **AUTHN-POST-01** — HTTP-POST binding signed AuthnRequests (enveloped XML signature + C14N). Carry-forward from v1.3.
+- **KMS-01** — KMS-native `KeyResolver` adapters (AWS KMS, GCP KMS). Carry-forward from v1.3.
+- **SIGNED-META-01** — Signed SP metadata (`EntityDescriptor`) for academic federation / InCommon. Carry-forward from v1.3.
 
-Known carry-forward from v1.1 close:
-- Mixed-content / inter-element-whitespace C14N follow-up (fail-closed, safe; document interop story in v1.3).
-- Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`) — non-blocking.
+**Known carry-forward maintenance items (low priority, surface only on need):**
+
 - CVE ID backfill into `docs/advisories/2026-001-...` when GitHub assigns it (pending async).
+- Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`) — non-blocking.
 
+## Shipped Milestones — v1.x Arc Summary
 
-## Current Milestone: v1.3 Advanced Federation
+The v1.x milestone arc closed with v1.4:
 
-**Goal:** Extend Relyra to support encrypted assertions and signed AuthnRequests for enterprise federation scenarios, alongside authoritative guides for generic SAML onboarding and identity mapping patterns.
-
-**Target features:**
-- Encrypted assertions (`EncryptedAssertion` / XML-Enc): RSA-OAEP + AES-GCM, re-parsed through the hardened saxy seam, adversarial corpus expanded
-- Signed AuthnRequests: HTTP-Redirect binding signing for `WantAuthnRequestsSigned` IdPs (ADFS, Shibboleth)
-- Generic SAML runbook (`guides/recipes/generic_saml.md`) — first-class peer of `okta.md`, with field-name decoder tables for top non-preset IdPs
-- Identity mapping & provisioning guide (`guides/identity_mapping_and_provisioning.md`) — NameID vs app identity, 3 mapping patterns, JIT decision tree, explicit SCIM non-goal
+- **v1.0** — Conformance, security review readiness, and adopter onboarding polish (Phases 25-27).
+- **v1.1** — Verify the Trust Path: real exclusive-C14N, genuine XMLDSig `:public_key.verify`, adversarial crypto corpus permanently gating CI, disclosure honesty (Phases 28-31).
+- **v1.3** — Advanced Federation: encrypted assertions (ENC-01), signed AuthnRequests (AUTHN-01), generic SAML and identity-mapping operator guides (Phases 32-37).
+- **v1.4** — Full SLO + Ops Polish: full SLO round-trip (SLO-01), logout strategy guide (DOCS-04), Incident Response Playbook (DOCS-05), SAML Error Atom Decoder (DOCS-06), audit-closure Phase 40.1 (Phases 38-40.1).
 
 ## Requirements
 
@@ -111,6 +103,9 @@ Known carry-forward from v1.1 close:
 **v1.3:**
 - ✓ **ENC-01** — Encrypted assertions (`EncryptedAssertion` / XML-Enc): single `<EncryptedAssertion>` decrypted (RSA-OAEP + AES-256-GCM), spliced, and re-parsed through the SAME `PureBeam.parse_safely/2` seam so `Signature.do_verify/4` runs before any identity field is read; cleartext+encrypted and >1-encrypted rejected `:ambiguous_assertion` before crypto; single opaque `:decryption_failed`; 7-fixture pipeline-level adversarial corpus gated by `mix ci.security` — v1.3 (Phase 34; 5/5 success criteria verified 2026-05-25)
 - ✓ **ENC-02** — SP metadata publishes distinct `<KeyDescriptor use="encryption">` and `<KeyDescriptor use="signing">` (base64-of-DER, PUBLIC certs only, schema-valid ordering) — v1.3 (Phase 34 verified 2026-05-25)
+- ✓ **AUTHN-01** — Signed AuthnRequests: HTTP-Redirect binding signing for `WantAuthnRequestsSigned` IdPs (ADFS, Shibboleth); raw query bytes signed verbatim; bit-for-bit golden corpus + ADFS-style variant gated by `mix ci.security` — v1.3 (Phase 35 verified 2026-05-26)
+- ✓ **DOCS-02** — Generic SAML runbook (`guides/recipes/generic_saml.md`) with field-name decoder tables for IBM Security Verify, CyberArk, Oracle Access Manager, PingFederate, CA SiteMinder, ADFS, Shibboleth — v1.3 (Phase 36 verified 2026-05-26)
+- ✓ **DOCS-03** — Identity mapping & provisioning guide (`guides/identity_mapping_and_provisioning.md`): NameID vs app identity, 3 mapping patterns, JIT decision tree, explicit SCIM non-goal — v1.3 (Phase 37 verified 2026-05-26)
 
 **v1.4:**
 - ✓ **DOCS-04** — Publish `guides/recipes/logout.md` detailing when to enable SLO, session-model implications, 3rd-party cookie caveats, and absolute-timeout fallbacks — v1.4 (Phase 39 verified 2026-05-27)
@@ -121,9 +116,7 @@ Known carry-forward from v1.1 close:
 
 <!-- Carried forward; building toward these next. -->
 
-- [ ] **AUTHN-01** — Signed AuthnRequests: HTTP-Redirect binding signing for `WantAuthnRequestsSigned` IdPs (ADFS, Shibboleth) — v1.3
-- [ ] **DOCS-02** — Generic SAML runbook (`guides/recipes/generic_saml.md`) with field-name decoder tables for top non-preset IdPs — v1.3
-- [ ] **DOCS-03** — Identity mapping & provisioning guide (`guides/identity_mapping_and_provisioning.md`): NameID vs app identity, 3 mapping patterns, JIT decision tree, explicit SCIM non-goal — v1.3
+_None._ The v1.x arc closed at v1.4; future work is demand-gated, not coverage-gated. See "Next Milestone Goals" above for demand-gated candidates that do not enter Active until adoption signal materializes.
 
 ### Out of Scope
 
@@ -222,4 +215,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-27 — Phase 40.1 verified complete. v1.4 audit gaps closed: retroactive 38/39 VERIFICATIONs, `guides/recipes/logout.md` rewritten to canonical 4-arg `SessionAdapter` signatures, host-owned-linkage policy documented, and `test/docs/logout_recipe_drift_test.exs` is live in `ci.docs` (no longer skip-tagged). v1.4 is now implementation-complete end-to-end; milestone archival pending.*
+*Last updated: 2026-05-27 — v1.4 milestone shipped and archived. v1.x arc closed at the "done-enough" line: SP-initiated SSO (v0.1) → enterprise config (v0.2) → LiveView admin (v0.3) → IdP-initiated SSO (v0.4) → operational maturity (v0.5-0.6) → conformance + security review (v1.0) → verified trust path (v1.1) → advanced federation (v1.3) → full SLO + ops polish (v1.4). Future scope is demand-gated, not coverage-gated.*

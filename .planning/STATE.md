@@ -1,16 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: milestone audit gaps
-status: executing
-last_updated: "2026-05-27T17:05:33.924Z"
+milestone: none
+milestone_name: between milestones
+status: between_milestones
+last_updated: "2026-05-27T17:30:00.000Z"
 last_activity: 2026-05-27
+last_shipped_milestone: v1.4
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,24 +21,25 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 40.1 — close-v1-4-audit-gaps-logout-md-signature-drift-index-sessio
+**Current focus:** Between milestones — v1.x arc shipped at v1.4. Next work is demand-gated, not coverage-gated.
 
 ## Current Position
 
-Phase: 40.1
-Plan: Not started
-Status: Executing Phase 40.1
+Phase: —
+Plan: —
+Status: Between milestones (v1.4 shipped 2026-05-27)
 
 Last activity: 2026-05-27
-Resume: /gsd:plan-phase 40.1
+Resume: `/gsd:new-milestone` when adoption signal motivates a demand-gated candidate (AUTHN-POST-01, KMS-01, SIGNED-META-01) — otherwise stay paused.
 
-Progress: [███████░░░] 75%
+Progress: [██████████] 100% (v1.4 closed)
 
 ## Performance Metrics
 
-- Last shipped milestone: v1.3 (Phases 32-37)
-- Plans complete in last shipped milestone: 21/21
-- Coverage in last shipped milestone: 10/10 requirements mapped and completed
+- Last shipped milestone: v1.4 (Phases 38-40.1)
+- Plans complete in last shipped milestone: 12/12
+- Coverage in last shipped milestone: 4/4 requirements mapped and completed
+- Prior shipped milestone: v1.3 (Phases 32-37) — 21/21 plans, 10/10 requirements
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -128,6 +130,9 @@ Items acknowledged and deferred at milestone close:
 | Category | Item | Status |
 |----------|------|--------|
 | verification_gap | Phase 15: 15-VERIFICATION.md | human_needed |
+| v1.4_followup | 40-REVIEW WR-01 (redundant multi-line regex in drift test) | non_blocking, accepted |
+| v1.4_followup | 40-REVIEW WR-02 (cwd-relative path in drift test) | non_blocking, accepted |
+| v1.4_followup | `test/security/xml/adversarial_crypto_test.exs` `mix format` drift | pre-existing, byte-identical to base |
 
 ## Tracked Follow-ups (carried into v1.3)
 
