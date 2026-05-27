@@ -1,6 +1,8 @@
 defmodule Relyra.Protocol.Metadata do
   @moduledoc false
 
+  alias Relyra.Security.XML.AttributeEscape
+
   # XMLEnc accept-list URIs advertised in the encryption KeyDescriptor's
   # <md:EncryptionMethod>. These MUST match the decryptor's accept-list
   # (lib/relyra/security/xml_enc.ex) — the plain xmlenc# forms only, NOT the
@@ -32,14 +34,14 @@ defmodule Relyra.Protocol.Metadata do
     # KeyInfo before EncryptionMethod inside each KeyDescriptor.
     """
     <?xml version="1.0" encoding="UTF-8"?>
-    <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="#{issuer}">
+    <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="#{AttributeEscape.escape_attribute(issuer)}">
       <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol"#{authn_requests_attr}>
     #{signing_descriptor}
         <md:KeyDescriptor use="encryption">
           <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>#{encryption_cert_b64}</ds:X509Certificate></ds:X509Data></ds:KeyInfo>
     #{encryption_methods()}
         </md:KeyDescriptor>
-        <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="#{acs_url}" index="1" isDefault="true"/>
+        <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="#{AttributeEscape.escape_attribute(acs_url)}" index="1" isDefault="true"/>
       </md:SPSSODescriptor>
     </md:EntityDescriptor>
     """
