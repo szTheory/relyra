@@ -10,7 +10,7 @@ if Code.ensure_loaded?(Ecto.Schema) do
 
     @primary_key {:id, :binary_id, autogenerate: true}
     @foreign_key_type :binary_id
-    @domain_values [:connection, :metadata, :certificate, :mapping]
+    @domain_values [:connection, :metadata, :certificate, :mapping, :login]
     @action_values [
       :created,
       :updated,
@@ -22,7 +22,9 @@ if Code.ensure_loaded?(Ecto.Schema) do
       :activated,
       :retired,
       :replaced,
-      :deleted
+      :deleted,
+      :succeeded,
+      :failed
     ]
     @max_map_entries 32
     @max_list_entries 32
