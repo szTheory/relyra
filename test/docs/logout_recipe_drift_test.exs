@@ -71,7 +71,8 @@ defmodule Relyra.Docs.LogoutRecipeDriftTest do
       |> Map.new()
 
     doc = File.read!(@doc_path)
-    heads = Regex.scan(@head_pattern, doc, capture: :all_but_first)
+    elixir_blocks = extract_elixir_blocks(doc)
+    heads = Regex.scan(@head_pattern, elixir_blocks, capture: :all_but_first)
 
     extracted_names =
       heads
@@ -95,6 +96,16 @@ defmodule Relyra.Docs.LogoutRecipeDriftTest do
       assert actual == expected,
              format_arity_drift(name, params_str, actual, expected)
     end)
+  end
+
+  # Extracts the bodies of all ```elixir ... ``` fenced code blocks in the
+  # markdown doc and joins them. Scoping the head scan to fenced blocks
+  # prevents prose mentions of `def index_session(...)` outside the example
+  # from tripping the gate (WR-01).
+  defp extract_elixir_blocks(doc) do
+    ~r/```elixir\n(.*?)```/s
+    |> Regex.scan(doc, capture: :all_but_first)
+    |> Enum.map_join("\n", fn [body] -> body end)
   end
 
   # Comma-split + trim + non-empty count. Handles the empty-arglist case
