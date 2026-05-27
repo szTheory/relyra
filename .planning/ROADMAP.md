@@ -276,7 +276,7 @@ Plans:
 
 **Wave 2** *(depends on 40-01 for mix.exs anchor)*
 
-- [ ] 40-02-PLAN.md — DOCS-05: Incident Response Playbook (guides/operations/incident_playbook.md) + ci.docs presence guard
+- [x] 40-02-PLAN.md — DOCS-05: Incident Response Playbook (guides/operations/incident_playbook.md) + ci.docs presence guard
 
 **UI hint**: yes
 
@@ -324,6 +324,6 @@ Plans:
 | 37. Identity Mapping and Provisioning Guide | v1.3 | 2/2 | Complete    | 2026-05-26 |
 | 38. Single Logout (SLO) Core & Security | v1.4 | 2/4 | In Progress|  |
 | 39. Logout Strategy & Operational Guidance | v1.4 | 1/1 | Complete   | 2026-05-27 |
-| 40. Operational Polish & Error Taxonomy | v1.4 | 1/2 | In Progress|  |
+| 40. Operational Polish & Error Taxonomy | v1.4 | 2/2 | Complete   | 2026-05-27 |
 
 ---
