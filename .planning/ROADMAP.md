@@ -112,7 +112,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 - [x] **Phase 47: Onboarding truth — Getting Started & production Ecto path** — TestSupport macro pattern for first browser login; production Ecto path section. (completed 2026-05-27)
 - [x] **Phase 48: Operator completeness — incident playbook trace tools** — Login-trace LiveView route + `mix relyra.trace` in incident playbook tool table; Day-2 cross-links. (completed 2026-05-27)
 - [x] **Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy** — Scope boundary section, ENC manifest fix, jtbd_gap_map refresh, README/runbook taxonomy alignment. (completed 2026-05-27)
-- [ ] **Phase 49.1: Close v1.6 audit doc handoff gaps (INSERTED)** — Ecto path → Day-2 ops forward links; README/jtbd_user_flows cross-link alignment.
+- [x] **Phase 49.1: Close v1.6 audit doc handoff gaps (INSERTED)** — Ecto path → Day-2 ops forward links; README/jtbd_user_flows cross-link alignment. (completed 2026-05-27)
 - [ ] **Phase 49.2: v1.6 Nyquist retro + editorial polish (INSERTED)** — Retroactive Phase 47 VALIDATION.md; optional editorial skim per audit.
 
 ## Phase Details (v1.6)
@@ -170,7 +170,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 3. Getting Started §5 incident playbook link uses `#evidence-surfaces` anchor (parity with overview Day-2).
 4. `mix ci.docs` stays green.
 
-**Plans:** 0/4 plans
+**Plans:** 4/4 plans complete
 
 ### Phase 49.2: v1.6 Nyquist retro + editorial polish (INSERTED)
 
@@ -245,7 +245,7 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 3/3 | Complete    | 2026-05-27 |
 | 48. Operator completeness — incident playbook trace tools | v1.6 | 2/2 | Complete    | 2026-05-27 |
 | 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 3/3 | Complete    | 2026-05-27 |
-| 49.1. Close v1.6 audit doc handoff gaps (INSERTED) | v1.6 | 0/4 | Pending | — |
+| 49.1. Close v1.6 audit doc handoff gaps (INSERTED) | v1.6 | 4/4 | Complete   | 2026-05-27 |
 | 49.2. v1.6 Nyquist retro + editorial polish (INSERTED) | v1.6 | 0/3 | Pending | — |
 
 ---
