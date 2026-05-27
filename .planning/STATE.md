@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: milestone audit gaps
-status: planning
-last_updated: "2026-05-27T16:13:13.876Z"
-last_activity: 2026-05-27
+status: executing
+last_updated: "2026-05-27T16:40:38.720Z"
+last_activity: 2026-05-27 -- Phase 40.1 execution started
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 7
+  total_plans: 12
   completed_plans: 7
-  percent: 75
+  percent: 58
 ---
 
 # Project State
@@ -20,15 +20,15 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 40.1 — close v1.4 milestone audit gaps (logout.md signature drift, index_session/4 policy, retroactive 38/39 VERIFICATIONs, 38-04 SUMMARY name drift)
+**Current focus:** Phase 40.1 — close-v1-4-audit-gaps-logout-md-signature-drift-index-sessio
 
 ## Current Position
 
-Phase: 40.1
-Plan: Not started
-Status: Phase 40.1 context gathered (assumptions mode); ready for planning
+Phase: 40.1 (close-v1-4-audit-gaps-logout-md-signature-drift-index-sessio) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 40.1
 
-Last activity: 2026-05-27
+Last activity: 2026-05-27 -- Phase 40.1 execution started
 Resume: /gsd:plan-phase 40.1
 
 Progress: [███████░░░] 75%

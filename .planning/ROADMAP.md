@@ -291,10 +291,10 @@ Plans:
 
 **Wave 1** *(four parallel plans — all touch only `.planning/`, `test/docs/`, `mix.exs`)*
 
-- [ ] 40.1-01-PLAN.md — Retroactive `38-VERIFICATION.md` from existing Phase 38 evidence (D-07/D-08/D-09/D-10; SLO-01 re-verify)
-- [ ] 40.1-02-PLAN.md — Retroactive `39-VERIFICATION.md` from existing Phase 39 evidence (D-07/D-08/D-09/D-10; DOCS-04 re-verify)
-- [ ] 40.1-03-PLAN.md — New `test/docs/logout_recipe_drift_test.exs` skip-tagged + `mix.exs` `ci.docs` wiring (D-05/D-06)
-- [ ] 40.1-04-PLAN.md — Cosmetic `38-04-SUMMARY.md:4` `consume_logout_response/3` → `consume_logout/3` typo fix (D-11)
+- [x] 40.1-01-PLAN.md — Retroactive `38-VERIFICATION.md` from existing Phase 38 evidence (D-07/D-08/D-09/D-10; SLO-01 re-verify)
+- [x] 40.1-02-PLAN.md — Retroactive `39-VERIFICATION.md` from existing Phase 39 evidence (D-07/D-08/D-09/D-10; DOCS-04 re-verify)
+- [x] 40.1-03-PLAN.md — New `test/docs/logout_recipe_drift_test.exs` skip-tagged + `mix.exs` `ci.docs` wiring (D-05/D-06)
+- [x] 40.1-04-PLAN.md — Cosmetic `38-04-SUMMARY.md:4` `consume_logout_response/3` → `consume_logout/3` typo fix (D-11)
 
 **Wave 2** *(depends on 40.1-03 — flips drift gate live in same commit as doc rewrite)*
 
@@ -345,6 +345,6 @@ Plans:
 | 38. Single Logout (SLO) Core & Security | v1.4 | 4/4 | Complete (verification deferred) | 2026-05-27 |
 | 39. Logout Strategy & Operational Guidance | v1.4 | 1/1 | Complete (verification deferred) | 2026-05-27 |
 | 40. Operational Polish & Error Taxonomy | v1.4 | 2/2 | Complete    | 2026-05-27 |
-| 40.1. Close v1.4 audit gaps (INSERTED) | v1.4 | 0/5 | Planned |  |
+| 40.1. Close v1.4 audit gaps (INSERTED) | v1.4 | 4/5 | In Progress|  |
 
 ---
