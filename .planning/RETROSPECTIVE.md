@@ -88,6 +88,51 @@
 
 ---
 
+## Milestone: v1.5 — Publish, Prove, Polish
+
+**Shipped:** 2026-05-27
+**Phases:** 6 | **Plans:** 18 | **Requirements:** 15/15
+
+### What Was Built
+
+- **Pre-publish hygiene (Phase 41).** Closed v1.3 audit warnings: metadata attribute XML escaping, `test_support` excluded from prod/Hex artifact, regex-alongside-tree retired from encrypted-assertion path, doc drift fixes, repo-wide `mix format` clean.
+- **Login trace UI (Phase 42).** `ConnectionTraceLive` at `/relyra/admin/connections/:id/trace` plus `mix relyra.trace` headless companion. Reuses telemetry + audit ledger only — no parallel storage. Security corpus in `mix ci.security` proves redaction equivalence.
+- **Hex publish (Phases 43-44).** Version bump to `1.4.0`, CHANGELOG backfill, release-please stall diagnosed and fixed (stale PR #5 closed, PR #6 merged), `1.4.0` published via CI automation.
+- **Parity verification (Phase 45).** `mix verify.release_parity 1.4.0` compares Hex tarball path-set to git tag; **PASS** with auditable `PARITY-RESULT.md`.
+- **Adopter DX (Phase 46).** README Okta snippet above the fold, installer auto-injects `saml_routes()` when unambiguous, job-shaped `guides/overview.md`.
+
+### What Worked
+
+- **Phase reorder (42 before 43).** Sequencing trace LiveView before publish prep ensured the `v1.4.0` Hex tarball ships the trace UI by construction — no separate "slip to 1.4.1" coordination.
+- **TD-02 before publish.** Excluding `test_support` from the artifact before Phase 44 publish meant parity verification (Phase 45) proved correctness of the tarball adopters actually install, not just git-tag byte equality.
+- **Release-please diagnosis artifact.** `RELEASE-PLEASE-DIAGNOSIS.md` documents the stall root cause (unpushed commits + stale open PR) so recurrence is detectable.
+- **Shared redaction helper.** `LoginTrace.Export` serves both LiveView and CLI — one redaction policy, security corpus proves equivalence.
+
+### What Was Inefficient
+
+- **No v1.5 milestone audit before close.** Pre-flight recommended `/gsd-audit-milestone`; proceeded with open-artifact audit only (all clear). A formal milestone audit would have been belt-and-suspenders for a publish milestone.
+- **Large git diff range.** Phase 41-46 span includes release-please merge history; stats are noisy for LOC attribution.
+
+### Patterns Established
+
+- **Publish-before-parity ordering.** Always verify the *published* Hex tarball, not just local git tag, when closing a publish milestone.
+- **Trace UI reuses audit co-commit store.** Login traces read from existing `domain:login` audit rows — no second source of truth.
+- **Single Hex jump (1.2.0 → 1.4.0).** CHANGELOG retains `[1.3.0]` section for historical readers; Hex sees one release.
+
+### Key Lessons
+
+1. **Tarball correctness beats tag correctness.** Phase 45 path-set diff catches `test_support` leakage that a git-tag-only check would miss if `package.files` drifted.
+2. **Reorder phases when publish artifacts are the deliverable.** Anything that must ship in the published tarball must land before the version bump commit release-please sees.
+3. **Done-enough is a real milestone outcome.** v1.5 intentionally ships no new protocol features — closing the adopter visibility gap is the product event.
+
+### Cost Observations
+
+- Model mix: not measured (Cursor session).
+- Timeline: single day (2026-05-27) for all six phases.
+- Notable: yolo mode auto-approved scope gates; 18 plans executed without milestone audit file.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution

@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: — Publish, Prove, Polish
-status: executing
-last_updated: "2026-05-27T21:32:56.769Z"
-last_activity: 2026-05-27
+status: Awaiting next milestone
+last_updated: "2026-05-27T21:34:26.398Z"
+last_activity: 2026-05-27 — Milestone v1.5 completed and archived
 progress:
   total_phases: 6
   completed_phases: 6
@@ -20,21 +20,21 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 46 — adopter-dx-ergonomics
+**Current focus:** Planning next milestone (`/gsd-new-milestone`)
 
 ## Current Position
 
-Phase: 46
-Plan: Not started
-Status: Executing Phase 46
-Last activity: 2026-05-27
+Phase: Milestone v1.5 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-27 — Milestone v1.5 completed and archived
 
 ## Performance Metrics
 
-- Last shipped milestone: v1.4 (Phases 38-40.1)
-- Plans complete in last shipped milestone: 12/12
-- Coverage in last shipped milestone: 4/4 requirements mapped and completed
-- Prior shipped milestone: v1.3 (Phases 32-37) — 21/21 plans, 10/10 requirements
+- Last shipped milestone: v1.5 (Phases 41-46)
+- Plans complete in last shipped milestone: 18/18
+- Coverage in last shipped milestone: 15/15 requirements mapped and completed
+- Prior shipped milestone: v1.4 (Phases 38-40.1) — 12/12 plans, 4/4 requirements
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -217,3 +217,7 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 - [Roadmap v1.5 / 2026-05-27]: Sequenced TD-02 (test_support prod exclusion) BEFORE Phase 44 publishes — chosen so the first published 1.4.0 tarball is clean. The alternative (let TD-02 land in a 1.4.1 follow-up) would mean shipping test_support to adopters on the first 1.4.0 install, even though Phase 45 parity verification (byte-equal to git tag) would still pass. The tarball-correctness contract takes precedence over phase-ordering convenience.
 - [Roadmap v1.5 / 2026-05-27]: Phase 42 (trace LiveView) deliberately separated from Phase 46 (DX) despite both being "polish" — trace is a substantive new UI surface (~600-900 LOC per the assessment thread) with a dedicated security gate (TRACE-02 wired into `ci.security` as its own `cmd mix test` line). DX is doc + small installer touches. Single-phase fusion would obscure the load-bearing trace security gate.
 - [Roadmap v1.5 reorder / 2026-05-27]: Swapped old Phase 42 (publish prep) and old Phase 45 (trace LiveView) on user review. New order: 41 → 42 (trace) → 43 (publish prep) → 44 (release-please publish) → 45 (parity) → 46 (DX). Rationale: with trace ahead of publish prep, the v1.4.0 tag cut in Phase 44 includes the trace LiveView by construction, so the trace UI ships in the v1.4.0 Hex tarball — no separate "ship trace in 1.4.0 or slip to 1.4.1" coordination needed.
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd:new-milestone
