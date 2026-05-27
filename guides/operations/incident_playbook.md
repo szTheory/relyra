@@ -126,11 +126,16 @@ routes, but the suffix shapes are fixed.
 | `/relyra/admin/connections/:connection_id` | `Relyra.LiveAdmin.ConnectionsLive` `:show` |
 | `/relyra/admin/connections/:connection_id/edit` | `Relyra.LiveAdmin.ConnectionsLive` `:edit` |
 | `/relyra/admin/connections/:connection_id/metadata` | `Relyra.LiveAdmin.ConnectionMetadataLive` `:metadata` |
+| `/relyra/admin/connections/:connection_id/trace` | `Relyra.LiveAdmin.ConnectionTraceLive` `:trace` |
 | `/relyra/admin/diagnostic/bundle` | `Relyra.Phoenix.Controllers.DiagnosticController` `:download` |
+
+Operators reach the trace page from connection detail **View Login Trace**
+(`lib/relyra/live_admin/components/connection_detail.ex`); the path prefix
+remains configurable via host mount, suffix shape fixed.
 
 ### Mix tasks
 
-These are the 7 Relyra operator hand-tools. `hex.audit` is a third-party
+These are the 8 Relyra operator hand-tools. `hex.audit` is a third-party
 Hex task and is NOT a Relyra hand-tool — do not include it in operator
 runbooks alongside these.
 
@@ -139,10 +144,21 @@ runbooks alongside these.
 | `mix relyra.batteries_included` | Generate or drift-check BATTERIES_INCLUDED.md. |
 | `mix relyra.conformance` | Generate or drift-check CONFORMANCE.md. |
 | `mix relyra.diagnostic` | Generate a Relyra diagnostic bundle. |
+| `mix relyra.trace` | Print redacted per-login step timelines for a connection (headless; same data as LiveView trace). Requires `--repo` and `--connection`; optional `--last` (default **20**). |
 | `mix relyra.install` | Scaffold the minimal Relyra integration surface. |
 | `mix relyra.metadata.pin` | Pin a SHA-256 metadata trust fingerprint on a connection. |
 | `mix relyra.refresh_due` | Refresh any metadata sources whose schedule is due. |
 | `mix relyra.security_review` | Generate or drift-check SECURITY_REVIEW_EVIDENCE.md. |
+
+```bash
+mix relyra.trace --repo MyApp.Repo --connection CONNECTION_ID
+mix relyra.trace --repo MyApp.Repo --connection CONNECTION_ID --last 5
+```
+
+Use **LiveView** (`/relyra/admin/connections/:connection_id/trace`) for browser
+triage during an incident; use **`mix relyra.trace`** for SSH/headless on-call
+without a browser. Both call `Query.get_login_traces/4` with shared redaction
+(`Relyra.LoginTrace.Export`).
 
 ## Scenario 1: Certificate expiry imminent
 
