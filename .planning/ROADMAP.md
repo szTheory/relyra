@@ -13,7 +13,7 @@
 - ✅ **v1.3 — Advanced Federation** (shipped 2026-05-27). See `.planning/milestones/v1.3-ROADMAP.md`.
 - ✅ **v1.4 — Full SLO + Ops Polish** (shipped 2026-05-27). See `.planning/milestones/v1.4-ROADMAP.md`.
 - ✅ **v1.5 — Publish, Prove, Polish** (shipped 2026-05-27). See `.planning/milestones/v1.5-ROADMAP.md`.
-- 🚧 **v1.6 — Adoption Truth** — Phases 47-49 (in progress).
+- ✅ **v1.6 — Adoption Truth** — Phases 47-49 (shipped 2026-05-27).
 
 ## Phases
 
@@ -101,7 +101,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 
 </details>
 
-### 🚧 v1.6 — Adoption Truth (In Progress)
+### ✅ v1.6 — Adoption Truth (Shipped 2026-05-27)
 
 **Milestone Goal:** Close the gap between codebase strength and adopter-facing documentation — onboarding, production Ecto path, ops trace tools, CONFORMANCE honesty, planning-doc refresh, preset taxonomy alignment. **No new SAML protocol surface area.** Full assessment: `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`.
 
@@ -111,7 +111,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 
 - [x] **Phase 47: Onboarding truth — Getting Started & production Ecto path** — TestSupport macro pattern for first browser login; production Ecto path section. (completed 2026-05-27)
 - [x] **Phase 48: Operator completeness — incident playbook trace tools** — Login-trace LiveView route + `mix relyra.trace` in incident playbook tool table; Day-2 cross-links. (completed 2026-05-27)
-- [ ] **Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy** — Scope boundary section, ENC manifest fix, jtbd_gap_map refresh, README/runbook taxonomy alignment.
+- [x] **Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy** — Scope boundary section, ENC manifest fix, jtbd_gap_map refresh, README/runbook taxonomy alignment. (completed 2026-05-27)
 
 ## Phase Details (v1.6)
 
@@ -153,7 +153,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 3. README, Getting Started §4 (or equivalent), and `guides/recipes/generic_saml.md` agree on preset taxonomy — Keycloak/OneLogin either appear in the decoder table or are removed from over-broad README claims.
 4. `mix ci.conformance` (or equivalent manifest gate) stays green with the updated ENC row.
 
-**Plans:** 2/3 plans complete
+**Plans:** 3/3 plans complete
 
 ## Progress
 
@@ -213,6 +213,6 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 46. Adopter DX & ergonomics | v1.5 | 3/3 | Complete    | 2026-05-27 |
 | 47. Onboarding truth — Getting Started & production Ecto path | v1.6 | 3/3 | Complete    | 2026-05-27 |
 | 48. Operator completeness — incident playbook trace tools | v1.6 | 2/2 | Complete    | 2026-05-27 |
-| 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 2/3 | In Progress | — |
+| 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 3/3 | Complete    | 2026-05-27 |
 
 ---

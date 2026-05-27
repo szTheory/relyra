@@ -28,7 +28,7 @@ Requirements for this milestone. Each maps to one roadmap phase.
 
 ### Preset Taxonomy Honesty
 
-- [ ] **ADOPT-06**: README, Getting Started, and `guides/recipes/generic_saml.md` agree on preset taxonomy: either add Keycloak and OneLogin decoder-table rows (if README claims them) or narrow README/Getting Started claims to match the seven-family generic runbook. No over-promised IdP coverage.
+- [x] **ADOPT-06**: README, Getting Started, and `guides/recipes/generic_saml.md` agree on preset taxonomy: either add Keycloak and OneLogin decoder-table rows (if README claims them) or narrow README/Getting Started claims to match the seven-family generic runbook. No over-promised IdP coverage.
 
 ## Future Requirements
 
@@ -64,7 +64,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | ADOPT-03 | 48 | Complete |
 | ADOPT-04 | 49 | Complete |
 | ADOPT-05 | 49 | Complete |
-| ADOPT-06 | 49 | Pending |
+| ADOPT-06 | 49 | Complete |
 
 **Coverage:**
 

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: — Adoption Truth
-status: executing
-last_updated: "2026-05-27T22:30:39.508Z"
+status: complete
+last_updated: "2026-05-27T22:32:01Z"
 last_activity: 2026-05-27
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
-  percent: 88
+  completed_plans: 8
+  percent: 100
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 ## Current Position
 
-Phase: 49 (adoption-honesty-conformance-jtbd-map-preset-taxonomy) — EXECUTING
-Plan: 3 of 3 (49-02 complete)
-Status: Ready for 49-03-PLAN (ADOPT-06)
-Last activity: 2026-05-27 — Completed 49-02-PLAN.md (ADOPT-05)
+Phase: 49 (adoption-honesty-conformance-jtbd-map-preset-taxonomy) — COMPLETE
+Plan: 3 of 3 (49-03 complete)
+Status: Phase 49 complete — v1.6 Adoption Truth milestone ready for audit
+Last activity: 2026-05-27 — Completed 49-03-PLAN.md (ADOPT-06)
 
 ## Performance Metrics
 
@@ -67,6 +67,13 @@ Last activity: 2026-05-27 — Completed 49-02-PLAN.md (ADOPT-05)
 - `mix ci.security` hollow-gate invariant is permanent — each security suite is its own `cmd mix test` process.
 - Demand-gated protocol work (AUTHN-POST-01, KMS-01, SIGNED-META-01) stays out of v1.6 unless a real GitHub issue materializes.
 
+### Decisions from Phase 49-03
+
+- **Decoder table expansion:** Keycloak and OneLogin rows added — README 7-family claim honored without narrowing 4 first-class presets.
+- **Four-preset taxonomy:** Getting Started §4 and generic_saml intro list Okta, Entra, Google Workspace, and ADFS as batteries-included.
+- **Ping/Shibboleth cross-refs:** PingFederate footgun notes README "Ping" naming; Shibboleth cross-link after vendor table (no decoder row).
+- **No new ci.docs drift test:** D-15 precedent holds for preset taxonomy doc-only alignment.
+
 ### Decisions from Phase 49-02
 
 - **jtbd_gap_map v1.5+ refresh:** What changed section + persona reclassification; generic SAML and Operator personas **Strong** with honest caveats.
@@ -87,10 +94,9 @@ Last activity: 2026-05-27 — Completed 49-02-PLAN.md (ADOPT-05)
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand (investigation stub only) |
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
-| Phase 49-adoption-honesty-conformance-jtbd-map-preset-taxonomy P01 | 5min | 4 tasks | 4 files |
-| Phase 49-adoption-honesty-conformance-jtbd-map-preset-taxonomy P02 | 8min | 4 tasks | 1 files |
-
 ## Session Continuity
+
+**2026-05-27 — Completed 49-03-PLAN.md.** ADOPT-06: preset taxonomy aligned across generic_saml, Getting Started §4, README verify-only. `mix ci.docs` green. Phase 49 complete — v1.6 Adoption Truth ready for milestone audit.
 
 **2026-05-27 — Completed 49-02-PLAN.md.** ADOPT-05: jtbd_gap_map refreshed to v1.5+ shipped reality. `mix ci.docs` green. Resume: 49-03-PLAN (ADOPT-06 preset taxonomy).
 
