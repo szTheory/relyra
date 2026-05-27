@@ -12,9 +12,9 @@ Requirements for this milestone. Each maps to one roadmap phase.
 
 ### Hex Publish (Wedge 1)
 
-- [ ] **PUB-01**: `mix.exs` `@version` bumped from `1.2.0` to `1.4.0`, `guides/getting_started.md` install pin updated from `~> 0.1.0` to `~> 1.4`, and a SemVer-valid `v1.4.0` git tag exists (distinct from the non-SemVer `v1.4` already present). Single jump 1.2.0 → 1.4.0 (no intermediate 1.3.0 release); rationale documented in CHANGELOG.
+- [x] **PUB-01**: `mix.exs` `@version` bumped from `1.2.0` to `1.4.0`, `guides/getting_started.md` install pin updated from `~> 0.1.0` to `~> 1.4`, and a SemVer-valid `v1.4.0` git tag exists (distinct from the non-SemVer `v1.4` already present). Single jump 1.2.0 → 1.4.0 (no intermediate 1.3.0 release); rationale documented in CHANGELOG.
 
-- [ ] **PUB-02**: `CHANGELOG.md` contains a `[1.3.0]` section reconstructed from v1.3 milestone summaries (Advanced Federation — ENC-01, ENC-02, AUTHN-01, DOCS-02, DOCS-03) and a `[1.4.0]` section reconstructed from v1.4 milestone summaries (SLO-01, DOCS-04, DOCS-05, DOCS-06). Both sections follow Keep-a-Changelog format and the existing `[1.2.0]` precedent.
+- [x] **PUB-02**: `CHANGELOG.md` contains a `[1.3.0]` section reconstructed from v1.3 milestone summaries (Advanced Federation — ENC-01, ENC-02, AUTHN-01, DOCS-02, DOCS-03) and a `[1.4.0]` section reconstructed from v1.4 milestone summaries (SLO-01, DOCS-04, DOCS-05, DOCS-06). Both sections follow Keep-a-Changelog format and the existing `[1.2.0]` precedent.
 
 - [ ] **PUB-03**: Stalled release-please pipeline diagnosed and unstalled; `1.4.0` published to Hex via the release-please automation (NOT manual `mix hex.publish`, per CLAUDE.md). Diagnosis written up in `.planning/phases/<NN>/RELEASE-PLEASE-DIAGNOSIS.md` so the same failure mode cannot silently recur.
 
@@ -79,8 +79,8 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PUB-01      | 43    | Pending |
-| PUB-02      | 43    | Pending |
+| PUB-01      | 43    | Complete |
+| PUB-02      | 43    | Complete |
 | PUB-03      | 44    | Pending |
 | PUB-04      | 45    | Pending |
 | TRACE-01    | 42    | Complete |

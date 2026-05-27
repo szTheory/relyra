@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: — Publish, Prove, Polish
 status: executing
-last_updated: "2026-05-27T20:14:52.380Z"
-last_activity: 2026-05-27 -- Phase 43 execution started
+last_updated: "2026-05-27T20:16:11.040Z"
+last_activity: 2026-05-27
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 10
-  completed_plans: 9
-  percent: 33
+  completed_plans: 10
+  percent: 50
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 ## Current Position
 
-Phase: 43 (hex-publish-prep-version-bump-changelog-backfill) — EXECUTING
-Plan: 1 of 1
+Phase: 44
+Plan: Not started
 Status: Executing Phase 43
-Last activity: 2026-05-27 -- Phase 43 execution started
+Last activity: 2026-05-27
 
 ## Performance Metrics
 

@@ -24,6 +24,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v1.3 shipped 2026-05-27** — Advanced Federation. Phase 32 extended AlgorithmPolicy and schema support, Phase 33 shipped the `KeyResolver` / XMLEnc core, Phase 34 closed ENC-01 + ENC-02, Phase 35 shipped signed redirect-binding AuthnRequests plus the ADFS preset/runbook and AUTHN-01 corpus, and Phases 36-37 completed the generic SAML and identity-mapping operator guides.
 - **v1.4 shipped 2026-05-27** — Full SLO + Ops Polish. Phase 38 shipped SLO core + security (SLO-01), Phase 39 shipped the logout strategy guide (DOCS-04), Phase 40 shipped the operator incident playbook + Error Atom Decoder (DOCS-05, DOCS-06), and Phase 40.1 closed the v1.4 milestone-audit gaps: retroactive 38/39 VERIFICATIONs, `guides/recipes/logout.md` rewritten to canonical 4-arg `SessionAdapter` signatures with a host-owned-linkage subsection, and a live `test/docs/logout_recipe_drift_test.exs` wired into `ci.docs`. With v1.4 shipped, Relyra has crossed the "done-enough" line drawn in PROJECT.md: future scope is demand-gated, not coverage-gated.
 - **v1.5 Phase 42 complete 2026-05-27** — Stepwise login-trace LiveView at `/relyra/admin/connections/:id/trace` plus `mix relyra.trace` headless companion. TRACE-01/02/03 verified: telemetry handler persists login audit rows, shared `LoginTrace.Export` redaction, security corpus wired into `mix ci.security`.
+- **v1.5 Phase 43 complete 2026-05-27** — Release-prep staging: `mix.exs` and release-please manifest at `1.4.0`, `guides/getting_started.md` pin `~> 1.4`, hand-written CHANGELOG `[1.3.0]`/`[1.4.0]` sections with single-jump rationale. PUB-01/PUB-02 verified; git tag and Hex publish deferred to Phase 44.
 
 ## Current Milestone: v1.5 Publish, Prove, Polish
 
@@ -39,7 +40,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 ## Next Milestone Goals (post-v1.5)
 
-**Done-enough line reached at v1.4 for the *code* — but the *Hex-published surface* lags by two minor versions.** All v1.x core scope (Verify-the-Trust-Path → Advanced Federation → Full SLO + Ops Polish) shipped to git; mix.exs is still `@version "1.2.0"`. Adopter-first assessment 2026-05-27 (parallel candidate research + DX audit) confirmed: **the library is protocol-feature complete and adopter-blocked**. The next recommended milestone is a 1-week polish-and-publish wedge, NOT a new feature wedge.
+**Done-enough line reached at v1.4 for the *code* — Hex publish staging complete at `1.4.0` in Phase 43; tag + publish land in Phase 44.** All v1.x core scope (Verify-the-Trust-Path → Advanced Federation → Full SLO + Ops Polish) shipped to git; mix.exs is now `@version "1.4.0"` with CHANGELOG backfill. Adopter-first assessment 2026-05-27 (parallel candidate research + DX audit) confirmed: **the library is protocol-feature complete and adopter-blocked until Hex publish completes.**
 
 **Active: v1.5 — "Publish, prove, polish" (see Current Milestone section above).**
 
@@ -241,4 +242,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-27 — v1.5 Phase 42 (login-trace LiveView) complete; next: Phase 43 Hex publish prep. Polish-and-publish wedge bundles Hex publish of v1.3+v1.4, stepwise login-trace LiveView (done), and README/installer ergonomics + warning-level tech-debt sweep. After v1.5: future scope returns to demand-gated. Arc to date: SP-initiated SSO (v0.1) → enterprise config (v0.2) → LiveView admin (v0.3) → IdP-initiated SSO (v0.4) → operational maturity (v0.5-0.6) → conformance + security review (v1.0) → verified trust path (v1.1) → advanced federation (v1.3) → full SLO + ops polish (v1.4) → publish-prove-polish (v1.5).*
+*Last updated: 2026-05-27 — v1.5 Phase 43 (Hex publish prep) complete; next: Phase 44 release-please publish. Polish-and-publish wedge bundles Hex publish of v1.3+v1.4, stepwise login-trace LiveView (done), release-prep staging (done), and README/installer ergonomics + warning-level tech-debt sweep. After v1.5: future scope returns to demand-gated. Arc to date: SP-initiated SSO (v0.1) → enterprise config (v0.2) → LiveView admin (v0.3) → IdP-initiated SSO (v0.4) → operational maturity (v0.5-0.6) → conformance + security review (v1.0) → verified trust path (v1.1) → advanced federation (v1.3) → full SLO + ops polish (v1.4) → publish-prove-polish (v1.5).*
