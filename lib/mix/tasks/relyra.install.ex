@@ -95,26 +95,31 @@ defmodule Mix.Tasks.Relyra.Install do
   end
 
   defp maybe_update_router(nil, module_name, _force, opts) do
-    maybe_print_live_admin_instructions(module_name, opts)
+    case Relyra.Install.RouterInjector.detect_routers() do
+      [single] ->
+        inject_router_file(single, module_name, opts)
+
+      [] ->
+        print_manual_router_instructions(
+          module_name,
+          "No Phoenix router detected under lib/. Add saml_routes() manually."
+        )
+
+        maybe_print_live_admin_instructions(module_name, opts)
+
+      _multiple ->
+        print_manual_router_instructions(
+          module_name,
+          "Multiple routers detected under lib/. Add saml_routes() manually."
+        )
+
+        maybe_print_live_admin_instructions(module_name, opts)
+    end
   end
 
   defp maybe_update_router(router_path, module_name, force, opts) do
     if File.exists?(router_path) do
-      contents = File.read!(router_path)
-
-      if String.contains?(contents, "saml_routes()") do
-        maybe_print_live_admin_instructions(module_name, opts)
-      else
-        Mix.shell().info(
-          "Router found at #{router_path}, but route injection is ambiguous. Add saml_routes() manually."
-        )
-
-        Mix.shell().info(
-          "Generated for #{module_name}; use the router macro in the appropriate scope."
-        )
-
-        maybe_print_live_admin_instructions(module_name, opts)
-      end
+      inject_router_file(router_path, module_name, opts)
     else
       if force do
         Mix.shell().info("Router file #{router_path} missing; skipped due to --force.")
@@ -126,6 +131,45 @@ defmodule Mix.Tasks.Relyra.Install do
 
       maybe_print_live_admin_instructions(module_name, opts)
     end
+  end
+
+  defp inject_router_file(router_path, module_name, opts) do
+    contents = File.read!(router_path)
+
+    case Relyra.Install.RouterInjector.inject(contents) do
+      {:ok, new_contents} ->
+        File.write!(router_path, new_contents)
+
+        Mix.shell().info("Injected Relyra SAML routes into #{router_path}")
+
+        maybe_print_live_admin_instructions(module_name, opts)
+
+      {:already_injected, _} ->
+        Mix.shell().info("Relyra SAML routes already present in #{router_path}")
+
+        maybe_print_live_admin_instructions(module_name, opts)
+
+      :ambiguous ->
+        print_manual_router_instructions(
+          module_name,
+          "Router found at #{router_path}, but route injection is ambiguous. Add saml_routes() manually."
+        )
+
+        maybe_print_live_admin_instructions(module_name, opts)
+    end
+  end
+
+  defp print_manual_router_instructions(module_name, message) do
+    Mix.shell().info(message)
+
+    Mix.shell().info(
+      "Generated for #{module_name}; use the router macro in the appropriate scope:"
+    )
+
+    Mix.shell().info("""
+        import Relyra.Phoenix.Router
+        saml_routes()
+    """)
   end
 
   defp maybe_print_live_admin_instructions(module_name, opts) do
