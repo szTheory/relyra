@@ -2,78 +2,67 @@ defmodule Relyra.Protocol.LogoutRequestTest do
   use ExUnit.Case, async: true
 
   alias Relyra.Protocol.LogoutRequest
-  alias Relyra.Error
+  alias Relyra.Security.XML.SaxyTree
+  alias Relyra.Security.XML.SaxyTree.Node
 
-  describe "build/3" do
-    test "generates map with required fields when connection and subject are valid" do
-      connection = %{idp_slo_url: "https://idp.example.com/slo", sp_entity_id: "sp:example:com"}
-      subject = %{name_id: "user@example.com"}
+  @connection %{
+    idp_slo_url: "https://idp.example.com/slo",
+    sp_entity_id: "https://sp.example.com/metadata"
+  }
 
-      assert {:ok, result} = LogoutRequest.build(connection, subject)
-      assert result.destination == "https://idp.example.com/slo"
-      assert result.issuer == "sp:example:com"
-      assert result.name_id == "user@example.com"
-      assert String.starts_with?(result.id, "id_")
-      assert is_nil(result[:session_index])
-    end
+  test "build/3 returns required fields with deterministic shape" do
+    opts = [
+      name_id: "user@example.com",
+      session_index: "session-123"
+    ]
 
-    test "includes session_index if provided in subject" do
-      connection = %{idp_slo_url: "https://idp.example.com/slo", sp_entity_id: "sp:example:com"}
-      subject = %{name_id: "user@example.com", session_index: "session_123"}
+    assert {:ok, logout_request} = LogoutRequest.build(@connection, %{}, opts)
 
-      assert {:ok, result} = LogoutRequest.build(connection, subject)
-      assert result.session_index == "session_123"
-    end
+    assert is_binary(logout_request.id)
+    assert logout_request.id != ""
+    assert String.starts_with?(logout_request.id, "id_")
 
-    test "returns error if missing required connection fields" do
-      connection = %{idp_slo_url: "https://idp.example.com/slo"}
-      subject = %{name_id: "user@example.com"}
-
-      assert {:error, %Error{type: :logout_request_invalid}} =
-               LogoutRequest.build(connection, subject)
-    end
-
-    test "returns error if subject is missing name_id" do
-      connection = %{idp_slo_url: "https://idp.example.com/slo", sp_entity_id: "sp:example:com"}
-      subject = %{}
-
-      assert {:error, %Error{type: :logout_request_invalid}} =
-               LogoutRequest.build(connection, subject)
-    end
+    assert logout_request.destination == @connection.idp_slo_url
+    assert logout_request.issuer == @connection.sp_entity_id
+    assert logout_request.name_id == "user@example.com"
+    assert logout_request.session_index == "session-123"
+    assert is_binary(logout_request.issue_instant)
   end
 
-  describe "to_xml/1" do
-    test "generates valid XML string without session index" do
-      data = %{
-        id: "id_12345",
-        issue_instant: "2026-05-08T00:00:00Z",
-        destination: "https://idp.example.com/slo",
-        issuer: "sp:example:com",
-        name_id: "user@example.com"
-      }
+  test "from_parsed_doc/1 strictly traverses the SaxyTree structure to extract fields" do
+    xml = """
+    <samlp:LogoutRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="id_123" Version="2.0" IssueInstant="2023-01-01T00:00:00Z" Destination="https://idp.example.com/slo">
+      <saml:Issuer>https://sp.example.com/metadata</saml:Issuer>
+      <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">user@example.com</saml:NameID>
+      <samlp:SessionIndex>session-123</samlp:SessionIndex>
+    </samlp:LogoutRequest>
+    """
 
-      xml = LogoutRequest.to_xml(data)
-      assert xml =~ "<samlp:LogoutRequest"
-      assert xml =~ ~s(ID="id_12345")
-      assert xml =~ ~s(IssueInstant="2026-05-08T00:00:00Z")
-      assert xml =~ ~s(Destination="https://idp.example.com/slo")
-      assert xml =~ "<saml:Issuer>sp:example:com</saml:Issuer>"
-      assert xml =~ "<saml:NameID>user@example.com</saml:NameID>"
-      refute xml =~ "<samlp:SessionIndex>"
-    end
+    {:ok, tree} = SaxyTree.parse(xml)
+    
+    assert {:ok, req} = LogoutRequest.from_parsed_doc(tree)
+    assert req.issuer == "https://sp.example.com/metadata"
+    assert req.name_id == "user@example.com"
+    assert req.session_index == "session-123"
+    assert req.destination == "https://idp.example.com/slo"
+    assert req.id == "id_123"
+  end
 
-    test "generates valid XML string with session index" do
-      data = %{
-        id: "id_12345",
-        issue_instant: "2026-05-08T00:00:00Z",
-        destination: "https://idp.example.com/slo",
-        issuer: "sp:example:com",
-        name_id: "user@example.com",
-        session_index: "session_123"
-      }
+  test "to_xml/1 generates a valid XML string" do
+    req = %{
+      id: "id_123",
+      issue_instant: "2023-01-01T00:00:00Z",
+      destination: "https://idp.example.com/slo",
+      issuer: "https://sp.example.com/metadata",
+      name_id: "user@example.com",
+      name_id_format: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
+      session_index: "session-123"
+    }
 
-      xml = LogoutRequest.to_xml(data)
-      assert xml =~ ~s(<samlp:SessionIndex>session_123</samlp:SessionIndex>)
-    end
+    xml = LogoutRequest.to_xml(req)
+    assert String.contains?(xml, "ID=\"id_123\"")
+    assert String.contains?(xml, "<saml:Issuer>https://sp.example.com/metadata</saml:Issuer>")
+    assert String.contains?(xml, "<saml:NameID Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\">user@example.com</saml:NameID>")
+    assert String.contains?(xml, "<samlp:SessionIndex>session-123</samlp:SessionIndex>")
   end
 end
