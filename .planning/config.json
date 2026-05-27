@@ -1,5 +1,14 @@
 {
-  "model_profile": "quality",
+  "model_profile": "balanced",
+  "models": {
+    "planning": "opus",
+    "execution": "sonnet",
+    "verification": "sonnet",
+    "research": "sonnet"
+  },
+  "model_overrides": {
+    "gsd-codebase-mapper": "haiku"
+  },
   "commit_docs": true,
   "parallelization": true,
   "search_gitignored": false,
@@ -43,7 +52,6 @@
   "phase_naming": "sequential",
   "agent_skills": {},
   "features": {},
-  "resolve_model_ids": "omit",
   "mode": "yolo",
   "granularity": "standard"
 }
