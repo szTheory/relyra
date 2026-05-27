@@ -111,6 +111,11 @@ Known carry-forward from v1.1 close:
 - ✓ **ENC-01** — Encrypted assertions (`EncryptedAssertion` / XML-Enc): single `<EncryptedAssertion>` decrypted (RSA-OAEP + AES-256-GCM), spliced, and re-parsed through the SAME `PureBeam.parse_safely/2` seam so `Signature.do_verify/4` runs before any identity field is read; cleartext+encrypted and >1-encrypted rejected `:ambiguous_assertion` before crypto; single opaque `:decryption_failed`; 7-fixture pipeline-level adversarial corpus gated by `mix ci.security` — v1.3 (Phase 34; 5/5 success criteria verified 2026-05-25)
 - ✓ **ENC-02** — SP metadata publishes distinct `<KeyDescriptor use="encryption">` and `<KeyDescriptor use="signing">` (base64-of-DER, PUBLIC certs only, schema-valid ordering) — v1.3 (Phase 34 verified 2026-05-25)
 
+**v1.4:**
+- ✓ **DOCS-04** — Publish `guides/recipes/logout.md` detailing when to enable SLO, session-model implications, 3rd-party cookie caveats, and absolute-timeout fallbacks — v1.4 (Phase 39 verified 2026-05-27)
+- ✓ **DOCS-05** — Publish `guides/operations/incident_playbook.md` providing a narrative playbook that stitches together telemetry, audit events, the LiveView admin, and 7 Mix tasks; six Triage→Diagnose→Recover scenarios; explicit no-audit-signal callout for replay storms — v1.4 (Phase 40 verified 2026-05-27)
+- ✓ **DOCS-06** — Publish `guides/troubleshooting.md` as the SAML Error Atom Decoder (78 H3 atom entries across 7 trust-pipeline-seam buckets with the four-field Means/Likely root cause/Operator action/Source micro-block), paired with `test/docs/troubleshooting_drift_test.exs` enforcing bidirectional code↔doc parity (D-08 union of three regex patterns vs D-09 H3 anchor regex); wired into `ci.docs` via presence guards + `cmd mix test` drift-test step; `ci.security` byte-equivalent (Phase 30 hollow-gate invariant preserved) — v1.4 (Phase 40 verified 2026-05-27)
+
 ### Active
 
 <!-- Carried forward; building toward these next. -->
@@ -216,4 +221,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-26 — Phase 15 re-verification closed the stale admin UI human-verification artifact. v1.3 remains implementation-complete and no longer carries that external milestone-close blocker.*
+*Last updated: 2026-05-27 — Phase 40 verified complete (DOCS-05, DOCS-06). v1.4 (Full SLO + Ops Polish) is now implementation-complete: SLO core (Phase 38), logout strategy guide (Phase 39), Error Atom Decoder + bidirectional drift gate, and the operator incident playbook are all shipped. Phase 30 hollow-gate invariant preserved (`ci.security` byte-equivalent).*
