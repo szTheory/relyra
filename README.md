@@ -3,9 +3,25 @@
 Relyra is a strict-by-default **SAML 2.0 Service Provider library for Elixir and Phoenix**.
 It is for teams that need enterprise SSO without becoming SAML experts.
 
+## Quick Look
+
+```elixir
+connection =
+  Relyra.Provider.apply_defaults(:okta, [
+    sp_entity_id: "https://sp.example.com/metadata",
+    acs_url: "https://sp.example.com/saml/acs",
+    idp_sso_url: "https://example.okta.com/app/.../sso/saml",
+    idp_certificates: ["-----BEGIN CERTIFICATE-----..."]
+  ])
+```
+
+Presets fill safe defaults underneath — see the [Okta runbook](guides/recipes/okta.md) for the full receipt.
+
 ## Start Here
 
 Use one Day-1 route:
+
+- Browse the [documentation overview](guides/overview.md) — Day-1, Day-2, and Reference sections.
 
 1. Install the library and scaffold the host app with `mix relyra.install`.
 2. Follow [Getting Started](guides/getting_started.md).
