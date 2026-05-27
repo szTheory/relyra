@@ -12,6 +12,7 @@
 - ✅ **v1.1 — Verify the Trust Path** (shipped 2026-05-25). See `.planning/milestones/v1.1-ROADMAP.md`.
 - ✅ **v1.3 — Advanced Federation** (shipped 2026-05-27). See `.planning/milestones/v1.3-ROADMAP.md`.
 - ✅ **v1.4 — Full SLO + Ops Polish** (shipped 2026-05-27). See `.planning/milestones/v1.4-ROADMAP.md`.
+- 🚧 **v1.5 — Publish, Prove, Polish** — Phases 41-46 (in progress).
 
 ## Phases
 
@@ -74,129 +75,7 @@ See `.planning/milestones/v1.1-ROADMAP.md`.
 <details>
 <summary>✅ v1.3 — Advanced Federation (Phases 32-37) — SHIPPED 2026-05-27</summary>
 
-- [x] **Phase 32: AlgorithmPolicy Extension + Schema Migrations** — Extend AlgorithmPolicy with key-transport and content-encryption algorithm fields; add cert `party`/`use` columns and connection `sign_authn_requests` field via safe additive migrations. (completed 2026-05-25)
-  **Plans:** 2 plans
-
-  - [x] 32-01-PLAN.md — AlgorithmPolicy struct extension + enforce_key_transport_algorithm/2 + enforce_content_encryption_algorithm/3 (ENC-03)
-  - [x] 32-02-PLAN.md — Cert party/use migration + Connection sign_authn_requests migration + Ecto schema fields (ENC-04, AUTHN-02)
-- [x] **Phase 33: KeyResolver Behaviour + XMLEnc Crypto Core** — Introduce the `KeyResolver` behaviour and `KeyResolver.Default` PEM-from-config implementation; build `Relyra.Security.XMLEnc` with RSA-OAEP + AES-GCM decryption behind the AlgorithmPolicy gate. (completed 2026-05-25)
-  **Plans:** 2 plans
-
-  - [x] 33-01-PLAN.md — KeyResolver behaviour + dispatch function + KeyResolver.Default PEM-from-config + key_resolver_test.exs (ENC-04)
-  - [x] 33-02-PLAN.md — XMLEnc.decrypt/3 RSA-OAEP + AES-GCM + 4-case security corpus + ci.security registration (ENC-04)
-- [x] **Phase 34: ValidationPipeline Wiring + ENC-01 Complete** — Wire the decrypt-then-reparse step into `ValidationPipeline`; add ambiguity guard; publish SP encryption `KeyDescriptor`; add the 7-fixture ENC-01 adversarial corpus to `mix ci.security`. (completed 2026-05-25)
-- [x] **Phase 35: Signed AuthnRequests + ADFS Preset** — Implement redirect-binding query signing; add `sign_authn_requests` connection toggle; publish signing metadata fields; ship ADFS preset and runbook; add 5-fixture AUTHN-01 adversarial corpus. (completed 2026-05-26)
-- [x] **Phase 36: Generic SAML Runbook** — Publish `guides/recipes/generic_saml.md` covering SP/IdP metadata fields, decoder tables for non-preset IdPs, minimum-safe checklist, debugging flow, and certificate rotation. (completed 2026-05-26)
-- [x] **Phase 37: Identity Mapping and Provisioning Guide** — Publish `guides/identity_mapping_and_provisioning.md` covering three mapping patterns, JIT decision tree, `UserMapper` behaviour documentation, and SCIM non-goal statement. (completed 2026-05-26)
-
-See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
-
-### Phase 34: ValidationPipeline Wiring + ENC-01 Complete
-
-**Goal**: An SP configured against an encryption-enabled IdP can successfully log in; a malformed, tampered, or policy-violating encrypted assertion is rejected before any identity field is read.
-**Depends on**: Phase 33 (XMLEnc.decrypt/3 must exist).
-**Requirements**: ENC-01, ENC-02
-**Success Criteria** (what must be TRUE):
-
-  1. A response containing a valid `EncryptedAssertion` completes login successfully: the plaintext is decrypted, re-parsed through `PureBeam.parse_safely/2`, and then `Signature.do_verify/4` succeeds before any identity field (NameID, attributes) is accessible.
-  2. A response containing both a cleartext assertion and an encrypted assertion is rejected with `:ambiguous_assertion` before any crypto operation runs.
-  3. Non-encrypted response paths are structurally unchanged — the `:decrypt_assertion` pipeline step is a strict no-op when no encrypted assertion is present.
-  4. SP metadata endpoint publishes `<KeyDescriptor use="encryption">` containing the SP encryption certificate; `<KeyDescriptor use="signing">` is present and distinct from the encryption entry.
-  5. All 7 ENC-01 adversarial corpus fixtures (wrong-key, truncated tag, PKCS1v1.5, CBC, cleartext-injection, malformed ciphertext, read-before-verify attempt) are wired into `mix ci.security` and each returns the correct typed error.
-
-**Plans**: 4 plans
-Plans:
-**Wave 1**
-
-- [x] 34-01-PLAN.md — ENC-02: emit SP signing + encryption KeyDescriptors in metadata (Wave 1)
-- [x] 34-02-PLAN.md — ENC-01: FakeIdP.encrypt/encrypted_response canonical encrypted-assertion generator (Wave 1)
-- [x] 34-03-PLAN.md — ENC-01: :decrypt_assertion pre-stage in ValidationPipeline.do_run/4 (decrypt → reparse → verify; ambiguity guard) (Wave 1)
-
-**Wave 2** *(blocked on Wave 1 completion)*
-
-- [x] 34-04-PLAN.md — ENC-01: 7-fixture pipeline-level adversarial corpus + mix ci.security wiring (Wave 2, depends on 34-02 + 34-03)
-
-**UI hint**: no
-
-### Phase 35: Signed AuthnRequests + ADFS Preset
-
-**Goal**: An SP targeting an ADFS or locked-down Shibboleth IdP that requires `WantAuthnRequestsSigned` can complete login; the redirect-binding signature is byte-exact and verified against a committed golden output.
-**Depends on**: Phase 32 (needs `AlgorithmPolicy.signing_digest_atom/1`; can run in parallel with Phases 33-34).
-**Requirements**: AUTHN-01, AUTHN-02, AUTHN-03, AUTHN-04
-**Success Criteria** (what must be TRUE):
-
-  1. A connection with `sign_authn_requests: true` produces a redirect URL whose `SAMLRequest`, `RelayState`, and `SigAlg` query parameters are signed verbatim in that spec-canonical order; the `Signature` parameter base64-encodes the raw RSA-SHA256 output over the pre-assembled query-string binary.
-  2. The bit-for-bit golden output corpus fixture and an ADFS-style `+`-encoded variant both pass in `mix ci.security`; re-serialization of the query string before signing causes the corpus fixture to fail (validates the raw-octet invariant).
-  3. A connection with `sign_authn_requests: false` (the default) produces an unsigned redirect URL; no existing Okta, Google, or non-ADFS tests regress.
-  4. SP metadata for a signing-enabled connection emits `AuthnRequestsSigned="true"` and a `<KeyDescriptor use="signing">` element; SP metadata for a non-signing connection omits both.
-  5. The ADFS provider preset defaults to `sign_authn_requests: true`; `guides/recipes/adfs.md` covers claim rules, PowerShell `Set-ADFSRelyingPartyTrust` commands, SHA-1 vs SHA-256 redirect binding interop notes, and the `WantAuthnRequestsSigned` flag.
-
-**Plans**: 9 plans
-Plans:
-**Wave 0**
-
-- [x] 35-01-PLAN.md — outbound signing digest gate + `Signature.sign_redirect_query/3` + deterministic signing PEM
-
-**Wave 1**
-
-- [x] 35-02-PLAN.md — raw-DEFLATE redirect binding + signed query assembly + ADFS lowercase encoding
-- [x] 35-03-PLAN.md — persisted `signed_request_encoding` schema/runtime field + migration
-- [x] 35-04-PLAN.md — `:adfs` provider preset registration + defaults
-
-**Wave 2**
-
-- [x] 35-05-PLAN.md — `start_login/3` signed redirect flow + controller verbatim append + `idp_sso_url` collision guard
-- [x] 35-06-PLAN.md — metadata gating for `AuthnRequestsSigned` and signing `KeyDescriptor`
-
-**Wave 3**
-
-- [x] 35-07-PLAN.md — AUTHN-01 golden corpus + committed redirect fixtures + provenance
-- [x] 35-08-PLAN.md — `mix ci.security` wiring + meta-gate registration
-- [x] 35-09-PLAN.md — ADFS operator runbook + `ci.docs` presence guard
-
-### Phase 36: Generic SAML Runbook
-
-**Goal**: An operator integrating a non-preset IdP (IBM Security Verify, CyberArk, Oracle Access Manager, PingFederate, CA SiteMinder, ADFS custom, or Shibboleth) has one authoritative runbook that gets them through setup without reading the SAML spec.
-**Depends on**: Nothing (pure documentation; no code dependency; can run in parallel with any phase after Phase 32).
-**Requirements**: DOCS-02
-**Success Criteria** (what must be TRUE):
-
-  1. `guides/recipes/generic_saml.md` is published and covers: SP metadata field reference with plain-English descriptions, IdP metadata import checklist, attribute/claim decoder tables for IBM Security Verify, CyberArk, Oracle Access Manager, PingFederate, and CA SiteMinder.
-  2. The guide includes ADFS-specific and Shibboleth-specific subsections, a NameID format decision guide, and sections on when to enable signing and encryption.
-  3. A minimum-safe security settings checklist, a step-by-step debugging flow, and a certificate rotation procedure are included, written at the operator level (no SAML spec knowledge assumed).
-
-**Plans**: 2 plans
-Plans:
-
-**Wave 1**
-
-- [x] 36-01-PLAN.md — canonical generic/custom-SAML routing + core runbook skeleton
-
-**Wave 2**
-
-- [x] 36-02-PLAN.md — vendor decoder tables + operator-safety spine + ci.docs gate
-
-### Phase 37: Identity Mapping and Provisioning Guide
-
-**Goal**: An operator implementing JIT provisioning or attribute-to-user mapping has one authoritative guide covering the three canonical patterns and an explicit decision tree — and knows exactly where Relyra's responsibility ends and their application's begins.
-**Depends on**: Nothing (pure documentation; no code dependency; can run in parallel with any phase).
-**Requirements**: DOCS-03
-**Success Criteria** (what must be TRUE):
-
-  1. `guides/identity_mapping_and_provisioning.md` is published and covers all three mapping patterns: NameID-as-local-identifier, attribute-as-local-identifier, and JIT create-or-update.
-  2. A JIT decision tree helps operators choose between patterns based on their identity model; the `UserMapper` behaviour is fully documented with at least one complete implementation example per pattern.
-  3. The guide explicitly states the SCIM lifecycle non-goal, warns about JIT+SCIM simultaneous-use conflicts, and explains anchor stability guidance (what breaks when NameID format changes between logins).
-
-**Plans**: 2 plans
-Plans:
-
-**Wave 1**
-
-- [x] 37-01-PLAN.md — core identity mapping guide + `UserMapper` seam wording
-
-**Wave 2**
-
-- [x] 37-02-PLAN.md — docs publication, routing, and docs CI gate
+See `.planning/milestones/v1.3-ROADMAP.md`.
 
 </details>
 
@@ -207,7 +86,102 @@ See `.planning/milestones/v1.4-ROADMAP.md`.
 
 </details>
 
+### 🚧 v1.5 — Publish, Prove, Polish (In Progress)
+
+**Milestone Goal:** Close the gap between code (v1.4 shipped to git) and what adopters can actually see — bring Hex up to `1.4.0`, make the "every login explains itself" promise concretely visible via a stepwise login-trace LiveView, and close residual DX and warning-level tech-debt items so a new adopter installs in 15 minutes. After v1.5, future scope is demand-gated, not coverage-gated. Full scope: `.planning/threads/v1-5-polish-milestone-assessment-2026-05-27.md`.
+
+**Phase numbering:** v1.4 ended at Phase 40.1; v1.5 continues at Phase **41**.
+
+**Summary checklist:**
+
+- [ ] **Phase 41: Pre-publish hygiene — Tech-debt sweep & security hardening** — Close v1.3 audit warnings (WR-01/02/03, WR-04, WR-ENC-ATTR) and Phase 40 formatting drift before the first published tarball ships.
+- [ ] **Phase 42: Stepwise login-trace LiveView** — `/relyra/admin/connections/:id/trace`, redaction-gated, plus `mix relyra.trace` headless companion. The brand-promise UI receipt — sequenced before publish prep so it ships in the v1.4.0 tarball.
+- [ ] **Phase 43: Hex publish prep — version bump & CHANGELOG backfill** — `mix.exs` 1.2.0 → 1.4.0, fix `~> 0.1.0` pin, backfill `[1.3.0]` + `[1.4.0]` CHANGELOG sections.
+- [ ] **Phase 44: Release-please pipeline diagnosis & v1.4.0 Hex publish** — Diagnose stalled release-please flow; publish via automation (NOT manual `mix hex.publish`).
+- [ ] **Phase 45: Post-publish parity verification** — Hex `relyra-1.4.0` tarball is byte-equal to the `v1.4.0` git tag; published tarball contains no `test_support` artifacts.
+- [ ] **Phase 46: Adopter DX & ergonomics** — README leads with `apply_defaults(:okta, …)` snippet, `mix relyra.install` auto-injects `saml_routes()`, `guides/overview.md` job-shaped index, BATTERIES_INCLUDED dedupe.
+
+## Phase Details
+
+### Phase 41: Pre-publish hygiene — Tech-debt sweep & security hardening
+
+**Goal**: Close all v1.3-era warning-level audit items (WR-01/02/03, WR-04, WR-ENC-ATTR) and the Phase 40 deferred formatting drift, so the next published Hex tarball ships clean — no XSS-class defense-in-depth gaps, no `test_support` in prod artifact, no regex-alongside-tree detectors violating the "one trust path" invariant, no doc drift, and `mix format --check-formatted` exit 0 across the repo.
+**Depends on**: Nothing (entry phase for v1.5; can begin immediately).
+**Requirements**: TD-01, TD-02, TD-03, TD-04, TD-05
+**Success Criteria** (what must be TRUE):
+  1. `lib/relyra/protocol/metadata.ex` routes every attribute interpolation through an XML-attribute escaper, and a new `test/security/metadata_attribute_injection_test.exs` row in `mix ci.security` (its own `cmd mix test` line, Phase 30 hollow-gate invariant preserved) proves the five XML metacharacters `& < > " '` and control characters are escaped in attribute position.
+  2. `mix.exs` `package.files` whitelist AND `elixirc_paths(:prod)` agree that `lib/relyra/test_support` is excluded from the production artifact; the agreement is verifiable by inspecting a built tarball (audit step chained into Phase 45 confirms it on the published tarball).
+  3. `locate_encrypted_assertion/1` and any other detector still pairing a regex with the parse-tree are unified on the parse-tree alone; the regex-alongside-tree pattern is fully retired from the encrypted-assertion path (CLAUDE.md non-negotiable #2 "one parse path" holds without exception).
+  4. `REQUIREMENTS.md` and other legacy docs no longer reference `EncryptedAttribute` in ENC-01 context (scoped to `EncryptedAssertion` only); `PROJECT.md` "What This Is" and `README.md` provider-count copy read "4 first-class presets + a generic SAML runbook covering 7 IdP families" (Ping, OneLogin, Shibboleth, Keycloak, IBM Security Verify, CyberArk, Oracle Access Manager), not "8 presets".
+  5. `mix format --check-formatted` exits 0 across the full repo, including `test/security/xml/adversarial_crypto_test.exs` lines 188-200; `mix qa` (or equivalent full gate) stays green; no semantic changes introduced by the formatting fix.
+**Plans**: TBD
+
+### Phase 42: Stepwise login-trace LiveView
+
+**Goal**: An operator opens `/relyra/admin/connections/:connection_id/trace` and sees the last N logins for that connection, each expandable into the eight telemetry-span outcomes (decode → validate → signature → replay → user_map → session_establish), with `:outcome`, `:error_code` (if any), and post-mapping role/attribute result for each step. The "every login explains itself" brand promise has its UI receipt. Headless inspection is also available via `mix relyra.trace`.
+**Depends on**: Phase 41; **must complete before Phase 43 prep so the trace LiveView ships in the v1.4.0 tarball** (TD-03 regex-alongside-tree cleanup in Phase 41 is upstream of any trace work that touches the encrypted-assertion path).
+**Requirements**: TRACE-01, TRACE-02, TRACE-03
+**Success Criteria** (what must be TRUE):
+  1. A LiveView is mounted at `/relyra/admin/connections/:connection_id/trace` via the existing LiveAdmin scaffold (no new top-level mount); it lists the last N logins for the connection, each row expandable into the eight telemetry-span outcomes annotated with `:outcome`, `:error_code` (if any), and the post-mapping role/attribute result. Reuses the existing telemetry catalog and audit ledger — NO new schemas, NO parallel storage (audit co-commit invariant preserved per CLAUDE.md non-negotiable #5).
+  2. `test/security/login_trace_test.exs` exists, is wired into `mix ci.security` as its own `cmd mix test` line (Phase 30 hollow-gate invariant preserved), and asserts the trace LiveView never renders raw XML, PEM, base64 cert bodies, signature values, or key material — extending the redaction discipline established by `diagnostic/allow_list.ex`.
+  3. `mix relyra.trace --connection ID --last N` exists, prints the same step-by-step trace data as the LiveView (same audit + telemetry data sources), and applies the same redaction discipline; output is verifiably redaction-equivalent to the LiveView output (a comparison test or shared redaction helper proves it).
+  4. The trace LiveView is part of the `v1.4.0` git tag cut in Phase 44, so the published Hex tarball ships the trace UI. An adopter on `{:relyra, "~> 1.4"}` can see the trace UI without an additional install.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 43: Hex publish prep — version bump & CHANGELOG backfill
+
+**Goal**: Stage all repo-side changes required for a release-please-driven `1.4.0` publish — `mix.exs` `@version` bumped to `1.4.0`, the stale `~> 0.1.0` install pin corrected to `~> 1.4`, and `CHANGELOG.md` carries fully backfilled `[1.3.0]` and `[1.4.0]` sections in Keep-a-Changelog format consistent with the existing `[1.2.0]` precedent.
+**Depends on**: Phase 41 + Phase 42 (publish-prep version bump should land atop the clean tech-debt sweep AND with the trace LiveView already in the tree, so the release-please-cut tag includes trace; if TD-02 or trace landed after the bump, `package.files`/git-tag contents would diverge between staged and published artifacts).
+**Requirements**: PUB-01, PUB-02
+**Success Criteria** (what must be TRUE):
+  1. `mix.exs:6` reads `@version "1.4.0"` and `guides/getting_started.md:26` reads `{:relyra, "~> 1.4"}`; both changes are in a single commit (or co-located commits) so the release-please PR sees them together.
+  2. `CHANGELOG.md` contains a `[1.3.0]` section reconstructed from v1.3 milestone summaries (covers ENC-01, ENC-02, AUTHN-01, DOCS-02, DOCS-03), following Keep-a-Changelog Added/Changed/Security categorization and the existing `[1.2.0]` precedent.
+  3. `CHANGELOG.md` contains a `[1.4.0]` section reconstructed from v1.4 milestone summaries (covers SLO-01, DOCS-04, DOCS-05, DOCS-06), in the same Keep-a-Changelog format.
+  4. The rationale for the single 1.2.0 → 1.4.0 jump (no intermediate 1.3.0 Hex release) is documented at the top of the `[1.4.0]` section so future readers understand why `[1.3.0]` exists in CHANGELOG without a Hex release.
+  5. `mix test --warnings-as-errors` stays green after the version bump; no test asserts a literal `"1.2.0"` value (or those tests are updated to read `Mix.Project.config[:version]`).
+**Plans**: TBD
+
+### Phase 44: Release-please pipeline diagnosis & v1.4.0 Hex publish
+
+**Goal**: The release-please pipeline (currently stalled — release PR never merged after v1.2.0) is diagnosed, unstalled, and successfully drives a `1.4.0` publish to Hex via automation, NOT a manual `mix hex.publish` (CLAUDE.md forbids manual). The diagnosis is documented so the same failure mode cannot silently recur.
+**Depends on**: Phase 43 (version + CHANGELOG must be staged before release-please can run).
+**Requirements**: PUB-03
+**Success Criteria** (what must be TRUE):
+  1. The release-please stall is diagnosed (root cause identified — staged PR, missing token, mis-configured action, branch mismatch, etc.) and the diagnosis is written up in `.planning/phases/44-*/RELEASE-PLEASE-DIAGNOSIS.md` so the same failure mode is detectable on recurrence.
+  2. The diagnosed fix is applied and the release-please PR for `1.4.0` opens, builds green, and merges; on merge, the automation creates the `v1.4.0` git tag (SemVer-valid, distinct from the existing non-SemVer `v1.4`) and triggers the publish step.
+  3. `hex.pm/packages/relyra` shows `1.4.0` as the latest version; the publish completed via the automation pipeline, not a manual `mix hex.publish` invocation (verifiable by the absence of manual-publish logs in the local shell history and the presence of the publish artifact in CI logs).
+  4. `mix hex.info relyra` from a fresh checkout reports `1.4.0`; an adopter running `mix deps.get` with `{:relyra, "~> 1.4"}` pulls `1.4.0`.
+**Plans**: TBD
+
+### Phase 45: Post-publish parity verification
+
+**Goal**: Prove that the Hex `relyra-1.4.0` tarball is byte-equal to the `v1.4.0` git tag (the OSS-discipline contract from PROJECT.md Constraints), and that the published tarball contains no `test_support` artifacts. Any drift fails the milestone close.
+**Depends on**: Phase 44 (need a published tarball on Hex to compare).
+**Requirements**: PUB-04
+**Success Criteria** (what must be TRUE):
+  1. A verification script (committed under `.planning/phases/45-*/` and runnable from a fresh checkout) downloads the Hex `relyra-1.4.0` tarball, builds the equivalent tarball locally from the `v1.4.0` git tag, and reports byte-equality (or itemizes any drift); the script's exit code is the milestone-close gate.
+  2. The verification result is captured in `.planning/phases/45-*/PARITY-RESULT.md` with the SHA-256 of the published tarball, the SHA-256 of the locally rebuilt tarball, and an explicit pass/fail line; any drift triggers a milestone-close block (not an unconditional pass).
+  3. The published tarball's `lib/` listing contains no `lib/relyra/test_support/` paths and no `test_support` module entries — chains the Phase 41 TD-02 fix onto the actual published artifact (defense-in-depth verification).
+  4. `mix hex.audit` or equivalent surfaces no fixable warnings on the published artifact (e.g. missing license, missing CHANGELOG link, malformed metadata).
+**Plans**: TBD
+
+### Phase 46: Adopter DX & ergonomics
+
+**Goal**: A new adopter reading the README sees what Relyra looks like in 30 seconds (an above-the-fold `apply_defaults(:okta, …)` snippet), runs `mix relyra.install` and gets `saml_routes()` auto-injected into their router (with a graceful fallback when the insertion point is ambiguous), and can navigate the docs by job (Day-1 / Day-2 / Reference) rather than chasing footers. Installs in 15 minutes.
+**Depends on**: Phase 41 (TD-04 doc-drift fix to the "4 first-class + generic runbook" framing is a prerequisite for the README provider-count copy DX-01 will inherit).
+**Requirements**: DX-01, DX-02, DX-03
+**Success Criteria** (what must be TRUE):
+  1. `README.md` opens with a runnable `apply_defaults(:okta, …)` snippet (or equivalent provider-preset one-liner) BEFORE the Day-1 router walkthrough — the "what does relyra look like in 30 seconds?" answer is above the fold, in the oban/bandit landing-page tradition.
+  2. `mix relyra.install` (`lib/mix/tasks/relyra.install.ex`) auto-injects `saml_routes()` into the host application's router when an unambiguous insertion point is detected; when the insertion point is ambiguous (multiple routers, no clear anchor), it falls back to the existing print-instructions behaviour with no router corruption. Detection logic AND fallback path are covered by tests, including at least one edge-case test that proves the router is not corrupted on the ambiguous fallback.
+  3. `guides/overview.md` is published as a job-shaped index with Day-1 / Day-2 / Reference sections and is wired into the ExDoc `extras:` list; the existing "5-footer-chase" navigation friction is eliminated for a new adopter (manually verified via a fresh `mix docs` build).
+  4. `BATTERIES_INCLUDED.md` (root, drift-tested) and `guides/batteries_included.md` (hand-written) are deduplicated — one becomes the primary source of truth, the other becomes a stub link pointing to the primary. The decision is documented in the relevant phase SUMMARY so reviewers know which copy is canonical.
+**Plans**: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace LiveView (Phase 42) now precedes publish prep (Phase 43), so the trace UI ships in the v1.4.0 Hex tarball by construction — no separate coordination required.
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -241,15 +215,21 @@ See `.planning/milestones/v1.4-ROADMAP.md`.
 | 29. Cryptographic XMLDSig verification | v1.1 | 5/5 | Complete | 2026-05-24 |
 | 30. Adversarial crypto assurance | v1.1 | 4/4 | Complete | 2026-05-24 |
 | 31. Disclosure and docs honesty | v1.1 | 2/2 | Complete | 2026-05-24 |
-| 32. AlgorithmPolicy Extension + Schema Migrations | v1.3 | 2/2 | Complete   | 2026-05-25 |
-| 33. KeyResolver Behaviour + XMLEnc Crypto Core | v1.3 | 2/2 | Complete   | 2026-05-25 |
-| 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 4/4 | Complete    | 2026-05-25 |
+| 32. AlgorithmPolicy Extension + Schema Migrations | v1.3 | 2/2 | Complete | 2026-05-25 |
+| 33. KeyResolver Behaviour + XMLEnc Crypto Core | v1.3 | 2/2 | Complete | 2026-05-25 |
+| 34. ValidationPipeline Wiring + ENC-01 Complete | v1.3 | 4/4 | Complete | 2026-05-25 |
 | 35. Signed AuthnRequests + ADFS Preset | v1.3 | 9/9 | Complete | 2026-05-26 |
-| 36. Generic SAML Runbook | v1.3 | 2/2 | Complete    | 2026-05-26 |
-| 37. Identity Mapping and Provisioning Guide | v1.3 | 2/2 | Complete    | 2026-05-26 |
+| 36. Generic SAML Runbook | v1.3 | 2/2 | Complete | 2026-05-26 |
+| 37. Identity Mapping and Provisioning Guide | v1.3 | 2/2 | Complete | 2026-05-26 |
 | 38. Single Logout (SLO) Core & Security | v1.4 | 4/4 | Complete | 2026-05-27 |
 | 39. Logout Strategy & Operational Guidance | v1.4 | 1/1 | Complete | 2026-05-27 |
 | 40. Operational Polish & Error Taxonomy | v1.4 | 2/2 | Complete | 2026-05-27 |
 | 40.1. Close v1.4 audit gaps (INSERTED) | v1.4 | 5/5 | Complete | 2026-05-27 |
+| 41. Pre-publish hygiene — Tech-debt sweep & security hardening | v1.5 | 0/TBD | Not started | - |
+| 42. Stepwise login-trace LiveView | v1.5 | 0/TBD | Not started | - |
+| 43. Hex publish prep — version bump & CHANGELOG backfill | v1.5 | 0/TBD | Not started | - |
+| 44. Release-please pipeline diagnosis & v1.4.0 Hex publish | v1.5 | 0/TBD | Not started | - |
+| 45. Post-publish parity verification | v1.5 | 0/TBD | Not started | - |
+| 46. Adopter DX & ergonomics | v1.5 | 0/TBD | Not started | - |
 
 ---

@@ -79,28 +79,39 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PUB-01      | TBD   | Pending |
-| PUB-02      | TBD   | Pending |
-| PUB-03      | TBD   | Pending |
-| PUB-04      | TBD   | Pending |
-| TRACE-01    | TBD   | Pending |
-| TRACE-02    | TBD   | Pending |
-| TRACE-03    | TBD   | Pending |
-| DX-01       | TBD   | Pending |
-| DX-02       | TBD   | Pending |
-| DX-03       | TBD   | Pending |
-| TD-01       | TBD   | Pending |
-| TD-02       | TBD   | Pending |
-| TD-03       | TBD   | Pending |
-| TD-04       | TBD   | Pending |
-| TD-05       | TBD   | Pending |
+| PUB-01      | 43    | Pending |
+| PUB-02      | 43    | Pending |
+| PUB-03      | 44    | Pending |
+| PUB-04      | 45    | Pending |
+| TRACE-01    | 42    | Pending |
+| TRACE-02    | 42    | Pending |
+| TRACE-03    | 42    | Pending |
+| DX-01       | 46    | Pending |
+| DX-02       | 46    | Pending |
+| DX-03       | 46    | Pending |
+| TD-01       | 41    | Pending |
+| TD-02       | 41    | Pending |
+| TD-03       | 41    | Pending |
+| TD-04       | 41    | Pending |
+| TD-05       | 41    | Pending |
 
 **Coverage:**
 
 - v1.5 requirements: 15 total
-- Mapped to phases: 0/15 (roadmapper fills in next step)
-- Unmapped: 15
+- Mapped to phases: 15/15 ✓
+- Unmapped: 0
+
+**Phase ↔ Requirement summary:**
+
+| Phase | Name | Requirements | Count |
+|-------|------|--------------|-------|
+| 41 | Pre-publish hygiene — Tech-debt sweep & security hardening | TD-01, TD-02, TD-03, TD-04, TD-05 | 5 |
+| 42 | Stepwise login-trace LiveView | TRACE-01, TRACE-02, TRACE-03 | 3 |
+| 43 | Hex publish prep — version bump & CHANGELOG backfill | PUB-01, PUB-02 | 2 |
+| 44 | Release-please pipeline diagnosis & v1.4.0 Hex publish | PUB-03 | 1 |
+| 45 | Post-publish parity verification | PUB-04 | 1 |
+| 46 | Adopter DX & ergonomics | DX-01, DX-02, DX-03 | 3 |
 
 ---
 
-*Requirements defined: 2026-05-27 — v1.5 polish milestone scoping from `.planning/threads/v1-5-polish-milestone-assessment-2026-05-27.md`.*
+*Requirements defined: 2026-05-27 — v1.5 polish milestone scoping from `.planning/threads/v1-5-polish-milestone-assessment-2026-05-27.md`. Traceability filled by roadmapper 2026-05-27 — 6 phases (41-46), 15/15 requirements mapped, zero orphans. Reordered 2026-05-27 — trace LiveView (Phase 42) sequenced before publish prep so it ships in the v1.4.0 tarball by construction.*

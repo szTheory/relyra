@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Publish, Prove, Polish
 status: planning
-last_updated: "2026-05-27T17:54:38.189Z"
+last_updated: "2026-05-27T18:30:00.000Z"
 last_activity: 2026-05-27
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Between milestones — v1.x arc shipped at v1.4. Next work is publish-and-polish (v1.5), then demand-gated.
+**Current focus:** v1.5 "Publish, Prove, Polish" — bring Hex up to 1.4.0, ship login-trace LiveView (brand-promise UI receipt), close residual DX + warning-level tech-debt items.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 41 (defining context)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-27 — Milestone v1.5 started
+Status: Roadmap created (2026-05-27) — ready for `/gsd:plan-phase 41`
+Last activity: 2026-05-27 — v1.5 roadmap created. 6 phases (41-46), 15/15 requirements mapped. Reordered same day so trace LiveView (Phase 42) precedes publish prep (Phase 43); trace ships in v1.4.0 tarball by construction.
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Last activity: 2026-05-27 — Milestone v1.5 started
 - v1.3 starts at Phase 32 (continues numbering after v1.1's Phase 31).
 - v1.3 dependency graph: Phase 32 (shared prerequisite) → Phase 33 (crypto core) → Phase 34 (pipeline wiring + ENC-01 complete). Phase 35 (AUTHN-01) depends only on Phase 32 and can run in parallel with Phases 33-34. Phases 36-37 (docs) have no code dependencies and are fully parallel.
 - **Phase 40.1 inserted after Phase 40 on 2026-05-27 (URGENT — v1.4 audit closure):** Close four findings from `.planning/v1.4-MILESTONE-AUDIT.md` (status: `gaps_found`) — logout.md SessionAdapter signature drift (BLOCKER 1, affects DOCS-04 + SLO-01), `SessionAdapter.index_session/4` policy resolution (WARNING 2, affects SLO-01), missing 38/39 VERIFICATIONs, and 38-04 SUMMARY `consume_logout_response/3` → `consume_logout/3` name drift. Required before `/gsd:complete-milestone v1.4`.
+- **v1.5 starts at Phase 41** (continues numbering after v1.4's Phase 40.1). Six phases (41-46), 15 requirements, polish-and-publish only — no new protocol features. Linear dependency graph (post-reorder 2026-05-27): 41 (tech-debt sweep, MUST land first) → 42 (trace LiveView, sequenced before publish prep so it ships in v1.4.0 by construction) → 43 (version bump + CHANGELOG) → 44 (release-please diagnosis + Hex publish) → 45 (post-publish parity). 46 (DX) depends on 41 (TD-04 doc-drift fix) and can run any time after 41 in parallel with 42-45.
 
 ### Decisions / Constraints carried into v1.3
 
@@ -77,6 +78,14 @@ Last activity: 2026-05-27 — Milestone v1.5 started
 - **Zero new Hex dependencies:** all v1.3 crypto is OTP stdlib (`:public_key`, `:crypto`, `:zlib`). Any NIF-based XML-Enc library would bypass the hardened saxy seam — permanently out of scope.
 - **RSA-OAEP SHA-256 (`xmlenc11#rsa-oaep`) blocked at AlgorithmPolicy:** `{:rsa_oaep_hash, :sha256}` raises `{:badarg}` on OTP 26-28. AlgorithmPolicy maps this URI to `:blocked_pending_otp_support` with a clear error, not silent failure.
 - **Ambiguity guard for simultaneous cleartext+encrypted assertion:** `PureBeam.build_parsed_doc/1` must detect and reject `:ambiguous_assertion` before any crypto. CVE-2026-2092 (Keycloak) was injection of a cleartext assertion alongside an encrypted one.
+
+### Decisions / Constraints carried into v1.5
+
+- **TD-02 (test_support prod exclusion) lands in Phase 41 BEFORE Phase 44 publishes** — if test_support remained in the production artifact when 1.4.0 shipped, adopters would inherit dev-only modules at runtime; Phase 45 parity verification would still pass (byte-equal to tag) but the tarball itself would be wrong. Sequencing TD-02 before PUB-03 is the load-bearing ordering decision of v1.5.
+- **TD-03 (regex-alongside-tree retirement) is "one trust path" enforcement, not an optimization** — CLAUDE.md non-negotiable #2 says one parse path. Phase 41 closes the last exception (`locate_encrypted_assertion/1`) so the invariant holds without footnotes.
+- **TRACE LiveView reuses telemetry catalog + audit ledger; NO new schemas** — the audit co-commit invariant (CLAUDE.md non-negotiable #5) means trust state lives in the audit ledger. A parallel store for trace data would split the source of truth. Phase 42 must read from existing telemetry handlers and audit rows only.
+- **TRACE-02 redaction is wired via `cmd mix test`, not bundled test step** — Phase 30 hollow-gate invariant: every security suite runs as its own `cmd mix test` process. The `ci_gate_integrity_test.exs` meta-gate prevents recurrence. Phase 42 honours this when wiring `test/security/login_trace_test.exs`.
+- **Single jump 1.2.0 → 1.4.0 (no intermediate 1.3.0 Hex release)** — chosen for adopter clarity. CHANGELOG retains `[1.3.0]` section so the historical phase summaries are preserved for `git log`/changelog readers, but Hex sees a single 1.4.0 publish. Rationale documented in CHANGELOG `[1.4.0]` header.
 
 ### Decisions / Constraints carried from v1.1
 
@@ -127,9 +136,9 @@ Items acknowledged and deferred at milestone close:
 | verification_gap | Phase 15: 15-VERIFICATION.md | human_needed |
 | v1.4_followup | 40-REVIEW WR-01 (redundant multi-line regex in drift test) | non_blocking, accepted |
 | v1.4_followup | 40-REVIEW WR-02 (cwd-relative path in drift test) | non_blocking, accepted |
-| v1.4_followup | `test/security/xml/adversarial_crypto_test.exs` `mix format` drift | pre-existing, byte-identical to base |
+| v1.4_followup | `test/security/xml/adversarial_crypto_test.exs` `mix format` drift | being closed in Phase 41 (TD-05) |
 
-## Tracked Follow-ups (carried into v1.3)
+## Tracked Follow-ups (carried into v1.5)
 
 - **Mixed-content / inter-element-whitespace C14N gap — RESOLVED in 29-01 (2026-05-24).** Option-a landed exactly as recommended: ordered `content` field on `SaxyTree.Node`, `C14N` walks it in document order, `:text`/`:children` kept as byte-identical derived views. Docker-minted 1056-byte mixed-content golden (`mixed_content.c14n`) proves byte-equality to libxml2; 887-byte golden still green. See `29-01-SUMMARY.md`.
 - **PrefixList golden cross-check (future, not blocking).** A future `InclusiveNamespaces/@PrefixList` golden should additionally cross-check against a non-libxml2 implementation (e.g. Apache Santuario) to fully neutralize the lxml-lineage caveat noted in `parser_differential_and_c14n/PROVENANCE.md`. Current goldens use no PrefixList, so the caveat is not yet load-bearing.
@@ -137,6 +146,10 @@ Items acknowledged and deferred at milestone close:
 - **CVE ID backfill into `docs/advisories/2026-001-...`:** Pending async GitHub assignment.
 
 ## Session Continuity
+
+**2026-05-27 — v1.5 roadmap reordered.** Phase 42 and Phase 45 swapped after user review: trace LiveView is now Phase 42 (was 45) and sequenced before publish prep (Phase 43, was 42), so the trace UI ships in the v1.4.0 Hex tarball by construction — no separate coordination needed. New linear order: 41 (tech-debt sweep) → 42 (trace LiveView) → 43 (version + CHANGELOG) → 44 (release-please publish) → 45 (parity verify) → 46 (DX). Phase 41 still must complete first because TD-02 (test_support prod exclusion) is load-bearing for the published 1.4.0 tarball — if test_support shipped in 1.4.0, parity verification (45) would still pass but the tarball itself would be wrong. Ready for `/gsd:plan-phase 41`.
+
+**2026-05-27 — v1.5 roadmap created.** 6 phases defined (41-46), 15/15 requirements mapped, zero orphans. Original ordering placed trace LiveView at Phase 45; reordered same day (see entry above).
 
 **2026-05-27 — Phase 40.1 context gathered (assumptions mode).** Generated `40.1-CONTEXT.md` locking the four audit-closure decisions: D-01 host-owned `index_session/4` linkage (no auto-wire in `consume_response/3`); D-02..D-04 minimal `logout.md` rewrite (lines 91-127 + host-linkage paragraph); D-05/D-06 drift-prevention CI test using `behaviour_info(:callbacks)` introspection wired into `ci.docs` per Phase 30 hollow-gate invariant; D-07..D-10 retroactive `38-/39-VERIFICATION.md` generation following `40-VERIFICATION.md` template and closure-phase pattern; D-11 cosmetic `38-04-SUMMARY.md` fix; D-12 two-wave structure (Wave 1: A/C/D/E parallel; Wave 2: B gated on A). Ready for `/gsd-plan-phase 40.1`.
 
@@ -190,3 +203,6 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 - [Assessment 2026-05-27]: KMS-01 verdict = save-for-demand. Behaviour evolution is additive (new `decrypt_cek/3` + `sign/4` callbacks; `resolve/1` PEM path stays); ~3 plans; AWS-only first, defer GCP/Azure/HSM. Compliance-pull (SOC 2/FedRAMP/HITRUST), not ergonomics-pull. No adopter signal yet.
 - [Assessment 2026-05-27]: SIGNED-META-01 verdict = save-for-demand. Aspirational; only realistic adopter persona is Phoenix-based ed-tech winning an R1 university pilot — issue not filed. Real scope is signed `EntityDescriptor` + `mdrpi:RegistrationInfo` + `mdui:UIInfo` + `mdattr:EntityAttributes` + InCommon onboarding runbook (not just signature primitive).
 - [Assessment 2026-05-27]: Carry-forward warning-level items (do NOT re-open phases; sweep in v1.5 wedge 3) — v1.3 audit WR-03 (unescaped metadata attribute interpolation in `lib/relyra/protocol/metadata.ex`, XSS-class defense-in-depth gap), WR-04 (`lib/relyra/test_support` compiled into prod artifact), WR-01/02 (regex-alongside-tree detector in `locate_encrypted_assertion/1`), WR-ENC-ATTR (REQUIREMENTS.md doc drift), Phase 40 deferred formatting drift in `adversarial_crypto_test.exs`.
+- [Roadmap v1.5 / 2026-05-27]: Sequenced TD-02 (test_support prod exclusion) BEFORE Phase 44 publishes — chosen so the first published 1.4.0 tarball is clean. The alternative (let TD-02 land in a 1.4.1 follow-up) would mean shipping test_support to adopters on the first 1.4.0 install, even though Phase 45 parity verification (byte-equal to git tag) would still pass. The tarball-correctness contract takes precedence over phase-ordering convenience.
+- [Roadmap v1.5 / 2026-05-27]: Phase 42 (trace LiveView) deliberately separated from Phase 46 (DX) despite both being "polish" — trace is a substantive new UI surface (~600-900 LOC per the assessment thread) with a dedicated security gate (TRACE-02 wired into `ci.security` as its own `cmd mix test` line). DX is doc + small installer touches. Single-phase fusion would obscure the load-bearing trace security gate.
+- [Roadmap v1.5 reorder / 2026-05-27]: Swapped old Phase 42 (publish prep) and old Phase 45 (trace LiveView) on user review. New order: 41 → 42 (trace) → 43 (publish prep) → 44 (release-please publish) → 45 (parity) → 46 (DX). Rationale: with trace ahead of publish prep, the v1.4.0 tag cut in Phase 44 includes the trace LiveView by construction, so the trace UI ships in the v1.4.0 Hex tarball — no separate "ship trace in 1.4.0 or slip to 1.4.1" coordination needed.
