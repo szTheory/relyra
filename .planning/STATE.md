@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: — Publish, Prove, Polish
 status: executing
-last_updated: "2026-05-27T21:24:33.331Z"
+last_updated: "2026-05-27T21:27:01.905Z"
 last_activity: 2026-05-27
 progress:
   total_phases: 6
@@ -20,13 +20,13 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 45 — post-publish-parity-verification
+**Current focus:** Phase 46 — adopter-dx-ergonomics
 
 ## Current Position
 
 Phase: 46
 Plan: Not started
-Status: Executing Phase 45
+Status: Phase 46 context gathered — ready for planning
 Last activity: 2026-05-27
 
 ## Performance Metrics
@@ -149,6 +149,8 @@ Items acknowledged and deferred at milestone close:
 - **CVE ID backfill into `docs/advisories/2026-001-...`:** Pending async GitHub assignment.
 
 ## Session Continuity
+
+**2026-05-27 — Phase 46 context gathered (assumptions mode).** Generated `46-CONTEXT.md` locking README above-the-fold `apply_defaults(:okta, …)` snippet (DX-01), sigra-pattern router auto-injection with ambiguous fallback (DX-02), job-shaped `guides/overview.md` index (DX-03), root `BATTERIES_INCLUDED.md` as canonical with guide stub + generator ADFS fix, and install/overview CI gates. Ready for `/gsd-plan-phase 46`.
 
 **2026-05-27 — Phase 45 context gathered (assumptions mode).** Generated `45-CONTEXT.md` locking scrypath-DNA `mix verify.release_parity 1.4.0` (package contents path-set diff, not outer tar SHA256), full `package.files` scope comparison against tag `v1.4.0`, test_support hard-fail, `verify-parity.sh` + `PARITY-RESULT.md` milestone gate, and deferred post-publish/daily cron wiring. Live probe confirms Hex `1.4.0` contents match tag. Ready for `/gsd-plan-phase 45`.
 
