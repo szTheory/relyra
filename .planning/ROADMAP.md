@@ -254,11 +254,14 @@ Plans:
   1. `guides/troubleshooting.md` is published, acting as an Error Atom Decoder.
   2. An automated drift-check test enforces that every `:error_type` in `Relyra.Error` has a corresponding documented entry in the troubleshooting guide.
   3. `guides/operations/incident_playbook.md` is published, outlining end-to-end response workflows that stitch together Relyra telemetry, audit trails, the LiveView admin UI, and Mix tasks.
-**Plans**: 1 plan
+**Plans**: 2 plans
 Plans:
 
 **Wave 1**
-- [ ] 39-01-PLAN.md — SLO strategy, ITP/ETP caveats, and operational fallbacks
+- [ ] 40-01-PLAN.md — DOCS-06: Error Atom Decoder (guides/troubleshooting.md) + bidirectional drift-check test + ci.docs wiring
+
+**Wave 2** *(depends on 40-01 for mix.exs anchor)*
+- [ ] 40-02-PLAN.md — DOCS-05: Incident Response Playbook (guides/operations/incident_playbook.md) + ci.docs presence guard
 **UI hint**: yes
 
 </details>
