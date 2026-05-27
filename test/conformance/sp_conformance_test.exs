@@ -15,18 +15,32 @@ defmodule Relyra.Conformance.TestRequestStore do
 end
 
 defmodule Relyra.Conformance.SPConformanceTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Relyra.Protocol.AuthnRequest
   alias Relyra.Protocol.Binding
   alias Relyra.Protocol.LogoutRequest
   alias Relyra.TestSupport.ConformanceFixtures
+  alias Relyra.TestSupport.FakeIdP
   alias Relyra.TestSupport.XmldsigSigner
 
   @moduletag :conformance
 
   @manifest_path "priv/conformance/sp_manifest.json"
   @fixed_now ~U[2026-04-24 16:00:00Z]
+
+  setup do
+    keypair = FakeIdP.keypair()
+
+    pem =
+      :public_key.pem_encode([
+        {:RSAPrivateKey, :public_key.der_encode(:RSAPrivateKey, keypair), :not_encrypted}
+      ])
+
+    Application.put_env(:relyra, :sp_private_key_pem, pem)
+    on_exit(fn -> Application.delete_env(:relyra, :sp_private_key_pem) end)
+    :ok
+  end
 
   test "executed manifest rows produce their declared expected_outcome" do
     manifest()
@@ -149,6 +163,21 @@ defmodule Relyra.Conformance.SPConformanceTest do
     assert {:ok, %{response_xml: ^xml, relay_state: "relay-logout"}} =
              Binding.decode_redirect(params)
 
+    %{"result" => "ok"}
+  end
+
+  defp evaluate_row(%{"id" => "sp-encrypted-assertions-pass"}) do
+    xml = FakeIdP.encrypted_response()
+
+    assert {:ok, login_result} =
+             Relyra.consume_response(
+               xml,
+               request_intent(),
+               consume_opts(now: @fixed_now)
+             )
+
+    assert login_result.in_response_to == "id_request_123"
+    assert login_result.issuer == "https://idp.example.com/metadata"
     %{"result" => "ok"}
   end
 
