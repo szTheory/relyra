@@ -240,7 +240,7 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 42. Stepwise login-trace LiveView | v1.5 | 4/4 | Complete    | 2026-05-27 |
 | 43. Hex publish prep — version bump & CHANGELOG backfill | v1.5 | 1/1 | Complete    | 2026-05-27 |
 | 44. Release-please pipeline diagnosis & v1.4.0 Hex publish | v1.5 | 3/3 | Complete    | 2026-05-27 |
-| 45. Post-publish parity verification | v1.5 | 2/2 | Complete   | 2026-05-27 |
+| 45. Post-publish parity verification | v1.5 | 2/2 | Complete    | 2026-05-27 |
 | 46. Adopter DX & ergonomics | v1.5 | 0/TBD | Not started | - |
 
 ---
