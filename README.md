@@ -25,7 +25,7 @@ Use one Day-1 route:
 
 1. Install the library and scaffold the host app with `mix relyra.install`.
 2. Follow [Getting Started](guides/getting_started.md).
-3. Prove a local sign-in with `Relyra.TestSupport.FakeIdP`.
+3. Prove a local sign-in with the `Relyra.TestSupport` macro (`setup_saml_connection/2`, `post_saml_response/2`) — see [Getting Started §3](guides/getting_started.md#3-prove-local-login-with-testsupport).
 4. Choose exactly one first-class provider runbook.
 5. Return to the production follow-ons after the first provider is working.
 
@@ -51,7 +51,7 @@ In this repo, "batteries included" means the provider has a shipped preset modul
 a repo-native runbook, provider-specific field vocabulary, and Day-1 guidance that
 ends in a concrete receipt.
 
-Use these runbooks only after you complete the local FakeIdP proof in Getting Started:
+Use these runbooks only after you complete the local TestSupport proof in Getting Started:
 
 - [Okta runbook](guides/recipes/okta.md)
 - [Microsoft Entra ID runbook](guides/recipes/entra.md)
@@ -64,7 +64,7 @@ Use these runbooks only after you complete the local FakeIdP proof in Getting St
   The operator runbook at [guides/recipes/generic_saml.md](guides/recipes/generic_saml.md)
   covers **Ping, OneLogin, Shibboleth, Keycloak, IBM Security Verify, CyberArk, and
   Oracle Access Manager** with vendor decoder tables and field-mapping guidance. Use it
-  after the local `FakeIdP` proof and before you start translating your provider's
+  after the local TestSupport proof and before you start translating your provider's
   admin vocabulary.
 - **Custom SAML:** Supported when you bring your own IdP-specific field mapping and
   operator verification beyond the generic runbook tables.
