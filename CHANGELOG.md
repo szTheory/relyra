@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.4.0]
+
+Hex publishes **1.4.0** directly from **1.2.0** with no intermediate **1.3.0** Hex release for adopter clarity — one install line `{:relyra, "~> 1.4"}` receives Advanced Federation, Single Logout, and the login trace UI. The `[1.3.0]` section below is changelog archaeology for the v1.3 milestone only, not a skipped Hex version adopters must hunt for.
+
+### Added
+
+- **Single Logout (SLO-01):** `SessionAdapter.index_session/4` + `terminate_by_session_index/4`; SP- and IdP-initiated logout via `Relyra.consume_logout/3`; HTTP-Redirect + HTTP-POST bindings; strict logout validation pipeline (`Parse → Verify → Replay → Execute`); `LogoutRequest`/`LogoutResponse` on `SaxyTree` (single parse path).
+- **Documentation (DOCS-04):** `guides/recipes/logout.md` — ITP/ETP/Privacy Sandbox caveats, durable session prerequisite, absolute-timeout boundary, host-owned session-index linkage.
+- **Documentation (DOCS-05):** `guides/operations/incident_playbook.md` — six Triage→Diagnose→Recover scenarios.
+- **Documentation (DOCS-06):** `guides/troubleshooting.md` Error Atom Decoder (78 atoms, 7 buckets); bidirectional drift test in `ci.docs`.
+- **Audit closure (40.1):** `logout_recipe_drift_test.exs` AST arity gate; retroactive `38-VERIFICATION.md` / `39-VERIFICATION.md`.
+- **Login trace UI (TRACE-01):** `ConnectionTraceLive` at `/connections/:connection_id/trace`; six-step expandable rows from audit + telemetry.
+- **Headless trace (TRACE-03):** `mix relyra.trace --repo --connection [--last N]`.
+- **Shared export:** `Relyra.LoginTrace.Export` redaction path shared by LiveView and CLI.
+- **Pre-publish hygiene (TD-01..05):** metadata attribute escaping + security corpus; `test_support` excluded from prod compile and Hex `package.files`; parse-tree byte spans for encrypted assertion wire extraction (regex retired); README/doc preset honesty; adversarial crypto test formatting.
+
+### Changed
+
+- Trust audit timeline excludes `domain: :login` rows (login traces separate from trust mutations).
+- `LoginResult.validation_trace` populated on successful consume via `LoginTrace` telemetry handler.
+- Production `elixirc_paths` uses explicit lib file list (excludes `test_support`).
+
+### Security
+
+- **Logout crypto:** XMLDSig verification before session termination; redirect signatures verified against raw query octets; replay protection on logout messages.
+- **Login trace redaction (TRACE-02):** `test/security/login_trace_test.exs` — LiveView and CLI never render raw XML, PEM, cert bodies, signature values, or key material; dedicated `cmd mix test` in `ci.security`.
+- **Metadata XSS defense-in-depth (TD-01):** interpolated SP metadata attributes XML-escaped (`metadata_attribute_injection_test.exs`).
+- **One trust path (TD-03):** `locate_encrypted_assertion` uses parse-tree byte spans only — no regex alongside tree.
+
+## [1.3.0]
+
+This section records the v1.3 Advanced Federation milestone only — **no Hex release at 1.3.0** (historical record).
+
+### Added
+
+- **Encrypted assertions (ENC-01/02):** `KeyResolver` behaviour + `KeyResolver.Default` (SP private key from app config only); `Relyra.Security.XMLEnc.decrypt/3` with RSA-OAEP + AES-GCM behind `AlgorithmPolicy`; decrypt-then-reparse pipeline stage in `ValidationPipeline` (`:decrypt_assertion` pre-stage); cleartext+encrypted ambiguity guard (`:ambiguous_assertion` before crypto); SP metadata encryption `KeyDescriptor`; 7-fixture ENC-01 adversarial corpus in `mix ci.security`.
+- **Signed AuthnRequests (AUTHN-01):** HTTP-Redirect query signing (`sign_redirect_query/3` raw-octet invariant); `sign_authn_requests` connection toggle; SP metadata `AuthnRequestsSigned` + signing `KeyDescriptor`; ADFS provider preset + `guides/recipes/adfs.md`; 5-fixture AUTHN-01 adversarial corpus in `mix ci.security`.
+- **AlgorithmPolicy + schema:** Key-transport and content-encryption enforcement; RSA-PKCS1v1.5 blocked; AES-CBC blocked by default with time-boxed escape hatch; GCM auth-tag length guard; cert `party`/`use` columns; `sign_authn_requests` migration.
+- **Documentation (DOCS-02):** `guides/recipes/generic_saml.md` — SP/IdP metadata reference, decoder tables for IBM Security Verify, CyberArk, Oracle Access Manager, PingFederate, CA SiteMinder; security checklist, debugging flow, cert rotation.
+- **Documentation (DOCS-03):** `guides/identity_mapping_and_provisioning.md` — NameID vs attribute mapping patterns, JIT decision tree, `UserMapper` examples, SCIM non-goal.
+
+### Changed
+
+- `PureBeam.build_parsed_doc/1` tolerates encrypted-only Responses pre-decrypt (`encrypted_pending` path) without weakening cleartext gates.
+- SP metadata build order: signing + encryption `KeyDescriptor`s before ACS (schema-valid).
+
+### Security
+
+- **Decrypt-then-reparse invariant:** decrypted bytes MUST pass `PureBeam.parse_safely/2` AND `Signature.do_verify/4` before identity fields — CVE-2025-54419 class read-before-verify rejected by adversarial corpus.
+- **Single opaque `:decryption_failed`** for all decryption failure modes (no padding oracle via distinct atoms).
+- **Document `KeyInfo` ignored** for decryption key material — configured `KeyResolver` only.
+- **Ambiguity guard:** cleartext + encrypted assertion → `:ambiguous_assertion` pre-crypto (CVE-2026-2092 class).
+- **Redirect AuthnRequest signing:** golden corpus enforces no re-serialization before sign; ADFS `+`-encoding variant covered.
+- **AlgorithmPolicy:** RSA-OAEP SHA-256 URI blocked pending OTP support; zero new Hex deps for XML-Enc (OTP stdlib only).
+
 ## [1.2.0](https://github.com/szTheory/relyra/compare/v1.1.0...v1.2.0) (2026-05-25)
 
 
