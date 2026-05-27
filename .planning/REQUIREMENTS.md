@@ -38,15 +38,15 @@ Requirements for this milestone. Each maps to one roadmap phase.
 
 ### Warning-Level Tech-Debt Sweep (Wedge 3)
 
-- [ ] **TD-01**: `lib/relyra/protocol/metadata.ex` attribute interpolation routes through an XML-attribute escaper before serialization (WR-03 closure). Closes the XSS-class defense-in-depth gap surfaced by the v1.3 audit. New `test/security/metadata_attribute_injection_test.exs` row wired into `mix ci.security` proving interpolated values are XML-attribute-escaped for `& < > " '` and control characters.
+- [x] **TD-01**: `lib/relyra/protocol/metadata.ex` attribute interpolation routes through an XML-attribute escaper before serialization (WR-03 closure). Closes the XSS-class defense-in-depth gap surfaced by the v1.3 audit. New `test/security/metadata_attribute_injection_test.exs` row wired into `mix ci.security` proving interpolated values are XML-attribute-escaped for `& < > " '` and control characters.
 
-- [ ] **TD-02**: `lib/relyra/test_support` excluded from the production artifact (WR-04 closure). Achieved via `elixirc_paths(:prod)` exclusion AND `package.files` whitelist tightening — both layers in agreement. Verified by an audit step that examines the published tarball contents (chained off PUB-04 if convenient).
+- [x] **TD-02**: `lib/relyra/test_support` excluded from the production artifact (WR-04 closure). Achieved via `elixirc_paths(:prod)` exclusion AND `package.files` whitelist tightening — both layers in agreement. Verified by an audit step that examines the published tarball contents (chained off PUB-04 if convenient).
 
-- [ ] **TD-03**: `locate_encrypted_assertion/1` and any other detector that still pairs a regex with the parse-tree unified on the parse-tree alone (WR-01 + WR-02 closure). Retires the regex-alongside-tree pattern so the "one trust path" invariant (CLAUDE.md non-negotiable #2) holds without exception in the encrypted-assertion path.
+- [x] **TD-03**: `locate_encrypted_assertion/1` and any other detector that still pairs a regex with the parse-tree unified on the parse-tree alone (WR-01 + WR-02 closure). Retires the regex-alongside-tree pattern so the "one trust path" invariant (CLAUDE.md non-negotiable #2) holds without exception in the encrypted-assertion path.
 
-- [ ] **TD-04**: Doc-drift fixes — `REQUIREMENTS.md`/legacy docs that reference `EncryptedAttribute` in ENC-01 context corrected to scope `EncryptedAssertion` only (WR-ENC-ATTR closure); `PROJECT.md` "What This Is" + `README.md` provider-count copy corrected from "8 presets" to "4 first-class presets + a generic SAML runbook covering 7 IdP families" (Ping, OneLogin, Shibboleth, Keycloak, IBM Security Verify, CyberArk, Oracle Access Manager). Honest framing of real preset surface.
+- [x] **TD-04**: Doc-drift fixes — `REQUIREMENTS.md`/legacy docs that reference `EncryptedAttribute` in ENC-01 context corrected to scope `EncryptedAssertion` only (WR-ENC-ATTR closure); `PROJECT.md` "What This Is" + `README.md` provider-count copy corrected from "8 presets" to "4 first-class presets + a generic SAML runbook covering 7 IdP families" (Ping, OneLogin, Shibboleth, Keycloak, IBM Security Verify, CyberArk, Oracle Access Manager). Honest framing of real preset surface.
 
-- [ ] **TD-05**: Phase 40 deferred formatting drift closed — `mix format` clean across `test/security/xml/adversarial_crypto_test.exs` (lines 188-200 region). `mix format --check-formatted` exits 0 across the full repo. No semantic changes.
+- [x] **TD-05**: Phase 40 deferred formatting drift closed — `mix format` clean across `test/security/xml/adversarial_crypto_test.exs` (lines 188-200 region). `mix format --check-formatted` exits 0 across the full repo. No semantic changes.
 
 ## Future Requirements
 
@@ -89,11 +89,11 @@ Explicitly excluded. Documented to prevent scope creep.
 | DX-01       | 46    | Pending |
 | DX-02       | 46    | Pending |
 | DX-03       | 46    | Pending |
-| TD-01       | 41    | Pending |
-| TD-02       | 41    | Pending |
-| TD-03       | 41    | Pending |
-| TD-04       | 41    | Pending |
-| TD-05       | 41    | Pending |
+| TD-01       | 41    | Complete |
+| TD-02       | 41    | Complete |
+| TD-03       | 41    | Complete |
+| TD-04       | 41    | Complete |
+| TD-05       | 41    | Complete |
 
 **Coverage:**
 
