@@ -68,7 +68,7 @@ Each task was committed atomically:
 3. **Task 3: Align generic_saml intro and Getting Started §4 taxonomy** - `8a056bf` (docs)
 4. **Task 4: Verify README alignment and ci.docs** - `0281845` (chore)
 
-**Plan metadata:** pending (docs: complete plan)
+**Plan metadata:** `4441ee8` (docs: complete plan)
 
 ## Files Created/Modified
 
