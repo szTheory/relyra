@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Full SLO + Ops Polish
 status: executing
-last_updated: "2026-05-27T12:44:01.668Z"
-last_activity: 2026-05-27 -- Phase 40 planning complete
+last_updated: "2026-05-27T12:59:52.983Z"
+last_activity: 2026-05-27 -- Phase 40 execution started
 progress:
   total_phases: 3
   completed_phases: 2
@@ -20,15 +20,15 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.4 (Full SLO + Ops Polish) — Phase 40 Operational Polish & Error Taxonomy
+**Current focus:** Phase 40 — operational-polish-error-taxonomy
 
 ## Current Position
 
-Phase: 40
-Plan: —
-Status: Ready to execute
+Phase: 40 (operational-polish-error-taxonomy) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 40
 
-Last activity: 2026-05-27 -- Phase 40 planning complete
+Last activity: 2026-05-27 -- Phase 40 execution started
 Resume: /gsd-plan-phase 40
 
 Progress: [██████████] 100%

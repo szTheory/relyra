@@ -130,7 +130,9 @@ defmodule Relyra.MixProject do
         "guides/recipes/okta.md",
         "guides/recipes/entra.md",
         "guides/recipes/google_workspace.md",
-        "guides/recipes/logout.md"
+        "guides/recipes/logout.md",
+        "guides/troubleshooting.md",
+        "guides/operations/incident_playbook.md"
       ]
     ]
   end
@@ -153,6 +155,9 @@ defmodule Relyra.MixProject do
         "cmd test -f guides/recipes/adfs.md",
         "cmd test -f guides/recipes/generic_saml.md",
         "cmd test -f guides/recipes/logout.md",
+        "cmd test -f guides/troubleshooting.md",
+        "cmd test -f guides/operations/incident_playbook.md",
+        "cmd mix test test/docs/troubleshooting_drift_test.exs --warnings-as-errors",
         "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
         "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs --warnings-as-errors",
         "relyra.batteries_included --check"
