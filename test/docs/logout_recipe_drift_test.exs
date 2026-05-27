@@ -108,16 +108,23 @@ defmodule Relyra.Docs.LogoutRecipeDriftTest do
     |> Enum.map_join("\n", fn [body] -> body end)
   end
 
-  # Comma-split + trim + non-empty count. Handles the empty-arglist case
-  # (`def foo()`) cleanly: returns 0. Treats `_opts` as one parameter
-  # (same as `opts`) because String.split + String.trim does not care
-  # about the leading underscore.
+  # AST-based arity count. Wraps the param string in an anonymous-function
+  # literal and reads the arg-list length from the parsed AST. This handles
+  # every Elixir-legal param form (defaults like `opts \\ []`, tuple/map/list
+  # patterns, multi-element collections) that a naive comma split mis-counts
+  # (WR-03). Empty / whitespace-only param strings short-circuit to 0 because
+  # `fn() -> :ok end` is not always parser-legal.
   defp count_params(params_string) do
-    params_string
-    |> String.split(",")
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&(String.length(&1) == 0))
-    |> length()
+    if String.trim(params_string) == "" do
+      0
+    else
+      src = "fn(#{params_string}) -> :ok end"
+
+      case Code.string_to_quoted(src) do
+        {:ok, {:fn, _, [{:->, _, [args, _body]}]}} -> length(args)
+        {:error, _} -> raise "unparseable params: #{inspect(params_string)}"
+      end
+    end
   end
 
   defp format_missing_callback(name) do
