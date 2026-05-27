@@ -239,6 +239,14 @@ defmodule Relyra.Security.XML.PureBeam do
   # plus the additive :parse_tree key (D-07 / D-08). Required-field gates reuse
   # require_present_fields/4 so the :missing_protocol_field / :missing_signature
   # error shapes stay byte-identical to the regex era.
+  defp build_parsed_doc(%Node{local: "LogoutRequest"} = root) do
+    build_logout_parsed_doc(root)
+  end
+
+  defp build_parsed_doc(%Node{local: "LogoutResponse"} = root) do
+    build_logout_parsed_doc(root)
+  end
+
   defp build_parsed_doc(%Node{} = root) do
     # ENC-01 (D-01): a Response whose ONLY assertion is encrypted carries no
     # cleartext <Assertion> / <Signature>, so the strict assertion/signature gates
@@ -253,6 +261,18 @@ defmodule Relyra.Security.XML.PureBeam do
       build_pre_decrypt_parsed_doc(root)
     else
       build_cleartext_parsed_doc(root)
+    end
+  end
+
+  defp build_logout_parsed_doc(%Node{} = root) do
+    base = %{
+      type: :parsed_logout_xml,
+      parse_tree: root
+    }
+
+    case signature_fields(root) do
+      {:ok, fields} -> {:ok, Map.merge(base, fields)}
+      {:error, _} -> {:ok, base}
     end
   end
 
