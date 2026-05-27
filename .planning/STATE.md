@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: — Adoption Truth
 status: executing
-last_updated: "2026-05-27T22:28:14.620Z"
-last_activity: 2026-05-27 -- Completed 49-01-PLAN.md (ADOPT-04)
+last_updated: "2026-05-27T22:30:39.508Z"
+last_activity: 2026-05-27
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 7
+  percent: 88
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 ## Current Position
 
 Phase: 49 (adoption-honesty-conformance-jtbd-map-preset-taxonomy) — EXECUTING
-Plan: 2 of 3 (49-01 complete)
-Status: Ready for 49-02-PLAN (ADOPT-05)
-Last activity: 2026-05-27 -- Completed 49-01-PLAN.md (ADOPT-04)
+Plan: 3 of 3 (49-02 complete)
+Status: Ready for 49-03-PLAN (ADOPT-06)
+Last activity: 2026-05-27 — Completed 49-02-PLAN.md (ADOPT-05)
 
 ## Performance Metrics
 
@@ -67,6 +67,12 @@ Last activity: 2026-05-27 -- Completed 49-01-PLAN.md (ADOPT-04)
 - `mix ci.security` hollow-gate invariant is permanent — each security suite is its own `cmd mix test` process.
 - Demand-gated protocol work (AUTHN-POST-01, KMS-01, SIGNED-META-01) stays out of v1.6 unless a real GitHub issue materializes.
 
+### Decisions from Phase 49-02
+
+- **jtbd_gap_map v1.5+ refresh:** What changed section + persona reclassification; generic SAML and Operator personas **Strong** with honest caveats.
+- **Gap demotion pattern:** Biggest gaps #1–#4 marked Shipped (v1.3–v1.6); milestones reordered to demand-gated AUTHN-POST/KMS/SIGNED-META.
+- **No new ci.docs drift test:** D-15 precedent holds for jtbd_gap_map doc-only refresh.
+
 ### Decisions from Phase 49-01
 
 - **CONFORMANCE scope boundary in generator:** `scope_boundary_section/0` appended after CVE-REG-01 table — never hand-edit CONFORMANCE.md.
@@ -82,8 +88,11 @@ Last activity: 2026-05-27 -- Completed 49-01-PLAN.md (ADOPT-04)
 | demand_gated | SIGNED-META-01 | save-for-demand (investigation stub only) |
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
 | Phase 49-adoption-honesty-conformance-jtbd-map-preset-taxonomy P01 | 5min | 4 tasks | 4 files |
+| Phase 49-adoption-honesty-conformance-jtbd-map-preset-taxonomy P02 | 8min | 4 tasks | 1 files |
 
 ## Session Continuity
+
+**2026-05-27 — Completed 49-02-PLAN.md.** ADOPT-05: jtbd_gap_map refreshed to v1.5+ shipped reality. `mix ci.docs` green. Resume: 49-03-PLAN (ADOPT-06 preset taxonomy).
 
 **2026-05-27 — Completed 49-01-PLAN.md.** ADOPT-04: scope boundary section, ENC manifest pass row, CONFORMANCE.md regen. `mix ci.conformance` green. Resume: 49-02-PLAN (ADOPT-05 jtbd_gap_map).
 
