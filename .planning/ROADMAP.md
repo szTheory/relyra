@@ -237,7 +237,7 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 40. Operational Polish & Error Taxonomy | v1.4 | 2/2 | Complete | 2026-05-27 |
 | 40.1. Close v1.4 audit gaps (INSERTED) | v1.4 | 5/5 | Complete | 2026-05-27 |
 | 41. Pre-publish hygiene — Tech-debt sweep & security hardening | v1.5 | 5/5 | Complete    | 2026-05-27 |
-| 42. Stepwise login-trace LiveView | v1.5 | 1/4 | In Progress | 2026-05-27 |
+| 42. Stepwise login-trace LiveView | v1.5 | 2/4 | In Progress | 2026-05-27 |
 | 43. Hex publish prep — version bump & CHANGELOG backfill | v1.5 | 0/TBD | Not started | - |
 | 44. Release-please pipeline diagnosis & v1.4.0 Hex publish | v1.5 | 0/TBD | Not started | - |
 | 45. Post-publish parity verification | v1.5 | 0/TBD | Not started | - |
