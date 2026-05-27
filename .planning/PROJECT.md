@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Relyra is an open-source **SAML 2.0 Service Provider library for Elixir and Phoenix** — strict-by-default validation, multi-tenant enterprise SSO, provider presets (Okta, Microsoft Entra ID, Google Workspace, Ping, OneLogin, ADFS, Shibboleth, Keycloak), telemetry, audit events, **and** durable enterprise configuration: persisted connection records, runtime snapshot resolution, metadata import/export with controlled refresh, certificate inventory with staged rollover, and persisted attribute/group mappings backed by a cross-domain audit ledger. It is for Phoenix SaaS teams that need secure enterprise SSO without becoming SAML experts, and for the platform/auth/security/SRE engineers who will have to operate that SSO safely for years.
+Relyra is an open-source **SAML 2.0 Service Provider library for Elixir and Phoenix** — strict-by-default validation, multi-tenant enterprise SSO, four first-class provider presets (Okta, Microsoft Entra ID, Google Workspace, ADFS) plus a generic-SAML runbook with vendor decoder tables for seven more IdP families (Ping, OneLogin, Shibboleth, Keycloak, IBM Security Verify, CyberArk, Oracle Access Manager), telemetry, audit events, **and** durable enterprise configuration: persisted connection records, runtime snapshot resolution, metadata import/export with controlled refresh, certificate inventory with staged rollover, and persisted attribute/group mappings backed by a cross-domain audit ledger. It is for Phoenix SaaS teams that need secure enterprise SSO without becoming SAML experts, and for the platform/auth/security/SRE engineers who will have to operate that SSO safely for years.
 
 ## Core Value
 
@@ -24,11 +24,35 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v1.3 shipped 2026-05-27** — Advanced Federation. Phase 32 extended AlgorithmPolicy and schema support, Phase 33 shipped the `KeyResolver` / XMLEnc core, Phase 34 closed ENC-01 + ENC-02, Phase 35 shipped signed redirect-binding AuthnRequests plus the ADFS preset/runbook and AUTHN-01 corpus, and Phases 36-37 completed the generic SAML and identity-mapping operator guides.
 - **v1.4 shipped 2026-05-27** — Full SLO + Ops Polish. Phase 38 shipped SLO core + security (SLO-01), Phase 39 shipped the logout strategy guide (DOCS-04), Phase 40 shipped the operator incident playbook + Error Atom Decoder (DOCS-05, DOCS-06), and Phase 40.1 closed the v1.4 milestone-audit gaps: retroactive 38/39 VERIFICATIONs, `guides/recipes/logout.md` rewritten to canonical 4-arg `SessionAdapter` signatures with a host-owned-linkage subsection, and a live `test/docs/logout_recipe_drift_test.exs` wired into `ci.docs`. With v1.4 shipped, Relyra has crossed the "done-enough" line drawn in PROJECT.md: future scope is demand-gated, not coverage-gated.
 
-## Next Milestone Goals
+## Current Milestone: v1.5 Publish, Prove, Polish
 
-**Done-enough line reached at v1.4.** All v1.x core scope (Verify-the-Trust-Path → Advanced Federation → Full SLO + Ops Polish) is shipped. Future milestones are demand-gated, not coverage-gated. A "Scope boundary & diminishing returns" section in `CONFORMANCE.md` should record the shipping milestone arc and the explicit "no more" boundary (HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, full standalone app — all explicitly out of scope at this stage).
+**Goal:** Transform Relyra from "1.2 on Hex with some git tags" into "v1.4 shipped, every login explains itself, installs in 15 minutes" — close the gap between the code and what adopters can actually see. Single polish milestone, ~1 week scope. NOT a new feature wedge.
 
-**Demand-gated future candidates** (do NOT plan unless adoption signal materializes):
+**Target features (3 wedges):**
+
+1. **Ship v1.3 + v1.4 to Hex** — bump `mix.exs` `1.2.0` → `1.4.0`, fix `~> 0.1.0` pin in `guides/getting_started.md:26`, backfill CHANGELOG `[1.3.0]`/`[1.4.0]`, diagnose the stalled release-please flow, tag `v1.4.0` (SemVer), publish via automation. Post-publish parity verification.
+2. **Stepwise login-trace LiveView** at `/relyra/admin/connections/:id/trace` — makes "every login explains itself" concretely visible. Reuses telemetry catalog + audit ledger + LiveAdmin scaffold. Optional `mix relyra.trace` headless companion. Security gate: no raw XML/PEM/key material in UI.
+3. **README/installer ergonomics + warning-level tech-debt sweep** — auto-inject `saml_routes()` in `mix relyra.install`, lead README with `apply_defaults(:okta, …)` snippet, close v1.3 audit warnings (WR-01/02 regex-alongside-tree, WR-03 metadata attribute escaping, WR-04 test_support in prod artifact, WR-ENC-ATTR doc drift), close Phase 40 formatting drift, dedupe `BATTERIES_INCLUDED.md`, add `guides/overview.md` job-shaped index, fix "8 presets" → "4 first-class + generic runbook" copy drift.
+
+**After v1.5:** pause. AUTHN-POST-01, KMS-01, SIGNED-META-01 remain demand-gated with pre-baked plans in `.planning/threads/`. Full scope in `.planning/threads/v1-5-polish-milestone-assessment-2026-05-27.md`.
+
+## Next Milestone Goals (post-v1.5)
+
+**Done-enough line reached at v1.4 for the *code* — but the *Hex-published surface* lags by two minor versions.** All v1.x core scope (Verify-the-Trust-Path → Advanced Federation → Full SLO + Ops Polish) shipped to git; mix.exs is still `@version "1.2.0"`. Adopter-first assessment 2026-05-27 (parallel candidate research + DX audit) confirmed: **the library is protocol-feature complete and adopter-blocked**. The next recommended milestone is a 1-week polish-and-publish wedge, NOT a new feature wedge.
+
+**Active: v1.5 — "Publish, prove, polish" (see Current Milestone section above).**
+
+Scoped in `.planning/threads/v1-5-polish-milestone-assessment-2026-05-27.md`. Three wedges:
+
+1. **Ship v1.3 + v1.4 to Hex** — bump `mix.exs` to `1.4.0`, fix the `~> 0.1.0` pin in `guides/getting_started.md:26`, backfill CHANGELOG `[1.3.0]`/`[1.4.0]` sections, diagnose stalled release-please flow, tag `v1.4.0` SemVer, publish.
+2. **Stepwise login-trace LiveView** at `/relyra/admin/connections/:id/trace` — makes the "every login explains itself" brand promise concretely visible to adopters; reuses existing telemetry catalog + audit ledger + LiveAdmin scaffold.
+3. **README/installer ergonomics + warning-level tech-debt sweep** — auto-inject `saml_routes()`, lead README with `apply_defaults(:okta, …)` snippet, close v1.3 audit warnings WR-03 (unescaped metadata attribute interpolation, defense-in-depth XSS-class gap) + WR-04 (test_support in prod artifact) + WR-01/02 (regex-alongside-tree detector) + WR-ENC-ATTR (doc drift), close Phase 40 deferred formatting drift, dedupe BATTERIES_INCLUDED.md pair, add `guides/overview.md` job-shaped index.
+
+After v1.5: pause. Three demand-gated candidates below remain explicitly out-of-active-scope; each has a pre-baked plan ready to ship 2-3 weeks after a real GitHub issue lands.
+
+A "Scope boundary & diminishing returns" section in `CONFORMANCE.md` should record the shipping milestone arc and the explicit "no more" boundary (HTTP-Artifact, ECP, Attribute Query, SCIM-in-core, more presets-without-generic-path, full standalone app — all explicitly out of scope at this stage).
+
+**Demand-gated future candidates** (do NOT plan unless adoption signal materializes; assessment 2026-05-27 reconfirmed all three as save-for-demand):
 
 - **AUTHN-POST-01** — HTTP-POST binding signed AuthnRequests (enveloped XML signature + C14N). Carry-forward from v1.3.
 - **KMS-01** — KMS-native `KeyResolver` adapters (AWS KMS, GCP KMS). Carry-forward from v1.3.
@@ -116,7 +140,7 @@ The v1.x milestone arc closed with v1.4:
 
 <!-- Carried forward; building toward these next. -->
 
-_None._ The v1.x arc closed at v1.4; future work is demand-gated, not coverage-gated. See "Next Milestone Goals" above for demand-gated candidates that do not enter Active until adoption signal materializes.
+v1.5 polish milestone in flight (see "Current Milestone" above). v1.5 REQ-IDs land in `.planning/REQUIREMENTS.md` and are mirrored here at phase verification. After v1.5: Active returns to empty unless a demand-gated candidate (AUTHN-POST-01 / KMS-01 / SIGNED-META-01) is triggered by an adopter issue.
 
 ### Out of Scope
 
@@ -196,6 +220,7 @@ _None._ The v1.x arc closed at v1.4; future work is demand-gated, not coverage-g
 | **v0.2 tech debt accepted at close: `MappingCommands.append_audit/8` lacks explicit `repo.rollback/1`** | Modern Ecto's `transact/1` auto-rolls on `{:error, _}`; legacy adapter fallback uses `repo.transaction/1` where audit failure could commit mapping rows. Other three co-commit sites use the explicit pattern. | ⚠️ Revisit (track for v0.3 cleanup; not reproducible against current dep set) |
 | **v0.5: closure-phase pattern extended (21.1 → INT-01 BLOCKER closure, 21.2 → audit-gap + scope-rescope closure)** | When an audit surfaces a BLOCKER + scope drift, prefer producing closure phases over re-opening implementation. Phase 21.1 closed the security-adjacent BLOCKER; Phase 21.2 closed the doc/scope gaps. Cleaner audit trail; smaller blast radius; milestone audit re-runs cleanly. | ✓ Good (closed v0.5 audit gaps without re-opening Phase 20 or Phase 21; pattern reusable for v0.6+) |
 | **v1.1 Phase 28: pure-BEAM exclusive-C14N proven correct via a committed golden-byte oracle** | ADR-0001 mandated pure-BEAM canonicalization; correctness on the auth boundary demanded independent proof, not self-assertion. A `saxy` parse tree replaced regex string-scanning (one trust path, D-04), and the hand-rolled C14N engine reproduces libxml2/xmlsec1's 887-byte exclusive-C14N output byte-for-byte (cross-checked across two libxml2 builds; the Elixir engine is the third agreeing implementation). CI stays pure-Elixir against committed bytes (D-12); the verified signature is bound to the exact node consumed (D-10, anti-XSW). | ✓ Good (Phase 28; SIGV-03 verified 2026-05-24. Known fail-safe limitation: mixed-content / inter-element-whitespace mis-canonicalizes → rejection never bypass; tracked as the first Phase 29 follow-up) |
+| **Assessment 2026-05-27: v1.x done-enough verdict re-confirmed; next milestone is publish+polish, not new protocol** | Adopter-first assessment with parallel candidate research (AUTHN-POST-01 / KMS-01 / SIGNED-META-01) and a DX audit through the lens of a Phoenix SaaS adopter. All three demand-gated candidates verdict = save-for-demand (zero adopter pull, all tractable when needed; pre-baked plans retained in `.planning/threads/`). The single high-leverage finding is **Hex publishing lag**: mix.exs at 1.2.0 while git/PROJECT.md say v1.4 — Hex audience cannot see v1.3 or v1.4 features. Brand-defining gap also surfaced: no stepwise login-trace LiveView for the "every login explains itself" promise. Recommended single pick: **v1.5 polish milestone** bundling Hex publish + trace LiveView + README/installer ergonomics + warning-level tech-debt sweep. ~1 week. After v1.5: pause until external demand signal. | Open (no implementation work undertaken in this assessment session per maintainer preference; thread `v1-5-polish-milestone-assessment-2026-05-27.md` captures full scope) |
 
 ## Evolution
 
@@ -215,4 +240,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-27 — v1.4 milestone shipped and archived. v1.x arc closed at the "done-enough" line: SP-initiated SSO (v0.1) → enterprise config (v0.2) → LiveView admin (v0.3) → IdP-initiated SSO (v0.4) → operational maturity (v0.5-0.6) → conformance + security review (v1.0) → verified trust path (v1.1) → advanced federation (v1.3) → full SLO + ops polish (v1.4). Future scope is demand-gated, not coverage-gated.*
+*Last updated: 2026-05-27 — v1.5 "Publish, Prove, Polish" milestone started. Polish-and-publish wedge bundles Hex publish of v1.3+v1.4, stepwise login-trace LiveView, and README/installer ergonomics + warning-level tech-debt sweep. After v1.5: future scope returns to demand-gated. Arc to date: SP-initiated SSO (v0.1) → enterprise config (v0.2) → LiveView admin (v0.3) → IdP-initiated SSO (v0.4) → operational maturity (v0.5-0.6) → conformance + security review (v1.0) → verified trust path (v1.1) → advanced federation (v1.3) → full SLO + ops polish (v1.4) → publish-prove-polish (v1.5).*

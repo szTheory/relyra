@@ -1,11 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: none
-milestone_name: between milestones
-status: between_milestones
-last_updated: "2026-05-27T17:30:00.000Z"
+milestone: v1.5
+milestone_name: Publish, Prove, Polish
+status: planning
+last_updated: "2026-05-27T17:54:38.189Z"
 last_activity: 2026-05-27
-last_shipped_milestone: v1.4
 progress:
   total_phases: 0
   completed_phases: 0
@@ -21,18 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Between milestones — v1.x arc shipped at v1.4. Next work is demand-gated, not coverage-gated.
+**Current focus:** Between milestones — v1.x arc shipped at v1.4. Next work is publish-and-polish (v1.5), then demand-gated.
 
 ## Current Position
 
-Phase: —
+Phase: Not started (defining requirements)
 Plan: —
-Status: Between milestones (v1.4 shipped 2026-05-27)
-
-Last activity: 2026-05-27
-Resume: `/gsd:new-milestone` when adoption signal motivates a demand-gated candidate (AUTHN-POST-01, KMS-01, SIGNED-META-01) — otherwise stay paused.
-
-Progress: [██████████] 100% (v1.4 closed)
+Status: Defining requirements
+Last activity: 2026-05-27 — Milestone v1.5 started
 
 ## Performance Metrics
 
@@ -188,5 +183,10 @@ Phase 32 is the mandatory first phase — AlgorithmPolicy extension and DB schem
 - [Phase 37]: Ground every UserMapper example in the real Phoenix ACS seam using LoginResult and Principal.
 - [Phase 37]: Route identity mapping only from Day-2 and production follow-on docs, not Day-1 onboarding.
 - [Phase 37]: Publish the guide in ExDoc extras and gate its presence in ci.docs.
-
-s.
+- [Assessment 2026-05-27]: Done-% revised to 88-92% (band: "strong, with publish + DX polish remaining; no foundational gaps"). The library is *protocol-feature complete and adopter-blocked*. Hex publishing has lagged: mix.exs is `@version "1.2.0"` while git tag `v1.4` exists and PROJECT.md declares v1.4 shipped — Hex audience cannot see v1.3 or v1.4 features. Worse, hexdocs for 1.2.0 already include v1.3/v1.4 guide files (via `extras:`), so published docs describe features the published code doesn't implement.
+- [Assessment 2026-05-27]: Drift in PROJECT.md "What This Is" — claims 8 provider presets, but `lib/relyra/provider/` only ships 4 first-class modules (okta, entra, google_workspace, adfs). Other 4 (Ping, OneLogin, Shibboleth, Keycloak) are decoder-table coverage in `guides/recipes/generic_saml.md`. Honest description: "4 first-class presets + a generic runbook covering 7 IdP families." Fix in v1.5 wedge 3.
+- [Assessment 2026-05-27]: Brand-defining gap — `grep -r "stepwise\|login_trace" lib guides` returns nothing. The library's thesis ("every login produces a validation trace") has no per-login UI receipt; current surface is "subscribe to telemetry yourself." Stepwise login-trace LiveView is v1.5 wedge 2.
+- [Assessment 2026-05-27]: AUTHN-POST-01 verdict = save-for-demand. Tractable inside existing C14N + sign primitives (`XmldsigSigner` is a working blueprint); ~3 plans / ~600-900 LOC; zero adopter pull at v1.4 close. Pre-baked plan in `signed-authn-requests-investigation.md`.
+- [Assessment 2026-05-27]: KMS-01 verdict = save-for-demand. Behaviour evolution is additive (new `decrypt_cek/3` + `sign/4` callbacks; `resolve/1` PEM path stays); ~3 plans; AWS-only first, defer GCP/Azure/HSM. Compliance-pull (SOC 2/FedRAMP/HITRUST), not ergonomics-pull. No adopter signal yet.
+- [Assessment 2026-05-27]: SIGNED-META-01 verdict = save-for-demand. Aspirational; only realistic adopter persona is Phoenix-based ed-tech winning an R1 university pilot — issue not filed. Real scope is signed `EntityDescriptor` + `mdrpi:RegistrationInfo` + `mdui:UIInfo` + `mdattr:EntityAttributes` + InCommon onboarding runbook (not just signature primitive).
+- [Assessment 2026-05-27]: Carry-forward warning-level items (do NOT re-open phases; sweep in v1.5 wedge 3) — v1.3 audit WR-03 (unescaped metadata attribute interpolation in `lib/relyra/protocol/metadata.ex`, XSS-class defense-in-depth gap), WR-04 (`lib/relyra/test_support` compiled into prod artifact), WR-01/02 (regex-alongside-tree detector in `locate_encrypted_assertion/1`), WR-ENC-ATTR (REQUIREMENTS.md doc drift), Phase 40 deferred formatting drift in `adversarial_crypto_test.exs`.
