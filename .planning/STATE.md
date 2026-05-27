@@ -20,13 +20,13 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 44 — release-please-pipeline-diagnosis-v1-4-0-hex-publish
+**Current focus:** Phase 45 — post-publish-parity-verification
 
 ## Current Position
 
 Phase: 45
 Plan: Not started
-Status: Executing Phase 44
+Status: Context gathered — ready for planning
 Last activity: 2026-05-27
 
 ## Performance Metrics
@@ -149,6 +149,8 @@ Items acknowledged and deferred at milestone close:
 - **CVE ID backfill into `docs/advisories/2026-001-...`:** Pending async GitHub assignment.
 
 ## Session Continuity
+
+**2026-05-27 — Phase 45 context gathered (assumptions mode).** Generated `45-CONTEXT.md` locking scrypath-DNA `mix verify.release_parity 1.4.0` (package contents path-set diff, not outer tar SHA256), full `package.files` scope comparison against tag `v1.4.0`, test_support hard-fail, `verify-parity.sh` + `PARITY-RESULT.md` milestone gate, and deferred post-publish/daily cron wiring. Live probe confirms Hex `1.4.0` contents match tag. Ready for `/gsd-plan-phase 45`.
 
 **2026-05-27 — Phase 44 context gathered (assumptions mode).** Generated `44-CONTEXT.md` locking root cause (stale open PR #5 for 1.3.0 + local main 110 commits ahead of origin), close-PR-without-merge strategy, push→reconcile→merge→auto-publish sequence, CHANGELOG narrative preservation, publish-hex.yml recovery fallback only, and `RELEASE-PLEASE-DIAGNOSIS.md` artifact. Ready for `/gsd-plan-phase 44`.
 
