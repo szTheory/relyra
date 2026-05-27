@@ -2,11 +2,11 @@
 
 **Captured:** 2026-05-27  
 **Phase:** 44 — release-please-pipeline-diagnosis-v1-4-0-hex-publish  
-**Status:** Post-push (Plan 44-02 complete); awaiting merge of PR #6 (Plan 44-03)
+**Status:** **Resolved** — `1.4.0` on Hex via CI (2026-05-27)
 
 ## Summary
 
-Hex.pm remains on **1.2.0** while local `main` carries Phase 41–43 work staged for **1.4.0**. The automation is not broken: `release-please.yml` and `publish-hex.yml` are wired, PR #5 was created normally, and no `HEX_API_KEY` gap explains the stall. The pipeline is blocked by an **unmerged stale release PR** targeting the wrong version (**1.3.0**), **114 unpushed commits** on local `main`, and a **version-strategy conflict** between release-please’s conventional 1.3.0 release and Phase 43’s single-jump 1.4.0 narrative CHANGELOG.
+Hex was stuck at **1.2.0** while `main` carried Phase 41–43 work staged for **1.4.0**. The automation is not broken: `release-please.yml` and `publish-hex.yml` are wired, PR #5 was created normally, and no `HEX_API_KEY` gap explains the stall. The pipeline is blocked by an **unmerged stale release PR** targeting the wrong version (**1.3.0**), **114 unpushed commits** on local `main`, and a **version-strategy conflict** between release-please’s conventional 1.3.0 release and Phase 43’s single-jump 1.4.0 narrative CHANGELOG.
 
 ## Root Cause
 
@@ -49,7 +49,30 @@ Hex.pm remains on **1.2.0** while local `main` carries Phase 41–43 work staged
 | New release PR | **#6** opened as `chore(main): release 1.5.0` |
 | Reconciliation (pre-merge) | PR #6 branch restored to **1.4.0** + narrative CHANGELOG; title edited to `release 1.4.0`; commit `7cdc09a` |
 
-**Plan 44-03:** Merge PR #6 → expect `v1.4.0` tag + `publish-hex` job with `release_created=true`.
+**Post-merge (run 26538511601):** Merging PR #6 triggered `release_created=true`, tag **`v1.4.0`**, and **publish-hex** success (`mix hex.publish --yes` in CI). Recovery `publish-hex.yml` dispatch was **not** needed.
+
+## Fix Applied
+
+| Action | Detail |
+|--------|--------|
+| Push `main` | 2026-05-27 — `c2a8e08..38827e8` (115 commits) |
+| Close PR #5 | Without merge — stale `1.3.0` release |
+| Reconcile PR #6 | Reverted erroneous `1.5.0` bump; narrative CHANGELOG preserved |
+| Merge PR #6 | `3a89dd0` — `Merge pull request #6` |
+| CI publish | Workflow **26538511601** — publish-hex job **78173730297** |
+
+## Verification Results
+
+| Check | Result |
+|-------|--------|
+| Git tag `v1.4.0` | ✓ exists on GitHub |
+| `git show v1.4.0:mix.exs` | ✓ `@version "1.4.0"` |
+| `mix hex.info relyra` | ✓ **1.4.0** latest (2026-05-27) |
+| Hex API `releases/1.4.0` | ✓ `"version":"1.4.0"` |
+| CI `mix hex.publish --yes` | ✓ run 26538511601 logs |
+| PR #5 | ✓ `CLOSED`, not merged |
+| CHANGELOG narratives | ✓ `[1.4.0]`, `[1.3.0]`, `[Unreleased]` on `main` |
+| Local `mix hex.publish` | ✓ not run |
 
 ## Recurrence Checklist
 
@@ -61,6 +84,8 @@ When Hex lags behind git again, run in order:
 4. `grep '@version' mix.exs` vs `cat .release-please-manifest.json` — version source agreement
 5. `gh run list --workflow=release-please.yml --limit 3` — last automation runs
 6. `git tag -l 'v1.*'` — SemVer tag presence vs Hex
+
+**Learnings (2026-05-27):** Pre-setting `.release-please-manifest.json` to the target version **before** the prior version is tagged can make release-please open a PR for **target+1** (here `1.5.0`). Prefer manifest at last **published** SemVer until merge, or reconcile the release PR version before merge.
 
 ## Recovery Path
 
