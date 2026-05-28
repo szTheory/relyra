@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.5.1](https://github.com/szTheory/relyra/compare/v1.5.0...v1.5.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **ci:** gate Hex publish on mix qa and enforce branch protection ([7303b36](https://github.com/szTheory/relyra/commit/7303b3659883458102e97d691540736b3ce2ff64))
+* **ci:** release-please trigger for 1.5.1 ([15efe67](https://github.com/szTheory/relyra/commit/15efe677a837c61364e00abf89d1b1a472704449))
+
 ## [1.5.0](https://github.com/szTheory/relyra/compare/v1.4.0...v1.5.0) (2026-05-28)
 
 
