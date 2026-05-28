@@ -1,6 +1,8 @@
 defmodule Relyra.Protocol.LogoutPipelineTest do
   use ExUnit.Case, async: true
 
+  import Relyra.TestSupport.ReplayStoreCase
+
   alias Relyra.Error
   alias Relyra.TestSupport.FakeIdP
 
@@ -24,13 +26,15 @@ defmodule Relyra.Protocol.LogoutPipelineTest do
     end
   end
 
-  setup do
-    opts = [
-      cert_chain: [FakeIdP.self_signed_cert_pem()],
-      replay_store: Relyra.ReplayStore.ETS,
-      session_adapter: MockSessionAdapter,
-      test_pid: self()
-    ]
+  setup tags do
+    replay_opts = setup_isolated_replay_store(tags)
+
+    opts =
+      [
+        cert_chain: [FakeIdP.self_signed_cert_pem()],
+        session_adapter: MockSessionAdapter,
+        test_pid: self()
+      ] ++ replay_opts
 
     {:ok, opts: opts}
   end
