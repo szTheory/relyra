@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # setup_branch_protection.sh — idempotently configure branch protection on main.
+# Re-assert after CI hardening changes (see fix(ci) release 1.5.1).
 #
 # Usage:
 #   GH_TOKEN=<admin-PAT> GITHUB_REPOSITORY=szTheory/relyra scripts/setup_branch_protection.sh [branch]
