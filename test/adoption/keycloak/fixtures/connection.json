@@ -1,0 +1,7 @@
+{
+  "connection_id": "keycloak",
+  "sp_entity_id": "relyra-adoption-sp",
+  "acs_url": "http://demo-host.test/keycloak/acs",
+  "username": "adoption",
+  "password": "adoption-test-pass"
+}

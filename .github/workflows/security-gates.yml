@@ -89,6 +89,9 @@ jobs:
       - name: Integration lane
         run: mix ci.integration
 
+      - name: Demo lane
+        run: mix ci.demo
+
       - name: Admin UI contract lane
         run: mix ci.admin_ui
 

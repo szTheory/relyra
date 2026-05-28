@@ -1,0 +1,47 @@
+{
+  "realm": "relyra-adoption",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "users": [
+    {
+      "username": "adoption",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Adoption",
+      "lastName": "Tester",
+      "email": "adoption@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "adoption-test-pass",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "relyra-adoption-sp",
+      "name": "Relyra Adoption SP",
+      "enabled": true,
+      "protocol": "saml",
+      "fullScopeAllowed": true,
+      "redirectUris": ["http://demo-host.test/*"],
+      "webOrigins": ["+"],
+      "attributes": {
+        "saml.authnstatement": "true",
+        "saml.server.signature": "true",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml_force_name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+        "saml.assertion.consumer.url.post": "http://demo-host.test/keycloak/acs",
+        "saml_assertion_consumer_url_post": "http://demo-host.test/keycloak/acs"
+      }
+    }
+  ]
+}

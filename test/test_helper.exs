@@ -1,4 +1,4 @@
-ExUnit.start(exclude: [:pending, :integration])
+ExUnit.start(exclude: [:pending, :integration, :external_idp])
 
 Relyra.TestSupport.MigrationCase.bootstrap!()
 

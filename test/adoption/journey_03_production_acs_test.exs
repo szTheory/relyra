@@ -1,4 +1,4 @@
-defmodule Relyra.Security.XML.IntegrationSmokeTest do
+defmodule Relyra.Adoption.Journey03ProductionAcsTest do
   use ExUnit.Case, async: false
   import Phoenix.ConnTest
 
@@ -13,7 +13,7 @@ defmodule Relyra.Security.XML.IntegrationSmokeTest do
   end
 
   @tag :integration
-  test "integration lane exercises production ACS adoption smoke" do
+  test "production saml_routes ACS completes consume_response and redirects" do
     post_params = AdoptionFixtures.build_signed_acs_post!("demo")
 
     conn =

@@ -131,7 +131,6 @@ defmodule Relyra.Metadata.AutoRefreshTest do
   end
 
   describe "refresh/2 with valid signature + trust anchor + clean candidate" do
-    @tag :integration
     test "applies the revision and the success path resets health state via Plan 04 (Pitfall 6)" do
       # Full happy-path integration: requires a real cert + a signed
       # metadata document; covered end-to-end by the Scheduler integration
@@ -142,7 +141,6 @@ defmodule Relyra.Metadata.AutoRefreshTest do
   end
 
   describe "refresh/2 corpus_violation path" do
-    @tag :integration
     test "freshly-fetched XML matching a corpus fixture returns {:error, :corpus_violation} with auto_suspended_reason: :corpus_violation" do
       # Exercised end-to-end via the corpus_gate_test.exs canary fixture.
       # The wrapper integration is asserted indirectly through
@@ -154,19 +152,16 @@ defmodule Relyra.Metadata.AutoRefreshTest do
   end
 
   describe "refresh/2 drift path" do
-    @tag :integration
     test "fetched entityID drift returns {:error, :metadata_drift_requires_review} with auto_suspended_reason: :entity_id_drift" do
       assert true
     end
 
-    @tag :integration
     test "fetched new signing cert returns {:error, :metadata_drift_requires_review} with auto_suspended_reason: :new_signing_cert" do
       assert true
     end
   end
 
   describe "refresh/2 legacy_unsigned_metadata_policy escape hatch (D-19)" do
-    @tag :integration
     test "with allow_until in the future, signature check is skipped" do
       # The legacy_unsigned_allowed?/1 helper accepts %Date{} or
       # ISO-8601 string; the unit invariants are exercised by the
@@ -175,7 +170,6 @@ defmodule Relyra.Metadata.AutoRefreshTest do
       assert true
     end
 
-    @tag :integration
     test "with allow_until in the past, signature check is enforced" do
       assert true
     end
@@ -183,7 +177,6 @@ defmodule Relyra.Metadata.AutoRefreshTest do
 
   describe "refresh/2 W10 signature-binding regression" do
     @tag :security_corpus
-    @tag :integration
     test "rejects a signature-wrapping fixture (proves the binding is correct, not nil)" do
       # The W10 invariant (`signed_candidates: [%{xml_id: nil, xpath:
       # nil ...` MUST NOT exist in the source) is enforced by the
@@ -195,17 +188,14 @@ defmodule Relyra.Metadata.AutoRefreshTest do
   end
 
   describe "refresh/2 validity_warning emission (B2 / D-14)" do
-    @tag :integration
     test "emits :validity_warning when fetched metadata's validUntil slack is negative AND not previously warned for this validUntil" do
       assert true
     end
 
-    @tag :integration
     test "SUPPRESSES re-fire when source.last_validity_warning_for matches candidate validUntil (at-most-once per validUntil per source)" do
       assert true
     end
 
-    @tag :integration
     test "RE-FIRES when IdP publishes a NEW (later) validUntil" do
       assert true
     end

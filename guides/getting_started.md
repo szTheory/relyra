@@ -131,6 +131,19 @@ The demo test path is also checked by `mix ci.docs` in the Relyra repository.
 
 </details>
 
+<details>
+<summary>Maintainers: what CI proves</summary>
+
+Adoption journey evidence lives under `test/adoption/` in the Relyra repository (not shipped on Hex):
+
+- **`mix ci.integration`** — install parity, TestSupport proof, production `saml_routes()` ACS, Ecto resolver path, LiveAdmin smoke (`@tag :integration`).
+- **`mix ci.demo`** — headless FakeIdP round trip via `examples/quickstart.exs`.
+- **`mix ci.external_idp`** — Keycloak SAML happy path (`@tag :external_idp`; separate CI job, not part of default `mix qa`).
+
+Golden host fixture: `test/fixtures/demo_host/` (kept in sync with `mix relyra.install` via journey 01).
+
+</details>
+
 **Stub vs production ACS:** The §3 stub assigns `:current_user` directly for a
 fast receipt. The §2 install scaffold wires production ACS via
 `import Relyra.Phoenix.Router; saml_routes()` on

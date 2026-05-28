@@ -47,6 +47,7 @@ Generated from executable manifest state in `priv/conformance/sp_manifest.json` 
 ## Scope boundary & diminishing returns
 
 - **Shipped surface:** strict SAML SP library with cryptographic verification, four first-class provider presets plus a generic SAML runbook, Single Logout, encrypted assertions, login trace tooling, and an operator incident playbook.
-- **Explicit out-of-scope (not missing):** HTTP-Artifact binding, ECP profile, Attribute Query, SCIM-in-core, additional first-class presets without generic-path investment, standalone demo app, customer-admin self-service portal.
+- **Explicit out-of-scope (not missing):** HTTP-Artifact binding, ECP profile, Attribute Query, SCIM-in-core, additional first-class presets without generic-path investment, standalone adopter-facing demo app on Hex, customer-admin self-service portal.
+- **Maintainer adoption evidence (in-repo, not shipped on Hex):** golden host fixtures under `test/fixtures/demo_host/`, `test/adoption/` journey tests, `examples/quickstart.exs`, and optional Keycloak `@tag :external_idp` lane — these prove integrator journeys for CI; they are not a customer-facing demo application.
 - **Demand-gated extensions (when an adopter or federation requires them):** HTTP-POST signed AuthnRequests, KMS-native `KeyResolver` adapters, signed SP metadata export and federation extensions.
 - **Posture:** enterprise SAML adoption flows in this library are intentionally complete for the stated scope; further protocol work ships on real demand, not coverage checklists.
