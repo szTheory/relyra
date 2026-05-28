@@ -113,7 +113,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 - [x] **Phase 48: Operator completeness — incident playbook trace tools** — Login-trace LiveView route + `mix relyra.trace` in incident playbook tool table; Day-2 cross-links. (completed 2026-05-27)
 - [x] **Phase 49: Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy** — Scope boundary section, ENC manifest fix, jtbd_gap_map refresh, README/runbook taxonomy alignment. (completed 2026-05-27)
 - [x] **Phase 49.1: Close v1.6 audit doc handoff gaps (INSERTED)** — Ecto path → Day-2 ops forward links; README/jtbd_user_flows cross-link alignment. (completed 2026-05-27)
-- [ ] **Phase 49.2: v1.6 Nyquist retro + editorial polish (INSERTED)** — Retroactive Phase 47 VALIDATION.md; optional editorial skim per audit.
+- [x] **Phase 49.2: v1.6 Nyquist retro + editorial polish (INSERTED)** — Retroactive Phase 47 VALIDATION.md; optional editorial skim per audit. (completed 2026-05-28)
 
 ## Phase Details (v1.6)
 
@@ -184,7 +184,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 2. Optional editorial skim completed or explicitly waived in VERIFICATION: playbook Scenarios 3–6 Diagnose prose; `jtbd_gap_map` persona tone; SiteMinder decoder row note.
 3. `mix ci.docs` stays green if doc edits land.
 
-**Plans:** 3 plans (49.2-01 Nyquist retro · 49.2-02 editorial · 49.2-03 verification) — ready to execute
+**Plans:** 3/3 plans complete
 
 ## Progress
 
@@ -246,6 +246,6 @@ Phases execute in numeric order: 41 → 42 → 43 → 44 → 45 → 46. Trace Li
 | 48. Operator completeness — incident playbook trace tools | v1.6 | 2/2 | Complete    | 2026-05-27 |
 | 49. Adoption honesty — CONFORMANCE, jtbd map, preset taxonomy | v1.6 | 3/3 | Complete    | 2026-05-27 |
 | 49.1. Close v1.6 audit doc handoff gaps (INSERTED) | v1.6 | 4/4 | Complete    | 2026-05-27 |
-| 49.2. v1.6 Nyquist retro + editorial polish (INSERTED) | v1.6 | 0/3 | Planned | — |
+| 49.2. v1.6 Nyquist retro + editorial polish (INSERTED) | v1.6 | 3/3 | Complete    | 2026-05-28 |
 
 ---
