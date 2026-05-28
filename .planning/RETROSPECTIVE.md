@@ -199,13 +199,15 @@
 
 - **Red CI on `main`:** three test files were unformatted locally but never committed; `security-gates` failed at `mix qa` while **Release Please** still published **1.5.0** (publish job did not run `mix qa`; no branch protection).
 - **Fixes shipped:** format commit; `mix qa` on Hex publish path; `fetch-depth: 0` for release-parity integration; LiveAdmin endpoint ETS health-check; branch protection with `enforce_admins`; release-please automerge; `BRANCH_PROTECTION_PAT` + daily re-assert workflow; pre-commit hook for format check.
-- **1.5.1 prep:** patch bumps `ex_doc` 0.40.3, `req` 0.5.18 (skipped `oban` 2.23 Worker-state warning and `ecto` 3.14 / decimal 3 transitive).
+- **Hex 1.5.1 shipped:** patch bumps `ex_doc` 0.40.3, `req` 0.5.18; `fix(ci)` commit to satisfy release-please user-facing changelog; PR #11 merged with human-triggered `security-gates` on bot branch.
+- **Release-please bot PRs:** GitHub skips `pull_request` workflows for `GITHUB_TOKEN`-created PRs — push an empty/human commit on `release-please--branches--main` before merge when branch protection requires checks.
 
 ### Lessons
 
 1. **Publish path must run the same gate as `main`.** Adding `mix qa` to `publish-hex` closes “red main, green Hex.”
 2. **`enforce_admins` is required** for shift-left — without it, admins bypass required checks silently.
 3. **Pre-commit is cheap insurance** against agent/human format drift.
+4. **Bot release PRs need a human nudge for CI** under branch protection — document or automate (e.g. `workflow_run` dispatch on release branch).
 
 ---
 

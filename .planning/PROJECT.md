@@ -41,7 +41,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 **Known carry-forward maintenance items (low priority, surface only on need):**
 
 - CVE ID backfill into `docs/advisories/2026-001-...` when GitHub assigns it (checked 2026-05-28 — `cve_id` still null on GHSA-jv46-xfwm-36j7).
-- **CI/CD (2026-05-28):** `security-gates` required on `main` (OTP 27+28); `enforce_admins`; Hex publish runs `mix qa` + `ci.security`; release-please automerge; daily branch-protection re-assert via `BRANCH_PROTECTION_PAT`.
+- **CI/CD (2026-05-28):** `security-gates` required on `main` (OTP 27+28); `enforce_admins`; Hex **1.5.1** publish runs `mix qa` + `ci.security`; release-please automerge; daily branch-protection re-assert via `BRANCH_PROTECTION_PAT`.
 - Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`) — non-blocking.
 
 ## Shipped Milestones — v1.x Arc Summary
