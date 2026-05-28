@@ -16,8 +16,7 @@ If you want the narrative explanation of what these steps are buying you, read
 [Jobs To Be Done And User Flows](jtbd_user_flows.md) after you finish this
 guide once.
 
-Patch releases on `main` are automated via release-please (no manual version
-bumps in this guide).
+For a job-based map of all guides, see the [documentation overview](overview.md).
 
 ## 1. Install
 
@@ -126,9 +125,10 @@ The demo test path is also checked by `mix ci.docs` in the Relyra repository.
 </details>
 
 **Stub vs production ACS:** The §3 stub assigns `:current_user` directly for a
-fast receipt. The §2 install scaffold wires `import Relyra.Phoenix.Router;
-saml_routes()` to `Relyra.Phoenix.Controllers.ACSController` and
-`consume_response/3` — use that for real integration after this proof.
+fast receipt. The §2 install scaffold wires production ACS via
+`import Relyra.Phoenix.Router; saml_routes()` on
+`Relyra.Phoenix.Controllers.ACSController` and `consume_response/3` — use that
+for real integration after this proof.
 
 If this step fails, fix it here. Do not move to a hosted IdP until the local
 proof is stable.
@@ -141,10 +141,10 @@ returns `{:ok, …}`) after `post_saml_response/2` dispatches to your stub ACS r
 Choose exactly one first-class batteries-included provider and finish that
 runbook before you return to production follow-ons:
 
-- [Okta runbook](recipes/okta.md) at `guides/recipes/okta.md`
-- [Microsoft Entra ID runbook](recipes/entra.md) at `guides/recipes/entra.md`
-- [Google Workspace runbook](recipes/google_workspace.md) at `guides/recipes/google_workspace.md`
-- [ADFS runbook](recipes/adfs.md) at `guides/recipes/adfs.md`
+- [Okta runbook](recipes/okta.md)
+- [Microsoft Entra ID runbook](recipes/entra.md)
+- [Google Workspace runbook](recipes/google_workspace.md)
+- [ADFS runbook](recipes/adfs.md)
 
 Use one branch only for Day-1. The goal is to finish one real provider path, not
 to compare several admins in parallel.
@@ -191,14 +191,13 @@ Important posture:
 
 Useful follow-on references:
 
-After your first successful login, bookmark the
-[incident playbook](operations/incident_playbook.md#evidence-surfaces) for on-call Diagnose workflows.
-
+- [Documentation overview](overview.md) — Day-1, Day-2, and reference map
 - [Production Ecto path](production_ecto_path.md) — migrate from install ETS defaults to
   cluster-safe ConnectionResolver and RequestStore/ReplayStore Ecto adapters.
 - [Incident playbook — login trace & evidence surfaces](operations/incident_playbook.md#evidence-surfaces) — evidence surfaces, `mix relyra.trace`,
   and scenario runbooks for Day-2 SAML incidents (login-trace LiveView at
   `/relyra/admin/connections/:connection_id/trace`).
+- [Logout recipe](recipes/logout.md) — SLO strategy and session boundaries after the first provider works.
 - [guides/identity_mapping_and_provisioning.md](identity_mapping_and_provisioning.md)
   for the host-owned anchor, lookup, and JIT decisions that come after a
   working provider path.

@@ -1,19 +1,43 @@
 defmodule Relyra.Docs.MarkdownLinkSmokeTest do
   @moduledoc """
   Smoke gate for adopter-facing markdown: internal link targets exist and
-  planning paths do not leak into `guides/` or published `docs/` extras.
+  planning paths do not leak into `guides/` or published ExDoc extras.
   """
 
   use ExUnit.Case, async: true
 
-  @guide_globs ["guides/**/*.md", "docs/*.md", "README.md"]
+  @published_extras [
+    "README.md",
+    "guides/overview.md",
+    "guides/getting_started.md",
+    "guides/identity_mapping_and_provisioning.md",
+    "guides/production_ecto_path.md",
+    "guides/jtbd_user_flows.md",
+    "guides/case_studies/phoenix_saas_tenant_onboarding.md",
+    "guides/case_studies/operator_managed_rollout.md",
+    "guides/recipes/okta.md",
+    "guides/recipes/entra.md",
+    "guides/recipes/google_workspace.md",
+    "guides/recipes/adfs.md",
+    "guides/recipes/generic_saml.md",
+    "guides/recipes/logout.md",
+    "guides/troubleshooting.md",
+    "guides/operations/incident_playbook.md",
+    "SECURITY.md",
+    "SECURITY_REVIEW.md",
+    "docs/security_boundary.md",
+    "docs/security_findings.md",
+    "CHANGELOG.md",
+    "CONFORMANCE.md",
+    "BATTERIES_INCLUDED.md",
+    "SECURITY_REVIEW_EVIDENCE.md"
+  ]
+
   @link_re ~r/\[[^\]]*\]\(([^)]+)\)/
 
   test "guides and published docs do not reference .planning paths" do
     offenders =
-      @guide_globs
-      |> Enum.flat_map(&Path.wildcard/1)
-      |> Enum.filter(&File.regular?/1)
+      published_paths()
       |> Enum.flat_map(fn path ->
         path
         |> File.read!()
@@ -34,13 +58,11 @@ defmodule Relyra.Docs.MarkdownLinkSmokeTest do
            "docs/jtbd_gap_map.md is maintainers-only and must stay out of ExDoc extras"
   end
 
-  test "relative markdown links in guides and docs resolve to files" do
+  test "relative markdown links in published docs resolve to files" do
     repo_root = File.cwd!()
 
     failures =
-      @guide_globs
-      |> Enum.flat_map(&Path.wildcard/1)
-      |> Enum.filter(&File.regular?/1)
+      published_paths()
       |> Enum.flat_map(fn source_path ->
         source_path
         |> File.read!()
@@ -55,6 +77,12 @@ defmodule Relyra.Docs.MarkdownLinkSmokeTest do
 
     assert failures == [],
            "broken relative links:\n#{format_link_failures(failures, repo_root)}"
+  end
+
+  defp published_paths do
+    (@published_extras ++ Path.wildcard("guides/**/*.md") ++ Path.wildcard("docs/*.md"))
+    |> Enum.uniq()
+    |> Enum.filter(&File.regular?/1)
   end
 
   defp extract_links(content) do
