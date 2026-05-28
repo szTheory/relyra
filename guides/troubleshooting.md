@@ -25,6 +25,12 @@ a replay storm is in flight, a metadata refresh is degraded), follow the
 matching scenario runbook in
 [`guides/operations/incident_playbook.md`](operations/incident_playbook.md).
 
+For step-by-step login triage during an active incident, use the login trace
+(`mix relyra.trace` or the LiveView route documented in the playbook
+[`#evidence-surfaces`](operations/incident_playbook.md#evidence-surfaces) section).
+That timeline answers which pipeline stage failed; this guide answers what the
+rejection atom means.
+
 ## Relyra owns / Host owns
 
 ## Relyra owns
@@ -1203,7 +1209,10 @@ The playbook stitches Relyra telemetry, the audit ledger, the LiveView
 admin UI, and the Mix-task hand-tools into a single Triage → Diagnose →
 Recover narrative for each common incident class.
 
-When in doubt — or when you need a complete redacted evidence bundle for an
-incident review — run `mix relyra.diagnostic`. Every login resolves to a
-verified trust path or a typed rejection; when in doubt, the diagnostic
-bundle is the trace.
+When in doubt during an active incident, start with the login trace in the
+[`incident playbook — evidence surfaces`](operations/incident_playbook.md#evidence-surfaces)
+section (`mix relyra.trace` or the LiveView route). When you need a complete
+redacted evidence bundle for an external handoff, run `mix relyra.diagnostic`.
+Every login resolves to a verified trust path or a typed rejection — the trace
+shows where in the pipeline that happened; the diagnostic bundle packages
+operator-safe exports for review.

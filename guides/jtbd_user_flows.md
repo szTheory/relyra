@@ -460,7 +460,7 @@ library is valuable.
 - [Getting Started](getting_started.md)
 - [Production Ecto path](production_ecto_path.md) — migrate from install ETS defaults to cluster-safe Ecto adapters
 - [Incident playbook — login trace & evidence surfaces](operations/incident_playbook.md#evidence-surfaces) — Day-2 SAML incident Diagnose workflows
-- [Batteries Included](batteries_included.md)
+- [Batteries Included proof map](../BATTERIES_INCLUDED.md)
 - [Okta runbook](recipes/okta.md)
 - [Microsoft Entra ID runbook](recipes/entra.md)
 - [Google Workspace runbook](recipes/google_workspace.md)

@@ -154,7 +154,6 @@ defmodule Relyra.MixProject do
         "Day-1": [
           "guides/getting_started.md",
           "guides/identity_mapping_and_provisioning.md",
-          "guides/production_ecto_path.md",
           "guides/jtbd_user_flows.md",
           "guides/case_studies/phoenix_saas_tenant_onboarding.md",
           "guides/case_studies/operator_managed_rollout.md"
@@ -168,6 +167,7 @@ defmodule Relyra.MixProject do
           "guides/recipes/logout.md"
         ],
         Operations: [
+          "guides/production_ecto_path.md",
           "guides/troubleshooting.md",
           "guides/operations/incident_playbook.md"
         ],
@@ -210,6 +210,7 @@ defmodule Relyra.MixProject do
         "cmd test -f guides/troubleshooting.md",
         "cmd test -f guides/operations/incident_playbook.md",
         "cmd mix test test/docs/markdown_link_smoke_test.exs --warnings-as-errors",
+        "cmd mix test test/docs/adopter_voice_test.exs --warnings-as-errors",
         "cmd mix test test/docs/troubleshooting_drift_test.exs --warnings-as-errors",
         "cmd mix test test/docs/logout_recipe_drift_test.exs --warnings-as-errors",
         "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",

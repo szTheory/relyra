@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Adoption Truth
 status: between-milestones
-last_updated: "2026-05-28T17:45:00.000Z"
-last_activity: 2026-05-28 — hands-off release proof passed (Hex 1.5.3, CI workflow fixes #19–#21)
+last_updated: "2026-05-29T00:00:00.000Z"
+last_activity: 2026-05-29 — reader experience doc audit + Hex 1.5.4 publish chain validated
 progress:
   total_phases: 5
   completed_phases: 5
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-28)
 Phase: Milestone v1.6 complete — post-assessment pause
 Plan: —
 Status: Between milestones (pause default; ~93% done for stated scope)
-Last activity: 2026-05-28 — Hands-off 1.5.3 proof (see `.planning/threads/hands-off-release-proof-2026-05-29.md`)
+Last activity: 2026-05-29 — Doc reader audit (`.planning/threads/doc-reader-audit-2026-05-29.md`); Hex 1.5.4 live
 
 ## Performance Metrics
 
@@ -43,7 +43,8 @@ Last activity: 2026-05-28 — Hands-off 1.5.3 proof (see `.planning/threads/hand
 - v1.6 is doc-only: onboarding truth, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy. No new SAML protocol surface area.
 - After v1.6: pause until external demand signal (AUTHN-POST-01, KMS-01, SIGNED-META-01 remain save-for-demand).
 - Post-v1.6 assessment (2026-05-28): ~93% done-enough; **do not** open v1.7 feature milestone without trigger. Next phase when work resumes: **50** (continue numbering).
-- Hex **1.5.3** live (hands-off proof 2026-05-28): doc trigger [#17](https://github.com/szTheory/relyra/pull/17) → release-please [#18](https://github.com/szTheory/relyra/pull/18) automerged → Hex publish. CI fixes [#19–#21](https://github.com/szTheory/relyra/pull/21) (dispatch `actions: write`, check-name parsing, `gh pr checks` exit tolerance). Proof thread: `.planning/threads/hands-off-release-proof-2026-05-29.md`.
+- Hex **1.5.4** live (2026-05-28): release-please [#23](https://github.com/szTheory/relyra/pull/23) automerged; publish via automerge dispatch ([#22](https://github.com/szTheory/relyra/pull/22)).
+- Hex **1.5.3** live (hands-off proof 2026-05-28): doc trigger [#17](https://github.com/szTheory/relyra/pull/17) → release-please [#18](https://github.com/szTheory/relyra/pull/18) automerged → Hex publish. CI fixes [#19–#22](https://github.com/szTheory/relyra/pull/22). Proof thread: `.planning/threads/hands-off-release-proof-2026-05-29.md`.
 - Hex **1.5.2** live (release-please + CI publish 2026-05-28); README and Getting Started pin `~> 1.5`.
 - Post-1.5.0 maintenance (2026-05-28): **security-gates** green; branch protection + `enforce_admins`; publish path runs `mix qa`; `BRANCH_PROTECTION_PAT` configured; release-please automerge + `release-please-pr-checks` workflow; pre-commit hook; test flake fix (isolated replay store + FakeIdP warmup).
 
