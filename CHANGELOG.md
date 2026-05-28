@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.5.2](https://github.com/szTheory/relyra/compare/v1.5.1...v1.5.2) (2026-05-28)
+
+
+### Bug Fixes
+
+* **test:** isolate replay store and warm FakeIdP keypair ([3635c5c](https://github.com/szTheory/relyra/commit/3635c5c4a8900ebd4bd4733b01b480637c258bc7))
+* **test:** isolate replay store and warm FakeIdP keypair ([d2bb6bf](https://github.com/szTheory/relyra/commit/d2bb6bf6c957162598d47e2e31657be92fea646d))
+
 ## [1.5.1](https://github.com/szTheory/relyra/compare/v1.5.0...v1.5.1) (2026-05-28)
 
 
