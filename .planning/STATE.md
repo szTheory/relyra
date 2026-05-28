@@ -4,7 +4,7 @@ milestone: v1.6
 milestone_name: Adoption Truth
 status: between-milestones
 last_updated: "2026-05-28T12:00:00.000Z"
-last_activity: 2026-05-28 — v1.7 Reader Experience doc UX pass (guides, README, Hex extras, ci.docs link smoke)
+last_activity: 2026-05-28 — Hex 1.5.0 published; install pins aligned to `~> 1.5`
 progress:
   total_phases: 5
   completed_phases: 5
@@ -43,7 +43,7 @@ Last activity: 2026-05-28 — Post-v1.6 milestone-next assessment recorded
 - v1.6 is doc-only: onboarding truth, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy. No new SAML protocol surface area.
 - After v1.6: pause until external demand signal (AUTHN-POST-01, KMS-01, SIGNED-META-01 remain save-for-demand).
 - Post-v1.6 assessment (2026-05-28): ~93% done-enough; **do not** open v1.7 feature milestone without trigger. Next phase when work resumes: **50** (continue numbering).
-- Residual low-severity drift: `guides/jtbd_user_flows.md` Scene 3 omits ADFS (four presets elsewhere); optional micro doc fix only.
+- Hex **1.5.0** live (release-please + CI publish 2026-05-28); README and Getting Started pin `~> 1.5`.
 
 ### Decisions / Constraints carried into v1.6
 
@@ -129,5 +129,4 @@ Last activity: 2026-05-28 — Post-v1.6 milestone-next assessment recorded
 ## Operator Next Steps
 
 - **Default:** Wait for GitHub issue / adopter request; maintenance only (CVE backfill, deps).
-- **Optional:** 30-min doc PR for `jtbd_user_flows` Scene 3 (ADFS) if narrative drift bothers you.
 - **When triggered:** `/gsd-new-milestone` with one protocol wedge (not a bundle); continue from Phase 50.

@@ -23,7 +23,7 @@ Add Relyra to your host application's dependencies:
 ```elixir
 def deps do
   [
-    {:relyra, "~> 1.4"}
+    {:relyra, "~> 1.5"}
   ]
 end
 ```

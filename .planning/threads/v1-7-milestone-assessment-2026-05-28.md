@@ -1,7 +1,7 @@
 # Investigation: Post-v1.6 Milestone Assessment — "Done enough? What's next?"
 
 Status: COMPLETE — assessment 2026-05-28, post v1.6 ship; routing verdict recorded
-Re-validated: 2026-05-28 — spot-check (mix.exs 1.4.0, conformance 9 pass / 0 deferred, Scene 3 drift unchanged); verdict unchanged
+Re-validated: 2026-05-28 — spot-check (mix.exs 1.5.0, Hex 1.5.0 live, conformance 9 pass / 0 deferred); verdict unchanged
 Priority: HIGH (milestone routing decision)
 Depends: v1.6 shipped (Phases 47-49.2, Adoption Truth doc-only)
 
@@ -64,8 +64,6 @@ Phase numbering when next milestone starts: continue from **Phase 50** (do not r
 
 | Issue | Evidence |
 |-------|----------|
-| `jtbd_user_flows.md` Scene 3 lists 3 presets, not 4 | Getting Started §4 + README list Okta, Entra, Google, ADFS |
-| Internal milestone v1.6 vs Hex 1.4.0 | Intentional; adopters pin `~> 1.4` in Getting Started |
 | Security reviewer "quick arch" | Still thin in gap map; SECURITY + conformance strong |
 
 v1.6 closed all **important** adoption-truth gaps flagged in v1-6 assessment.

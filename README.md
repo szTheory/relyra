@@ -9,7 +9,7 @@ It is for teams that need enterprise SSO without becoming SAML experts.
 Add the dependency:
 
 ```elixir
-{:relyra, "~> 1.4"}
+{:relyra, "~> 1.5"}
 ```
 
 Published docs: [hexdocs.pm/relyra](https://hexdocs.pm/relyra) (Getting Started is the home page).
