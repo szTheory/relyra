@@ -27,6 +27,11 @@ defmodule Relyra.LiveAdmin.Phase15UiContractTest do
     :ok
   end
 
+  setup do
+    LiveAdminEndpointSupport.ensure_started!()
+    :ok
+  end
+
   test "admin shell keeps the list and detail regions visible on connection detail routes" do
     connection =
       insert_connection!("conn_shell", "org_phase15", status: :enabled, cert_ready?: true)

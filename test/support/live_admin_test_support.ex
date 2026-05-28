@@ -252,10 +252,38 @@ if Code.ensure_loaded?(Phoenix.Endpoint) and Code.ensure_loaded?(Phoenix.LiveVie
     end
 
     defp start_endpoint do
+      case Process.whereis(Relyra.TestSupport.LiveAdminEndpoint) do
+        nil ->
+          do_start_endpoint()
+
+        pid when is_pid(pid) ->
+          if endpoint_healthy?(), do: :ok, else: restart_endpoint(pid)
+      end
+    end
+
+    defp restart_endpoint(pid) do
+      if Process.alive?(pid) do
+        try do
+          :gen_server.stop(pid, :normal, 5_000)
+        catch
+          :exit, _ -> :ok
+        end
+      end
+
+      do_start_endpoint()
+    end
+
+    defp do_start_endpoint do
       case Relyra.TestSupport.LiveAdminEndpoint.start_link() do
         {:ok, _pid} -> :ok
         {:error, {:already_started, _pid}} -> :ok
       end
+    end
+
+    defp endpoint_healthy? do
+      :ets.info(Relyra.TestSupport.LiveAdminEndpoint) != :undefined
+    rescue
+      ArgumentError -> false
     end
   end
 
