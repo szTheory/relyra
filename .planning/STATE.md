@@ -4,7 +4,7 @@ milestone: v1.6
 milestone_name: Adoption Truth
 status: between-milestones
 last_updated: "2026-05-28T20:00:00.000Z"
-last_activity: 2026-05-28 — Hex 1.5.1 published (maintenance patch + CI hardening)
+last_activity: 2026-05-28 — deferred housekeeping complete (Hex 1.5.2, CI automation, doc sync)
 progress:
   total_phases: 5
   completed_phases: 5
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-28)
 Phase: Milestone v1.6 complete — post-assessment pause
 Plan: —
 Status: Between milestones (pause default; ~93% done for stated scope)
-Last activity: 2026-05-28 — Post-v1.6 maintenance complete (Hex 1.5.1, CI hardening)
+Last activity: 2026-05-28 — Housekeeping sweep complete (Hex 1.5.2, release-please CI, jtbd_user_flows)
 
 ## Performance Metrics
 
@@ -43,8 +43,8 @@ Last activity: 2026-05-28 — Post-v1.6 maintenance complete (Hex 1.5.1, CI hard
 - v1.6 is doc-only: onboarding truth, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy. No new SAML protocol surface area.
 - After v1.6: pause until external demand signal (AUTHN-POST-01, KMS-01, SIGNED-META-01 remain save-for-demand).
 - Post-v1.6 assessment (2026-05-28): ~93% done-enough; **do not** open v1.7 feature milestone without trigger. Next phase when work resumes: **50** (continue numbering).
-- Hex **1.5.1** live (release-please + CI publish 2026-05-28); README and Getting Started pin `~> 1.5`.
-- Post-1.5.0 maintenance (2026-05-28): **security-gates** green; branch protection + `enforce_admins`; publish path runs `mix qa`; `BRANCH_PROTECTION_PAT` configured; release-please automerge; pre-commit hook; patch deps `ex_doc`/`req`.
+- Hex **1.5.2** live (release-please + CI publish 2026-05-28); README and Getting Started pin `~> 1.5`.
+- Post-1.5.0 maintenance (2026-05-28): **security-gates** green; branch protection + `enforce_admins`; publish path runs `mix qa`; `BRANCH_PROTECTION_PAT` configured; release-please automerge + `release-please-pr-checks` workflow; pre-commit hook; test flake fix (isolated replay store + FakeIdP warmup).
 
 ### Decisions / Constraints carried into v1.6
 
@@ -96,11 +96,11 @@ Last activity: 2026-05-28 — Post-v1.6 maintenance complete (Hex 1.5.1, CI hard
 | demand_gated | AUTHN-POST-01 | save-for-demand |
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand (investigation stub only) |
-| maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async (checked 2026-05-28 — GHSA-jv46-xfwm-36j7 `cve_id` still null) |
+| maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async (checked 2026-05-28 — GHSA-jv46-xfwm-36j7 `cve_id` still null; weekly `cve-advisory-check` workflow) |
 
 ## Session Continuity
 
-**2026-05-28 — Post-v1.6 maintenance complete.** CI red root cause: unformatted tests + publish path skipped `mix qa` + no branch protection. Fixed: format commit, `mix qa` on Hex publish, security-gates `fetch-depth: 0`, LiveAdmin endpoint health-check, `enforce_admins`, automerge + `BRANCH_PROTECTION_PAT`. PR #9 deps + planning; PR #10 `fix(ci)` release-please trigger; PR #11 → **Hex 1.5.1** ([v1.5.1](https://github.com/szTheory/relyra/releases/tag/v1.5.1)). Release-please bot PRs need a human push to run `security-gates` (GITHUB_TOKEN skip). Pause verdict unchanged.
+**2026-05-28 — Deferred housekeeping complete.** PR #13 test flake fix → **Hex 1.5.2** ([v1.5.2](https://github.com/szTheory/relyra/releases/tag/v1.5.2)); PR #14 release-please-pr-checks + CVE weekly poll; PR #15 release merge; `jtbd_user_flows` TestSupport vocabulary. CVE still unassigned. Pause verdict unchanged.
 
 **2026-05-28 — Phase 49.2 complete.** Nyquist retro (47-VALIDATION.md), editorial polish (playbook/jtbd/SiteMinder), `49.2-VERIFICATION.md` passed. v1.6 Adoption Truth milestone ready for audit.
 

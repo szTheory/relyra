@@ -200,7 +200,7 @@
 - **Red CI on `main`:** three test files were unformatted locally but never committed; `security-gates` failed at `mix qa` while **Release Please** still published **1.5.0** (publish job did not run `mix qa`; no branch protection).
 - **Fixes shipped:** format commit; `mix qa` on Hex publish path; `fetch-depth: 0` for release-parity integration; LiveAdmin endpoint ETS health-check; branch protection with `enforce_admins`; release-please automerge; `BRANCH_PROTECTION_PAT` + daily re-assert workflow; pre-commit hook for format check.
 - **Hex 1.5.1 shipped:** patch bumps `ex_doc` 0.40.3, `req` 0.5.18; `fix(ci)` commit to satisfy release-please user-facing changelog; PR #11 merged with human-triggered `security-gates` on bot branch.
-- **Release-please bot PRs:** GitHub skips `pull_request` workflows for `GITHUB_TOKEN`-created PRs — push an empty/human commit on `release-please--branches--main` before merge when branch protection requires checks.
+- **Release-please bot PRs:** GitHub skips `pull_request` workflows for `GITHUB_TOKEN`-created PRs. Mitigation shipped: `release-please-pr-checks.yml` dispatches `security-gates` and PAT nudges the release branch; automerge polls OTP 27/28 checks before merge. PAT fallback remains if dispatch alone does not attach checks to the PR.
 
 ### Lessons
 
