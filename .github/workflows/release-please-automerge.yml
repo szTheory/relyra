@@ -17,6 +17,7 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   automerge:
@@ -150,3 +151,14 @@ jobs:
         run: |
           set -euo pipefail
           gh pr merge "$PR_NUMBER" --merge --delete-branch
+
+      - name: Dispatch Release Please for tag and Hex publish
+        if: ${{ steps.candidate.outputs.found == 'true' && steps.wait_checks.outputs.ready == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run release-please.yml --ref main
+          echo "Dispatched Release Please on main for GitHub release + Hex publish"
