@@ -60,10 +60,9 @@ Work only when forced by:
 
 | ID | Item | Notes |
 |----|------|-------|
-| D-12 | README Elixir version + CI/license badges | Done in #26 |
-| D-13 | Provider runbook wiring bridge | Okta runbook §Wire the host app in #26 |
-| — | Hexdocs home = README vs Getting Started | Evaluator persona; deferred |
+| — | P2 doc backlog (D-12–D-16) | **Closed** 2026-05-29 micro-polish pass |
 | — | `guides/batteries_included.md` stub | Still in repo for ci.docs presence; not on Hex extras |
+| maintenance | CVE ID backfill | GHSA-jv46-xfwm-36j7 `cve_id` still null; weekly poll only |
 
 ## Doc guardrails (do not weaken)
 

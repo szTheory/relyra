@@ -16,7 +16,7 @@ Add the dependency:
 {:relyra, "~> 1.5"}
 ```
 
-Published docs: [hexdocs.pm/relyra](https://hexdocs.pm/relyra) (Getting Started is the home page).
+Published docs: [hexdocs.pm/relyra](https://hexdocs.pm/relyra) — [Getting Started](guides/getting_started.md) is the hexdocs home page; the [README](README.md) is the GitHub evaluator router.
 
 ## Quick Look
 

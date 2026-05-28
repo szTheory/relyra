@@ -214,6 +214,33 @@ Observable triggers:
 - The IdP begins sending `EncryptedAssertion`.
 - The IdP's security baseline requires separate encryption material for the SP.
 
+## Wire the host app
+
+Your connection struct (from a preset or custom mapping) is not enough on its
+own. Before a real IdP login works, wire that struct into the host application
+seams the installer created:
+
+1. **Resolve the connection** — `Relyra.start_login/3` and
+   `Relyra.consume_response/3` call your configured `ConnectionResolver`. On a
+   single-node dev path, register the struct where your resolver returns it (see
+   [Getting Started §2](../getting_started.md#2-scaffold) and the install
+   generator output). For production, persist the connection and switch to
+   [ConnectionResolver.Ecto](../production_ecto_path.md#4-wire-connectionresolver-ecto).
+
+2. **Use the production ACS route** — After
+   [Getting Started §3](../getting_started.md#3-prove-local-login-with-testsupport)
+   passes with TestSupport, switch from the stub ACS to the installer's
+   `saml_routes()` / `ACSController` path so POSTbacks hit
+   `Relyra.consume_response/3`.
+
+3. **Map verified attributes** — Implement `Relyra.UserMapper` to turn the
+   verified login result into your host user model ([Identity
+   mapping](../identity_mapping_and_provisioning.md)).
+
+Receipt before the minimum-safe checklist: a browser or integration test hits
+your ACS URL, the resolver returns the connection, and `consume_response/3`
+completes without a typed rejection.
+
 ## Minimum-safe checklist
 
 - Trust only configured IdP certificates. Do not accept document-provided `KeyInfo`

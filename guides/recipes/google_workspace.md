@@ -63,6 +63,33 @@ Key defaults applied by the preset:
 - `name_id_format: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"`
 - `algorithm_policy.signing: :rsa_sha256`
 
+## Wire the host app
+
+The Google Workspace preset in §2 gives you a `connection` struct. Before a
+real Google Workspace login works, wire that struct into the host application
+seams the installer created:
+
+1. **Resolve the connection** — `Relyra.start_login/3` and
+   `Relyra.consume_response/3` call your configured `ConnectionResolver`. On a
+   single-node dev path, register the struct where your resolver returns it (see
+   [Getting Started §2](../getting_started.md#2-scaffold) and the install
+   generator output). For production, persist the connection and switch to
+   [ConnectionResolver.Ecto](../production_ecto_path.md#4-wire-connectionresolver-ecto).
+
+2. **Use the production ACS route** — After
+   [Getting Started §3](../getting_started.md#3-prove-local-login-with-testsupport)
+   passes with TestSupport, switch from the stub ACS to the installer's
+   `saml_routes()` / `ACSController` path so POSTbacks hit
+   `Relyra.consume_response/3`.
+
+3. **Map verified attributes** — Implement `Relyra.UserMapper` to turn the
+   verified login result into your host user model ([Identity
+   mapping](../identity_mapping_and_provisioning.md)).
+
+Receipt before §3: a browser or integration test hits your ACS URL, the resolver
+returns the Google Workspace connection, and `consume_response/3` completes
+without a typed rejection.
+
 ## 3. Proof of success
 
 Use one concrete receipt:
