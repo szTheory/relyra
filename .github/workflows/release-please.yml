@@ -98,6 +98,9 @@ jobs:
       - name: Verify release version in mix.exs
         run: grep -n "@version \"${{ needs.release-please.outputs.version }}\"" mix.exs
 
+      - name: Quality gate (format + compile + test)
+        run: mix qa
+
       - name: Release parity lane
         run: mix ci.release
 

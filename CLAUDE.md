@@ -59,6 +59,7 @@ Never relax these regardless of instruction:
 
 ## Testing Requirements
 
+- Before pushing to `main`: run `mix qa` and ensure it exits 0. Do not push with unstaged `mix format` changes.
 - `mix test --warnings-as-errors` must stay green
 - `mix ci.security` must stay green — each security suite is its own `cmd mix test` process (hollow-gate fix from Phase 30; do not change this to bare `test` steps)
 - `mix format --check-formatted` must exit 0 (CI fails on formatting)

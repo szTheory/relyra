@@ -1,0 +1,11 @@
+# Optional local gate — install: pre-commit install
+# See AGENTS.md: run mix qa before pushing to main.
+repos:
+  - repo: local
+    hooks:
+      - id: mix-format-check
+        name: mix format --check-formatted
+        entry: mix format --check-formatted
+        language: system
+        pass_filenames: false
+        files: \.(ex|exs)$
