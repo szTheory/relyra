@@ -304,7 +304,8 @@ defmodule Relyra.TestSupport.FakeIdP do
       :missing ->
         generated = :public_key.generate_key({:rsa, 2048, 65_537})
         :persistent_term.put(@persistent_term_key, generated)
-        generated
+        # Re-read so concurrent init races converge on the stored keypair.
+        :persistent_term.get(@persistent_term_key)
 
       keypair ->
         keypair

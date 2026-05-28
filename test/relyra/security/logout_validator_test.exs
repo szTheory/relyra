@@ -1,6 +1,8 @@
 defmodule Relyra.Security.LogoutValidatorTest do
   use ExUnit.Case, async: true
 
+  import Relyra.TestSupport.ReplayStoreCase
+
   alias Relyra.Security.LogoutValidator
   alias Relyra.Error
   alias Relyra.TestSupport.FakeIdP
@@ -8,13 +10,13 @@ defmodule Relyra.Security.LogoutValidatorTest do
   @issuer "https://idp.example.com/metadata"
   @connection %{idp_entity_id: @issuer, connection_id: "conn_123"}
 
-  setup do
-    # Clear ETS store before each test if using ETS ReplayStore
-    # We will use the Default ETS store for testing Replay
-    opts = [
-      cert_chain: [FakeIdP.self_signed_cert_pem()],
-      replay_store: Relyra.ReplayStore.ETS
-    ]
+  setup tags do
+    replay_opts = setup_isolated_replay_store(tags)
+
+    opts =
+      [
+        cert_chain: [FakeIdP.self_signed_cert_pem()]
+      ] ++ replay_opts
 
     {:ok, opts: opts}
   end
