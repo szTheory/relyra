@@ -108,16 +108,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          required_checks="security (27, 1.19.5) security (28, 1.19.5)"
+          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)")
           deadline=$((SECONDS + 900))
 
           while [[ "$SECONDS" -lt "$deadline" ]]; do
             all_pass=true
 
-            for check in $required_checks; do
-              state="$(gh pr checks "$PR_NUMBER" 2>/dev/null | awk -v name="$check" '$1 == name { print $2; exit }' || true)"
+            for check in "${required_checks[@]}"; do
+              state="$(
+                gh pr checks "$PR_NUMBER" --json name,state -q \
+                  ".[] | select(.name == \"$check\") | .state" 2>/dev/null | head -1
+              )"
 
-              if [[ "$state" != "pass" ]]; then
+              if [[ "$state" != "SUCCESS" && "$state" != "pass" ]]; then
                 echo "Waiting for $check (state: ${state:-missing})"
                 all_pass=false
                 break
