@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: executing
+status: between-milestones
 last_updated: "2026-05-28T00:55:46.403Z"
 last_activity: 2026-05-28
 progress:
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 49.2 — v1.6-nyquist-retro-editorial-polish
+**Current focus:** v1.6 Adoption Truth complete — between milestones
 
 ## Current Position
 
-Phase: 49.2
-Plan: Not started
-Status: Executing Phase 49.2
-Last activity: 2026-05-28
+Phase: 49.2 (complete)
+Plan: 3/3 complete
+Status: Phase 49.2 verified — v1.6 gap closure done
+Last activity: 2026-05-28 — Phase 49.2 execution complete
 
 ## Performance Metrics
 
@@ -96,6 +96,8 @@ Last activity: 2026-05-28
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
 
 ## Session Continuity
+
+**2026-05-28 — Phase 49.2 complete.** Nyquist retro (47-VALIDATION.md), editorial polish (playbook/jtbd/SiteMinder), `49.2-VERIFICATION.md` passed. v1.6 Adoption Truth milestone ready for audit.
 
 **2026-05-27 — Phase 49.2 context gathered (assumptions mode).** All assumptions confirmed without correction. Resume: `.planning/phases/49.2-v1.6-nyquist-retro-editorial-polish/49.2-CONTEXT.md` → `/gsd-plan-phase 49.2`
 

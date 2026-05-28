@@ -13,7 +13,7 @@
 - ✅ **v1.3 — Advanced Federation** (shipped 2026-05-27). See `.planning/milestones/v1.3-ROADMAP.md`.
 - ✅ **v1.4 — Full SLO + Ops Polish** (shipped 2026-05-27). See `.planning/milestones/v1.4-ROADMAP.md`.
 - ✅ **v1.5 — Publish, Prove, Polish** (shipped 2026-05-27). See `.planning/milestones/v1.5-ROADMAP.md`.
-- 🔄 **v1.6 — Adoption Truth** — Phases 47-49 shipped 2026-05-27; Phases 49.1-49.2 gap closure in progress.
+- ✅ **v1.6 — Adoption Truth** — Phases 47-49 shipped 2026-05-27; gap closure 49.1-49.2 complete 2026-05-28.
 
 ## Phases
 
@@ -101,7 +101,7 @@ See `.planning/milestones/v1.5-ROADMAP.md`.
 
 </details>
 
-### 🔄 v1.6 — Adoption Truth (Phases 47-49 shipped; gap closure 49.1-49.2)
+### ✅ v1.6 — Adoption Truth (Phases 47-49 + gap closure 49.1-49.2 complete)
 
 **Milestone Goal:** Close the gap between codebase strength and adopter-facing documentation — onboarding, production Ecto path, ops trace tools, CONFORMANCE honesty, planning-doc refresh, preset taxonomy alignment. **No new SAML protocol surface area.** Full assessment: `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`.
 
