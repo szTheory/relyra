@@ -87,8 +87,8 @@ What is still rough:
 - optional polish on playbook cross-links as new ops surfaces ship
 
 Assessment:
-Workflow packaging is complete for v1.5/v1.6 — playbook, trace tools, and
-diagnostics are documented as one coherent production story.
+For v1.5/v1.6, playbook, trace tools, and diagnostics form one coherent
+production story — workflow packaging is complete.
 
 ### Security reviewer
 
@@ -151,8 +151,8 @@ What is still rough:
 
 Assessment:
 Generic SAML adoption is documented and guided. Remaining roughness is the
-honest non-preset caveat, not a missing runbook — this is no longer the biggest
-adoption gap inside the current product boundary.
+honest non-preset caveat, not a missing runbook — no longer the biggest adoption
+gap inside the current product boundary.
 
 ## Biggest gaps by user and job
 
