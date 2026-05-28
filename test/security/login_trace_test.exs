@@ -77,9 +77,7 @@ defmodule Relyra.Security.LoginTraceTest do
              )
 
     {:ok,
-     connection_record: connection_record,
-     fixture: fixture,
-     forbidden: forbidden_markers(fixture)}
+     connection_record: connection_record, fixture: fixture, forbidden: forbidden_markers(fixture)}
   end
 
   test "LiveView login trace HTML omits forbidden SAML, PEM, and signature material", %{

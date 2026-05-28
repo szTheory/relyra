@@ -35,7 +35,10 @@ defmodule Relyra.LoginTrace.ExportTest do
     test "redacts forbidden SAML/XML substrings in allowed attribute summaries" do
       step = %{
         "outcome" => "ok",
-        "attributes" => %{"email" => "user@example.com", "note" => "<saml:Assertion>secret</saml:Assertion>"}
+        "attributes" => %{
+          "email" => "user@example.com",
+          "note" => "<saml:Assertion>secret</saml:Assertion>"
+        }
       }
 
       exported = Export.export_step(step)

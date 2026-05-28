@@ -185,7 +185,11 @@ defmodule Relyra.LiveAdmin.Phase15UiContractTest do
       live(authed_conn("org_phase15"), "/admin/connections/#{connection.connection_id}")
 
     assert has_element?(view, ~s([data-testid="view-login-trace-link"]))
-    assert has_element?(view, ~s([data-testid="view-login-trace-link"][href="/admin/connections/#{connection.connection_id}/trace"]))
+
+    assert has_element?(
+             view,
+             ~s([data-testid="view-login-trace-link"][href="/admin/connections/#{connection.connection_id}/trace"])
+           )
   end
 
   defp login_trace_steps do
