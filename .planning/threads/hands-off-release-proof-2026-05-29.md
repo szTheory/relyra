@@ -37,7 +37,7 @@ Initial proof exposed three workflow bugs; merged before release PR could merge:
 | Verify | `mix hex.info relyra 1.5.3` — Released 2026-05-28 |
 | Publish run | [26591502390](https://github.com/szTheory/relyra/actions/runs/26591502390) (`workflow_dispatch` on Release Please) |
 
-**Gap:** Merge of #18 did not enqueue a `push` Release Please run with `release_created` in the window observed; publish completed after explicit `gh workflow run "Release Please" --ref main`. Follow-up: confirm push trigger on release-please merge commit (concurrency cancel vs missing event).
+**Gap (resolved):** [#22](https://github.com/szTheory/relyra/pull/22) — `release-please-main` concurrency no longer cancels in-flight runs; automerge dispatches `release-please.yml` after merging the bot release PR so Hex publish does not depend on manual `workflow_dispatch`. E2E confirmation on the next patch release.
 
 ## Lessons
 
@@ -53,4 +53,4 @@ Initial proof exposed three workflow bugs; merged before release PR could merge:
 - [x] Release PR CI without human `git push` to release branch
 - [x] Release PR merged by Auto Merge workflow
 - [x] Hex 1.5.3 live
-- [ ] Fully unattended Hex publish on release merge (dispatch gap noted above)
+- [x] Fully unattended Hex publish on release merge (automation shipped in #22; confirm on next release)
