@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Adoption Truth
 status: between-milestones
-last_updated: "2026-05-29T00:00:00.000Z"
-last_activity: 2026-05-29 — reader experience doc audit + Hex 1.5.4 publish chain validated
+last_updated: "2026-05-29T12:00:00.000Z"
+last_activity: 2026-05-29 — session handoff written; pause default unchanged
 progress:
   total_phases: 5
   completed_phases: 5
@@ -101,6 +101,12 @@ Last activity: 2026-05-29 — Doc reader audit (`.planning/threads/doc-reader-au
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async (checked 2026-05-28 — GHSA-jv46-xfwm-36j7 `cve_id` still null; weekly `cve-advisory-check` workflow) |
 
 ## Session Continuity
+
+**Resume here:** [`.planning/threads/session-handoff-2026-05-29.md`](.planning/threads/session-handoff-2026-05-29.md) — cold-start after maintenance + doc audit (Hex **1.5.4**, CI hands-off proven, reader audit #25 merged, pause default).
+
+**2026-05-29 — Reader experience audit + session handoff.** [#25](https://github.com/szTheory/relyra/pull/25) doc fixes + `adopter_voice_test`; GitHub homepage → hexdocs. Housekeeping: D-12 README badges, D-13 Okta wiring bridge ([#26](https://github.com/szTheory/relyra/pull/26)). Thread: `.planning/threads/doc-reader-audit-2026-05-29.md`.
+
+**2026-05-28 — Release automation hardened (#19–#22) + hands-off proof.** 1.5.3 proof → 1.5.4 validates automerge publish dispatch. Thread: `.planning/threads/hands-off-release-proof-2026-05-29.md`.
 
 **2026-05-28 — Deferred housekeeping complete.** PR #13 test flake fix → **Hex 1.5.2** ([v1.5.2](https://github.com/szTheory/relyra/releases/tag/v1.5.2)); PR #14 release-please-pr-checks + CVE weekly poll; PR #15 release merge; `jtbd_user_flows` TestSupport vocabulary. CVE still unassigned. Pause verdict unchanged.
 

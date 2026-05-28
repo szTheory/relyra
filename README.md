@@ -2,8 +2,12 @@
 
 [![Hex.pm](https://img.shields.io/hexpm/v/relyra.svg)](https://hex.pm/packages/relyra)
 [![Documentation](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/relyra)
+[![CI](https://github.com/szTheory/relyra/actions/workflows/security-gates.yml/badge.svg)](https://github.com/szTheory/relyra/actions/workflows/security-gates.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Elixir](https://img.shields.io/badge/elixir-~>1.19-purple.svg)](https://hexdocs.pm/elixir/compatibility-and-deprecations.html)
 
 Relyra is a strict-by-default **SAML 2.0 Service Provider library for Elixir and Phoenix**.
+Requires Elixir **~> 1.19** (see [`mix.exs`](mix.exs)).
 It is for teams that need enterprise SSO without becoming SAML experts.
 
 Add the dependency:
