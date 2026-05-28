@@ -21,7 +21,10 @@ permissions:
 jobs:
   automerge:
     name: Auto-merge eligible Release Please PR
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          (github.event.workflow_run.head_branch == 'main' ||
+           github.event.workflow_run.head_branch == 'release-please--branches--main') }}
     runs-on: ubuntu-latest
 
     steps:

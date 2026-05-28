@@ -17,6 +17,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   trigger-release-pr-checks:
@@ -115,7 +116,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Dispatch security-gates on release branch
+        id: dispatch
         if: ${{ steps.candidate.outputs.found == 'true' && steps.checks.outputs.all_success != 'true' }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -155,7 +158,7 @@ jobs:
           echo "all_success=$all_success" >> "$GITHUB_OUTPUT"
 
       - name: Push CI nudge commit via PAT
-        if: ${{ steps.candidate.outputs.found == 'true' && steps.recheck.outputs.all_success != 'true' && steps.checks.outputs.all_success != 'true' }}
+        if: ${{ steps.candidate.outputs.found == 'true' && steps.checks.outputs.all_success != 'true' && (steps.recheck.outputs.all_success != 'true' || steps.dispatch.outcome == 'failure') }}
         env:
           GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_PAT }}
         shell: bash
