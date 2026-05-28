@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.5.0](https://github.com/szTheory/relyra/compare/v1.4.0...v1.5.0) (2026-05-28)
+
+
+### Features
+
+* **45-01:** add mix verify.release_parity for Hex vs tag path-set diff ([7ca46c4](https://github.com/szTheory/relyra/commit/7ca46c461dee37997330859ead5e045110f441a4))
+* **45-02:** add verify-parity.sh milestone gate wrapper ([227a3c2](https://github.com/szTheory/relyra/commit/227a3c23d5583c5f78534a75c93e1c92a0dc1577))
+* **49-01:** add scope boundary section to conformance generator ([93418a6](https://github.com/szTheory/relyra/commit/93418a64461ed0344adfa6bced4961c614f38f04))
+* **49-01:** flip ENC manifest row from deferred to pass ([f865174](https://github.com/szTheory/relyra/commit/f865174995964a4cc19e77c4148c13da053a662d))
+* **docs:** add README Quick Look preset snippet (DX-01) ([65bcf93](https://github.com/szTheory/relyra/commit/65bcf93f96727ba6e96c89da92226a5144f71ec2))
+* **docs:** job-shaped overview hub and batteries dedupe (DX-03) ([00937be](https://github.com/szTheory/relyra/commit/00937befa5512c107f0faf1f98c5a1021d171a5a))
+* **install:** auto-inject saml_routes on single Phoenix router (DX-02) ([ca632bd](https://github.com/szTheory/relyra/commit/ca632bd9defed9449118b2f5bdd9ea0a2d1913b7))
+
 ## [1.4.0]
 
 Hex publishes **1.4.0** directly from **1.2.0** with no intermediate **1.3.0** Hex release for adopter clarity — one install line `{:relyra, "~> 1.4"}` receives Advanced Federation, Single Logout, and the login trace UI. The `[1.3.0]` section below is changelog archaeology for the v1.3 milestone only, not a skipped Hex version adopters must hunt for.
