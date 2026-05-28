@@ -117,7 +117,7 @@ jobs:
             for check in "${required_checks[@]}"; do
               state="$(
                 gh pr checks "$PR_NUMBER" --json name,state -q \
-                  ".[] | select(.name == \"$check\") | .state" 2>/dev/null | head -1
+                  ".[] | select(.name == \"$check\") | .state" 2>/dev/null | head -1 || true
               )"
 
               if [[ "$state" != "SUCCESS" && "$state" != "pass" ]]; then
