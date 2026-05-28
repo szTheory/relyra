@@ -1,5 +1,8 @@
 name: Release Please Auto Merge
 
+# Merges eligible release-please PRs after security-gates (OTP 27+28) pass.
+# Pair with release-please-pr-checks.yml which dispatches checks on bot PRs.
+
 on:
   workflow_run:
     workflows:
@@ -91,8 +94,48 @@ jobs:
             echo "url=$url"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Merge Release Please PR
+      - name: Wait for required security-gates on release PR
         if: ${{ steps.candidate.outputs.found == 'true' }}
+        id: wait_checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.candidate.outputs.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_checks="security (27, 1.19.5) security (28, 1.19.5)"
+          deadline=$((SECONDS + 900))
+
+          while [[ "$SECONDS" -lt "$deadline" ]]; do
+            all_pass=true
+
+            for check in $required_checks; do
+              state="$(gh pr checks "$PR_NUMBER" 2>/dev/null | awk -v name="$check" '$1 == name { print $2; exit }' || true)"
+
+              if [[ "$state" != "pass" ]]; then
+                echo "Waiting for $check (state: ${state:-missing})"
+                all_pass=false
+                break
+              fi
+            done
+
+            if [[ "$all_pass" == "true" ]]; then
+              echo "All required checks passing."
+              echo "ready=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            sleep 30
+          done
+
+          echo "Timed out waiting for security-gates on PR #${PR_NUMBER}"
+          gh pr checks "$PR_NUMBER" || true
+          exit 1
+
+      - name: Merge Release Please PR
+        if: ${{ steps.candidate.outputs.found == 'true' && steps.wait_checks.outputs.ready == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

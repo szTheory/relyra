@@ -1,0 +1,177 @@
+name: Release Please PR Checks
+
+# Bot-opened release-please PRs do not receive pull_request workflows from
+# GITHUB_TOKEN. Dispatch security-gates on the release branch and, if needed,
+# push a human-style empty commit with BRANCH_PROTECTION_PAT.
+
+on:
+  workflow_run:
+    workflows:
+      - Release Please
+    types:
+      - completed
+
+concurrency:
+  group: release-please-pr-checks
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  trigger-release-pr-checks:
+    name: Trigger security-gates on release-please PR
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Find eligible Release Please PR
+        id: candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          prs_json="$(
+            gh pr list \
+              --state open \
+              --base main \
+              --author app/github-actions \
+              --json number,title,headRefName,baseRefName,isDraft,url
+          )"
+
+          eligible_json="$(
+            jq '
+              [
+                .[]
+                | select(.headRefName == "release-please--branches--main")
+                | select(.baseRefName == "main")
+                | select(.isDraft == false)
+                | select(.title | test("^chore\\(main\\): release [0-9]+\\.[0-9]+\\.[0-9]+$"))
+              ]
+            ' <<< "$prs_json"
+          )"
+
+          count="$(jq 'length' <<< "$eligible_json")"
+
+          if [[ "$count" == "0" ]]; then
+            echo "No eligible Release Please PR found."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "$count" != "1" ]]; then
+            echo "Expected exactly one eligible Release Please PR, found $count."
+            jq -r '.[].url' <<< "$eligible_json"
+            exit 1
+          fi
+
+          number="$(jq -r '.[0].number' <<< "$eligible_json")"
+          url="$(jq -r '.[0].url' <<< "$eligible_json")"
+
+          echo "Eligible Release Please PR: $url"
+          {
+            echo "found=true"
+            echo "number=$number"
+            echo "url=$url"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check required security-gates on release PR
+        id: checks
+        if: ${{ steps.candidate.outputs.found == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.candidate.outputs.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_checks="security (27, 1.19.5) security (28, 1.19.5)"
+
+          all_success=true
+          any_missing=false
+
+          for check in $required_checks; do
+            state="$(gh pr checks "$PR_NUMBER" 2>/dev/null | awk -v name="$check" '$1 == name { print $2; exit }' || true)"
+
+            if [[ -z "$state" ]]; then
+              echo "Missing check: $check"
+              any_missing=true
+              all_success=false
+            elif [[ "$state" != "pass" ]]; then
+              echo "Check not passing: $check ($state)"
+              all_success=false
+            else
+              echo "Check passing: $check"
+            fi
+          done
+
+          {
+            echo "all_success=$all_success"
+            echo "any_missing=$any_missing"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch security-gates on release branch
+        if: ${{ steps.candidate.outputs.found == 'true' && steps.checks.outputs.all_success != 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run security-gates.yml --ref release-please--branches--main
+          echo "Dispatched security-gates on release-please--branches--main"
+
+      - name: Wait for dispatch to register
+        if: ${{ steps.candidate.outputs.found == 'true' && steps.checks.outputs.all_success != 'true' }}
+        run: sleep 30
+
+      - name: Re-check security-gates after dispatch
+        id: recheck
+        if: ${{ steps.candidate.outputs.found == 'true' && steps.checks.outputs.all_success != 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.candidate.outputs.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_checks="security (27, 1.19.5) security (28, 1.19.5)"
+          all_success=true
+
+          for check in $required_checks; do
+            state="$(gh pr checks "$PR_NUMBER" 2>/dev/null | awk -v name="$check" '$1 == name { print $2; exit }' || true)"
+
+            if [[ "$state" != "pass" ]]; then
+              echo "Still not passing: $check (${state:-missing})"
+              all_success=false
+            fi
+          done
+
+          echo "all_success=$all_success" >> "$GITHUB_OUTPUT"
+
+      - name: Push CI nudge commit via PAT
+        if: ${{ steps.candidate.outputs.found == 'true' && steps.recheck.outputs.all_success != 'true' && steps.checks.outputs.all_success != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "BRANCH_PROTECTION_PAT not set; cannot push release-branch nudge."
+            exit 0
+          fi
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+          cd repo
+          git checkout release-please--branches--main
+          git commit --allow-empty -m "ci: trigger security-gates for release merge"
+          git push origin release-please--branches--main
