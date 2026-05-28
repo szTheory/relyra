@@ -98,3 +98,11 @@ v1.6 closed all **important** adoption-truth gaps flagged in v1-6 assessment.
 - **CI:** security-gates green; branch protection + `enforce_admins`; `BRANCH_PROTECTION_PAT` verified. Bot-opened release PRs require a human commit on `release-please--branches--main` to attach required checks before merge.
 - **CVE:** GHSA-jv46-xfwm-36j7 still no CVE id — deferred unchanged.
 - **Verdict:** pause unchanged — no Phase 50 without demand signal.
+
+## Housekeeping sweep (2026-05-28)
+
+- **Hex 1.5.2:** test stability (`IsolatedReplayStore`, FakeIdP keypair warmup); PRs #13–#15.
+- **CI automation:** `release-please-pr-checks.yml` dispatches `security-gates` + PAT nudge; automerge polls required checks.
+- **CVE:** weekly `cve-advisory-check.yml`; `scripts/check_cve_assignment.sh`; still unassigned.
+- **Docs:** `jtbd_user_flows` TestSupport onboarding vocabulary aligned.
+- **Verdict:** pause unchanged.

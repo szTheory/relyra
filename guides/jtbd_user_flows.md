@@ -32,7 +32,7 @@ Relyra's opinionated answer is:
 
 1. install the library
 2. scaffold the host seams
-3. prove the trust path locally with `FakeIdP`
+3. prove the trust path locally with `TestSupport` (see Getting Started §3)
 4. finish exactly one real-provider runbook
 5. only then move into production follow-ons
 
@@ -129,7 +129,7 @@ What your app still owns:
 - the assertion-to-local-user mapping choice
 
 Success receipt:
-- a host-side proof test or local smoke flow succeeds against `FakeIdP`
+- a host-side proof test or local smoke flow succeeds with the `TestSupport` macro path
 
 Why this matters:
 This is the library's version of "make it work on localhost first." It strips
@@ -154,7 +154,7 @@ What your app still owns:
 - downstream authorization after login
 
 Success receipt:
-- one successful real-provider login after the `FakeIdP` proof already passed
+- one successful real-provider login after the TestSupport proof already passed
 
 Why the "exactly one provider" rule is smart:
 When teams get stuck, it is often because they start comparing providers before
@@ -225,7 +225,7 @@ Here is the Relyra-shaped path:
 1. You install Relyra and run `mix relyra.install`.
 2. You wire the host seams for connection resolution, user mapping, and session
    establishment.
-3. You prove the local path with `FakeIdP` in a host-side test.
+3. You prove the local path with `TestSupport` in a host-side test.
 4. You follow the Entra runbook and land one real login.
 5. You persist the tenant's connection and metadata state.
 6. You decide whether your team needs the optional LiveAdmin surface.
@@ -436,7 +436,7 @@ When a tenant goes live on Relyra, the library is helping you move through four
 states:
 
 1. **Proof**
-   Local `FakeIdP` proof shows the host and library can agree on the basic
+   Local TestSupport proof shows the host and library can agree on the basic
    contract.
 
 2. **Trust establishment**
