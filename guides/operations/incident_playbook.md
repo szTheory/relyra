@@ -350,7 +350,7 @@ operator tools answer different questions — do not conflate them:
   Route the bundle to your IdP support contact when the symptom is a
   signing-cert regression, to your security review queue when an active attack
   is suspected, or attach it to a Relyra issue when you suspect a library bug.
-  Phase 23's redactor strips secret material before the archive is written.
+  The diagnostic bundle redactor strips secret material before the archive is written.
 - **Login trace** (LiveView `/relyra/admin/connections/:connection_id/trace`
   or `mix relyra.trace --repo MyApp.Repo --connection CONNECTION_ID`) —
   per-attempt **step timeline** answering "which pipeline stage failed and

@@ -2,6 +2,28 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Post-v1.6 milestone-next assessment (2026-05-28)
+
+**Context:** Adopter-first assessment after v1.6 Adoption Truth shipped. Repo inspection (`lib/`, `test/`, `priv/conformance/`, guides) — not milestone-name trust.
+
+**Done-%:** ~93% (90–95% band). v1.6 Adoption Truth criteria MET per `docs/jtbd_gap_map.md`.
+
+**Verdict:** Pause default — no new feature milestone until GitHub issue, adopter request, or maintenance release. Do not bundle AUTHN-POST + KMS + SIGNED-META.
+
+**Single pick when work resumes:** Issue-driven triage; first protocol wedge likely AUTHN-POST-01 (~1 week). Phase numbering continues from **50**.
+
+**Residual (low severity):** `guides/jtbd_user_flows.md` Scene 3 lists three batteries-included presets; Getting Started/README list four (ADFS omitted in flows doc).
+
+**Graduation candidates (cross-phase):**
+
+1. Run post-ship milestone assessment thread before `/gsd-new-milestone` when `milestone_pause_when_done_enough` is true.
+2. On doc milestones, keep `jtbd_user_flows` preset taxonomy aligned with Getting Started §4.
+3. Adoption Truth is a one-time pattern at done-enough — do not repeat without new gap evidence.
+
+**Thread:** `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`
+
+---
+
 ## Milestone: v1.6 — Adoption Truth
 
 **Shipped:** 2026-05-28

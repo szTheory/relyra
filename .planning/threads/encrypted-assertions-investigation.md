@@ -1,6 +1,7 @@
 # Investigation: Encrypted Assertions (EncryptedAssertion / XML-Enc)
 
 Status: PARTIAL — ENC-01 shipped Phase 34 (2026-05-25); KMS-01 extension guidance still save-for-demand
+Last assessed: 2026-05-28 (post-v1.6 milestone-next assessment; verdict unchanged)
 Priority: Low (demand-gated — KMS-01 only)
 Depends: v1.1 XMLDSig verification (DONE); ENC-01 pipeline (DONE — Phase 34)
 

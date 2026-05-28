@@ -1,6 +1,7 @@
 # Investigation: Post-v1.5 Milestone Assessment — "Done enough? What's next?"
 
-Status: OPEN — assessment 2026-05-27, post v1.5 ship; NOT YET in a milestone
+Status: COMPLETE — assessment 2026-05-27; v1.6 Adoption Truth shipped 2026-05-28 per user choice via `/gsd-new-milestone`
+Last assessed: 2026-05-28 (superseded by `v1-7-milestone-assessment-2026-05-28.md` for routing)
 Priority: HIGH (milestone routing decision)
 Depends: v1.5 shipped (Phases 41-46, Hex 1.4.0 live)
 

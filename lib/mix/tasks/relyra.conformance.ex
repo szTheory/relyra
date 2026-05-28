@@ -105,10 +105,10 @@ defmodule Mix.Tasks.Relyra.Conformance do
     [
       "## Scope boundary & diminishing returns",
       "",
-      "- **v0.x through v1.5 shipping arc:** strict SAML SP library with cryptographic verification, first-class provider presets, generic SAML runbook, Single Logout (SLO), encrypted assertions (ENC-01), login trace tooling, and an operator incident playbook.",
-      "- **Explicit out-of-scope / demand-gated (not missing):** HTTP-Artifact binding, ECP profile, Attribute Query, SCIM-in-core, additional first-class presets without generic-path investment, standalone demo app, customer-admin self-service portal.",
-      "- **Demand-gated protocol extensions:** AUTHN-POST-01 (HTTP-POST signed AuthnRequests), KMS-01 (KMS-native KeyResolver adapters), SIGNED-META-01 (signed SP metadata and federation extensions).",
-      "- **Done-enough framing:** ~92–95% JTBD coverage for enterprise SAML adoption; further work is demand-gated, not coverage-gated (v1.6 Adoption Truth milestone)."
+      "- **Shipped surface:** strict SAML SP library with cryptographic verification, four first-class provider presets plus a generic SAML runbook, Single Logout, encrypted assertions, login trace tooling, and an operator incident playbook.",
+      "- **Explicit out-of-scope (not missing):** HTTP-Artifact binding, ECP profile, Attribute Query, SCIM-in-core, additional first-class presets without generic-path investment, standalone demo app, customer-admin self-service portal.",
+      "- **Demand-gated extensions (when an adopter or federation requires them):** HTTP-POST signed AuthnRequests, KMS-native `KeyResolver` adapters, signed SP metadata export and federation extensions.",
+      "- **Posture:** enterprise SAML adoption flows in this library are intentionally complete for the stated scope; further protocol work ships on real demand, not coverage checklists."
     ]
     |> Enum.join("\n")
   end

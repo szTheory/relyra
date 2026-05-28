@@ -11,15 +11,14 @@ Hex publishes **1.4.0** directly from **1.2.0** with no intermediate **1.3.0** H
 
 ### Added
 
-- **Single Logout (SLO-01):** `SessionAdapter.index_session/4` + `terminate_by_session_index/4`; SP- and IdP-initiated logout via `Relyra.consume_logout/3`; HTTP-Redirect + HTTP-POST bindings; strict logout validation pipeline (`Parse → Verify → Replay → Execute`); `LogoutRequest`/`LogoutResponse` on `SaxyTree` (single parse path).
-- **Documentation (DOCS-04):** `guides/recipes/logout.md` — ITP/ETP/Privacy Sandbox caveats, durable session prerequisite, absolute-timeout boundary, host-owned session-index linkage.
-- **Documentation (DOCS-05):** `guides/operations/incident_playbook.md` — six Triage→Diagnose→Recover scenarios.
-- **Documentation (DOCS-06):** `guides/troubleshooting.md` Error Atom Decoder (78 atoms, 7 buckets); bidirectional drift test in `ci.docs`.
-- **Audit closure (40.1):** `logout_recipe_drift_test.exs` AST arity gate; retroactive `38-VERIFICATION.md` / `39-VERIFICATION.md`.
-- **Login trace UI (TRACE-01):** `ConnectionTraceLive` at `/connections/:connection_id/trace`; six-step expandable rows from audit + telemetry.
-- **Headless trace (TRACE-03):** `mix relyra.trace --repo --connection [--last N]`.
-- **Shared export:** `Relyra.LoginTrace.Export` redaction path shared by LiveView and CLI.
-- **Pre-publish hygiene (TD-01..05):** metadata attribute escaping + security corpus; `test_support` excluded from prod compile and Hex `package.files`; parse-tree byte spans for encrypted assertion wire extraction (regex retired); README/doc preset honesty; adversarial crypto test formatting.
+- **Single Logout:** `SessionAdapter` session-index hooks; SP- and IdP-initiated logout via `Relyra.consume_logout/3`; HTTP-Redirect and HTTP-POST bindings; strict logout validation pipeline (`Parse → Verify → Replay → Execute`); `LogoutRequest`/`LogoutResponse` on the same `SaxyTree` parse path as login.
+- **Logout operator guide:** `guides/recipes/logout.md` — browser cookie caveats, durable session prerequisites, absolute-timeout boundaries, and host-owned session-index linkage.
+- **Incident playbook:** `guides/operations/incident_playbook.md` — six Triage→Diagnose→Recover scenarios with evidence surfaces for telemetry, audit, and login trace.
+- **Troubleshooting decoder:** `guides/troubleshooting.md` — 78 typed SAML error atoms across seven trust-pipeline buckets, kept in sync with the codebase.
+- **Login trace LiveView:** `ConnectionTraceLive` at `/relyra/admin/connections/:connection_id/trace` — expandable step timeline from audit rows and telemetry.
+- **Headless login trace:** `mix relyra.trace` for the same redacted step timeline without opening the browser.
+- **Shared trace export:** `Relyra.LoginTrace.Export` redacts login-trace rows consistently for LiveView and CLI.
+- **Publish hygiene:** SP metadata attribute escaping; `test_support` excluded from production compile and Hex tarball; encrypted-assertion wire extraction uses parse-tree byte spans only; README and preset documentation aligned with shipped presets.
 
 ### Changed
 
@@ -30,9 +29,9 @@ Hex publishes **1.4.0** directly from **1.2.0** with no intermediate **1.3.0** H
 ### Security
 
 - **Logout crypto:** XMLDSig verification before session termination; redirect signatures verified against raw query octets; replay protection on logout messages.
-- **Login trace redaction (TRACE-02):** `test/security/login_trace_test.exs` — LiveView and CLI never render raw XML, PEM, cert bodies, signature values, or key material; dedicated `cmd mix test` in `ci.security`.
-- **Metadata XSS defense-in-depth (TD-01):** interpolated SP metadata attributes XML-escaped (`metadata_attribute_injection_test.exs`).
-- **One trust path (TD-03):** `locate_encrypted_assertion` uses parse-tree byte spans only — no regex alongside tree.
+- **Login trace redaction:** security tests ensure LiveView and CLI never render raw XML, PEM, certificate bodies, signature values, or key material.
+- **Metadata XSS defense-in-depth:** interpolated SP metadata attributes are XML-escaped before publish.
+- **One trust path for encrypted assertions:** wire extraction uses parse-tree byte spans only — no parallel regex locator on the auth boundary.
 
 ## [1.3.0]
 

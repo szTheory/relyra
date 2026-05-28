@@ -142,8 +142,8 @@ Your trigger:
 Local proof is green. Now you need an actual enterprise login.
 
 What Relyra does:
-- gives you a narrow batteries-included set: Okta, Microsoft Entra ID, and
-  Google Workspace
+- gives you a narrow batteries-included set: Okta, Microsoft Entra ID, Google
+  Workspace, and ADFS
 - provides preset defaults for those providers
 - speaks the provider's admin vocabulary in docs and hints
 - keeps Day-1 scoped to one real-provider branch at a time
@@ -465,5 +465,9 @@ library is valuable.
 - [Microsoft Entra ID runbook](recipes/entra.md)
 - [Google Workspace runbook](recipes/google_workspace.md)
 - [Phoenix SaaS tenant onboarding](case_studies/phoenix_saas_tenant_onboarding.md)
+- [ADFS runbook](recipes/adfs.md)
+- [Generic SAML runbook](recipes/generic_saml.md)
+- [Logout recipe](recipes/logout.md)
+- [Troubleshooting](troubleshooting.md)
+- [Documentation overview](overview.md)
 - [Operator-managed rollout](case_studies/operator_managed_rollout.md)
-- [JTBD gap map](../docs/jtbd_gap_map.md)

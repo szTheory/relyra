@@ -1,5 +1,10 @@
 # Relyra JTBD Gap Map
 
+> **Maintainers only.** This file tracks prioritization and milestone history for
+> Relyra development. Adopters should read
+> [`guides/jtbd_user_flows.md`](../guides/jtbd_user_flows.md) instead. It is
+> intentionally omitted from Hex documentation extras.
+
 This document is the planning companion to
 [`guides/jtbd_user_flows.md`](../guides/jtbd_user_flows.md).
 
@@ -281,8 +286,8 @@ When refreshing this document in the future:
 1. Scan `CHANGELOG.md` for new user-facing flows.
 2. Re-read `README.md`, `guides/getting_started.md`, provider runbooks, and
    case studies.
-3. Re-read `.planning/PROJECT.md` and the next milestone docs, if a new
-   milestone exists.
+3. Re-read project planning artifacts in the repository when scoping the next
+   release (not published on Hex).
 4. Reclassify each job as strong, partial, or intentionally out of scope.
 5. Add a dated "what changed since last refresh" note here and in
    `guides/jtbd_user_flows.md`.

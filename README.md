@@ -1,7 +1,18 @@
 # Relyra
 
+[![Hex.pm](https://img.shields.io/hexpm/v/relyra.svg)](https://hex.pm/packages/relyra)
+[![Documentation](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/relyra)
+
 Relyra is a strict-by-default **SAML 2.0 Service Provider library for Elixir and Phoenix**.
 It is for teams that need enterprise SSO without becoming SAML experts.
+
+Add the dependency:
+
+```elixir
+{:relyra, "~> 1.4"}
+```
+
+Published docs: [hexdocs.pm/relyra](https://hexdocs.pm/relyra) (Getting Started is the home page).
 
 ## Quick Look
 
@@ -21,13 +32,12 @@ Presets fill safe defaults underneath — see the [Okta runbook](guides/recipes/
 
 Use one Day-1 route:
 
-- Browse the [documentation overview](guides/overview.md) — Day-1, Day-2, and Reference sections.
-
-1. Install the library and scaffold the host app with `mix relyra.install`.
-2. Follow [Getting Started](guides/getting_started.md).
-3. Prove a local sign-in with the `Relyra.TestSupport` macro (`setup_saml_connection/2`, `post_saml_response/2`) — see [Getting Started §3](guides/getting_started.md#3-prove-local-login-with-testsupport).
-4. Choose exactly one first-class provider runbook.
-5. Return to the production follow-ons after the first provider is working.
+1. Browse the [documentation overview](guides/overview.md) — Day-1, Day-2, and Reference sections.
+2. Install the library and scaffold the host app with `mix relyra.install`.
+3. Follow [Getting Started](guides/getting_started.md).
+4. Prove a local sign-in with the `Relyra.TestSupport` macro (`setup_saml_connection/2`, `post_saml_response/2`) — see [Getting Started §3](guides/getting_started.md#3-prove-local-login-with-testsupport).
+5. Choose exactly one first-class provider runbook.
+6. Return to the production follow-ons after the first provider is working.
 
 The README is the router. The full onboarding narrative lives in
 [guides/getting_started.md](guides/getting_started.md).
@@ -99,6 +109,10 @@ and the generic SAML runbook families named above.
 These surfaces matter after Day-1, but they should not compete with onboarding:
 
 - [Getting Started](guides/getting_started.md) for the canonical Day-1 path.
+- [Production Ecto path](guides/production_ecto_path.md) — cluster-safe stores and migrations.
+- [Incident playbook — evidence surfaces](guides/operations/incident_playbook.md#evidence-surfaces) — login trace, telemetry, and audit triage.
+- [Troubleshooting](guides/troubleshooting.md) — SAML error atom decoder.
+- [Logout recipe](guides/recipes/logout.md) — SLO strategy and session boundaries.
 - [Identity Mapping And Provisioning](guides/identity_mapping_and_provisioning.md)
   for the host-owned decision about local account anchors, login-time JIT, and
   the `Relyra.UserMapper` seam after the first provider works.
@@ -107,6 +121,7 @@ These surfaces matter after Day-1, but they should not compete with onboarding:
 - [Security policy](SECURITY.md) for supported algorithms, disclosure, and
   release posture.
 - [Security review packet](SECURITY_REVIEW.md) for auditors and release review.
+- [Security boundary](docs/security_boundary.md) for reviewer-oriented architecture notes.
 
 LiveAdmin is optional. Metadata refresh, certificate rollover, audit review,
 telemetry wiring, and diagnostic bundles belong after the first successful

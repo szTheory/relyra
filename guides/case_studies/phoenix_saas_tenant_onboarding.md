@@ -13,14 +13,15 @@ considered live.
 - Mount the ACS route and any host-specific router seams the installer prints
 - Prove the local path first with `Relyra.TestSupport.FakeIdP`
 - Pick one first-class provider runbook:
-  `guides/recipes/okta.md`, `guides/recipes/entra.md`, or
-  `guides/recipes/google_workspace.md`
+  [Okta](../recipes/okta.md), [Entra](../recipes/entra.md),
+  [Google Workspace](../recipes/google_workspace.md), or
+  [ADFS](../recipes/adfs.md)
 - Keep any non-preset tenant requests under an explicitly labeled
   `custom/generic SAML` path
 
 ## Relyra owns
 
-- The preset contract for Okta, Microsoft Entra ID, and Google Workspace
+- The preset contract for Okta, Microsoft Entra ID, Google Workspace, and ADFS
 - The local-first proof helpers in `Relyra.TestSupport`
 - Strict protocol validation, trust-boundary enforcement, and typed rejection
   behavior

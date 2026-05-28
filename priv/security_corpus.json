@@ -128,7 +128,7 @@
     ],
     "expected_error_type": "canonicalization_failed",
     "provenance": {
-      "source": "Phase 30 adversarial crypto assurance",
+      "source": "Relyra adversarial crypto assurance corpus",
       "kind": "ported-fixture",
       "captured_at": "2026-05-24"
     },

@@ -1,6 +1,18 @@
 defmodule Relyra do
   @moduledoc """
   Public entry points for strict-by-default SAML protocol flows.
+
+  Start with [Getting Started](getting_started.html) for install, local proof, and
+  your first IdP runbook. The two functions most host apps call are:
+
+  * `start_login/3` — build and store a request intent, then redirect (or POST)
+    the user to the IdP.
+  * `consume_response/3` — verify the SAML response on the ACS path and return a
+    `%Relyra.LoginResult{}` or a typed `%Relyra.Error{}`.
+
+  Mount HTTP routes with `Relyra.Phoenix.Router.saml_routes/2` (see
+  `Relyra.Phoenix.Router`). Configure connections via `Relyra.ConnectionResolver`
+  and the behaviour seams documented under `Relyra.*` in this reference.
   """
 
   alias Relyra.ConnectionResolver

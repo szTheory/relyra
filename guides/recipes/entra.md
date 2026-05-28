@@ -100,9 +100,14 @@ Proof receipt:
   refresh, and diagnostic exports into the host app's production follow-on
   checklist.
 
+## Related docs
+
+- [Getting Started](../getting_started.md)
+- [Documentation overview](../overview.md)
+- [Troubleshooting](../troubleshooting.md)
+- [Incident playbook — evidence surfaces](../operations/incident_playbook.md#evidence-surfaces)
+
 ## Related case studies
 
 - [Phoenix SaaS tenant onboarding](../case_studies/phoenix_saas_tenant_onboarding.md)
-  at `guides/case_studies/phoenix_saas_tenant_onboarding.md`
 - [Operator-managed rollout](../case_studies/operator_managed_rollout.md)
-  at `guides/case_studies/operator_managed_rollout.md`

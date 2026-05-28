@@ -188,3 +188,10 @@ Rely on your local timeouts. If the IdP terminates the session early and SLO
 works, excellent. If SLO fails due to ITP/ETP, your absolute timeout guarantees
 the session dies anyway. Document this dual-layer approach for your auditors:
 SLO is the optimization; local timeouts are the guarantee.
+
+## Related docs
+
+- [Getting Started](../getting_started.md)
+- [Documentation overview](../overview.md)
+- [Troubleshooting](../troubleshooting.md)
+- [Incident playbook — evidence surfaces](../operations/incident_playbook.md#evidence-surfaces)

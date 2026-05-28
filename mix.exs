@@ -126,30 +126,63 @@ defmodule Relyra.MixProject do
       extras: [
         "README.md",
         "guides/overview.md",
-        "BATTERIES_INCLUDED.md",
-        "CHANGELOG.md",
-        "CONFORMANCE.md",
-        "SECURITY.md",
-        "SECURITY_REVIEW.md",
-        "SECURITY_REVIEW_EVIDENCE.md",
-        "docs/security_boundary.md",
-        "docs/security_findings.md",
-        "docs/jtbd_gap_map.md",
-        "guides/batteries_included.md",
         "guides/getting_started.md",
         "guides/identity_mapping_and_provisioning.md",
         "guides/production_ecto_path.md",
         "guides/jtbd_user_flows.md",
-        "guides/case_studies/operator_managed_rollout.md",
         "guides/case_studies/phoenix_saas_tenant_onboarding.md",
-        "guides/recipes/adfs.md",
-        "guides/recipes/generic_saml.md",
+        "guides/case_studies/operator_managed_rollout.md",
         "guides/recipes/okta.md",
         "guides/recipes/entra.md",
         "guides/recipes/google_workspace.md",
+        "guides/recipes/adfs.md",
+        "guides/recipes/generic_saml.md",
         "guides/recipes/logout.md",
         "guides/troubleshooting.md",
-        "guides/operations/incident_playbook.md"
+        "guides/operations/incident_playbook.md",
+        "SECURITY.md",
+        "SECURITY_REVIEW.md",
+        "docs/security_boundary.md",
+        "docs/security_findings.md",
+        "CHANGELOG.md",
+        "CONFORMANCE.md",
+        "BATTERIES_INCLUDED.md",
+        "SECURITY_REVIEW_EVIDENCE.md"
+      ],
+      groups_for_extras: [
+        Introduction: ["README.md", "guides/overview.md"],
+        "Day-1": [
+          "guides/getting_started.md",
+          "guides/identity_mapping_and_provisioning.md",
+          "guides/production_ecto_path.md",
+          "guides/jtbd_user_flows.md",
+          "guides/case_studies/phoenix_saas_tenant_onboarding.md",
+          "guides/case_studies/operator_managed_rollout.md"
+        ],
+        Recipes: [
+          "guides/recipes/okta.md",
+          "guides/recipes/entra.md",
+          "guides/recipes/google_workspace.md",
+          "guides/recipes/adfs.md",
+          "guides/recipes/generic_saml.md",
+          "guides/recipes/logout.md"
+        ],
+        Operations: [
+          "guides/troubleshooting.md",
+          "guides/operations/incident_playbook.md"
+        ],
+        Security: [
+          "SECURITY.md",
+          "SECURITY_REVIEW.md",
+          "docs/security_boundary.md",
+          "docs/security_findings.md"
+        ],
+        "Generated & audit": [
+          "CHANGELOG.md",
+          "CONFORMANCE.md",
+          "BATTERIES_INCLUDED.md",
+          "SECURITY_REVIEW_EVIDENCE.md"
+        ]
       ]
     ]
   end
@@ -176,6 +209,7 @@ defmodule Relyra.MixProject do
         "cmd test -f guides/recipes/logout.md",
         "cmd test -f guides/troubleshooting.md",
         "cmd test -f guides/operations/incident_playbook.md",
+        "cmd mix test test/docs/markdown_link_smoke_test.exs --warnings-as-errors",
         "cmd mix test test/docs/troubleshooting_drift_test.exs --warnings-as-errors",
         "cmd mix test test/docs/logout_recipe_drift_test.exs --warnings-as-errors",
         "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",

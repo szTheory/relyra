@@ -152,7 +152,7 @@
       "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf",
       "section": "4.4.4.1"
     },
-    "notes": "SLO request generation added in Phase 24 remains executable and deterministic.",
+    "notes": "SLO request generation remains executable and deterministic with a fixed clock.",
     "input": {
       "connection": {
         "idp_slo_url": "https://idp.example.com/slo",
@@ -191,7 +191,7 @@
       "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf",
       "section": "3.4.4.1"
     },
-    "notes": "Redirect decoding must continue to accept either SAMLRequest or SAMLResponse payload keys after Phase 24.",
+    "notes": "Redirect decoding accepts either SAMLRequest or SAMLResponse payload keys for logout responses.",
     "xml": "<samlp:LogoutResponse xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"id_logout_response_123\" Version=\"2.0\" IssueInstant=\"2026-04-24T16:00:00Z\" InResponseTo=\"id_logout_123\" Destination=\"https://sp.example.com/slo\"><saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">https://idp.example.com/metadata</saml:Issuer><samlp:Status><samlp:StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></samlp:Status></samlp:LogoutResponse>"
   },
   {
@@ -220,7 +220,7 @@
       "source": "https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf",
       "section": "2.3.4"
     },
-    "notes": "Encrypted assertion positive control via FakeIdP.encrypted_response/2 — ENC-01 shipped Phase 34."
+    "notes": "Encrypted assertion positive control via FakeIdP.encrypted_response/2 in the test harness."
   },
   {
     "id": "sp-ecp-profile-unsupported",

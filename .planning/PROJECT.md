@@ -28,7 +28,9 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 ## Next Milestone Goals
 
-**After v1.6 (current):** pause until external demand signal (GitHub issue, adopter request). Protocol work is demand-gated, not coverage-gated. Start next milestone with `/gsd-new-milestone` (fresh requirements + roadmap).
+**After v1.6 (current):** **pause default** — no new feature milestone until external demand signal (GitHub issue, adopter request) or Hex/security maintenance. Post-v1.6 assessment (~93% done-enough): `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`. Do **not** run `/gsd-new-milestone` for coverage-gated protocol work. When triggered, scope **one** wedge and continue phase numbering from **50**.
+
+**Optional momentum-only:** v1.7 Maintenance & Narrative Sync (doc-only: `jtbd_user_flows` Scene 3 + ADFS, optional reviewer quick-arch) — diminishing returns; not JTBD-coverage-gated.
 
 **Demand-gated future candidates** (investigation threads in `.planning/threads/`; trigger = real GitHub issue):
 
@@ -226,6 +228,7 @@ The v1.x milestone arc:
 | **Assessment 2026-05-27: v1.x done-enough verdict re-confirmed; next milestone is publish+polish, not new protocol** | Adopter-first assessment with parallel candidate research (AUTHN-POST-01 / KMS-01 / SIGNED-META-01) and a DX audit through the lens of a Phoenix SaaS adopter. All three demand-gated candidates verdict = save-for-demand (zero adopter pull, all tractable when needed; pre-baked plans retained in `.planning/threads/`). The single high-leverage finding is **Hex publishing lag**: mix.exs at 1.2.0 while git/PROJECT.md say v1.4 — Hex audience cannot see v1.3 or v1.4 features. Brand-defining gap also surfaced: no stepwise login-trace LiveView for the "every login explains itself" promise. Recommended single pick: **v1.5 polish milestone** bundling Hex publish + trace LiveView + README/installer ergonomics + warning-level tech-debt sweep. ~1 week. After v1.5: pause until external demand signal. | ✓ Good (v1.5 shipped 2026-05-27; Hex 1.4.0 live, trace UI shipped, tech-debt sweep closed; pause until demand signal) |
 | **Assessment 2026-05-27 (post-v1.5): done-enough at ~92–95%; pause default; optional v1.6 Adoption Truth doc wedge** | Post-v1.5 adopter-first milestone-next assessment. Protocol-feature complete; Hex current; remaining delta is IMPORTANT-BUT-NARROW doc/onboarding (Ecto path, TestSupport macro, trace in ops docs, CONFORMANCE honesty) not foundational protocol. All three demand-gated candidates remain save-for-demand. SIGNED-META-01 has investigation stub only (not full pre-baked plan). Rational default: wait for GitHub issue. Optional v1.6 closes adoption-truth asymmetry without new SAML surface area. | ✓ Good (assessment recorded in `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`; user chose v1.6 via `/gsd-new-milestone` 2026-05-27) |
 | **v1.6 Adoption Truth = doc-only wedge at done-enough line** | No new protocol bindings, presets, or crypto. Closes adoption-truth asymmetry (code stronger than onboarding story) via Getting Started, production Ecto path, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy alignment. Gap-closure phases 49.1-49.2 closed audit handoffs + Nyquist retro. After v1.6: pause until demand signal. | ✓ Good (shipped 2026-05-28; 15 plans, 6/6 ADOPT requirements; audit passed) |
+| **Assessment 2026-05-28 (post-v1.6): ~93% done-enough; pause default reaffirmed** | Repo inspection (`lib/`, tests, conformance manifest, guides). v1.6 closed last important adoption-truth wedge. Remaining delta is demand-gated protocol (AUTHN-POST, KMS, SIGNED-META) or low-severity narrative drift (`jtbd_user_flows` Scene 3). Single pick: **pause** — no v1.7 feature milestone without trigger. Optional doc-only v1.7 only for narrative sync if desired. | ✓ Good (recorded in `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`; STATE updated) |
 
 ## Evolution
 
@@ -245,4 +248,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-28 after v1.6 milestone archive. See `.planning/milestones/v1.6-REQUIREMENTS.md` and `.planning/MILESTONES.md`.*
+*Last updated: 2026-05-28 after post-v1.6 milestone-next assessment. See `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`, `.planning/milestones/v1.6-REQUIREMENTS.md`, and `.planning/MILESTONES.md`.*

@@ -113,8 +113,14 @@ defmodule MyAppWeb.SamlLoginTest do
 end
 ```
 
-Copy-paste source of truth: `test/test_support_demo_test.exs` in the Relyra repo
-(also gated in `mix ci.docs`).
+Copy-paste source of truth: `test/test_support_demo_test.exs` in the Relyra repo.
+
+<details>
+<summary>Maintainers: doc CI gate</summary>
+
+The demo test path is also checked by `mix ci.docs` in the Relyra repository.
+
+</details>
 
 **Stub vs production ACS:** The §3 stub assigns `:current_user` directly for a
 fast receipt. The §2 install scaffold wires `import Relyra.Phoenix.Router;
@@ -135,6 +141,7 @@ runbook before you return to production follow-ons:
 - [Okta runbook](recipes/okta.md) at `guides/recipes/okta.md`
 - [Microsoft Entra ID runbook](recipes/entra.md) at `guides/recipes/entra.md`
 - [Google Workspace runbook](recipes/google_workspace.md) at `guides/recipes/google_workspace.md`
+- [ADFS runbook](recipes/adfs.md) at `guides/recipes/adfs.md`
 
 Use one branch only for Day-1. The goal is to finish one real provider path, not
 to compare several admins in parallel.

@@ -1,6 +1,19 @@
 defmodule Relyra.Phoenix.Router do
   @moduledoc """
   Exposes the `saml_routes/2` macro for mounting SAML endpoints in a Phoenix router.
+
+  After `mix relyra.install`, add the macro inside your host router scope (when
+  unambiguous, the installer injects this for you):
+
+      import Relyra.Phoenix.Router
+
+      scope "/saml", MyAppWeb do
+        saml_routes()
+      end
+
+  This mounts metadata GET, login GET/POST, and ACS POST for each `connection_id`.
+  The ACS route skips CSRF verification via `Relyra.Phoenix.Pipeline` — see
+  [Getting Started](getting_started.html) for the full Day-1 wiring narrative.
   """
 
   defmacro saml_routes(opts \\ []) do

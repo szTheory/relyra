@@ -47,13 +47,30 @@
     "node_repair_budget": 2,
     "ui_phase": true,
     "ui_safety_gate": true,
-    "text_mode": false,
+    "text_mode": true,
     "research_before_questions": true,
     "discuss_mode": "assumptions",
     "skip_discuss": false,
     "code_review": true,
     "code_review_depth": "standard",
-    "_auto_chain_active": false
+    "_auto_chain_active": false,
+    "milestone_assessment": {
+      "verify_lib_before_scope": true,
+      "adopter_lens_default": true,
+      "stop_milestone_includes_release_truth": true,
+      "jtbd_refresh_at_milestone_close": true,
+      "run_at_new_milestone": true,
+      "prefer_repo_inspection_over_docs": true,
+      "flag_conformance_manifest_drift": true,
+      "no_auto_new_milestone": true
+    },
+    "milestone_next_step": {
+      "adopter_lens": true,
+      "parallel_repo_research": true,
+      "retain_threads_and_retrospective": true,
+      "prompts_dir": "prompts/",
+      "path_to_done_thread": true
+    }
   },
   "hooks": {
     "context_warnings": true
@@ -69,7 +86,11 @@
       "KMS-01",
       "SIGNED-META-01"
     ],
-    "adoption_truth_doc_wedge": true
+    "adoption_truth_doc_wedge": true,
+    "doc_ux_audit": {
+      "forbid_planning_paths_in_extras": ["docs/jtbd_gap_map.md"],
+      "conformance_notes_adopter_facing": true
+    }
   },
   "project_code": null,
   "phase_naming": "sequential",

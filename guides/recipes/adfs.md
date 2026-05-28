@@ -106,3 +106,10 @@ Microsoft Learn sources verified on May 26, 2026:
 - `Set-AdfsRelyingPartyTrust (Windows Server 2025)` for parameter names and accepted
   `-SignatureAlgorithm` values.
 - `Create a Non-Claims Aware Relying Party Trust` for the relying-party trust creation path.
+
+## Related docs
+
+- [Getting Started](../getting_started.md)
+- [Documentation overview](../overview.md)
+- [Troubleshooting](../troubleshooting.md)
+- [Incident playbook — evidence surfaces](../operations/incident_playbook.md#evidence-surfaces)

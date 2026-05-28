@@ -45,5 +45,5 @@ auditability across production environments.
 - Metadata review artifacts and operator sign-off
 - Certificate lifecycle receipts tied to the host rollout process
 - Diagnostic and audit outputs used during support and recovery
-- Explicit scope notes showing whether the provider path is one of the three
+- Explicit scope notes showing whether the provider path is one of the four
   first-class presets or a `custom/generic SAML` integration

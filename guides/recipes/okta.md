@@ -102,6 +102,13 @@ Proof receipt:
 - Keep metadata, audit review, telemetry, and diagnostic-bundle handling in the
   host application's production follow-on plan.
 
+## Related docs
+
+- [Getting Started](../getting_started.md)
+- [Documentation overview](../overview.md)
+- [Troubleshooting](../troubleshooting.md)
+- [Incident playbook — evidence surfaces](../operations/incident_playbook.md#evidence-surfaces)
+
 ## Related case studies
 
 - [Phoenix SaaS tenant onboarding](../case_studies/phoenix_saas_tenant_onboarding.md)

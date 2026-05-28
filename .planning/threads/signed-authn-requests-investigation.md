@@ -1,6 +1,7 @@
 # Investigation: Signed AuthnRequests (WantAuthnRequestsSigned)
 
 Status: PARTIAL — redirect AUTHN-01 shipped Phase 35 (2026-05-26); POST deferral (AUTHN-POST-01) still save-for-demand
+Last assessed: 2026-05-28 (post-v1.6 milestone-next assessment; verdict unchanged)
 Priority: Low (demand-gated — save-for-demand)
 Depends: v1.1 XMLDSig (DONE); redirect signing (DONE — Phase 35); encrypted assertions (DONE — Phase 34)
 

@@ -34,6 +34,8 @@ Receipt: host-side test passes with `assert_saml_login/2`, then one hosted IdP l
 
 - [BATTERIES_INCLUDED.md](../BATTERIES_INCLUDED.md) — drift-checked claim-to-proof map
 - [SECURITY.md](../SECURITY.md)
+- [Security review packet](../SECURITY_REVIEW.md)
+- [Security boundary](../docs/security_boundary.md)
 - [CONFORMANCE.md](../CONFORMANCE.md)
 - [Jobs To Be Done And User Flows](jtbd_user_flows.md)
-- [Incident playbook](operations/incident_playbook.md)
+- [Incident playbook — evidence surfaces](operations/incident_playbook.md#evidence-surfaces)

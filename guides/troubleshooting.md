@@ -35,8 +35,15 @@ matching scenario runbook in
   source, one parse path, pre-parse guards, real crypto, audit co-commit,
   replay protection).
 - Documenting the canonical atom set in this guide.
-- Gating the guide against the codebase via the bidirectional drift test
-  (`test/docs/troubleshooting_drift_test.exs`).
+
+<details>
+<summary>Maintainers: drift test</summary>
+
+The guide is kept in sync with the codebase via
+`test/docs/troubleshooting_drift_test.exs` (run as part of `mix ci.docs` in the
+Relyra repository).
+
+</details>
 
 ## Host owns
 
@@ -120,8 +127,8 @@ intended node (signature wrapping).
 a buggy IdP signer.
 
 **Operator action:** Treat as hostile until proven otherwise. Capture the
-payload, file a ticket, do NOT retry. Real XSW corpora gate every build via
-`mix ci.security`.
+payload, file a ticket, do NOT retry. The permanent adversarial test corpus
+exercises this class of attack on every security CI run.
 
 **Source:** `lib/relyra/security/signature.ex`, `lib/relyra/security/xml/pure_beam.ex`
 

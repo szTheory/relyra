@@ -476,3 +476,11 @@ Safety warning:
 If you need both, define the authoritative anchor and lifecycle owner first.
 Without that decision, simultaneous JIT and SCIM is not additive resilience. It
 is two competing account writers.
+
+## Related docs
+
+- [Getting Started](getting_started.md)
+- [Generic SAML runbook](recipes/generic_saml.md)
+- [Troubleshooting](troubleshooting.md)
+- [Incident playbook — evidence surfaces](operations/incident_playbook.md#evidence-surfaces)
+- [Documentation overview](overview.md)

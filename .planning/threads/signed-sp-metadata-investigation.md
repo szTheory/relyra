@@ -1,6 +1,7 @@
 # Investigation: Signed SP Metadata (SIGNED-META-01)
 
 Status: OPEN — stub 2026-05-27; not yet in a milestone; no plan count until triggered
+Last assessed: 2026-05-28 (post-v1.6 milestone-next assessment; verdict unchanged)
 Priority: Low (demand-gated — save-for-demand)
 Depends: v1.1 SIGV-04 metadata-root verification (DONE — Phase 29); SP metadata generation (DONE — `Relyra.Protocol.Metadata.build_sp_metadata/2`)
 
