@@ -92,3 +92,4 @@ gh api -X PUT \
 
 echo "OK: branch protection configured for ${REPO}@${BRANCH}."
 print_expected_text
+
