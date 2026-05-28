@@ -43,6 +43,33 @@ Operator-owned values:
 - `idp_sso_url`: usually `https://<adfs-host>/adfs/ls/`.
 - `idp_certificates`: load the active token-signing certificate.
 
+## Wire the host app
+
+The `:adfs` preset connection struct above also requires `sp_signing_key_pem` in
+application config before a real ADFS login works. Wire the struct into the host
+application seams the installer created:
+
+1. **Resolve the connection** — `Relyra.start_login/3` and
+   `Relyra.consume_response/3` call your configured `ConnectionResolver`. On a
+   single-node dev path, register the struct where your resolver returns it (see
+   [Getting Started §2](../getting_started.md#2-scaffold) and the install
+   generator output). For production, persist the connection and switch to
+   [ConnectionResolver.Ecto](../production_ecto_path.md#4-wire-connectionresolver-ecto).
+
+2. **Use the production ACS route** — After
+   [Getting Started §3](../getting_started.md#3-prove-local-login-with-testsupport)
+   passes with TestSupport, switch from the stub ACS to the installer's
+   `saml_routes()` / `ACSController` path so POSTbacks hit
+   `Relyra.consume_response/3`.
+
+3. **Map verified attributes** — Implement `Relyra.UserMapper` to turn the
+   verified login result into your host user model ([Identity
+   mapping](../identity_mapping_and_provisioning.md)).
+
+Receipt before ADFS-side trust setup: a browser or integration test hits your ACS
+URL, the resolver returns the ADFS connection, and `consume_response/3` completes
+without a typed rejection.
+
 ## ADFS-side PowerShell
 
 Use the relying-party trust cmdlet parameters verified from Microsoft Learn on May 26, 2026:

@@ -1,6 +1,13 @@
 # Getting Started
 
-This is the canonical Day-1 onboarding path for Relyra.
+Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir and
+Phoenix. It is for teams that need enterprise SSO without becoming SAML experts —
+every login ends in a cryptographically verified assertion or a typed rejection.
+
+This page is the canonical **Day-1 onboarding path**. For the full doc map by job,
+see the [documentation overview](overview.md). For evaluator context (quick look,
+support taxonomy, Day-2 routing), see the [README](../README.md).
+
 Follow the sections in order:
 
 1. Install

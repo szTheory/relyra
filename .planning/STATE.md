@@ -104,6 +104,8 @@ Last activity: 2026-05-29 — Doc reader audit (`.planning/threads/doc-reader-au
 
 **Resume here:** [`.planning/threads/session-handoff-2026-05-29.md`](.planning/threads/session-handoff-2026-05-29.md) — cold-start after maintenance + doc audit (Hex **1.5.4**, CI hands-off proven, reader audit #25 merged, pause default).
 
+**2026-05-29 — Micro doc polish close-out.** Runbook wiring bridges (Entra/Google/ADFS/generic), Getting Started evaluator landing, v1.6 audit addendum. P2 doc backlog closed. Pause default unchanged. Thread: `.planning/threads/doc-reader-audit-2026-05-29.md`.
+
 **2026-05-29 — Reader experience audit + session handoff.** [#25](https://github.com/szTheory/relyra/pull/25) doc fixes + `adopter_voice_test`; GitHub homepage → hexdocs. Housekeeping: D-12 README badges, D-13 Okta wiring bridge ([#26](https://github.com/szTheory/relyra/pull/26)). Thread: `.planning/threads/doc-reader-audit-2026-05-29.md`.
 
 **2026-05-28 — Release automation hardened (#19–#22) + hands-off proof.** 1.5.3 proof → 1.5.4 validates automerge publish dispatch. Thread: `.planning/threads/hands-off-release-proof-2026-05-29.md`.
