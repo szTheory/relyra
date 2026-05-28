@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1
-milestone_name: milestone
+milestone: v1.6
+milestone_name: Adoption Truth
 status: between-milestones
-last_updated: "2026-05-28T00:55:46.403Z"
-last_activity: 2026-05-28
+last_updated: "2026-05-28T01:17:35.012Z"
+last_activity: 2026-05-28 — Milestone v1.6 completed and archived
 progress:
   total_phases: 5
   completed_phases: 5
@@ -17,22 +17,22 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-05-27)
+See: `.planning/PROJECT.md` (updated 2026-05-28)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.6 Adoption Truth complete — between milestones
+**Current focus:** Between milestones — pause until external demand signal; use `/gsd-new-milestone` to start next cycle
 
 ## Current Position
 
-Phase: 49.2 (complete)
-Plan: 3/3 complete
-Status: Phase 49.2 verified — v1.6 gap closure done
-Last activity: 2026-05-28 — Phase 49.2 execution complete
+Phase: Milestone v1.6 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-28 — Milestone v1.6 completed and archived
 
 ## Performance Metrics
 
-- Last shipped milestone: v1.5 (Phases 41-46)
-- Prior shipped milestone: v1.4 (Phases 38-40.1)
+- Last shipped milestone: v1.6 (Phases 47-49.2)
+- Prior shipped milestone: v1.5 (Phases 41-46)
 
 ## Accumulated Context
 
@@ -116,3 +116,7 @@ Last activity: 2026-05-28 — Phase 49.2 execution complete
 **2026-05-27 — Phase 48 context gathered.** Assumptions mode; all assumptions confirmed without correction.
 
 **2026-05-27 — Phase 47 context gathered.** Assumptions mode; all assumptions confirmed without correction.
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd:new-milestone

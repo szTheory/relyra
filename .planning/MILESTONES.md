@@ -1,5 +1,29 @@
 # Milestones
 
+## v1.6 Adoption Truth (Shipped: 2026-05-28)
+
+**Phases completed:** 5 phases, 15 plans, 46 tasks
+
+**Key accomplishments:**
+
+- Getting Started §3 teaches TestSupport macro round-trip; manual FakeIdP builder demoted to appendix; overview Day-1 aligned
+- Production Ecto path guide covers dep-path migrations, host store DDL, wrapper modules, Connections delegator, and opt-in ETS warning
+- Production Ecto guide linked from Day-2 hubs, ExDoc extras, and ci.docs presence gate — full doc CI green
+- Incident playbook documents login-trace LiveView and `mix relyra.trace` across six evidence surfaces, operator tables, scenarios 3–6, and a diagnostic-vs-trace When in doubt split
+- Day-2 hubs and Getting Started §5 now point operators at incident playbook login-trace evidence surfaces; mix ci.docs verified green
+- ADOPT-04 delivered: generator emits scope-boundary section, ENC row passes with FakeIdP encrypted assertion positive control, CONFORMANCE.md regenerated with 9 pass / 0 deferred.
+- ADOPT-05 delivered: jtbd_gap_map.md refreshed to v1.5+ shipped reality — generic runbook, logout, playbook, login trace, ENC, and identity mapping marked shipped; demand-gated milestones replace stale coverage gaps.
+- ADOPT-06 delivered: generic SAML decoder table extended with Keycloak and OneLogin, Getting Started §4 lists four batteries-included presets including ADFS, and Ping/Shibboleth cross-references resolve README vs runbook naming drift without editing README.
+- Production Ecto path closes with Related Day-2 guides footer linking incident playbook, troubleshooting, and overview hub
+- README Start Here step 3 promotes TestSupport macro with deep link to Getting Started §3; runbook gate prose uses TestSupport proof
+- jtbd_user_flows Related docs extended with production Ecto path and incident playbook #evidence-surfaces links
+- Getting Started §5 incident playbook links use #evidence-surfaces anchor; final mix ci.docs gate green
+- Phase 47 Nyquist parity achieved via retroactive 47-VALIDATION.md and milestone audit update
+- v1.6 milestone audit editorial tech debt closed — playbook, jtbd_gap_map, SiteMinder footnote
+- Phase 49.2 closed with VERIFICATION.md — Nyquist retro + editorial disposition + mix ci.docs
+
+---
+
 ## v1.5 Publish, Prove, Polish (Shipped: 2026-05-27)
 
 **Phases completed:** 6 phases, 18 plans, 24 tasks

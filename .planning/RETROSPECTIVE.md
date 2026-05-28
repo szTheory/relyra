@@ -2,6 +2,42 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v1.6 — Adoption Truth
+
+**Shipped:** 2026-05-28
+**Phases:** 5 (3 scope + 2 gap-closure) | **Plans:** 15 | **Tasks:** 46
+
+### What Was Built
+
+- **Onboarding truth (Phase 47).** Getting Started §3 promotes TestSupport macro round-trip; manual FakeIdP builder demoted to appendix; new `guides/production_ecto_path.md` with migrations, resolver, store swap, and ETS prod warning.
+- **Operator completeness (Phase 48).** Incident playbook documents login-trace LiveView and `mix relyra.trace` across evidence surfaces, scenarios 3–6, and Day-2 hub cross-links.
+- **Adoption honesty (Phase 49).** CONFORMANCE scope boundary + ENC manifest pass row; jtbd_gap_map refreshed to v1.5+ shipped reality; Keycloak/OneLogin decoder rows and four batteries-included presets aligned.
+- **Gap closure (Phases 49.1–49.2).** Ecto path → Day-2 ops forward handoff; README/jtbd cross-links; retroactive Phase 47 Nyquist VALIDATION.md; editorial polish per audit.
+
+### What Worked
+
+- **Doc-only boundary held.** No protocol surface creep despite rich codebase — milestone stayed at adoption-truth wedge.
+- **Audit-driven gap closure.** Pre-close audit inserted 49.1/49.2 instead of shipping with known handoff gaps; integration score went 3/4 → 4/4.
+- **D-15 precedent for doc-only phases.** No new ci.docs drift tests when presence guards suffice — kept hollow-gate discipline without test sprawl.
+- **Adoption Truth pattern at done-enough line.** Closes asymmetry between shipped code and adopter story without reopening protocol work.
+
+### What Was Inefficient
+
+- **REQUIREMENTS.md gap-closure table lagged audit.** Traceability still showed 49.1/49.2 items as Pending after phases completed — fixed at milestone close, not during execution.
+- **summary-extract one_liners sparse.** Phase SUMMARY frontmatter lacks `one_liner` field; accomplishment extraction fell back to manual reads.
+
+### Patterns Established
+
+- **Adoption Truth milestone type.** Doc wedge at ~92–95% done-enough: onboarding path, production deploy guide, ops tool surfacing, CONFORMANCE honesty, planning-doc refresh.
+- **Decimal gap-closure after audit.** 49.1 (handoff) + 49.2 (Nyquist retro + editorial) mirrors v1.4's 40.1 pattern for doc milestones.
+- **Forward-nav footers on deploy guides.** `production_ecto_path.md` Related Day-2 guides footer prevents adopters backtracking through overview.
+
+### Key Lessons
+
+1. **Run milestone audit before close, then gap-close.** v1.6 audit on 2026-05-27 found real handoffs; 49.1/49.2 closed them before archive — cleaner than accepting tech debt.
+2. **Adoption truth is a milestone, not a phase.** Six ADOPT requirements across three phases plus two closure phases — scope as milestone, not single doc PR.
+3. **Pause default is correct post-v1.6.** Protocol candidates remain save-for-demand; next work needs GitHub issue signal.
+
 ## Milestone: v0.5 — Operational maturity
 
 **Shipped:** 2026-05-07

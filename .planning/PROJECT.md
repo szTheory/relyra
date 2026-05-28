@@ -24,26 +24,11 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v1.3 shipped 2026-05-27** — Advanced Federation. Phase 32 extended AlgorithmPolicy and schema support, Phase 33 shipped the `KeyResolver` / XMLEnc core, Phase 34 closed ENC-01 + ENC-02, Phase 35 shipped signed redirect-binding AuthnRequests plus the ADFS preset/runbook and AUTHN-01 corpus, and Phases 36-37 completed the generic SAML and identity-mapping operator guides.
 - **v1.4 shipped 2026-05-27** — Full SLO + Ops Polish. Phase 38 shipped SLO core + security (SLO-01), Phase 39 shipped the logout strategy guide (DOCS-04), Phase 40 shipped the operator incident playbook + Error Atom Decoder (DOCS-05, DOCS-06), and Phase 40.1 closed the v1.4 milestone-audit gaps: retroactive 38/39 VERIFICATIONs, `guides/recipes/logout.md` rewritten to canonical 4-arg `SessionAdapter` signatures with a host-owned-linkage subsection, and a live `test/docs/logout_recipe_drift_test.exs` wired into `ci.docs`. With v1.4 shipped, Relyra has crossed the "done-enough" line drawn in PROJECT.md: future scope is demand-gated, not coverage-gated.
 - **v1.5 shipped 2026-05-27** — Publish, Prove, Polish. Phases 41-46 complete (18/18 plans, 15/15 requirements). Hex `1.4.0` published via release-please automation; `mix verify.release_parity 1.4.0` **PASS** (path-set matches tag `v1.4.0`, zero `test_support` in tarball). Stepwise login-trace LiveView at `/relyra/admin/connections/:id/trace` plus `mix relyra.trace` headless companion (TRACE-01/02/03). Pre-publish tech-debt sweep closed (TD-01..TD-05). Adopter DX: README Okta snippet above the fold, `mix relyra.install` auto-injects `saml_routes()` when unambiguous, `guides/overview.md` job-shaped index. **Done-enough line reached:** future scope is demand-gated, not coverage-gated.
-
-## Current Milestone: v1.6 Adoption Truth
-
-**Goal:** Close the gap between codebase strength and adopter-facing documentation — no new SAML protocol surface area.
-
-**Target features:** *(all complete — v1.6 shipped 2026-05-27)*
-- ~~Getting Started: promote `TestSupport` macro pattern~~ — **done Phase 47**
-- ~~New "Production Ecto path" section~~ — **done Phase 47** (`guides/production_ecto_path.md`)
-- ~~Ops: login-trace route + `mix relyra.trace` in `guides/operations/incident_playbook.md` tool table~~ — **done Phase 48** (evidence surfaces, scenarios 3–6, Day-2 cross-links)
-- ~~CONFORMANCE: "Scope boundary & diminishing returns" section; fix `sp-encrypted-assertions-deferred` manifest (ENC-01 shipped Phase 34)~~ — **done Phase 49**
-- ~~Refresh `docs/jtbd_gap_map.md` to v1.5 reality~~ — **done Phase 49**
-- ~~README / Getting Started preset taxonomy honesty (Keycloak/OneLogin decoder rows or narrowed claims)~~ — **done Phase 49**
-
-**Explicitly out of scope:** AUTHN-POST-01, KMS-01, SIGNED-META-01, new presets, HTTP-Artifact, ECP, SCIM-in-core, standalone demo app.
-
-Full assessment: `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`.
+- **v1.6 shipped 2026-05-28** — Adoption Truth. Phases 47-49.2 complete (15/15 plans, 6/6 ADOPT requirements). Doc-only milestone: TestSupport-first Getting Started, `guides/production_ecto_path.md`, incident playbook login-trace surfaces, CONFORMANCE scope boundary + ENC manifest honesty, jtbd_gap_map refresh, preset taxonomy alignment. Gap-closure phases 49.1-49.2 closed audit handoffs and Nyquist retro. **No new SAML protocol surface area.** Pause default until external demand signal.
 
 ## Next Milestone Goals
 
-**After v1.6:** pause until external demand signal (GitHub issue, adopter request). Protocol work is demand-gated, not coverage-gated.
+**After v1.6 (current):** pause until external demand signal (GitHub issue, adopter request). Protocol work is demand-gated, not coverage-gated. Start next milestone with `/gsd-new-milestone` (fresh requirements + roadmap).
 
 **Demand-gated future candidates** (investigation threads in `.planning/threads/`; trigger = real GitHub issue):
 
@@ -58,13 +43,14 @@ Full assessment: `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`.
 
 ## Shipped Milestones — v1.x Arc Summary
 
-The v1.x milestone arc closed with v1.5:
+The v1.x milestone arc:
 
 - **v1.0** — Conformance, security review readiness, and adopter onboarding polish (Phases 25-27).
 - **v1.1** — Verify the Trust Path: real exclusive-C14N, genuine XMLDSig `:public_key.verify`, adversarial crypto corpus permanently gating CI, disclosure honesty (Phases 28-31).
 - **v1.3** — Advanced Federation: encrypted assertions (ENC-01), signed AuthnRequests (AUTHN-01), generic SAML and identity-mapping operator guides (Phases 32-37).
 - **v1.4** — Full SLO + Ops Polish: full SLO round-trip (SLO-01), logout strategy guide (DOCS-04), Incident Response Playbook (DOCS-05), SAML Error Atom Decoder (DOCS-06), audit-closure Phase 40.1 (Phases 38-40.1).
 - **v1.5** — Publish, Prove, Polish: Hex `1.4.0` publish, login-trace LiveView + CLI, pre-publish tech-debt sweep, adopter DX polish (Phases 41-46).
+- **v1.6** — Adoption Truth: onboarding/ops doc wedge closing adoption-truth asymmetry; no new protocol surface (Phases 47-49.2).
 
 ## Requirements
 
@@ -239,7 +225,7 @@ The v1.x milestone arc closed with v1.5:
 | **v1.1 Phase 28: pure-BEAM exclusive-C14N proven correct via a committed golden-byte oracle** | ADR-0001 mandated pure-BEAM canonicalization; correctness on the auth boundary demanded independent proof, not self-assertion. A `saxy` parse tree replaced regex string-scanning (one trust path, D-04), and the hand-rolled C14N engine reproduces libxml2/xmlsec1's 887-byte exclusive-C14N output byte-for-byte (cross-checked across two libxml2 builds; the Elixir engine is the third agreeing implementation). CI stays pure-Elixir against committed bytes (D-12); the verified signature is bound to the exact node consumed (D-10, anti-XSW). | ✓ Good (Phase 28; SIGV-03 verified 2026-05-24. Known fail-safe limitation: mixed-content / inter-element-whitespace mis-canonicalizes → rejection never bypass; tracked as the first Phase 29 follow-up) |
 | **Assessment 2026-05-27: v1.x done-enough verdict re-confirmed; next milestone is publish+polish, not new protocol** | Adopter-first assessment with parallel candidate research (AUTHN-POST-01 / KMS-01 / SIGNED-META-01) and a DX audit through the lens of a Phoenix SaaS adopter. All three demand-gated candidates verdict = save-for-demand (zero adopter pull, all tractable when needed; pre-baked plans retained in `.planning/threads/`). The single high-leverage finding is **Hex publishing lag**: mix.exs at 1.2.0 while git/PROJECT.md say v1.4 — Hex audience cannot see v1.3 or v1.4 features. Brand-defining gap also surfaced: no stepwise login-trace LiveView for the "every login explains itself" promise. Recommended single pick: **v1.5 polish milestone** bundling Hex publish + trace LiveView + README/installer ergonomics + warning-level tech-debt sweep. ~1 week. After v1.5: pause until external demand signal. | ✓ Good (v1.5 shipped 2026-05-27; Hex 1.4.0 live, trace UI shipped, tech-debt sweep closed; pause until demand signal) |
 | **Assessment 2026-05-27 (post-v1.5): done-enough at ~92–95%; pause default; optional v1.6 Adoption Truth doc wedge** | Post-v1.5 adopter-first milestone-next assessment. Protocol-feature complete; Hex current; remaining delta is IMPORTANT-BUT-NARROW doc/onboarding (Ecto path, TestSupport macro, trace in ops docs, CONFORMANCE honesty) not foundational protocol. All three demand-gated candidates remain save-for-demand. SIGNED-META-01 has investigation stub only (not full pre-baked plan). Rational default: wait for GitHub issue. Optional v1.6 closes adoption-truth asymmetry without new SAML surface area. | ✓ Good (assessment recorded in `.planning/threads/v1-6-milestone-assessment-2026-05-27.md`; user chose v1.6 via `/gsd-new-milestone` 2026-05-27) |
-| **v1.6 Adoption Truth = doc-only wedge at done-enough line** | No new protocol bindings, presets, or crypto. Closes adoption-truth asymmetry (code stronger than onboarding story) via Getting Started, production Ecto path, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy alignment. ~1 week. After v1.6: pause until demand signal. | — Pending (milestone started 2026-05-27) |
+| **v1.6 Adoption Truth = doc-only wedge at done-enough line** | No new protocol bindings, presets, or crypto. Closes adoption-truth asymmetry (code stronger than onboarding story) via Getting Started, production Ecto path, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy alignment. Gap-closure phases 49.1-49.2 closed audit handoffs + Nyquist retro. After v1.6: pause until demand signal. | ✓ Good (shipped 2026-05-28; 15 plans, 6/6 ADOPT requirements; audit passed) |
 
 ## Evolution
 
@@ -259,4 +245,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-05-27 — v1.6 Adoption Truth complete (Phases 47–49; ADOPT-01..06). See `.planning/REQUIREMENTS.md` and `.planning/ROADMAP.md`.*
+*Last updated: 2026-05-28 after v1.6 milestone archive. See `.planning/milestones/v1.6-REQUIREMENTS.md` and `.planning/MILESTONES.md`.*
