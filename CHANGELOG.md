@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.5.3](https://github.com/szTheory/relyra/compare/v1.5.2...v1.5.3) (2026-05-28)
+
+
+### Bug Fixes
+
+* **ci:** grant actions:write for release-please PR dispatch ([e32d828](https://github.com/szTheory/relyra/commit/e32d8282f47971770d7382ca9f59de63f33a536a))
+* **ci:** grant actions:write for release-please PR dispatch ([ecf2736](https://github.com/szTheory/relyra/commit/ecf2736b9185d3a46bf4723bea9e04ac53978c58))
+* **ci:** parse spaced security-gates check names on release PRs ([099b92b](https://github.com/szTheory/relyra/commit/099b92b098dc02b9b9714afce7a2372cc99dd8ea))
+* **ci:** parse spaced security-gates check names on release PRs ([adabc13](https://github.com/szTheory/relyra/commit/adabc1381ce118d71f85eb1061264ddac5dec7cb))
+* **ci:** tolerate gh pr checks exit when no checks yet ([fbef01c](https://github.com/szTheory/relyra/commit/fbef01cf9c3f2e363d3a73eecf7c37681274b079))
+* **ci:** tolerate gh pr checks exit when no checks yet ([98606d2](https://github.com/szTheory/relyra/commit/98606d2f0b6501b4ab7684802569dfff26432307))
+* **docs:** note hands-off release path in getting started ([0f6d758](https://github.com/szTheory/relyra/commit/0f6d7588cf9286f1f457c782c63592e35c9e7214))
+* **docs:** note hands-off release path in getting started ([f19d239](https://github.com/szTheory/relyra/commit/f19d2392c5b5a035c82c5466a6a7d0490cd7f3af))
+
 ## [1.5.2](https://github.com/szTheory/relyra/compare/v1.5.1...v1.5.2) (2026-05-28)
 
 
