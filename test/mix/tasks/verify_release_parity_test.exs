@@ -154,6 +154,7 @@ defmodule Mix.Tasks.VerifyReleaseParityTest do
 
   describe "integration canary" do
     @tag :integration
+    @tag timeout: 120_000
     test "mix verify.release_parity 1.4.0 exits 0 against live Hex" do
       {_output, exit_status} =
         System.cmd("mix", ["verify.release_parity", "1.4.0"], stderr_to_stdout: true)
