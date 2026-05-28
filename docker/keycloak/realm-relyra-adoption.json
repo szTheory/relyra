@@ -32,15 +32,19 @@
       "enabled": true,
       "protocol": "saml",
       "fullScopeAllowed": true,
-      "redirectUris": ["http://demo-host.test/*"],
+      "rootUrl": "http://demo-host.test",
+      "baseUrl": "http://demo-host.test",
+      "adminUrl": "http://demo-host.test/keycloak/acs",
+      "redirectUris": ["http://demo-host.test/keycloak/acs"],
       "webOrigins": ["+"],
       "attributes": {
         "saml.authnstatement": "true",
         "saml.server.signature": "true",
+        "saml.client.signature": "false",
         "saml.signature.algorithm": "RSA_SHA256",
-        "saml_force_name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+        "saml.force.post.binding": "false",
         "saml.assertion.consumer.url.post": "http://demo-host.test/keycloak/acs",
-        "saml_assertion_consumer_url_post": "http://demo-host.test/keycloak/acs"
+        "saml_force_name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
       }
     }
   ]

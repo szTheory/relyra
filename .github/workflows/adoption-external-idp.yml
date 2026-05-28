@@ -64,6 +64,7 @@ jobs:
           docker run -d --name keycloak-adoption -p 8080:8080 \
             -e KEYCLOAK_ADMIN=admin \
             -e KEYCLOAK_ADMIN_PASSWORD=admin \
+            -e KC_HOSTNAME=localhost \
             -e KC_HOSTNAME_STRICT=false \
             -e KC_HOSTNAME_STRICT_HTTPS=false \
             -e KC_HTTP_ENABLED=true \
@@ -71,6 +72,16 @@ jobs:
             -v "$PWD/docker/keycloak/realm-relyra-adoption.json:/opt/keycloak/data/import/realm-relyra-adoption.json:ro" \
             quay.io/keycloak/keycloak:26.0.7 \
             start-dev --import-realm --http-port=8080
+
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8080/realms/relyra-adoption/.well-known/openid-configuration >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Keycloak failed to become ready" >&2
+          docker logs keycloak-adoption
+          exit 1
 
       - name: External IdP adoption lane
         run: mix ci.external_idp

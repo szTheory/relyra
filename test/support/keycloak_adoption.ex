@@ -3,6 +3,7 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
 
   @realm "relyra-adoption"
   @connection_id "keycloak"
+  @redirect_binding "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
 
   def base_url! do
     System.get_env("KEYCLOAK_BASE_URL") ||
@@ -76,6 +77,11 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
   def start_login!(connection, opts) do
     relay_context = %{return_to: "/welcome"}
 
+    opts =
+      opts
+      |> Keyword.put(:protocol_binding, @redirect_binding)
+      |> Keyword.put_new(:now, DateTime.utc_now())
+
     case Relyra.start_login(connection, relay_context, opts) do
       {:ok, login} -> login
       {:error, %Relyra.Error{} = error} -> raise error.message
@@ -93,7 +99,9 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
       )
 
     if login_page.status not in 200..399 do
-      raise "unexpected Keycloak SSO status #{login_page.status}"
+      body = String.slice(login_page.body || "", 0, 500)
+
+      raise "unexpected Keycloak SSO status #{login_page.status} from #{sso_url}: #{body}"
     end
 
     form = extract_form!(base_url, login_page.body)
@@ -109,12 +117,25 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
     extract_saml_post!(auth_response)
   end
 
-  defp build_sso_url(idp_sso_url, %{redirect_params: params}) when is_map(params) do
-    idp_sso_url <> "?" <> URI.encode_query(params)
+  defp build_sso_url(idp_sso_url, %{redirect_query: redirect_query})
+       when is_binary(redirect_query) do
+    separator = if String.contains?(idp_sso_url, "?"), do: "&", else: "?"
+    idp_sso_url <> separator <> redirect_query
   end
 
-  defp build_sso_url(idp_sso_url, %{redirect_query: query}) when is_binary(query) do
-    idp_sso_url <> "?" <> query
+  defp build_sso_url(idp_sso_url, %{redirect_params: redirect_params})
+       when is_map(redirect_params) do
+    uri = URI.parse(idp_sso_url)
+    existing_query = URI.decode_query(uri.query || "")
+    new_query = Map.merge(existing_query, redirect_params)
+
+    uri
+    |> Map.put(:query, URI.encode_query(new_query))
+    |> URI.to_string()
+  end
+
+  defp build_sso_url(_idp_sso_url, login) do
+    raise "start_login/3 returned no redirect payload: #{inspect(Map.keys(login))}"
   end
 
   defp extract_form!(base_url, html) when is_binary(html) do

@@ -1,10 +1,6 @@
 defmodule RelyraTest do
   use ExUnit.Case, async: true
 
-  alias Relyra.TestSupport.NoopConnectionResolver
-  alias Relyra.TestSupport.NoopReplayStore
-  alias Relyra.TestSupport.NoopRequestStore
-
   @valid_response "<Response><Assertion>signed</Assertion></Response>"
 
   test "start_login/3 returns documented tuple contract" do
