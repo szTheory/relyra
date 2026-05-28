@@ -93,7 +93,8 @@ v1.6 closed all **important** adoption-truth gaps flagged in v1-6 assessment.
 
 ## Maintenance closure (2026-05-28)
 
-- **1.5.1 prep:** patch deps (`ex_doc` 0.40.3, `req` 0.5.18); skipped `oban` 2.23 (new Worker state warning) and `ecto` 3.14 (decimal major transitive).
-- **CI:** security-gates green; branch protection + `enforce_admins`; publish `mix qa`; `BRANCH_PROTECTION_PAT` verified.
+- **Hex 1.5.1 shipped:** release-please PR #11; publish job ran `mix qa` + `ci.security` + parity; [v1.5.1](https://github.com/szTheory/relyra/releases/tag/v1.5.1).
+- **Deps:** patch `ex_doc` 0.40.3, `req` 0.5.18 (PR #9); skipped `oban` 2.23 / `ecto` 3.14.
+- **CI:** security-gates green; branch protection + `enforce_admins`; `BRANCH_PROTECTION_PAT` verified. Bot-opened release PRs require a human commit on `release-please--branches--main` to attach required checks before merge.
 - **CVE:** GHSA-jv46-xfwm-36j7 still no CVE id — deferred unchanged.
 - **Verdict:** pause unchanged — no Phase 50 without demand signal.
