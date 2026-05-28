@@ -90,3 +90,10 @@ v1.6 closed all **important** adoption-truth gaps flagged in v1-6 assessment.
 ## Verdict
 
 **Honest answer: nothing major is missing for the stated scope.** v1.6 closed the last important adoption-truth asymmetry. Pause is the rational default; watch the issue tracker; pull one protocol thread when a real trigger lands (AUTHN-POST most likely first).
+
+## Maintenance closure (2026-05-28)
+
+- **1.5.1 prep:** patch deps (`ex_doc` 0.40.3, `req` 0.5.18); skipped `oban` 2.23 (new Worker state warning) and `ecto` 3.14 (decimal major transitive).
+- **CI:** security-gates green; branch protection + `enforce_admins`; publish `mix qa`; `BRANCH_PROTECTION_PAT` verified.
+- **CVE:** GHSA-jv46-xfwm-36j7 still no CVE id — deferred unchanged.
+- **Verdict:** pause unchanged — no Phase 50 without demand signal.

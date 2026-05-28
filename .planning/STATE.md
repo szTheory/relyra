@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Adoption Truth
 status: between-milestones
-last_updated: "2026-05-28T12:00:00.000Z"
-last_activity: 2026-05-28 — Hex 1.5.0 published; install pins aligned to `~> 1.5`
+last_updated: "2026-05-28T20:00:00.000Z"
+last_activity: 2026-05-28 — maintenance 1.5.1 prep (deps, CI bookkeeping, planning sync)
 progress:
   total_phases: 5
   completed_phases: 5
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-28)
 Phase: Milestone v1.6 complete — post-assessment pause
 Plan: —
 Status: Between milestones (pause default; ~93% done for stated scope)
-Last activity: 2026-05-28 — Post-v1.6 milestone-next assessment recorded
+Last activity: 2026-05-28 — Post-v1.6 maintenance slice (CI hardening, 1.5.1 prep)
 
 ## Performance Metrics
 
@@ -44,6 +44,8 @@ Last activity: 2026-05-28 — Post-v1.6 milestone-next assessment recorded
 - After v1.6: pause until external demand signal (AUTHN-POST-01, KMS-01, SIGNED-META-01 remain save-for-demand).
 - Post-v1.6 assessment (2026-05-28): ~93% done-enough; **do not** open v1.7 feature milestone without trigger. Next phase when work resumes: **50** (continue numbering).
 - Hex **1.5.0** live (release-please + CI publish 2026-05-28); README and Getting Started pin `~> 1.5`.
+- Post-1.5.0 maintenance (2026-05-28): **security-gates** green; branch protection + `enforce_admins`; publish path runs `mix qa`; `BRANCH_PROTECTION_PAT` configured; release-please automerge; pre-commit hook.
+- **1.5.1** release in flight (patch: post-tag doc pins, CI hardening, `ex_doc`/`req` bumps).
 
 ### Decisions / Constraints carried into v1.6
 
@@ -95,9 +97,11 @@ Last activity: 2026-05-28 — Post-v1.6 milestone-next assessment recorded
 | demand_gated | AUTHN-POST-01 | save-for-demand |
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand (investigation stub only) |
-| maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
+| maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async (checked 2026-05-28 — GHSA-jv46-xfwm-36j7 `cve_id` still null) |
 
 ## Session Continuity
+
+**2026-05-28 — Post-v1.6 maintenance.** CI red root cause: unformatted tests + publish path skipped `mix qa` + no branch protection. Fixed: format commit, `mix qa` on Hex publish, security-gates `fetch-depth: 0`, LiveAdmin endpoint health-check, `enforce_admins`, automerge + `BRANCH_PROTECTION_PAT`. Chore branch `chore/maintenance-1.5.1` for deps (`ex_doc` 0.40.3, `req` 0.5.18). Pause verdict unchanged.
 
 **2026-05-28 — Phase 49.2 complete.** Nyquist retro (47-VALIDATION.md), editorial polish (playbook/jtbd/SiteMinder), `49.2-VERIFICATION.md` passed. v1.6 Adoption Truth milestone ready for audit.
 
