@@ -28,7 +28,7 @@ Expected required status checks (security-gates workflow):
 
 Expected non-context branch protection fields:
   - required_status_checks.strict: true
-  - enforce_admins: false
+  - enforce_admins: true
   - required_pull_request_reviews: null
   - restrictions: null
   - allow_force_pushes: false
@@ -51,7 +51,7 @@ expected_json() {
         strict: true,
         contexts: $contexts
       },
-      enforce_admins: false,
+      enforce_admins: true,
       required_pull_request_reviews: null,
       restrictions: null,
       allow_force_pushes: false,
