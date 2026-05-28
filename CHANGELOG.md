@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.5.4](https://github.com/szTheory/relyra/compare/v1.5.3...v1.5.4) (2026-05-28)
+
+
+### Bug Fixes
+
+* **ci:** auto-dispatch Hex publish after release-please automerge ([e50dfd5](https://github.com/szTheory/relyra/commit/e50dfd59fd76938842ca637813a04f7011d704d2))
+* **ci:** auto-dispatch Hex publish after release-please automerge ([39bbc21](https://github.com/szTheory/relyra/commit/39bbc21a5ca22484f25b866e45041fda973d0c23))
+
 ## [1.5.3](https://github.com/szTheory/relyra/compare/v1.5.2...v1.5.3) (2026-05-28)
 
 
