@@ -223,14 +223,15 @@ in logs, repeating across many login attempts in a short window.
    calls. Operators rely on `[:relyra, :saml, :replay, :check]`
    telemetry alone for replay-storm detection; the audit ledger will
    not corroborate.
-2. Diagnose — open `/relyra/admin/connections/:connection_id/trace`
+2. Diagnose — With triage confirming repeated `:replayed_assertion` on
+   this connection, open `/relyra/admin/connections/:connection_id/trace`
    (or `mix relyra.trace --repo MyApp.Repo --connection CONNECTION_ID`)
    and inspect **`replay.check`** step outcomes and volume across recent
-   attempts. Replays still write no audit rows — login trace and telemetry
-   are the primary evidence surfaces for replay storms. Host log
-   infrastructure remains useful for source-IP grouping as a secondary
-   signal; use `:connection_id` in telemetry metadata to localize the
-   storm to a single connection when possible.
+   attempts. Because replays write no audit rows, login trace and
+   telemetry remain the primary evidence surfaces before you tune
+   Recover-rate limits. Use host logs for source-IP grouping as a
+   secondary signal; `:connection_id` in telemetry metadata localizes the
+   storm to one connection when possible.
 3. Recover — apply host-app-level rate limiting on the ACS endpoint;
    replays are protocol-correct messages that the SAML library cannot
    refuse to receive (only refuse to accept). If the storm correlates
@@ -253,21 +254,22 @@ returning from every login attempt for a specific connection.
    exact atom in `:error_code`. Group by `:connection_id` to confirm
    the regression is isolated to one connection — a fleet-wide signature
    failure indicates an algorithm-policy change, not a key rotation.
-2. Diagnose — open `/relyra/admin/connections/:connection_id` and
-   review the signing certificate inventory; the IdP may have rotated
-   to a key Relyra does not yet trust. Open login trace
+2. Diagnose — With triage isolating signature failures to one
+   connection, open `/relyra/admin/connections/:connection_id` and review
+   the signing certificate inventory — the IdP may have rotated to a key
+   Relyra does not yet trust. Open login trace
    (`/relyra/admin/connections/:connection_id/trace` or
    `mix relyra.trace --repo MyApp.Repo --connection CONNECTION_ID`) and
-   inspect the **`signature.verify`** step for the exact `:error_code`
+   inspect **`signature.verify`** for the exact `:error_code`
    (`:digest_mismatch`, `:invalid_signature`, `:trust_anchor_mismatch`)
-   before or alongside cert inventory review. Run `mix relyra.diagnostic` to
-   bundle the connection state plus a redacted copy of the failing
-   response payload for the IdP vendor's support team. Cross-reference
-   the atom decoder at
+   before or alongside cert review. Run `mix relyra.diagnostic` to bundle
+   connection state plus a redacted failing response for the IdP vendor.
+   Cross-reference
    [`../troubleshooting.md#digest_mismatch`](../troubleshooting.md#digest_mismatch)
    and
    [`../troubleshooting.md#trust_anchor_mismatch`](../troubleshooting.md#trust_anchor_mismatch)
-   for the exact distinction between the three failure modes.
+   for the distinction between failure modes — align the cert inventory
+   before Recover staging.
 3. Recover — stage the new IdP signing certificate via the admin UI
    cert inventory (audit row `domain = :certificate`,
    `action = :staged`); confirm the next login succeeds against the
@@ -290,16 +292,17 @@ on every login for a new or freshly reconfigured connection.
    response, `:recipient_mismatch` is the `SubjectConfirmationData
    Recipient`, and `:in_response_to_mismatch` is the response's
    `InResponseTo` attribute against the request store.
-2. Diagnose — open `/relyra/admin/connections/:connection_id/edit` and
-   verify `acs_url`, `sp_entity_id`, `idp_entity_id`, and `idp_sso_url`
-   match what the IdP's published metadata advertises. Login trace
-   **`response.validate`** step shows which field failed
-   (`:destination_mismatch`, `:recipient_mismatch`,
-   `:in_response_to_mismatch`) — use before or alongside connection edit
-   field verification. The IdP-side
-   error message will reveal the mismatched value. Cross-reference
+2. Diagnose — With triage naming the exact validation atom, open
+   `/relyra/admin/connections/:connection_id/edit` and verify `acs_url`,
+   `sp_entity_id`, `idp_entity_id`, and `idp_sso_url` match the IdP's
+   published metadata. Use login trace **`response.validate`** to see which
+   field failed (`:destination_mismatch`, `:recipient_mismatch`,
+   `:in_response_to_mismatch`) before or alongside field verification —
+   the IdP-side error message reveals the mismatched value.
+   Cross-reference
    [`../troubleshooting.md#destination_mismatch`](../troubleshooting.md#destination_mismatch)
-   for the exact field semantics.
+   for field semantics, then apply Recover field updates once canonical
+   values are confirmed.
 3. Recover — update the affected connection field via the admin UI; the
    audit row `domain = :connection`, `action = :updated` records the
    change. If your deployment uses metadata-driven configuration, fix
@@ -318,16 +321,17 @@ attribute set).
    audit ledger for `domain = :mapping` rows with `action` in
    `[:created, :updated]` to see recent mapping changes on the
    connection — a recent mapping edit is the most common cause.
-2. Diagnose — open `/relyra/admin/connections/:connection_id` and
-   review the mapping section plus the audit timeline. When mapping-stage
-   telemetry is insufficient, open login trace and inspect the **`user.map`**
-   step for mapper-stage outcome and error detail. Cross-reference
+2. Diagnose — With triage pointing at recent `domain = :mapping` audit
+   rows, open `/relyra/admin/connections/:connection_id` and review the
+   mapping section plus the audit timeline. When mapping-stage telemetry
+   is insufficient, open login trace and inspect **`user.map`** for
+   mapper-stage outcome and error detail. Cross-reference
    [`../troubleshooting.md#invalid_audience`](../troubleshooting.md#invalid_audience)
-   for the audience-mismatch case. If the issue is in the host's
-   `UserMapper` callback rather than in the connection's mapping
-   configuration, the fix is in host application code — see
+   for audience mismatch. If the failure is in the host `UserMapper`
+   callback rather than connection mapping configuration, the fix belongs
+   in host application code — see
    [`../identity_mapping_and_provisioning.md`](../identity_mapping_and_provisioning.md)
-   for the UserMapper contract.
+   — before Recover updates the admin mapping UI.
 3. Recover — update the mapping via the admin UI (audit row
    `domain = :mapping`, `action = :updated`); confirm the next login
    for a representative user succeeds. If the host application owns
