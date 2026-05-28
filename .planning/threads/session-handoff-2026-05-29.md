@@ -60,8 +60,8 @@ Work only when forced by:
 
 | ID | Item | Notes |
 |----|------|-------|
-| D-12 | README Elixir version + CI/license badges | From doc audit P2 |
-| D-13 | Provider runbook wiring bridge | install → Connections/UserMapper → real login; needs design slice |
+| D-12 | README Elixir version + CI/license badges | Done in #26 |
+| D-13 | Provider runbook wiring bridge | Okta runbook §Wire the host app in #26 |
 | — | Hexdocs home = README vs Getting Started | Evaluator persona; deferred |
 | — | `guides/batteries_included.md` stub | Still in repo for ci.docs presence; not on Hex extras |
 
