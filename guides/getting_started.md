@@ -16,6 +16,9 @@ If you want the narrative explanation of what these steps are buying you, read
 [Jobs To Be Done And User Flows](jtbd_user_flows.md) after you finish this
 guide once.
 
+Patch releases on `main` are automated via release-please (no manual version
+bumps in this guide).
+
 ## 1. Install
 
 Add Relyra to your host application's dependencies:
