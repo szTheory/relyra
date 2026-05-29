@@ -201,6 +201,7 @@
 - **Fixes shipped:** format commit; `mix qa` on Hex publish path; `fetch-depth: 0` for release-parity integration; LiveAdmin endpoint ETS health-check; branch protection with `enforce_admins`; release-please automerge; `BRANCH_PROTECTION_PAT` + daily re-assert workflow; pre-commit hook for format check.
 - **Hex 1.5.1 shipped:** patch bumps `ex_doc` 0.40.3, `req` 0.5.18; `fix(ci)` commit to satisfy release-please user-facing changelog; PR #11 merged with human-triggered `security-gates` on bot branch.
 - **Release-please bot PRs:** GitHub skips `pull_request` workflows for `GITHUB_TOKEN`-created PRs. Mitigation shipped: `release-please-pr-checks.yml` dispatches `security-gates` and PAT nudges the release branch; automerge polls OTP 27/28 checks before merge. PAT fallback remains if dispatch alone does not attach checks to the PR.
+- **Planning-only PRs:** `security-gates` uses `paths-ignore: .planning/**`, so phase closeout PRs (e.g. `STATE.md` only) never get required checks on the PR. `workflow_dispatch` runs green on the branch but does not satisfy merge under `enforce_admins`. Mitigation shipped: `planning-pr-checks.yml` updates `.github/planning_ci_ref.txt` on the PR branch so `pull_request` `security-gates` runs and attaches `security (27|28, 1.19.5)` to the PR.
 
 ### Lessons
 
@@ -208,6 +209,7 @@
 2. **`enforce_admins` is required** for shift-left — without it, admins bypass required checks silently.
 3. **Pre-commit is cheap insurance** against agent/human format drift.
 4. **Bot release PRs need a human nudge for CI** under branch protection — document or automate (e.g. `workflow_run` dispatch on release branch).
+5. **Planning-only PRs need a non-`.planning/` path on the PR diff** for required checks to attach — automate via `planning-pr-checks.yml` (not `workflow_dispatch` alone).
 
 ---
 
