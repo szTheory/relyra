@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Adoption Truth
-status: between-milestones
-last_updated: "2026-05-29T12:00:00.000Z"
-last_activity: 2026-05-29 — session handoff written; pause default unchanged
+status: phase-50-in-progress
+last_updated: "2026-05-28T20:55:00.000Z"
+last_activity: 2026-05-28 — Phase 50 adoption evidence (golden host + Keycloak lane)
 progress:
   total_phases: 5
   completed_phases: 5
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-28)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Between milestones — **pause default** for protocol work. Doc UX pass shipped in-repo (Reader Experience); formal `/gsd-new-milestone` optional. Assessment: `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`
+**Current focus:** Phase 50 — Adoption Evidence (golden host fixtures, automated integrator journeys, Keycloak external IdP lane). Pause break: explicit demand signal for adoption-evidence automation (not new protocol surface). Assessment: `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`
 
 ## Current Position
 
-Phase: Milestone v1.6 complete — post-assessment pause
-Plan: —
-Status: Between milestones (pause default; ~93% done for stated scope)
-Last activity: 2026-05-29 — Doc reader audit (`.planning/threads/doc-reader-audit-2026-05-29.md`); Hex 1.5.4 live
+Phase: 50 — Adoption Evidence (Golden Host + Keycloak)
+Plan: `.cursor/plans/Adoption evidence fixtures-803df5ac.plan.md` (executing)
+Status: In progress — Wave 1 journeys + ci.demo; Wave 2 Keycloak `@tag :external_idp`
+Last activity: 2026-05-28 — Phase 50 implementation (test/adoption, examples/quickstart.exs, docker/keycloak)
 
 ## Performance Metrics
 

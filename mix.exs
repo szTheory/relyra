@@ -34,6 +34,8 @@ defmodule Relyra.MixProject do
         "ci.security": :test,
         "ci.verify": :test,
         "ci.integration": :test,
+        "ci.demo": :test,
+        "ci.external_idp": :test,
         "ci.admin_ui": :test,
         "ci.oban_smoke": :test,
         "ci.release": :test
@@ -41,7 +43,7 @@ defmodule Relyra.MixProject do
     ]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(:test), do: ["lib", "test/support", "test/fixtures/demo_host/lib"]
   defp elixirc_paths(:prod), do: prod_elixirc_paths()
   defp elixirc_paths(_), do: ["lib"]
 
@@ -260,7 +262,13 @@ defmodule Relyra.MixProject do
         "test test/relyra/ecto/audit_hardening_test.exs test/relyra/ecto/connection_record_test.exs test/relyra/ecto/metadata_apply_test.exs test/relyra/ecto/certificate_inventory_transition_test.exs test/relyra/ecto/mapping_commands_test.exs test/relyra/ecto/ecto_connection_resolver_test.exs test/relyra/connection_snapshot_test.exs test/relyra/user_mapper/default_attribute_test.exs --warnings-as-errors"
       ],
       "ci.integration": [
-        "test --only integration --warnings-as-errors"
+        "test test/adoption test/security/xml/integration_smoke_test.exs test/mix/tasks/verify_release_parity_test.exs --only integration --warnings-as-errors"
+      ],
+      "ci.demo": [
+        "run --no-start examples/quickstart.exs"
+      ],
+      "ci.external_idp": [
+        "test test/adoption/keycloak --only external_idp --warnings-as-errors"
       ],
       "ci.admin_ui": [
         "test test/phoenix/live_admin_test.exs test/relyra/live_admin/connections_live_test.exs test/relyra/live_admin/connection_metadata_live_test.exs test/relyra/live_admin/phase15_ui_contract_test.exs --warnings-as-errors"

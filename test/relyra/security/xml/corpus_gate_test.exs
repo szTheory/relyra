@@ -58,10 +58,10 @@ defmodule Relyra.Security.XML.CorpusGateTest do
     test "compile-time manifest canary still exposes a pinned CVE-2024-45409 fixture ID" do
       fixture =
         Enum.find(CorpusGate.manifest(), fn row ->
-          row["family"] == "CVE-2024-45409"
+          row["id"] == "cve-2024-45409-keyinfo-001"
         end)
 
-      assert fixture, "expected a pinned CVE-2024-45409 fixture in the runtime manifest"
+      assert fixture, "expected pinned cve-2024-45409-keyinfo-001 in the runtime manifest"
 
       assert {:error,
               %Error{type: :corpus_violation, details: %{matched_fixture_id: matched_fixture_id}}} =
