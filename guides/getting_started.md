@@ -129,8 +129,8 @@ Copy-paste source of truth: `test/test_support_demo_test.exs` in the Relyra repo
 
 The demo test path is also checked by `mix ci.docs` in the Relyra repository.
 
-Phase closeout PRs that touch only `.planning/**` are handled by
-`.github/workflows/planning-pr-checks.yml` (see `.planning/RETROSPECTIVE.md`).
+Phase closeout PRs that touch only internal GSD metadata are handled by
+`.github/workflows/planning-pr-checks.yml` in the Relyra repository.
 
 </details>
 
