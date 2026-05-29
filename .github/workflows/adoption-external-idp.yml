@@ -69,6 +69,7 @@ jobs:
             -e KC_HOSTNAME_STRICT_HTTPS=false \
             -e KC_HTTP_ENABLED=true \
             -e KC_HEALTH_ENABLED=true \
+            -e JAVA_OPTS_APPEND=-Dpicketlink.xmlsig.includeKeyInfo=false \
             -v "$PWD/docker/keycloak/realm-relyra-adoption.json:/opt/keycloak/data/import/realm-relyra-adoption.json:ro" \
             quay.io/keycloak/keycloak:26.0.7 \
             start-dev --import-realm --http-port=8080

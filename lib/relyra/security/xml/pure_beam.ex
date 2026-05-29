@@ -387,7 +387,7 @@ defmodule Relyra.Security.XML.PureBeam do
           })
         end),
       duplicate_ids: duplicate_ids(root),
-      key_info_trust: element_present?(root, "KeyInfo")
+      key_info_trust: rogue_key_info_present?(root)
     }
 
     require_present_fields(
@@ -405,17 +405,7 @@ defmodule Relyra.Security.XML.PureBeam do
   # Reference's ds:Transforms node (:transforms_node) so canonicalize/2 can apply
   # the reference transform chain over the same node it bound.
   defp signed_candidates(%Node{} = root) do
-    signature_node = find_first(root, "Signature")
-    transforms_node = if signature_node, do: find_first(signature_node, "Transforms"), else: nil
-
-    # D-02: surface the inputs Plan 03's crypto needs off the bound ds:Signature.
-    # signed_info_node is the SignedInfo tree node (the bytes :public_key.verify
-    # recomputes over); digest_value_b64 / signature_value_b64 are the
-    # attacker-controlled base64 strings (DATA only here — decoded + verified in
-    # Plan 03). All three are nil-safe when the corresponding node is absent.
-    signed_info_node = if signature_node, do: find_first(signature_node, "SignedInfo"), else: nil
-    digest_value_b64 = trimmed_node_text(maybe_find(signature_node, "DigestValue"))
-    signature_value_b64 = trimmed_node_text(maybe_find(signature_node, "SignatureValue"))
+    response_signature = find_first(root, "Signature")
 
     root
     |> find_all("Assertion")
@@ -426,6 +416,17 @@ defmodule Relyra.Security.XML.PureBeam do
           []
 
         assertion_id ->
+          signature_node = find_first(assertion, "Signature") || response_signature
+
+          transforms_node =
+            if signature_node, do: find_first(signature_node, "Transforms"), else: nil
+
+          signed_info_node =
+            if signature_node, do: find_first(signature_node, "SignedInfo"), else: nil
+
+          digest_value_b64 = trimmed_node_text(maybe_find(signature_node, "DigestValue"))
+          signature_value_b64 = trimmed_node_text(maybe_find(signature_node, "SignatureValue"))
+
           [
             %{
               xml_id: assertion_id,
@@ -442,6 +443,23 @@ defmodule Relyra.Security.XML.PureBeam do
       end
     end)
   end
+
+  defp rogue_key_info_present?(%Node{} = root) do
+    has_rogue_key_info?(root, false)
+  end
+
+  defp has_rogue_key_info?(%Node{local: "KeyInfo"}, false), do: true
+  defp has_rogue_key_info?(%Node{local: "KeyInfo"}, true), do: false
+
+  defp has_rogue_key_info?(%Node{local: "Signature", children: children}, _inside?) do
+    Enum.any?(children, &has_rogue_key_info?(&1, true))
+  end
+
+  defp has_rogue_key_info?(%Node{children: children}, inside?) when is_list(children) do
+    Enum.any?(children, &has_rogue_key_info?(&1, inside?))
+  end
+
+  defp has_rogue_key_info?(_node, _inside?), do: false
 
   # All ID/id attribute values across the tree; return the values that occur more
   # than once (D-09 duplicate-ID guard, tree-derived). Document-order preserved

@@ -67,7 +67,14 @@ defmodule Relyra do
            issued_at <- intent_issued_at(opts),
            expires_at <- intent_expires_at(issued_at, opts),
            intent <-
-             build_request_intent(request_id, relay_state, connection, issued_at, expires_at) do
+             build_request_intent(
+               request_id,
+               relay_state,
+               connection,
+               issued_at,
+               expires_at,
+               relay_context
+             ) do
         request_store_start = System.monotonic_time()
         request_store_result = persist_request_intent(relay_state, intent, opts)
         request_store_latency_ms = duration_ms(request_store_start)
@@ -612,7 +619,14 @@ defmodule Relyra do
     DateTime.add(issued_at, ttl, :second)
   end
 
-  defp build_request_intent(request_id, relay_state, connection, issued_at, expires_at) do
+  defp build_request_intent(
+         request_id,
+         relay_state,
+         connection,
+         issued_at,
+         expires_at,
+         relay_context
+       ) do
     %{
       request_id: request_id,
       relay_state: relay_state,
@@ -620,6 +634,7 @@ defmodule Relyra do
       organization_id: read_field(connection, :organization_id),
       sp_entity_id: read_field(connection, :sp_entity_id) || read_field(connection, :issuer),
       acs_url: read_field(connection, :acs_url),
+      return_to: Map.get(relay_context, :return_to),
       issued_at: issued_at,
       expires_at: expires_at
     }

@@ -40,9 +40,12 @@
       "attributes": {
         "saml.authnstatement": "true",
         "saml.server.signature": "true",
+        "saml.assertion.signature": "true",
         "saml.client.signature": "false",
         "saml.signature.algorithm": "RSA_SHA256",
-        "saml.force.post.binding": "false",
+        "saml.server.signature.keyinfo.ext": "false",
+        "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
+        "saml.force.post.binding": "true",
         "saml.assertion.consumer.url.post": "http://demo-host.test/keycloak/acs",
         "saml_force_name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
       }
