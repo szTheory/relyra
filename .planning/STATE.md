@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Adoption Truth
-status: phase-50-in-progress
-last_updated: "2026-05-28T20:55:00.000Z"
-last_activity: 2026-05-28 — Phase 50 adoption evidence (golden host + Keycloak lane)
+status: between-milestones-pause
+last_updated: "2026-05-29T01:05:00.000Z"
+last_activity: 2026-05-29 — Phase 50 complete; PR #28 merged (adoption evidence + Keycloak CI)
 progress:
   total_phases: 5
   completed_phases: 5
@@ -20,18 +20,20 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-28)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 50 — Adoption Evidence (golden host fixtures, automated integrator journeys, Keycloak external IdP lane). Pause break: explicit demand signal for adoption-evidence automation (not new protocol surface). Assessment: `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`
+**Current focus:** Pause default — between milestones. Phase 50 (Adoption Evidence) shipped via [#28](https://github.com/szTheory/relyra/pull/28). Next phase when work resumes: **51**. Assessment: `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`
 
 ## Current Position
 
-Phase: 50 — Adoption Evidence (Golden Host + Keycloak)
-Plan: `.cursor/plans/Adoption evidence fixtures-803df5ac.plan.md` (executing)
-Status: In progress — Wave 1 journeys + ci.demo; Wave 2 Keycloak `@tag :external_idp`
-Last activity: 2026-05-28 — Phase 50 implementation (test/adoption, examples/quickstart.exs, docker/keycloak)
+Phase: 50 — Adoption Evidence (Golden Host + Keycloak) — **complete**
+Status: Shipped 2026-05-29 — [#28](https://github.com/szTheory/relyra/pull/28) merged to `main`
+CI proof: `security-gates` (OTP 27+28) + `adoption-external-idp` (Keycloak) green on merge commit `b21bdbb`
+Deliverables: golden host fixtures, `test/adoption/journey_01`–`05`, `examples/quickstart.exs`, `mix ci.demo` / `mix ci.integration`, Keycloak docker realm + `@tag :external_idp` lane
+Last activity: 2026-05-29 — Phase 50 close-out (corpus KeyInfo alignment, Keycloak SSO redirect stability)
 
 ## Performance Metrics
 
 - Last shipped milestone: v1.6 (Phases 47-49.2)
+- Highest shipped phase: **50** (Adoption Evidence, 2026-05-29)
 - Prior shipped milestone: v1.5 (Phases 41-46)
 
 ## Accumulated Context
@@ -42,7 +44,8 @@ Last activity: 2026-05-28 — Phase 50 implementation (test/adoption, examples/q
 - v1.6 starts at Phase 47 (continues numbering; does not reset).
 - v1.6 is doc-only: onboarding truth, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy. No new SAML protocol surface area.
 - After v1.6: pause until external demand signal (AUTHN-POST-01, KMS-01, SIGNED-META-01 remain save-for-demand).
-- Post-v1.6 assessment (2026-05-28): ~93% done-enough; **do not** open v1.7 feature milestone without trigger. Next phase when work resumes: **50** (continue numbering).
+- Post-v1.6 assessment (2026-05-28): ~93% done-enough; **do not** open v1.7 feature milestone without trigger. Next phase when work resumes: **51** (continue numbering).
+- **Phase 50 shipped 2026-05-29:** Adoption evidence automation — golden host, integrator journeys, Keycloak external IdP CI ([#28](https://github.com/szTheory/relyra/pull/28)). PureBeam KeyInfo interop: rogue KeyInfo outside `Signature` rejected; KeyInfo inside standard XMLDSig ignored for trust (configured IdP certs only).
 - Hex **1.5.4** live (2026-05-28): release-please [#23](https://github.com/szTheory/relyra/pull/23) automerged; publish via automerge dispatch ([#22](https://github.com/szTheory/relyra/pull/22)).
 - Hex **1.5.3** live (hands-off proof 2026-05-28): doc trigger [#17](https://github.com/szTheory/relyra/pull/17) → release-please [#18](https://github.com/szTheory/relyra/pull/18) automerged → Hex publish. CI fixes [#19–#22](https://github.com/szTheory/relyra/pull/22). Proof thread: `.planning/threads/hands-off-release-proof-2026-05-29.md`.
 - Hex **1.5.2** live (release-please + CI publish 2026-05-28); README and Getting Started pin `~> 1.5`.
@@ -85,6 +88,12 @@ Last activity: 2026-05-28 — Phase 50 implementation (test/adoption, examples/q
 - **Gap demotion pattern:** Biggest gaps #1–#4 marked Shipped (v1.3–v1.6); milestones reordered to demand-gated AUTHN-POST/KMS/SIGNED-META.
 - **No new ci.docs drift test:** D-15 precedent holds for jtbd_gap_map doc-only refresh.
 
+### Decisions from Phase 50
+
+- **Adoption evidence != protocol milestone:** automated integrator proof (golden host, journeys, Keycloak lane) without new public API or binding surface.
+- **External IdP lane gated:** `@tag :external_idp` + `mix ci.external_idp` workflow; not in default `mix test`.
+- **Real IdP interop seam:** KeyInfo inside `ds:Signature` tolerated at parse; rogue document KeyInfo outside `Signature` still rejected; verification uses configured IdP certs only.
+
 ### Decisions from Phase 49-01
 
 - **CONFORMANCE scope boundary in generator:** `scope_boundary_section/0` appended after CVE-REG-01 table — never hand-edit CONFORMANCE.md.
@@ -102,7 +111,9 @@ Last activity: 2026-05-28 — Phase 50 implementation (test/adoption, examples/q
 
 ## Session Continuity
 
-**Resume here:** [`.planning/threads/session-handoff-2026-05-29.md`](.planning/threads/session-handoff-2026-05-29.md) — cold-start after maintenance + doc audit (Hex **1.5.4**, CI hands-off proven, reader audit #25 merged, pause default).
+**Resume here:** Pause default — Phase 50 complete ([#28](https://github.com/szTheory/relyra/pull/28)). Cold-start context: [`.planning/threads/session-handoff-2026-05-29.md`](.planning/threads/session-handoff-2026-05-29.md).
+
+**2026-05-29 — Phase 50 complete.** [#28](https://github.com/szTheory/relyra/pull/28) merged: golden host fixtures, adoption journey tests (`mix ci.integration`, `mix ci.demo`), Keycloak external IdP lane (`mix ci.external_idp`), Getting Started maintainer CI proof block. CI green: `security-gates` + `adoption-external-idp`. Pause default restored; next phase **51** on demand signal.
 
 **2026-05-29 — Micro doc polish close-out.** Runbook wiring bridges (Entra/Google/ADFS/generic), Getting Started evaluator landing, v1.6 audit addendum. P2 doc backlog closed. Pause default unchanged. Thread: `.planning/threads/doc-reader-audit-2026-05-29.md`.
 
@@ -142,4 +153,4 @@ Last activity: 2026-05-28 — Phase 50 implementation (test/adoption, examples/q
 ## Operator Next Steps
 
 - **Default:** Wait for GitHub issue / adopter request; maintenance only (CVE backfill, deps).
-- **When triggered:** `/gsd-new-milestone` with one protocol wedge (not a bundle); continue from Phase 50.
+- **When triggered:** `/gsd-new-milestone` with one protocol wedge (not a bundle); continue from Phase **51**.
