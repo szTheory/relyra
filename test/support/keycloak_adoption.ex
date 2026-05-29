@@ -206,10 +206,8 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
   defp login_page_cookie(%{login_cookie: cookie}) when is_binary(cookie), do: cookie
   defp login_page_cookie(response), do: cookie_header(response)
 
-  defp absolutize_redirect_url(_current_url, location)
-       when is_binary(location) and location =~ ~r/^https?:\/\// do
-    location
-  end
+  defp absolutize_redirect_url(_current_url, "http://" <> _rest = location), do: location
+  defp absolutize_redirect_url(_current_url, "https://" <> _rest = location), do: location
 
   defp absolutize_redirect_url(current_url, location) when is_binary(location) do
     URI.merge(current_url, location) |> URI.to_string()
