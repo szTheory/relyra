@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.6.0](https://github.com/szTheory/relyra/compare/v1.5.4...v1.6.0) (2026-05-29)
+
+
+### Features
+
+* **adoption:** Phase 50 golden host journeys and Keycloak CI lane ([b21bdbb](https://github.com/szTheory/relyra/commit/b21bdbb254163983da179304455b58d7d35460fe))
+* **adoption:** Phase 50 golden host journeys and Keycloak CI lane ([fb105da](https://github.com/szTheory/relyra/commit/fb105da4d8f60de890014b5f46b2eba19dbe927f))
+
+
+### Bug Fixes
+
+* **adoption:** CI warnings and Keycloak SSO redirect binding ([83f9b90](https://github.com/szTheory/relyra/commit/83f9b90028be15279d1592dd9c1bb28628d50c09))
+* **adoption:** follow Keycloak SSO redirects when fetching login form ([19fbb26](https://github.com/szTheory/relyra/commit/19fbb26e11ffb15e796639c445ea7ba8511a8ff7))
+* **adoption:** green Keycloak external IdP lane and real IdP crypto interop ([d48871a](https://github.com/szTheory/relyra/commit/d48871a22e501f6141219adaa096789d6cc85d60))
+* **adoption:** stabilize Keycloak login fetch without form pre-check ([45e1d1e](https://github.com/szTheory/relyra/commit/45e1d1efb1d278439b5aee25f61aa718273d00e6))
+* **adoption:** use valid guard in Keycloak redirect URL helper ([18f78ae](https://github.com/szTheory/relyra/commit/18f78aeeff72ca7afd6665f7eb2b34b1b0d2f10f))
+* **security:** align KeyInfo corpus with rogue-outside-Signature policy ([7846892](https://github.com/szTheory/relyra/commit/78468929a8f152dcb19000cefc8789a7e799dab3))
+
 ## [1.5.4](https://github.com/szTheory/relyra/compare/v1.5.3...v1.5.4) (2026-05-28)
 
 
