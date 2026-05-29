@@ -10,20 +10,35 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
       raise "KEYCLOAK_BASE_URL is required for external IdP adoption tests"
   end
 
-  def wait_for_ready!(base_url, attempts \\ 60) do
-    url = Path.join(base_url, "realms/#{@realm}/.well-known/openid-configuration")
+  def wait_for_ready!(base_url, attempts \\ 90) do
+    oidc_url = Path.join(base_url, "realms/#{@realm}/.well-known/openid-configuration")
+    descriptor_url = Path.join(base_url, "realms/#{@realm}/protocol/saml/descriptor")
 
     Enum.reduce_while(1..attempts, :error, fn attempt, _acc ->
-      case Req.get(url, receive_timeout: 5_000, retry: false) do
-        {:ok, %{status: 200}} ->
-          {:halt, :ok}
+      oidc_ok =
+        case Req.get(oidc_url, receive_timeout: 5_000, retry: false) do
+          {:ok, %{status: 200}} -> true
+          _ -> false
+        end
 
-        _ when attempt == attempts ->
+      descriptor_ok =
+        case Req.get(descriptor_url, receive_timeout: 5_000, retry: false) do
+          {:ok, %{status: 200, body: body}} when is_binary(body) ->
+            String.contains?(body, "X509Certificate")
+
+          _ ->
+            false
+        end
+
+      if oidc_ok and descriptor_ok do
+        {:halt, :ok}
+      else
+        if attempt == attempts do
           {:halt, {:error, :timeout}}
-
-        _ ->
+        else
           Process.sleep(1_000)
           {:cont, :error}
+        end
       end
     end)
     |> case do
@@ -107,38 +122,8 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
     extract_saml_post!(auth_response)
   end
 
-  defp fetch_login_page!(sso_url, attempts \\ 5) do
-    Enum.reduce_while(1..attempts, nil, fn attempt, _acc ->
-      case follow_login_redirects(sso_url) do
-        {:ok, login_page} = ok ->
-          body = login_page.body || ""
-
-          if String.contains?(body, "<form") do
-            {:halt, ok}
-          else
-            snippet = String.slice(body, 0, 500)
-
-            if attempt == attempts do
-              {:halt,
-               {:error,
-                "Keycloak SSO response had no login form after #{attempts} attempts (status=#{login_page.status}): #{snippet}"}}
-            else
-              Process.sleep(500)
-              {:cont, nil}
-            end
-          end
-
-        {:error, _} = err ->
-          if attempt == attempts,
-            do: {:halt, err},
-            else:
-              (
-                Process.sleep(500)
-                {:cont, nil}
-              )
-      end
-    end)
-    |> case do
+  defp fetch_login_page!(sso_url) do
+    case follow_login_redirects(sso_url) do
       {:ok, login_page} -> login_page
       {:error, message} when is_binary(message) -> raise message
       other -> raise "unable to fetch Keycloak login page from #{sso_url}: #{inspect(other)}"
@@ -235,6 +220,8 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
   end
 
   defp extract_form!(base_url, html) when is_binary(html) do
+    html = IO.iodata_to_binary(html)
+
     {action, form_html} =
       case Regex.run(
              ~r/<form id="kc-form-login"[^>]*action="([^"]+)"[^>]*>(.*?)<\/form>/s,
