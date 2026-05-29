@@ -1,0 +1,133 @@
+name: Planning PR Checks
+
+# PRs that only touch .planning/** (or prompts/**) skip security-gates via paths-ignore,
+# but branch protection still requires security (27/28). Dispatch alone does not attach
+# checks to the PR under enforce_admins — push a .github/ marker commit so pull_request
+# security-gates runs on the full PR diff.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".planning/**"
+      - "prompts/**"
+      - ".github/workflows/planning-pr-checks.yml"
+
+concurrency:
+  group: planning-pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  actions: write
+  pull-requests: read
+
+jobs:
+  trigger-planning-pr-checks:
+    name: Trigger security-gates on planning PR
+    if: ${{ github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify planning-only diff
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t files < <(
+            gh pr diff "$PR_NUMBER" --name-only
+          )
+
+          if [[ "${#files[@]}" -eq 0 ]]; then
+            echo "No changed files on PR."
+            echo "planning_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          planning_only=true
+
+          for file in "${files[@]}"; do
+            case "$file" in
+              .planning/*|prompts/*|.github/workflows/planning-pr-checks.yml|.github/planning_ci_ref.txt)
+                ;;
+              *)
+                echo "Non-planning path in PR: $file"
+                planning_only=false
+                ;;
+            esac
+          done
+
+          echo "planning_only=$planning_only" >> "$GITHUB_OUTPUT"
+
+      - name: Check required security-gates on planning PR
+        id: checks
+        if: ${{ steps.scope.outputs.planning_only == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)")
+
+          all_success=true
+
+          for check in "${required_checks[@]}"; do
+            state="$(
+              gh pr checks "$PR_NUMBER" --json name,state -q \
+                ".[] | select(.name == \"$check\") | .state" 2>/dev/null | head -1 || true
+            )"
+
+            if [[ -z "$state" ]]; then
+              echo "Missing check: $check"
+              all_success=false
+            elif [[ "$state" != "SUCCESS" && "$state" != "pass" ]]; then
+              echo "Check not passing: $check ($state)"
+              all_success=false
+            else
+              echo "Check passing: $check"
+            fi
+          done
+
+          echo "all_success=$all_success" >> "$GITHUB_OUTPUT"
+
+      - name: Push CI gate ref so security-gates runs on pull_request
+        if: ${{ steps.scope.outputs.planning_only == 'true' && steps.checks.outputs.all_success != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_PAT || github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+          cd repo
+          git checkout "$HEAD_REF"
+
+          mkdir -p .github
+          {
+            echo "# Updated by planning-pr-checks.yml so pull_request security-gates runs on"
+            echo "# planning-only PRs (paths-ignore skips .planning/** otherwise)."
+            echo "pr=${PR_NUMBER}"
+            echo "ref=${{ github.event.pull_request.head.sha }}"
+            echo "run=${GITHUB_RUN_ID}"
+          } > .github/planning_ci_ref.txt
+
+          if git diff --quiet -- .github/planning_ci_ref.txt; then
+            echo "planning_ci_ref.txt unchanged; skipping push."
+            exit 0
+          fi
+
+          git add .github/planning_ci_ref.txt
+          git commit -m "ci: trigger security-gates for planning-only PR #${PR_NUMBER}"
+          git push origin "$HEAD_REF"
