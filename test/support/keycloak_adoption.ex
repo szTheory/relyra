@@ -90,18 +90,10 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
 
   def fetch_saml_response!(base_url, connection, login, username, password) do
     sso_url = build_sso_url(connection.idp_sso_url, login)
-
-    {:ok, login_page} =
-      Req.get(sso_url, redirect: false, receive_timeout: 15_000, retry: false)
-
-    if login_page.status < 200 or login_page.status >= 500 do
-      body = String.slice(login_page.body || "", 0, 500)
-
-      raise "unexpected Keycloak SSO status #{login_page.status} from #{sso_url}: #{body}"
-    end
+    login_page = fetch_login_page!(sso_url)
 
     form = extract_form!(base_url, login_page.body)
-    cookie = cookie_header(login_page)
+    cookie = login_page_cookie(login_page)
 
     {:ok, auth_response} =
       Req.post(form.action,
@@ -113,6 +105,114 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
       )
 
     extract_saml_post!(auth_response)
+  end
+
+  defp fetch_login_page!(sso_url, attempts \\ 5) do
+    Enum.reduce_while(1..attempts, nil, fn attempt, _acc ->
+      case follow_login_redirects(sso_url) do
+        {:ok, login_page} = ok ->
+          body = login_page.body || ""
+
+          if String.contains?(body, "<form") do
+            {:halt, ok}
+          else
+            snippet = String.slice(body, 0, 500)
+
+            if attempt == attempts do
+              {:halt,
+               {:error,
+                "Keycloak SSO response had no login form after #{attempts} attempts (status=#{login_page.status}): #{snippet}"}}
+            else
+              Process.sleep(500)
+              {:cont, nil}
+            end
+          end
+
+        {:error, _} = err ->
+          if attempt == attempts,
+            do: {:halt, err},
+            else:
+              (
+                Process.sleep(500)
+                {:cont, nil}
+              )
+      end
+    end)
+    |> case do
+      {:ok, login_page} -> login_page
+      {:error, message} when is_binary(message) -> raise message
+      other -> raise "unable to fetch Keycloak login page from #{sso_url}: #{inspect(other)}"
+    end
+  end
+
+  defp follow_login_redirects(url, hops \\ 0, cookie \\ "") do
+    headers = if cookie == "", do: [], else: [{"cookie", cookie}]
+
+    cond do
+      hops > 5 ->
+        {:error, "too many redirects fetching Keycloak login page"}
+
+      true ->
+        case Req.get(url,
+               redirect: false,
+               receive_timeout: 15_000,
+               retry: false,
+               headers: headers
+             ) do
+          {:ok, %{status: status} = response} when status in 300..399 ->
+            cookie = merge_cookie_header(cookie, cookie_header(response))
+
+            case redirect_location(response) do
+              nil ->
+                {:error, "redirect without Location header (status=#{status}) from #{url}"}
+
+              next_url ->
+                follow_login_redirects(absolutize_redirect_url(url, next_url), hops + 1, cookie)
+            end
+
+          {:ok, %{status: status} = response} when status < 200 or status >= 500 ->
+            body = String.slice(response.body || "", 0, 500)
+            {:error, "unexpected Keycloak SSO status #{status} from #{url}: #{body}"}
+
+          {:ok, response} ->
+            cookie = merge_cookie_header(cookie, cookie_header(response))
+            {:ok, Map.put(response, :login_cookie, cookie)}
+
+          {:error, reason} ->
+            {:error, "Keycloak SSO request failed for #{url}: #{inspect(reason)}"}
+        end
+    end
+  end
+
+  defp merge_cookie_header(existing, ""), do: existing
+  defp merge_cookie_header("", incoming), do: incoming
+
+  defp merge_cookie_header(existing, incoming) do
+    (String.split(existing, "; ") ++ String.split(incoming, "; "))
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.uniq()
+    |> Enum.join("; ")
+  end
+
+  defp redirect_location(%{headers: headers}) when is_map(headers) do
+    headers
+    |> Enum.find_value(fn {name, value} ->
+      if String.downcase(name) == "location" do
+        value |> List.wrap() |> List.first()
+      end
+    end)
+  end
+
+  defp login_page_cookie(%{login_cookie: cookie}) when is_binary(cookie), do: cookie
+  defp login_page_cookie(response), do: cookie_header(response)
+
+  defp absolutize_redirect_url(_current_url, location)
+       when is_binary(location) and location =~ ~r/^https?:\/\// do
+    location
+  end
+
+  defp absolutize_redirect_url(current_url, location) when is_binary(location) do
+    URI.merge(current_url, location) |> URI.to_string()
   end
 
   defp build_sso_url(idp_sso_url, %{redirect_query: redirect_query})
