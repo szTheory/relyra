@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Adoption Truth
-status: between-milestones-pause
-last_updated: "2026-06-12T00:00:00.000Z"
-last_activity: 2026-05-29 — Phase 50 complete; PR #28 merged (adoption evidence + Keycloak CI)
+milestone: v1.7
+milestone_name: Adoption Evidence Demo
+status: planning
+last_updated: "2026-06-12T02:33:10.002Z"
+last_activity: 2026-06-12
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -24,11 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-05-28)
 
 ## Current Position
 
-Phase: 50 — Adoption Evidence (Golden Host + Keycloak) — **complete**
-Status: Shipped 2026-05-29 — [#28](https://github.com/szTheory/relyra/pull/28) merged to `main`
-CI proof: `security-gates` (OTP 27+28) + `adoption-external-idp` (Keycloak) green on merge commit `b21bdbb`
-Deliverables: golden host fixtures, `test/adoption/journey_01`–`05`, `examples/quickstart.exs`, `mix ci.demo` / `mix ci.integration`, Keycloak docker realm + `@tag :external_idp` lane
-Last activity: 2026-05-29 — Phase 50 close-out (corpus KeyInfo alignment, Keycloak SSO redirect stability)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-12 — Milestone v1.7 started
 
 ## Performance Metrics
 
