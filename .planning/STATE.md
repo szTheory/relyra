@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
 status: executing
-last_updated: "2026-06-12T15:30:07.021Z"
-last_activity: 2026-06-12 -- Phase 51 planning complete
+last_updated: "2026-06-12T15:48:51.029Z"
+last_activity: 2026-06-12 -- Completed 51-01 scaffold plan
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 6
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 17
 ---
 
 # Project State
@@ -20,23 +20,23 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-12)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection - never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.7 Adoption Evidence Demo - a realistic runnable Phoenix SaaS demo app proving Relyra setup, strict login, Ecto stores, operator diagnosis, Docker DX, browser evidence, and host-app boundaries.
+**Current focus:** Phase 51 — demo-app-foundation
 
 ## Current Position
 
-Phase: 51 of 56 (Demo App Foundation)
-Plan: -
+Phase: 51 (demo-app-foundation) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-06-12 -- Phase 51 planning complete
+Last activity: 2026-06-12 -- Completed 51-01 scaffold plan
 
-Progress: [----------] 0%
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 
 - Last shipped milestone: v1.6 Adoption Truth (Phases 47-49.2)
 - Highest shipped phase: 50 (Adoption Evidence, 2026-05-29)
 - Current milestone phases: 51-56
-- Plans complete this milestone: 0/6 created for Phase 51
+- Plans complete this milestone: 1/6 created for Phase 51
 
 ## Accumulated Context
 
@@ -65,16 +65,18 @@ None currently. Keycloak browser proof is intentionally optional because startup
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand |
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
+| Phase 51 P01 | 7 min | 1 tasks | 39 files |
 
 ## Session Continuity
 
-Resume here: plan Phase 51 with `$gsd-plan-phase 51`.
+Resume here: continue Phase 51 execution with `$gsd-execute-phase 51`.
 
 Primary context:
 
 - `.planning/ROADMAP.md`
 - `.planning/REQUIREMENTS.md`
 - `.planning/phases/51-demo-app-foundation/51-CONTEXT.md`
+- `.planning/phases/51-demo-app-foundation/51-01-SUMMARY.md`
 - `.planning/phases/51-demo-app-foundation/51-UI-SPEC.md`
 - `.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md`
 - `.planning/seeds/SEED-001-adoption-evidence-demo.md`

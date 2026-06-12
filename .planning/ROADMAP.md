@@ -54,7 +54,7 @@ Relyra v1.7 turns the existing adoption proof into a realistic runnable Phoenix 
 Plans:
 **Wave 1**
 
-- [ ] 51-01-PLAN.md — Scaffold LedgerLoop Phoenix app foundation
+- [x] 51-01-PLAN.md — Scaffold LedgerLoop Phoenix app foundation
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -191,7 +191,7 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 51. Demo App Foundation | 0/TBD | Not started | - |
+| 51. Demo App Foundation | 1/6 | In Progress|  |
 | 52. Ecto Stores And Deterministic Seed Story | 0/TBD | Not started | - |
 | 53. Setup And Operator UX | 0/TBD | Not started | - |
 | 54. Local Browser Login Proof | 0/TBD | Not started | - |
