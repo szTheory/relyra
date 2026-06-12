@@ -1,1 +1,183 @@
-/* This file is for your main application CSS */
+:root {
+  --ll-bg: #ffffff;
+  --ll-panel: #f0f4f8;
+  --ll-accent: #0066cc;
+  --ll-danger: #c62828;
+  --ll-success: #2e7d32;
+  --ll-warning: #b87600;
+  --ll-text: #333333;
+  --ll-muted: #555555;
+  --ll-border: #d1d9e1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ll-bg);
+  color: var(--ll-text);
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  background: var(--ll-bg);
+  color: var(--ll-text);
+}
+
+a {
+  color: var(--ll-accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--ll-accent);
+  outline-offset: 3px;
+}
+
+p {
+  margin: 0;
+  color: var(--ll-muted);
+  font-size: 16px;
+}
+
+strong {
+  color: var(--ll-text);
+  font-weight: 600;
+}
+
+.ll-app-shell {
+  min-height: 100vh;
+}
+
+.workspace-shell,
+.route-affordance {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.workspace-header {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 24px;
+  padding: 24px;
+  background: var(--ll-panel);
+  border: 1px solid var(--ll-border);
+  border-radius: 8px;
+}
+
+.workspace-kicker {
+  color: var(--ll-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.workspace-header h1,
+.route-affordance h1 {
+  margin: 0;
+  color: var(--ll-text);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.2fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.workspace-panel,
+.route-affordance {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  background: var(--ll-bg);
+  border: 1px solid var(--ll-border);
+  border-radius: 8px;
+}
+
+.workspace-panel h2 {
+  margin: 0;
+  color: var(--ll-text);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.workspace-panel h3 {
+  margin: 0;
+  color: var(--ll-text);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.status-label {
+  width: fit-content;
+  padding: 4px 8px;
+  color: var(--ll-warning);
+  background: #fff7e6;
+  border: 1px solid var(--ll-warning);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.workspace-panel nav {
+  display: grid;
+  gap: 8px;
+}
+
+.workspace-panel nav a,
+.route-affordance > p:first-child a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 16px;
+  color: var(--ll-bg);
+  background: var(--ll-accent);
+  border: 1px solid var(--ll-accent);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.workspace-panel p a {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.route-affordance {
+  max-width: 720px;
+  margin-top: 24px;
+}
+
+.route-affordance h1 {
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .workspace-shell,
+  .route-affordance {
+    width: min(1120px, calc(100% - 32px));
+    padding-bottom: 32px;
+  }
+
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
