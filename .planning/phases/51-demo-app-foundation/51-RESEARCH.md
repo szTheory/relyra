@@ -354,17 +354,19 @@ end
 | A4 | Minimal demo-owned admin scope provider should make `/relyra/admin` reachable. | Common Pitfalls | LiveAdmin may require more host session setup than planned. |
 | A5 | Health controller code shape follows standard Phoenix controller conventions. | Code Examples | Exact generated controller imports may differ; planner should verify in scaffold. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `/readyz` require database reachability in Phase 51?**
    - What we know: Phase 51 requires Docker/CI-distinguishable ready/unavailable states. [CITED: .planning/REQUIREMENTS.md]
    - What's unclear: Whether readiness should already query `LedgerLoop.Repo` before Phase 52 seeds/migrations deepen data. [ASSUMED]
    - Recommendation: Make `/healthz` app-only and `/readyz` check repo availability if the generated app includes Ecto; do not require seeded data until Phase 52. [ASSUMED]
+   - **RESOLVED:** `/readyz` checks repository availability in Phase 51 without requiring Phase 52 seed data.
 
 2. **Should root CI get a new demo compile alias in Phase 51?**
    - What we know: Phase 55 owns focused `mix ci.demo_app`. [CITED: .planning/ROADMAP.md]
    - What's unclear: Whether Phase 51 should add a root helper alias for planning ergonomics. [ASSUMED]
    - Recommendation: Keep Phase 51 verification commands local to `demo/ledger_loop` plus root package exclusion tests; defer root CI alias to Phase 55. [ASSUMED]
+   - **RESOLVED:** Root `mix ci.demo_app` remains deferred to Phase 55; Phase 51 uses local demo commands and package exclusion checks.
 
 ## Environment Availability
 
