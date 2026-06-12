@@ -118,9 +118,15 @@ defmodule Relyra.RequestStore.Ecto do
     case repo_query(repo, sql, [relay_state]) do
       {:ok, %{rows: [[request_id, intent, nil, expires_at] | _]}}
       when is_binary(request_id) and is_map(intent) ->
+        atomized_intent =
+          Map.new(intent, fn {k, v} ->
+            {if(is_binary(k), do: String.to_existing_atom(k), else: k), v}
+          end)
+
         {:ok,
          {:ok,
-          Map.put_new(intent, :request_id, request_id) |> Map.put_new(:expires_at, expires_at)}}
+          Map.put_new(atomized_intent, :request_id, request_id)
+          |> Map.put_new(:expires_at, expires_at)}}
 
       {:ok, %{rows: [[_request_id, _intent, consumed_at, _expires_at] | _]}}
       when not is_nil(consumed_at) ->
