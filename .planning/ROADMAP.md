@@ -58,7 +58,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 51-02-PLAN.md — Mount Relyra SAML/admin route seams
+- [x] 51-02-PLAN.md — Mount Relyra SAML/admin route seams
 - [ ] 51-06-PLAN.md — Prove repo-local runnability and Hex package exclusion
 
 **Wave 3** *(blocked on Wave 2 completion)*
@@ -191,7 +191,7 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 51. Demo App Foundation | 1/6 | In Progress|  |
+| 51. Demo App Foundation | 2/6 | In Progress|  |
 | 52. Ecto Stores And Deterministic Seed Story | 0/TBD | Not started | - |
 | 53. Setup And Operator UX | 0/TBD | Not started | - |
 | 54. Local Browser Login Proof | 0/TBD | Not started | - |
