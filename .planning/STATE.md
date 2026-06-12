@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
 status: executing
-last_updated: "2026-06-12T18:46:09.581Z"
-last_activity: 2026-06-12 -- Phase 52 planning complete
+last_updated: "2026-06-12T18:53:40.276Z"
+last_activity: 2026-06-12 -- Phase 52 execution complete
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 12
-  completed_plans: 8
-  percent: 17
+  completed_plans: 12
+  percent: 33
 ---
 
 # Project State
@@ -20,24 +20,25 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-12)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection - never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 52 — ecto stores and deterministic seed story
+**Current focus:** Phase 53 — TBD
 
 ## Current Position
 
-Phase: 52
+Phase: 53
 Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-12 -- Phase 52 planning complete
+Status: Ready to plan
+Last activity: 2026-06-12 -- Phase 52 execution complete
 
-Progress: [███████░░░] 67%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 - Last shipped milestone: v1.6 Adoption Truth (Phases 47-49.2)
 - Highest shipped phase: 50 (Adoption Evidence, 2026-05-29)
 - Current milestone phases: 51-56
-- Phase progress this milestone: 1/6 phases complete
+- Phase progress this milestone: 2/6 phases complete
 - Plans complete in Phase 51: 6/6
+- Plans complete in Phase 52: 6/6
 
 ## Accumulated Context
 
@@ -49,6 +50,8 @@ Progress: [███████░░░] 67%
 - Customer/admin setup screens stay host-owned in LedgerLoop; Relyra LiveAdmin remains the operator trust cockpit.
 - Local FakeIdP proof is default and dev/test-only; Keycloak is optional until burn-in justifies promotion.
 - No hosted broker, production IdP, public API shape changes, default-tightening, or security relaxation.
+- LedgerLoop.Relyra.UserMapper uses SAMLIdentity to find a deterministic user and fetches LedgerLoop tenant/groups.
+- LedgerLoop.Relyra.SessionAdapter establishes a host session by writing a deterministic LoginReceipt row and verifying explicitly what Relyra verified vs what LedgerLoop owns.
 
 ### Active Requirements
 
@@ -72,6 +75,7 @@ None currently. Keycloak browser proof is intentionally optional because startup
 | Phase 51 P03 | 5 min | 2 tasks | 5 files |
 | Phase 51 P04 | 8 min | 2 tasks | 8 files |
 | Phase 51 P05 | 12 min | 2 tasks | 4 files |
+| Phase 52 P05 | 10 min | 2 tasks | 4 files |
 
 ## Session Continuity
 
