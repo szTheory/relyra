@@ -56,11 +56,45 @@ defmodule LedgerLoop.Demo.ResetTest do
     end
 
     test "migration does not create Relyra tables" do
-      migration_file = "priv/repo/migrations/20260612170000_create_ledger_loop_demo_tables.exs"
+      migration_file =
+        "priv/repo/migrations/20260612170000_create_ledger_loop_demo_tables.exs"
+
       migration_content = File.read!(migration_file)
 
       refute migration_content =~ "relyra_"
       refute migration_content =~ "Relyra"
+    end
+  end
+
+  describe "Task 2: Deterministic Reset" do
+    test "reset!/0 produces identical rows when called multiple times" do
+      LedgerLoop.Demo.Reset.reset!()
+
+      tenants_1 = Repo.all(Tenant)
+      users_1 = Repo.all(User)
+      groups_1 = Repo.all(Group)
+      memberships_1 = Repo.all(Membership)
+      identities_1 = Repo.all(SAMLIdentity)
+      receipts_1 = Repo.all(LoginReceipt)
+
+      assert length(tenants_1) >= 1
+      assert length(users_1) >= 1
+
+      LedgerLoop.Demo.Reset.reset!()
+
+      tenants_2 = Repo.all(Tenant)
+      users_2 = Repo.all(User)
+      groups_2 = Repo.all(Group)
+      memberships_2 = Repo.all(Membership)
+      identities_2 = Repo.all(SAMLIdentity)
+      receipts_2 = Repo.all(LoginReceipt)
+
+      assert tenants_1 == tenants_2
+      assert users_1 == users_2
+      assert groups_1 == groups_2
+      assert memberships_1 == memberships_2
+      assert identities_1 == identities_2
+      assert receipts_1 == receipts_2
     end
   end
 end
