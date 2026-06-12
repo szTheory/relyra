@@ -85,7 +85,28 @@ Plans:
   4. A successful demo login writes and consumes Ecto-backed connection, request, and replay records with fixed host-owned table names.
   5. Login receipts show Relyra verified the principal while LedgerLoop owns user mapping, session establishment, and authorization.
 
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+**Wave 1**
+
+- [ ] 52-01-PLAN.md - Run Relyra shipped migrations from dependency path
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 52-02-PLAN.md - Create deterministic LedgerLoop host data reset
+- [ ] 52-04-PLAN.md - Add fixed Ecto request and replay store wrappers
+
+**Wave 3** *(blocked on Wave 2 host data completion)*
+
+- [ ] 52-03-PLAN.md - Seed inspectable Relyra connection scenarios
+
+**Wave 4** *(blocked on seeded scenarios and fixed stores)*
+
+- [ ] 52-05-PLAN.md - Implement host-owned mapper and session receipt boundary
+
+**Wave 5** *(blocked on host boundary completion)*
+
+- [ ] 52-06-PLAN.md - Prove signed Ecto-backed non-browser login path
 
 ### Phase 53: Setup And Operator UX
 
@@ -192,7 +213,7 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 51. Demo App Foundation | 6/6 | Complete    | 2026-06-12 |
-| 52. Ecto Stores And Deterministic Seed Story | 0/TBD | Not started | - |
+| 52. Ecto Stores And Deterministic Seed Story | 0/6 | Not started | - |
 | 53. Setup And Operator UX | 0/TBD | Not started | - |
 | 54. Local Browser Login Proof | 0/TBD | Not started | - |
 | 55. Docker, CI, And Optional Keycloak Proof | 0/TBD | Not started | - |
