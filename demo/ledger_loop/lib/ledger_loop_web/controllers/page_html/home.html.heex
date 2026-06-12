@@ -13,15 +13,26 @@
   <section class="workspace-grid" aria-label="LedgerLoop operational workspace">
     <section class="workspace-panel" aria-labelledby="tenant-status-title">
       <h2 id="tenant-status-title">Northstar Health SSO status</h2>
-      <p class="status-label">Needs setup</p>
-      <h3>No tenant data loaded</h3>
-      <p>
-        Run the demo reset command, then refresh this workspace to load Northstar Health and its SSO status.
-      </p>
-      <p>
-        Phase 52 loads deterministic tenant data. Until then, this workspace keeps the route
-        affordances visible without inventing seeded state.
-      </p>
+      <%= if @has_tenant? do %>
+        <p class="status-label">Seeded Scenarios Active</p>
+        <ul class="scenario-list">
+          <%= for scenario <- @scenarios do %>
+            <li>
+              <strong><%= scenario.name %></strong>: {scenario.status}
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="status-label">Needs setup</p>
+        <h3>No tenant data loaded</h3>
+        <p>
+          Run the demo reset command, then refresh this workspace to load Northstar Health and its SSO status.
+        </p>
+        <p>
+          Phase 52 loads deterministic tenant data. Until then, this workspace keeps the route
+          affordances visible without inventing seeded state.
+        </p>
+      <% end %>
     </section>
 
     <section class="workspace-panel" aria-labelledby="actions-title">

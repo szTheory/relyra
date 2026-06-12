@@ -1,7 +1,29 @@
 defmodule LedgerLoopWeb.PageControllerTest do
   use LedgerLoopWeb.ConnCase
 
-  test "GET /", %{conn: conn} do
+  alias LedgerLoop.Demo.Reset
+
+  setup do
+    Reset.reset!()
+    :ok
+  end
+
+  test "GET / after reset shows Northstar Health and scenario labels (Test 1)", %{conn: conn} do
+    conn = get(conn, ~p"/")
+    response = html_response(conn, 200)
+
+    for label <- [
+          "Northstar Health",
+          "Enabled",
+          "Draft/Missing Metadata",
+          "Staged Rollover",
+          "Support Failure"
+        ] do
+      assert response =~ label
+    end
+  end
+
+  test "GET / still includes existing route affordance and scope labels (Test 2)", %{conn: conn} do
     conn = get(conn, ~p"/")
     response = html_response(conn, 200)
 
@@ -30,9 +52,16 @@ defmodule LedgerLoopWeb.PageControllerTest do
         ] do
       assert response =~ href
     end
+  end
+
+  test "GET / still omits forbidden tokens (Test 3)", %{conn: conn} do
+    conn = get(conn, ~p"/")
+    response = html_response(conn, 200)
 
     for forbidden <- [
           "BEGIN CERTIFICATE",
+          "PRIVATE KEY",
+          "<?xml",
           "SAMLResponse",
           "Assertion",
           "RelayState=",
