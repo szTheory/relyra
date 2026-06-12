@@ -30,7 +30,7 @@ Relyra v1.7 turns the existing adoption proof into a realistic runnable Phoenix 
 
 - [x] **Phase 51: Demo App Foundation** - Evaluators can boot a conventional LedgerLoop Phoenix app with Relyra mounted as a local path dependency. (completed 2026-06-12)
 - [ ] **Phase 52: Ecto Stores And Deterministic Seed Story** - The demo proves durable Relyra stores and deterministic LedgerLoop / Northstar Health data.
-- [ ] **Phase 53: Setup And Operator UX** - Customer/admin setup, receipts, support handoffs, and mounted LiveAdmin are visible in a calm operator UI.
+- [x] **Phase 53: Setup And Operator UX** - Customer/admin setup, receipts, support handoffs, and mounted LiveAdmin are visible in a calm operator UI. (completed 2026-06-12)
 - [ ] **Phase 54: Local Browser Login Proof** - The default offline FakeIdP path completes strict in-browser SAML login with receipts and trace evidence.
 - [ ] **Phase 55: Docker, CI, And Optional Keycloak Proof** - Demo commands, Compose profiles, focused CI, browser evidence, and optional Keycloak proof run without weakening security gates.
 - [ ] **Phase 56: Documentation And Evidence Polish** - README and demo guide make the runnable app useful as evaluator evidence and adopter onboarding.
@@ -121,7 +121,7 @@ Plans:
   4. Support scenarios link to trace and diagnostic surfaces while clearly separating runtime login trace evidence from trust-mutation audit rows.
   5. The demo UI uses accessible status text, precise microcopy, light/dark/system support, and no color-only risk indicators.
 
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 **Wave 1**
 
@@ -129,7 +129,11 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 53-02-PLAN.md — LiveView setup checklist and safe receipts
+- [x] 53-02-PLAN.md — LiveView setup checklist and safe receipts
+
+**Wave 3** *(gap closure)*
+
+- [ ] 53-03-PLAN.md — Fix Setup Checklist UI gaps by implementing functional SP settings, an IdP metadata intake form, mapping preview, and test login logic.
 
 **UI hint**: yes
 
@@ -223,7 +227,7 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 |-------|----------------|--------|-----------|
 | 51. Demo App Foundation | 6/6 | Complete    | 2026-06-12 |
 | 52. Ecto Stores And Deterministic Seed Story | 3/6 | In Progress|  |
-| 53. Setup And Operator UX | 1/2 | In Progress|  |
+| 53. Setup And Operator UX | 2/2 | Complete   | 2026-06-12 |
 | 54. Local Browser Login Proof | 0/TBD | Not started | - |
 | 55. Docker, CI, And Optional Keycloak Proof | 0/TBD | Not started | - |
 | 56. Documentation And Evidence Polish | 0/TBD | Not started | - |
