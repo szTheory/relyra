@@ -1,6 +1,9 @@
 defmodule LedgerLoopWeb.Router do
   use LedgerLoopWeb, :router
 
+  import Relyra.LiveAdmin.Router
+  import Relyra.Phoenix.Router
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -14,10 +17,24 @@ defmodule LedgerLoopWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", LedgerLoopWeb do
+  scope "/" do
     pipe_through :browser
 
-    get "/", PageController, :home
+    get "/", LedgerLoopWeb.PageController, :home
+    get "/setup/sso", LedgerLoopWeb.RouteAffordanceController, :setup
+    get "/login/test", LedgerLoopWeb.RouteAffordanceController, :login
+    get "/support/scenario", LedgerLoopWeb.RouteAffordanceController, :support
+
+    relyra_admin_routes("/relyra/admin",
+      repo: LedgerLoop.Repo,
+      scope_provider: LedgerLoop.Relyra.AdminScope
+    )
+  end
+
+  scope "/saml" do
+    pipe_through :browser
+
+    saml_routes()
   end
 
   # Other scopes may use custom stacks.
