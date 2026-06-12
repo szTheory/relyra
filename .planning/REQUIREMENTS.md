@@ -15,8 +15,8 @@
 
 ### Data And Stores
 
-- [ ] **DATA-01**: Demo reset creates deterministic LedgerLoop / Northstar Health tenants, users, groups, memberships, SAML identities, mappings, cert states, audit rows, and trace/failure scenarios.
-- [ ] **DATA-02**: Demo seeds at least one enabled happy-path connection, one draft/missing-metadata connection, one staged-certificate scenario, and one failure/support scenario.
+- [x] **DATA-01**: Demo reset creates deterministic LedgerLoop / Northstar Health tenants, users, groups, memberships, SAML identities, mappings, cert states, audit rows, and trace/failure scenarios.
+- [x] **DATA-02**: Demo seeds at least one enabled happy-path connection, one draft/missing-metadata connection, one staged-certificate scenario, and one failure/support scenario.
 - [ ] **ECTO-01**: Demo runs Relyra's shipped Ecto migrations from the dependency path instead of copying migration files.
 - [ ] **ECTO-02**: Demo happy path uses Ecto-backed connection resolution, request store, and replay store.
 - [ ] **ECTO-03**: Demo provides host-owned wrapper modules for Relyra request/replay stores with fixed table names and no request-param-derived storage targets.
@@ -89,8 +89,8 @@
 | DEMO-03 | Phase 51 | Complete |
 | DEMO-04 | Phase 51 | Complete |
 | DEMO-05 | Phase 51 | Complete |
-| DATA-01 | Phase 52 | Pending |
-| DATA-02 | Phase 52 | Pending |
+| DATA-01 | Phase 52 | Complete |
+| DATA-02 | Phase 52 | Complete |
 | ECTO-01 | Phase 52 | Pending |
 | ECTO-02 | Phase 52 | Pending |
 | ECTO-03 | Phase 52 | Pending |
