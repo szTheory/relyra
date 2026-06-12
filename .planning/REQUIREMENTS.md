@@ -20,15 +20,15 @@
 - [ ] **ECTO-01**: Demo runs Relyra's shipped Ecto migrations from the dependency path instead of copying migration files.
 - [ ] **ECTO-02**: Demo happy path uses Ecto-backed connection resolution, request store, and replay store.
 - [ ] **ECTO-03**: Demo provides host-owned wrapper modules for Relyra request/replay stores with fixed table names and no request-param-derived storage targets.
-- [ ] **ECTO-04**: Demo user mapping and session establishment remain host-owned and demonstrate the boundary between verified principal and product authorization.
+- [x] **ECTO-04**: Demo user mapping and session establishment remain host-owned and demonstrate the boundary between verified principal and product authorization.
 
 ### Setup And Operator UX
 
 - [ ] **FLOW-01**: Customer/admin setup page shows copyable SP settings, provider vocabulary, IdP metadata/manual intake, mapping preview, test-login action, and enablement receipt.
 - [ ] **FLOW-02**: Setup UX uses a task-list/checklist pattern suitable for nonlinear SAML setup across multiple systems and people.
 - [ ] **FLOW-03**: Login/setup receipts state what was verified, mapped, replay-checked, and handed to the host app without exposing raw XML, PEM, or secrets.
-- [ ] **ADMIN-01**: Demo mounts Relyra LiveAdmin for operator trust-state workflows using a proper repo and scope provider.
-- [ ] **ADMIN-02**: Demo links support scenarios to LiveAdmin trace/diagnostic surfaces without confusing login trace evidence with trust-mutation audit rows.
+- [x] **ADMIN-01**: Demo mounts Relyra LiveAdmin for operator trust-state workflows using a proper repo and scope provider.
+- [x] **ADMIN-02**: Demo links support scenarios to LiveAdmin trace/diagnostic surfaces without confusing login trace evidence with trust-mutation audit rows.
 - [ ] **UX-01**: Demo UI follows Relyra's calm/operator brand: accessible status text, clear microcopy, light/dark/system support, and no color-only risk indicators.
 
 ### Identity Provider Proof
@@ -94,12 +94,12 @@
 | ECTO-01 | Phase 52 | Pending |
 | ECTO-02 | Phase 52 | Pending |
 | ECTO-03 | Phase 52 | Pending |
-| ECTO-04 | Phase 52 | Pending |
+| ECTO-04 | Phase 52 | Complete |
 | FLOW-01 | Phase 53 | Pending |
 | FLOW-02 | Phase 53 | Pending |
 | FLOW-03 | Phase 53 | Pending |
-| ADMIN-01 | Phase 53 | Pending |
-| ADMIN-02 | Phase 53 | Pending |
+| ADMIN-01 | Phase 53 | Complete |
+| ADMIN-02 | Phase 53 | Complete |
 | UX-01 | Phase 53 | Pending |
 | IDP-01 | Phase 54 | Pending |
 | IDP-02 | Phase 54 | Pending |

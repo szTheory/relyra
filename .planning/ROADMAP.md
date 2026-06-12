@@ -102,7 +102,7 @@ Plans:
 
 **Wave 4** *(blocked on seeded scenarios and fixed stores)*
 
-- [ ] 52-05-PLAN.md - Implement host-owned mapper and session receipt boundary
+- [x] 52-05-PLAN.md - Implement host-owned mapper and session receipt boundary
 
 **Wave 5** *(blocked on host boundary completion)*
 
@@ -121,7 +121,16 @@ Plans:
   4. Support scenarios link to trace and diagnostic surfaces while clearly separating runtime login trace evidence from trust-mutation audit rows.
   5. The demo UI uses accessible status text, precise microcopy, light/dark/system support, and no color-only risk indicators.
 
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+**Wave 1**
+
+- [x] 53-01-PLAN.md — Admin session mocking and support trace routing
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 53-02-PLAN.md — LiveView setup checklist and safe receipts
+
 **UI hint**: yes
 
 ### Phase 54: Local Browser Login Proof
@@ -213,8 +222,8 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 51. Demo App Foundation | 6/6 | Complete    | 2026-06-12 |
-| 52. Ecto Stores And Deterministic Seed Story | 2/6 | In Progress|  |
-| 53. Setup And Operator UX | 0/TBD | Not started | - |
+| 52. Ecto Stores And Deterministic Seed Story | 3/6 | In Progress|  |
+| 53. Setup And Operator UX | 1/2 | In Progress|  |
 | 54. Local Browser Login Proof | 0/TBD | Not started | - |
 | 55. Docker, CI, And Optional Keycloak Proof | 0/TBD | Not started | - |
 | 56. Documentation And Evidence Polish | 0/TBD | Not started | - |
