@@ -114,6 +114,9 @@
 | DOCS-01 | Phase 56 | Pending |
 | DOCS-02 | Phase 56 | Pending |
 | DOCS-03 | Phase 56 | Pending |
+| PORTAL-01 | Future | Deferred |
+| SCREENSHOT-01 | Future | Deferred |
+| KMS-01 | Future | Demand-gated |
 
 **Coverage:**
 - v1.7 requirements: 30 total
