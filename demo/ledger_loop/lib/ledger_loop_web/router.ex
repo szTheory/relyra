@@ -17,6 +17,17 @@ defmodule LedgerLoopWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :health do
+    plug(:accepts, ["json"])
+  end
+
+  scope "/" do
+    pipe_through(:health)
+
+    get("/healthz", LedgerLoopWeb.HealthController, :health)
+    get("/readyz", LedgerLoopWeb.HealthController, :ready)
+  end
+
   scope "/" do
     pipe_through :browser
 
