@@ -32,7 +32,7 @@ defmodule LedgerLoopWeb.Router do
     pipe_through :browser
 
     get "/", LedgerLoopWeb.PageController, :home
-    get "/setup/sso", LedgerLoopWeb.RouteAffordanceController, :setup
+    live "/setup/sso", LedgerLoopWeb.SetupLive, :index
     get "/login/test", LedgerLoopWeb.RouteAffordanceController, :login
     get "/login/admin", LedgerLoopWeb.RouteAffordanceController, :admin_login
     get "/support/scenario", LedgerLoopWeb.RouteAffordanceController, :support
