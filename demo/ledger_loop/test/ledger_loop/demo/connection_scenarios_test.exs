@@ -41,15 +41,15 @@ defmodule LedgerLoop.Demo.ConnectionScenariosTest do
   test "Test 3: staged-certificate scenario has active and next certificate lifecycle rows" do
     staged_conn = Repo.get_by!(Connection, display_name: "Northstar Health (Staged Rollover)")
     certs = Repo.all(Ecto.assoc(staged_conn, :certificates))
-    
+
     assert Enum.any?(certs, &(&1.lifecycle_state == :active))
     assert Enum.any?(certs, &(&1.lifecycle_state == :next))
   end
 
   test "Test 4: support scenario has domain: :login audit rows with the six required trace step names and no raw XML/PEM/secrets in summaries" do
     support_conn = Repo.get_by!(Connection, display_name: "Northstar Health (Support Failure)")
-    
-    audit_events = 
+
+    audit_events =
       AuditEvent
       |> Ecto.Query.where(connection_record_id: ^support_conn.id, domain: :login)
       |> Repo.all()
@@ -57,9 +57,16 @@ defmodule LedgerLoop.Demo.ConnectionScenariosTest do
     assert length(audit_events) > 0
 
     # Actually, let's check the required trace step names
-    required_steps = ["response.decode", "response.validate", "signature.verify", "replay.check", "user.map", "session.establish"]
-    
-    found_steps = 
+    required_steps = [
+      "response.decode",
+      "response.validate",
+      "signature.verify",
+      "replay.check",
+      "user.map",
+      "session.establish"
+    ]
+
+    found_steps =
       audit_events
       |> Enum.map(& &1.diff_summary["step"])
       |> Enum.reject(&is_nil/1)
@@ -70,13 +77,22 @@ defmodule LedgerLoop.Demo.ConnectionScenariosTest do
     end
 
     # Check for forbidden tokens
-    forbidden_tokens = ["<?xml", "BEGIN CERTIFICATE", "PRIVATE KEY", "SAMLResponse", "RelayState", "FakeIdP", "Keycloak"]
-    
+    forbidden_tokens = [
+      "<?xml",
+      "BEGIN CERTIFICATE",
+      "PRIVATE KEY",
+      "SAMLResponse",
+      "RelayState",
+      "FakeIdP",
+      "Keycloak"
+    ]
+
     for event <- audit_events do
       summary_json = Jason.encode!(event.diff_summary)
-      
+
       for token <- forbidden_tokens do
-        refute String.contains?(summary_json, token), "Found forbidden token #{token} in audit summary"
+        refute String.contains?(summary_json, token),
+               "Found forbidden token #{token} in audit summary"
       end
     end
   end

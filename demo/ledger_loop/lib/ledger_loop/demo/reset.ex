@@ -21,6 +21,7 @@ defmodule LedgerLoop.Demo.Reset do
       # Delete Relyra data
       connections = Repo.all(from c in Connection, where: c.organization_id == "northstar")
       conn_ids = Enum.map(connections, & &1.id)
+
       if length(conn_ids) > 0 do
         Repo.delete_all(from a in AuditEvent, where: a.connection_record_id in ^conn_ids)
         Repo.delete_all(from c in Certificate, where: c.connection_record_id in ^conn_ids)
@@ -44,11 +45,19 @@ defmodule LedgerLoop.Demo.Reset do
 
       # Insert Support Failure Trace Events
       support_id = Fixtures.relyra_support_scenario_id()
-      trace_steps = ["response.decode", "response.validate", "signature.verify", "replay.check", "user.map", "session.establish"]
-      
+
+      trace_steps = [
+        "response.decode",
+        "response.validate",
+        "signature.verify",
+        "replay.check",
+        "user.map",
+        "session.establish"
+      ]
+
       for {step, index} <- Enum.with_index(trace_steps) do
         action = if step == "session.establish", do: :failed, else: :succeeded
-        
+
         attrs = %{
           connection_record_id: support_id,
           domain: :login,
@@ -64,7 +73,7 @@ defmodule LedgerLoop.Demo.Reset do
             "status" => if(action == :failed, do: "error", else: "ok")
           }
         }
-        
+
         {:ok, _} = AuditWriter.append_event(Repo, attrs)
       end
     end)

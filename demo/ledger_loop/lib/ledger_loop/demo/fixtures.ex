@@ -18,13 +18,13 @@ defmodule LedgerLoop.Demo.Fixtures do
   # Relyra scenario IDs
   @enabled_conn_id "aaaaaaaa-1111-1111-1111-aaaaaaaaaaaa"
   @enabled_conn_ulid "01H0B4Y1A2B3C4D5E6F7G8H9J0"
-  
+
   @draft_conn_id "bbbbbbbb-2222-2222-2222-bbbbbbbbbbbb"
   @draft_conn_ulid "01H0B4Y1A2B3C4D5E6F7G8H9J1"
-  
+
   @staged_conn_id "cccccccc-3333-3333-3333-cccccccccccc"
   @staged_conn_ulid "01H0B4Y1A2B3C4D5E6F7G8H9J2"
-  
+
   @support_conn_id "dddddddd-4444-4444-4444-dddddddddddd"
   @support_conn_ulid "01H0B4Y1A2B3C4D5E6F7G8H9J3"
 
