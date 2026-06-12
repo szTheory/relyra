@@ -34,6 +34,7 @@ defmodule LedgerLoopWeb.Router do
     get "/", LedgerLoopWeb.PageController, :home
     get "/setup/sso", LedgerLoopWeb.RouteAffordanceController, :setup
     get "/login/test", LedgerLoopWeb.RouteAffordanceController, :login
+    get "/login/admin", LedgerLoopWeb.RouteAffordanceController, :admin_login
     get "/support/scenario", LedgerLoopWeb.RouteAffordanceController, :support
 
     relyra_admin_routes("/relyra/admin",
