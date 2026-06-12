@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
 status: planning
-last_updated: "2026-06-12"
-last_activity: 2026-06-12
+last_updated: "2026-06-12T14:20:53.061Z"
+last_activity: 2026-06-12 - Phase 51 UI-SPEC approved
 progress:
   total_phases: 6
   completed_phases: 0
@@ -26,8 +26,8 @@ See: `.planning/PROJECT.md` (updated 2026-06-12)
 
 Phase: 51 of 56 (Demo App Foundation)
 Plan: -
-Status: Not started / ready to plan
-Last activity: 2026-06-12 - Roadmap created for v1.7 Adoption Evidence Demo
+Status: UI-SPEC approved / ready to plan
+Last activity: 2026-06-12 - Phase 51 UI-SPEC approved
 
 Progress: [----------] 0%
 
@@ -71,7 +71,9 @@ None currently. Keycloak browser proof is intentionally optional because startup
 Resume here: plan Phase 51 with `$gsd-plan-phase 51`.
 
 Primary context:
+
 - `.planning/ROADMAP.md`
 - `.planning/REQUIREMENTS.md`
+- `.planning/phases/51-demo-app-foundation/51-UI-SPEC.md`
 - `.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md`
 - `.planning/seeds/SEED-001-adoption-evidence-demo.md`
