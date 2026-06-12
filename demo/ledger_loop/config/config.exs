@@ -30,6 +30,12 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :relyra,
+  connection_resolver: Relyra.ConnectionResolver.Ecto,
+  request_store: LedgerLoop.Relyra.RequestStore,
+  replay_store: LedgerLoop.Relyra.ReplayStore,
+  repo: LedgerLoop.Repo
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
