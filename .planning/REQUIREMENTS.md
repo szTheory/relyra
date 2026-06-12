@@ -24,12 +24,12 @@
 
 ### Setup And Operator UX
 
-- [ ] **FLOW-01**: Customer/admin setup page shows copyable SP settings, provider vocabulary, IdP metadata/manual intake, mapping preview, test-login action, and enablement receipt.
-- [ ] **FLOW-02**: Setup UX uses a task-list/checklist pattern suitable for nonlinear SAML setup across multiple systems and people.
-- [ ] **FLOW-03**: Login/setup receipts state what was verified, mapped, replay-checked, and handed to the host app without exposing raw XML, PEM, or secrets.
+- [x] **FLOW-01**: Customer/admin setup page shows copyable SP settings, provider vocabulary, IdP metadata/manual intake, mapping preview, test-login action, and enablement receipt.
+- [x] **FLOW-02**: Setup UX uses a task-list/checklist pattern suitable for nonlinear SAML setup across multiple systems and people.
+- [x] **FLOW-03**: Login/setup receipts state what was verified, mapped, replay-checked, and handed to the host app without exposing raw XML, PEM, or secrets.
 - [x] **ADMIN-01**: Demo mounts Relyra LiveAdmin for operator trust-state workflows using a proper repo and scope provider.
 - [x] **ADMIN-02**: Demo links support scenarios to LiveAdmin trace/diagnostic surfaces without confusing login trace evidence with trust-mutation audit rows.
-- [ ] **UX-01**: Demo UI follows Relyra's calm/operator brand: accessible status text, clear microcopy, light/dark/system support, and no color-only risk indicators.
+- [x] **UX-01**: Demo UI follows Relyra's calm/operator brand: accessible status text, clear microcopy, light/dark/system support, and no color-only risk indicators.
 
 ### Identity Provider Proof
 
@@ -95,12 +95,12 @@
 | ECTO-02 | Phase 52 | Pending |
 | ECTO-03 | Phase 52 | Pending |
 | ECTO-04 | Phase 52 | Complete |
-| FLOW-01 | Phase 53 | Pending |
-| FLOW-02 | Phase 53 | Pending |
-| FLOW-03 | Phase 53 | Pending |
+| FLOW-01 | Phase 53 | Complete |
+| FLOW-02 | Phase 53 | Complete |
+| FLOW-03 | Phase 53 | Complete |
 | ADMIN-01 | Phase 53 | Complete |
 | ADMIN-02 | Phase 53 | Complete |
-| UX-01 | Phase 53 | Pending |
+| UX-01 | Phase 53 | Complete |
 | IDP-01 | Phase 54 | Pending |
 | IDP-02 | Phase 54 | Pending |
 | E2E-01 | Phase 54 | Pending |
