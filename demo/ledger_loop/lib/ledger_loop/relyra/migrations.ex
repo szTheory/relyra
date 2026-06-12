@@ -16,7 +16,7 @@ defmodule LedgerLoop.Relyra.Migrations do
   """
   def migrate_relyra!(opts \\ []) do
     path = relyra_migrations_path()
-    
+
     # Run the migrations via Ecto.Migrator
     Ecto.Migrator.with_repo(LedgerLoop.Repo, fn repo ->
       Ecto.Migrator.run(repo, path, :up, Keyword.merge([all: true], opts))
