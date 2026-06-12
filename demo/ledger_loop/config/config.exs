@@ -35,6 +35,7 @@ config :relyra,
   request_store: LedgerLoop.Relyra.RequestStore,
   replay_store: LedgerLoop.Relyra.ReplayStore,
   user_mapper: LedgerLoop.Relyra.UserMapper,
+  session_adapter: LedgerLoop.Relyra.SessionAdapter,
   repo: LedgerLoop.Repo
 
 # Import environment specific config. This must remain at the bottom
