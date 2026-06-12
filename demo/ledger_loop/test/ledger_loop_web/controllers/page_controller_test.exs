@@ -5,11 +5,41 @@ defmodule LedgerLoopWeb.PageControllerTest do
     conn = get(conn, ~p"/")
     response = html_response(conn, 200)
 
-    assert response =~ "LedgerLoop Workspace"
-    assert response =~ "Northstar Health SSO status"
-    assert response =~ "Open SSO Setup"
-    assert response =~ "Start Test Login"
-    assert response =~ "Open Relyra Admin"
-    assert response =~ "Open Support Scenario"
+    for label <- [
+          "LedgerLoop Workspace",
+          "Northstar Health SSO status",
+          "Open SSO Setup",
+          "Start Test Login",
+          "Open Relyra Admin",
+          "Open Support Scenario",
+          "Mounted SAML routes: /saml",
+          "Mounted operator routes: /relyra/admin",
+          "Demo health",
+          "Demo readiness"
+        ] do
+      assert response =~ label
+    end
+
+    for href <- [
+          ~s(href="/setup/sso"),
+          ~s(href="/login/test"),
+          ~s(href="/relyra/admin"),
+          ~s(href="/support/scenario"),
+          ~s(href="/healthz"),
+          ~s(href="/readyz")
+        ] do
+      assert response =~ href
+    end
+
+    for forbidden <- [
+          "BEGIN CERTIFICATE",
+          "SAMLResponse",
+          "Assertion",
+          "RelayState=",
+          "FakeIdP",
+          "Keycloak"
+        ] do
+      refute response =~ forbidden
+    end
   end
 end
