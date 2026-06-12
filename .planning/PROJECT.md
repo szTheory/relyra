@@ -30,6 +30,8 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 **Goal:** Build a realistic runnable Phoenix SaaS demo that proves Relyra's adopter story end to end: setup, tenant SSO configuration, strict SAML login, production-like Ecto stores, operator/admin diagnosis, Docker DX, and browser-visible receipts.
 
+**Status:** Phase 51 (Demo App Foundation) is complete and verified as of 2026-06-12: `demo/ledger_loop` boots as a Phoenix host app with Relyra as a path dependency, visible LedgerLoop workspace, `/saml` and `/relyra/admin` route mounts, health/readiness probes, and Hex package exclusion proof. Next up is Phase 52, deterministic seed data and durable Ecto store proof.
+
 **Target features:**
 - Real Phoenix app at `demo/ledger_loop` using Relyra as a path dependency and excluded from Hex packaging.
 - LedgerLoop / Northstar Health seeded B2B SaaS story with tenants, users, groups, mappings, connection state, cert states, audit rows, and trace scenarios.
@@ -156,11 +158,13 @@ The v1.x milestone arc:
 - ✓ **ADOPT-05** — `docs/jtbd_gap_map.md` refreshed to v1.5 shipped reality — v1.6 (Phase 49)
 - ✓ **ADOPT-06** — Preset taxonomy honesty (README / Getting Started / generic runbook alignment) — v1.6 (Phase 49)
 
+**v1.7:**
+- ✓ **DEMO-01..DEMO-05** — LedgerLoop Phoenix demo foundation: repo-local path dependency, Hex package exclusion, first-screen workspace, host-owned SAML/admin route scopes, and health/readiness probes — v1.7 (Phase 51 verified 2026-06-12)
+
 ### Active
 
 <!-- Carried forward; building toward these next. -->
 
-- [ ] **DEMO-01** — Runnable LedgerLoop Phoenix demo app proves Relyra in a realistic host application.
 - [ ] **DATA-01** — Deterministic seeds create a realistic tenant, identity, mapping, cert, audit, and trace story.
 - [ ] **ECTO-01** — Demo happy path uses Ecto production stores, including request and replay stores.
 - [ ] **FLOW-01** — Customer/admin setup pages show copyable SP settings, IdP intake, mapping preview, test-login, and enablement receipt.
@@ -273,4 +277,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-06-12 after starting v1.7 Adoption Evidence Demo. See `.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md`, `.planning/seeds/SEED-001-adoption-evidence-demo.md`, and `.planning/REQUIREMENTS.md`.*
+*Last updated: 2026-06-12 after completing Phase 51 Demo App Foundation. See `.planning/phases/51-demo-app-foundation/51-VERIFICATION.md`, `.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md`, `.planning/seeds/SEED-001-adoption-evidence-demo.md`, and `.planning/REQUIREMENTS.md`.*
