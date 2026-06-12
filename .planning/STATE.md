@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Adoption Truth
 status: between-milestones-pause
-last_updated: "2026-05-29T01:05:00.000Z"
+last_updated: "2026-06-12T00:00:00.000Z"
 last_activity: 2026-05-29 — Phase 50 complete; PR #28 merged (adoption evidence + Keycloak CI)
 progress:
   total_phases: 5
@@ -20,7 +20,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-28)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Pause default — between milestones. Phase 50 (Adoption Evidence) shipped via [#28](https://github.com/szTheory/relyra/pull/28). Next phase when work resumes: **51**. Assessment: `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`
+**Current focus:** Private adoption-evidence trigger recorded. Phase 50 (Adoption Evidence) shipped via [#28](https://github.com/szTheory/relyra/pull/28), but the next milestone should now be **v1.7 Adoption Evidence Demo** starting at **Phase 51**: a realistic runnable Phoenix SaaS demo app, Docker DX, seeded data, Ecto production stores, LiveAdmin/customer setup flows, local FakeIdP proof, optional Keycloak proof, and browser E2E. Assessment: `.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md`
 
 ## Current Position
 
@@ -45,6 +45,7 @@ Last activity: 2026-05-29 — Phase 50 close-out (corpus KeyInfo alignment, Keyc
 - v1.6 is doc-only: onboarding truth, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy. No new SAML protocol surface area.
 - After v1.6: pause until external demand signal (AUTHN-POST-01, KMS-01, SIGNED-META-01 remain save-for-demand).
 - Post-v1.6 assessment (2026-05-28): ~93% done-enough; **do not** open v1.7 feature milestone without trigger. Next phase when work resumes: **51** (continue numbering).
+- **Private trigger recorded 2026-06-12:** adoption evidence is the next blocker. Recommended next milestone: v1.7 Adoption Evidence Demo (Phase 51+) — realistic runnable Phoenix SaaS demo under `demo/ledger_loop`, deterministic seeds, Docker DX, mounted LiveAdmin, customer/admin setup flow, Ecto connection/request/replay stores, local FakeIdP proof, optional Keycloak profile, browser E2E. Thread: `.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md`.
 - **Phase 50 shipped 2026-05-29:** Adoption evidence automation — golden host, integrator journeys, Keycloak external IdP CI ([#28](https://github.com/szTheory/relyra/pull/28)). PureBeam KeyInfo interop: rogue KeyInfo outside `Signature` rejected; KeyInfo inside standard XMLDSig ignored for trust (configured IdP certs only).
 - Hex **1.5.4** live (2026-05-28): release-please [#23](https://github.com/szTheory/relyra/pull/23) automerged; publish via automerge dispatch ([#22](https://github.com/szTheory/relyra/pull/22)).
 - Hex **1.5.3** live (hands-off proof 2026-05-28): doc trigger [#17](https://github.com/szTheory/relyra/pull/17) → release-please [#18](https://github.com/szTheory/relyra/pull/18) automerged → Hex publish. CI fixes [#19–#22](https://github.com/szTheory/relyra/pull/22). Proof thread: `.planning/threads/hands-off-release-proof-2026-05-29.md`.
@@ -107,11 +108,14 @@ Last activity: 2026-05-29 — Phase 50 close-out (corpus KeyInfo alignment, Keyc
 | demand_gated | AUTHN-POST-01 | save-for-demand |
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand (investigation stub only) |
+| active_trigger | v1.7 Adoption Evidence Demo | next milestone candidate — private adoption evidence signal recorded 2026-06-12 |
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async (checked 2026-05-28 — GHSA-jv46-xfwm-36j7 `cve_id` still null; weekly `cve-advisory-check` workflow) |
 
 ## Session Continuity
 
-**Resume here:** Pause default — Phase 50 complete ([#28](https://github.com/szTheory/relyra/pull/28)). Cold-start context: [`.planning/threads/session-handoff-2026-05-29.md`](.planning/threads/session-handoff-2026-05-29.md).
+**Resume here:** Phase 50 complete ([#28](https://github.com/szTheory/relyra/pull/28)); private adoption-evidence trigger recorded 2026-06-12. Cold-start context for next milestone: [`.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md`](.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md).
+
+**2026-06-12 — Adoption Evidence Demo roadmap recorded.** Private maintainer signal: realistic runnable demo app + self-service/admin UI where useful are now the highest-leverage next milestone. Recommended: `$gsd-new-milestone` for **v1.7 Adoption Evidence Demo**, starting Phase **51**. Keep protocol wedges demand-gated.
 
 **2026-05-29 — Phase 50 complete.** [#28](https://github.com/szTheory/relyra/pull/28) merged: golden host fixtures, adoption journey tests (`mix ci.integration`, `mix ci.demo`), Keycloak external IdP lane (`mix ci.external_idp`), Getting Started maintainer CI proof block. CI green: `security-gates` + `adoption-external-idp`. Pause default restored; next phase **51** on demand signal.
 
@@ -146,11 +150,11 @@ Last activity: 2026-05-29 — Phase 50 close-out (corpus KeyInfo alignment, Keyc
 ### Post-v1.6 assessment (2026-05-28)
 
 - **Done-%:** ~93% (90–95% band). v1.6 Adoption Truth criteria MET (`docs/jtbd_gap_map.md`).
-- **Single pick:** Pause — no `/gsd-new-milestone` until demand signal or maintenance release.
+- **Single pick:** Superseded by private 2026-06-12 adoption-evidence trigger — run `/gsd-new-milestone` for v1.7 Adoption Evidence Demo when ready.
 - **Thread:** `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`
 - **First protocol wedge when triggered:** AUTHN-POST-01 (~1 week).
 
 ## Operator Next Steps
 
-- **Default:** Wait for GitHub issue / adopter request; maintenance only (CVE backfill, deps).
-- **When triggered:** `/gsd-new-milestone` with one protocol wedge (not a bundle); continue from Phase **51**.
+- **Default now:** Run `/gsd-new-milestone` for **v1.7 Adoption Evidence Demo** when ready; continue from Phase **51**.
+- **Keep demand-gated:** AUTHN-POST-01, KMS-01, and SIGNED-META-01 remain save-for-demand unless a real adopter/federation/key-custody trigger appears.
