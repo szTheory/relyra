@@ -64,7 +64,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 51-03-PLAN.md — Add non-browser health/readiness probes and route tests
-- [ ] 51-04-PLAN.md — Build LedgerLoop workspace and route affordance content
+- [x] 51-04-PLAN.md — Build LedgerLoop workspace and route affordance content
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -191,7 +191,7 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 51. Demo App Foundation | 4/6 | In Progress|  |
+| 51. Demo App Foundation | 5/6 | In Progress|  |
 | 52. Ecto Stores And Deterministic Seed Story | 0/TBD | Not started | - |
 | 53. Setup And Operator UX | 0/TBD | Not started | - |
 | 54. Local Browser Login Proof | 0/TBD | Not started | - |
