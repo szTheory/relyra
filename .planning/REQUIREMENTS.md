@@ -11,7 +11,7 @@
 - [x] **DEMO-02**: Demo app is excluded from the Hex package while remaining runnable from the repository.
 - [x] **DEMO-03**: Demo app exposes a usable LedgerLoop workspace as its first screen with tenant status and links to setup, login, admin, and support flows.
 - [x] **DEMO-04**: Demo app mounts Relyra SAML routes under a clear host-owned route scope.
-- [ ] **DEMO-05**: Demo app exposes health/readiness endpoints suitable for local Docker and CI orchestration.
+- [x] **DEMO-05**: Demo app exposes health/readiness endpoints suitable for local Docker and CI orchestration.
 
 ### Data And Stores
 
@@ -88,7 +88,7 @@
 | DEMO-02 | Phase 51 | Complete |
 | DEMO-03 | Phase 51 | Complete |
 | DEMO-04 | Phase 51 | Complete |
-| DEMO-05 | Phase 51 | Pending |
+| DEMO-05 | Phase 51 | Complete |
 | DATA-01 | Phase 52 | Pending |
 | DATA-02 | Phase 52 | Pending |
 | ECTO-01 | Phase 52 | Pending |
