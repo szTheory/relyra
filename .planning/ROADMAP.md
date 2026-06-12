@@ -28,7 +28,7 @@ Relyra v1.7 turns the existing adoption proof into a realistic runnable Phoenix 
 - Decimal phases are urgent insertions and execute between their surrounding integers.
 - v1.7 continues after the highest shipped phase, Phase 50.
 
-- [ ] **Phase 51: Demo App Foundation** - Evaluators can boot a conventional LedgerLoop Phoenix app with Relyra mounted as a local path dependency.
+- [x] **Phase 51: Demo App Foundation** - Evaluators can boot a conventional LedgerLoop Phoenix app with Relyra mounted as a local path dependency. (completed 2026-06-12)
 - [ ] **Phase 52: Ecto Stores And Deterministic Seed Story** - The demo proves durable Relyra stores and deterministic LedgerLoop / Northstar Health data.
 - [ ] **Phase 53: Setup And Operator UX** - Customer/admin setup, receipts, support handoffs, and mounted LiveAdmin are visible in a calm operator UI.
 - [ ] **Phase 54: Local Browser Login Proof** - The default offline FakeIdP path completes strict in-browser SAML login with receipts and trace evidence.
@@ -68,7 +68,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 51-05-PLAN.md — Apply UI styling and workspace tests
+- [x] 51-05-PLAN.md — Apply UI styling and workspace tests
 
 **UI hint**: yes
 
@@ -191,7 +191,7 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 51. Demo App Foundation | 5/6 | In Progress|  |
+| 51. Demo App Foundation | 6/6 | Complete   | 2026-06-12 |
 | 52. Ecto Stores And Deterministic Seed Story | 0/TBD | Not started | - |
 | 53. Setup And Operator UX | 0/TBD | Not started | - |
 | 54. Local Browser Login Proof | 0/TBD | Not started | - |
