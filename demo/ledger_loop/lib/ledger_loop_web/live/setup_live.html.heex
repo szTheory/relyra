@@ -25,21 +25,57 @@
       <%= if @active_step == :sp_settings do %>
         <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">SP Settings</h2>
         <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">Copy Relyra configuration to your IdP</p>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 8px;">Entity ID (Audience URI)</label>
+          <input type="text" readonly value={LedgerLoopWeb.Endpoint.url() <> "/auth/saml/metadata"} style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; background-color: #f9f9f9; color: #333;" />
+        </div>
+        <div style="margin-bottom: 24px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 8px;">ACS URL (Assertion Consumer Service)</label>
+          <input type="text" readonly value={LedgerLoopWeb.Endpoint.url() <> "/auth/saml/acs"} style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; background-color: #f9f9f9; color: #333;" />
+        </div>
         <button phx-click="next_step" style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Next</button>
       <% end %>
 
       <%= if @active_step == :idp_metadata do %>
         <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">IdP Metadata</h2>
         <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">Provide XML or URLs from your IdP</p>
-        <div style="margin-bottom: 16px;">
-           <p style="color: #b87600; background-color: #fff7e6; padding: 8px; border-radius: 4px;">No IdP metadata provided.</p>
-        </div>
-        <button phx-click="next_step" style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Next</button>
+        <%= if @metadata_saved do %>
+          <div style="margin-bottom: 16px;">
+             <p style="color: #2e7d32; background-color: #e8f5e9; padding: 8px; border-radius: 4px;">Metadata saved successfully!</p>
+          </div>
+        <% else %>
+          <form phx-submit="save_metadata" style="margin-bottom: 24px;">
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-weight: 600; margin-bottom: 8px;">Metadata XML</label>
+              <textarea name="metadata" rows="6" style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; font-family: monospace;" placeholder="Paste your IdP metadata XML here..."></textarea>
+            </div>
+            <button type="submit" style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Save Metadata</button>
+          </form>
+        <% end %>
+        <button phx-click="next_step" style="background-color: #f0f4f8; color: #333333; border: 1px solid #d1d9e1; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Next</button>
       <% end %>
 
       <%= if @active_step == :mapping_preview do %>
         <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">Mapping Preview</h2>
         <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">Preview how SAML attributes map to LedgerLoop users</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding: 12px 8px; border-bottom: 2px solid #d1d9e1; background-color: #f0f4f8; font-weight: 600;">SAML Attribute (OID or Name)</th>
+              <th style="text-align: left; padding: 12px 8px; border-bottom: 2px solid #d1d9e1; background-color: #f0f4f8; font-weight: 600;">LedgerLoop Field</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for mapping <- @mappings do %>
+              <tr>
+                <td style="padding: 12px 8px; border-bottom: 1px solid #e1e5eb; font-family: monospace; color: #555;"><%= mapping.saml %></td>
+                <td style="padding: 12px 8px; border-bottom: 1px solid #e1e5eb; font-weight: 600;"><%= mapping.local %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+
         <button phx-click="next_step" style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Next</button>
       <% end %>
 
@@ -48,7 +84,7 @@
         <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">Perform a test login to verify the trust path</p>
         
         <div style="margin-bottom: 24px;">
-           <button style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; margin-right: 8px;">Start Test Login</button>
+           <button phx-click="test_login" style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; margin-right: 8px;">Start Test Login</button>
            <button style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Enable Connection</button>
         </div>
 
