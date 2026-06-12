@@ -23,6 +23,7 @@ Relyra v1.7 turns the existing adoption proof into a realistic runnable Phoenix 
 ## Phases
 
 **Phase Numbering:**
+
 - Integer phases are planned milestone work.
 - Decimal phases are urgent insertions and execute between their surrounding integers.
 - v1.7 continues after the highest shipped phase, Phase 50.
@@ -37,83 +38,113 @@ Relyra v1.7 turns the existing adoption proof into a realistic runnable Phoenix 
 ## Phase Details
 
 ### Phase 51: Demo App Foundation
+
 **Goal**: Evaluators can launch a conventional Phoenix app at `demo/ledger_loop` that visibly hosts Relyra inside a realistic LedgerLoop workspace.
 **Depends on**: Phase 50 shipped adoption evidence
 **Requirements**: DEMO-01, DEMO-02, DEMO-03, DEMO-04, DEMO-05
 **Success Criteria** (what must be TRUE):
+
   1. Evaluator can boot `demo/ledger_loop` locally with Relyra loaded from the repository path.
   2. Evaluator can open the first screen and see a usable LedgerLoop workspace with tenant status and links to setup, login, admin, and support flows.
   3. Evaluator can confirm Relyra SAML routes are mounted under a clear host-owned route scope.
   4. Docker or CI orchestration can poll health/readiness endpoints and distinguish booted from unavailable demo state.
   5. Hex packaging excludes the demo app while repository-local demo commands still work.
+
 **Plans**: 6 plans
 Plans:
+**Wave 1**
+
 - [ ] 51-01-PLAN.md — Scaffold LedgerLoop Phoenix app foundation
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 51-02-PLAN.md — Mount Relyra SAML/admin route seams
+- [ ] 51-06-PLAN.md — Prove repo-local runnability and Hex package exclusion
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 51-03-PLAN.md — Add non-browser health/readiness probes and route tests
 - [ ] 51-04-PLAN.md — Build LedgerLoop workspace and route affordance content
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 51-05-PLAN.md — Apply UI styling and workspace tests
-- [ ] 51-06-PLAN.md — Prove repo-local runnability and Hex package exclusion
+
 **UI hint**: yes
 
 ### Phase 52: Ecto Stores And Deterministic Seed Story
+
 **Goal**: Demo reset creates a reproducible Northstar Health story and the happy path uses production-like Ecto-backed Relyra stores.
 **Depends on**: Phase 51
 **Requirements**: DATA-01, DATA-02, ECTO-01, ECTO-02, ECTO-03, ECTO-04
 **Success Criteria** (what must be TRUE):
+
   1. Evaluator can reset the demo and always receive the same tenants, users, groups, mappings, certificate states, audit rows, and support scenarios.
   2. Evaluator can inspect seeded enabled, draft, staged-certificate, and failure/support connection states.
   3. Demo setup runs Relyra's shipped Ecto migrations from the dependency path rather than copied migration files.
   4. A successful demo login writes and consumes Ecto-backed connection, request, and replay records with fixed host-owned table names.
   5. Login receipts show Relyra verified the principal while LedgerLoop owns user mapping, session establishment, and authorization.
+
 **Plans**: TBD
 
 ### Phase 53: Setup And Operator UX
+
 **Goal**: Customer/admin setup and operator diagnosis are browser-visible without blurring host-app workflow, LiveAdmin trust workflows, login trace evidence, or audit rows.
 **Depends on**: Phase 52
 **Requirements**: FLOW-01, FLOW-02, FLOW-03, ADMIN-01, ADMIN-02, UX-01
 **Success Criteria** (what must be TRUE):
+
   1. Customer/admin can use a nonlinear setup checklist with copyable SP settings, provider vocabulary, IdP intake, mapping preview, test login, and enablement receipt.
   2. Receipts state what was verified, mapped, replay-checked, and handed to LedgerLoop without exposing raw XML, PEM, or secrets.
   3. Operator can open mounted Relyra LiveAdmin with the correct repo and scope provider and see seeded trust-state workflows.
   4. Support scenarios link to trace and diagnostic surfaces while clearly separating runtime login trace evidence from trust-mutation audit rows.
   5. The demo UI uses accessible status text, precise microcopy, light/dark/system support, and no color-only risk indicators.
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 54: Local Browser Login Proof
+
 **Goal**: The default offline demo proof completes strict SAML login through browser-visible FakeIdP test support and produces actionable receipts.
 **Depends on**: Phase 53
 **Requirements**: IDP-01, IDP-02, E2E-01
 **Success Criteria** (what must be TRUE):
+
   1. End user can complete an in-browser SAML login through a dev/test-only FakeIdP route using genuine Relyra test signing.
   2. The FakeIdP path is visibly labeled as local test support and cannot be mistaken for a production IdP.
   3. Browser proof covers setup checklist or receipt, seeded LiveAdmin connection visibility, end-user login receipt, and support trace handoff.
   4. Failed local proof paths surface typed rejection evidence rather than silent compromise or raw protocol leakage.
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 55: Docker, CI, And Optional Keycloak Proof
+
 **Goal**: The demo can be booted, reset, tested, and optionally proven against Keycloak through isolated Docker and CI lanes.
 **Depends on**: Phase 54
 **Requirements**: DX-01, DX-02, DX-03, CI-01, IDP-03, IDP-04, E2E-02
 **Success Criteria** (what must be TRUE):
+
   1. Evaluator can run `scripts/demo doctor`, `up`, `reset`, `test`, `urls`, and `down` from the repository root.
   2. Compose uses project-name isolation, env-driven ports, healthchecks, and `core`/`keycloak`/`browser` profiles without fixed container names.
   3. `doctor` reports common blockers with exact environment overrides or remediation steps.
   4. `mix ci.demo_app` compiles, migrates, seeds, and proves local FakeIdP plus Ecto store behavior without weakening `mix ci.security`.
   5. Optional Keycloak proof completes browser-visible login against the launched Phoenix app while preserving configured-certificate trust and keeping Keycloak outside required deterministic proof.
+
 **Plans**: TBD
 
 ### Phase 56: Documentation And Evidence Polish
+
 **Goal**: Evaluators and adopters can understand, run, reset, test, and interpret the demo without replacing the normal Hex installation path.
 **Depends on**: Phase 55
 **Requirements**: DOCS-01, DOCS-02, DOCS-03
 **Success Criteria** (what must be TRUE):
+
   1. README or Getting Started links to the runnable demo as evaluator evidence while preserving the normal Hex install path.
   2. Demo guide documents boot, reset, test, URL discovery, seeded credentials, key routes, Docker overrides, and optional Keycloak profile.
   3. Demo guide explains the host-app boundary: Relyra verifies SAML trust, while LedgerLoop owns tenant workflow, mapping, sessions, and authorization.
   4. Evidence notes make clear that v1.7 adds adoption proof only, not protocol expansion, production IdP behavior, hosted broker behavior, or security relaxation.
+
 **Plans**: TBD
 
 ## Coverage
