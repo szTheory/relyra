@@ -31,7 +31,7 @@
 | `demo/ledger_loop/test/support/data_case.ex` | test | CRUD | `demo/ledger_loop/test/support/data_case.ex` | exact |
 | `demo/ledger_loop/test/ledger_loop/demo/reset_test.exs` | test | batch | `test/relyra/live_admin/phase15_ui_contract_test.exs` | role-match |
 | `demo/ledger_loop/test/ledger_loop/relyra/store_wrapper_test.exs` | test | request-response | `test/security/stores/request_store_ecto_test.exs` + `test/security/stores/replay_store_ecto_test.exs` | exact |
-| `demo/ledger_loop/test/ledger_loop/relyra/signed_ecto_login_test.exs` | test | request-response | `test/adoption/journey_04_ecto_production_path_test.exs` | role-match |
+| `demo/ledger_loop/test/ledger_loop/relyra/ecto_happy_path_test.exs` | test | request-response | `test/adoption/journey_04_ecto_production_path_test.exs` | role-match |
 
 ## Pattern Assignments
 
@@ -489,7 +489,7 @@ Planner instruction: Phase 52 may show seeded Northstar/connection summaries, bu
 
 ### Non-Browser Signed Login Proof
 
-**Apply to:** `demo/ledger_loop/test/ledger_loop/relyra/signed_ecto_login_test.exs`
+**Apply to:** `demo/ledger_loop/test/ledger_loop/relyra/ecto_happy_path_test.exs`
 
 **Analogs:** `test/adoption/journey_04_ecto_production_path_test.exs`, `test/support/adoption_fixtures.ex`, store tests.
 

@@ -351,17 +351,17 @@ config :relyra,
 | A2 | Fixed seed timestamps should be used for story rows, with live time only for runtime proof rows. | Common Pitfalls | Determinism tests may need adjusted expectations. |
 | A3 | `undefined_table` is the likely failure signature when migration order is wrong. | Common Pitfalls | Planner may need to inspect actual Postgres errors during implementation. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should reset be exposed as `mix ledger_loop.reset` or folded into `mix ecto.setup` only?**
    - What we know: current generated aliases call `ecto.setup` and `priv/repo/seeds.exs`; Phase 55 owns root `scripts/demo reset`. [VERIFIED: codebase grep]
    - What's unclear: preferred operator command name for Phase 52 before Phase 55 scripts exist. [ASSUMED]
-   - Recommendation: add a demo-local Mix task or alias now, then let Phase 55 wrap it from root scripts. [ASSUMED]
+   - Resolution: Phase 52 uses the deterministic seed/reset module path: `priv/repo/seeds.exs` delegates to `LedgerLoop.Demo.Reset.reset!/0`, and setup/reset aliases run the Relyra migration task before demo migrations/seeds. Phase 55 can wrap this existing reset entrypoint from root scripts. [ASSUMED]
 
 2. **Should host receipts be persisted in a dedicated table or returned-only from `SessionAdapter`?**
    - What we know: ECTO-04 requires demonstrating host-owned mapping/session boundary; Phase 53/54 own browser receipt UX. [VERIFIED: REQUIREMENTS.md]
    - What's unclear: whether durable receipt rows are needed before browser receipt pages. [ASSUMED]
-   - Recommendation: persist a minimal `ledger_loop_login_receipts` row because it gives database-level proof without taking UI scope. [ASSUMED]
+   - Resolution: persist minimal `LedgerLoop.Accounts.LoginReceipt` rows in `ledger_loop_login_receipts` because they provide database-level proof of the host-owned boundary without taking Phase 53/54 browser receipt scope. [ASSUMED]
 
 ## Environment Availability
 
