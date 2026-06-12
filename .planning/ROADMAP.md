@@ -46,11 +46,14 @@ Relyra v1.7 turns the existing adoption proof into a realistic runnable Phoenix 
   3. Evaluator can confirm Relyra SAML routes are mounted under a clear host-owned route scope.
   4. Docker or CI orchestration can poll health/readiness endpoints and distinguish booted from unavailable demo state.
   5. Hex packaging excludes the demo app while repository-local demo commands still work.
-**Plans**: 3 plans
+**Plans**: 6 plans
 Plans:
-- [ ] 51-01-PLAN.md — Scaffold LedgerLoop Phoenix app with Relyra route, admin, and health seams
-- [ ] 51-02-PLAN.md — Build the LedgerLoop workspace first screen and placeholder route surface
-- [ ] 51-03-PLAN.md — Prove repo-local demo runnability and Hex package exclusion
+- [ ] 51-01-PLAN.md — Scaffold LedgerLoop Phoenix app foundation
+- [ ] 51-02-PLAN.md — Mount Relyra SAML/admin route seams
+- [ ] 51-03-PLAN.md — Add non-browser health/readiness probes and route tests
+- [ ] 51-04-PLAN.md — Build LedgerLoop workspace and route affordance content
+- [ ] 51-05-PLAN.md — Apply UI styling and workspace tests
+- [ ] 51-06-PLAN.md — Prove repo-local runnability and Hex package exclusion
 **UI hint**: yes
 
 ### Phase 52: Ecto Stores And Deterministic Seed Story
