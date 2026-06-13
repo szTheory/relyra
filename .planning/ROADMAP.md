@@ -48,7 +48,9 @@ No active milestone phases. v1.7 phase detail (goals, success criteria, plans, c
 - Success variant: valid signed assertion → logged-in session. Failure variant: tampered signature → Relyra typed rejection surfaced in the demo trace UI (`/relyra/admin/connections/:id/trace`).
 - Tests in-process (`Phoenix.ConnTest`/`LiveViewTest`, no Wallaby); rides existing `demo-app-ci.yml` → `mix ci.demo_app`, no new CI; demo suite stays green (currently 37/0).
 
-**Plans:** 0 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 57 to break down)
+- [ ] 57-01-PLAN.md - Wave-0 prerequisites: demo keypair/cert, fixture cert-trust + idp_sso_url alignment, LoginTrace.attach
+- [ ] 57-02-PLAN.md - Demo-local SAML signer via relyra public C14N (byte-compat pass + tamper -> :digest_mismatch)
+- [ ] 57-03-PLAN.md - Wire /fake_idp/* routes + SP-initiated end-to-end flow (success round-trip + tampered/trace) + affordance repoint
