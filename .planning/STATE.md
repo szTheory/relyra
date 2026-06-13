@@ -64,6 +64,10 @@ Last activity: 2026-06-13 — Milestone v1.7 completed and archived
 
 None currently. Keycloak browser proof is intentionally optional because startup/readiness and browser-form flake risk are known.
 
+### Roadmap Evolution
+
+- Phase 57 added (2026-06-13): Demo FakeIdP Browser-Login Proof — standalone MVP phase outside archived v1.7, finishing SEED-003 option (b) with a demo-local SAML signer. Parked WIP on branch `wip/demo-fake-idp`.
+
 ## Deferred Items
 
 | Category | Item | Status |

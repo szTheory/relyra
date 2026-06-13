@@ -33,3 +33,22 @@ Dormant follow-ups (in `.planning/seeds/`, surface at next `/gsd:new-milestone`)
 No active milestone phases. v1.7 phase detail (goals, success criteria, plans, coverage, progress) is archived at `.planning/milestones/v1.7-ROADMAP.md`.
 
 **Phase Numbering:** integer phases are planned milestone work; decimal phases are urgent insertions executing between their surrounding integers. The next milestone continues after the highest shipped phase, **Phase 56**.
+
+### Phase 57: Demo FakeIdP Browser-Login Proof
+
+**Goal:** As a LedgerLoop demo evaluator, I want to click the Log in with SSO button and complete a real browser round-trip through a built-in fake IdP, so that I see Relyra cryptographically verify a signed SAML assertion end-to-end and surface a typed rejection on the tampered variant without configuring an external IdP.
+**Mode:** mvp
+**Requirements**: SEED-003
+**Depends on:** Phase 56
+
+**Scope / hard constraints:**
+- DEMO-LOCAL SAML signer in `demo/ledger_loop` (its own demo IdP keypair) whose cert matches the IdP signing cert on the enabled connection fixture (`LedgerLoop.Demo.Fixtures`, scenario `01H0B4Y1A2B3C4D5E6F7G8H9J0`) so Relyra's strict signature verification passes. **Cert-trust alignment is the crux.**
+- **Do NOT** expose `Relyra.TestSupport.FakeIdP` outside `:test` — that's the SEED-002 packaging/security-posture escalation, explicitly out of scope. Keep relyra's `prod_elixirc_paths` `test_support` exclusion intact.
+- Wire `/fake_idp/login` (GET) + `/fake_idp/sso` (POST) into the demo router. Parked WIP on branch `wip/demo-fake-idp` is a starting point, but its `Relyra.TestSupport.FakeIdP.sign/1` call must be replaced with the demo-local signer.
+- Success variant: valid signed assertion → logged-in session. Failure variant: tampered signature → Relyra typed rejection surfaced in the demo trace UI (`/relyra/admin/connections/:id/trace`).
+- Tests in-process (`Phoenix.ConnTest`/`LiveViewTest`, no Wallaby); rides existing `demo-app-ci.yml` → `mix ci.demo_app`, no new CI; demo suite stays green (currently 37/0).
+
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 57 to break down)
