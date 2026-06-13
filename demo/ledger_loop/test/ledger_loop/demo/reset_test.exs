@@ -5,13 +5,15 @@ defmodule LedgerLoop.Demo.ResetTest do
 
   describe "Task 1: Demo Migrations and Schemas" do
     test "tables exist with binary IDs and expected natural key unique indexes" do
-      # If queries run without raising, the tables exist.
-      assert Repo.all(Tenant) == []
-      assert Repo.all(User) == []
-      assert Repo.all(Group) == []
-      assert Repo.all(Membership) == []
-      assert Repo.all(SAMLIdentity) == []
-      assert Repo.all(LoginReceipt) == []
+      # If queries run without raising, the tables exist. This asserts queryability,
+      # not emptiness: the ci.demo_app lane seeds the DB (mix ecto.setup) before the
+      # suite runs, so seeded rows may be present here.
+      assert is_list(Repo.all(Tenant))
+      assert is_list(Repo.all(User))
+      assert is_list(Repo.all(Group))
+      assert is_list(Repo.all(Membership))
+      assert is_list(Repo.all(SAMLIdentity))
+      assert is_list(Repo.all(LoginReceipt))
 
       # We can check schema primary keys directly
       assert Tenant.__schema__(:primary_key) == [:id]

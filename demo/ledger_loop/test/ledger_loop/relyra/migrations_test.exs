@@ -43,10 +43,17 @@ defmodule LedgerLoop.Relyra.MigrationsTest do
     local_migrations_path = Path.expand("../../../priv/repo/migrations", __DIR__)
 
     if File.exists?(local_migrations_path) do
-      files = File.ls!(local_migrations_path)
-      # Assert there are no relyra prefix files
+      files = File.ls!(local_migrations_path) |> Enum.filter(&String.ends_with?(&1, ".exs"))
+      # Guard against copying Relyra's *library* migrations into the demo. Relyra owns
+      # tables prefixed `relyra_` (e.g. relyra_connections, relyra_audit_events); the demo
+      # legitimately owns its own fixed runtime-store tables prefixed `ledger_loop_relyra_`.
+      # Scan migration CONTENTS for a `relyra_`-prefixed table creation, not the filename
+      # (the demo's own create_relyra_runtime_store_tables.exs is allowed).
       for file <- files do
-        refute String.contains?(file, "relyra_"), "Found Relyra migration copied to demo: #{file}"
+        contents = File.read!(Path.join(local_migrations_path, file))
+
+        refute Regex.match?(~r/create table\(:relyra_/, contents),
+               "Found a copied Relyra library migration (creates a relyra_* table) in the demo: #{file}"
       end
     end
   end

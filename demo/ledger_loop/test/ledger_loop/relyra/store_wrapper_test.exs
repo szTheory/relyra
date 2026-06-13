@@ -24,7 +24,9 @@ defmodule LedgerLoop.Relyra.StoreWrapperTest do
       assert :ok = RequestEcto.put_intent(relay_state, intent, opts)
 
       assert {:ok, fetched} = RequestEcto.fetch_intent(relay_state, opts)
-      assert fetched["request_id"] == request_id
+      # Relyra.RequestStore.Ecto.fetch_intent/2 atomizes the stored intent keys and
+      # returns :request_id / :expires_at as atoms, so fetch with the atom key.
+      assert fetched[:request_id] == request_id
 
       assert :ok = RequestEcto.consume_intent(relay_state, request_id, opts)
 
@@ -62,7 +64,9 @@ defmodule LedgerLoop.Relyra.StoreWrapperTest do
       assert :ok = RequestStore.put_intent(relay_state, intent, opts)
 
       assert {:ok, fetched} = RequestStore.fetch_intent(relay_state, opts)
-      assert fetched["request_id"] == request_id
+      # Relyra.RequestStore.Ecto.fetch_intent/2 atomizes the stored intent keys and
+      # returns :request_id / :expires_at as atoms, so fetch with the atom key.
+      assert fetched[:request_id] == request_id
 
       assert :ok = RequestStore.consume_intent(relay_state, request_id, opts)
     end
