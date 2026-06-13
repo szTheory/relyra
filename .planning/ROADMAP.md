@@ -189,7 +189,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 **Wave 1**
-- [ ] 56-01-PLAN.md — Rewrite the demo README as the authoritative evaluator-first guide (verified surface, boundary table, scope honesty, D-12 content gate)
+- [x] 56-01-PLAN.md — Rewrite the demo README as the authoritative evaluator-first guide (verified surface, boundary table, scope honesty, D-12 content gate)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 56-02-PLAN.md — Add the thin guides/demo.md hexdocs pointer and secondary README/Getting Started demo links without displacing the Hex install path
@@ -246,4 +246,4 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 | 53. Setup And Operator UX | 3/3 | Complete   | 2026-06-12 |
 | 54. Local Browser Login Proof | 2/2 | Complete   | 2026-06-13 |
 | 55. Docker, CI, And Optional Keycloak Proof | 3/3 | Complete   | 2026-06-13 |
-| 56. Documentation And Evidence Polish | 0/3 | Not started | - |
+| 56. Documentation And Evidence Polish | 1/3 | In Progress|  |

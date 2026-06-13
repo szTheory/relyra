@@ -50,8 +50,8 @@
 ### Documentation
 
 - [ ] **DOCS-01**: README or Getting Started links to the runnable demo as evaluator evidence without replacing the normal Hex installation path.
-- [ ] **DOCS-02**: Demo guide documents boot/reset/test/urls, seeded credentials, key routes, and Docker environment overrides.
-- [ ] **DOCS-03**: Demo guide explains the host-app boundary: Relyra verifies SAML trust; LedgerLoop owns tenant workflow, user mapping, sessions, and authorization.
+- [x] **DOCS-02**: Demo guide documents boot/reset/test/urls, seeded credentials, key routes, and Docker environment overrides.
+- [x] **DOCS-03**: Demo guide explains the host-app boundary: Relyra verifies SAML trust; LedgerLoop owns tenant workflow, user mapping, sessions, and authorization.
 
 ## Future Requirements
 
@@ -112,8 +112,8 @@
 | IDP-04 | Phase 55 | Pending |
 | E2E-02 | Phase 55 | Complete |
 | DOCS-01 | Phase 56 | Pending |
-| DOCS-02 | Phase 56 | Pending |
-| DOCS-03 | Phase 56 | Pending |
+| DOCS-02 | Phase 56 | Complete |
+| DOCS-03 | Phase 56 | Complete |
 | PORTAL-01 | Future | Deferred |
 | SCREENSHOT-01 | Future | Deferred |
 | KMS-01 | Future | Demand-gated |
