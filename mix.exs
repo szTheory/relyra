@@ -35,6 +35,7 @@ defmodule Relyra.MixProject do
         "ci.verify": :test,
         "ci.integration": :test,
         "ci.demo": :test,
+        "ci.demo_app": :test,
         "ci.external_idp": :test,
         "ci.admin_ui": :test,
         "ci.oban_smoke": :test,
@@ -266,6 +267,11 @@ defmodule Relyra.MixProject do
       ],
       "ci.demo": [
         "run --no-start examples/quickstart.exs"
+      ],
+      "ci.demo_app": [
+        "cmd --cd demo/ledger_loop mix deps.get",
+        "cmd --cd demo/ledger_loop mix ecto.setup",
+        "cmd --cd demo/ledger_loop mix test"
       ],
       "ci.external_idp": [
         "test test/adoption/keycloak --only external_idp --warnings-as-errors"
