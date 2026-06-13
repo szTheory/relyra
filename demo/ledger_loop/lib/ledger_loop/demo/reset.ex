@@ -43,8 +43,10 @@ defmodule LedgerLoop.Demo.Reset do
       Repo.insert_all(AttributeMapping, Fixtures.relyra_attribute_mappings())
       Repo.insert_all(GroupMapping, Fixtures.relyra_group_mappings())
 
-      # Insert Support Failure Trace Events
-      support_id = Fixtures.relyra_support_scenario_id()
+      # Insert Support Failure Trace Events.
+      # AuditEvent.connection_record_id is a :binary_id FK to Relyra.Ecto.Connection.id,
+      # so use the connection's internal record id (UUID), not the public ULID connection_id.
+      support_id = Fixtures.relyra_support_scenario_record_id()
 
       trace_steps = [
         "response.decode",

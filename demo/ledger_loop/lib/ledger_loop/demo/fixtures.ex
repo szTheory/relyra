@@ -177,6 +177,17 @@ defmodule LedgerLoop.Demo.Fixtures do
     @support_conn_ulid
   end
 
+  @doc """
+  The Support Failure connection's internal `:binary_id` record id.
+
+  Use this (not `relyra_support_scenario_id/0`, which is the public ULID) wherever a
+  `connection_record_id` foreign key is needed — e.g. seeding audit/trace events, whose
+  `connection_record_id` references `Relyra.Ecto.Connection.id`.
+  """
+  def relyra_support_scenario_record_id do
+    @support_conn_id
+  end
+
   def relyra_enabled_scenario_id do
     @enabled_conn_ulid
   end
