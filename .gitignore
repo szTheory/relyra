@@ -32,3 +32,7 @@ relyra-*.tar
 .planning/tmp_*
 .planning/*.bak
 node_modules/
+
+# Generated test artifacts (Playwright browser-proof runs).
+playwright-report/
+test-results/
