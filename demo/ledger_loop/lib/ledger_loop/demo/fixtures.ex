@@ -174,7 +174,11 @@ defmodule LedgerLoop.Demo.Fixtures do
   end
 
   def relyra_support_scenario_id do
-    @support_conn_id
+    @support_conn_ulid
+  end
+
+  def relyra_enabled_scenario_id do
+    @enabled_conn_ulid
   end
 
   def tenant do

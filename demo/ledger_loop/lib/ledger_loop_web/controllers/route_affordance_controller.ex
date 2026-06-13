@@ -2,7 +2,8 @@ defmodule LedgerLoopWeb.RouteAffordanceController do
   use LedgerLoopWeb, :controller
 
   def login(conn, _params) do
-    render(conn, :login)
+    conn_id = LedgerLoop.Demo.Fixtures.relyra_enabled_scenario_id()
+    render(conn, :login, conn_id: conn_id)
   end
 
   def admin_login(conn, _params) do
