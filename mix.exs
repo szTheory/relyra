@@ -218,6 +218,8 @@ defmodule Relyra.MixProject do
         "cmd mix test test/docs/adopter_voice_test.exs --warnings-as-errors",
         "cmd mix test test/docs/troubleshooting_drift_test.exs --warnings-as-errors",
         "cmd mix test test/docs/logout_recipe_drift_test.exs --warnings-as-errors",
+        "cmd test -f demo/ledger_loop/README.md",
+        "cmd mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors",
         "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
         "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs --warnings-as-errors",
         "relyra.batteries_included --check"
