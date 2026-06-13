@@ -460,6 +460,7 @@ defmodule Relyra do
   defp validate_request_intent_expiry(_, _now), do: :ok
 
   defp maybe_parse_iso8601(%DateTime{} = dt), do: dt
+  defp maybe_parse_iso8601(%NaiveDateTime{} = ndt), do: DateTime.from_naive!(ndt, "Etc/UTC")
 
   defp maybe_parse_iso8601(bin) when is_binary(bin) do
     case DateTime.from_iso8601(bin) do
@@ -530,7 +531,11 @@ defmodule Relyra do
 
   defp validate_request_intent(intent, _opts) do
     required = [:request_id, :sp_entity_id, :acs_url]
-    missing = Enum.filter(required, fn key -> is_nil(Map.get(intent, key)) end)
+
+    missing =
+      Enum.filter(required, fn key ->
+        is_nil(Map.get(intent, key)) and is_nil(Map.get(intent, Atom.to_string(key)))
+      end)
 
     if missing == [] do
       :ok

@@ -1,0 +1,54 @@
+{
+  "realm": "demo-app",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "http://localhost:4000",
+      "name": "Relyra Demo SP",
+      "enabled": true,
+      "protocol": "saml",
+      "fullScopeAllowed": true,
+      "rootUrl": "http://localhost:4000",
+      "baseUrl": "http://localhost:4000",
+      "adminUrl": "http://localhost:4000/saml/sso/acs",
+      "redirectUris": ["http://localhost:4000/saml/sso/acs", "http://demo_app:4000/saml/sso/acs"],
+      "webOrigins": ["+"],
+      "attributes": {
+        "saml.authnstatement": "true",
+        "saml.server.signature": "true",
+        "saml.assertion.signature": "true",
+        "saml.client.signature": "false",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml.server.signature.keyinfo.ext": "false",
+        "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
+        "saml.force.post.binding": "true",
+        "saml.assertion.consumer.url.post": "http://localhost:4000/saml/sso/acs",
+        "saml_force_name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+      }
+    }
+  ]
+}

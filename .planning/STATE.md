@@ -1,104 +1,71 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Adoption Truth
-status: between-milestones-pause
-last_updated: "2026-05-29T01:05:00.000Z"
-last_activity: 2026-05-29 — Phase 50 complete; PR #28 merged (adoption evidence + Keycloak CI)
+milestone: v1.7
+milestone_name: Adoption Evidence Demo
+status: milestone_complete
+last_updated: 2026-06-13T07:41:21.478Z
+last_activity: 2026-06-13
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 23
+  completed_plans: 23
   percent: 100
+stopped_at: Milestone complete (Phase 56 was final phase)
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-05-28)
+See: `.planning/PROJECT.md` (updated 2026-06-12)
 
-**Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Pause default — between milestones. Phase 50 (Adoption Evidence) shipped via [#28](https://github.com/szTheory/relyra/pull/28). Next phase when work resumes: **51**. Assessment: `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`
+**Core value:** Every SAML login ends in a verified trust path or a typed rejection - never a silent compromise. Trust mutations are durable, attributable, and reviewable.
+**Current focus:** Milestone complete
 
 ## Current Position
 
-Phase: 50 — Adoption Evidence (Golden Host + Keycloak) — **complete**
-Status: Shipped 2026-05-29 — [#28](https://github.com/szTheory/relyra/pull/28) merged to `main`
-CI proof: `security-gates` (OTP 27+28) + `adoption-external-idp` (Keycloak) green on merge commit `b21bdbb`
-Deliverables: golden host fixtures, `test/adoption/journey_01`–`05`, `examples/quickstart.exs`, `mix ci.demo` / `mix ci.integration`, Keycloak docker realm + `@tag :external_idp` lane
-Last activity: 2026-05-29 — Phase 50 close-out (corpus KeyInfo alignment, Keycloak SSO redirect stability)
+Phase: 56
+Plan: Not started
+Status: Milestone complete
+Last activity: 2026-06-13
+
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
-- Last shipped milestone: v1.6 (Phases 47-49.2)
-- Highest shipped phase: **50** (Adoption Evidence, 2026-05-29)
-- Prior shipped milestone: v1.5 (Phases 41-46)
+- Last shipped milestone: v1.6 Adoption Truth (Phases 47-49.2)
+- Highest shipped phase: 50 (Adoption Evidence, 2026-05-29)
+- Current milestone phases: 51-56
+- Phase progress this milestone: 3/6 phases complete
+- Plans complete in Phase 51: 6/6
+- Plans complete in Phase 52: 6/6
+- Plans complete in Phase 53: 3/3
 
 ## Accumulated Context
 
-### Roadmap Evolution
+### Decisions
 
-- v1.5 shipped 2026-05-27 (Phases 41-46). Highest shipped phase = 46.
-- v1.6 starts at Phase 47 (continues numbering; does not reset).
-- v1.6 is doc-only: onboarding truth, ops trace docs, CONFORMANCE honesty, jtbd_gap_map refresh, preset taxonomy. No new SAML protocol surface area.
-- After v1.6: pause until external demand signal (AUTHN-POST-01, KMS-01, SIGNED-META-01 remain save-for-demand).
-- Post-v1.6 assessment (2026-05-28): ~93% done-enough; **do not** open v1.7 feature milestone without trigger. Next phase when work resumes: **51** (continue numbering).
-- **Phase 50 shipped 2026-05-29:** Adoption evidence automation — golden host, integrator journeys, Keycloak external IdP CI ([#28](https://github.com/szTheory/relyra/pull/28)). PureBeam KeyInfo interop: rogue KeyInfo outside `Signature` rejected; KeyInfo inside standard XMLDSig ignored for trust (configured IdP certs only).
-- Hex **1.5.4** live (2026-05-28): release-please [#23](https://github.com/szTheory/relyra/pull/23) automerged; publish via automerge dispatch ([#22](https://github.com/szTheory/relyra/pull/22)).
-- Hex **1.5.3** live (hands-off proof 2026-05-28): doc trigger [#17](https://github.com/szTheory/relyra/pull/17) → release-please [#18](https://github.com/szTheory/relyra/pull/18) automerged → Hex publish. CI fixes [#19–#22](https://github.com/szTheory/relyra/pull/22). Proof thread: `.planning/threads/hands-off-release-proof-2026-05-29.md`.
-- Hex **1.5.2** live (release-please + CI publish 2026-05-28); README and Getting Started pin `~> 1.5`.
-- Post-1.5.0 maintenance (2026-05-28): **security-gates** green; branch protection + `enforce_admins`; publish path runs `mix qa`; `BRANCH_PROTECTION_PAT` configured; release-please automerge + `release-please-pr-checks` workflow; pre-commit hook; test flake fix (isolated replay store + FakeIdP warmup).
+- v1.7 is adoption evidence infrastructure, not protocol expansion.
+- Build a repo-local Phoenix app at `demo/ledger_loop` with Relyra as a path dependency and excluded from Hex packaging.
+- Demo happy path must use Ecto connection, request, and replay stores; ETS is not acceptable for the v1.7 happy path.
+- Customer/admin setup screens stay host-owned in LedgerLoop; Relyra LiveAdmin remains the operator trust cockpit.
+- Local FakeIdP proof is default and dev/test-only; Keycloak is optional until burn-in justifies promotion.
+- No hosted broker, production IdP, public API shape changes, default-tightening, or security relaxation.
+- LedgerLoop.Relyra.UserMapper uses SAMLIdentity to find a deterministic user and fetches LedgerLoop tenant/groups.
+- LedgerLoop.Relyra.SessionAdapter establishes a host session by writing a deterministic LoginReceipt row and verifying explicitly what Relyra verified vs what LedgerLoop owns.
+- [Phase ?]: Demo group in groups_for_extras uses a dedicated Demo entry rather than appending to Day-1 to keep the Day-1 spine uncluttered
+- [Phase ?]: D-02c implemented: relative-link-outside-package CI gate converts silent disk-pass/hexdocs-404 gap into a CI failure
+- [Phase ?]: D-05 runtime extraction in demo guide drift gate
+- [Phase ?]: D-11 lane selection for demo guide drift gate
 
-### Decisions / Constraints carried into v1.6
+### Active Requirements
 
-- **Doc-only boundary is load-bearing:** no new protocol bindings, presets, crypto modules, or public API shape changes. Escalation triggers in CLAUDE.md still apply if scope creeps.
-- **Adoption Truth != feature milestone:** closes asymmetry between shipped code and adopter-facing story; reusable pattern at the done-enough line (~92–95%).
-- **CONFORMANCE manifest must track shipped features:** ENC-01 shipped Phase 34; `sp-encrypted-assertions-deferred` row is stale and must flip to pass.
-- **ci.docs gates apply:** doc drift tests (troubleshooting, logout recipe pattern) stay on `cmd mix test` per Phase 30 hollow-gate invariant when adding new drift tests.
+30 v1.7 requirements mapped across Phase 51-56 in `.planning/REQUIREMENTS.md` and `.planning/ROADMAP.md`.
 
-### Decisions from Phase 48-02
+### Blockers/Concerns
 
-- **Day-2 hub pattern:** overview Day-2 links `operations/incident_playbook.md#evidence-surfaces` immediately after Production Ecto path.
-- **Getting Started §5:** incident playbook + `mix relyra.trace` + LiveView trace route; optional intro bookmarks playbook after first login.
-- **No new ci.docs drift test:** D-15 presence guard sufficient; `login_trace_test.exs` stays in `mix ci.security` only.
-
-### Decisions from Phase 48-01
-
-- **Login trace vs audit ledger callout** under Evidence surfaces — `domain: :login` trace rows are not trust-mutation audit vocabulary; replays appear in trace/telemetry only.
-- **Diagnostic bundle ≠ login trace** in When in doubt — `mix relyra.diagnostic` for external handoff; LiveView/`mix relyra.trace` for active step-timeline triage.
-
-### Decisions carried from v1.5
-
-- TRACE LiveView reuses telemetry + audit ledger only (no parallel trace store).
-- `mix ci.security` hollow-gate invariant is permanent — each security suite is its own `cmd mix test` process.
-- Demand-gated protocol work (AUTHN-POST-01, KMS-01, SIGNED-META-01) stays out of v1.6 unless a real GitHub issue materializes.
-
-### Decisions from Phase 49-03
-
-- **Decoder table expansion:** Keycloak and OneLogin rows added — README 7-family claim honored without narrowing 4 first-class presets.
-- **Four-preset taxonomy:** Getting Started §4 and generic_saml intro list Okta, Entra, Google Workspace, and ADFS as batteries-included.
-- **Ping/Shibboleth cross-refs:** PingFederate footgun notes README "Ping" naming; Shibboleth cross-link after vendor table (no decoder row).
-- **No new ci.docs drift test:** D-15 precedent holds for preset taxonomy doc-only alignment.
-
-### Decisions from Phase 49-02
-
-- **jtbd_gap_map v1.5+ refresh:** What changed section + persona reclassification; generic SAML and Operator personas **Strong** with honest caveats.
-- **Gap demotion pattern:** Biggest gaps #1–#4 marked Shipped (v1.3–v1.6); milestones reordered to demand-gated AUTHN-POST/KMS/SIGNED-META.
-- **No new ci.docs drift test:** D-15 precedent holds for jtbd_gap_map doc-only refresh.
-
-### Decisions from Phase 50
-
-- **Adoption evidence != protocol milestone:** automated integrator proof (golden host, journeys, Keycloak lane) without new public API or binding surface.
-- **External IdP lane gated:** `@tag :external_idp` + `mix ci.external_idp` workflow; not in default `mix test`.
-- **Real IdP interop seam:** KeyInfo inside `ds:Signature` tolerated at parse; rogue document KeyInfo outside `Signature` still rejected; verification uses configured IdP certs only.
-
-### Decisions from Phase 49-01
-
-- **CONFORMANCE scope boundary in generator:** `scope_boundary_section/0` appended after CVE-REG-01 table — never hand-edit CONFORMANCE.md.
-- **ENC manifest honesty:** `sp-encrypted-assertions-pass` with `FakeIdP.encrypted_response/2` evaluate_row; requirement summary 9 pass / 0 deferred.
-- **SPConformanceTest async: false:** SP private key via `Application.put_env` requires serial execution.
+None currently. Keycloak browser proof is intentionally optional because startup/readiness and browser-form flake risk are known.
 
 ## Deferred Items
 
@@ -106,51 +73,45 @@ Last activity: 2026-05-29 — Phase 50 close-out (corpus KeyInfo alignment, Keyc
 |----------|------|--------|
 | demand_gated | AUTHN-POST-01 | save-for-demand |
 | demand_gated | KMS-01 | save-for-demand |
-| demand_gated | SIGNED-META-01 | save-for-demand (investigation stub only) |
-| maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async (checked 2026-05-28 — GHSA-jv46-xfwm-36j7 `cve_id` still null; weekly `cve-advisory-check` workflow) |
+| demand_gated | SIGNED-META-01 | save-for-demand |
+| maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
+| Phase 51 P01 | 7 min | 1 tasks | 39 files |
+| Phase 51 P02 | 5 min | 1 tasks | 3 files |
+| Phase 51 P06 | 7 min | 2 tasks | 1 files |
+| Phase 51 P03 | 5 min | 2 tasks | 5 files |
+| Phase 51 P04 | 8 min | 2 tasks | 8 files |
+| Phase 51 P05 | 12 min | 2 tasks | 4 files |
+| Phase 52 P05 | 10 min | 2 tasks | 4 files |
+| Phase 56 P02 | 3 min | 2 tasks | 5 files |
+| Phase 56 P03 | 5 min | 2 tasks | 2 files |
 
 ## Session Continuity
 
-**Resume here:** Pause default — Phase 50 complete ([#28](https://github.com/szTheory/relyra/pull/28)). Cold-start context: [`.planning/threads/session-handoff-2026-05-29.md`](.planning/threads/session-handoff-2026-05-29.md).
+Resume here: continue planning Phase 55 with `/gsd:plan-phase 55` when ready.
 
-**2026-05-29 — Phase 50 complete.** [#28](https://github.com/szTheory/relyra/pull/28) merged: golden host fixtures, adoption journey tests (`mix ci.integration`, `mix ci.demo`), Keycloak external IdP lane (`mix ci.external_idp`), Getting Started maintainer CI proof block. CI green: `security-gates` + `adoption-external-idp`. Pause default restored; next phase **51** on demand signal.
+Primary context:
 
-**2026-05-29 — Micro doc polish close-out.** Runbook wiring bridges (Entra/Google/ADFS/generic), Getting Started evaluator landing, v1.6 audit addendum. P2 doc backlog closed. Pause default unchanged. Thread: `.planning/threads/doc-reader-audit-2026-05-29.md`.
+- `.planning/ROADMAP.md`
+- `.planning/REQUIREMENTS.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-CONTEXT.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-RESEARCH.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-VALIDATION.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-PATTERNS.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-01-PLAN.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-02-PLAN.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-03-PLAN.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-04-PLAN.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-05-PLAN.md`
+- `.planning/phases/52-ecto-stores-and-deterministic-seed-story/52-06-PLAN.md`
+- `.planning/phases/51-demo-app-foundation/51-CONTEXT.md`
+- `.planning/phases/51-demo-app-foundation/51-01-SUMMARY.md`
+- `.planning/phases/51-demo-app-foundation/51-02-SUMMARY.md`
+- `.planning/phases/51-demo-app-foundation/51-03-SUMMARY.md`
+- `.planning/phases/51-demo-app-foundation/51-04-SUMMARY.md`
+- `.planning/phases/51-demo-app-foundation/51-05-SUMMARY.md`
+- `.planning/phases/51-demo-app-foundation/51-06-SUMMARY.md`
+- `.planning/phases/51-demo-app-foundation/51-UI-SPEC.md`
+- `.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md`
+- `.planning/seeds/SEED-001-adoption-evidence-demo.md`
 
-**2026-05-29 — Reader experience audit + session handoff.** [#25](https://github.com/szTheory/relyra/pull/25) doc fixes + `adopter_voice_test`; GitHub homepage → hexdocs. Housekeeping: D-12 README badges, D-13 Okta wiring bridge ([#26](https://github.com/szTheory/relyra/pull/26)). Thread: `.planning/threads/doc-reader-audit-2026-05-29.md`.
-
-**2026-05-28 — Release automation hardened (#19–#22) + hands-off proof.** 1.5.3 proof → 1.5.4 validates automerge publish dispatch. Thread: `.planning/threads/hands-off-release-proof-2026-05-29.md`.
-
-**2026-05-28 — Deferred housekeeping complete.** PR #13 test flake fix → **Hex 1.5.2** ([v1.5.2](https://github.com/szTheory/relyra/releases/tag/v1.5.2)); PR #14 release-please-pr-checks + CVE weekly poll; PR #15 release merge; `jtbd_user_flows` TestSupport vocabulary. CVE still unassigned. Pause verdict unchanged.
-
-**2026-05-28 — Phase 49.2 complete.** Nyquist retro (47-VALIDATION.md), editorial polish (playbook/jtbd/SiteMinder), `49.2-VERIFICATION.md` passed. v1.6 Adoption Truth milestone ready for audit.
-
-**2026-05-27 — Phase 49.2 context gathered (assumptions mode).** All assumptions confirmed without correction. Resume: `.planning/phases/49.2-v1.6-nyquist-retro-editorial-polish/49.2-CONTEXT.md` → `/gsd-plan-phase 49.2`
-
-**2026-05-27 — Completed 49-03-PLAN.md.** ADOPT-06: preset taxonomy aligned across generic_saml, Getting Started §4, README verify-only. `mix ci.docs` green. Phase 49 complete — v1.6 Adoption Truth ready for milestone audit.
-
-**2026-05-27 — Completed 49-02-PLAN.md.** ADOPT-05: jtbd_gap_map refreshed to v1.5+ shipped reality. `mix ci.docs` green. Resume: 49-03-PLAN (ADOPT-06 preset taxonomy).
-
-**2026-05-27 — Completed 49-01-PLAN.md.** ADOPT-04: scope boundary section, ENC manifest pass row, CONFORMANCE.md regen. `mix ci.conformance` green. Resume: 49-02-PLAN (ADOPT-05 jtbd_gap_map).
-
-**2026-05-27 — Phase 49 context gathered (assumptions mode).** All assumptions confirmed without correction. Resume: `.planning/phases/49-adoption-honesty-conformance-jtbd-map-preset-taxonomy/49-CONTEXT.md` → `/gsd-plan-phase 49`.
-
-**2026-05-27 — Phase 48 complete (48-01 + 48-02).** Playbook trace tables/scenarios + Day-2 cross-links. Resume: Phase 49 (ADOPT-04/05/06).
-
-**2026-05-27 — Completed 48-01-PLAN.md.** Playbook tables/scenarios/When in doubt updated for login trace.
-
-**2026-05-27 — Phase 48 context gathered.** Assumptions mode; all assumptions confirmed without correction.
-
-**2026-05-27 — Phase 47 context gathered.** Assumptions mode; all assumptions confirmed without correction.
-
-### Post-v1.6 assessment (2026-05-28)
-
-- **Done-%:** ~93% (90–95% band). v1.6 Adoption Truth criteria MET (`docs/jtbd_gap_map.md`).
-- **Single pick:** Pause — no `/gsd-new-milestone` until demand signal or maintenance release.
-- **Thread:** `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`
-- **First protocol wedge when triggered:** AUTHN-POST-01 (~1 week).
-
-## Operator Next Steps
-
-- **Default:** Wait for GitHub issue / adopter request; maintenance only (CVE backfill, deps).
-- **When triggered:** `/gsd-new-milestone` with one protocol wedge (not a bundle); continue from Phase **51**.
+e-demo.md`

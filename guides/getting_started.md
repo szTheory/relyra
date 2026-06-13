@@ -227,6 +227,9 @@ Useful follow-on references:
 - [Jobs To Be Done And User Flows](jtbd_user_flows.md)
 - [`SECURITY.md`](../SECURITY.md)
 - [`SECURITY_REVIEW.md`](../SECURITY_REVIEW.md)
+- [LedgerLoop demo app](demo.md) — a runnable reference app, not part of the Hex package,
+  showing Relyra embedded in a full Phoenix SaaS host; useful as evaluator evidence of the
+  complete Ecto-backed trust path.
 
 Receipt: you have one working provider path plus a written production follow-on
 plan for metadata, certificates, audit/telemetry, and any optional admin surface.

@@ -1,0 +1,70 @@
+<Layouts.flash_group flash={@flash} />
+
+<main class="workspace-shell" aria-labelledby="workspace-title">
+  <header class="workspace-header">
+    <p class="workspace-kicker">LedgerLoop demo host</p>
+    <h1 id="workspace-title">LedgerLoop Workspace</h1>
+    <p>
+      LedgerLoop owns the tenant workflow and session boundary; Relyra verifies SAML trust
+      behind the mounted routes.
+    </p>
+  </header>
+
+  <section class="workspace-grid" aria-label="LedgerLoop operational workspace">
+    <section class="workspace-panel" aria-labelledby="tenant-status-title">
+      <h2 id="tenant-status-title">Northstar Health SSO status</h2>
+      <%= if @has_tenant? do %>
+        <p class="status-label">Seeded Scenarios Active</p>
+        <ul class="scenario-list">
+          <%= for scenario <- @scenarios do %>
+            <li>
+              <strong><%= scenario.name %></strong>: {scenario.status}
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="status-label">Needs setup</p>
+        <h3>No tenant data loaded</h3>
+        <p>
+          Run the demo reset command, then refresh this workspace to load Northstar Health and its SSO status.
+        </p>
+        <p>
+          Phase 52 loads deterministic tenant data. Until then, this workspace keeps the route
+          affordances visible without inventing seeded state.
+        </p>
+      <% end %>
+    </section>
+
+    <section class="workspace-panel" aria-labelledby="actions-title">
+      <h2 id="actions-title">Workspace actions</h2>
+      <nav aria-label="LedgerLoop route affordances">
+        <a href={~p"/setup/sso"}>Open SSO Setup</a>
+        <a href={~p"/login/test"}>Start Test Login</a>
+        <a href="/relyra/admin">Open Relyra Admin</a>
+        <a href={~p"/support/scenario"}>Open Support Scenario</a>
+      </nav>
+    </section>
+
+    <section class="workspace-panel" aria-labelledby="route-mounts-title">
+      <h2 id="route-mounts-title">Mounted route scopes</h2>
+      <p>Mounted SAML routes: /saml</p>
+      <p>Mounted operator routes: /relyra/admin</p>
+      <p>
+        The /saml scope is host-owned by LedgerLoop. Relyra owns the metadata, login, and ACS handlers mounted inside it.
+      </p>
+    </section>
+
+    <section class="workspace-panel" aria-labelledby="probe-status-title">
+      <h2 id="probe-status-title">Probe status</h2>
+      <p>
+        Demo health: <strong>{@health_status}</strong> via <a href={~p"/healthz"}>/healthz</a>
+      </p>
+      <p>
+        Demo readiness: <strong>{@readiness_status}</strong> via <a href={~p"/readyz"}>/readyz</a>
+      </p>
+      <p>
+        Probe text is explicit so automation and evaluators do not have to infer state from color.
+      </p>
+    </section>
+  </section>
+</main>

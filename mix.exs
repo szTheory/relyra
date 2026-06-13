@@ -35,6 +35,7 @@ defmodule Relyra.MixProject do
         "ci.verify": :test,
         "ci.integration": :test,
         "ci.demo": :test,
+        "ci.demo_app": :test,
         "ci.external_idp": :test,
         "ci.admin_ui": :test,
         "ci.oban_smoke": :test,
@@ -129,6 +130,7 @@ defmodule Relyra.MixProject do
         "README.md",
         "guides/overview.md",
         "guides/getting_started.md",
+        "guides/demo.md",
         "guides/identity_mapping_and_provisioning.md",
         "guides/production_ecto_path.md",
         "guides/jtbd_user_flows.md",
@@ -160,6 +162,7 @@ defmodule Relyra.MixProject do
           "guides/case_studies/phoenix_saas_tenant_onboarding.md",
           "guides/case_studies/operator_managed_rollout.md"
         ],
+        Demo: ["guides/demo.md"],
         Recipes: [
           "guides/recipes/okta.md",
           "guides/recipes/entra.md",
@@ -215,6 +218,8 @@ defmodule Relyra.MixProject do
         "cmd mix test test/docs/adopter_voice_test.exs --warnings-as-errors",
         "cmd mix test test/docs/troubleshooting_drift_test.exs --warnings-as-errors",
         "cmd mix test test/docs/logout_recipe_drift_test.exs --warnings-as-errors",
+        "cmd test -f demo/ledger_loop/README.md",
+        "cmd mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors",
         "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
         "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs --warnings-as-errors",
         "relyra.batteries_included --check"
@@ -266,6 +271,11 @@ defmodule Relyra.MixProject do
       ],
       "ci.demo": [
         "run --no-start examples/quickstart.exs"
+      ],
+      "ci.demo_app": [
+        "cmd --cd demo/ledger_loop mix deps.get",
+        "cmd --cd demo/ledger_loop mix ecto.setup",
+        "cmd --cd demo/ledger_loop mix test"
       ],
       "ci.external_idp": [
         "test test/adoption/keycloak --only external_idp --warnings-as-errors"
