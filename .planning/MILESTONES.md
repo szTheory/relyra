@@ -1,5 +1,27 @@
 # Milestones
 
+## v1.7 Adoption Evidence Demo (Shipped: 2026-06-13)
+
+**Phases completed:** 6 phases, 23 plans, 17 tasks
+
+**Key accomplishments:**
+
+- Conventional Phoenix LedgerLoop host app scaffold with local Relyra path dependency and compile-ready repo/endpoint foundation
+- LedgerLoop-owned Phoenix routes now mount Relyra SAML and LiveAdmin internals with a demo-owned admin scope provider
+- Lightweight Phoenix health/readiness probes with automated route mount coverage for SAML and LiveAdmin seams
+- LedgerLoop workspace and route affordance pages with explicit host/Relyra ownership boundaries
+- App-local LedgerLoop styling plus Wave 0 workspace regression coverage
+- Executable Hex unpack check proves LedgerLoop stays repo-local while the publishable Relyra package excludes demo paths
+- Seeded deterministic Relyra connection scenarios with redaction-safe traces and rendered their statuses in the workspace shell.
+- Implemented admin session mocking and deep link routing to LiveAdmin trace UI for operator demonstration.
+- Demo orchestrator CLI wrapper for abstracting Docker Compose profiles.
+
+**Known deferred items at close:** Phase 53 has a `human_needed` verification (demo Setup/Operator UX click-through) deferred to `/gsd:verify-work 53`. Two dormant seeds opened: SEED-002 (TestSupport vs Hex-package decision) and SEED-003 (demo FakeIdP login WIP). See STATE.md "Deferred Items".
+
+**Merged:** PR #31 (squash) to `main` on 2026-06-13; `demo-app` + `security` + `keycloak` CI lanes green.
+
+---
+
 ## v1.6 Adoption Truth (Shipped: 2026-05-28)
 
 **Phases completed:** 5 phases, 15 plans, 46 tasks

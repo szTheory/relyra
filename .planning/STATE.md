@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
-status: milestone_complete
-last_updated: 2026-06-13T07:41:21.478Z
-last_activity: 2026-06-13
+status: Awaiting next milestone
+last_updated: "2026-06-13T15:51:14.301Z"
+last_activity: 2026-06-13 — Milestone v1.7 completed and archived
 progress:
   total_phases: 6
   completed_phases: 6
   total_plans: 23
   completed_plans: 23
   percent: 100
-stopped_at: Milestone complete (Phase 56 was final phase)
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-06-12)
 
 ## Current Position
 
-Phase: 56
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-06-13
-
-Progress: [██████████] 100%
+Phase: Milestone v1.7 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-06-13 — Milestone v1.7 completed and archived
 
 ## Performance Metrics
 
@@ -75,15 +72,7 @@ None currently. Keycloak browser proof is intentionally optional because startup
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand |
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
-| Phase 51 P01 | 7 min | 1 tasks | 39 files |
-| Phase 51 P02 | 5 min | 1 tasks | 3 files |
-| Phase 51 P06 | 7 min | 2 tasks | 1 files |
-| Phase 51 P03 | 5 min | 2 tasks | 5 files |
-| Phase 51 P04 | 8 min | 2 tasks | 8 files |
-| Phase 51 P05 | 12 min | 2 tasks | 4 files |
-| Phase 52 P05 | 10 min | 2 tasks | 4 files |
-| Phase 56 P02 | 3 min | 2 tasks | 5 files |
-| Phase 56 P03 | 5 min | 2 tasks | 2 files |
+| verification | Phase 53 (`53-VERIFICATION.md`) human-needed UI testing — demo Setup/Operator UX click-through | deferred at v1.7 close; run `/gsd:verify-work 53` |
 
 ## Session Continuity
 
@@ -115,3 +104,7 @@ Primary context:
 - `.planning/seeds/SEED-001-adoption-evidence-demo.md`
 
 e-demo.md`
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

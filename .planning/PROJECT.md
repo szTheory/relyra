@@ -25,26 +25,19 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v1.4 shipped 2026-05-27** — Full SLO + Ops Polish. Phase 38 shipped SLO core + security (SLO-01), Phase 39 shipped the logout strategy guide (DOCS-04), Phase 40 shipped the operator incident playbook + Error Atom Decoder (DOCS-05, DOCS-06), and Phase 40.1 closed the v1.4 milestone-audit gaps: retroactive 38/39 VERIFICATIONs, `guides/recipes/logout.md` rewritten to canonical 4-arg `SessionAdapter` signatures with a host-owned-linkage subsection, and a live `test/docs/logout_recipe_drift_test.exs` wired into `ci.docs`. With v1.4 shipped, Relyra has crossed the "done-enough" line drawn in PROJECT.md: future scope is demand-gated, not coverage-gated.
 - **v1.5 shipped 2026-05-27** — Publish, Prove, Polish. Phases 41-46 complete (18/18 plans, 15/15 requirements). Hex `1.4.0` published via release-please automation; `mix verify.release_parity 1.4.0` **PASS** (path-set matches tag `v1.4.0`, zero `test_support` in tarball). Stepwise login-trace LiveView at `/relyra/admin/connections/:id/trace` plus `mix relyra.trace` headless companion (TRACE-01/02/03). Pre-publish tech-debt sweep closed (TD-01..TD-05). Adopter DX: README Okta snippet above the fold, `mix relyra.install` auto-injects `saml_routes()` when unambiguous, `guides/overview.md` job-shaped index. **Done-enough line reached:** future scope is demand-gated, not coverage-gated.
 - **v1.6 shipped 2026-05-28** — Adoption Truth. Phases 47-49.2 complete (15/15 plans, 6/6 ADOPT requirements). Doc-only milestone: TestSupport-first Getting Started, `guides/production_ecto_path.md`, incident playbook login-trace surfaces, CONFORMANCE scope boundary + ENC manifest honesty, jtbd_gap_map refresh, preset taxonomy alignment. Gap-closure phases 49.1-49.2 closed audit handoffs and Nyquist retro. **No new SAML protocol surface area.** Pause default held until the 2026-06-12 private adoption-evidence trigger.
+- **v1.7 shipped 2026-06-13** — Adoption Evidence Demo. Phases 51-56 complete (23/23 plans, 30/30 requirements), merged via PR #31. Runnable `demo/ledger_loop` Phoenix host app with Relyra as a path dependency (excluded from Hex): deterministic Northstar Health seed story, production-like Ecto connection/request/replay stores, host-owned customer/admin setup + mounted LiveAdmin, local FakeIdP browser proof + optional Keycloak profile, `scripts/demo` Docker DX, isolated `ci.demo_app` lane, and an evaluator-first demo guide. **No protocol surface, public API, or security-posture change.**
 
-## Current Milestone: v1.7 Adoption Evidence Demo
+## Current Milestone: None (paused)
 
-**Goal:** Build a realistic runnable Phoenix SaaS demo that proves Relyra's adopter story end to end: setup, tenant SSO configuration, strict SAML login, production-like Ecto stores, operator/admin diagnosis, Docker DX, and browser-visible receipts.
-
-**Status:** Phase 51 (Demo App Foundation) is complete and verified as of 2026-06-12: `demo/ledger_loop` boots as a Phoenix host app with Relyra as a path dependency, visible LedgerLoop workspace, `/saml` and `/relyra/admin` route mounts, health/readiness probes, and Hex package exclusion proof. Next up is Phase 52, deterministic seed data and durable Ecto store proof.
-
-**Target features:**
-- Real Phoenix app at `demo/ledger_loop` using Relyra as a path dependency and excluded from Hex packaging.
-- LedgerLoop / Northstar Health seeded B2B SaaS story with tenants, users, groups, mappings, connection state, cert states, audit rows, and trace scenarios.
-- Host-owned customer/admin SSO setup pages plus mounted Relyra LiveAdmin for operator trust-state workflows.
-- Ecto-backed connection, request, replay, audit, mapping, and session/linkage proof in the demo happy path.
-- Local deterministic FakeIdP proof by default, optional Keycloak external IdP browser proof behind an explicit Docker/CI profile.
-- One-command Docker/local DX, browser E2E, focused CI lanes, and docs that make the demo useful as adopter/evaluator evidence.
+**Status:** v1.7 shipped 2026-06-13. No active milestone. The v1.x arc is complete; future protocol scope is demand-gated (a real GitHub issue triggers the next milestone). Dormant follow-ups are seeded in `.planning/seeds/` and surface at the next `/gsd:new-milestone`.
 
 ## Next Milestone Goals
 
-**Current:** **v1.7 Adoption Evidence Demo** — private adoption signal recorded 2026-06-12. Continue phase numbering from **51**. Build a realistic runnable Phoenix SaaS demo app (`demo/ledger_loop`) with deterministic seeds, Docker DX, mounted LiveAdmin, host-owned customer/admin setup flow, Ecto connection/request/replay stores, local FakeIdP proof, optional Keycloak external IdP proof, browser E2E, and docs. This is evidence infrastructure and evaluator aid, not a protocol milestone.
+**Pause default (re-asserted post-v1.7):** Do **not** run `/gsd-new-milestone` for coverage-gated protocol features. AUTHN-POST-01, KMS-01, and SIGNED-META-01 stay demand-gated. Assessment: `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`.
 
-**Former pause default:** Post-v1.6 assessment (~93% done-enough): `.planning/threads/v1-7-milestone-assessment-2026-05-28.md`. Still valid for protocol work: do **not** run `/gsd-new-milestone` for coverage-gated protocol features. AUTHN-POST-01, KMS-01, and SIGNED-META-01 stay demand-gated.
+**Seeded follow-ups (dormant, surface at next milestone):**
+- **SEED-002** — resolve the `Relyra.TestSupport` vs Hex-package contradiction (Getting Started tells adopters to `use Relyra.TestSupport`, but it's excluded from the tarball / TD-02). Shipping a public `Relyra.Testing` is escalation-gated.
+- **SEED-003** — finish-or-remove the demo FakeIdP login WIP (`/fake_idp/*` routes unwired; demo currently logs in via `RouteAffordanceController`).
 
 **Optional momentum-only:** Maintenance & Narrative Sync (doc-only: `jtbd_user_flows` Scene 3 + ADFS, optional reviewer quick-arch) — diminishing returns; not JTBD-coverage-gated.
 
@@ -70,6 +63,7 @@ The v1.x milestone arc:
 - **v1.4** — Full SLO + Ops Polish: full SLO round-trip (SLO-01), logout strategy guide (DOCS-04), Incident Response Playbook (DOCS-05), SAML Error Atom Decoder (DOCS-06), audit-closure Phase 40.1 (Phases 38-40.1).
 - **v1.5** — Publish, Prove, Polish: Hex `1.4.0` publish, login-trace LiveView + CLI, pre-publish tech-debt sweep, adopter DX polish (Phases 41-46).
 - **v1.6** — Adoption Truth: onboarding/ops doc wedge closing adoption-truth asymmetry; no new protocol surface (Phases 47-49.2).
+- **v1.7** — Adoption Evidence Demo: runnable `demo/ledger_loop` Phoenix host app proving the full adopter story (Ecto stores, setup UX, mounted LiveAdmin, FakeIdP + optional Keycloak proof, Docker/CI DX, evaluator guide); no protocol/API/security change (Phases 51-56).
 
 ## Requirements
 
@@ -277,4 +271,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-06-12 after completing Phase 51 Demo App Foundation. See `.planning/phases/51-demo-app-foundation/51-VERIFICATION.md`, `.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md`, `.planning/seeds/SEED-001-adoption-evidence-demo.md`, and `.planning/REQUIREMENTS.md`.*
+*Last updated: 2026-06-13 after shipping the v1.7 Adoption Evidence Demo milestone (Phases 51-56, merged via PR #31). See `.planning/milestones/v1.7-ROADMAP.md`, `.planning/milestones/v1.7-REQUIREMENTS.md`, and `.planning/seeds/` (SEED-002, SEED-003).*
