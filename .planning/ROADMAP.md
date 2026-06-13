@@ -186,7 +186,16 @@ Plans:
   3. Demo guide explains the host-app boundary: Relyra verifies SAML trust, while LedgerLoop owns tenant workflow, mapping, sessions, and authorization.
   4. Evidence notes make clear that v1.7 adds adoption proof only, not protocol expansion, production IdP behavior, hosted broker behavior, or security relaxation.
 
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+- [ ] 56-01-PLAN.md — Rewrite the demo README as the authoritative evaluator-first guide (verified surface, boundary table, scope honesty, D-12 content gate)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 56-02-PLAN.md — Add the thin guides/demo.md hexdocs pointer and secondary README/Getting Started demo links without displacing the Hex install path
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 56-03-PLAN.md — Add and CI-wire the scripts/demo subcommand drift gate in the ci.docs lane
 
 ## Coverage
 
@@ -237,4 +246,4 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 | 53. Setup And Operator UX | 3/3 | Complete   | 2026-06-12 |
 | 54. Local Browser Login Proof | 2/2 | Complete   | 2026-06-13 |
 | 55. Docker, CI, And Optional Keycloak Proof | 3/3 | Complete   | 2026-06-13 |
-| 56. Documentation And Evidence Polish | 0/TBD | Not started | - |
+| 56. Documentation And Evidence Polish | 0/3 | Not started | - |
