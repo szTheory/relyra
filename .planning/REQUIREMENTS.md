@@ -43,9 +43,9 @@
 - [ ] **DX-01**: Root `scripts/demo` supports `doctor`, `up`, `reset`, `test`, `urls`, and `down`.
 - [ ] **DX-02**: Compose setup uses project-name isolation, env-driven ports, profiles for `core`/`keycloak`/`browser`, no fixed `container_name`, and healthchecks/readiness probes.
 - [ ] **DX-03**: `doctor` detects common local blockers and prints exact environment overrides or remediation steps.
-- [ ] **CI-01**: Focused `mix ci.demo_app` lane compiles, migrates, seeds, and proves local FakeIdP + Ecto store behavior without weakening `mix ci.security`.
+- [x] **CI-01**: Focused `mix ci.demo_app` lane compiles, migrates, seeds, and proves local FakeIdP + Ecto store behavior without weakening `mix ci.security`.
 - [x] **E2E-01**: Browser proof covers setup checklist/receipt, LiveAdmin seeded connection visibility, end-user login receipt, and support trace handoff.
-- [ ] **E2E-02**: Optional Keycloak browser proof is isolated from required deterministic demo proof until burn-in justifies promotion.
+- [x] **E2E-02**: Optional Keycloak browser proof is isolated from required deterministic demo proof until burn-in justifies promotion.
 
 ### Documentation
 
@@ -107,10 +107,10 @@
 | DX-01 | Phase 55 | Pending |
 | DX-02 | Phase 55 | Pending |
 | DX-03 | Phase 55 | Pending |
-| CI-01 | Phase 55 | Pending |
+| CI-01 | Phase 55 | Complete |
 | IDP-03 | Phase 55 | Pending |
 | IDP-04 | Phase 55 | Pending |
-| E2E-02 | Phase 55 | Pending |
+| E2E-02 | Phase 55 | Complete |
 | DOCS-01 | Phase 56 | Pending |
 | DOCS-02 | Phase 56 | Pending |
 | DOCS-03 | Phase 56 | Pending |

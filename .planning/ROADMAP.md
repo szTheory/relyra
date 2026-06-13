@@ -165,7 +165,14 @@ Plans:
   4. `mix ci.demo_app` compiles, migrates, seeds, and proves local FakeIdP plus Ecto store behavior without weakening `mix ci.security`.
   5. Optional Keycloak proof completes browser-visible login against the launched Phoenix app while preserving configured-certificate trust and keeping Keycloak outside required deterministic proof.
 
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+- [ ] 55-01-PLAN.md — Consolidate Docker orchestrations into a top-level docker-compose.yml
+- [x] 55-03-PLAN.md — Wire the Demo app into GitHub CI with a new isolated pipeline
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 55-02-PLAN.md — Provide a low-friction CLI wrapper for Demo lifecycle and Docker
 
 ### Phase 56: Documentation And Evidence Polish
 
@@ -229,5 +236,5 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 | 52. Ecto Stores And Deterministic Seed Story | 3/6 | In Progress|  |
 | 53. Setup And Operator UX | 3/3 | Complete   | 2026-06-12 |
 | 54. Local Browser Login Proof | 2/2 | Complete   | 2026-06-13 |
-| 55. Docker, CI, And Optional Keycloak Proof | 0/TBD | Not started | - |
+| 55. Docker, CI, And Optional Keycloak Proof | 1/3 | In Progress|  |
 | 56. Documentation And Evidence Polish | 0/TBD | Not started | - |
