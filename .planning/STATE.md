@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
-status: executing
-last_updated: "2026-06-13T07:25:59.125Z"
+status: verifying
+last_updated: "2026-06-13T07:30:37.702Z"
 last_activity: 2026-06-13
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 23
-  completed_plans: 22
-  percent: 83
+  completed_plans: 23
+  percent: 100
 ---
 
 # Project State
@@ -26,10 +26,10 @@ See: `.planning/PROJECT.md` (updated 2026-06-12)
 
 Phase: 56 (documentation-and-evidence-polish) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-13
 
-Progress: [██████████] 96%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -55,6 +55,8 @@ Progress: [██████████] 96%
 - LedgerLoop.Relyra.SessionAdapter establishes a host session by writing a deterministic LoginReceipt row and verifying explicitly what Relyra verified vs what LedgerLoop owns.
 - [Phase ?]: Demo group in groups_for_extras uses a dedicated Demo entry rather than appending to Day-1 to keep the Day-1 spine uncluttered
 - [Phase ?]: D-02c implemented: relative-link-outside-package CI gate converts silent disk-pass/hexdocs-404 gap into a CI failure
+- [Phase ?]: D-05 runtime extraction in demo guide drift gate
+- [Phase ?]: D-11 lane selection for demo guide drift gate
 
 ### Active Requirements
 
@@ -80,6 +82,7 @@ None currently. Keycloak browser proof is intentionally optional because startup
 | Phase 51 P05 | 12 min | 2 tasks | 4 files |
 | Phase 52 P05 | 10 min | 2 tasks | 4 files |
 | Phase 56 P02 | 3 min | 2 tasks | 5 files |
+| Phase 56 P03 | 5 min | 2 tasks | 2 files |
 
 ## Session Continuity
 

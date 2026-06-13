@@ -33,7 +33,7 @@ Relyra v1.7 turns the existing adoption proof into a realistic runnable Phoenix 
 - [x] **Phase 53: Setup And Operator UX** - Customer/admin setup, receipts, support handoffs, and mounted LiveAdmin are visible in a calm operator UI. (completed 2026-06-12)
 - [x] **Phase 54: Local Browser Login Proof** - The default offline FakeIdP path completes strict in-browser SAML login with receipts and trace evidence. (completed 2026-06-13)
 - [x] **Phase 55: Docker, CI, And Optional Keycloak Proof** - Demo commands, Compose profiles, focused CI, browser evidence, and optional Keycloak proof run without weakening security gates. (completed 2026-06-13)
-- [ ] **Phase 56: Documentation And Evidence Polish** - README and demo guide make the runnable app useful as evaluator evidence and adopter onboarding.
+- [x] **Phase 56: Documentation And Evidence Polish** - README and demo guide make the runnable app useful as evaluator evidence and adopter onboarding. (completed 2026-06-13)
 
 ## Phase Details
 
@@ -195,7 +195,7 @@ Plans:
 - [x] 56-02-PLAN.md — Add the thin guides/demo.md hexdocs pointer and secondary README/Getting Started demo links without displacing the Hex install path
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 56-03-PLAN.md — Add and CI-wire the scripts/demo subcommand drift gate in the ci.docs lane
+- [x] 56-03-PLAN.md — Add and CI-wire the scripts/demo subcommand drift gate in the ci.docs lane
 
 ## Coverage
 
@@ -246,4 +246,4 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55 -> 56.
 | 53. Setup And Operator UX | 3/3 | Complete   | 2026-06-12 |
 | 54. Local Browser Login Proof | 2/2 | Complete   | 2026-06-13 |
 | 55. Docker, CI, And Optional Keycloak Proof | 3/3 | Complete   | 2026-06-13 |
-| 56. Documentation And Evidence Polish | 2/3 | In Progress|  |
+| 56. Documentation And Evidence Polish | 3/3 | Complete   | 2026-06-13 |
