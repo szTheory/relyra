@@ -6,7 +6,7 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
       conn = get(conn, "/login/test")
 
       expected_id = LedgerLoop.Demo.Fixtures.relyra_enabled_scenario_id()
-      assert html_response(conn, 200) =~ "/fake_idp/#{expected_id}/sso"
+      assert html_response(conn, 200) =~ "/fake_idp/login?RelayState=#{expected_id}"
     end
   end
 
