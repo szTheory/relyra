@@ -29,7 +29,7 @@ Relyra v1.7 turns the existing adoption proof into a realistic runnable Phoenix 
 - v1.7 continues after the highest shipped phase, Phase 50.
 
 - [x] **Phase 51: Demo App Foundation** - Evaluators can boot a conventional LedgerLoop Phoenix app with Relyra mounted as a local path dependency. (completed 2026-06-12)
-- [ ] **Phase 52: Ecto Stores And Deterministic Seed Story** - The demo proves durable Relyra stores and deterministic LedgerLoop / Northstar Health data.
+- [x] **Phase 52: Ecto Stores And Deterministic Seed Story** - The demo proves durable Relyra stores and deterministic LedgerLoop / Northstar Health data. (completed 2026-06-12)
 - [x] **Phase 53: Setup And Operator UX** - Customer/admin setup, receipts, support handoffs, and mounted LiveAdmin are visible in a calm operator UI. (completed 2026-06-12)
 - [x] **Phase 54: Local Browser Login Proof** - The default offline FakeIdP path completes strict in-browser SAML login with receipts and trace evidence. (completed 2026-06-13)
 - [x] **Phase 55: Docker, CI, And Optional Keycloak Proof** - Demo commands, Compose profiles, focused CI, browser evidence, and optional Keycloak proof run without weakening security gates. (completed 2026-06-13)
