@@ -10,6 +10,7 @@ defmodule Relyra.Docs.MarkdownLinkSmokeTest do
     "README.md",
     "guides/overview.md",
     "guides/getting_started.md",
+    "guides/demo.md",
     "guides/identity_mapping_and_provisioning.md",
     "guides/production_ecto_path.md",
     "guides/jtbd_user_flows.md",
@@ -31,6 +32,25 @@ defmodule Relyra.Docs.MarkdownLinkSmokeTest do
     "CONFORMANCE.md",
     "BATTERIES_INCLUDED.md",
     "SECURITY_REVIEW_EVIDENCE.md"
+  ]
+
+  # Directories and files shipped in the Hex package (from mix.exs package.files).
+  # A relative link from a published extra that resolves outside this set would 404 on hexdocs.
+  @package_file_prefixes [
+    "priv/",
+    "docs/",
+    "guides/",
+    "lib/",
+    ".formatter.exs",
+    "mix.exs",
+    "README.md",
+    "CONFORMANCE.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "SECURITY.md",
+    "SECURITY_REVIEW.md",
+    "SECURITY_REVIEW_EVIDENCE.md",
+    "BATTERIES_INCLUDED.md"
   ]
 
   @link_re ~r/\[[^\]]*\]\(([^)]+)\)/
@@ -79,6 +99,32 @@ defmodule Relyra.Docs.MarkdownLinkSmokeTest do
            "broken relative links:\n#{format_link_failures(failures, repo_root)}"
   end
 
+  test "relative links from published extras do not resolve outside package.files (D-02c)" do
+    # A relative link that resolves into demo/ or any path not in package.files
+    # would 404 on hexdocs even though it works on disk. Absolute http(s) links are exempt.
+    repo_root = File.cwd!()
+
+    failures =
+      @published_extras
+      |> Enum.flat_map(fn source_path ->
+        source_path
+        |> File.read!()
+        |> extract_links()
+        |> Enum.reject(&external_or_anchor_only?/1)
+        |> Enum.map(fn target ->
+          resolved = resolve_link(repo_root, source_path, target)
+          rel_resolved = Path.relative_to(resolved, repo_root)
+          {source_path, target, rel_resolved}
+        end)
+        |> Enum.reject(fn {_source, _target, rel_resolved} ->
+          path_in_package_files?(rel_resolved)
+        end)
+      end)
+
+    assert failures == [],
+           "relative links from published extras resolve outside package.files (would 404 on hexdocs):\n#{format_outside_package_failures(failures)}"
+  end
+
   defp published_paths do
     (@published_extras ++ Path.wildcard("guides/**/*.md") ++ Path.wildcard("docs/*.md"))
     |> Enum.uniq()
@@ -115,6 +161,18 @@ defmodule Relyra.Docs.MarkdownLinkSmokeTest do
     Enum.map_join(failures, "\n", fn {source_path, target} ->
       resolved = resolve_link(repo_root, source_path, target)
       "  #{source_path} -> #{target} (resolved #{resolved}, missing)"
+    end)
+  end
+
+  defp path_in_package_files?(rel_path) do
+    Enum.any?(@package_file_prefixes, fn prefix ->
+      rel_path == prefix or String.starts_with?(rel_path, prefix)
+    end)
+  end
+
+  defp format_outside_package_failures(failures) do
+    Enum.map_join(failures, "\n", fn {source_path, target, rel_resolved} ->
+      "  #{source_path} -> #{target} (resolves to #{rel_resolved}, outside package.files)"
     end)
   end
 end

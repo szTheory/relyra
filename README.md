@@ -126,6 +126,8 @@ These surfaces matter after Day-1, but they should not compete with onboarding:
   release posture.
 - [Security review packet](SECURITY_REVIEW.md) for auditors and release review.
 - [Security boundary](docs/security_boundary.md) for reviewer-oriented architecture notes.
+- [LedgerLoop demo app](guides/demo.md) — a runnable reference app, not part of the Hex package,
+  showing Relyra embedded in a Phoenix SaaS host with Ecto-backed stores and browser-visible receipts.
 
 LiveAdmin is optional. Metadata refresh, certificate rollover, audit review,
 telemetry wiring, and diagnostic bundles belong after the first successful
