@@ -40,9 +40,9 @@
 
 ### Docker, CI, And Browser Evidence
 
-- [ ] **DX-01**: Root `scripts/demo` supports `doctor`, `up`, `reset`, `test`, `urls`, and `down`.
+- [x] **DX-01**: Root `scripts/demo` supports `doctor`, `up`, `reset`, `test`, `urls`, and `down`.
 - [ ] **DX-02**: Compose setup uses project-name isolation, env-driven ports, profiles for `core`/`keycloak`/`browser`, no fixed `container_name`, and healthchecks/readiness probes.
-- [ ] **DX-03**: `doctor` detects common local blockers and prints exact environment overrides or remediation steps.
+- [x] **DX-03**: `doctor` detects common local blockers and prints exact environment overrides or remediation steps.
 - [x] **CI-01**: Focused `mix ci.demo_app` lane compiles, migrates, seeds, and proves local FakeIdP + Ecto store behavior without weakening `mix ci.security`.
 - [x] **E2E-01**: Browser proof covers setup checklist/receipt, LiveAdmin seeded connection visibility, end-user login receipt, and support trace handoff.
 - [x] **E2E-02**: Optional Keycloak browser proof is isolated from required deterministic demo proof until burn-in justifies promotion.
@@ -104,9 +104,9 @@
 | IDP-01 | Phase 54 | Complete |
 | IDP-02 | Phase 54 | Pending |
 | E2E-01 | Phase 54 | Complete |
-| DX-01 | Phase 55 | Pending |
+| DX-01 | Phase 55 | Complete |
 | DX-02 | Phase 55 | Pending |
-| DX-03 | Phase 55 | Pending |
+| DX-03 | Phase 55 | Complete |
 | CI-01 | Phase 55 | Complete |
 | IDP-03 | Phase 55 | Pending |
 | IDP-04 | Phase 55 | Pending |
