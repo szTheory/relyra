@@ -33,7 +33,7 @@
 
 ### Identity Provider Proof
 
-- [ ] **IDP-01**: Default local proof completes an in-browser SAML login through a dev/test-only FakeIdP route using genuine Relyra test signing.
+- [x] **IDP-01**: Default local proof completes an in-browser SAML login through a dev/test-only FakeIdP route using genuine Relyra test signing.
 - [ ] **IDP-02**: FakeIdP proof is clearly labeled as local test support and cannot be presented as a production IdP.
 - [ ] **IDP-03**: Optional Keycloak profile completes a browser-visible external IdP happy path against the launched Phoenix demo app.
 - [ ] **IDP-04**: Keycloak proof preserves configured-certificate trust and never treats document `KeyInfo` as a trust source.
@@ -44,7 +44,7 @@
 - [ ] **DX-02**: Compose setup uses project-name isolation, env-driven ports, profiles for `core`/`keycloak`/`browser`, no fixed `container_name`, and healthchecks/readiness probes.
 - [ ] **DX-03**: `doctor` detects common local blockers and prints exact environment overrides or remediation steps.
 - [ ] **CI-01**: Focused `mix ci.demo_app` lane compiles, migrates, seeds, and proves local FakeIdP + Ecto store behavior without weakening `mix ci.security`.
-- [ ] **E2E-01**: Browser proof covers setup checklist/receipt, LiveAdmin seeded connection visibility, end-user login receipt, and support trace handoff.
+- [x] **E2E-01**: Browser proof covers setup checklist/receipt, LiveAdmin seeded connection visibility, end-user login receipt, and support trace handoff.
 - [ ] **E2E-02**: Optional Keycloak browser proof is isolated from required deterministic demo proof until burn-in justifies promotion.
 
 ### Documentation
@@ -101,9 +101,9 @@
 | ADMIN-01 | Phase 53 | Complete |
 | ADMIN-02 | Phase 53 | Complete |
 | UX-01 | Phase 53 | Complete |
-| IDP-01 | Phase 54 | Pending |
+| IDP-01 | Phase 54 | Complete |
 | IDP-02 | Phase 54 | Pending |
-| E2E-01 | Phase 54 | Pending |
+| E2E-01 | Phase 54 | Complete |
 | DX-01 | Phase 55 | Pending |
 | DX-02 | Phase 55 | Pending |
 | DX-03 | Phase 55 | Pending |
