@@ -3,7 +3,7 @@ Code.require_file("lib/mix/tasks/compile/parser_path_guard.ex", __DIR__)
 defmodule Relyra.MixProject do
   use Mix.Project
 
-  @version "1.6.0"
+  @version "1.7.0"
   @source_url "https://github.com/szTheory/relyra"
 
   def project do

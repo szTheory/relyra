@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.7.0](https://github.com/szTheory/relyra/compare/v1.6.0...v1.7.0) (2026-06-13)
+
+
+### Features
+
+* v1.7 Adoption Evidence Demo (LedgerLoop runnable demo app) ([#31](https://github.com/szTheory/relyra/issues/31)) ([b66722d](https://github.com/szTheory/relyra/commit/b66722d0aa73e17fc408cfab7172afc62841bd78))
+
 ## [1.6.0](https://github.com/szTheory/relyra/compare/v1.5.4...v1.6.0) (2026-05-29)
 
 
