@@ -1,6 +1,15 @@
 defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
   use LedgerLoopWeb.ConnCase, async: true
 
+  describe "login" do
+    test "renders the login page with a FakeIdP SSO link", %{conn: conn} do
+      conn = get(conn, "/login/test")
+
+      expected_id = LedgerLoop.Demo.Fixtures.relyra_enabled_scenario_id()
+      assert html_response(conn, 200) =~ "/fake_idp/#{expected_id}/sso"
+    end
+  end
+
   describe "admin_login" do
     test "sets admin session keys and redirects to /relyra/admin", %{conn: conn} do
       conn = get(conn, "/login/admin")
