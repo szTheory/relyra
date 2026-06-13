@@ -130,6 +130,7 @@ defmodule Relyra.MixProject do
         "README.md",
         "guides/overview.md",
         "guides/getting_started.md",
+        "guides/demo.md",
         "guides/identity_mapping_and_provisioning.md",
         "guides/production_ecto_path.md",
         "guides/jtbd_user_flows.md",
@@ -161,6 +162,7 @@ defmodule Relyra.MixProject do
           "guides/case_studies/phoenix_saas_tenant_onboarding.md",
           "guides/case_studies/operator_managed_rollout.md"
         ],
+        Demo: ["guides/demo.md"],
         Recipes: [
           "guides/recipes/okta.md",
           "guides/recipes/entra.md",
