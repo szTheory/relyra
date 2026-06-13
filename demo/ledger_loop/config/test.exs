@@ -8,7 +8,7 @@ import Config
 config :ledger_loop, LedgerLoop.Repo,
   username: "postgres",
   password: "postgres",
-  hostname: "localhost",
+  hostname: System.get_env("PGHOST") || "localhost",
   database: "ledger_loop_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
@@ -16,7 +16,7 @@ config :ledger_loop, LedgerLoop.Repo,
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :ledger_loop, LedgerLoopWeb.Endpoint,
-  http: [ip: {127, 0, 0, 1}, port: 4002],
+  http: [ip: {0, 0, 0, 0}, port: 4002],
   secret_key_base: "W0YjCYaq4C8vyPf1wbxG+XnIHewq7Dy19LmgMXN3lSIC6WQAaK9jj7EkgnK/JBbn",
   server: false
 

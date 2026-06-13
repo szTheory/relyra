@@ -1,0 +1,85 @@
+name: relyra-demo
+
+services:
+  db:
+    image: postgres:15-alpine
+    profiles: ["core"]
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${PGPORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  demo_app:
+    image: hexpm/elixir:1.15.7-erlang-26.1.2-alpine-3.18.4
+    profiles: ["core"]
+    volumes:
+      - .:/app
+    working_dir: /app/demo/ledger_loop
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-4000}:4000"
+    command: >
+      sh -c "apk add --no-cache inotify-tools curl &&
+             mix local.hex --force &&
+             mix local.rebar --force &&
+             mix deps.get &&
+             mix ecto.setup &&
+             mix phx.server"
+    environment:
+      - MIX_ENV=dev
+      - PGHOST=db
+      - PGUSER=postgres
+      - PGPASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4000/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    profiles: ["keycloak"]
+    command: start-dev --import-realm --http-port=8080
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      JAVA_OPTS_APPEND: "-Dpicketlink.xmlsig.includeKeyInfo=false"
+    ports:
+      - "${KC_PORT:-8080}:8080"
+    volumes:
+      - ./docker/keycloak/realm-demo-app.json:/opt/keycloak/data/import/realm-demo-app.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.54.2-jammy
+    profiles: ["browser"]
+    ipc: host
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      demo_app:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    command: >
+      sh -c "npm install && npx playwright test --config playwright.demo.config.mjs"
+    environment:
+      - BASE_URL=http://demo_app:4000
