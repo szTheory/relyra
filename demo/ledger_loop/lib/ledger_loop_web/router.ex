@@ -13,6 +13,22 @@ defmodule LedgerLoopWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  # SAML endpoints need browser-style session handling, but the ACS receives an
+  # IdP-originated POST that cannot carry our CSRF token. SkipCSRF runs BEFORE
+  # protect_from_forgery so the ACS route's `relyra_skip_csrf` private flag (set
+  # by saml_routes/0) exempts it, while the form-login POST keeps CSRF. Piping
+  # saml_routes through :browser instead lets protect_from_forgery raise first,
+  # which 403s the self-submitting SAMLResponse before it reaches the verifier.
+  pipeline :saml do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {LedgerLoopWeb.Layouts, :root}
+    plug Relyra.Phoenix.Pipeline.SkipCSRF
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -37,6 +53,9 @@ defmodule LedgerLoopWeb.Router do
     get "/login/admin", LedgerLoopWeb.RouteAffordanceController, :admin_login
     get "/support/scenario", LedgerLoopWeb.RouteAffordanceController, :support
 
+    get "/fake_idp/login", LedgerLoopWeb.FakeIdPController, :login
+    post "/fake_idp/sso", LedgerLoopWeb.FakeIdPController, :sso
+
     relyra_admin_routes("/relyra/admin",
       repo: LedgerLoop.Repo,
       scope_provider: LedgerLoop.Relyra.AdminScope
@@ -44,7 +63,7 @@ defmodule LedgerLoopWeb.Router do
   end
 
   scope "/saml" do
-    pipe_through :browser
+    pipe_through :saml
 
     saml_routes()
   end

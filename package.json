@@ -2,7 +2,8 @@
   "name": "relyra-admin-ui-contracts",
   "private": true,
   "scripts": {
-    "admin-ui:smoke": "playwright test --config playwright.admin-ui.config.mjs"
+    "admin-ui:smoke": "playwright test --config playwright.admin-ui.config.mjs",
+    "demo:fake-idp": "playwright test --config playwright.fake-idp.config.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2"

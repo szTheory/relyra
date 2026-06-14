@@ -1,0 +1,78 @@
+name: demo-app-e2e
+
+on:
+  pull_request:
+    paths-ignore:
+      - ".planning/**"
+      - "prompts/**"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - ".planning/**"
+      - "prompts/**"
+  workflow_dispatch:
+
+jobs:
+  fake-idp-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      # The seeded FakeIdP connection's idp_sso_url is http://localhost:4000/...,
+      # so drive the browser from the same host/port for a same-origin journey.
+      PORT: "4000"
+      BASE_URL: http://localhost:4000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup BEAM
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28"
+          elixir-version: "1.19.5"
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Elixir deps (root + demo, warm compile)
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get
+          mix cmd --cd demo/ledger_loop mix deps.get
+          mix cmd --cd demo/ledger_loop mix compile
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: FakeIdP browser e2e
+        # The Playwright config self-boots the demo app (mix ecto.setup &&
+        # mix phx.server) via its webServer block and tears it down after.
+        run: npm run demo:fake-idp
