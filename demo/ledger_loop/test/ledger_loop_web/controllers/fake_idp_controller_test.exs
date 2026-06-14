@@ -132,5 +132,41 @@ defmodule LedgerLoopWeb.FakeIdPControllerTest do
       assert response =~ "name=\"SAMLResponse\""
       assert response =~ "action=\"/saml/#{@conn_ulid}/acs\""
     end
+
+    # WR-03: unknown idp_action → success path (no CaseClauseError/500)
+    test "WR-03 unknown idp_action resolves to success path (HTTP 200, SAMLResponse rendered)", %{
+      conn: conn
+    } do
+      conn =
+        post(conn, "/fake_idp/sso", %{
+          "idp_action" => "foo",
+          "RelayState" => "test_relay_state"
+        })
+
+      response = html_response(conn, 200)
+      assert response =~ "onload=\"document.forms[0].submit()\""
+      assert response =~ "name=\"SAMLResponse\""
+      assert response =~ "action=\"/saml/#{@conn_ulid}/acs\""
+    end
+
+    # WR-03: failure path still tampers (existing behaviour preserved)
+    test "WR-03 idp_action=failure still produces tampered Response (existing behaviour preserved)",
+         %{conn: conn} do
+      conn = post(conn, "/fake_idp/sso", %{"idp_action" => "failure"})
+
+      response = html_response(conn, 200)
+      assert response =~ "name=\"SAMLResponse\""
+    end
+  end
+
+  describe "GET /fake_idp/login - WR-02 label correctness" do
+    # WR-02: valid-login radio shows sarah@northstar.example.com (actual emitted subject)
+    test "WR-02 renders sarah@northstar.example.com label for valid login", %{conn: conn} do
+      conn = get(conn, "/fake_idp/login")
+      response = html_response(conn, 200)
+
+      assert response =~ "sarah@northstar.example.com"
+      refute response =~ "evaluator@example.com"
+    end
   end
 end
