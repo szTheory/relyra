@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
-status: Awaiting next milestone
-last_updated: "2026-06-13T15:51:14.301Z"
-last_activity: 2026-06-13 — Milestone v1.7 completed and archived
+status: executing
+last_updated: "2026-06-14T00:49:49.132Z"
+last_activity: 2026-06-14 -- Phase 57 Plan 01 complete (keypair + fixture cert alignment + LoginTrace)
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 23
-  completed_plans: 23
-  percent: 100
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 1
+  percent: 0
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-12)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection - never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Milestone complete
+**Current focus:** Phase 57 — demo-fakeidp-browser-login-proof
 
 ## Current Position
 
-Phase: Milestone v1.7 complete
-Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-06-13 — Milestone v1.7 completed and archived
+Phase: 57 (demo-fakeidp-browser-login-proof) — EXECUTING
+Plan: 2 of 3
+Status: Executing Phase 57 Plan 02
+Last activity: 2026-06-14
 
 ## Performance Metrics
 
@@ -51,6 +51,8 @@ Last activity: 2026-06-13 — Milestone v1.7 completed and archived
 - No hosted broker, production IdP, public API shape changes, default-tightening, or security relaxation.
 - LedgerLoop.Relyra.UserMapper uses SAMLIdentity to find a deterministic user and fetches LedgerLoop tenant/groups.
 - LedgerLoop.Relyra.SessionAdapter establishes a host session by writing a deterministic LoginReceipt row and verifying explicitly what Relyra verified vs what LedgerLoop owns.
+- [Phase 57-01]: Fixture cert PEM sourced at compile time from Keypair.cert_pem/0 via module attribute to prevent fixture/signer cert drift (T-57-04)
+- [Phase 57-01]: LoginTrace.attach placed after Supervisor.start_link (not as supervised child); {:error, :already_exists} ignored for idempotency
 - [Phase ?]: Demo group in groups_for_extras uses a dedicated Demo entry rather than appending to Day-1 to keep the Day-1 spine uncluttered
 - [Phase ?]: D-02c implemented: relative-link-outside-package CI gate converts silent disk-pass/hexdocs-404 gap into a CI failure
 - [Phase ?]: D-05 runtime extraction in demo guide drift gate
