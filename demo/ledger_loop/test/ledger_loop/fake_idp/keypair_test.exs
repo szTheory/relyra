@@ -39,6 +39,21 @@ defmodule LedgerLoop.FakeIdP.KeypairTest do
     end
   end
 
+  describe "load_private_key/0 error handling (IN-02)" do
+    # IN-02: load_private_key/0 must raise a descriptive RuntimeError (not a bare MatchError)
+    # when the PEM file contains entries other than a single unencrypted RSAPrivateKey.
+    # We test this by calling decode_pem_key/1 (the testable extraction of the decode logic).
+    test "IN-02: raises a descriptive error on a multi-entry / wrong-shape PEM" do
+      cert_pem = Keypair.cert_pem()
+      # Two Certificate entries: neither is a single unencrypted RSAPrivateKey
+      multi_entry_pem = cert_pem <> cert_pem
+
+      assert_raise RuntimeError, ~r/expected a single unencrypted/, fn ->
+        Keypair.decode_pem_key(multi_entry_pem)
+      end
+    end
+  end
+
   describe "key<->cert pairing" do
     test "private key corresponds to the cert's SubjectPublicKeyInfo (sign/verify round-trip)" do
       priv_key = Keypair.private_key()
