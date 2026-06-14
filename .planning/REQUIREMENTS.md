@@ -38,8 +38,8 @@ Requirements for the Brand System & Identity milestone. Each maps to exactly one
 
 ### QA & Repo Hygiene
 
-- [ ] **QA-01**: All SVGs are optimized, the repo-size budget is enforced, the diff contains no unrelated changes, and no font binaries are committed.
-- [ ] **QA-02**: `brandbook/README.md` documents every artifact and how to preview it; `mix qa` exits 0; and the milestone is closed out.
+- [x] **QA-01**: All SVGs are optimized, the repo-size budget is enforced, the diff contains no unrelated changes, and no font binaries are committed.
+- [x] **QA-02**: `brandbook/README.md` documents every artifact and how to preview it; `mix qa` exits 0; and the milestone is closed out.
 
 ## Future Requirements
 
@@ -83,8 +83,8 @@ Which phases cover which requirements. Finalized during roadmap creation.
 | INTEG-01 | Phase 62 | Complete |
 | INTEG-02 | Phase 62 | Complete |
 | INTEG-03 | Phase 62 | Complete |
-| QA-01 | Phase 63 | Pending |
-| QA-02 | Phase 63 | Pending |
+| QA-01 | Phase 63 | Complete |
+| QA-02 | Phase 63 | Complete |
 
 **Coverage:**
 - v1.8 requirements: 16 total

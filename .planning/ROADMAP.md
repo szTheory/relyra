@@ -32,7 +32,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 - [x] **Phase 60: Design Tokens** - Publish tokens.json, tokens.css, and a Tailwind/daisyUI mapping (completed 2026-06-14)
 - [x] **Phase 61: HTML Brand Book & Component Examples** - Ship standalone brandbook/index.html with full specimens, states, microcopy, and copy-ready examples (completed 2026-06-14)
 - [x] **Phase 62: Real-World Integration** - Wire logo/favicon into HexDocs, ship social card and README banner, reskin ledger_loop demo (completed 2026-06-14)
-- [ ] **Phase 63: QA, Repo Hygiene & Ship** - Optimize SVGs, enforce repo-size budget, verify mix qa, close milestone
+- [x] **Phase 63: QA, Repo Hygiene & Ship** - Optimize SVGs, enforce repo-size budget, verify mix qa, close milestone (completed 2026-06-14)
 
 ## Phase Details
 
@@ -115,4 +115,4 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 | 60. Design Tokens | 1/1 | Complete    | 2026-06-14 |
 | 61. HTML Brand Book & Component Examples | 1/1 | Complete    | 2026-06-14 |
 | 62. Real-World Integration | 1/1 | Complete    | 2026-06-14 |
-| 63. QA, Repo Hygiene & Ship | 0/TBD | Not started | - |
+| 63. QA, Repo Hygiene & Ship | 1/1 | Complete    | 2026-06-14 |
