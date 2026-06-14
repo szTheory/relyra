@@ -1,6 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 58 32" fill="none" role="img" aria-label="Relyra">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 32" fill="none" role="img" aria-label="Relyra">
   <title>Relyra</title>
   <!-- PRIMARY lockup = the integrated typemark: the monogram IS the leading "R" of the word.
+       Leading R sized to the wordmark ascender (scale 0.82), leg on the baseline.
        Default everywhere. Self-adapting: Ink on light, Paper on dark (honors the OS scheme). -->
   <style>
     .rl-ink { stroke: #101827; }
@@ -12,13 +13,13 @@
       .rl-node { fill: #61D6C8; }
     }
   </style>
-  <g transform="translate(-0.6 6.92) scale(0.76)">
-    <g class="rl-ink" stroke-width="3.15" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <g transform="translate(-0.9 5.69) scale(0.82)">
+    <g class="rl-ink" stroke-width="2.95" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M5 3.5 V20.5" />
       <path d="M5 3.5 H12.5 A5 5 0 0 1 12.5 13.5 H7.5" />
       <path d="M9.5 11.5 L19 20.5" />
     </g>
     <circle class="rl-node" cx="13" cy="8.5" r="2.1" />
   </g>
-  <text class="rl-wm" x="15.2" y="22.5" font-family="'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif" font-weight="600" font-size="20" letter-spacing="-0.2">elyra</text>
+  <text class="rl-wm" x="16.0" y="22.5" font-family="'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif" font-weight="600" font-size="20" letter-spacing="-0.2">elyra</text>
 </svg>
