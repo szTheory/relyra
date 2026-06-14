@@ -123,6 +123,8 @@ defmodule Relyra.MixProject do
   defp docs do
     [
       main: "getting_started",
+      logo: "brandbook/assets/exdoc-logo.png",
+      favicon: "brandbook/assets/exdoc-favicon.png",
       source_ref: "v#{@version}",
       source_url: @source_url,
       formatters: ["html", "markdown"],

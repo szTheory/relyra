@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relyra — Brand Book</title>
+<meta name="description" content="Relyra design system: logo, color, type, space and components for a strict-by-default SAML 2.0 SP library. Enterprise SAML, calmly verified.">
+
+<!-- Set theme before paint to avoid a flash of the wrong mode -->
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("rl-theme");
+      if (t === "light" || t === "dark") {
+        document.documentElement.setAttribute("data-theme", t);
+      }
+    } catch (e) {}
+  })();
+</script>
+
+<!-- Real tokens — sibling stylesheet, the single source of every semantic color -->
+<link rel="stylesheet" href="tokens/tokens.css">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+<!-- Fonts: display / body / code -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ---- Scoped scaffolding only. Every brand color routes through var(--rl-*). ---- */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --rl-maxw: 1120px;
+    --rl-header-h: 56px;
+  }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--rl-bg);
+    color: var(--rl-text);
+    font-family: var(--rl-font-body);
+    font-size: var(--rl-text-body);
+    line-height: var(--rl-leading-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--rl-font-display);
+    font-weight: var(--rl-weight-semibold);
+    color: var(--rl-text);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  p { margin: 0 0 var(--rl-space-16); color: var(--rl-text); }
+  a { color: var(--rl-link); text-decoration: underline; text-underline-offset: 2px; }
+  code, kbd, samp { font-family: var(--rl-font-code); font-size: 0.9em; }
+
+  /* Universal focus-visible, driven by the real focus token */
+  a:focus-visible, button:focus-visible, input:focus-visible,
+  select:focus-visible, [tabindex]:focus-visible, .swatch:focus-visible {
+    outline: var(--rl-focus-width) var(--rl-focus-style) var(--rl-focus);
+    outline-offset: var(--rl-focus-offset);
+    border-radius: var(--rl-radius-sm);
+  }
+
+  /* ---- Layout ---- */
+  .wrap { max-width: var(--rl-maxw); margin: 0 auto; padding: 0 var(--rl-space-24); }
+
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    height: var(--rl-header-h);
+    display: flex; align-items: center;
+    background: color-mix(in srgb, var(--rl-bg) 88%, transparent);
+    backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: var(--rl-border-hairline) solid var(--rl-divider);
+  }
+  header.site .wrap { display: flex; align-items: center; gap: var(--rl-space-16); width: 100%; }
+  .brand-min { display: flex; align-items: center; gap: var(--rl-space-8); text-decoration: none; color: var(--rl-text); }
+  .brand-min img { height: 22px; width: auto; display: block; }
+  .brand-min .wm { font-family: var(--rl-font-display); font-weight: var(--rl-weight-semibold); font-size: 1.05rem; letter-spacing: -0.01em; }
+  nav.top { margin-left: auto; display: flex; gap: var(--rl-space-4); align-items: center; flex-wrap: wrap; }
+  nav.top a {
+    font-size: var(--rl-text-small); color: var(--rl-text-muted); text-decoration: none;
+    padding: var(--rl-space-4) var(--rl-space-8); border-radius: var(--rl-radius-sm);
+    font-family: var(--rl-font-display); font-weight: var(--rl-weight-medium);
+  }
+  nav.top a:hover { color: var(--rl-text); background: var(--rl-surface-subtle); }
+
+  /* Theme toggle */
+  .theme-toggle { display: inline-flex; border: var(--rl-border-hairline) solid var(--rl-border);
+    border-radius: var(--rl-radius-full); overflow: hidden; background: var(--rl-surface); }
+  .theme-toggle button {
+    font-family: var(--rl-font-display); font-size: var(--rl-text-caption); font-weight: var(--rl-weight-medium);
+    border: 0; background: transparent; color: var(--rl-text-muted);
+    padding: var(--rl-space-4) var(--rl-space-12); cursor: pointer; line-height: 1.8;
+  }
+  .theme-toggle button[aria-pressed="true"] { background: var(--rl-action); color: var(--rl-bg); }
+
+  section { padding: var(--rl-space-96) 0 var(--rl-space-64); border-top: var(--rl-border-hairline) solid var(--rl-divider); scroll-margin-top: var(--rl-header-h); }
+  section:first-of-type { border-top: 0; }
+  .eyebrow { font-family: var(--rl-font-display); font-weight: var(--rl-weight-semibold);
+    font-size: var(--rl-text-caption); letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--rl-verified); margin-bottom: var(--rl-space-12); display: flex; align-items: baseline; gap: var(--rl-space-8); }
+  .eyebrow .num { color: var(--rl-text-muted); font-variant-numeric: tabular-nums; }
+  h2.section-title { font-size: var(--rl-text-h2); line-height: var(--rl-leading-h2); margin-bottom: var(--rl-space-12); }
+  .section-lede { color: var(--rl-text-muted); font-size: var(--rl-text-body-lg); line-height: var(--rl-leading-body-lg); max-width: 64ch; margin-bottom: var(--rl-space-48); }
+  h3.sub { font-size: var(--rl-text-h3); line-height: var(--rl-leading-h3); margin: var(--rl-space-48) 0 var(--rl-space-16); font-weight: var(--rl-weight-semibold); }
+  h4.subsub { font-family: var(--rl-font-display); font-size: var(--rl-text-small); text-transform: uppercase; letter-spacing: 0.08em; color: var(--rl-text-muted); margin: var(--rl-space-32) 0 var(--rl-space-12); font-weight: var(--rl-weight-semibold); }
+
+  .grid { display: grid; gap: var(--rl-space-16); }
+  .cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .cols-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 860px) { .cols-3, .cols-4 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; } }
+
+  .card { background: var(--rl-surface); border: var(--rl-border-hairline) solid var(--rl-border);
+    border-radius: var(--rl-radius-md); padding: var(--rl-space-24); box-shadow: var(--rl-shadow-sm); }
+  .muted { color: var(--rl-text-muted); }
+  .mono { font-family: var(--rl-font-code); }
+  .tnum { font-variant-numeric: tabular-nums; }
+  hr.div { border: 0; border-top: var(--rl-border-hairline) solid var(--rl-divider); margin: var(--rl-space-32) 0; }
+
+  /* ---- Cover ---- */
+  .cover { padding-top: var(--rl-space-96); padding-bottom: var(--rl-space-96); }
+  .cover-logo { height: 56px; width: auto; margin-bottom: var(--rl-space-32); }
+  .cover h1 { font-size: var(--rl-text-hero); line-height: var(--rl-leading-hero); font-weight: var(--rl-weight-bold); letter-spacing: -0.02em; max-width: 16ch; }
+  @media (max-width: 640px) { .cover h1 { font-size: var(--rl-text-h1); } }
+  .cover .tagline { font-size: var(--rl-text-body-lg); color: var(--rl-verified); font-family: var(--rl-font-display);
+    font-weight: var(--rl-weight-medium); margin: var(--rl-space-24) 0 var(--rl-space-12); }
+  .cover .desc { font-size: var(--rl-text-body-lg); color: var(--rl-text-muted); max-width: 60ch; line-height: var(--rl-leading-body-lg); }
+  .cover-nav { display: flex; flex-wrap: wrap; gap: var(--rl-space-8); margin-top: var(--rl-space-48); }
+  .cover-nav a { font-family: var(--rl-font-display); font-weight: var(--rl-weight-medium); font-size: var(--rl-text-small);
+    text-decoration: none; color: var(--rl-text); border: var(--rl-border-hairline) solid var(--rl-border);
+    padding: var(--rl-space-8) var(--rl-space-16); border-radius: var(--rl-radius-full); background: var(--rl-surface); }
+  .cover-nav a:hover { border-color: var(--rl-action); color: var(--rl-action); }
+  .cover-meta { margin-top: var(--rl-space-48); display: flex; gap: var(--rl-space-32); flex-wrap: wrap; font-size: var(--rl-text-small); color: var(--rl-text-muted); }
+  .cover-meta b { color: var(--rl-text); font-weight: var(--rl-weight-semibold); }
+
+  /* ---- Logo section ---- */
+  .logo-tile { display: flex; align-items: center; justify-content: center; min-height: 140px;
+    background: var(--rl-surface); border: var(--rl-border-hairline) solid var(--rl-border);
+    border-radius: var(--rl-radius-md); padding: var(--rl-space-32); }
+  .logo-tile.dark { background: var(--rl-ink); }
+  .logo-tile img { max-width: 100%; height: auto; }
+  .tile-label { font-size: var(--rl-text-caption); color: var(--rl-text-muted); margin-top: var(--rl-space-8); font-family: var(--rl-font-code); }
+  .tile-h { font-family: var(--rl-font-display); font-weight: var(--rl-weight-semibold); font-size: var(--rl-text-small); margin-bottom: var(--rl-space-4); }
+
+  .clearspace { display: flex; gap: var(--rl-space-24); flex-wrap: wrap; align-items: center; }
+  .clearspace .cs-box { position: relative; padding: 28px; border: var(--rl-border-hairline) dashed var(--rl-action);
+    border-radius: var(--rl-radius-sm); background: var(--rl-surface); }
+  .clearspace .cs-box img { height: 28px; display: block; }
+  .minsize { display: flex; align-items: flex-end; gap: var(--rl-space-32); flex-wrap: wrap; }
+  .minsize .ms { text-align: center; }
+  .minsize .ms img { display: block; margin: 0 auto var(--rl-space-8); }
+
+  .dont-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--rl-space-12); }
+  @media (max-width: 860px) { .dont-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .dont-grid { grid-template-columns: 1fr; } }
+  .dont { border: var(--rl-border-hairline) solid var(--rl-border); border-radius: var(--rl-radius-md); overflow: hidden; background: var(--rl-surface); }
+  .dont .stage { height: 96px; display: flex; align-items: center; justify-content: center; background: var(--rl-surface-subtle); overflow: hidden; }
+  .dont .stage img { height: 26px; }
+  .dont .cap { padding: var(--rl-space-8) var(--rl-space-12); font-size: var(--rl-text-caption); display: flex; gap: var(--rl-space-8); align-items: flex-start; border-top: var(--rl-border-hairline) solid var(--rl-divider); }
+  .dont .cap .x { color: var(--rl-error); font-weight: var(--rl-weight-bold); flex: none; }
+  /* misuse demonstrations (intentionally wrong) */
+  .mis-cage { border: 2px solid var(--rl-text-muted); border-radius: 6px; padding: 8px 14px; background: var(--rl-bg); }
+  .mis-stretch { transform: scaleX(1.6); }
+  .mis-shadow { filter: drop-shadow(0 4px 6px rgba(0,0,0,.5)); }
+  .mis-low { opacity: 0.32; }
+
+  /* ---- Color swatches ---- */
+  .swatch { border: var(--rl-border-hairline) solid var(--rl-border); border-radius: var(--rl-radius-md); overflow: hidden; background: var(--rl-surface); }
+  .swatch .chip { height: 76px; display: block; }
+  .swatch .meta { padding: var(--rl-space-12) var(--rl-space-16); }
+  .swatch .role { font-family: var(--rl-font-display); font-weight: var(--rl-weight-semibold); font-size: var(--rl-text-small); }
+  .swatch .hex { font-family: var(--rl-font-code); font-size: var(--rl-text-caption); color: var(--rl-text-muted); text-transform: uppercase; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--rl-font-code); font-size: var(--rl-text-caption);
+    padding: 2px 8px; border-radius: var(--rl-radius-full); border: var(--rl-border-hairline) solid var(--rl-border); margin-top: var(--rl-space-8); }
+  .badge.pass { color: var(--rl-success); border-color: color-mix(in srgb, var(--rl-success) 50%, var(--rl-border)); }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+  .color-callout { display: flex; gap: var(--rl-space-16); align-items: flex-start; }
+
+  /* ---- Type specimens ---- */
+  .type-row { display: grid; grid-template-columns: 200px 1fr; gap: var(--rl-space-24); align-items: baseline;
+    padding: var(--rl-space-16) 0; border-bottom: var(--rl-border-hairline) solid var(--rl-divider); }
+  @media (max-width: 640px) { .type-row { grid-template-columns: 1fr; gap: var(--rl-space-4); } }
+  .type-row .spec { font-family: var(--rl-font-code); font-size: var(--rl-text-caption); color: var(--rl-text-muted); line-height: var(--rl-leading-caption); }
+  .type-row .sample { color: var(--rl-text); overflow: hidden; }
+  .field { display: inline-flex; align-items: center; gap: 6px; font-family: var(--rl-font-code); font-size: var(--rl-text-code);
+    background: var(--rl-surface-subtle); border: var(--rl-border-hairline) solid var(--rl-divider);
+    border-radius: var(--rl-radius-sm); padding: 3px 8px; color: var(--rl-text); margin: 0 4px 6px 0; }
+  .field b { color: var(--rl-verified); font-weight: var(--rl-weight-semibold); }
+
+  /* ---- Space / radius / shadow ---- */
+  .space-row { display: flex; align-items: center; gap: var(--rl-space-16); margin-bottom: var(--rl-space-8); }
+  .space-row .lbl { width: 56px; font-family: var(--rl-font-code); font-size: var(--rl-text-caption); color: var(--rl-text-muted); text-align: right; }
+  .space-row .bar { height: 14px; background: var(--rl-action); border-radius: 3px; }
+  .radius-demo { height: 88px; background: var(--rl-surface-subtle); border: var(--rl-border-regular) solid var(--rl-action); display: flex; align-items: center; justify-content: center; font-family: var(--rl-font-code); font-size: var(--rl-text-caption); color: var(--rl-text-muted); }
+  .shadow-demo { height: 96px; background: var(--rl-surface); border-radius: var(--rl-radius-md); display: flex; align-items: center; justify-content: center; font-family: var(--rl-font-code); font-size: var(--rl-text-caption); color: var(--rl-text-muted); border: var(--rl-border-hairline) solid var(--rl-divider); }
+
+  /* ---- Components ---- */
+  .btn { font-family: var(--rl-font-display); font-weight: var(--rl-weight-semibold); font-size: var(--rl-text-body);
+    border-radius: var(--rl-radius-sm); padding: 10px 18px; cursor: pointer; border: var(--rl-border-regular) solid transparent;
+    display: inline-flex; align-items: center; gap: var(--rl-space-8); line-height: 1.2;
+    transition: background var(--rl-duration-base) var(--rl-ease-standard), border-color var(--rl-duration-base) var(--rl-ease-standard); }
+  .btn-primary { background: var(--rl-action); color: var(--rl-bg); }
+  .btn-primary:hover { background: var(--rl-action-emphasis); }
+  .btn-primary.is-active { background: var(--rl-action-emphasis); transform: translateY(1px); }
+  .btn-secondary { background: var(--rl-surface); color: var(--rl-action); border-color: var(--rl-border); }
+  .btn-secondary:hover { border-color: var(--rl-action); }
+  .btn:disabled, .btn.is-disabled { opacity: 1; background: var(--rl-surface-subtle); color: var(--rl-text-muted); border-color: var(--rl-divider); cursor: not-allowed; }
+  .btn.show-focus { outline: var(--rl-focus-width) var(--rl-focus-style) var(--rl-focus); outline-offset: var(--rl-focus-offset); }
+  .btn-row { display: flex; gap: var(--rl-space-12); flex-wrap: wrap; align-items: center; }
+
+  .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-top-color: transparent; animation: rl-spin 0.7s linear infinite; }
+  @keyframes rl-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+
+  .lbl-field { display: block; margin-bottom: var(--rl-space-16); }
+  .lbl-field > span { display: block; font-family: var(--rl-font-display); font-weight: var(--rl-weight-medium); font-size: var(--rl-text-small); margin-bottom: var(--rl-space-4); }
+  .input { width: 100%; font-family: var(--rl-font-body); font-size: var(--rl-text-body); color: var(--rl-text);
+    background: var(--rl-surface); border: var(--rl-border-hairline) solid var(--rl-border); border-radius: var(--rl-radius-sm);
+    padding: 10px 12px; }
+  .input::placeholder { color: var(--rl-text-muted); }
+  .input.show-focus { outline: var(--rl-focus-width) var(--rl-focus-style) var(--rl-focus); outline-offset: var(--rl-focus-offset); border-color: var(--rl-action); }
+  .input.error { border-color: var(--rl-error); }
+  .input:disabled { background: var(--rl-surface-subtle); color: var(--rl-text-muted); cursor: not-allowed; }
+  .help { font-size: var(--rl-text-caption); color: var(--rl-text-muted); margin-top: var(--rl-space-4); }
+  .help.error { color: var(--rl-error); }
+
+  .alert { display: flex; gap: var(--rl-space-12); padding: var(--rl-space-16); border-radius: var(--rl-radius-md);
+    border: var(--rl-border-hairline) solid var(--rl-border); background: var(--rl-surface); margin-bottom: var(--rl-space-12); }
+  .alert .ic { flex: none; width: 20px; height: 20px; }
+  .alert .body { min-width: 0; }
+  .alert .body h4 { font-size: var(--rl-text-small); margin-bottom: var(--rl-space-4); display: flex; gap: 6px; align-items: center; }
+  .alert .body p { margin: 0; font-size: var(--rl-text-small); color: var(--rl-text-muted); }
+  .alert.info  { border-left: 4px solid var(--rl-info); }
+  .alert.info .ic, .alert.info h4 { color: var(--rl-info); }
+  .alert.success { border-left: 4px solid var(--rl-success); }
+  .alert.success .ic, .alert.success h4 { color: var(--rl-success); }
+  .alert.warning { border-left: 4px solid var(--rl-warning); }
+  .alert.warning .ic, .alert.warning h4 { color: var(--rl-warning); }
+  .alert.error { border-left: 4px solid var(--rl-error); }
+  .alert.error .ic, .alert.error h4 { color: var(--rl-error); }
+
+  pre.code { background: var(--rl-surface-subtle); border: var(--rl-border-hairline) solid var(--rl-divider);
+    border-radius: var(--rl-radius-md); padding: var(--rl-space-16); overflow-x: auto;
+    font-family: var(--rl-font-code); font-size: var(--rl-text-code); line-height: var(--rl-leading-code); color: var(--rl-text); margin: 0; }
+  pre.code .k { color: var(--rl-action); }
+  pre.code .t { color: var(--rl-verified); }
+  pre.code .c { color: var(--rl-text-muted); }
+
+  .tag { display: inline-flex; align-items: center; gap: 5px; font-family: var(--rl-font-display); font-weight: var(--rl-weight-medium);
+    font-size: var(--rl-text-caption); padding: 2px 10px; border-radius: var(--rl-radius-full);
+    border: var(--rl-border-hairline) solid var(--rl-border); color: var(--rl-text-muted); background: var(--rl-surface); }
+  .tag.verified { color: var(--rl-verified); border-color: color-mix(in srgb, var(--rl-verified) 45%, var(--rl-border)); }
+  .tag.action { color: var(--rl-action); border-color: color-mix(in srgb, var(--rl-action) 45%, var(--rl-border)); }
+  .tag.error { color: var(--rl-error); border-color: color-mix(in srgb, var(--rl-error) 45%, var(--rl-border)); }
+  .tag.caution { color: var(--rl-caution); border-color: color-mix(in srgb, var(--rl-caution) 45%, var(--rl-border)); }
+
+  table.data { width: 100%; border-collapse: collapse; font-size: var(--rl-text-small); }
+  table.data th, table.data td { text-align: left; padding: 10px 12px; border-bottom: var(--rl-border-hairline) solid var(--rl-divider); }
+  table.data th { font-family: var(--rl-font-display); font-weight: var(--rl-weight-semibold); color: var(--rl-text-muted); font-size: var(--rl-text-caption); text-transform: uppercase; letter-spacing: 0.06em; }
+  table.data td.num, table.data th.num { font-family: var(--rl-font-code); font-variant-numeric: tabular-nums; }
+  table.data tr.selected td { background: color-mix(in srgb, var(--rl-action) 12%, var(--rl-surface)); }
+  table.data tr.selected td:first-child { box-shadow: inset 3px 0 0 var(--rl-action); }
+
+  .empty { text-align: center; padding: var(--rl-space-48) var(--rl-space-24); border: var(--rl-border-hairline) dashed var(--rl-border);
+    border-radius: var(--rl-radius-md); color: var(--rl-text-muted); }
+  .empty .em-mark { width: 40px; height: 40px; margin: 0 auto var(--rl-space-12); color: var(--rl-text-muted); display: block; }
+  .empty h4 { font-size: var(--rl-text-body); margin-bottom: var(--rl-space-4); color: var(--rl-text); }
+
+  .skeleton { background: var(--rl-surface); border: var(--rl-border-hairline) solid var(--rl-border); border-radius: var(--rl-radius-md); padding: var(--rl-space-16); }
+  .sk { background: var(--rl-surface-subtle); border-radius: var(--rl-radius-sm); height: 12px; margin-bottom: var(--rl-space-8); overflow: hidden; position: relative; }
+  .sk.w70 { width: 70%; } .sk.w40 { width: 40%; } .sk.w90 { width: 90%; }
+  .sk::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--rl-text) 7%, transparent), transparent);
+    animation: rl-shimmer 1.4s infinite; }
+  @keyframes rl-shimmer { 100% { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .sk::after { animation: none; } }
+
+  /* ---- Voice do/don't ---- */
+  .vpair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--rl-space-16); }
+  @media (max-width: 640px) { .vpair { grid-template-columns: 1fr; } }
+  .vcard { border-radius: var(--rl-radius-md); border: var(--rl-border-hairline) solid var(--rl-border); padding: var(--rl-space-16); background: var(--rl-surface); }
+  .vcard .vh { font-family: var(--rl-font-display); font-weight: var(--rl-weight-semibold); font-size: var(--rl-text-small); display: flex; align-items: center; gap: 6px; margin-bottom: var(--rl-space-8); }
+  .vcard.do .vh { color: var(--rl-success); }
+  .vcard.dont .vh { color: var(--rl-error); }
+  .vcard p { font-size: var(--rl-text-small); margin: 0; color: var(--rl-text); }
+
+  .footer { padding: var(--rl-space-48) 0 var(--rl-space-96); color: var(--rl-text-muted); font-size: var(--rl-text-small); border-top: var(--rl-border-hairline) solid var(--rl-divider); }
+  .footer img { height: 28px; margin-bottom: var(--rl-space-16); }
+
+  .pill-note { display: inline-flex; align-items: center; gap: 6px; font-size: var(--rl-text-caption); font-family: var(--rl-font-code);
+    color: var(--rl-text-muted); background: var(--rl-surface-subtle); border: var(--rl-border-hairline) solid var(--rl-divider);
+    border-radius: var(--rl-radius-full); padding: 3px 10px; }
+</style>
+</head>
+
+<body>
+
+<!-- ============ STICKY HEADER ============ -->
+<header class="site">
+  <div class="wrap">
+    <a class="brand-min" href="#cover" aria-label="Relyra brand book, top">
+      <img src="assets/logo-mark.svg" alt="">
+      <span class="wm">Relyra</span>
+    </a>
+    <nav class="top" aria-label="Sections">
+      <a href="#logo">Logo</a>
+      <a href="#color">Color</a>
+      <a href="#type">Type</a>
+      <a href="#space">Space</a>
+      <a href="#components">Components</a>
+      <a href="#voice">Voice</a>
+      <a href="#developers">Dev</a>
+      <div class="theme-toggle" role="group" aria-label="Theme">
+        <button type="button" data-theme-set="light">Light</button>
+        <button type="button" data-theme-set="dark">Dark</button>
+        <button type="button" data-theme-set="system">Auto</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ 1. COVER ============ -->
+<section id="cover" class="cover">
+  <div class="wrap">
+    <img class="cover-logo" src="assets/logo-primary.svg" alt="Relyra">
+    <h1>The Relyra brand &amp; design system.</h1>
+    <p class="tagline">Enterprise SAML, calmly verified.</p>
+    <p class="desc">The single source of truth for Relyra's logo, color, type, spacing and UI components — a strict-by-default SAML&nbsp;2.0 service-provider library for Elixir&nbsp;/&nbsp;Phoenix. Every value here is dogfooded from <code>tokens/tokens.css</code>; nothing is a one-off.</p>
+    <nav class="cover-nav" aria-label="Brand book contents">
+      <a href="#logo">01 · Logo</a>
+      <a href="#color">02 · Color</a>
+      <a href="#type">03 · Typography</a>
+      <a href="#space">04 · Space · Radius · Shadow</a>
+      <a href="#components">05 · Components</a>
+      <a href="#voice">06 · Microcopy &amp; Voice</a>
+      <a href="#developers">07 · For Developers</a>
+    </nav>
+    <div class="cover-meta">
+      <span>Mood: <b>calm · exact · protocol-aware · operable</b></span>
+      <span>Theme: <b>Light / Dark / Auto</b> — try the toggle above</span>
+      <span>Tokens: <b>--rl-*</b></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. LOGO ============ -->
+<section id="logo">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">01</span> Logo</div>
+    <h2 class="section-title">The Relying-Path monogram</h2>
+    <p class="section-lede">A custom <strong>R</strong> that encodes the protocol: an SP stem, an IdP bowl, a verified-assertion diagonal leg, and a Proof-Teal verification node. The mark is transparent and floats free — never caged. All eight lockups below are the canonical assets in <code>assets/</code>.</p>
+
+    <h3 class="sub">Lockups &amp; marks</h3>
+    <div class="grid cols-3">
+      <div>
+        <div class="logo-tile"><img src="assets/logo-primary.svg" alt="Relyra primary horizontal lockup" style="height:34px"></div>
+        <div class="tile-h" style="margin-top:8px">Primary (horizontal)</div>
+        <div class="tile-label">logo-primary.svg · default everywhere</div>
+      </div>
+      <div>
+        <div class="logo-tile"><img src="assets/logo-stacked.svg" alt="Relyra stacked lockup" style="height:80px"></div>
+        <div class="tile-h" style="margin-top:8px">Stacked (vertical)</div>
+        <div class="tile-label">logo-stacked.svg · narrow / centered</div>
+      </div>
+      <div>
+        <div class="logo-tile dark"><img src="assets/logo-primary-inverse.svg" alt="Relyra inverse lockup on dark" style="height:34px"></div>
+        <div class="tile-h" style="margin-top:8px">Inverse (on dark)</div>
+        <div class="tile-label">logo-primary-inverse.svg · node = Dark Teal</div>
+      </div>
+      <div>
+        <div class="logo-tile"><img src="assets/logo-typemark.svg" alt="Relyra integrated typemark" style="height:32px"></div>
+        <div class="tile-h" style="margin-top:8px">Integrated typemark</div>
+        <div class="tile-label">logo-typemark.svg · monogram is the “R”</div>
+      </div>
+      <div>
+        <div class="logo-tile"><img src="assets/logo-with-tagline.svg" alt="Relyra lockup with tagline" style="height:48px"></div>
+        <div class="tile-h" style="margin-top:8px">With tagline</div>
+        <div class="tile-label">logo-with-tagline.svg · marketing / footers only</div>
+      </div>
+      <div>
+        <div class="logo-tile" style="gap:32px">
+          <span style="text-align:center"><img src="assets/logo-mark.svg" alt="Relyra mark" style="height:48px"><div class="tile-label">logo-mark.svg</div></span>
+          <span style="text-align:center"><img src="assets/logo-mark-mono.svg" alt="Relyra single-ink mark" style="height:48px"><div class="tile-label">logo-mark-mono.svg</div></span>
+          <span style="text-align:center"><img src="assets/favicon.svg" alt="Relyra favicon" style="height:48px"><div class="tile-label">favicon.svg</div></span>
+        </div>
+        <div class="tile-h" style="margin-top:8px">Marks — cage-free, transparent</div>
+        <div class="tile-label">avatars · one-color print · 16–24px tabs</div>
+      </div>
+    </div>
+
+    <h3 class="sub">Clear space &amp; minimum size</h3>
+    <div class="grid cols-2">
+      <div class="card">
+        <h4 class="subsub">Clear space = cap-height of the bowl</h4>
+        <div class="clearspace">
+          <div class="cs-box"><img src="assets/logo-primary.svg" alt="Relyra lockup with clear space margin"></div>
+          <p class="muted" style="margin:0;max-width:28ch;font-size:var(--rl-text-small)">Keep a margin equal to the height of the “R” on every side. No text, UI chrome, or other logo intrudes. Mark-to-word gap is fixed — never let the mark float away.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h4 class="subsub">Minimum sizes</h4>
+        <div class="minsize">
+          <div class="ms"><img src="assets/logo-primary.svg" alt="" style="width:120px"><div class="tile-label">120px lockup</div></div>
+          <div class="ms"><img src="assets/logo-mark.svg" alt="" style="height:24px"><div class="tile-label">24px mark</div></div>
+          <div class="ms"><img src="assets/favicon.svg" alt="" style="height:16px"><div class="tile-label">16px favicon</div></div>
+        </div>
+        <p class="muted" style="margin-top:var(--rl-space-16);font-size:var(--rl-text-small)">Below 24px, switch from the lockup to <code>favicon.svg</code> — purpose-built with a heavier stroke and larger node.</p>
+      </div>
+    </div>
+
+    <h3 class="sub">Don't</h3>
+    <div class="dont-grid">
+      <div class="dont"><div class="stage"><span class="mis-cage"><img src="assets/logo-mark.svg" alt=""></span></div><div class="cap"><span class="x">✕</span><span>Cage it in a box, rounded-rect, or badge.</span></div></div>
+      <div class="dont"><div class="stage"><img src="assets/logo-primary.svg" alt="" class="mis-stretch"></div><div class="cap"><span class="x">✕</span><span>Stretch, skew, or re-proportion.</span></div></div>
+      <div class="dont"><div class="stage" style="flex-direction:column;gap:2px"><img src="assets/logo-primary.svg" alt=""><span style="font-family:var(--rl-font-body);font-size:9px;color:var(--rl-text-muted)">for Phoenix apps</span></div><div class="cap"><span class="x">✕</span><span>Add a subtitle to the primary lockup.</span></div></div>
+      <div class="dont"><div class="stage" style="gap:24px"><img src="assets/logo-mark.svg" alt="" style="height:24px"><span style="font-family:var(--rl-font-display);font-weight:600;font-size:18px;color:var(--rl-text)">Relyra</span></div><div class="cap"><span class="x">✕</span><span>Separate the mark from the word.</span></div></div>
+      <div class="dont"><div class="stage"><img src="assets/logo-mark.svg" alt="" style="filter:hue-rotate(120deg) saturate(2)"></div><div class="cap"><span class="x">✕</span><span>Recolor into off-brand hues.</span></div></div>
+      <div class="dont"><div class="stage" style="background:var(--rl-text-muted)"><img src="assets/logo-mark.svg" alt="" class="mis-low"></div><div class="cap"><span class="x">✕</span><span>Place on a low-contrast background.</span></div></div>
+      <div class="dont"><div class="stage"><img src="assets/logo-mark.svg" alt="" class="mis-shadow"></div><div class="cap"><span class="x">✕</span><span>Add shadows, glows, or 3D.</span></div></div>
+      <div class="dont"><div class="stage"><span style="font-family:Georgia,serif;font-weight:700;font-size:18px;color:var(--rl-text);font-style:italic">Relyra</span></div><div class="cap"><span class="x">✕</span><span>Re-typeset or alter the casing.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. COLOR ============ -->
+<section id="color">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">02</span> Color</div>
+    <h2 class="section-title">Semantic palette, contrast-proven</h2>
+    <p class="section-lede">Every role is one hex per mode. Ratios are computed by <code>contrast.exs</code> against WCAG&nbsp;2.2 — not hand-typed. Swatches inherit the active theme; the light/dark tables below show both modes side by side with their measured contrast.</p>
+
+    <div class="color-callout card" style="border-left:4px solid var(--rl-info);margin-bottom:var(--rl-space-32)">
+      <svg class="ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="color:var(--rl-info);flex:none"><circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6" r="1.1" fill="currentColor"/></svg>
+      <p style="margin:0;font-size:var(--rl-text-small)"><strong>Info is byte-identical to Relay Blue</strong> (<code>#3454D1</code>). An info callout and a clickable action share the same hue by design (D-04). Always disambiguate with an <strong>icon + label</strong> — never by color alone.</p>
+    </div>
+
+    <h3 class="sub">Light mode</h3>
+    <div class="grid cols-4">
+      <div class="swatch"><span class="chip" style="background:#101827"></span><div class="meta"><div class="role">Ink · text</div><div class="hex">#101827</div><span class="badge pass"><span class="dot"></span>17.16 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#263245"></span><div class="meta"><div class="role">Graphite · muted</div><div class="hex">#263245</div><span class="badge pass"><span class="dot"></span>12.48 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#FCFBF7;border-bottom:1px solid var(--rl-divider)"></span><div class="meta"><div class="role">Paper · bg</div><div class="hex">#FCFBF7</div><span class="badge pass"><span class="dot"></span>app surface</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#EEF2F6;border-bottom:1px solid var(--rl-divider)"></span><div class="meta"><div class="role">Mist · subtle</div><div class="hex">#EEF2F6</div><span class="badge pass"><span class="dot"></span>15.79 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#3454D1"></span><div class="meta"><div class="role">Relay Blue · action / link / info</div><div class="hex">#3454D1</div><span class="badge pass"><span class="dot"></span>6.08 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#1D2E82"></span><div class="meta"><div class="role">Deep Relay · emphasis</div><div class="hex">#1D2E82</div><span class="badge pass"><span class="dot"></span>11.49 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#147D77"></span><div class="meta"><div class="role">Proof Teal · verified</div><div class="hex">#147D77</div><span class="badge pass"><span class="dot"></span>4.80 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#6D5DF2"></span><div class="meta"><div class="role">Keyline Violet · focus</div><div class="hex">#6D5DF2</div><span class="badge pass"><span class="dot"></span>4.51 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#9A6B1C"></span><div class="meta"><div class="role">Certificate Gold · caution</div><div class="hex">#9A6B1C</div><span class="badge pass"><span class="dot"></span>4.51 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#7E8A9A"></span><div class="meta"><div class="role">Accessible Border · controls</div><div class="hex">#7E8A9A</div><span class="badge pass"><span class="dot"></span>3.39 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#D8E0EA;border-bottom:1px solid var(--rl-divider)"></span><div class="meta"><div class="role">Soft Line · divider</div><div class="hex">#D8E0EA</div><span class="badge"><span class="dot"></span>decorative only</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#027A48"></span><div class="meta"><div class="role">Success</div><div class="hex">#027A48</div><span class="badge pass"><span class="dot"></span>5.23 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#B45309"></span><div class="meta"><div class="role">Warning</div><div class="hex">#B45309</div><span class="badge pass"><span class="dot"></span>4.85 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#B42318"></span><div class="meta"><div class="role">Error</div><div class="hex">#B42318</div><span class="badge pass"><span class="dot"></span>6.35 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#3454D1"></span><div class="meta"><div class="role">Info <span class="muted">(= Relay Blue)</span></div><div class="hex">#3454D1</div><span class="badge pass"><span class="dot"></span>6.08 PASS</span></div></div>
+    </div>
+
+    <h3 class="sub">Dark mode</h3>
+    <div class="grid cols-4">
+      <div class="swatch"><span class="chip" style="background:#0B1020"></span><div class="meta"><div class="role">Dark Background · bg</div><div class="hex">#0B1020</div><span class="badge pass"><span class="dot"></span>app surface</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#111827"></span><div class="meta"><div class="role">Dark Surface · cards</div><div class="hex">#111827</div><span class="badge pass"><span class="dot"></span>16.96 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#F8FAFC;border-bottom:1px solid var(--rl-divider)"></span><div class="meta"><div class="role">Dark Text</div><div class="hex">#F8FAFC</div><span class="badge pass"><span class="dot"></span>18.10 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#CBD5E1"></span><div class="meta"><div class="role">Dark Muted</div><div class="hex">#CBD5E1</div><span class="badge pass"><span class="dot"></span>12.75 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#8CA2FF"></span><div class="meta"><div class="role">Dark Blue · action / link / info</div><div class="hex">#8CA2FF</div><span class="badge pass"><span class="dot"></span>7.87 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#61D6C8"></span><div class="meta"><div class="role">Dark Teal · verified</div><div class="hex">#61D6C8</div><span class="badge pass"><span class="dot"></span>10.78 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#A99BFF"></span><div class="meta"><div class="role">Dark Violet · focus</div><div class="hex">#A99BFF</div><span class="badge pass"><span class="dot"></span>7.95 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#64748B"></span><div class="meta"><div class="role">Dark Border · controls</div><div class="hex">#64748B</div><span class="badge pass"><span class="dot"></span>3.98 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#86EFAC"></span><div class="meta"><div class="role">Dark Green · success</div><div class="hex">#86EFAC</div><span class="badge pass"><span class="dot"></span>13.48 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#FBBF24"></span><div class="meta"><div class="role">Dark Amber · warning</div><div class="hex">#FBBF24</div><span class="badge pass"><span class="dot"></span>11.34 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#FDA29B"></span><div class="meta"><div class="role">Dark Red · error</div><div class="hex">#FDA29B</div><span class="badge pass"><span class="dot"></span>9.75 PASS</span></div></div>
+      <div class="swatch"><span class="chip" style="background:#8CA2FF"></span><div class="meta"><div class="role">Info <span class="muted">(= Dark Blue)</span></div><div class="hex">#8CA2FF</div><span class="badge pass"><span class="dot"></span>7.87 PASS</span></div></div>
+    </div>
+    <p class="muted" style="font-size:var(--rl-text-small);margin-top:var(--rl-space-16)">Ratios are foreground-on-background per intended use, lifted verbatim from <code>notes/accessibility-checks.md</code>. Thin-margin passes (Proof Teal 4.80, Keyline Violet 4.51, Warning 4.85) are locked do-not-darken.</p>
+  </div>
+</section>
+
+<!-- ============ 4. TYPOGRAPHY ============ -->
+<section id="type">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">03</span> Typography</div>
+    <h2 class="section-title">Three roles, no ambiguity</h2>
+    <p class="section-lede"><strong>IBM Plex Sans Condensed</strong> for display, <strong>Atkinson Hyperlegible</strong> for body and UI (purpose-built to disambiguate glyphs in certificate fingerprints and errors), and <strong>JetBrains Mono</strong> for code and protocol fields.</p>
+
+    <div class="type-row"><div class="spec">Hero · display<br>4rem / 1.0 / 700</div><div class="sample" style="font-family:var(--rl-font-display);font-size:var(--rl-text-hero);line-height:var(--rl-leading-hero);font-weight:var(--rl-weight-bold);letter-spacing:-0.02em">Calmly verified</div></div>
+    <div class="type-row"><div class="spec">H1 · display<br>2.75rem / 1.05 / 600</div><div class="sample" style="font-family:var(--rl-font-display);font-size:var(--rl-text-h1);line-height:var(--rl-leading-h1);font-weight:var(--rl-weight-semibold)">Assertion accepted</div></div>
+    <div class="type-row"><div class="spec">H2 · display<br>2rem / 1.12 / 600</div><div class="sample" style="font-family:var(--rl-font-display);font-size:var(--rl-text-h2);line-height:var(--rl-leading-h2);font-weight:var(--rl-weight-semibold)">Signature verified against configured IdP certs</div></div>
+    <div class="type-row"><div class="spec">H3 · display<br>1.5rem / 1.2 / 600</div><div class="sample" style="font-family:var(--rl-font-display);font-size:var(--rl-text-h3);line-height:var(--rl-leading-h3);font-weight:var(--rl-weight-semibold)">One parse path, no parser differentials</div></div>
+    <div class="type-row"><div class="spec">Body Large · body<br>1.1875rem / 1.55 / 400</div><div class="sample" style="font-size:var(--rl-text-body-lg);line-height:var(--rl-leading-body-lg)">Every login ends in a cryptographically verified assertion or a typed rejection — never a silent compromise.</div></div>
+    <div class="type-row"><div class="spec">Body · body<br>1rem / 1.55 / 400</div><div class="sample" style="font-size:var(--rl-text-body);line-height:var(--rl-leading-body)">The <code>DigestValue</code> is recomputed and <code>SignedInfo</code> is verified via <code>:public_key.verify</code>. Structure-only acceptance is treated as an auth bypass.</div></div>
+    <div class="type-row"><div class="spec">Small · body<br>0.875rem / 1.45 / 400</div><div class="sample" style="font-size:var(--rl-text-small);line-height:var(--rl-leading-small)">Replay protection is required in production; the ETS adapter warns when used in prod.</div></div>
+    <div class="type-row"><div class="spec">Caption · body<br>0.78rem / 1.4 / 400</div><div class="sample" style="font-size:var(--rl-text-caption);line-height:var(--rl-leading-caption);color:var(--rl-text-muted)">Trust mutations co-commit an audit row inside the same Ecto transaction.</div></div>
+    <div class="type-row"><div class="spec">Code · mono<br>0.875rem / 1.55 / 400</div><div class="sample"><code style="font-family:var(--rl-font-code);font-size:var(--rl-text-code)">Relyra.consume_response(conn, raw_xml, opts)</code></div></div>
+
+    <h3 class="sub">Protocol-field treatment</h3>
+    <p class="muted" style="font-size:var(--rl-text-small);max-width:60ch">SAML field names and values always render in JetBrains Mono with the field name in Proof Teal — so a <code>Recipient</code> mismatch is unmistakable in a trace.</p>
+    <div style="margin-top:var(--rl-space-12)">
+      <span class="field"><b>Audience</b> https://sp.example.com/saml</span>
+      <span class="field"><b>Recipient</b> https://sp.example.com/saml/acs</span>
+      <span class="field"><b>InResponseTo</b> _a1b2c3d4e5</span>
+      <span class="field"><b>RelayState</b> /dashboard</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. SPACE / RADIUS / SHADOW ============ -->
+<section id="space">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">04</span> Space · Radius · Shadow</div>
+    <h2 class="section-title">A ×4 rhythm</h2>
+    <p class="section-lede">An eleven-step spacing scale on a 4px base, four radii, and two elevation shadows. Restraint is the rule — most surfaces sit at <code>--rl-radius-md</code> with <code>--rl-shadow-sm</code>.</p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h4 class="subsub">Space scale (2 → 128)</h4>
+        <div class="space-row"><span class="lbl">2</span><span class="bar" style="width:2px"></span></div>
+        <div class="space-row"><span class="lbl">4</span><span class="bar" style="width:4px"></span></div>
+        <div class="space-row"><span class="lbl">8</span><span class="bar" style="width:8px"></span></div>
+        <div class="space-row"><span class="lbl">12</span><span class="bar" style="width:12px"></span></div>
+        <div class="space-row"><span class="lbl">16</span><span class="bar" style="width:16px"></span></div>
+        <div class="space-row"><span class="lbl">24</span><span class="bar" style="width:24px"></span></div>
+        <div class="space-row"><span class="lbl">32</span><span class="bar" style="width:32px"></span></div>
+        <div class="space-row"><span class="lbl">48</span><span class="bar" style="width:48px"></span></div>
+        <div class="space-row"><span class="lbl">64</span><span class="bar" style="width:64px"></span></div>
+        <div class="space-row"><span class="lbl">96</span><span class="bar" style="width:96px"></span></div>
+        <div class="space-row"><span class="lbl">128</span><span class="bar" style="width:128px"></span></div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:var(--rl-space-16)">
+          <h4 class="subsub" style="margin-top:0">Radius</h4>
+          <div class="grid cols-4">
+            <div><div class="radius-demo" style="border-radius:var(--rl-radius-sm)">8</div><div class="tile-label" style="text-align:center">sm</div></div>
+            <div><div class="radius-demo" style="border-radius:var(--rl-radius-md)">12</div><div class="tile-label" style="text-align:center">md</div></div>
+            <div><div class="radius-demo" style="border-radius:var(--rl-radius-lg)">16</div><div class="tile-label" style="text-align:center">lg</div></div>
+            <div><div class="radius-demo" style="border-radius:var(--rl-radius-full)">full</div><div class="tile-label" style="text-align:center">full</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h4 class="subsub" style="margin-top:0">Shadow</h4>
+          <div class="grid cols-2">
+            <div><div class="shadow-demo" style="box-shadow:var(--rl-shadow-sm)">sm</div><div class="tile-label" style="text-align:center">--rl-shadow-sm</div></div>
+            <div><div class="shadow-demo" style="box-shadow:var(--rl-shadow-md)">md</div><div class="tile-label" style="text-align:center">--rl-shadow-md</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. COMPONENTS ============ -->
+<section id="components">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">05</span> Components</div>
+    <h2 class="section-title">Every state, in the active theme</h2>
+    <p class="section-lede">Components follow the page theme — toggle Light/Dark to see both. Focus rings use the real <code>--rl-focus</code> token; status is always carried by an icon + heading, never color alone.</p>
+
+    <h3 class="sub">Buttons</h3>
+    <div class="card">
+      <div class="btn-row">
+        <button class="btn btn-primary" type="button">Start login</button>
+        <button class="btn btn-primary" type="button" style="background:var(--rl-action-emphasis)">Hover</button>
+        <button class="btn btn-primary show-focus" type="button">Focus-visible</button>
+        <button class="btn btn-primary is-active" type="button">Active</button>
+        <button class="btn btn-primary is-disabled" type="button" disabled>Disabled</button>
+        <button class="btn btn-primary" type="button"><span class="spinner" aria-hidden="true"></span> Verifying…</button>
+        <button class="btn btn-secondary" type="button">Secondary</button>
+      </div>
+    </div>
+
+    <h3 class="sub">Links &amp; inputs</h3>
+    <div class="grid cols-2">
+      <div class="card">
+        <h4 class="subsub" style="margin-top:0">Links</h4>
+        <p style="font-size:var(--rl-text-small)">A standard <a href="#components">inline link</a> uses <code>--rl-link</code>. Tab to it to see the <a href="#components" class="show-focus" style="outline:var(--rl-focus-width) var(--rl-focus-style) var(--rl-focus);outline-offset:var(--rl-focus-offset);border-radius:var(--rl-radius-sm)">focus ring</a>.</p>
+        <h4 class="subsub">Badges &amp; tags</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="tag verified">✓ Verified</span>
+          <span class="tag action">SP-initiated</span>
+          <span class="tag">HTTP-POST</span>
+          <span class="tag caution">Cert expiring</span>
+          <span class="tag error">Rejected</span>
+        </div>
+      </div>
+      <div class="card">
+        <h4 class="subsub" style="margin-top:0">Text inputs</h4>
+        <label class="lbl-field"><span>IdP entity ID</span><input class="input" type="text" placeholder="https://idp.example.com/metadata"></label>
+        <label class="lbl-field"><span>ACS URL (focused)</span><input class="input show-focus" type="text" value="https://sp.example.com/saml/acs"></label>
+        <label class="lbl-field"><span>Clock skew (error)</span><input class="input error" type="text" value="-90"><span class="help error">Must be between 0 and 300 seconds.</span></label>
+        <label class="lbl-field" style="margin-bottom:0"><span>Connection ID (disabled)</span><input class="input" type="text" value="okta-prod" disabled><span class="help">Locked after first successful assertion.</span></label>
+      </div>
+    </div>
+
+    <h3 class="sub">Callouts</h3>
+    <div class="alert info">
+      <svg class="ic" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6" r="1.1" fill="currentColor"/></svg>
+      <div class="body"><h4>Info · IdP metadata refreshed</h4><p>Signing certificates were re-read 4 minutes ago. The next scheduled refresh is in 56 minutes.</p></div>
+    </div>
+    <div class="alert success">
+      <svg class="ic" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="body"><h4>Success · Assertion verified</h4><p>Signature checked against the configured IdP certificate. The subject was mapped and the session established.</p></div>
+    </div>
+    <div class="alert warning">
+      <svg class="ic" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5l7.5 13H2.5L10 2.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 8v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14" r="1" fill="currentColor"/></svg>
+      <div class="body"><h4>Warning · Certificate expiring</h4><p>The IdP signing certificate expires in 9 days. Rotate it before <span class="mono">2026-06-23</span> to avoid downtime.</p></div>
+    </div>
+    <div class="alert error">
+      <svg class="ic" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <div class="body"><h4>Error · Signature did not verify</h4><p>The recomputed <span class="mono">DigestValue</span> did not match <span class="mono">SignedInfo</span>. The response was rejected and no session was created.</p></div>
+    </div>
+
+    <h3 class="sub">Code block</h3>
+    <pre class="code"><code><span class="c"># config/runtime.exs — strict-by-default SP</span>
+config <span class="t">:relyra</span>, <span class="t">:connection</span>,
+  idp_entity_id: <span class="t">"https://idp.example.com/metadata"</span>,
+  acs_url:       <span class="t">"https://sp.example.com/saml/acs"</span>,
+  <span class="k">signature_required:</span> <span class="t">true</span>,
+  <span class="k">trust_document_keyinfo:</span> <span class="t">false</span>, <span class="c"># never trust KeyInfo</span>
+  <span class="k">replay_store:</span> Relyra.ReplayStore.Ecto,
+  <span class="k">allowed_algorithms:</span> [<span class="t">:rsa_sha256</span>, <span class="t">:ecdsa_sha256</span>]</code></pre>
+
+    <h3 class="sub">Data table — tabular numbers</h3>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="data">
+        <thead><tr><th>Connection</th><th>Binding</th><th class="num">Cert NotAfter</th><th class="num">Verified</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>okta-prod</td><td>HTTP-POST</td><td class="num">2026-06-23</td><td class="num">17:04:12</td><td><span class="tag verified">✓ Verified</span></td></tr>
+          <tr class="selected"><td>azure-ad</td><td>HTTP-POST</td><td class="num">2027-01-09</td><td class="num">17:03:58</td><td><span class="tag verified">✓ Verified</span></td></tr>
+          <tr><td>onelogin-stg</td><td>HTTP-Redirect</td><td class="num">2026-09-30</td><td class="num">16:51:40</td><td><span class="tag caution">Expiring</span></td></tr>
+          <tr><td>pingfed-dev</td><td>HTTP-POST</td><td class="num">2026-06-14</td><td class="num">—</td><td><span class="tag error">Rejected</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="font-size:var(--rl-text-caption);margin-top:var(--rl-space-8)">The selected row is marked by a tinted background <em>and</em> a left rule — never color alone.</p>
+
+    <h3 class="sub">Empty state &amp; loading skeleton</h3>
+    <div class="grid cols-2">
+      <div class="empty">
+        <svg class="em-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M3.5 9h17" stroke="currentColor" stroke-width="1.4"/><path d="M8 13h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <h4>No connections yet</h4>
+        <p style="margin:0;font-size:var(--rl-text-small)">Add an IdP connection to start verifying assertions.</p>
+        <button class="btn btn-secondary" type="button" style="margin-top:var(--rl-space-16)">Add connection</button>
+      </div>
+      <div class="skeleton" aria-busy="true" aria-label="Loading connections">
+        <div class="sk w40"></div>
+        <div class="sk w90"></div>
+        <div class="sk w70"></div>
+        <div class="sk w90"></div>
+        <div class="sk w40"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. MICROCOPY & VOICE ============ -->
+<section id="voice">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">06</span> Microcopy &amp; Voice</div>
+    <h2 class="section-title">Calm · exact · transparent</h2>
+    <p class="section-lede">Relyra speaks like a careful operator: it states what happened, why it matters, and what to do next. It never over-promises security and never trivializes SAML.</p>
+
+    <h3 class="sub">Do / Don't copy pairs</h3>
+    <div class="vpair" style="margin-bottom:var(--rl-space-16)">
+      <div class="vcard do"><div class="vh">✓ Do — exact</div><p>“Signature verified against the configured IdP certificate.”</p></div>
+      <div class="vcard dont"><div class="vh">✕ Don't — vague</div><p>“Login looks good!”</p></div>
+    </div>
+    <div class="vpair" style="margin-bottom:var(--rl-space-16)">
+      <div class="vcard do"><div class="vh">✓ Do — transparent</div><p>“Rejected: the assertion's <span class="mono">Audience</span> did not match this SP.”</p></div>
+      <div class="vcard dont"><div class="vh">✕ Don't — opaque</div><p>“Something went wrong. Try again.”</p></div>
+    </div>
+    <div class="vpair">
+      <div class="vcard do"><div class="vh">✓ Do — calm</div><p>“Replay protection is required in production. Configure an Ecto replay store before deploying.”</p></div>
+      <div class="vcard dont"><div class="vh">✕ Don't — alarmist</div><p>“DANGER!! Your app is WIDE OPEN to attackers!!”</p></div>
+    </div>
+
+    <h3 class="sub">The error pattern</h3>
+    <p class="muted" style="font-size:var(--rl-text-small);max-width:62ch">Every rejection answers three questions in order: <strong>what happened</strong> · <strong>why it matters</strong> · <strong>what to do next</strong>.</p>
+    <div class="card" style="border-left:4px solid var(--rl-error)">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:var(--rl-space-8) var(--rl-space-16);font-size:var(--rl-text-small)">
+        <strong style="color:var(--rl-error)">What happened</strong><span>The assertion's <span class="mono">Recipient</span> was <span class="mono">https://sp.example.com/acs</span>, but this SP's ACS URL is <span class="mono">https://sp.example.com/saml/acs</span>.</span>
+        <strong style="color:var(--rl-error)">Why it matters</strong><span>A mismatched <span class="mono">Recipient</span> can indicate a misdirected or replayed response, so Relyra refuses it rather than establishing a session.</span>
+        <strong style="color:var(--rl-error)">What to do next</strong><span>Align the IdP's ACS endpoint with the SP's configured <span class="mono">acs_url</span>, or update <span class="mono">acs_url</span> to match the registered endpoint.</span>
+      </div>
+    </div>
+
+    <div class="alert error" style="margin-top:var(--rl-space-24);border-left-color:var(--rl-error)">
+      <svg class="ic" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5l7.5 13H2.5L10 2.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 8v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14" r="1" fill="currentColor"/></svg>
+      <div class="body"><h4>Forbidden claims — never ship these</h4><p>Relyra is never described as <strong>“unhackable,” “bulletproof,” “military-grade,”</strong> or <strong>“zero-risk,”</strong> and SAML is never called <strong>“easy.”</strong> Claims are specific and falsifiable, or they are not made.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. FOR DEVELOPERS ============ -->
+<section id="developers">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">07</span> For Developers</div>
+    <h2 class="section-title">Consume the tokens</h2>
+    <p class="section-lede">This page dogfoods <code>tokens/tokens.css</code> directly. Link it, reference <code>--rl-*</code> custom properties, and wire the theme hook. Hardcode nothing.</p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h4 class="subsub" style="margin-top:0">1 · Link the stylesheet</h4>
+        <pre class="code"><code><span class="k">&lt;link</span> rel=<span class="t">"stylesheet"</span> href=<span class="t">"tokens/tokens.css"</span><span class="k">&gt;</span></code></pre>
+        <h4 class="subsub">2 · Reference semantic vars</h4>
+        <pre class="code"><code>.button {
+  background: <span class="k">var(--rl-action)</span>;
+  color: <span class="k">var(--rl-bg)</span>;
+  border-radius: <span class="k">var(--rl-radius-sm)</span>;
+}</code></pre>
+      </div>
+      <div class="card">
+        <h4 class="subsub" style="margin-top:0">3 · Theme hook</h4>
+        <pre class="code"><code><span class="c">/* tokens.css already ships both: */</span>
+<span class="k">[data-theme="dark"]</span> { <span class="c">/* manual, wins */</span> }
+@media (<span class="k">prefers-color-scheme: dark</span>) {
+  :root:not([data-theme="light"]) { … }
+}</code></pre>
+        <h4 class="subsub">4 · Focus ring (never remove)</h4>
+        <pre class="code"><code>:focus-visible {
+  outline: <span class="k">var(--rl-focus-width)</span>
+           <span class="k">var(--rl-focus-style)</span>
+           <span class="k">var(--rl-focus)</span>;
+  outline-offset: <span class="k">var(--rl-focus-offset)</span>;
+}</code></pre>
+      </div>
+    </div>
+
+    <h3 class="sub">Font stack</h3>
+    <div class="grid cols-3">
+      <div class="card"><div class="tile-h">Display</div><code class="mono" style="font-size:var(--rl-text-caption)">--rl-font-display</code><p class="muted" style="font-size:var(--rl-text-small);margin:var(--rl-space-8) 0 0">IBM Plex Sans Condensed</p></div>
+      <div class="card"><div class="tile-h">Body / UI</div><code class="mono" style="font-size:var(--rl-text-caption)">--rl-font-body</code><p class="muted" style="font-size:var(--rl-text-small);margin:var(--rl-space-8) 0 0">Atkinson Hyperlegible</p></div>
+      <div class="card"><div class="tile-h">Code</div><code class="mono" style="font-size:var(--rl-text-caption)">--rl-font-code</code><p class="muted" style="font-size:var(--rl-text-small);margin:var(--rl-space-8) 0 0">JetBrains Mono</p></div>
+    </div>
+
+    <div class="card" style="margin-top:var(--rl-space-24);display:flex;gap:var(--rl-space-16);align-items:center;flex-wrap:wrap">
+      <span class="pill-note">tokens/tokens.css</span>
+      <span class="pill-note">tokens/tokens.json</span>
+      <span class="pill-note">tokens/tailwind.example.js</span>
+      <span class="pill-note">examples/</span>
+      <p class="muted" style="margin:0;font-size:var(--rl-text-small);flex:1;min-width:240px">For Tailwind, map the same <code>--rl-*</code> vars in <code>tokens/tailwind.example.js</code>. Integration snippets live in <code>examples/</code>. Both consume these tokens verbatim — never a parallel palette.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap">
+    <img src="assets/logo-with-tagline.svg" alt="Relyra — Enterprise SAML, calmly verified.">
+    <p style="margin:0">Relyra design system · Canonical Lock Set (Phase 58) · logo system locked Phase 59. Colors, type, space and components are dogfooded from <code>tokens/tokens.css</code>. Every contrast ratio is computed by <code>notes/contrast.exs</code> against WCAG&nbsp;2.2.</p>
+  </div>
+</footer>
+
+<!-- ============ THEME TOGGLE SCRIPT ============ -->
+<script>
+  (function () {
+    var root = document.documentElement;
+    var buttons = document.querySelectorAll("[data-theme-set]");
+
+    function current() {
+      var attr = root.getAttribute("data-theme");
+      return attr === "light" || attr === "dark" ? attr : "system";
+    }
+    function apply(mode) {
+      if (mode === "light" || mode === "dark") {
+        root.setAttribute("data-theme", mode);
+      } else {
+        root.removeAttribute("data-theme"); // system → fall back to prefers-color-scheme
+      }
+      try {
+        if (mode === "system") { localStorage.removeItem("rl-theme"); }
+        else { localStorage.setItem("rl-theme", mode); }
+      } catch (e) {}
+      sync();
+    }
+    function sync() {
+      var c = current();
+      buttons.forEach(function (b) {
+        b.setAttribute("aria-pressed", b.getAttribute("data-theme-set") === c ? "true" : "false");
+      });
+    }
+    buttons.forEach(function (b) {
+      b.addEventListener("click", function () { apply(b.getAttribute("data-theme-set")); });
+    });
+    sync();
+  })();
+</script>
+
+</body>
+</html>

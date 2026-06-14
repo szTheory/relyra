@@ -1,5 +1,23 @@
 # Milestones
 
+## v1.8 Brand System & Identity (Shipped: 2026-06-14)
+
+**Phases completed:** 6 phases (58–63), 6 plans · 39 commits · non-protocol brand/design milestone
+
+**Key accomplishments:**
+
+- WCAG-true brand foundation: every palette pair computed via a committed, re-runnable `brandbook/notes/contrast.exs`; 3 contrast failures remediated (gold #C08A2B→#9A6B1C, dark border #334155→#64748B, soft-line decorative-only) and the book's contradictions resolved into a single Canonical Lock Set.
+- Complete cage-free logo system, chosen by the maintainer from four real rendered directions (A — Relying Path monogram): primary/stacked/mark/mono/inverse/favicon/tagline + integrated typemark, with usage rules.
+- Implementation-ready design tokens (`tokens.json` + `tokens.css` `--rl-*` with automatic dark mode + `tailwind.example.js`), dogfooded by the brand book.
+- Standalone professional HTML brand book (`brandbook/index.html`, 8 sections, all component states, light/dark/system) + copy-ready `examples/`; verified in both themes.
+- Real-world brand presence: ex_doc logo+favicon, an OpenGraph social card, a README header banner, and a brand-reskinned `ledger_loop` demo.
+
+**Repo-safety:** `brandbook/` self-contained at 316K (<1MB budget); no committed fonts (CDN); diff limited to `brandbook/` + 3 authorized integration files (README.md, mix.exs docs(), demo app.css). **No `lib/`, security, protocol, public-API, or `@version` change.** `mix qa` green (744 tests, 0 failures).
+
+**Not a Hex release:** planning milestone only. (release-please independently released **Hex 1.8.0** — the v1.7 demo `feat` commits — while this was built; the GSD "v1.8" label is distinct from that release. The brand `feat(58–63)` commits will feed the next release-please version.) **No manual `v1.8` git tag** — `v1.8.0` already exists from release-please; a planning-milestone tag would collide. See `.planning/milestones/v1.8-ROADMAP.md`.
+
+---
+
 ## v1.7 Adoption Evidence Demo (Shipped: 2026-06-13)
 
 **Phases completed:** 6 phases, 23 plans, 17 tasks

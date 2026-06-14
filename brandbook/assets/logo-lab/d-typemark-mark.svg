@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke-linejoin="round">
+  <title>Relyra — Integrated typemark (R mark)</title>
+
+  <!--
+    Standalone R extracted from the typemark. Same construction as the wordmark:
+    a condensed grotesque R whose diagonal leg becomes the relay / verified
+    path, dropping below the cap box and terminating in the Proof Teal node.
+    Drawn slightly bolder/wider than the wordmark proportions so it survives at
+    16px. Cap box x 3.5..16, y 3..18; relay leg + node fill the lower-right.
+  -->
+
+  <!-- R stem -->
+  <path d="M3.5 3 H7.3 V18 H3.5 Z"/>
+  <!-- R bowl with counter (even-odd) -->
+  <path fill-rule="evenodd"
+        d="M7.3 3
+           H12.3
+           C15.2 3 17 4.7 17 7.3
+           C17 9.6 15.7 11.2 13.3 11.7
+           V11.7
+           H7.3
+           V3
+           Z
+           M7.3 5.9
+           V8.9
+           H11.5
+           C12.5 8.9 13.1 8.3 13.1 7.4
+           C13.1 6.5 12.5 5.9 11.5 5.9
+           H7.3
+           Z"/>
+  <!-- R leg = relay path: from bowl/stem junction down through the baseline -->
+  <path d="M9.9 10.4
+           L14.1 10.4
+           L19.7 19.2
+           L16.3 21.3
+           Z"/>
+
+  <!-- verification node terminus : the only accent -->
+  <circle cx="17.7" cy="20.2" r="2.6" fill="#147D77"/>
+</svg>

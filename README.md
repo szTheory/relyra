@@ -1,3 +1,5 @@
+<p align="center"><img src="brandbook/assets/readme-banner.svg" alt="Relyra — Enterprise SAML, calmly verified." width="720"></p>
+
 # Relyra
 
 [![Hex.pm](https://img.shields.io/hexpm/v/relyra.svg)](https://hex.pm/packages/relyra)

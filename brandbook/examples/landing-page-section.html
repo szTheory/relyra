@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relyra — Enterprise SAML, calmly verified.</title>
+  <!-- Tokens drive all color and spacing. examples/ sits one level below tokens/. -->
+  <link rel="stylesheet" href="../tokens/tokens.css" />
+  <!-- Layout-only styles; brand values come from var(--rl-*). -->
+  <style>
+    body {
+      margin: 0;
+      background: var(--rl-bg);
+      color: var(--rl-text);
+      font-family: var(--rl-font-body);
+      line-height: var(--rl-leading-body);
+    }
+    .section { max-width: 960px; margin: 0 auto; padding: var(--rl-space-96) var(--rl-space-24); }
+
+    /* Hero */
+    .hero { text-align: center; }
+    .hero .logo { color: var(--rl-text); height: 48px; width: auto; }
+    .hero .tagline {
+      font-family: var(--rl-font-display); font-size: var(--rl-text-hero); line-height: var(--rl-leading-hero);
+      color: var(--rl-text); margin: var(--rl-space-32) 0 var(--rl-space-16); letter-spacing: -0.01em;
+    }
+    .hero .valueprop {
+      font-size: var(--rl-text-body-lg); line-height: var(--rl-leading-body-lg);
+      color: var(--rl-text-muted); max-width: 56ch; margin: 0 auto var(--rl-space-32);
+    }
+    .ctas { display: flex; gap: var(--rl-space-12); justify-content: center; flex-wrap: wrap; }
+    .btn {
+      font-family: var(--rl-font-body); font-size: var(--rl-text-body-lg); font-weight: var(--rl-weight-semibold);
+      text-decoration: none; padding: var(--rl-space-12) var(--rl-space-32); border-radius: var(--rl-radius-sm);
+      border: var(--rl-border-regular) solid transparent;
+      transition: background var(--rl-duration-fast) var(--rl-ease-standard);
+    }
+    .btn:focus-visible { outline: var(--rl-focus-width) var(--rl-focus-style) var(--rl-focus); outline-offset: var(--rl-focus-offset); }
+    .btn--primary { background: var(--rl-action); color: #fff; }
+    .btn--primary:hover { background: var(--rl-action-emphasis); }
+    .btn--secondary { background: transparent; color: var(--rl-action); border-color: var(--rl-border); }
+
+    /* 3-up feature row */
+    .features {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--rl-space-24);
+      margin-top: var(--rl-space-96); padding-top: var(--rl-space-48);
+      border-top: var(--rl-border-hairline) solid var(--rl-divider);
+    }
+    .feature h2 {
+      font-family: var(--rl-font-display); font-size: var(--rl-text-h3); line-height: var(--rl-leading-h3);
+      margin: 0 0 var(--rl-space-8); display: flex; align-items: center; gap: var(--rl-space-8);
+    }
+    .feature h2 svg { width: 20px; height: 20px; color: var(--rl-verified); flex: none; }
+    .feature p { margin: 0; color: var(--rl-text-muted); font-size: var(--rl-text-body); }
+    @media (max-width: 720px) { .features { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <section class="section">
+    <!-- Hero: logo (currentColor wordmark + teal proof-dot), canonical tagline, value prop, two CTAs -->
+    <div class="hero">
+      <img class="logo" src="../assets/logo-primary.svg" alt="Relyra" />
+      <p class="tagline">Enterprise SAML,<br />calmly verified.</p>
+      <p class="valueprop">
+        Relyra is a strict-by-default SAML 2.0 service-provider library for Elixir and Phoenix.
+        Every login ends in a cryptographically verified assertion or a typed rejection — never a
+        silent compromise. Signatures are checked against the certificates you configure, not the
+        ones an attacker can put in the document.
+      </p>
+      <div class="ctas">
+        <a class="btn btn--primary" href="#get-started">Get started</a>
+        <a class="btn btn--secondary" href="#docs">Read the docs</a>
+      </div>
+    </div>
+
+    <!-- Feature row: three calm, exact claims — no hype words -->
+    <div class="features">
+      <!-- Strict by default -->
+      <div class="feature">
+        <h2><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 2l6 2.5v5c0 4-3 6.5-6 8-3-1.5-6-4-6-8v-5L10 2z" stroke-linejoin="round"/></svg>Strict by default</h2>
+        <p>The secure path is the default path. The digest is recomputed and the signature verified on every response — there is no setting that turns acceptance into structure-only.</p>
+      </div>
+      <!-- Phoenix-native -->
+      <div class="feature">
+        <h2><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 11l7-8-1.5 6H17l-7 8 1.5-6H3z" stroke-linejoin="round"/></svg>Phoenix-native</h2>
+        <p>Plugs, behaviours, and Ecto-backed stores that fit the app you already have. Connection resolution, session, user mapping, and replay are seams you implement, not internals you fight.</p>
+      </div>
+      <!-- Explainable by design -->
+      <div class="feature">
+        <h2><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v5M10 6h.01" stroke-linecap="round"/></svg>Explainable by design</h2>
+        <p>Rejections are typed and specific, and every trust mutation co-commits an audit row. When a login fails, you can say exactly which check rejected it and why.</p>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

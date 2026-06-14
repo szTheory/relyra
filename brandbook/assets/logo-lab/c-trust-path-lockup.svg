@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <title>Relyra — Trust Path</title>
+  <!-- mark: same geometry as c-trust-path-mark, translated/scaled into a 4..28 band -->
+  <g transform="translate(4 4)">
+    <circle cx="3.5" cy="17.5" r="2" stroke-width="1.3"/>
+    <path d="M5.2 16.2 L9.4 10.3"/>
+    <path d="M14.6 9.7 L18.9 13.4"/>
+    <circle cx="20.5" cy="14.5" r="2" fill="currentColor" stroke="none"/>
+    <circle cx="12" cy="9" r="4" fill="#147D77" stroke="none"/>
+    <path d="M10 9.1 L11.4 10.6 L14 7.2" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+  </g>
+  <!-- wordmark: tight to mark, ~0.5x cap-height gap -->
+  <text x="37" y="22" font-family="'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif" font-size="19" font-weight="600" letter-spacing="-0.3" fill="currentColor" stroke="none">Relyra</text>
+</svg>

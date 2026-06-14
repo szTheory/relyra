@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 32" fill="none">
+  <title>Relyra — Assertion Frame lockup</title>
+  <!-- Mark: identical geometry to b-assertion-frame-mark, placed 0..32 with 4px inset -->
+  <g transform="translate(4,4)">
+    <g stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M10 4 H4 V10" />
+      <path d="M14 20 H20 V14" />
+    </g>
+    <path d="M8.6 12.3 L11 14.8 L15.6 9.6" stroke="#3454D1" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  </g>
+  <!-- Wordmark: tight to mark, gap approx 0.5x cap-height -->
+  <text x="41" y="22" font-family="'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif"
+        font-weight="600" font-size="20" letter-spacing="-0.3" fill="currentColor">Relyra</text>
+</svg>
