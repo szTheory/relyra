@@ -157,7 +157,18 @@ defmodule LedgerLoop.FakeIdP.Signer do
   # digest_value_b64 / signature_value_b64 are base64 (no XML metacharacters);
   # applying xml_text/1 to them is harmless and uniform.
   defp response_xml(fields, digest_value_b64, signature_value_b64) do
-    "<Response Destination=\"#{AttributeEscape.escape_attribute(fields.destination)}\" InResponseTo=\"#{AttributeEscape.escape_attribute(fields.in_response_to || "")}\" ConnectionId=\"valid\">" <>
+    # Omit InResponseTo entirely when absent (direct, non-SP-initiated visit):
+    # an empty InResponseTo="" is not equivalent to an absent attribute, and a
+    # strict SP (including Relyra on the real ACS path) may reject "" as a
+    # malformed correlation, masking the missing-correlation condition (WR-03).
+    in_response_to_attr =
+      case fields.in_response_to do
+        nil -> ""
+        "" -> ""
+        v -> ~s( InResponseTo="#{AttributeEscape.escape_attribute(v)}")
+      end
+
+    "<Response Destination=\"#{AttributeEscape.escape_attribute(fields.destination)}\"#{in_response_to_attr} ConnectionId=\"valid\">" <>
       "<Issuer>#{xml_text(fields.issuer)}</Issuer>" <>
       "<Status><StatusCode Value=\"#{AttributeEscape.escape_attribute(fields.status)}\"/></Status>" <>
       "<Assertion ID=\"#{AttributeEscape.escape_attribute(fields.assertion_id)}\">" <>
