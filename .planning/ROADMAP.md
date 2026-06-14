@@ -71,7 +71,9 @@ Plans:
 
 **Requirements**: TBD (tech-debt remediation — derived from 57-REVIEW.md WR-01..05, IN-02, IN-03)
 **Depends on:** Phase 57
-**Plans:** 0 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 57.1 to break down)
+- [ ] 57.1-01-PLAN.md — Signer + keypair hardening: WR-05 raise-on-no-op tamper guard, WR-01 response_xml/3 escaping, IN-02 descriptive PEM error
+- [ ] 57.1-02-PLAN.md — Controller boundary hardening: WR-04 bounded safeInflate, IN-03/WR-01 NCName extractor, WR-03 idp_action catch-all, WR-02 login label
+- [ ] 57.1-03-PLAN.md — Repo hygiene: commit test/support/poll.ex + add its root unit test, delete stale wip/demo-fake-idp branch
