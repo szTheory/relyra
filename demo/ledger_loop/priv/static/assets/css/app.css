@@ -1,13 +1,14 @@
+/* Relyra brand tokens (v1.8) — see brandbook/tokens/tokens.css */
 :root {
-  --ll-bg: #ffffff;
-  --ll-panel: #f0f4f8;
-  --ll-accent: #0066cc;
-  --ll-danger: #c62828;
-  --ll-success: #2e7d32;
-  --ll-warning: #b87600;
-  --ll-text: #333333;
-  --ll-muted: #555555;
-  --ll-border: #d1d9e1;
+  --ll-bg: #FCFBF7;
+  --ll-panel: #EEF2F6;
+  --ll-accent: #3454D1;
+  --ll-danger: #B42318;
+  --ll-success: #027A48;
+  --ll-warning: #B45309;
+  --ll-text: #101827;
+  --ll-muted: #263245;
+  --ll-border: #7E8A9A;
 }
 
 * {
