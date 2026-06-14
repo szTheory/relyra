@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
 status: executing
-last_updated: "2026-06-14T00:49:49.132Z"
-last_activity: 2026-06-14 -- Phase 57 Plan 01 complete (keypair + fixture cert alignment + LoginTrace)
+last_updated: "2026-06-14T00:56:44Z"
+last_activity: 2026-06-14 -- Phase 57 Plan 02 complete (FakeIdP Signer — genuine SAML signing via relyra C14N)
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -25,8 +25,8 @@ See: `.planning/PROJECT.md` (updated 2026-06-12)
 ## Current Position
 
 Phase: 57 (demo-fakeidp-browser-login-proof) — EXECUTING
-Plan: 2 of 3
-Status: Executing Phase 57 Plan 02
+Plan: 3 of 3
+Status: Executing Phase 57 Plan 03
 Last activity: 2026-06-14
 
 ## Performance Metrics
@@ -53,6 +53,9 @@ Last activity: 2026-06-14
 - LedgerLoop.Relyra.SessionAdapter establishes a host session by writing a deterministic LoginReceipt row and verifying explicitly what Relyra verified vs what LedgerLoop owns.
 - [Phase 57-01]: Fixture cert PEM sourced at compile time from Keypair.cert_pem/0 via module attribute to prevent fixture/signer cert drift (T-57-04)
 - [Phase 57-01]: LoginTrace.attach placed after Supervisor.start_link (not as supervised child); {:error, :already_exists} ignored for idempotency
+- [Phase 57-02]: Vendored 4-step XmldsigSigner technique in demo Signer — copies shape, calls relyra PUBLIC C14N (PureBeam.canonicalize + C14N.serialize); no Relyra.TestSupport runtime refs
+- [Phase 57-02]: tamper/1 targets Assertion NameID (not Response-level Issuer) to land :digest_mismatch at the crypto gate, not :issuer_mismatch at protocol validation
+- [Phase 57-02]: assertion_id generated per-call via System.unique_integer/1 (Pitfall 6 replay guard)
 - [Phase ?]: Demo group in groups_for_extras uses a dedicated Demo entry rather than appending to Day-1 to keep the Day-1 spine uncluttered
 - [Phase ?]: D-02c implemented: relative-link-outside-package CI gate converts silent disk-pass/hexdocs-404 gap into a CI failure
 - [Phase ?]: D-05 runtime extraction in demo guide drift gate
@@ -82,7 +85,7 @@ None currently. Keycloak browser proof is intentionally optional because startup
 
 ## Session Continuity
 
-Resume here: continue planning Phase 55 with `/gsd:plan-phase 55` when ready.
+Resume here: execute Phase 57 Plan 03 (FakeIdP controller + browser flow) with `/gsd:execute-phase 57-03`.
 
 Primary context:
 
