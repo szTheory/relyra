@@ -2,6 +2,7 @@
 
 **Phase:** v1.8 / 59 — Logo System & Selection Checkpoint
 **Status:** Direction **A — Relying Path monogram** selected by the maintainer (2026-06-14). Full lockup set developed.
+**Refinement (2026-06-14, post-ship):** the **integrated typemark is now the PRIMARY lockup** — the monogram stands in as the leading "R" of "Relyra" (one fused unit), replacing the mark-beside-word arrangement (which read as a duplicated "R"). The standalone monogram remains the icon. See decision-log.md D-09/D-10.
 
 The selection gallery for all four directions remains at `brandbook/logo-lab.html` (transparent, cage-free comparison at multiple sizes/colorways).
 
@@ -16,7 +17,7 @@ The selection gallery for all four directions remains at `brandbook/logo-lab.htm
 | **C — Trust Path** | Open IdP ring → teal seal node → solid bound SP terminus | **Rejected for primary** | Friendly for diagrams, but node-link forms are the most common in the space; weakest distinctiveness as a brand mark. May be reused as an *illustration motif* later, not the logo. |
 | **D — Integrated typemark** | "Relyra" wordmark with the motif fused into the R leg and y descender | **Folded into A** | The boldest concept and a direct answer to "no icon-left-of-text" — but the bespoke-letter execution needs more refinement than the milestone warrants. A's `logo-typemark.svg` captures the *integrated* intent (the monogram IS the R of the word) at far lower risk. |
 
-**Net:** A is the system. Its `logo-typemark.svg` variant delivers the integrated-wordmark idea (mark fused as the leading "R"), so the user's two asks — a unified mark *and* an integrated typemark — are both satisfied without shipping the rougher bespoke-letter route.
+**Net:** A is the system, and (post-ship refinement) its **integrated typemark is the primary lockup** — the mark fused as the leading "R" of "Relyra". This satisfies the user's two asks — a unified mark *and* an integrated typemark that is *the* logo, not an icon beside text — without shipping the rougher bespoke-letter route of direction D.
 
 ---
 
@@ -24,16 +25,16 @@ The selection gallery for all four directions remains at `brandbook/logo-lab.htm
 
 | File | Use |
 | --- | --- |
-| `logo-primary.svg` | **Canonical** horizontal lockup (mark + "Relyra", no subtitle). Default everywhere. |
-| `logo-stacked.svg` | Vertical lockup (mark above wordmark) — narrow/centered contexts (cards, mobile headers). |
+| `logo-primary.svg` | **Canonical** horizontal lockup = the **integrated typemark** (the monogram is the "R" of "Relyra", no subtitle). Default everywhere. |
+| `logo-typemark.svg` | The same integrated typemark, named alias for editorial/explicit reference. |
+| `logo-stacked.svg` | Vertical lockup (mark above the full wordmark) — narrow/centered contexts (cards, mobile headers). |
 | `logo-mark.svg` | Mark only (R monogram + teal verification node). Avatars, app icons, favicons ≥24px. |
 | `logo-mark-mono.svg` | Single-ink mark (verification node = `currentColor`). One-color print, stamps, embroidery, watermarks. |
-| `logo-primary-inverse.svg` | Horizontal lockup tuned for dark surfaces (mark+word inherit `currentColor` → set to Paper; node = Dark Teal `#61D6C8`). |
+| `logo-primary-inverse.svg` | Integrated typemark forced for dark surfaces (Paper ink `#F8FAFC` + Dark Teal node `#61D6C8`), unconditional. |
 | `favicon.svg` | Mark simplified for 16–24px (heavier stroke, larger node). Browser tab, Hex icon. |
-| `logo-with-tagline.svg` | Separate lockup with "Enterprise SAML, calmly verified." below. Marketing/footers ONLY — never the primary. |
-| `logo-typemark.svg` | Integrated typemark: the monogram stands in as the "R" of "Relyra" — one fused unit. Expressive/editorial use. |
+| `logo-with-tagline.svg` | Integrated typemark + "Enterprise SAML, calmly verified." below. Marketing/footers ONLY — never the primary. |
 
-All assets are transparent (no background rect), SVG-first, and use the Phase 58 Canonical Lock Set hexes. Primary forms use `currentColor`; only the verification node carries a literal hex (Proof Teal `#147D77` light / Dark Teal `#61D6C8` on dark).
+All assets are transparent (no background rect), SVG-first, and use the Phase 58 Canonical Lock Set hexes. Each file carries explicit Ink/Paper colors with an internal `@media (prefers-color-scheme: dark)` flip (so it self-adapts when used via `<img>` on GitHub/HexDocs); the verification node is Proof Teal `#147D77` (light) / Dark Teal `#61D6C8` (dark). The brand book itself renders the lockups **inline** (`<symbol>`/`<use>`, ink = `currentColor`, node = `var(--rl-verified)`) so they also follow its manual theme toggle. `logo-mark-mono.svg` is the single-`currentColor` exception.
 
 ---
 
@@ -49,7 +50,7 @@ Minimum clear space on all sides = the **cap-height of the monogram's bowl** (�
 Below 24px, switch from the lockup to `favicon.svg`.
 
 ### Mark ↔ logotype spacing
-In the horizontal lockup the gap between mark and the "R" of "Relyra" is **≈ 0.5× cap-height** — tight, so mark and word read as one unit. Do not increase this gap; the mark must never float away from the word.
+In the primary lockup the monogram **is** the "R" of "Relyra" (integrated typemark): the mark is set to wordmark cap-height (scale 0.76, baseline-aligned) and "elyra" is kerned tight against it so the whole reads as one word. Never re-space, enlarge the gap, or split the monogram from "elyra". (In the vertical `logo-stacked` lockup the monogram sits above the full wordmark — that pairing is intentional and only for narrow/centered contexts.)
 
 ### Approved colorways
 1. **Ink on Paper** (default light): `currentColor` = Ink `#101827`, node = Proof Teal `#147D77`.

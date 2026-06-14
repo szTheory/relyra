@@ -188,3 +188,23 @@ Dark Deep-Relay: where an emphasis blue is needed on dark, use the book's CSS va
 - Soft Line #D8E0EA: unchanged hex, locked decorative-only; interactive boundaries use Accessible Border #7E8A9A.
 - Info #3454D1: unchanged hex (collision shipped), constrained to icon + label affordance.
 - Display type "Condensed OR Sans" ambiguity → locked to **IBM Plex Sans Condensed**.
+
+---
+
+## Addendum — post-ship logo refinement (2026-06-14)
+
+Captured after the v1.8 brand book shipped (PR #37), from maintainer review.
+
+**Decision D-09: primary lockup = the integrated typemark (the monogram IS the "R")**
+- Lens: graphic-design director (brand cohesion).
+- Problem: the original primary (`logo-primary.svg` = mark **beside** the full word "Relyra") shows the R twice — monogram R + wordmark R — which reads as a duplicated "icon-left-of-text."
+- Decision: promote the **integrated typemark** to primary. The monogram stands in as the leading "R" of "Relyra" (mark cap-height ≈ wordmark cap-height at scale 0.76, baseline-aligned, "elyra" kerned tight). `logo-primary.svg` and `logo-typemark.svg` now carry this design; the standalone monogram (`logo-mark.svg`) remains the icon. Maintainer chose this over "monogram-only" and "keep the combination lockup."
+- Propagation: README banner, OpenGraph social card, sticky-header + cover of the brand book all use the typemark. The mark-beside-word arrangement is now an explicit misuse ("use the typemark").
+- Confidence: HIGH (rendered + visually verified with the real fonts, light & dark, down to 16px).
+
+**Decision D-10: logo dark-mode rendering model**
+- Problem: logos embedded via `<img src=…svg>` could not inherit page `color`, so `currentColor` → black → invisible on the dark canvas; `logo-primary-inverse.svg` had only swapped the node color, never the ink.
+- Decision (two tracks):
+  - **Brand book** renders logos **inline** via a `<symbol>`/`<use>` set — ink = `currentColor` (tracks `--rl-text`), node = `var(--rl-verified)` — so every lockup follows Light/Dark/Auto, manual toggle included.
+  - **Standalone asset files** carry an internal `@media (prefers-color-scheme: dark)` block (Ink→Paper, Proof Teal→Dark Teal) so they self-correct on GitHub / HexDocs / raw viewing. `logo-primary-inverse.svg` is forced-light (Paper ink + Dark-Teal node), for always-dark surfaces.
+- Confidence: HIGH (verified in light and forced/manual dark).
