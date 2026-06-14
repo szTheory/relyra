@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.8.0](https://github.com/szTheory/relyra/compare/v1.7.0...v1.8.0) (2026-06-14)
+
+
+### Features
+
+* **demo:** FakeIdP browser-login proof + hardening (Phase 57/57.1) ([#35](https://github.com/szTheory/relyra/issues/35)) ([9b72d1e](https://github.com/szTheory/relyra/commit/9b72d1ec3f7d650002af176f7a3395dc3ea29db7))
+
 ## [1.7.0](https://github.com/szTheory/relyra/compare/v1.6.0...v1.7.0) (2026-06-13)
 
 
