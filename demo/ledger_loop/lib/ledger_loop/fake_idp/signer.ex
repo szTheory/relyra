@@ -24,6 +24,7 @@ defmodule LedgerLoop.FakeIdP.Signer do
   """
 
   alias LedgerLoop.FakeIdP.Keypair
+  alias Relyra.Security.XML.AttributeEscape
   alias Relyra.Security.XML.C14N
   alias Relyra.Security.XML.PureBeam
   alias Relyra.Security.XML.SaxyTree
@@ -101,7 +102,15 @@ defmodule LedgerLoop.FakeIdP.Signer do
   @spec tamper(binary()) :: binary()
   def tamper(b64) when is_binary(b64) do
     xml = Base.decode64!(b64)
-    tampered = String.replace(xml, ~r/<NameID>([^<]+)<\/NameID>/, "<NameID>TAMPERED</NameID>")
+    # Broadened regex: matches <NameID> with optional attributes (e.g. Format="…") to avoid
+    # a false positive when the replacement changes the tag shape — WR-05.
+    tampered = String.replace(xml, ~r/<NameID[^>]*>([^<]+)<\/NameID>/, "<NameID>TAMPERED</NameID>")
+
+    # WR-05 detectable-no-op guard: a tamper helper must never silently fail to tamper.
+    if tampered == xml do
+      raise "tamper/1 failed to locate <NameID>; template drifted"
+    end
+
     Base.encode64(tampered)
   end
 
@@ -135,35 +144,56 @@ defmodule LedgerLoop.FakeIdP.Signer do
   # The Response XML carries the genuine ds:Signature as a sibling of
   # <Assertion> (NOT enveloped — no enveloped-signature transform needed; the
   # digest is plain exc-C14N over the referenced <Assertion>).
+  #
+  # WR-01: All interpolated values are escaped at the point of interpolation,
+  # inside this single function. Because signed_response/1 calls response_xml/3
+  # three times (placeholder, digest, signed — lines 65/77/83), escaping here
+  # is digest-stable: all three passes escape identically (RESEARCH Pitfall 1).
+  # Attribute values: AttributeEscape.escape_attribute/1 (prod-compiled, C14N-aligned).
+  # Element text: xml_text/1 (local helper — &, <, > only; correct for text nodes).
+  # digest_value_b64 / signature_value_b64 are base64 (no XML metacharacters);
+  # applying xml_text/1 to them is harmless and uniform.
   defp response_xml(fields, digest_value_b64, signature_value_b64) do
-    "<Response Destination=\"#{fields.destination}\" InResponseTo=\"#{fields.in_response_to}\" ConnectionId=\"valid\">" <>
-      "<Issuer>#{fields.issuer}</Issuer>" <>
-      "<Status><StatusCode Value=\"#{fields.status}\"/></Status>" <>
-      "<Assertion ID=\"#{fields.assertion_id}\">" <>
-      "<Issuer>#{fields.issuer}</Issuer>" <>
+    "<Response Destination=\"#{AttributeEscape.escape_attribute(fields.destination)}\" InResponseTo=\"#{AttributeEscape.escape_attribute(fields.in_response_to || "")}\" ConnectionId=\"valid\">" <>
+      "<Issuer>#{xml_text(fields.issuer)}</Issuer>" <>
+      "<Status><StatusCode Value=\"#{AttributeEscape.escape_attribute(fields.status)}\"/></Status>" <>
+      "<Assertion ID=\"#{AttributeEscape.escape_attribute(fields.assertion_id)}\">" <>
+      "<Issuer>#{xml_text(fields.issuer)}</Issuer>" <>
       "<Subject>" <>
-      "<NameID>#{fields.name_id}</NameID>" <>
+      "<NameID>#{xml_text(fields.name_id)}</NameID>" <>
       "<SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\">" <>
-      "<SubjectConfirmationData Recipient=\"#{fields.recipient}\" NotOnOrAfter=\"#{fields.subject_confirmation_not_on_or_after}\"/>" <>
+      "<SubjectConfirmationData Recipient=\"#{AttributeEscape.escape_attribute(fields.recipient)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.subject_confirmation_not_on_or_after)}\"/>" <>
       "</SubjectConfirmation>" <>
       "</Subject>" <>
-      "<Conditions NotBefore=\"#{fields.not_before}\" NotOnOrAfter=\"#{fields.not_on_or_after}\">" <>
-      "<AudienceRestriction><Audience>#{fields.audience}</Audience></AudienceRestriction>" <>
+      "<Conditions NotBefore=\"#{AttributeEscape.escape_attribute(fields.not_before)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.not_on_or_after)}\">" <>
+      "<AudienceRestriction><Audience>#{xml_text(fields.audience)}</Audience></AudienceRestriction>" <>
       "</Conditions>" <>
       "</Assertion>" <>
       "<Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\">" <>
       "<SignedInfo>" <>
       "<CanonicalizationMethod Algorithm=\"#{@exc_c14n}\"/>" <>
       "<SignatureMethod Algorithm=\"#{@rsa_sha256}\"/>" <>
-      "<Reference URI=\"##{fields.assertion_id}\">" <>
+      "<Reference URI=\"##{AttributeEscape.escape_attribute(fields.assertion_id)}\">" <>
       "<DigestMethod Algorithm=\"#{@sha256}\"/>" <>
-      "<DigestValue>#{digest_value_b64}</DigestValue>" <>
+      "<DigestValue>#{xml_text(digest_value_b64)}</DigestValue>" <>
       "</Reference>" <>
       "</SignedInfo>" <>
-      "<SignatureValue>#{signature_value_b64}</SignatureValue>" <>
+      "<SignatureValue>#{xml_text(signature_value_b64)}</SignatureValue>" <>
       "</Signature>" <>
       "</Response>"
   end
+
+  # WR-01: Escape XML element text (& → &amp;, < → &lt;, > → &gt;).
+  # Used for element-text interpolations where attribute-specific escaping
+  # (tabs, newlines, quotes) is not needed and would be wrong.
+  defp xml_text(value) when is_binary(value) do
+    value
+    |> String.replace("&", "&amp;")
+    |> String.replace("<", "&lt;")
+    |> String.replace(">", "&gt;")
+  end
+
+  defp xml_text(nil), do: ""
 
   # ---------------------------------------------------------------------------
   # Internal — crypto (vendored technique from XmldsigSigner, re-homed here)
