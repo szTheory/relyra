@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
-status: executing
-last_updated: "2026-06-14T00:56:44Z"
-last_activity: 2026-06-14 -- Phase 57 Plan 02 complete (FakeIdP Signer — genuine SAML signing via relyra C14N)
+status: verifying
+last_updated: "2026-06-14T01:09:56.594Z"
+last_activity: 2026-06-14
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 0
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -24,9 +24,9 @@ See: `.planning/PROJECT.md` (updated 2026-06-12)
 
 ## Current Position
 
-Phase: 57 (demo-fakeidp-browser-login-proof) — EXECUTING
-Plan: 3 of 3
-Status: Executing Phase 57 Plan 03
+Phase: 57 (demo-fakeidp-browser-login-proof) — COMPLETE
+Plan: 3 of 3 (all plans done)
+Status: Phase complete — SEED-003 demo FakeIdP browser-login proof delivered
 Last activity: 2026-06-14
 
 ## Performance Metrics
@@ -60,6 +60,8 @@ Last activity: 2026-06-14
 - [Phase ?]: D-02c implemented: relative-link-outside-package CI gate converts silent disk-pass/hexdocs-404 gap into a CI failure
 - [Phase ?]: D-05 runtime extraction in demo guide drift gate
 - [Phase ?]: D-11 lane selection for demo guide drift gate
+- [Phase 57-03]: InResponseTo captured by inflating deflated SAMLRequest via :zlib(-15) + regex on ID attribute; tolerates absent/garbled input
+- [Phase 57-03]: SessionAdapter.establish_session fix: Map.get instead of Access.[] on Relyra.LoginResult (does not implement Access behaviour)
 
 ### Active Requirements
 
@@ -85,7 +87,7 @@ None currently. Keycloak browser proof is intentionally optional because startup
 
 ## Session Continuity
 
-Resume here: execute Phase 57 Plan 03 (FakeIdP controller + browser flow) with `/gsd:execute-phase 57-03`.
+Phase 57 complete. All 3 plans executed. SEED-003 (demo FakeIdP browser-login proof) delivered.
 
 Primary context:
 
