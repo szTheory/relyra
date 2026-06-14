@@ -122,14 +122,16 @@ defmodule LedgerLoopWeb.FakeIdPController do
   defp extract_in_response_to(nil), do: nil
 
   defp extract_in_response_to(b64) when is_binary(b64) do
-    # The first ID attribute in a well-formed SP AuthnRequest is the root
-    # AuthnRequest/@ID (IN-03 first-match assumption). The NCName regex constrains
-    # the capture to the xsd:ID/NCName grammar: leading letter or '_', then
-    # letters, digits, '.', '-', '_'. Non-name characters (e.g. '<', '&', space)
-    # are rejected here before the ID reaches any downstream template (IN-03/WR-01).
+    # Anchor the capture to the document's first start tag (the root
+    # AuthnRequest element), so a crafted SAMLRequest cannot thread a
+    # non-root ID (e.g. <Issuer ID="x">) into InResponseTo (WR-01). The
+    # NCName regex constrains the capture to the xsd:ID/NCName grammar:
+    # leading letter or '_', then letters, digits, '.', '-', '_'. Non-name
+    # characters (e.g. '<', '&', space) are rejected here before the ID
+    # reaches any downstream template (IN-03/WR-01).
     with {:ok, compressed} <- Base.decode64(b64, padding: false),
          {:ok, xml} <- inflate(compressed),
-         [_, id] <- Regex.run(~r/\bID="([A-Za-z_][A-Za-z0-9._-]*)"/, xml) do
+         [_, id] <- Regex.run(~r/\A\s*<[^>]*\bID="([A-Za-z_][A-Za-z0-9._-]*)"/, xml) do
       id
     else
       _ -> nil
