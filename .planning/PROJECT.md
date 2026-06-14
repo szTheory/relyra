@@ -27,9 +27,21 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v1.6 shipped 2026-05-28** — Adoption Truth. Phases 47-49.2 complete (15/15 plans, 6/6 ADOPT requirements). Doc-only milestone: TestSupport-first Getting Started, `guides/production_ecto_path.md`, incident playbook login-trace surfaces, CONFORMANCE scope boundary + ENC manifest honesty, jtbd_gap_map refresh, preset taxonomy alignment. Gap-closure phases 49.1-49.2 closed audit handoffs and Nyquist retro. **No new SAML protocol surface area.** Pause default held until the 2026-06-12 private adoption-evidence trigger.
 - **v1.7 shipped 2026-06-13** — Adoption Evidence Demo. Phases 51-56 complete (23/23 plans, 30/30 requirements), merged via PR #31. Runnable `demo/ledger_loop` Phoenix host app with Relyra as a path dependency (excluded from Hex): deterministic Northstar Health seed story, production-like Ecto connection/request/replay stores, host-owned customer/admin setup + mounted LiveAdmin, local FakeIdP browser proof + optional Keycloak profile, `scripts/demo` Docker DX, isolated `ci.demo_app` lane, and an evaluator-first demo guide. **No protocol surface, public API, or security-posture change.**
 
-## Current Milestone: None (paused)
+## Current Milestone: v1.8 Brand System & Identity
 
-**Status:** v1.7 shipped 2026-06-13. No active milestone. The v1.x arc is complete; future protocol scope is demand-gated (a real GitHub issue triggers the next milestone). Dormant follow-ups are seeded in `.planning/seeds/` and surface at the next `/gsd:new-milestone`.
+**Goal:** Pressure-test the existing decision-complete brand book (`prompts/relyra-brand-book.md`) and convert it into a self-contained, repo-safe `brandbook/` package — rendered logos, design tokens, and a standalone HTML brand book — plus a small set of real-world integrations. No protocol surface, public API, or security-posture change.
+
+**Target features:**
+- **Brand foundation pressure-test** — audit the brand book through design / accessibility / red-team lenses; WCAG-verify every palette pair (text + non-text, light + dark); lock palette/type/voice with a decision log.
+- **Logo system + selection checkpoint** — render all four directions (Relying Path monogram, Assertion Frame, Trust Path, integrated typemark) as transparent SVGs in a `logo-lab.html` gallery; user picks the winner; develop the full lockup set (primary no-subtitle, stacked, mark-only, mono, inverse, favicon, optional tagline, integrated typemark) with usage rules.
+- **Design tokens** — `tokens.json` + `tokens.css` (+ Tailwind/daisyUI example), light/dark, no sprawl.
+- **Standalone HTML brand book** — responsive `brandbook/index.html`, scoped CSS, light/dark/system toggle, components in all states, microcopy, examples.
+- **Real-world integration** — HexDocs logo + favicon, OpenGraph social card, README header banner, reskin the `ledger_loop` demo.
+- **QA & repo hygiene** — SVG optimization, repo-size budget, diff audit, `mix qa` green, milestone closeout.
+
+**Key context:** Non-protocol, non-security milestone — the brand book is decision-complete but asset-incomplete, and this milestone produces the missing artifacts. Locked brand constraints: no rectangular logo cages (transparent marks are default), logotype tight to the mark, the primary lockup carries no subtitle, at least one fully integrated typemark, title-case "Relyra" only, and no lyre/music/constellation/shield/padlock/key/flame/bird imagery (constraint §"Brand" still governs). Repo-safety budget: vector-first (SVG/HTML/CSS/JSON), no committed font binaries, ~1MB total `brandbook/`, exactly one optimized PNG, zero changes to `lib/` security seams or public API.
+
+**Demand-gated protocol scope is unchanged and still paused** — AUTHN-POST-01, KMS-01, and SIGNED-META-01 remain save-for-demand (see "Next Milestone Goals" below); v1.8 does not touch them.
 
 ## Next Milestone Goals
 
@@ -271,4 +283,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-06-13 after shipping the v1.7 Adoption Evidence Demo milestone (Phases 51-56, merged via PR #31). See `.planning/milestones/v1.7-ROADMAP.md`, `.planning/milestones/v1.7-REQUIREMENTS.md`, and `.planning/seeds/` (SEED-002, SEED-003).*
+*Last updated: 2026-06-14 — started milestone v1.8 Brand System & Identity (a non-protocol brand/design milestone; phases continue at 58). v1.7 phase dirs archived to `.planning/milestones/v1.7-phases/`. See `.planning/milestones/v1.7-ROADMAP.md`, `.planning/milestones/v1.7-REQUIREMENTS.md`, and `.planning/seeds/` (SEED-002, SEED-003).*
