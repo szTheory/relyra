@@ -90,6 +90,49 @@ defmodule LedgerLoop.FakeIdP.SignerTest do
       result = Signature.verify(parsed_doc, connection_stub(), [cert_pem])
       assert {:error, %Error{type: :digest_mismatch}} = result
     end
+
+    # WR-05: still-tampers — guard does NOT fire on today's live template
+    test "WR-05: tampering a signed_response/1 output changes bytes (guard does not fire)" do
+      b64 = Signer.signed_response(default_opts())
+      tampered_b64 = Signer.tamper(b64)
+
+      # The guard must NOT raise — the real template has a <NameID> to match
+      assert b64 != tampered_b64
+      tampered_xml = Base.decode64!(tampered_b64)
+      assert String.contains?(tampered_xml, "TAMPERED")
+    end
+
+    # WR-05: raise — tamper/1 on XML with no <NameID> must raise descriptively
+    test "WR-05: raises with descriptive message when XML has no matching <NameID>" do
+      # Build a base64 XML payload with no <NameID> element
+      xml_without_name_id =
+        "<Response><Issuer>https://idp.example.com</Issuer></Response>"
+
+      b64 = Base.encode64(xml_without_name_id)
+
+      assert_raise RuntimeError, ~r/tamper\/1 failed to locate/, fn ->
+        Signer.tamper(b64)
+      end
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Test 4 — WR-01: escaped response_xml/3 — metacharacter in_response_to
+  # ---------------------------------------------------------------------------
+
+  describe "WR-01 XML escaping" do
+    # The existing verify/4-accepts row (Test 1) covers WR-01 success-path intactness.
+    # This row checks that metacharacter-bearing in_response_to does not crash the signer.
+    test "WR-01: signed_response/1 with metacharacter in_response_to returns a binary without crashing" do
+      opts =
+        default_opts()
+        |> Keyword.put(:in_response_to, "a<b>&c")
+
+      # The signer must not raise — it re-parses its own emitted XML, which
+      # would crash with a MatchError if in_response_to is not escaped first.
+      result = Signer.signed_response(opts)
+      assert is_binary(result)
+    end
   end
 
   # ---------------------------------------------------------------------------
