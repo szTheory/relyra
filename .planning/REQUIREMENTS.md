@@ -9,9 +9,9 @@ Requirements for the Brand System & Identity milestone. Each maps to exactly one
 
 ### Brand Foundation
 
-- [ ] **BRAND-01**: The existing brand book (`prompts/relyra-brand-book.md`) is pressure-tested across design, accessibility, and red-team lenses, with findings and explicit ship/reject/defer dispositions captured in a decision log.
-- [ ] **BRAND-02**: Every brand color pair (light and dark) is WCAG-checked for text and non-text contrast, with pass/fail results documented.
-- [ ] **BRAND-03**: Final palette, typography stack, and voice are locked — token sprawl removed and contradictions resolved — as the authoritative input for every downstream artifact.
+- [x] **BRAND-01**: The existing brand book (`prompts/relyra-brand-book.md`) is pressure-tested across design, accessibility, and red-team lenses, with findings and explicit ship/reject/defer dispositions captured in a decision log.
+- [x] **BRAND-02**: Every brand color pair (light and dark) is WCAG-checked for text and non-text contrast, with pass/fail results documented.
+- [x] **BRAND-03**: Final palette, typography stack, and voice are locked — token sprawl removed and contradictions resolved — as the authoritative input for every downstream artifact.
 
 ### Logo System
 
@@ -69,9 +69,9 @@ Which phases cover which requirements. Finalized during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BRAND-01 | Phase 58 | Pending |
-| BRAND-02 | Phase 58 | Pending |
-| BRAND-03 | Phase 58 | Pending |
+| BRAND-01 | Phase 58 | Complete |
+| BRAND-02 | Phase 58 | Complete |
+| BRAND-03 | Phase 58 | Complete |
 | LOGO-01 | Phase 59 | Pending |
 | LOGO-02 | Phase 59 | Pending |
 | LOGO-03 | Phase 59 | Pending |

@@ -27,7 +27,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 
 ### v1.8 Brand System & Identity
 
-- [ ] **Phase 58: Brand Foundation Pressure-Test & Decision Lock** - Audit and lock palette, typography, voice, and accessibility with a decision log
+- [x] **Phase 58: Brand Foundation Pressure-Test & Decision Lock** - Audit and lock palette, typography, voice, and accessibility with a decision log (completed 2026-06-14)
 - [ ] **Phase 59: Logo System & Selection Checkpoint** - Render all four directions in a gallery, checkpoint for user logo pick, develop full lockup set
 - [ ] **Phase 60: Design Tokens** - Publish tokens.json, tokens.css, and a Tailwind/daisyUI mapping
 - [ ] **Phase 61: HTML Brand Book & Component Examples** - Ship standalone brandbook/index.html with full specimens, states, microcopy, and copy-ready examples
@@ -110,7 +110,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 58. Brand Foundation Pressure-Test & Decision Lock | 0/TBD | Not started | - |
+| 58. Brand Foundation Pressure-Test & Decision Lock | 1/1 | Complete    | 2026-06-14 |
 | 59. Logo System & Selection Checkpoint | 0/TBD | Not started | - |
 | 60. Design Tokens | 0/TBD | Not started | - |
 | 61. HTML Brand Book & Component Examples | 0/TBD | Not started | - |
