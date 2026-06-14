@@ -102,9 +102,12 @@ defmodule LedgerLoop.FakeIdP.Signer do
   @spec tamper(binary()) :: binary()
   def tamper(b64) when is_binary(b64) do
     xml = Base.decode64!(b64)
-    # Broadened regex: matches <NameID> with optional attributes (e.g. Format="…") to avoid
-    # a false positive when the replacement changes the tag shape — WR-05.
-    tampered = String.replace(xml, ~r/<NameID[^>]*>([^<]+)<\/NameID>/, "<NameID>TAMPERED</NameID>")
+    # Broadened regex: matches <NameID> with optional attributes (e.g. Format="…").
+    # Preserve the original open and close tags (back-references \\1/\\2) so only
+    # the text node is mutated — keeps any Format attribute intact so the rejection
+    # stays at the crypto gate rather than shifting to an earlier protocol step
+    # (WR-02/WR-05).
+    tampered = String.replace(xml, ~r/(<NameID[^>]*>)[^<]+(<\/NameID>)/, "\\1TAMPERED\\2")
 
     # WR-05 detectable-no-op guard: a tamper helper must never silently fail to tamper.
     if tampered == xml do
