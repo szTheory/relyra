@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.8.1](https://github.com/szTheory/relyra/compare/v1.8.0...v1.8.1) (2026-06-14)
+
+
+### Bug Fixes
+
+* **brandbook:** integrated typemark as primary logo + dark-mode rendering ([#38](https://github.com/szTheory/relyra/issues/38)) ([2156562](https://github.com/szTheory/relyra/commit/215656260bd51ce758e8dd62b7b774875506c76b))
+
 ## [1.8.0](https://github.com/szTheory/relyra/compare/v1.7.0...v1.8.0) (2026-06-14)
 
 
