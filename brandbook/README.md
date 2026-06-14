@@ -31,7 +31,7 @@ over CDN — **no font binaries are committed**.
 | --- | --- |
 | `index.html` | Standalone HTML brand book (the main artifact). |
 | `logo-lab.html` | Logo direction selection gallery. |
-| `assets/logo-*.svg` | The logo system (direction A — Relying Path monogram): `logo-primary`, `logo-stacked`, `logo-mark`, `logo-mark-mono`, `logo-primary-inverse`, `logo-typemark`, `logo-with-tagline`, `favicon`. All transparent / cage-free. |
+| `assets/logo-*.svg` | The logo system (direction A — Relying Path monogram). **Primary = the integrated typemark** (`logo-primary.svg` / `logo-typemark.svg`: the monogram is the "R" of "Relyra"); plus `logo-stacked`, `logo-mark` (the icon), `logo-mark-mono`, `logo-primary-inverse`, `logo-with-tagline`, `favicon`. All transparent / cage-free; each self-adapts to light/dark via an internal `prefers-color-scheme` block. |
 | `assets/logo-lab/*.svg` | The four explored directions (A/B/C/D) from the selection round. |
 | `assets/exdoc-logo.png`, `assets/exdoc-favicon.png` | Raster marks for ex_doc (HexDocs requires PNG). |
 | `assets/social-card.{svg,png}` | OpenGraph share card (1200×630). |
@@ -65,7 +65,9 @@ elixir brandbook/notes/contrast.exs   # prints every pair + verdict; exits non-z
 - **Logomarks are never caged** in a rectangle/box — they ship transparent and float free.
   (A *marketing banner* with a background panel — e.g. `social-card`, `readme-banner` — is a
   separate artifact and is fine.)
-- The **primary lockup carries no subtitle**; use `logo-with-tagline.svg` when a tagline is needed.
+- The **primary lockup is the integrated typemark** — the monogram is the "R" of "Relyra", one
+  fused unit. Never set the monogram as a separate icon beside the word, and never add a subtitle;
+  use `logo-with-tagline.svg` when a tagline is genuinely needed.
 - Don't recolor off-brand, stretch, add shadows, re-typeset "Relyra", or introduce forbidden
   imagery (lyre/music/shield/padlock/key/flame/bird/…). Full rules in `notes/logo-options.md`.
 

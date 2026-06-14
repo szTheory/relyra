@@ -1,9 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" role="img" aria-label="Relyra">
   <title>Relyra</title>
-  <g stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <!-- Favicon: monogram simplified for 16–24px (heavier stroke, larger node).
+       Self-adapting: Ink on light, Paper on dark (honors the OS scheme). -->
+  <style>
+    .rl-ink { stroke: #101827; }
+    .rl-node { fill: #147D77; }
+    @media (prefers-color-scheme: dark) {
+      .rl-ink { stroke: #F8FAFC; }
+      .rl-node { fill: #61D6C8; }
+    }
+  </style>
+  <g class="rl-ink" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <path d="M5 3.5 V20.5" />
     <path d="M5 3.5 H12.5 A5 5 0 0 1 12.5 13.5 H7.5" />
     <path d="M9.5 11.5 L19 20.5" />
   </g>
-  <circle cx="13" cy="8.5" r="2.4" fill="#147D77" />
+  <circle class="rl-node" cx="13" cy="8.5" r="2.4" />
 </svg>

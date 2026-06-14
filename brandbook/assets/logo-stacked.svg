@@ -1,12 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 80" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 80" fill="none" role="img" aria-label="Relyra">
   <title>Relyra</title>
+  <!-- Vertical lockup: monogram centered above the wordmark — narrow / centered contexts
+       (cards, mobile headers). Self-adapting: Ink on light, Paper on dark. -->
+  <style>
+    .rl-ink { stroke: #101827; }
+    .rl-wm  { fill: #101827; }
+    .rl-node { fill: #147D77; }
+    @media (prefers-color-scheme: dark) {
+      .rl-ink { stroke: #F8FAFC; }
+      .rl-wm  { fill: #F8FAFC; }
+      .rl-node { fill: #61D6C8; }
+    }
+  </style>
   <g transform="translate(36 6)">
-    <g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <g class="rl-ink" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M5 3.5 V20.5" />
       <path d="M5 3.5 H12.5 A5 5 0 0 1 12.5 13.5 H7.5" />
       <path d="M9.5 11.5 L19 20.5" />
     </g>
-    <circle cx="13" cy="8.5" r="2.1" fill="#147D77" />
+    <circle class="rl-node" cx="13" cy="8.5" r="2.1" />
   </g>
-  <text x="48" y="72" text-anchor="middle" font-family="'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif" font-weight="600" font-size="20" letter-spacing="-0.2" fill="currentColor">Relyra</text>
+  <text class="rl-wm" x="48" y="72" text-anchor="middle" font-family="'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif" font-weight="600" font-size="20" letter-spacing="-0.2">Relyra</text>
 </svg>

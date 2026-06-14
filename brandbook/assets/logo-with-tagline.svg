@@ -1,13 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 48" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 50" fill="none" role="img" aria-label="Relyra — Enterprise SAML, calmly verified.">
   <title>Relyra — Enterprise SAML, calmly verified.</title>
-  <g transform="translate(2 2.8) scale(1.1)">
-    <g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <path d="M5 3.5 V20.5" />
-      <path d="M5 3.5 H12.5 A5 5 0 0 1 12.5 13.5 H7.5" />
-      <path d="M9.5 11.5 L19 20.5" />
+  <!-- Integrated typemark + tagline. Marketing / footers ONLY — never the primary lockup.
+       Self-adapting: Ink on light, Paper on dark. -->
+  <style>
+    .rl-ink { stroke: #101827; }
+    .rl-wm  { fill: #101827; }
+    .rl-node { fill: #147D77; }
+    .rl-tag { fill: #263245; }
+    @media (prefers-color-scheme: dark) {
+      .rl-ink { stroke: #F8FAFC; }
+      .rl-wm  { fill: #F8FAFC; }
+      .rl-node { fill: #61D6C8; }
+      .rl-tag { fill: #CBD5E1; }
+    }
+  </style>
+  <g transform="translate(0 1) scale(1.05)">
+    <g transform="translate(-0.6 6.92) scale(0.76)">
+      <g class="rl-ink" stroke-width="3.15" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <path d="M5 3.5 V20.5" />
+        <path d="M5 3.5 H12.5 A5 5 0 0 1 12.5 13.5 H7.5" />
+        <path d="M9.5 11.5 L19 20.5" />
+      </g>
+      <circle class="rl-node" cx="13" cy="8.5" r="2.1" />
     </g>
-    <circle cx="13" cy="8.5" r="2.1" fill="#147D77" />
+    <text class="rl-wm" x="15.2" y="22.5" font-family="'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif" font-weight="600" font-size="20" letter-spacing="-0.2">elyra</text>
   </g>
-  <text x="33" y="22.5" font-family="'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif" font-weight="600" font-size="20" letter-spacing="-0.2" fill="currentColor">Relyra</text>
-  <text x="33" y="40" font-family="'Atkinson Hyperlegible',system-ui,sans-serif" font-size="8.5" letter-spacing="0.1" fill="currentColor" opacity="0.7">Enterprise SAML, calmly verified.</text>
+  <text class="rl-tag" x="1" y="44" font-family="'Atkinson Hyperlegible',system-ui,sans-serif" font-size="8.5" letter-spacing="0.2">Enterprise SAML, calmly verified.</text>
 </svg>
