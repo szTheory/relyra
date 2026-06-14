@@ -1,0 +1,181 @@
+/*
+ * Relyra Design Tokens — CSS Custom Properties
+ * Source: Phase 58 Canonical Lock Set (brandbook/notes/decision-log.md).
+ * Every value passes its WCAG 2.2 requirement (brandbook/notes/accessibility-checks.md).
+ *
+ * Theming model:
+ *   - :root holds LIGHT semantic values by default.
+ *   - Dark overrides are provided twice for robustness:
+ *       1. prefers-color-scheme: dark  (auto, unless [data-theme="light"] opts out)
+ *       2. [data-theme="dark"]         (manual hook; always wins)
+ *   - prefers-reduced-motion zeroes the motion durations.
+ *
+ * Note: --rl-info == --rl-action (Relay Blue) by design (D-04). ALWAYS distinguish an
+ * info callout from a clickable action with an icon + label affordance, never by color alone.
+ * --rl-divider (Soft Line) is decorative only; interactive boundaries use --rl-border.
+ */
+
+:root {
+  /* --- Primitives (light) --- */
+  --rl-ink: #101827;
+  --rl-graphite: #263245;
+  --rl-paper: #FCFBF7;
+  --rl-mist: #EEF2F6;
+  --rl-relay-blue: #3454D1;
+  --rl-deep-relay: #1D2E82;
+  --rl-proof-teal: #147D77;
+  --rl-keyline-violet: #6D5DF2;
+  --rl-accessible-border: #7E8A9A;
+  --rl-soft-line: #D8E0EA;
+  --rl-certificate-gold: #9A6B1C;
+  --rl-success-base: #027A48;
+  --rl-warning-base: #B45309;
+  --rl-error-base: #B42318;
+
+  /* --- Semantic (light) --- */
+  --rl-bg: var(--rl-paper);
+  --rl-surface: #FFFFFF;
+  --rl-surface-subtle: var(--rl-mist);
+  --rl-text: var(--rl-ink);
+  --rl-text-muted: var(--rl-graphite);
+  --rl-border: var(--rl-accessible-border);
+  --rl-divider: var(--rl-soft-line);
+  --rl-action: var(--rl-relay-blue);
+  --rl-action-emphasis: var(--rl-deep-relay);
+  --rl-link: var(--rl-relay-blue);
+  --rl-verified: var(--rl-proof-teal);
+  --rl-focus: var(--rl-keyline-violet);
+  --rl-caution: var(--rl-certificate-gold);
+  --rl-success: var(--rl-success-base);
+  --rl-warning: var(--rl-warning-base);
+  --rl-error: var(--rl-error-base);
+  --rl-info: var(--rl-relay-blue);
+
+  /* --- Typography --- */
+  --rl-font-display: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --rl-font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --rl-font-code: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --rl-text-hero: 4rem;
+  --rl-text-h1: 2.75rem;
+  --rl-text-h2: 2rem;
+  --rl-text-h3: 1.5rem;
+  --rl-text-body-lg: 1.1875rem;
+  --rl-text-body: 1rem;
+  --rl-text-small: 0.875rem;
+  --rl-text-caption: 0.78rem;
+  --rl-text-code: 0.875rem;
+
+  --rl-leading-hero: 1;
+  --rl-leading-h1: 1.05;
+  --rl-leading-h2: 1.12;
+  --rl-leading-h3: 1.2;
+  --rl-leading-body-lg: 1.55;
+  --rl-leading-body: 1.55;
+  --rl-leading-small: 1.45;
+  --rl-leading-caption: 1.4;
+  --rl-leading-code: 1.55;
+
+  --rl-weight-regular: 400;
+  --rl-weight-medium: 500;
+  --rl-weight-semibold: 600;
+  --rl-weight-bold: 700;
+
+  /* --- Space (×4 base) --- */
+  --rl-space-2: 2px;
+  --rl-space-4: 4px;
+  --rl-space-8: 8px;
+  --rl-space-12: 12px;
+  --rl-space-16: 16px;
+  --rl-space-24: 24px;
+  --rl-space-32: 32px;
+  --rl-space-48: 48px;
+  --rl-space-64: 64px;
+  --rl-space-96: 96px;
+  --rl-space-128: 128px;
+
+  /* --- Radius --- */
+  --rl-radius-sm: 8px;
+  --rl-radius-md: 12px;
+  --rl-radius-lg: 16px;
+  --rl-radius-full: 9999px;
+
+  /* --- Border width --- */
+  --rl-border-hairline: 1px;
+  --rl-border-regular: 2px;
+
+  /* --- Shadow (light) --- */
+  --rl-shadow-sm: 0 1px 2px rgba(16, 24, 39, 0.06);
+  --rl-shadow-md: 0 1px 2px rgba(16, 24, 39, 0.06), 0 8px 24px rgba(16, 24, 39, 0.06);
+
+  /* --- Motion --- */
+  --rl-duration-fast: 120ms;
+  --rl-duration-base: 180ms;
+  --rl-duration-slow: 220ms;
+  --rl-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* --- Focus ring --- */
+  --rl-focus-width: 2px;
+  --rl-focus-offset: 2px;
+  --rl-focus-style: solid;
+}
+
+/* Dark semantic values, shared by both dark hooks below. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --rl-bg: #0B1020;
+    --rl-surface: #111827;
+    --rl-surface-subtle: #111827;
+    --rl-text: #F8FAFC;
+    --rl-text-muted: #CBD5E1;
+    --rl-border: #64748B;
+    --rl-divider: #64748B;
+    --rl-action: #8CA2FF;
+    --rl-action-emphasis: #A9B7FF;
+    --rl-link: #8CA2FF;
+    --rl-verified: #61D6C8;
+    --rl-focus: #A99BFF;
+    --rl-caution: #FBBF24;
+    --rl-success: #86EFAC;
+    --rl-warning: #FBBF24;
+    --rl-error: #FDA29B;
+    --rl-info: #8CA2FF;
+
+    /* Shadows over near-black need more alpha to read. */
+    --rl-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --rl-shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Manual dark hook — always wins over prefers-color-scheme. */
+[data-theme="dark"] {
+  --rl-bg: #0B1020;
+  --rl-surface: #111827;
+  --rl-surface-subtle: #111827;
+  --rl-text: #F8FAFC;
+  --rl-text-muted: #CBD5E1;
+  --rl-border: #64748B;
+  --rl-divider: #64748B;
+  --rl-action: #8CA2FF;
+  --rl-action-emphasis: #A9B7FF;
+  --rl-link: #8CA2FF;
+  --rl-verified: #61D6C8;
+  --rl-focus: #A99BFF;
+  --rl-caution: #FBBF24;
+  --rl-success: #86EFAC;
+  --rl-warning: #FBBF24;
+  --rl-error: #FDA29B;
+  --rl-info: #8CA2FF;
+
+  --rl-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --rl-shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Respect reduced-motion: collapse durations to ~instant. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rl-duration-fast: 0.01ms;
+    --rl-duration-base: 0.01ms;
+    --rl-duration-slow: 0.01ms;
+  }
+}
