@@ -3,6 +3,16 @@ defmodule LedgerLoop.Demo.Fixtures do
   Stable constants for the LedgerLoop/Northstar Health demo story.
   """
 
+  # Demo IdP cert — sourced at build time from the committed PEM so that the
+  # fixture and the FakeIdP signer can never drift (PLAN 57-01, T-57-04).
+  @demo_idp_cert_pem LedgerLoop.FakeIdP.Keypair.cert_pem()
+
+  # Compute fingerprint at compile time: sha256 of the DER-encoded cert, uppercase hex.
+  @demo_idp_cert_fingerprint (case :public_key.pem_decode(@demo_idp_cert_pem) do
+                                [{:Certificate, der, :not_encrypted}] ->
+                                  Base.encode16(:crypto.hash(:sha256, der))
+                              end)
+
   # Stable UUIDs generated once to ensure determinism.
   @northstar_tenant_id "11111111-1111-1111-1111-111111111111"
   @dr_sarah_id "22222222-2222-2222-2222-222222222222"
@@ -48,7 +58,7 @@ defmodule LedgerLoop.Demo.Fixtures do
         sp_entity_id: "https://ledgerloop.example.com/sp",
         acs_url: "https://ledgerloop.example.com/sso/acs",
         idp_entity_id: "https://idp.northstar.example.com",
-        idp_sso_url: "https://idp.northstar.example.com/sso",
+        idp_sso_url: "http://localhost:4000/fake_idp/login",
         inserted_at: @fixed_timestamp,
         updated_at: @fixed_timestamp
       },
@@ -102,8 +112,8 @@ defmodule LedgerLoop.Demo.Fixtures do
       %{
         id: @enabled_cert_id,
         connection_record_id: @enabled_conn_id,
-        fingerprint_sha256: "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
-        pem: "MOCK_PEM_NOT_REAL",
+        fingerprint_sha256: @demo_idp_cert_fingerprint,
+        pem: @demo_idp_cert_pem,
         source: "metadata",
         role: :signing,
         lifecycle_state: :active,

@@ -21,7 +21,19 @@ defmodule LedgerLoop.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: LedgerLoop.Supervisor]
-    Supervisor.start_link(children, opts)
+    result = Supervisor.start_link(children, opts)
+
+    # Attach the Relyra LoginTrace telemetry handler so that SAML login events
+    # (success + typed rejections) produce domain: :login AuditEvents visible in
+    # the trace UI at /relyra/admin/connections/:id/trace (T-57-03).
+    # Placed AFTER Supervisor.start_link so the Repo is alive.
+    # Idempotent: {:error, :already_exists} is ignored (safe on app restart).
+    case Relyra.Telemetry.Handlers.LoginTrace.attach(repo: LedgerLoop.Repo) do
+      :ok -> :ok
+      {:error, :already_exists} -> :ok
+    end
+
+    result
   end
 
   # Tell Phoenix to update the endpoint configuration
