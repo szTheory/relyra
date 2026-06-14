@@ -32,9 +32,9 @@ Requirements for the Brand System & Identity milestone. Each maps to exactly one
 
 ### Real-World Integration
 
-- [ ] **INTEG-01**: HexDocs (ex_doc) renders the brand logo and favicon for `hexdocs.pm/relyra`.
-- [ ] **INTEG-02**: An OpenGraph social card and a README header banner ship as optimized brand assets.
-- [ ] **INTEG-03**: The `ledger_loop` demo app is reskinned with brand tokens (replacing the placeholder `--ll-*` vars) and still renders correctly.
+- [x] **INTEG-01**: HexDocs (ex_doc) renders the brand logo and favicon for `hexdocs.pm/relyra`.
+- [x] **INTEG-02**: An OpenGraph social card and a README header banner ship as optimized brand assets.
+- [x] **INTEG-03**: The `ledger_loop` demo app is reskinned with brand tokens (replacing the placeholder `--ll-*` vars) and still renders correctly.
 
 ### QA & Repo Hygiene
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Finalized during roadmap creation.
 | BOOK-01 | Phase 61 | Complete |
 | BOOK-02 | Phase 61 | Complete |
 | BOOK-03 | Phase 61 | Complete |
-| INTEG-01 | Phase 62 | Pending |
-| INTEG-02 | Phase 62 | Pending |
-| INTEG-03 | Phase 62 | Pending |
+| INTEG-01 | Phase 62 | Complete |
+| INTEG-02 | Phase 62 | Complete |
+| INTEG-03 | Phase 62 | Complete |
 | QA-01 | Phase 63 | Pending |
 | QA-02 | Phase 63 | Pending |
 
