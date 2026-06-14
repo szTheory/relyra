@@ -14,7 +14,7 @@
 
 **Repo-safety:** `brandbook/` self-contained at 316K (<1MB budget); no committed fonts (CDN); diff limited to `brandbook/` + 3 authorized integration files (README.md, mix.exs docs(), demo app.css). **No `lib/`, security, protocol, public-API, or `@version` change.** `mix qa` green (744 tests, 0 failures).
 
-**Not a Hex release:** planning milestone only; Hex stays at 1.7.0. The `feat(58–63)` commits let release-please propose the version on the next release. No manual `v1.8` git tag (avoids release-please collision). See `.planning/milestones/v1.8-ROADMAP.md`.
+**Not a Hex release:** planning milestone only. (release-please independently released **Hex 1.8.0** — the v1.7 demo `feat` commits — while this was built; the GSD "v1.8" label is distinct from that release. The brand `feat(58–63)` commits will feed the next release-please version.) **No manual `v1.8` git tag** — `v1.8.0` already exists from release-please; a planning-milestone tag would collide. See `.planning/milestones/v1.8-ROADMAP.md`.
 
 ---
 
