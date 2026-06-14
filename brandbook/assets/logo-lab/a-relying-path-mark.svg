@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <title>Relyra — Relying Path monogram</title>
+  <g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- SP stem: the vertical Service Provider -->
+    <path d="M5 3.5 V20.5" />
+    <!-- IdP bowl: the right-side identity node, opening a verified route into the stem -->
+    <path d="M5 3.5 H12.5 A5 5 0 0 1 12.5 13.5 H7.5" />
+    <!-- Verified-assertion diagonal: the leg routing from the binding point down and out -->
+    <path d="M9.5 11.5 L19 20.5" />
+  </g>
+  <!-- Verification dot: where the assertion is cryptographically proven -->
+  <circle cx="13" cy="8.5" r="2.1" fill="#147D77" />
+</svg>

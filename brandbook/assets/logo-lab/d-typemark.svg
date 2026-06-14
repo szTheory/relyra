@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 138 42" fill="currentColor" stroke-linejoin="round">
+  <title>Relyra — Integrated typemark</title>
+
+  <!--
+    Condensed grotesque "Relyra".
+    R and y are hand-drawn filled paths with the verified-path motif fused in.
+    'el' and 'ra' are tightly-tracked text in a matched condensed weight so the
+    seam between path-letters and set-letters is invisible.
+    Cap height 26 (y=6 cap-top to y=32 baseline). Stem weight ~5.
+  -->
+
+  <!-- ============ R : custom path ============
+       Stem + bowl in a condensed grotesque weight. The diagonal leg does NOT
+       sit inside the cap box like a normal R leg — it shoots out below the
+       baseline as the relay / verified-assertion path, ending in the teal node.
+  -->
+  <!-- R stem -->
+  <path d="M6 6 H11 V32 H6 Z"/>
+  <!-- R bowl (outer outline with inner counter via even-odd) -->
+  <path fill-rule="evenodd"
+        d="M11 6
+           H19.4
+           C24 6 26.7 8.7 26.7 12.6
+           C26.7 16 24.7 18.4 21.2 19.1
+           V19.1
+           H11
+           V6
+           Z
+           M11 10.2
+           V15
+           H18.4
+           C20.1 15 21.4 14.1 21.4 12.6
+           C21.4 11.1 20.1 10.2 18.4 10.2
+           H11
+           Z"/>
+  <!-- R leg = relay path: from the bowl/stem junction, descends through the
+       baseline and keeps going as the verified-assertion path. Tapered fill so
+       it reads as the leg of the R. -->
+  <path d="M16 17.6
+           L21.4 17.6
+           L33.4 36.4
+           L28.7 38.6
+           Z"/>
+
+  <!-- ============ el : matched condensed weight ============ -->
+  <text x="31" y="32"
+        font-family="'IBM Plex Sans Condensed','Roboto Condensed','Helvetica Neue Condensed',Arial,sans-serif"
+        font-size="34" font-weight="600"
+        letter-spacing="-1.2"
+        style="font-stretch:condensed">el</text>
+
+  <!-- ============ y : custom path ============
+       One closed glyph: two arms converge at a junction (~x70,y26) and the
+       right arm continues past it into the descender / trust path, which drops
+       below the baseline and lands on the teal verification node — mirroring
+       the R's relay terminus.
+       Cap of the arms at y=13 (x-height top), junction near baseline. -->
+  <path d="M60.6 13
+           L66.2 13
+           L70.6 22.4
+           L74.8 13
+           L80.2 13
+           L70.6 33.9
+           C69.9 35.6 68.8 36.7 66.9 36.9
+           L64 36.9
+           L64 32.5
+           L66.2 32.5
+           C67.1 32.5 67.6 32.1 68 31.2
+           L69 28.9
+           L67.5 28.9
+           L62.7 18.7
+           L67 27.9
+           L60.6 13
+           Z"/>
+
+  <!-- ============ ra : matched condensed weight ============ -->
+  <text x="80" y="32"
+        font-family="'IBM Plex Sans Condensed','Roboto Condensed','Helvetica Neue Condensed',Arial,sans-serif"
+        font-size="34" font-weight="600"
+        letter-spacing="-1.2"
+        style="font-stretch:condensed">ra</text>
+
+  <!-- ============ verification nodes : the ONLY accent (Proof Teal) ============ -->
+  <!-- terminus of the R's relay leg -->
+  <circle cx="31.2" cy="37.5" r="3.1" fill="#147D77"/>
+  <!-- terminus of the y's trust-path descender -->
+  <circle cx="65.5" cy="36.4" r="3.1" fill="#147D77"/>
+</svg>
