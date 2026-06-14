@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="200" viewBox="0 0 900 200" fill="none">
+  <title>Relyra — Enterprise SAML, calmly verified.</title>
+
+  <!-- Ink panel (explicit colors: identical on GitHub light + dark) -->
+  <rect width="900" height="200" rx="14" fill="#101827"/>
+  <!-- Relay-Blue foot keyline -->
+  <rect x="0" y="192" width="900" height="8" rx="4" fill="#3454D1"/>
+
+  <!-- Centered logo lockup: mark + wordmark -->
+  <g transform="translate(300 56)">
+    <!-- mark (Paper strokes, Proof Teal verification dot), scaled from 24x24 -->
+    <g transform="scale(3.0)">
+      <g stroke="#FCFBF7" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <path d="M5 3.5 V20.5"/>
+        <path d="M5 3.5 H12.5 A5 5 0 0 1 12.5 13.5 H7.5"/>
+        <path d="M9.5 11.5 L19 20.5"/>
+      </g>
+      <circle cx="13" cy="8.5" r="2.1" fill="#147D77"/>
+    </g>
+    <!-- wordmark in Paper -->
+    <text x="86" y="52"
+      font-family="'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif"
+      font-weight="600" font-size="62" letter-spacing="-1" fill="#FCFBF7">Relyra</text>
+  </g>
+
+  <!-- Muted-Paper tagline below the lockup -->
+  <text x="450" y="166" text-anchor="middle"
+    font-family="'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif"
+    font-weight="400" font-size="24" letter-spacing="0.3" fill="#CBD5E1">Enterprise SAML, calmly verified.</text>
+</svg>
