@@ -21,8 +21,8 @@ Requirements for the Brand System & Identity milestone. Each maps to exactly one
 
 ### Design Tokens
 
-- [ ] **TOKEN-01**: Design tokens are published as `tokens.json` and `tokens.css` covering color (primitive + semantic), light/dark maps, focus ring, type, spacing, radius, border, shadow, and motion — with every token justified (no sprawl).
-- [ ] **TOKEN-02**: A framework example (Tailwind/daisyUI theme) maps the tokens so a Phoenix consumer can adopt them without re-deriving values.
+- [x] **TOKEN-01**: Design tokens are published as `tokens.json` and `tokens.css` covering color (primitive + semantic), light/dark maps, focus ring, type, spacing, radius, border, shadow, and motion — with every token justified (no sprawl).
+- [x] **TOKEN-02**: A framework example (Tailwind/daisyUI theme) maps the tokens so a Phoenix consumer can adopt them without re-deriving values.
 
 ### HTML Brand Book
 
@@ -75,8 +75,8 @@ Which phases cover which requirements. Finalized during roadmap creation.
 | LOGO-01 | Phase 59 | Complete |
 | LOGO-02 | Phase 59 | Complete |
 | LOGO-03 | Phase 59 | Complete |
-| TOKEN-01 | Phase 60 | Pending |
-| TOKEN-02 | Phase 60 | Pending |
+| TOKEN-01 | Phase 60 | Complete |
+| TOKEN-02 | Phase 60 | Complete |
 | BOOK-01 | Phase 61 | Pending |
 | BOOK-02 | Phase 61 | Pending |
 | BOOK-03 | Phase 61 | Pending |

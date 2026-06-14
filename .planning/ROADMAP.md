@@ -29,7 +29,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 
 - [x] **Phase 58: Brand Foundation Pressure-Test & Decision Lock** - Audit and lock palette, typography, voice, and accessibility with a decision log (completed 2026-06-14)
 - [x] **Phase 59: Logo System & Selection Checkpoint** - Render all four directions in a gallery, checkpoint for user logo pick, develop full lockup set (completed 2026-06-14)
-- [ ] **Phase 60: Design Tokens** - Publish tokens.json, tokens.css, and a Tailwind/daisyUI mapping
+- [x] **Phase 60: Design Tokens** - Publish tokens.json, tokens.css, and a Tailwind/daisyUI mapping (completed 2026-06-14)
 - [ ] **Phase 61: HTML Brand Book & Component Examples** - Ship standalone brandbook/index.html with full specimens, states, microcopy, and copy-ready examples
 - [ ] **Phase 62: Real-World Integration** - Wire logo/favicon into HexDocs, ship social card and README banner, reskin ledger_loop demo
 - [ ] **Phase 63: QA, Repo Hygiene & Ship** - Optimize SVGs, enforce repo-size budget, verify mix qa, close milestone
@@ -112,7 +112,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 |-------|----------------|--------|-----------|
 | 58. Brand Foundation Pressure-Test & Decision Lock | 1/1 | Complete    | 2026-06-14 |
 | 59. Logo System & Selection Checkpoint | 1/1 | Complete    | 2026-06-14 |
-| 60. Design Tokens | 0/TBD | Not started | - |
+| 60. Design Tokens | 1/1 | Complete    | 2026-06-14 |
 | 61. HTML Brand Book & Component Examples | 0/TBD | Not started | - |
 | 62. Real-World Integration | 0/TBD | Not started | - |
 | 63. QA, Repo Hygiene & Ship | 0/TBD | Not started | - |
