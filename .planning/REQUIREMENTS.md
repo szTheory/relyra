@@ -26,9 +26,9 @@ Requirements for the Brand System & Identity milestone. Each maps to exactly one
 
 ### HTML Brand Book
 
-- [ ] **BOOK-01**: A standalone, responsive `brandbook/index.html` opens from `file://` with scoped CSS and a light/dark/system toggle, presenting logo usage, color (with contrast badges), the type scale, and spacing/radius/shadow specimens.
-- [ ] **BOOK-02**: The brand book demonstrates UI components across all states (hover/focus/active/disabled/loading/error/empty/selected/skeleton) in both modes, plus microcopy do/don't examples and developer implementation notes.
-- [ ] **BOOK-03**: `examples/` provides copy-ready component, landing-page-section, and README-header references derived from the tokens.
+- [x] **BOOK-01**: A standalone, responsive `brandbook/index.html` opens from `file://` with scoped CSS and a light/dark/system toggle, presenting logo usage, color (with contrast badges), the type scale, and spacing/radius/shadow specimens.
+- [x] **BOOK-02**: The brand book demonstrates UI components across all states (hover/focus/active/disabled/loading/error/empty/selected/skeleton) in both modes, plus microcopy do/don't examples and developer implementation notes.
+- [x] **BOOK-03**: `examples/` provides copy-ready component, landing-page-section, and README-header references derived from the tokens.
 
 ### Real-World Integration
 
@@ -77,9 +77,9 @@ Which phases cover which requirements. Finalized during roadmap creation.
 | LOGO-03 | Phase 59 | Complete |
 | TOKEN-01 | Phase 60 | Complete |
 | TOKEN-02 | Phase 60 | Complete |
-| BOOK-01 | Phase 61 | Pending |
-| BOOK-02 | Phase 61 | Pending |
-| BOOK-03 | Phase 61 | Pending |
+| BOOK-01 | Phase 61 | Complete |
+| BOOK-02 | Phase 61 | Complete |
+| BOOK-03 | Phase 61 | Complete |
 | INTEG-01 | Phase 62 | Pending |
 | INTEG-02 | Phase 62 | Pending |
 | INTEG-03 | Phase 62 | Pending |
