@@ -46,16 +46,36 @@ defmodule LedgerLoop.FakeIdP.Keypair do
     |> File.read!()
   end
 
+  @doc """
+  Decodes a PEM binary that must contain exactly one unencrypted RSA private key.
+
+  Raises a descriptive `RuntimeError` naming `@key_path` and the found entry tags
+  when the binary contains anything other than a single unencrypted RSAPrivateKey.
+
+  Exposed as a public function so test code can exercise the error path without
+  writing a bad key file to disk.
+  """
+  @spec decode_pem_key(binary()) :: tuple()
+  def decode_pem_key(pem_bin) when is_binary(pem_bin) do
+    # IN-02: typed pattern-match with a descriptive raise on mismatch,
+    # replacing the opaque MatchError from a bare `[entry] = pem_decode(...)`.
+    case :public_key.pem_decode(pem_bin) do
+      [{:RSAPrivateKey, _der, :not_encrypted} = entry] ->
+        :public_key.pem_entry_decode(entry)
+
+      entries ->
+        raise "expected a single unencrypted RSA private key in #{@key_path}, got: " <>
+                "#{inspect(Enum.map(entries, &elem(&1, 0)))}"
+    end
+  end
+
   # ---------------------------------------------------------------------------
   # Internal
   # ---------------------------------------------------------------------------
 
   defp load_private_key do
-    pem_bin =
-      Application.app_dir(:ledger_loop, "priv/" <> @key_path)
-      |> File.read!()
-
-    [entry] = :public_key.pem_decode(pem_bin)
-    :public_key.pem_entry_decode(entry)
+    Application.app_dir(:ledger_loop, "priv/" <> @key_path)
+    |> File.read!()
+    |> decode_pem_key()
   end
 end
