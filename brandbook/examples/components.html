@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relyra — Component Examples</title>
+  <!-- Drive every color from the canonical tokens. examples/ is one level below tokens/. -->
+  <link rel="stylesheet" href="../tokens/tokens.css" />
+  <!-- Layout-only styles. No brand colors live here; those come from var(--rl-*). -->
+  <style>
+    body {
+      margin: 0;
+      padding: var(--rl-space-48) var(--rl-space-24);
+      background: var(--rl-bg);
+      color: var(--rl-text);
+      font-family: var(--rl-font-body);
+      font-size: var(--rl-text-body);
+      line-height: var(--rl-leading-body);
+    }
+    .wrap { max-width: 760px; margin: 0 auto; }
+    h1 { font-family: var(--rl-font-display); font-size: var(--rl-text-h1); line-height: var(--rl-leading-h1); margin: 0 0 var(--rl-space-8); }
+    h2 { font-family: var(--rl-font-display); font-size: var(--rl-text-h3); line-height: var(--rl-leading-h3); color: var(--rl-text-muted); margin: var(--rl-space-48) 0 var(--rl-space-16); }
+    .lede { color: var(--rl-text-muted); margin: 0 0 var(--rl-space-32); }
+    .row { display: flex; gap: var(--rl-space-12); flex-wrap: wrap; align-items: center; }
+    .stack > * + * { margin-top: var(--rl-space-12); }
+    .toolbar { display: flex; gap: var(--rl-space-8); justify-content: flex-end; margin-bottom: var(--rl-space-24); }
+
+    /* --- Reusable Relyra component classes (lift these into your app) --- */
+    .rl-btn {
+      font-family: var(--rl-font-body); font-size: var(--rl-text-body); font-weight: var(--rl-weight-semibold);
+      padding: var(--rl-space-12) var(--rl-space-24); border-radius: var(--rl-radius-sm);
+      border: var(--rl-border-regular) solid transparent; cursor: pointer;
+      transition: background var(--rl-duration-fast) var(--rl-ease-standard);
+    }
+    .rl-btn:focus-visible { outline: var(--rl-focus-width) var(--rl-focus-style) var(--rl-focus); outline-offset: var(--rl-focus-offset); }
+    .rl-btn--primary { background: var(--rl-action); color: #fff; }
+    .rl-btn--primary:hover { background: var(--rl-action-emphasis); }
+    .rl-btn--secondary { background: transparent; color: var(--rl-action); border-color: var(--rl-border); }
+    .rl-btn[disabled] { background: var(--rl-surface-subtle); color: var(--rl-text-muted); border-color: var(--rl-divider); cursor: not-allowed; }
+
+    .rl-field { display: flex; flex-direction: column; gap: var(--rl-space-4); max-width: 380px; }
+    .rl-label { font-size: var(--rl-text-small); font-weight: var(--rl-weight-medium); }
+    .rl-input {
+      font-family: var(--rl-font-body); font-size: var(--rl-text-body); color: var(--rl-text);
+      background: var(--rl-surface); padding: var(--rl-space-8) var(--rl-space-12);
+      border: var(--rl-border-hairline) solid var(--rl-border); border-radius: var(--rl-radius-sm);
+    }
+    .rl-input:focus-visible { outline: var(--rl-focus-width) var(--rl-focus-style) var(--rl-focus); outline-offset: var(--rl-focus-offset); }
+    .rl-input[aria-invalid="true"] { border-color: var(--rl-error); }
+    .rl-help { font-size: var(--rl-text-caption); color: var(--rl-text-muted); }
+    .rl-error { font-size: var(--rl-text-caption); color: var(--rl-error); }
+
+    .rl-card {
+      background: var(--rl-surface); border: var(--rl-border-hairline) solid var(--rl-divider);
+      border-radius: var(--rl-radius-md); padding: var(--rl-space-24); box-shadow: var(--rl-shadow-md);
+    }
+    .rl-card h3 { font-family: var(--rl-font-display); font-size: var(--rl-text-h3); margin: 0 0 var(--rl-space-8); }
+    .rl-card p { margin: 0; color: var(--rl-text-muted); }
+
+    /* Callouts: color is never the sole cue — each carries an icon + heading (decision-log D-04). */
+    .rl-callout { display: flex; gap: var(--rl-space-12); padding: var(--rl-space-16);
+      border-radius: var(--rl-radius-md); border-left: var(--rl-border-regular) solid var(--rl-border);
+      background: var(--rl-surface-subtle); }
+    .rl-callout svg { flex: none; width: 20px; height: 20px; margin-top: 2px; }
+    .rl-callout strong { display: block; margin-bottom: var(--rl-space-2); }
+    .rl-callout p { margin: 0; color: var(--rl-text-muted); font-size: var(--rl-text-small); }
+    .rl-callout--info    { border-left-color: var(--rl-info);    color: var(--rl-info); }
+    .rl-callout--success { border-left-color: var(--rl-success); color: var(--rl-success); }
+    .rl-callout--warning { border-left-color: var(--rl-warning); color: var(--rl-warning); }
+    .rl-callout--error   { border-left-color: var(--rl-error);   color: var(--rl-error); }
+    .rl-callout strong, .rl-callout p { color: var(--rl-text); }
+
+    .rl-badge { display: inline-flex; align-items: center; gap: var(--rl-space-4);
+      font-size: var(--rl-text-caption); font-weight: var(--rl-weight-semibold);
+      padding: var(--rl-space-2) var(--rl-space-8); border-radius: var(--rl-radius-full);
+      border: var(--rl-border-hairline) solid currentColor; }
+    .rl-badge--verified { color: var(--rl-verified); }
+    .rl-badge--action   { color: var(--rl-action); }
+    .rl-badge--caution  { color: var(--rl-caution); }
+    .rl-badge--error    { color: var(--rl-error); }
+
+    .rl-code {
+      font-family: var(--rl-font-code); font-size: var(--rl-text-code); line-height: var(--rl-leading-code);
+      background: var(--rl-surface-subtle); color: var(--rl-text);
+      border: var(--rl-border-hairline) solid var(--rl-divider); border-radius: var(--rl-radius-sm);
+      padding: var(--rl-space-16); overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Theme toggle: tokens.css responds to [data-theme]; both modes pass WCAG (accessibility-checks.md). -->
+    <div class="toolbar">
+      <button class="rl-btn rl-btn--secondary" onclick="document.documentElement.dataset.theme='light'">Light</button>
+      <button class="rl-btn rl-btn--secondary" onclick="document.documentElement.dataset.theme='dark'">Dark</button>
+    </div>
+
+    <h1>Relyra Components</h1>
+    <p class="lede">Copy-ready markup. Every color resolves through <code>var(--rl-*)</code>, so the same block reads correctly in light and dark.</p>
+
+    <!-- Buttons: primary action, secondary, and disabled state -->
+    <h2>Buttons</h2>
+    <div class="row">
+      <button class="rl-btn rl-btn--primary">Verify assertion</button>
+      <button class="rl-btn rl-btn--secondary">View metadata</button>
+      <button class="rl-btn rl-btn--primary" disabled>Retiring key…</button>
+    </div>
+
+    <!-- Text input: label + help text in the calm state, plus an invalid-state variant -->
+    <h2>Text input</h2>
+    <div class="row" style="align-items: flex-start; gap: var(--rl-space-32);">
+      <div class="rl-field">
+        <label class="rl-label" for="entity-id">IdP Entity ID</label>
+        <input class="rl-input" id="entity-id" type="text" value="https://idp.example.com/saml" />
+        <span class="rl-help">The exact <code>entityID</code> from the IdP metadata. Whitespace is significant.</span>
+      </div>
+      <div class="rl-field">
+        <label class="rl-label" for="acs-url">ACS URL</label>
+        <input class="rl-input" id="acs-url" type="text" value="http://app.local/sso/acs" aria-invalid="true" aria-describedby="acs-err" />
+        <span class="rl-error" id="acs-err">Must be https in production. Plaintext ACS URLs are rejected.</span>
+      </div>
+    </div>
+
+    <!-- Card: a contained surface with heading + body -->
+    <h2>Card</h2>
+    <div class="rl-card">
+      <h3>Connection: Okta (Production)</h3>
+      <p>Two signing certificates on file. The active certificate fingerprint is verified on every response; the second is staged for rotation.</p>
+    </div>
+
+    <!-- Callouts: the four severities. Icon + heading carry meaning so color is never alone. -->
+    <h2>Callouts</h2>
+    <div class="stack">
+      <!-- info -->
+      <div class="rl-callout rl-callout--info">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v5M10 6h.01" stroke-linecap="round"/></svg>
+        <div><strong>Info</strong><p>Replay protection is using the Ecto adapter — the cluster-safe default.</p></div>
+      </div>
+      <!-- success -->
+      <div class="rl-callout rl-callout--success">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M6.5 10.5l2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div><strong>Verified</strong><p>Assertion signature checked against the configured IdP certificate. Login may proceed.</p></div>
+      </div>
+      <!-- warning -->
+      <div class="rl-callout rl-callout--warning">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 2.5l8 14H2l8-14z" stroke-linejoin="round"/><path d="M10 8v3.5M10 14h.01" stroke-linecap="round"/></svg>
+        <div><strong>Warning</strong><p>The ETS replay store is in use. It does not survive a node restart — switch to Ecto before production.</p></div>
+      </div>
+      <!-- error -->
+      <div class="rl-callout rl-callout--error">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M7 7l6 6M13 7l-6 6" stroke-linecap="round"/></svg>
+        <div><strong>Rejected</strong><p><code>DigestValue</code> did not match the recomputed digest. The response was rejected; no session was created.</p></div>
+      </div>
+    </div>
+
+    <!-- Badges / tags: status pills for connection and certificate state -->
+    <h2>Badges</h2>
+    <div class="row">
+      <span class="rl-badge rl-badge--verified">Verified</span>
+      <span class="rl-badge rl-badge--action">SP-initiated</span>
+      <span class="rl-badge rl-badge--caution">Cert expires 14d</span>
+      <span class="rl-badge rl-badge--error">Signature missing</span>
+    </div>
+
+    <!-- Code block: JetBrains Mono via --rl-font-code -->
+    <h2>Code</h2>
+    <pre class="rl-code"><code>case Relyra.consume_response(conn, raw_response, opts) do
+  {:ok, %Relyra.Assertion{subject: subject}} ->
+    {:ok, subject}
+
+  {:error, %Relyra.Rejection{reason: reason}} ->
+    # Typed rejection — never a silent compromise.
+    Logger.warning("SAML rejected: #{inspect(reason)}")
+    {:error, reason}
+end</code></pre>
+  </div>
+</body>
+</html>
