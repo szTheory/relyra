@@ -15,9 +15,9 @@ Requirements for the Brand System & Identity milestone. Each maps to exactly one
 
 ### Logo System
 
-- [ ] **LOGO-01**: All four logo directions (Relying Path monogram, Assertion Frame, Trust Path, integrated typemark) are rendered as transparent, cage-free SVGs and viewable side-by-side in a `logo-lab.html` gallery at multiple sizes and colorways.
-- [ ] **LOGO-02**: The maintainer selects one direction, which is developed into a complete lockup set: primary horizontal (no subtitle), stacked, mark-only, monochrome, inverse, favicon, an optional separate tagline lockup, and an integrated typemark.
-- [ ] **LOGO-03**: Logo usage rules are documented — clear-space, minimum sizes, approved colorways, mark↔logotype spacing, and misuse don'ts (including no rectangular cages and no forbidden imagery).
+- [x] **LOGO-01**: All four logo directions (Relying Path monogram, Assertion Frame, Trust Path, integrated typemark) are rendered as transparent, cage-free SVGs and viewable side-by-side in a `logo-lab.html` gallery at multiple sizes and colorways.
+- [x] **LOGO-02**: The maintainer selects one direction, which is developed into a complete lockup set: primary horizontal (no subtitle), stacked, mark-only, monochrome, inverse, favicon, an optional separate tagline lockup, and an integrated typemark.
+- [x] **LOGO-03**: Logo usage rules are documented — clear-space, minimum sizes, approved colorways, mark↔logotype spacing, and misuse don'ts (including no rectangular cages and no forbidden imagery).
 
 ### Design Tokens
 
@@ -72,9 +72,9 @@ Which phases cover which requirements. Finalized during roadmap creation.
 | BRAND-01 | Phase 58 | Complete |
 | BRAND-02 | Phase 58 | Complete |
 | BRAND-03 | Phase 58 | Complete |
-| LOGO-01 | Phase 59 | Pending |
-| LOGO-02 | Phase 59 | Pending |
-| LOGO-03 | Phase 59 | Pending |
+| LOGO-01 | Phase 59 | Complete |
+| LOGO-02 | Phase 59 | Complete |
+| LOGO-03 | Phase 59 | Complete |
 | TOKEN-01 | Phase 60 | Pending |
 | TOKEN-02 | Phase 60 | Pending |
 | BOOK-01 | Phase 61 | Pending |
