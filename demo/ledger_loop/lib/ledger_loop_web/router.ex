@@ -37,6 +37,9 @@ defmodule LedgerLoopWeb.Router do
     get "/login/admin", LedgerLoopWeb.RouteAffordanceController, :admin_login
     get "/support/scenario", LedgerLoopWeb.RouteAffordanceController, :support
 
+    get "/fake_idp/login", LedgerLoopWeb.FakeIdPController, :login
+    post "/fake_idp/sso", LedgerLoopWeb.FakeIdPController, :sso
+
     relyra_admin_routes("/relyra/admin",
       repo: LedgerLoop.Repo,
       scope_provider: LedgerLoop.Relyra.AdminScope

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SAML POST</title>
+  </head>
+  <body onload="document.forms[0].submit()">
+    <noscript>
+      <p>
+        <strong>Note:</strong> Since your browser does not support JavaScript,
+        you must press the Continue button once to proceed.
+      </p>
+    </noscript>
+    
+    <form action={@acs_url} method="post">
+      <div>
+        <input type="hidden" name="SAMLResponse" value={@saml_response} />
+        <%= if @relay_state != "" do %>
+          <input type="hidden" name="RelayState" value={@relay_state} />
+        <% end %>
+      </div>
+      <noscript>
+        <div>
+          <input type="submit" value="Continue" />
+        </div>
+      </noscript>
+    </form>
+  </body>
+</html>
