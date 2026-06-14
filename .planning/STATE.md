@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
-status: milestone_complete
-last_updated: 2026-06-14T01:18:27.305Z
+status: Planned - not started
+last_updated: "2026-06-14T04:46:16.340Z"
 last_activity: 2026-06-14
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 26
-  percent: 100
-stopped_at: Milestone complete (Phase 57 was final phase)
+  total_plans: 6
+  completed_plans: 3
+  percent: 50
 ---
 
 # Project State
@@ -25,9 +24,9 @@ See: `.planning/PROJECT.md` (updated 2026-06-12)
 
 ## Current Position
 
-Phase: 57
+Phase: 57.1
 Plan: Not started
-Status: Milestone complete
+Status: Planned - not started
 Last activity: 2026-06-14
 
 ## Performance Metrics
@@ -75,6 +74,7 @@ None currently. Keycloak browser proof is intentionally optional because startup
 ### Roadmap Evolution
 
 - Phase 57 added (2026-06-13): Demo FakeIdP Browser-Login Proof — standalone MVP phase outside archived v1.7, finishing SEED-003 option (b) with a demo-local SAML signer. Parked WIP on branch `wip/demo-fake-idp`.
+- Phase 57.1 inserted after Phase 57: Address Phase 57 tech debt: tamper guard, label, input hardening, repo hygiene (URGENT)
 
 ## Deferred Items
 
