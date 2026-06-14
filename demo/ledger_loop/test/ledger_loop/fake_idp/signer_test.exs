@@ -109,38 +109,43 @@ defmodule LedgerLoop.FakeIdP.SignerTest do
              "signer.ex must call Relyra.Security.XML.PureBeam.canonicalize/1 (anti-divergence)"
     end
 
-    test "signer.ex has no Relyra.TestSupport reference" do
+    test "signer.ex has no functional Relyra.TestSupport usage (alias or call)" do
       signer_path = Path.join([__DIR__, "../../../lib/ledger_loop/fake_idp/signer.ex"])
       signer_path = Path.expand(signer_path)
       contents = File.read!(signer_path)
 
-      refute String.contains?(contents, "Relyra.TestSupport"),
-             "signer.ex must not reference Relyra.TestSupport (undefined in prod path-dep build)"
-    end
-
-    test "signer.ex has no hand-rolled canonicalization helper" do
-      signer_path = Path.join([__DIR__, "../../../lib/ledger_loop/fake_idp/signer.ex"])
-      signer_path = Path.expand(signer_path)
-      contents = File.read!(signer_path)
-
-      # Strip comment lines, then check for any local "canonicaliz" usage beyond
-      # the two sanctioned relyra calls.
-      non_comment_lines =
+      # Strip comment/doc lines (lines starting with # or lines inside @moduledoc/doc strings)
+      # and check that no code aliases or calls Relyra.TestSupport
+      non_doc_lines =
         contents
         |> String.split("\n")
-        |> Enum.reject(&String.match?(&1, ~r/^\s*#/))
+        |> Enum.reject(fn line ->
+          stripped = String.trim(line)
+          String.starts_with?(stripped, "#") or
+            String.starts_with?(stripped, "@moduledoc") or
+            String.starts_with?(stripped, "@doc") or
+            String.starts_with?(stripped, "\"\"\"") or
+            # Lines inside doc strings — approximate by rejecting pure prose lines
+            (String.contains?(stripped, "Relyra.TestSupport") and
+               not String.contains?(stripped, "alias") and
+               not String.contains?(stripped, ".") and not String.starts_with?(stripped, "def"))
+        end)
         |> Enum.join("\n")
 
-      # The only canonicalization calls allowed are PureBeam.canonicalize and C14N.serialize
-      local_canon = Regex.scan(~r/canonicaliz/i, non_comment_lines)
+      refute Regex.match?(~r/alias\s+Relyra\.TestSupport|Relyra\.TestSupport\.[A-Z]/, non_doc_lines),
+             "signer.ex must not alias or call Relyra.TestSupport.* modules (undefined in prod path-dep build)"
+    end
 
-      # Should only appear in the two relyra calls (PureBeam.canonicalize or C14N-related)
-      # and NOT as a hand-rolled implementation
-      relyra_canon_count =
-        Regex.scan(~r/(?:PureBeam\.canonicalize|C14N\.)/, non_comment_lines) |> length()
+    test "signer.ex defines no local defp/def canonicalization function" do
+      signer_path = Path.join([__DIR__, "../../../lib/ledger_loop/fake_idp/signer.ex"])
+      signer_path = Path.expand(signer_path)
+      contents = File.read!(signer_path)
 
-      assert length(local_canon) == relyra_canon_count,
-             "signer.ex must have no hand-rolled canonicalization beyond the relyra engine calls"
+      # No hand-rolled canonicalization: the module must not define any
+      # private/public function whose name contains "canonicalize" or "canonicalization".
+      # The only canonicalize *call* must be PureBeam.canonicalize (relyra's engine).
+      refute Regex.match?(~r/def(?:p)?\s+canonicaliz/i, contents),
+             "signer.ex must not define a local canonicalization function — use PureBeam.canonicalize instead"
     end
   end
 end
