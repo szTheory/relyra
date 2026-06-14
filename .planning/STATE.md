@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Adoption Evidence Demo
 status: executing
-last_updated: "2026-06-14T05:56:51.018Z"
+last_updated: "2026-06-14T06:07:12.942Z"
 last_activity: 2026-06-14
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 50
 ---
 
@@ -25,7 +25,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-12)
 ## Current Position
 
 Phase: 57.1 (address-phase-57-tech-debt-tamper-guard-label-input-hardenin) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-06-14
 
@@ -63,6 +63,10 @@ Last activity: 2026-06-14
 - [Phase 57-03]: InResponseTo captured by inflating deflated SAMLRequest via :zlib(-15) + regex on ID attribute; tolerates absent/garbled input
 - [Phase 57-03]: SessionAdapter.establish_session fix: Map.get instead of Access.[] on Relyra.LoginResult (does not implement Access behaviour)
 - [Phase ?]: WR-01/05/IN-02: escape-at-emission inside response_xml/3, raise-on-no-op tamper guard, and typed PEM decode with descriptive raise — all confined to demo/ledger_loop
+- [Phase ?]: [Phase 57.1-02]: WR-04 safeInflate 64 KiB ceiling bounds amplification ratio
+- [Phase ?]: [Phase 57.1-02]: IN-03 regex + comment approach over SaxyTree parse (lower blast radius, no parse overhead on GET hot path)
+- [Phase ?]: [Phase 57.1-02]: WR-03 catch-all idp_action clause eliminates CaseClauseError on any crafted POST value
+- [Phase ?]: [Phase 57.1-02]: WR-02 relabelled valid-login to sarah@northstar.example.com matching conn_fields/0 emitted subject
 
 ### Active Requirements
 
@@ -87,6 +91,7 @@ None currently. Keycloak browser proof is intentionally optional because startup
 | maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
 | verification | Phase 53 (`53-VERIFICATION.md`) human-needed UI testing — demo Setup/Operator UX click-through | deferred at v1.7 close; run `/gsd:verify-work 53` |
 | Phase 57.1 P01 | 4 | 2 tasks | 4 files |
+| Phase 57.1 P02 | 434 | 2 tasks | 3 files |
 
 ## Session Continuity
 
