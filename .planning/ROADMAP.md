@@ -54,3 +54,24 @@ Plans:
 - [x] 57-01-PLAN.md - Wave-0 prerequisites: demo keypair/cert, fixture cert-trust + idp_sso_url alignment, LoginTrace.attach
 - [x] 57-02-PLAN.md - Demo-local SAML signer via relyra public C14N (byte-compat pass + tamper -> :digest_mismatch)
 - [x] 57-03-PLAN.md - Wire /fake_idp/* routes + SP-initiated end-to-end flow (success round-trip + tampered/trace) + affordance repoint
+
+### Phase 57.1: Address Phase 57 tech debt: tamper guard, label, input hardening, repo hygiene (INSERTED)
+
+**Goal:** Close the correctness, robustness, and hygiene debt the Phase 57 code review surfaced on the demo FakeIdP browser-login proof — confined to `demo/ledger_loop`, no Relyra core/API/security-posture change. Harden the tamper guard so it can never silently fail (false-negative rejection proof), correct the lying login label, escape/bound/catch all untrusted input on the unauthenticated FakeIdP endpoints, and clean up dangling repo state.
+
+**Success Criteria:**
+- `tamper/1` raises (not silently no-ops) when it cannot locate `<NameID>`, with a test proving today's output still tampers and a drifted template raises.
+- Valid-login label matches the emitted `name_id` (`sarah@northstar.example.com`); no label advertises an unseeded subject.
+- `response_xml/3` XML-escapes interpolated values; the `InResponseTo` extractor rejects non-`ID`-grammar input; crafted `SAMLRequest` no longer produces malformed emitted XML.
+- Unknown `idp_action` values resolve to the success path (no `CaseClauseError`/500).
+- `inflate/1` fails closed to `nil` on oversized decompressed output (no unbounded zip-bomb amplification).
+- `keypair.ex` raises a descriptive error on an unexpected PEM shape.
+- `test/support/poll.ex` is committed (or removed with rationale); stale `wip/demo-fake-idp` branch deleted.
+- `mix qa` and `mix ci.demo_app` stay green.
+
+**Requirements**: TBD (tech-debt remediation — derived from 57-REVIEW.md WR-01..05, IN-02, IN-03)
+**Depends on:** Phase 57
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 57.1 to break down)
