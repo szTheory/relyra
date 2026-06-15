@@ -366,17 +366,17 @@ assert {:error, %Relyra.Error{type: :digest_mismatch}} =
 | A2 | A curated signer can be copied/moved without changing verifier semantics. [ASSUMED] | Architecture Patterns | Implementation may need more refactor isolation than planned. |
 | A3 | Phoenix-free core compile coverage can be scoped to `Relyra.Testing` even though current full dependency compile without optional deps fails on broader Ecto/Phoenix modules. [ASSUMED] | Common Pitfalls / Validation | TEST-05 may reveal a larger optional-dependency packaging issue. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should `Relyra.Testing.Fixture` be a public struct or documented map?**
-   - What we know: CONTEXT.md requires explicit data. [VERIFIED: CONTEXT.md]
-   - What's unclear: Exact public type/name is discretionary. [ASSUMED]
-   - Recommendation: Use a public struct for stable docs/specs and pattern matching; avoid exposing signer internals.
+1. **RESOLVED: `Relyra.Testing.Fixture` is a public struct.**
+   - Decision: Use public `%Relyra.Testing.Fixture{}` for stable docs/specs, pattern matching, and explicit adopter-facing fields. [VERIFIED: CONTEXT.md]
+   - Rationale: CONTEXT.md D-02 and D-04 require plain functions plus explicit structs/data; a documented map would be less stable for a public Hex API.
+   - Boundary: The struct exposes fixture data only; signer internals, key persistence details, and private `Relyra.TestSupport.*` helpers remain private.
 
-2. **How far should TEST-05 go?**
-   - What we know: Core testing helpers must not make Phoenix mandatory. [VERIFIED: CONTEXT.md]
-   - What's unclear: A throwaway non-Phoenix path-dependency compile currently fails because existing `lib/relyra/ecto*` and `lib/relyra/phoenix*` modules reference optional deps. [VERIFIED: local command]
-   - Recommendation: Planner should include a scoped compile test proving `Relyra.Testing` itself has no Phoenix dependency, and optionally file/defer the broader package optional-dependency issue if outside Phase 64.
+2. **RESOLVED: TEST-05 requires scoped Phoenix-absent compile/load proof for core `Relyra.Testing` modules.**
+   - Decision: Plan 64-03 must add a focused ExUnit gate that compiles/loads `lib/relyra/testing.ex`, `lib/relyra/testing/fixture.ex`, `lib/relyra/testing/signer.ex`, and `lib/relyra/testing/adapters.ex` in an external process with no Phoenix modules available, plus the required non-Phoenix Relyra XML/security dependencies needed by those files. [VERIFIED: CONTEXT.md]
+   - Rationale: Source-token scans are useful supplementary evidence, but D-11/TEST-05 require compile/load coverage that proves Phoenix is not mandatory for core fixture use.
+   - Boundary: If a broader throwaway path-dependency compile still fails because existing non-testing `lib/relyra/ecto*` or `lib/relyra/phoenix*` optional-dependency modules compile differently without optional deps, record that as outside Phase 64's public testing core proof rather than making it a blocker for this phase. [VERIFIED: local command]
 
 ## Environment Availability
 

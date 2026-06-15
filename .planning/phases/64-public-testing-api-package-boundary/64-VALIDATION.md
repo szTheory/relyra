@@ -40,7 +40,7 @@ created: 2026-06-15
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 64-W0-01 | TBD | 0 | TEST-01, TEST-02, TEST-04 | T64-01, T64-02, T64-03 | Public fixtures compile under `lib/relyra/testing*` and successful fixtures pass through `consume_response/3`. | integration | `mix test test/relyra/testing_test.exs --warnings-as-errors` | no | pending |
 | 64-W0-02 | TBD | 0 | TEST-02, TEST-03, TEST-04 | T64-01, T64-02, T64-03 | Negative public fixtures fail for exact typed digest/signature/audience reasons through the real verifier. | security/integration | `mix test test/security/testing_fixture_crypto_test.exs --warnings-as-errors` | no | pending |
-| 64-W0-03 | TBD | 0 | TEST-05 | T64-06 | Core fixture generation remains Phoenix-free; any Phoenix helper stays isolated. | compile/integration | `mix test test/relyra/testing_optional_dependency_test.exs --warnings-as-errors` | no | pending |
+| 64-W0-03 | TBD | 0 | TEST-05 | T64-06 | Core fixture modules compile/load in a scoped external process with no Phoenix modules available; source-token checks remain supplementary, and any broader existing optional Ecto/Phoenix path-dependency compile issue is outside this public testing core gate. | compile/integration | `mix test test/relyra/testing_optional_dependency_test.exs --warnings-as-errors` | no | pending |
 | 64-W0-04 | TBD | 0 | TEST-05 | T64-06 | Optional ACS convenience, if shipped, dispatches POST params through a real ACS route or remains explicitly deferred. | integration | `mix test test/relyra/testing_phoenix_test.exs --warnings-as-errors` | no | pending |
 | 64-W0-05 | TBD | 0 | PKG-01 | T64-04 | Package files include `lib/relyra/testing*` and exclude `lib/relyra/test_support*`. | package | `mix test test/mix/tasks/verify_release_parity_test.exs --warnings-as-errors` | existing file needs extension | pending |
 
@@ -55,7 +55,7 @@ created: 2026-06-15
 | T64-03 | Parser or C14N differential between fixture signer and verifier | Signer must reuse Relyra's Saxy/C14N path; no alternate XML parser or custom fixture-only canonicalization. |
 | T64-04 | Private adversarial corpus or `TestSupport` leaks into package | Public negative fixtures are representative only; package parity must prove `test_support` is absent. |
 | T64-05 | Global production trust mutation from helper | Helpers must return explicit fixture data/options and avoid Application env, persistent global trust, or production resolver mutation. |
-| T64-06 | Optional Phoenix helper becomes mandatory | Core fixture modules must remain Phoenix-free; Phoenix convenience must live in an optional layer or be deferred. |
+| T64-06 | Optional Phoenix helper becomes mandatory | Core fixture modules must compile/load in a Phoenix-absent scoped subprocess; Phoenix convenience must live in an optional layer. |
 
 ---
 
@@ -63,7 +63,7 @@ created: 2026-06-15
 
 - [ ] `test/relyra/testing_test.exs` - covers TEST-01, TEST-02, and TEST-04.
 - [ ] `test/security/testing_fixture_crypto_test.exs` - covers TEST-02, TEST-03, and TEST-04.
-- [ ] `test/relyra/testing_optional_dependency_test.exs` - covers TEST-05 core dependency isolation.
+- [ ] `test/relyra/testing_optional_dependency_test.exs` - covers TEST-05 core dependency isolation with a scoped Phoenix-absent compile/load proof plus supplementary source-token checks.
 - [ ] `test/relyra/testing_phoenix_test.exs` - covers TEST-05 ACS convenience if shipped.
 - [ ] Extend `test/mix/tasks/verify_release_parity_test.exs` - covers PKG-01 inclusion and exclusion.
 
@@ -82,6 +82,7 @@ created: 2026-06-15
 - [x] All phase requirements have an automated verification path or Wave 0 test file.
 - [x] Security-relevant fixture behavior has threat references.
 - [x] Package-boundary behavior is verified against package/release parity, not source-tree existence only.
+- [x] Local package artifact proof is allowed to run slower than unit-level checks because it builds/unpacks the package artifact.
 - [x] No watch-mode flags are used in verification commands.
 - [x] `nyquist_compliant: true` is set in frontmatter.
 
