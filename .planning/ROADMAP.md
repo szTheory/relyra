@@ -29,6 +29,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 **Goal:** Close adopter-facing loose ends after v1.8 by making the Hex testing story honest and useful, resolving the LedgerLoop demo FakeIdP WIP, and syncing narrow maintenance docs without reopening demand-gated protocol work.
 
 **Scope boundaries:**
+
 - In scope: public `Relyra.Testing` planning/implementation, package/docs truth, demo FakeIdP disposition, narrow maintenance sync.
 - Out of scope: `AUTHN-POST-01`, `KMS-01`, `SIGNED-META-01`, full public adversarial corpus, production IdP or hosted broker behavior.
 
@@ -52,12 +53,21 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 **Plans:** 4 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 64-01-PLAN.md — Phoenix-free `Relyra.Testing` core fixtures and signed success proof
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 64-02-PLAN.md — Representative negative fixtures and security CI gate
 - [ ] 64-03-PLAN.md — Optional Phoenix helper and core dependency isolation
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 64-04-PLAN.md — Package parity proof for public testing files
 
 **Success criteria:**
+
 1. `lib/relyra/testing*` exists as the public API surface and is included in package files.
 2. `lib/relyra/test_support*` remains excluded from production compilation and package files.
 3. Public helpers generate genuine signed success fixtures with matching test cert chain and no global production trust mutation.
@@ -66,6 +76,7 @@ Plans:
 6. Optional Phoenix convenience helpers, if shipped, are isolated from core fixture generation and do not make Phoenix mandatory.
 
 **Research flags:**
+
 - Final API shape, fixture return type, key lifecycle, and optional Phoenix compile behavior need phase-level design before implementation.
 - Any public API signature must be reviewed carefully before implementation.
 
@@ -76,6 +87,7 @@ Plans:
 **Requirements:** DOCS-01, DOCS-02, DOCS-03
 
 **Success criteria:**
+
 1. Hex adopters are pointed at `Relyra.Testing`, not private `Relyra.TestSupport`, for local proof.
 2. Docs clearly label helpers as test-only and avoid production IdP or hosted broker language.
 3. Docs explain cert/key provenance and make test cert trust explicit and scoped.
@@ -89,6 +101,7 @@ Plans:
 **Requirements:** DEMO-01, DEMO-02, DEMO-03
 
 **Success criteria:**
+
 1. Current `/fake_idp/login` and `/fake_idp/sso` routes, controller tests, and browser/demo lane status are verified.
 2. The milestone makes an explicit retain-vs-remove decision for the demo FakeIdP browser flow.
 3. If retained, the flow is documented as the canonical or clearly labeled local FakeIdP browser proof.
@@ -102,6 +115,7 @@ Plans:
 **Requirements:** MAINT-01, MAINT-02, MAINT-03
 
 **Success criteria:**
+
 1. `guides/jtbd_user_flows.md` Scene 3 and ADFS references are reviewed and updated if stale.
 2. CVE ID backfill status is checked and recorded without manually publishing or retiring Hex packages.
 3. CI/release guard notes are updated only where they are stale.
@@ -129,6 +143,7 @@ Plans:
 | MAINT-03 | Phase 67 | Pending |
 
 **Coverage:**
+
 - v1.9 requirements: 15 total
 - Mapped to phases: 15
 - Unmapped: 0
@@ -140,6 +155,7 @@ Plans:
 `$gsd-discuss-phase 64`
 
 Also available:
+
 - `$gsd-plan-phase 64` - skip discussion and plan directly
 
 ---
