@@ -49,6 +49,14 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 
 **Requirements:** TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, PKG-01
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 64-01-PLAN.md — Phoenix-free `Relyra.Testing` core fixtures and signed success proof
+- [ ] 64-02-PLAN.md — Representative negative fixtures and security CI gate
+- [ ] 64-03-PLAN.md — Optional Phoenix helper and core dependency isolation
+- [ ] 64-04-PLAN.md — Package parity proof for public testing files
+
 **Success criteria:**
 1. `lib/relyra/testing*` exists as the public API surface and is included in package files.
 2. `lib/relyra/test_support*` remains excluded from production compilation and package files.
