@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Loose Ends & Adoption Honesty
 status: planning
-last_updated: "2026-06-15T20:32:22.303Z"
+last_updated: "2026-06-15T20:41:21Z"
 last_activity: 2026-06-15
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-15)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.9 Loose Ends & Adoption Honesty — defining requirements
+**Current focus:** v1.9 Loose Ends & Adoption Honesty — roadmap drafted
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 64 - Public Testing API & Package Boundary (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-15 — Milestone v1.9 started
+Status: Roadmap drafted; awaiting approval
+Last activity: 2026-06-15 — v1.9 roadmap drafted (Phases 64-67)
 
 ## Performance Metrics
 
@@ -35,6 +35,7 @@ Last activity: 2026-06-15 — Milestone v1.9 started
 - Highest shipped phase: 63
 - Previous milestone: v1.7 Adoption Evidence Demo (Phases 51-57.1)
 - v1.8 phase progress: 6/6 phases complete
+- v1.9 planned phase progress: 0/4 phases complete
 
 ## Accumulated Context
 
@@ -68,5 +69,5 @@ Last activity: 2026-06-15 — Milestone v1.9 started
 
 ## Session Continuity
 
-Last session: 2026-06-15 — v1.9 milestone started; requirements and roadmap pending.
-Resume at: `$gsd-new-milestone` workflow Step 8/9 (research, requirements, roadmap).
+Last session: 2026-06-15 — v1.9 requirements and roadmap drafted; roadmap approval pending.
+Resume at: approve or adjust roadmap, then `$gsd-discuss-phase 64`.
