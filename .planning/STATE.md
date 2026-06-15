@@ -1,36 +1,33 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.8
-milestone_name: Brand System & Identity
-status: milestone_complete
-last_updated: 2026-06-14T19:25:12.897Z
-last_activity: 2026-06-14
+milestone: v1.9
+milestone_name: Loose Ends & Adoption Honesty
+status: planning
+last_updated: "2026-06-15T20:32:22.303Z"
+last_activity: 2026-06-15
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 6
-  completed_plans: 6
-  percent: 100
-stopped_at: v1.8 shipped + archived; no active milestone
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-06-14)
+See: `.planning/PROJECT.md` (updated 2026-06-15)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Milestone complete
+**Current focus:** v1.9 Loose Ends & Adoption Honesty — defining requirements
 
 ## Current Position
 
-Phase: — (no active milestone)
+Phase: Not started (defining requirements)
 Plan: —
-Status: v1.8 Brand System & Identity shipped + archived 2026-06-14. Paused — next milestone via `/gsd:new-milestone`.
-Last activity: 2026-06-14
-
-Progress: [██████████] 100% (v1.8 complete)
+Status: Defining requirements
+Last activity: 2026-06-15 — Milestone v1.9 started
 
 ## Performance Metrics
 
@@ -50,10 +47,12 @@ Progress: [██████████] 100% (v1.8 complete)
 - Phase 59 has an interactive checkpoint: maintainer picks the winning logo direction before the full lockup set is developed.
 - Phase 62 is the only phase that touches files outside brandbook/: mix.exs ex_doc config, README.md, demo/ledger_loop CSS.
 - Demand-gated protocol scope is unchanged and still paused: AUTHN-POST-01, KMS-01, SIGNED-META-01.
+- v1.9 rolls SEED-002, SEED-003, and narrow maintenance sync into a bounded adoption-honesty milestone.
+- Maintainer explicitly approved planning a public `Relyra.Testing` direction; concrete API shape still needs phase-level design/review and must remain test-only.
 
 ### Blockers/Concerns
 
-- Phase 59 is gated on a user decision (logo direction selection) — plan-phase must surface this as an explicit checkpoint before developing the full lockup set.
+- Public `Relyra.Testing` is a public API/package-posture change. Phase planning must keep adversarial corpus internals private, use ephemeral key material, and avoid production trust-boundary changes.
 
 ## Deferred Items
 
@@ -69,5 +68,5 @@ Progress: [██████████] 100% (v1.8 complete)
 
 ## Session Continuity
 
-Last session: 2026-06-14 — Roadmap defined for v1.8 (Phases 58-63, 16/16 requirements mapped).
-Resume at: `/gsd:plan-phase 58`
+Last session: 2026-06-15 — v1.9 milestone started; requirements and roadmap pending.
+Resume at: `$gsd-new-milestone` workflow Step 8/9 (research, requirements, roadmap).
