@@ -1,0 +1,89 @@
+# Requirements: Relyra v1.9 Loose Ends & Adoption Honesty
+
+**Defined:** 2026-06-15
+**Core Value:** Every SAML login ends in a verified trust path or a typed rejection - never a silent compromise. Trust mutations are durable, attributable, and reviewable.
+
+## v1.9 Requirements
+
+### Public Testing API
+
+- [ ] **TEST-01**: Hex adopters can use a public `Relyra.Testing` module shipped in package files, while private `Relyra.TestSupport` remains excluded.
+- [ ] **TEST-02**: Adopters can generate a genuine signed SAML success fixture with matching test cert chain and no production trust mutation.
+- [ ] **TEST-03**: Adopters can generate representative typed rejection fixtures, including wrong audience and tampered digest/signature, without exposing the private adversarial corpus.
+- [ ] **TEST-04**: Public testing helpers exercise the real Relyra ACS or `consume_response/3` verifier path, never direct session assignment or verifier bypass.
+- [ ] **TEST-05**: Any Phoenix convenience helper is optional and does not make Phoenix mandatory for core Relyra/testing fixture use.
+
+### Package And Docs Truth
+
+- [ ] **PKG-01**: Package/release parity proves `lib/relyra/testing*` ships and `lib/relyra/test_support*` remains excluded.
+- [ ] **DOCS-01**: README, Getting Started, overview, recipes, and batteries-included docs no longer instruct Hex adopters to use private `Relyra.TestSupport`.
+- [ ] **DOCS-02**: Public docs clearly label `Relyra.Testing` as test-only, with ephemeral/explicit cert handling and no production IdP claim.
+- [ ] **DOCS-03**: Existing docs/tests that mention local proof are updated to the new public API or explicitly marked repo-internal.
+
+### Demo FakeIdP Disposition
+
+- [ ] **DEMO-01**: LedgerLoop FakeIdP browser flow current state is verified through route/controller/browser or demo-lane tests.
+- [ ] **DEMO-02**: The demo has one intentional documented browser-login path: either retain and document `/fake_idp/*`, or remove it and keep route-affordance login as canonical.
+- [ ] **DEMO-03**: SEED-003 is resolved with evidence, not left dormant with stale route assumptions.
+
+### Maintenance Sync
+
+- [ ] **MAINT-01**: JTBD Scene 3 and ADFS-related narrative drift are reviewed and synced if still stale.
+- [ ] **MAINT-02**: CVE ID backfill status, CI/release guard notes, and Phase 29 warning-level items are triaged with close/defer decisions.
+- [ ] **MAINT-03**: Seeds are cleaned up or reclassified so completed/stale loose ends do not resurface as new milestone candidates.
+
+## Future Requirements
+
+### Protocol Features
+
+- **AUTHN-POST-01**: HTTP-POST binding signed AuthnRequests with enveloped XML signature and C14N. Demand-gated until a real adopter issue appears.
+- **KMS-01**: KMS-native `KeyResolver` adapters for services such as AWS KMS or GCP KMS. Demand-gated until a real adopter issue appears.
+- **SIGNED-META-01**: Signed SP metadata (`EntityDescriptor`) plus federation extensions and InCommon runbook. Demand-gated until a real adopter issue appears.
+
+### Testing Expansion
+
+- **TEST-FUT-01**: Broader public negative-fixture catalog beyond the representative v1.9 set, only if adopter demand appears.
+- **TEST-FUT-02**: Large browser-testing matrix for public testing helpers, only if adopter demand appears.
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Full public adversarial crypto corpus | The permanent adversarial corpus remains a private security gate; public helpers expose representative rejection fixtures only. |
+| Production IdP or hosted broker behavior | Relyra remains a library; `Relyra.Testing` helpers are test-only and must not become a product IdP. |
+| Protocol feature bundle | `AUTHN-POST-01`, `KMS-01`, and `SIGNED-META-01` remain demand-gated and are not loose-end work. |
+| Relaxing signature, digest, parser, or replay requirements | v1.9 must preserve Relyra's non-negotiable security invariants. |
+| Shipping private `Relyra.TestSupport` wholesale | v1.9 should curate a public surface while keeping private repo internals out of Hex. |
+
+## Traceability
+
+Which phases cover which requirements. Populated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| TEST-01 | TBD | Pending |
+| TEST-02 | TBD | Pending |
+| TEST-03 | TBD | Pending |
+| TEST-04 | TBD | Pending |
+| TEST-05 | TBD | Pending |
+| PKG-01 | TBD | Pending |
+| DOCS-01 | TBD | Pending |
+| DOCS-02 | TBD | Pending |
+| DOCS-03 | TBD | Pending |
+| DEMO-01 | TBD | Pending |
+| DEMO-02 | TBD | Pending |
+| DEMO-03 | TBD | Pending |
+| MAINT-01 | TBD | Pending |
+| MAINT-02 | TBD | Pending |
+| MAINT-03 | TBD | Pending |
+
+**Coverage:**
+- v1.9 requirements: 15 total
+- Mapped to phases: 0
+- Unmapped: 15
+
+---
+*Requirements defined: 2026-06-15*
+*Last updated: 2026-06-15 after v1.9 requirements definition*
