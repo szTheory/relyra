@@ -1,128 +1,208 @@
-# Pitfalls Research: v1.7 Adoption Evidence Demo
+# Pitfalls Research
 
-**Project:** Relyra v1.7 — Adoption Evidence Demo
-**Researched:** 2026-06-12
+**Domain:** Public SAML testing helpers and loose-end maintenance
+**Researched:** 2026-06-15
 **Confidence:** HIGH
 
-## Critical Security Pitfalls
+## Critical Pitfalls
 
-### Disabling Strictness For Demo Smoothness
+### Pitfall 1: Public Helper Becomes a Trust Bypass
 
-The demo must never disable signatures, replay checks, configured-certificate trust, or XML guards to make the flow easier. A smooth insecure demo would undercut Relyra's core value.
+**What goes wrong:**
+The helper proves login by assigning session state or calling host callbacks directly instead of producing SAML that goes through the verifier.
 
-Prevention: prove the same strict path as production and make any failure state visible through typed errors/trace.
+**Why it happens:**
+It is much simpler to mock "logged in" than to mint signed SAML and wire test certs.
 
-### Trusting Document `KeyInfo`
+**How to avoid:**
+Every public login proof helper must feed `Relyra.consume_response/3` or the Phoenix ACS route with signed XML. Requirements should explicitly test that digest/signature verification still occurs.
 
-Keycloak and other IdPs may emit `KeyInfo` inside XMLDSig. Relyra may parse it structurally, but verification trust must continue to use configured IdP certs only.
+**Warning signs:**
+Helper APIs mention `current_user`, `SessionAdapter`, or direct controller assigns but not `SAMLResponse`, `cert_chain`, or ACS/consume entrypoints.
 
-Prevention: seed configured certs and assert the proof path ignores document-provided trust anchors.
+**Phase to address:**
+First implementation phase for `Relyra.Testing`.
 
-### Second XML Parse Path
+---
 
-Do not introduce a demo parser that extracts identities directly from SAML XML. The demo may parse AuthnRequest enough for FakeIdP mirroring, but response/assertion consumption must go through Relyra's hardened path.
+### Pitfall 2: Static Test Keys Leak Into Production
 
-Prevention: all ACS response handling uses mounted Relyra routes and public APIs.
+**What goes wrong:**
+Docs or helpers normalize a reusable FakeIdP key/cert that adopters accidentally configure in production.
 
-### ETS In The Happy Path
+**Why it happens:**
+Static fixtures are easy to copy and produce deterministic tests.
 
-The current adoption fixture gap is ETS request/replay usage in otherwise production-shaped tests. v1.7 must close this.
+**How to avoid:**
+Default to ephemeral key material returned with the fixture. If deterministic fixtures are needed, require explicit caller opt-in and label them unsafe for production. Never auto-register test certs globally.
 
-Prevention: demo happy path uses Ecto request/replay wrappers, with tests verifying rows are written/consumed.
+**Warning signs:**
+Docs show a PEM block or "put this cert in config" without "test only" and without scoped test setup.
 
-## Product And Architecture Pitfalls
+**Phase to address:**
+API design and docs phases.
 
-### Accidentally Building A Broker
+---
 
-Relyra is a library, not WorkOS/SSOReady/Auth0. The demo can learn from their setup UX, but the host app owns tenant workflow and customer setup.
+### Pitfall 3: Shipping `test_support` Internals
 
-Prevention: put setup pages under `LedgerLoopWeb`, not `Relyra.LiveAdmin`; document the boundary.
+**What goes wrong:**
+Fixing the docs/package contradiction by allowing all `lib/relyra/test_support/*` into the Hex tarball exposes private internals as public API.
 
-### Premature Core UI API
+**Why it happens:**
+It is the smallest packaging diff.
 
-A customer-admin portal sounds reusable, but v1.7 has not yet proven the right abstraction.
+**How to avoid:**
+Keep `test_support` excluded. Add new allowlisted `lib/relyra/testing*` modules and package parity tests proving both sides.
 
-Prevention: keep host setup screens demo-local. Extract later only if repeated evidence shows stable cross-app semantics.
+**Warning signs:**
+Changes delete `String.contains?(&1, "test_support")` or weaken `verify.release_parity`.
 
-### Copying Relyra Migrations
+**Phase to address:**
+Packaging/docs truth phase.
 
-Copying dependency migrations creates drift.
+---
 
-Prevention: run Relyra's shipped migrations from dependency path and keep host-owned request/replay/session tables separate.
+### Pitfall 4: Optional Phoenix Dependency Becomes Mandatory
 
-### Confusing Login Trace With Audit Ledger
+**What goes wrong:**
+A public helper module references Phoenix at compile time, breaking non-Phoenix consumers or changing dependency expectations.
 
-Trust mutations are audit rows; login traces are runtime evidence. Replays and failed attempts should not be presented as trust-mutation audit events.
+**Why it happens:**
+The current private macro imports `Phoenix.ConnTest`; mirroring it directly is tempting.
 
-Prevention: label surfaces precisely and link to troubleshooting semantics.
+**How to avoid:**
+Put core fixture generation in a Phoenix-free module. If a Phoenix layer ships, isolate it and verify package compile with Phoenix optionality intact.
 
-## DevOps / CI Pitfalls
+**Warning signs:**
+`Relyra.Testing` itself imports `Phoenix.ConnTest` or calls Phoenix modules unconditionally.
 
-### Fixed Container Names And Ports
+**Phase to address:**
+API design and compile/package test phase.
 
-Fixed names/ports break when multiple demos or CI jobs run on the same host.
+---
 
-Prevention: no `container_name`; env-driven ports; `COMPOSE_PROJECT_NAME`; `scripts/demo doctor` prints override commands.
+### Pitfall 5: Public Negative Fixtures Reveal the Private Corpus
 
-### Keycloak Readiness Flakes
+**What goes wrong:**
+Public helpers copy the full adversarial crypto corpus into API/docs, coupling adopters to internal attack fixtures and teaching bypass details.
 
-Keycloak can expose ports/descriptors before the login surface is usable.
+**Why it happens:**
+Relyra's strongest tests are already written, so copying them feels efficient.
 
-Prevention: health endpoint plus SSO-login-form readiness probe; optional lane until stable.
+**How to avoid:**
+Expose representative named outcomes only, such as `:expired_assertion`, `:wrong_audience`, and `:tampered_digest`. Keep corpus-specific fixtures and exploit variants private and gated by `mix ci.security`.
 
-### Realm Import Drift
+**Warning signs:**
+Public docs reference adversarial fixture filenames or named CVE exploit variants as helper API.
 
-Keycloak import skips existing state when volumes persist.
+**Phase to address:**
+Testing helper design and docs phase.
 
-Prevention: `reset` removes volumes or performs explicit import; docs say reset is destructive for demo data.
+---
 
-### Branch Protection Drift
+### Pitfall 6: Demo FakeIdP Seed Is Treated as Current Truth
 
-Adding required CI checks without updating branch protection/release scripts breaks hands-off release.
+**What goes wrong:**
+The roadmap plans to wire routes that already exist, missing the real task: verify completion, docs, browser flow, and seed cleanup.
 
-Prevention: keep demo lanes initially optional unless deliberately promoted; if promoted, update branch-protection scripts with exact check names.
+**Why it happens:**
+SEED-003 was planted when files were untracked/WIP, but the repo has changed.
 
-### Playwright Weight And Flake
+**How to avoid:**
+Start the demo phase with a current-state verification pass: route table, controller tests, browser test, README guide, and `scripts/demo` path.
 
-Browser E2E is valuable but expensive.
+**Warning signs:**
+Requirements say "add `/fake_idp/*` routes" without acknowledging they are already in `demo/ledger_loop/lib/ledger_loop_web/router.ex`.
 
-Prevention: one worker in CI, deterministic seeds, trace retained on failure, split core smoke from optional Keycloak browser proof.
+**Phase to address:**
+Demo cleanup phase.
 
-## UI / UX Pitfalls
+## Technical Debt Patterns
 
-### Hero Page Instead Of Usable Demo
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Rename docs only, no public helper | Fast closure | Hex adopters still lack a good local proof story | Only if phase design rejects public API after explicit review. |
+| Ship public helper without parity tests | Faster implementation | Next release may silently omit it from Hex | Never. |
+| Reuse persistent private keypair | Faster tests | Key provenance becomes unclear and may leak into prod examples | Only inside private repo tests, not public default. |
+| Leave SEED-003 untouched after verification | Saves cleanup time | Future agents keep replanning stale work | Never after milestone closes. |
 
-Evaluators need to inspect the product workflow immediately.
+## Integration Gotchas
 
-Prevention: first screen is LedgerLoop workspace with tenant status and task links.
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Hex package files | Include `test_support` wholesale | Add only `testing` public modules, preserve `test_support` exclusion. |
+| Phoenix host tests | Assume a fixed ACS path | Accept explicit `:path` or `:connection_id`; do not guess host routing. |
+| Relyra connection config | Trust document `KeyInfo` for the test cert | Return cert chain and require normal configured-cert trust. |
+| Demo browser flow | Bypass CSRF incorrectly or post to wrong pipeline | Keep ACS under the `:saml` pipeline with `SkipCSRF` before `protect_from_forgery`. |
 
-### Wizard For A Nonlinear Workflow
+## Performance Traps
 
-SAML setup crosses two systems and often multiple people. A forced wizard can misrepresent the job.
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| RSA key per assertion in large suites | Slow test modules | Allow caller-scoped fixture context if needed | Hundreds/thousands of generated fixtures per run. |
+| Unbounded SAMLRequest inflate in demo | Hangs/memory pressure | Keep bounded `safeInflate` behavior | Crafted oversized SAMLRequest. |
+| Full browser proof for every test | Slow demo CI | Unit/controller tests for signer/controller, one browser smoke | CI time grows with browser matrix. |
 
-Prevention: use task-list/checklist for setup; use a linear mini-flow only for deterministic test-login proof.
+## Security Mistakes
 
-### Color-Only Status Or Dark Cyber Aesthetic
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Helper installs cert globally | Test cert trusted in unintended environment | Return cert data only; caller wires it in test setup. |
+| Helper accepts unsigned fixtures for convenience | Normalizes auth bypass | No unsigned success helper. |
+| Helper weakens algorithm policy | Users think SHA-1/legacy paths are normal | Public helpers use current strict defaults only. |
+| Demo calls private TestSupport | Path-dep prod compile breaks or hides package truth | Demo-local signer only. |
 
-Relyra's brand is calm, exact, operator-friendly, not alarmist.
+## UX Pitfalls
 
-Prevention: text labels, accessible contrast, light/dark/system support, no decorative security theater.
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Two similarly named helpers (`TestSupport` and `Testing`) without migration docs | Adopters do not know which to use | Docs clearly say `Relyra.Testing` is public; `Relyra.TestSupport` is repo-internal. |
+| Public negative fixtures with cryptic atoms only | Users cannot map failures to their app behavior | Provide examples with expected `Relyra.Error` atoms and trace assertions. |
+| Demo has two login paths with no explanation | Evaluators click the wrong path | Pick one documented path or clearly label "local FakeIdP browser proof". |
 
-### Vague Security Copy
+## "Looks Done But Isn't" Checklist
 
-"Invalid SAML" does not help operators.
+- [ ] **Public API:** Module exists but is not included in `package.files`.
+- [ ] **Docs:** README updated but `guides/getting_started.md` still uses `Relyra.TestSupport`.
+- [ ] **Security:** Positive helper signs XML but tests do not prove tampering rejects.
+- [ ] **Optional deps:** Core helper compiles only when Phoenix is installed.
+- [ ] **Demo:** Controller tests pass but browser/README path still points elsewhere.
+- [ ] **Seeds:** SEED-002/003 remain dormant after completion with stale trigger text.
 
-Prevention: copy states what failed, why it matters, and what to do next.
+## Recovery Strategies
 
-## Scope Pitfalls
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Shipped too much `test_support` | MEDIUM-HIGH | Re-tighten package files, deprecate exposed modules, add parity regression. |
+| Static key leaked in docs | MEDIUM | Remove key, rotate examples, add doc test forbidding PEM blocks in public testing docs. |
+| Phoenix dependency leak | MEDIUM | Split modules, guard optional helper compile, add no-Phoenix compile check if feasible. |
+| Demo flow duplicated/confusing | LOW | Delete one route path or update demo guide with explicit labels and tests. |
 
-Keep these out of v1.7:
+## Pitfall-to-Phase Mapping
 
-- AUTHN-POST.
-- KMS/HSM decryption.
-- Signed SP metadata.
-- New provider presets.
-- SCIM.
-- Public API shape changes.
-- Default-tightening.
-- Hosted broker runtime.
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Public helper bypasses verifier | Testing API phase | Tests prove helper output enters `consume_response/3`/ACS and verifies real signature/digest. |
+| Static key leakage | Testing API + docs phase | Tests/docs checks ensure ephemeral/default test-only key handling and no production config guidance. |
+| Shipping `test_support` internals | Packaging/docs phase | `mix verify.release_parity` pure functions and package tests cover exclude/include behavior. |
+| Phoenix dependency leak | Testing API phase | Compile/package check with optional dependency assumptions. |
+| Stale demo seed | Demo cleanup phase | Route/controller/browser tests and seed triage commit. |
+
+## Sources
+
+- `.planning/seeds/SEED-002-testsupport-vs-hex-package.md`
+- `.planning/seeds/SEED-003-demo-fakeidp-login-wip.md`
+- `mix.exs`
+- `lib/mix/tasks/verify.release_parity.ex`
+- `lib/relyra/test_support.ex`
+- `lib/relyra/test_support/fake_idp.ex`
+- `lib/relyra/test_support/xmldsig_signer.ex`
+- `demo/ledger_loop/lib/ledger_loop_web/controllers/fake_idp_controller.ex`
+- `demo/ledger_loop/lib/ledger_loop_web/router.ex`
+- `https://phoenix.hexdocs.pm/Phoenix.ConnTest.html`
+- `https://ex-unit.hexdocs.pm/ExUnit.CaseTemplate.html`
+
+---
+*Pitfalls research for: Relyra v1.9 public testing API and loose-end cleanup*
+*Researched: 2026-06-15*

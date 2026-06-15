@@ -1,138 +1,236 @@
-# Architecture Research: v1.7 Adoption Evidence Demo
+# Architecture Research
 
-**Project:** Relyra v1.7 — Adoption Evidence Demo
-**Researched:** 2026-06-12
+**Domain:** Public SAML testing API plus demo/adoption maintenance
+**Researched:** 2026-06-15
 **Confidence:** HIGH
 
-## Architectural Stance
+## Standard Architecture
 
-Build a single conventional Phoenix app at `demo/ledger_loop`. Keep Relyra as a library dependency. Keep all product-specific customer setup, tenant lifecycle, user mapping, and session policy in the host app.
-
-This is the least surprising shape for Phoenix adopters: contexts own app logic, routes expose workflows, Ecto stores durable state, and the library plugs into explicit seams.
-
-## Bounded Contexts
-
-### `LedgerLoop.Organizations`
-
-Owns tenants and memberships.
-
-Minimum schemas:
-
-- `organizations`
-- `users`
-- `memberships`
-
-### `LedgerLoop.Accounts`
-
-Owns demo users and session-facing identity.
-
-Minimum behavior:
-
-- Lookup user by SAML identity anchor.
-- Create/link demo users when seeded or explicitly allowed.
-- Expose current user/current organization for LiveView scopes.
-
-### `LedgerLoop.SSO`
-
-Owns host-specific SSO setup and Relyra integration.
-
-Minimum schemas/tables:
-
-- `saml_identities`: organization, user, connection, anchor type/value.
-- `relyra_request_intents`: relay state, request ID, intent, consumed timestamp, expiry.
-- `relyra_replay_keys`: replay key, inserted timestamp, metadata.
-- Optional `demo_saml_sessions` if showing SLO/session linkage.
-
-Minimum modules:
-
-- `LedgerLoop.Relyra.ConnectionResolver`
-- `LedgerLoop.Relyra.RequestStore`
-- `LedgerLoop.Relyra.ReplayStore`
-- `LedgerLoop.Relyra.UserMapper`
-- `LedgerLoop.Relyra.SessionAdapter`
-- `LedgerLoop.Relyra.ScopeProvider`
-
-### `LedgerLoop.DemoData`
-
-Owns deterministic reset and seed scenarios:
-
-- Northstar happy-path connection.
-- Draft/missing-metadata connection.
-- Staged certificate rollover scenario.
-- Invalid audience/support trace scenario.
-- Optional Keycloak connection.
-
-## Relyra Integration
-
-Use existing Relyra APIs and avoid copying internals:
-
-- Run Relyra's shipped migrations from dependency path; do not copy them into demo app migrations.
-- Use `Relyra.Ecto.Connections`, `MetadataApply`, `CertificateInventory`, and `MappingCommands` where possible for trust data.
-- Mount SAML routes under `/saml`.
-- Mount LiveAdmin under `/relyra/admin` with `repo:` and `scope_provider:`.
-
-## Store Contracts
-
-The demo should use thin wrapper modules with fixed table names:
-
-- `LedgerLoop.Relyra.RequestStore` delegates to `Relyra.RequestStore.Ecto` with `repo: LedgerLoop.Repo, table: "relyra_request_intents"`.
-- `LedgerLoop.Relyra.ReplayStore` delegates to `Relyra.ReplayStore.Ecto` with `repo: LedgerLoop.Repo, table: "relyra_replay_keys"`.
-
-Never derive Ecto table names from request params or connection IDs.
-
-## Session Handling
-
-The host app owns session establishment. If the mounted ACS path needs to mutate Phoenix session, use a narrow request-scoped plug/adapter pattern. Do not store `Plug.Conn` or pass it to async work.
-
-If the demo shows SLO linkage, persist session index mapping explicitly. Relyra does not own the host session system.
-
-## FakeIdP Boundary
-
-Provide a dev/test-only local IdP route:
+### System Overview
 
 ```text
-/dev/idp/:connection_id/sso
+Consumer tests
+  |
+  | use/import
+  v
+Relyra.Testing public API
+  |
+  | builds signed/invalid SAML fixtures, returns cert chain and params
+  v
+Relyra verifier entrypoints
+  |
+  | consume_response/3 or Phoenix ACS route
+  v
+Existing security seams
+  - pre-parse guards
+  - saxy parse path
+  - exclusive C14N
+  - DigestValue recompute
+  - :public_key.verify against configured certs
+
+Optional Phoenix layer
+  |
+  | posts returned params through host endpoint
+  v
+Host Phoenix test/router pipeline
+
+LedgerLoop demo
+  |
+  | browser flow only, demo-local signer
+  v
+Relyra ACS route mounted in demo app
 ```
 
-This route may wrap `Relyra.TestSupport.FakeIdP` only outside production. It should parse only enough of Relyra's emitted AuthnRequest to mirror `InResponseTo`, then sign through the real test XMLDSig signer and auto-submit a browser POST to ACS.
+### Component Responsibilities
 
-## Keycloak Boundary
+| Component | Responsibility | Typical Implementation |
+|-----------|----------------|------------------------|
+| `Relyra.Testing` | Public core fixture generation and small assertions | Functions under `lib/relyra/testing.ex` and possibly `lib/relyra/testing/*.ex`. |
+| `Relyra.Testing.Fixture` or equivalent | Opaque return struct/map carrying XML, Base64 SAMLResponse, RelayState, cert chain, and expected result metadata | Prefer explicit values over global config mutation. |
+| `Relyra.Testing.Phoenix` or case template | Optional helper that posts fixtures through Phoenix endpoint/ACS | Thin layer over `Phoenix.ConnTest.dispatch` or `post/3`; should load only when Phoenix is available. |
+| Private `Relyra.TestSupport` | Repo-only internal test infrastructure | Keep under `lib/relyra/test_support` and excluded from package/prod compilation. |
+| Demo `LedgerLoop.FakeIdP` | Browser-visible demo harness | Stays demo-local and independent of private TestSupport. |
+| Release parity gate | Package boundary proof | Extend current `test_support` exclusion with `testing` inclusion checks. |
 
-Keycloak stays optional:
+## Recommended Project Structure
 
-- Compose profile.
-- Dedicated CI job/tag.
-- Browser-visible ACS using localhost port.
-- Readiness checks before browser E2E.
+```text
+lib/relyra/
+  testing.ex              # public core API, no Phoenix dependency
+  testing/
+    fixture.ex            # optional public struct for fixture outputs
+    signer.ex             # curated public signer wrapper or extracted safe subset
+    phoenix.ex            # optional Phoenix helpers if phase design accepts
 
-The existing ConnTest Keycloak lane remains lower-level interop evidence; v1.7 adds browser-launched app proof only after core demo is stable.
+lib/relyra/test_support/  # remains private/excluded
+  fake_idp.ex
+  xmldsig_signer.ex
+  ...
 
-## UI Architecture
+test/relyra/testing/
+  testing_test.exs
+  phoenix_test.exs
+  package_boundary_test.exs
 
-Host demo pages own:
+guides/
+  getting_started.md
+  overview.md
+  jtbd_user_flows.md
 
-- Workspace home.
-- Tenant SSO setup task list.
-- Setup receipt.
-- Login receipt.
-- Support scenario pages.
+demo/ledger_loop/
+  lib/ledger_loop_web/controllers/fake_idp_controller.ex
+  test/ledger_loop_web/...
+```
 
-Relyra LiveAdmin owns:
+### Structure Rationale
 
-- Operator trust-state workflows.
-- Metadata/cert/mapping/audit/trace surfaces.
+- **`lib/relyra/testing.ex`:** Public Hex-shipped modules must not live under `test_support`, because existing package filters and release parity tests deliberately exclude that path.
+- **`testing/phoenix.ex`:** Phoenix is optional. A separate module lets consumers use core fixtures without Phoenix and lets docs clearly mark Phoenix-specific helpers.
+- **Private `test_support`:** Keeps internal Ecto repos, migration fixtures, conformance fixtures, and adversarial corpus helpers out of the public contract.
+- **Demo-local signer:** The demo compiles Relyra as a prod path dependency. Its browser harness must not rely on private test-support modules.
 
-Use function components, attrs/slots, URL-driven state, and scoped context calls. Avoid stuffing business rules into LiveViews.
+## Architectural Patterns
 
-## Roadmap Implication
+### Pattern 1: Core Fixture Builder
 
-Build order should be:
+**What:** Generate signed and selected invalid SAML responses as data.
 
-1. Scaffold runnable demo app and package boundary.
-2. Add Ecto/Relyra store integration and deterministic seeds.
-3. Add host setup + mounted LiveAdmin workflow.
-4. Add FakeIdP in-browser login proof.
-5. Add Docker/script/CI/browser receipts.
-6. Add optional Keycloak proof and docs polish.
+**When to use:** Always. This is the stable public contract.
 
-This order proves the foundation before the UI and optional external IdP layers.
+**Trade-offs:** Slightly more verbose for Phoenix users, but avoids optional dependency leakage.
+
+```elixir
+fixture = Relyra.Testing.signed_response(subject: "sarah@example.com")
+
+assert %{
+         response_xml: _xml,
+         saml_response: _base64,
+         cert_chain: [_pem],
+         connection: _connection_opts
+       } = fixture
+```
+
+### Pattern 2: Thin Phoenix Posting Helper
+
+**What:** A helper that accepts a `Plug.Conn`, endpoint, ACS path or connection_id, and a public fixture, then posts `SAMLResponse`/`RelayState`.
+
+**When to use:** If phase design confirms clean Phoenix optional dependency handling.
+
+**Trade-offs:** Good adopter ergonomics, but must not turn Phoenix into a core requirement.
+
+```elixir
+conn =
+  conn
+  |> Relyra.Testing.Phoenix.post_saml_response(endpoint: MyAppWeb.Endpoint, fixture: fixture)
+```
+
+### Pattern 3: Public Representative Negatives, Private Corpus
+
+**What:** Expose named invalid fixtures for common adopter paths while keeping the permanent adversarial corpus internal.
+
+**When to use:** Public helpers that need rejection-path coverage.
+
+**Trade-offs:** Good adopter coverage without making bypass research part of the public API.
+
+## Data Flow
+
+### Request Flow
+
+```text
+Test creates fixture
+  -> fixture returns XML/Base64/cert chain
+  -> host config uses returned cert chain for that test connection
+  -> host posts SAMLResponse to ACS or calls consume_response/3
+  -> Relyra verifies digest/signature through existing crypto gate
+  -> test asserts accepted user or typed rejection/trace
+```
+
+### State Management
+
+```text
+No global production state mutation
+  -> fixture owns keypair/cert
+  -> test owns connection config
+  -> replay/request stores remain host-provided
+```
+
+### Key Data Flows
+
+1. **Happy path fixture:** ephemeral keypair -> self-signed test cert -> signed assertion -> Base64 SAMLResponse -> host test connection trusts returned cert -> real consume/ACS path accepts.
+2. **Wrong audience fixture:** signed assertion with mismatched Audience -> real crypto passes -> protocol validation rejects with typed error.
+3. **Tampered digest fixture:** signed assertion mutated after signing -> crypto/digest validation rejects.
+4. **Demo FakeIdP browser flow:** browser hits `/fake_idp/login` -> posts to `/fake_idp/sso` -> self-submitting form posts to `/saml/:connection_id/acs` -> real Relyra verifier handles it.
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| Local adopter tests | Core fixture builder is enough. |
+| Large application test suites | Avoid persistent global keys; allow callers to reuse explicit fixture context inside a test module if needed. |
+| Browser/demo tests | Keep flow deterministic and bounded; avoid unbounded inflate or network calls. |
+
+### Scaling Priorities
+
+1. **First bottleneck:** RSA key generation per fixture can slow large suites. Mitigate with explicit caller-controlled fixture context only if needed, not a hidden global key.
+2. **Second bottleneck:** Phoenix helper ambiguity around ACS paths. Mitigate by requiring explicit endpoint and path/connection_id options.
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Publish Private TestSupport
+
+**What people do:** Move `lib/relyra/test_support` into package files.
+
+**Why it's wrong:** It exposes private stores, migrations, conformance helpers, and security-corpus assumptions.
+
+**Do this instead:** Extract a curated public module under `lib/relyra/testing*`.
+
+### Anti-Pattern 2: Test Helper Bypasses Verification
+
+**What people do:** Directly assign `current_user` or call session adapter without a signed response.
+
+**Why it's wrong:** It proves host session wiring, not SAML trust verification.
+
+**Do this instead:** Generate signed XML and route through ACS or `consume_response/3`.
+
+### Anti-Pattern 3: Phoenix Dependency Leak
+
+**What people do:** Make public core helper compile-time depend on `Phoenix.ConnTest`.
+
+**Why it's wrong:** Relyra's Phoenix dependency is optional.
+
+**Do this instead:** Keep core pure; isolate Phoenix helpers.
+
+## Integration Points
+
+### External Services
+
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| Hex package | Explicit package file allowlist | Add public `testing` paths without allowing `test_support`. |
+| Phoenix host app | Optional ConnTest helper | Follow `@endpoint`/case-template pattern from Phoenix docs. |
+| Demo LedgerLoop | Demo-local FakeIdP routes | Verify route and browser tests, then document or prune. |
+
+### Internal Boundaries
+
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| Public Testing -> Signature verifier | Signed XML only | No bypass around `Relyra.Security.Signature.do_verify/4`. |
+| Public Testing -> package filters | Allowlisted files | `package_lib_files/0` must include `testing` but exclude `test_support`. |
+| Public Testing -> private corpus | Selected fixture recipes only | No wholesale public export of adversarial corpus internals. |
+| Demo -> Relyra | Mounted public routes | Demo cannot call private `Relyra.TestSupport` in prod path-dep mode. |
+
+## Sources
+
+- `mix.exs`
+- `lib/relyra/test_support.ex`
+- `lib/relyra/test_support/fake_idp.ex`
+- `lib/relyra/test_support/xmldsig_signer.ex`
+- `demo/ledger_loop/lib/ledger_loop/fake_idp/signer.ex`
+- `demo/ledger_loop/lib/ledger_loop_web/router.ex`
+- `https://phoenix.hexdocs.pm/Phoenix.ConnTest.html`
+- `https://phoenix.hexdocs.pm/testing.html`
+- `https://ex-unit.hexdocs.pm/ExUnit.CaseTemplate.html`
+
+---
+*Architecture research for: Relyra v1.9 public testing API and demo cleanup*
+*Researched: 2026-06-15*
