@@ -3,6 +3,14 @@ defmodule Mix.Tasks.VerifyReleaseParityTest do
 
   alias Mix.Tasks.Verify.ReleaseParity
 
+  @public_testing_paths ~w(
+    lib/relyra/testing.ex
+    lib/relyra/testing/fixture.ex
+    lib/relyra/testing/signer.ex
+    lib/relyra/testing/adapters.ex
+    lib/relyra/testing/phoenix.ex
+  )
+
   describe "compute/2" do
     test "returns :parity when git paths and hex paths match" do
       git = MapSet.new(["lib/a.ex", "guides/x.md", "priv/repo/migrations/1.exs"])
@@ -129,6 +137,26 @@ defmodule Mix.Tasks.VerifyReleaseParityTest do
       paths = ["lib/relyra/foo.ex", "lib/relyra/test_support/foo.ex"]
 
       assert ReleaseParity.filter_package_paths(paths) == ["lib/relyra/foo.ex"]
+    end
+
+    test "keeps public testing paths and excludes private test support paths" do
+      paths =
+        @public_testing_paths ++
+          [
+            "lib/relyra/test_support.ex",
+            "lib/relyra/test_support/fake_idp.ex"
+          ]
+
+      assert ReleaseParity.filter_package_paths(paths) == Enum.sort(@public_testing_paths)
+    end
+  end
+
+  describe "package files" do
+    test "include public testing files and exclude private test support files" do
+      package_files = Mix.Project.config()[:package][:files]
+
+      assert Enum.all?(@public_testing_paths, &(&1 in package_files))
+      refute Enum.any?(package_files, &String.contains?(&1, "test_support"))
     end
   end
 
