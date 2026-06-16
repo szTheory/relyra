@@ -9,9 +9,9 @@
 
 - [x] **TEST-01**: Hex adopters can use a public `Relyra.Testing` module shipped in package files, while private `Relyra.TestSupport` remains excluded.
 - [x] **TEST-02**: Adopters can generate a genuine signed SAML success fixture with matching test cert chain and no production trust mutation.
-- [ ] **TEST-03**: Adopters can generate representative typed rejection fixtures, including wrong audience and tampered digest/signature, without exposing the private adversarial corpus.
+- [x] **TEST-03**: Adopters can generate representative typed rejection fixtures, including wrong audience and tampered digest/signature, without exposing the private adversarial corpus.
 - [x] **TEST-04**: Public testing helpers exercise the real Relyra ACS or `consume_response/3` verifier path, never direct session assignment or verifier bypass.
-- [ ] **TEST-05**: Any Phoenix convenience helper is optional and does not make Phoenix mandatory for core Relyra/testing fixture use.
+- [x] **TEST-05**: Any Phoenix convenience helper is optional and does not make Phoenix mandatory for core Relyra/testing fixture use.
 
 ### Package And Docs Truth
 
@@ -65,9 +65,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | TEST-01 | Phase 64 | Complete |
 | TEST-02 | Phase 64 | Complete |
-| TEST-03 | Phase 64 | Pending |
+| TEST-03 | Phase 64 | Complete |
 | TEST-04 | Phase 64 | Complete |
-| TEST-05 | Phase 64 | Pending |
+| TEST-05 | Phase 64 | Complete |
 | PKG-01 | Phase 64 | Pending |
 | DOCS-01 | Phase 65 | Pending |
 | DOCS-02 | Phase 65 | Pending |

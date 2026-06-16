@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Loose Ends & Adoption Honesty
 status: executing
-last_updated: "2026-06-16T02:34:52.633Z"
+last_updated: "2026-06-16T02:44:35.430Z"
 last_activity: 2026-06-16
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
-  percent: 25
+  completed_plans: 3
+  percent: 75
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: `.planning/PROJECT.md` (updated 2026-06-15)
 ## Current Position
 
 Phase: 64 (public-testing-api-package-boundary) — EXECUTING
-Plan: 2 of 4
-Status: Ready to execute Plan 64-02
-Last activity: 2026-06-16 -- Completed 64-01 public testing core fixtures
+Plan: 4 of 4
+Status: Ready to execute Plan 64-04
+Last activity: 2026-06-16 -- Completed 64-03 optional Phoenix helper and core dependency isolation
 
 ## Performance Metrics
 
@@ -35,8 +35,10 @@ Last activity: 2026-06-16 -- Completed 64-01 public testing core fixtures
 - Highest shipped phase: 63
 - Previous milestone: v1.7 Adoption Evidence Demo (Phases 51-57.1)
 - v1.8 phase progress: 6/6 phases complete
-- v1.9 planned phase progress: 0/4 phases complete
+- v1.9 planned phase progress: 3/4 plans complete
 - Phase 64 Plan 01 completed in 8min (2 tasks, 5 files)
+- Phase 64 Plan 02 completed in 8min (2 tasks, 5 files)
+- Phase 64 Plan 03 completed in 5min (2 tasks, 4 files)
 
 ## Accumulated Context
 
@@ -54,6 +56,11 @@ Last activity: 2026-06-16 -- Completed 64-01 public testing core fixtures
 - Relyra.Testing ships as plain Phoenix-free functions and explicit fixture structs, not macros.
 - Signed success fixtures generate fresh test key material per fixture and return trust material explicitly.
 - Public testing code reuses the verifier parser/C14N primitives and does not call Relyra.TestSupport.
+- Representative public negative fixtures are limited to wrong audience, post-signing digest tamper, and wrong-key invalid signature.
+- Public negative fixture tests pin exact `%Relyra.Error{type: ...}` results through `Relyra.consume_response/3`.
+- The public testing fixture crypto suite is tracked in `ci.security` and the anti-hollow meta-gate as a dedicated `cmd mix test` process.
+- Relyra.Testing.Phoenix is the only public testing layer that references Phoenix.ConnTest.
+- Core public testing modules are guarded by an external Phoenix-absent compile/load subprocess, not source scanning alone.
 
 ### Blockers/Concerns
 
@@ -73,5 +80,5 @@ Last activity: 2026-06-16 -- Completed 64-01 public testing core fixtures
 
 ## Session Continuity
 
-Last session: 2026-06-16T02:34:52.628Z — Completed 64-01-PLAN.md
-Resume at: `.planning/phases/64-public-testing-api-package-boundary/64-02-PLAN.md`.
+Last session: 2026-06-16T02:44:35.427Z — Completed 64-03-PLAN.md
+Resume at: `.planning/phases/64-public-testing-api-package-boundary/64-04-PLAN.md`.
