@@ -57,6 +57,26 @@ defmodule Relyra.Testing.Signer do
     }
   end
 
+  @doc """
+  Rewrites the signed assertion NameID after signing and raises if no mutation landed.
+  """
+  @spec tamper_name_id!(binary(), binary(), binary()) :: binary()
+  def tamper_name_id!(response_xml, original_name_id, replacement_name_id)
+      when is_binary(response_xml) and is_binary(original_name_id) and
+             is_binary(replacement_name_id) do
+    original = "<NameID>#{xml_text(original_name_id)}</NameID>"
+    replacement = "<NameID>#{xml_text(replacement_name_id)}</NameID>"
+
+    tampered_xml = String.replace(response_xml, original, replacement, global: false)
+
+    if tampered_xml == response_xml do
+      raise ArgumentError,
+            "Relyra.Testing.Signer tamper did not change the signed response NameID"
+    end
+
+    tampered_xml
+  end
+
   defp response_fields(opts) do
     %{
       connection_id: Keyword.fetch!(opts, :connection_id),

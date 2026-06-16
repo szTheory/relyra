@@ -36,7 +36,7 @@ defmodule Relyra.Testing do
   def signed_success(opts \\ []) when is_list(opts) do
     fields = signed_success_fields(opts)
 
-    %{response_xml: response_xml, cert_chain: cert_chain} =
+    signed =
       Signer.signed_response(
         connection_id: fields.connection_id,
         issuer: fields.issuer,
@@ -51,19 +51,63 @@ defmodule Relyra.Testing do
         subject_confirmation_not_on_or_after: fields.subject_confirmation_not_on_or_after
       )
 
-    connection = connection(fields, cert_chain)
-    request_intent = request_intent(fields)
+    fixture(fields, signed.response_xml, signed.cert_chain, {:ok, :verified})
+  end
 
-    %Fixture{
-      response_xml: response_xml,
-      encoded_response: Base.encode64(response_xml),
-      cert_chain: cert_chain,
-      idp_certificates: cert_chain,
-      connection: connection,
-      request_intent: request_intent,
-      relay_state: fields.relay_state,
-      expected: {:ok, :verified}
-    }
+  @doc """
+  Builds a signed fixture whose assertion audience differs from the configured SP audience.
+  """
+  @spec wrong_audience(keyword()) :: Fixture.t()
+  def wrong_audience(opts \\ []) when is_list(opts) do
+    expected_audience = Keyword.get(opts, :expected_audience, @default_sp_entity_id)
+    actual_audience = Keyword.get(opts, :actual_audience, "https://wrong-audience.example.com")
+    fields = signed_success_fields(Keyword.put(opts, :sp_entity_id, expected_audience))
+
+    signed =
+      signed_response(fields,
+        audience: actual_audience,
+        assertion_id: fields.assertion_id
+      )
+
+    fixture(fields, signed.response_xml, signed.cert_chain, {:error, :invalid_audience})
+  end
+
+  @doc """
+  Builds a signed fixture whose signed assertion content is mutated after signing.
+  """
+  @spec tampered_digest(keyword()) :: Fixture.t()
+  def tampered_digest(opts \\ []) when is_list(opts) do
+    fields = signed_success_fields(opts)
+    tampered_name_id = Keyword.get(opts, :tampered_name_id, "tampered@example.com")
+    signed = signed_response(fields)
+
+    response_xml =
+      Signer.tamper_name_id!(
+        signed.response_xml,
+        fields.name_id,
+        tampered_name_id
+      )
+
+    fixture(fields, response_xml, signed.cert_chain, {:error, :digest_mismatch})
+  end
+
+  @doc """
+  Builds a signed fixture whose returned trust material does not match the signing key.
+  """
+  @spec invalid_signature(keyword()) :: Fixture.t()
+  def invalid_signature(opts \\ []) when is_list(opts) do
+    fields = signed_success_fields(opts)
+    signed = signed_response(fields)
+
+    wrong_key_signed =
+      signed_response(%{fields | assertion_id: "#{fields.assertion_id}-wrong-key"})
+
+    fixture(
+      fields,
+      signed.response_xml,
+      wrong_key_signed.cert_chain,
+      {:error, :invalid_signature}
+    )
   end
 
   @doc """
@@ -124,6 +168,35 @@ defmodule Relyra.Testing do
       not_on_or_after: not_on_or_after,
       subject_confirmation_not_on_or_after:
         Keyword.get(opts, :subject_confirmation_not_on_or_after, not_on_or_after)
+    }
+  end
+
+  defp signed_response(fields, overrides \\ []) do
+    Signer.signed_response(
+      connection_id: fields.connection_id,
+      issuer: fields.issuer,
+      destination: fields.acs_url,
+      recipient: fields.acs_url,
+      audience: Keyword.get(overrides, :audience, fields.sp_entity_id),
+      name_id: fields.name_id,
+      in_response_to: fields.request_id,
+      assertion_id: Keyword.get(overrides, :assertion_id, fields.assertion_id),
+      not_before: fields.not_before,
+      not_on_or_after: fields.not_on_or_after,
+      subject_confirmation_not_on_or_after: fields.subject_confirmation_not_on_or_after
+    )
+  end
+
+  defp fixture(fields, response_xml, cert_chain, expected) do
+    %Fixture{
+      response_xml: response_xml,
+      encoded_response: Base.encode64(response_xml),
+      cert_chain: cert_chain,
+      idp_certificates: cert_chain,
+      connection: connection(fields, cert_chain),
+      request_intent: request_intent(fields),
+      relay_state: fields.relay_state,
+      expected: expected
     }
   end
 

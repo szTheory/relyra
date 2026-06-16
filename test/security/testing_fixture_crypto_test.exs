@@ -9,7 +9,6 @@ defmodule Relyra.Security.TestingFixtureCryptoTest do
   use ExUnit.Case, async: true
 
   alias Relyra.Error
-  alias Relyra.Testing
   alias Relyra.Testing.Fixture
 
   @fixed_now ~U[2026-04-24 16:00:00Z]
@@ -17,7 +16,7 @@ defmodule Relyra.Security.TestingFixtureCryptoTest do
   describe "public negative fixtures" do
     test "wrong_audience/1 rejects with exact :invalid_audience through consume_response/3" do
       fixture =
-        Testing.wrong_audience(
+        Relyra.Testing.wrong_audience(
           expected_audience: "https://sp.example.com/metadata",
           actual_audience: "https://evil.example.com/metadata",
           request_id: "id_request_wrong_audience",
@@ -36,13 +35,13 @@ defmodule Relyra.Security.TestingFixtureCryptoTest do
                Relyra.consume_response(
                  fixture.response_xml,
                  fixture.request_intent,
-                 Testing.consume_opts(fixture, now: @fixed_now)
+                 Relyra.Testing.consume_opts(fixture, now: @fixed_now)
                )
     end
 
     test "tampered_digest/1 rejects with exact :digest_mismatch through consume_response/3" do
       fixture =
-        Testing.tampered_digest(
+        Relyra.Testing.tampered_digest(
           request_id: "id_request_tampered_digest",
           assertion_id: "assertion-tampered-digest",
           relay_state: "rs_tampered_digest",
@@ -60,13 +59,13 @@ defmodule Relyra.Security.TestingFixtureCryptoTest do
                Relyra.consume_response(
                  fixture.response_xml,
                  fixture.request_intent,
-                 Testing.consume_opts(fixture, now: @fixed_now)
+                 Relyra.Testing.consume_opts(fixture, now: @fixed_now)
                )
     end
 
     test "invalid_signature/1 rejects with exact :invalid_signature through consume_response/3" do
       fixture =
-        Testing.invalid_signature(
+        Relyra.Testing.invalid_signature(
           request_id: "id_request_invalid_signature",
           assertion_id: "assertion-invalid-signature",
           relay_state: "rs_invalid_signature",
@@ -81,7 +80,7 @@ defmodule Relyra.Security.TestingFixtureCryptoTest do
                Relyra.consume_response(
                  fixture.response_xml,
                  fixture.request_intent,
-                 Testing.consume_opts(fixture, now: @fixed_now)
+                 Relyra.Testing.consume_opts(fixture, now: @fixed_now)
                )
     end
   end
