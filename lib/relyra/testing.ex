@@ -1,6 +1,6 @@
 defmodule Relyra.Testing do
   @moduledoc """
-  Public Phoenix-free testing fixtures for Relyra adopters.
+  Public framework-neutral testing fixtures for Relyra adopters.
 
   The helpers in this namespace produce explicit testing fixture data for the
   real verifier path. They do not mutate application environment, persistent
