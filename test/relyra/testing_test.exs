@@ -88,4 +88,48 @@ defmodule Relyra.TestingTest do
     assert opts[:connection_resolver] == Relyra.Testing.Adapters.ConnectionResolver
     assert opts[:now] == ~U[2026-04-24 16:00:00Z]
   end
+
+  test "signed_success/1 returns a real signed response that consume_response/3 verifies" do
+    fixed_now = ~U[2026-04-24 16:00:00Z]
+    name_id = "alice@example.com"
+
+    fixture =
+      Testing.signed_success(
+        name_id: name_id,
+        request_id: "id_request_public_success",
+        relay_state: "rs_public_success",
+        assertion_id: "assertion-public-success",
+        not_before: "2026-04-24T15:55:00Z",
+        not_on_or_after: "2026-04-24T16:05:00Z",
+        subject_confirmation_not_on_or_after: "2026-04-24T16:05:00Z"
+      )
+
+    assert %Fixture{
+             response_xml: response_xml,
+             encoded_response: encoded_response,
+             cert_chain: [cert_pem],
+             idp_certificates: idp_certificates,
+             connection: %Connection{} = connection,
+             request_intent: %{request_id: "id_request_public_success"},
+             relay_state: "rs_public_success",
+             expected: {:ok, :verified}
+           } = fixture
+
+    assert idp_certificates == [cert_pem]
+    assert connection.idp_certificates == [cert_pem]
+    assert connection.cert_chain == [cert_pem]
+    assert Base.decode64!(encoded_response) == response_xml
+    assert response_xml =~ "<DigestValue>"
+    assert response_xml =~ "<SignatureValue>"
+    refute response_xml =~ "<KeyInfo"
+
+    assert {:ok, login_result} =
+             Relyra.consume_response(
+               response_xml,
+               fixture.request_intent,
+               Testing.consume_opts(fixture, now: fixed_now)
+             )
+
+    assert login_result.principal.name_id == name_id
+  end
 end
