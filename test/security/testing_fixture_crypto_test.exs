@@ -39,6 +39,17 @@ defmodule Relyra.Security.TestingFixtureCryptoTest do
                )
     end
 
+    test "wrong_audience/1 rejects equal expected and actual audiences" do
+      assert_raise ArgumentError,
+                   ~r/requires :actual_audience to differ from :expected_audience/,
+                   fn ->
+                     Relyra.Testing.wrong_audience(
+                       expected_audience: "https://same.example.com/metadata",
+                       actual_audience: "https://same.example.com/metadata"
+                     )
+                   end
+    end
+
     test "tampered_digest/1 rejects with exact :digest_mismatch through consume_response/3" do
       fixture =
         Relyra.Testing.tampered_digest(

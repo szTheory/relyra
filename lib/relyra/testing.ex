@@ -61,6 +61,12 @@ defmodule Relyra.Testing do
   def wrong_audience(opts \\ []) when is_list(opts) do
     expected_audience = Keyword.get(opts, :expected_audience, @default_sp_entity_id)
     actual_audience = Keyword.get(opts, :actual_audience, "https://wrong-audience.example.com")
+
+    if actual_audience == expected_audience do
+      raise ArgumentError,
+            "Relyra.Testing.wrong_audience/1 requires :actual_audience to differ from :expected_audience"
+    end
+
     fields = signed_success_fields(Keyword.put(opts, :sp_entity_id, expected_audience))
 
     signed =
