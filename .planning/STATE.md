@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Loose Ends & Adoption Honesty
-status: executing
-last_updated: "2026-06-16T02:44:35.430Z"
+status: verifying
+last_updated: "2026-06-16T02:51:02.633Z"
 last_activity: 2026-06-16
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
-  percent: 75
+  completed_plans: 4
+  percent: 25
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: `.planning/PROJECT.md` (updated 2026-06-15)
 
 Phase: 64 (public-testing-api-package-boundary) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute Plan 64-04
-Last activity: 2026-06-16 -- Completed 64-03 optional Phoenix helper and core dependency isolation
+Status: Phase complete — ready for verification
+Last activity: 2026-06-16
 
 ## Performance Metrics
 
@@ -39,6 +39,7 @@ Last activity: 2026-06-16 -- Completed 64-03 optional Phoenix helper and core de
 - Phase 64 Plan 01 completed in 8min (2 tasks, 5 files)
 - Phase 64 Plan 02 completed in 8min (2 tasks, 5 files)
 - Phase 64 Plan 03 completed in 5min (2 tasks, 4 files)
+- Phase 64 Plan 04 completed in 3min (2 tasks, 2 files)
 
 ## Accumulated Context
 
@@ -61,6 +62,8 @@ Last activity: 2026-06-16 -- Completed 64-03 optional Phoenix helper and core de
 - The public testing fixture crypto suite is tracked in `ci.security` and the anti-hollow meta-gate as a dedicated `cmd mix test` process.
 - Relyra.Testing.Phoenix is the only public testing layer that references Phoenix.ConnTest.
 - Core public testing modules are guarded by an external Phoenix-absent compile/load subprocess, not source scanning alone.
+- [Phase 64]: The artifact-level package proof intentionally builds and unpacks a local Hex package even though it is slower than unit-only checks.
+- [Phase 64]: Package proof stays on the existing mix.exs package whitelist and ReleaseParity.filter_package_paths/1 model.
 
 ### Blockers/Concerns
 
@@ -80,5 +83,5 @@ Last activity: 2026-06-16 -- Completed 64-03 optional Phoenix helper and core de
 
 ## Session Continuity
 
-Last session: 2026-06-16T02:44:35.427Z — Completed 64-03-PLAN.md
-Resume at: `.planning/phases/64-public-testing-api-package-boundary/64-04-PLAN.md`.
+Last session: 2026-06-16T02:51:02.145Z
+Resume at: Phase 64 verification / next phase planning.

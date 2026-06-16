@@ -37,7 +37,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 
 | Phase | Name | Goal | Requirements | Status |
 |-------|------|------|--------------|--------|
-| 64 | Public Testing API & Package Boundary | Ship a curated public test-only helper surface while preserving private support boundaries and verifier invariants. | TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, PKG-01 | In Progress (3/4 plans) |
+| 64 | Public Testing API & Package Boundary | Ship a curated public test-only helper surface while preserving private support boundaries and verifier invariants. | TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, PKG-01 | Complete (4/4 plans) |
 | 65 | Documentation Truth | Rewrite adopter-facing docs around the public testing API and clearly mark private support internals as repo-only. | DOCS-01, DOCS-02, DOCS-03 | Pending |
 | 66 | Demo FakeIdP Disposition | Verify, finish, document, or remove the LedgerLoop FakeIdP browser flow so the demo has one intentional login story. | DEMO-01, DEMO-02, DEMO-03 | Pending |
 | 67 | Maintenance Narrative Sync | Close or explicitly defer the remaining narrative, seed, CVE, CI/release, and Phase 29 review loose ends. | MAINT-01, MAINT-02, MAINT-03 | Pending |
@@ -50,7 +50,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 
 **Requirements:** TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, PKG-01
 
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 **Wave 1**
@@ -64,7 +64,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 64-04-PLAN.md — Package parity proof for public testing files
+- [x] 64-04-PLAN.md — Package parity proof for public testing files
 
 **Success criteria:**
 
@@ -126,12 +126,12 @@ Plans:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEST-01 | Phase 64 | Pending |
-| TEST-02 | Phase 64 | Pending |
-| TEST-03 | Phase 64 | Pending |
-| TEST-04 | Phase 64 | Pending |
-| TEST-05 | Phase 64 | Pending |
-| PKG-01 | Phase 64 | Pending |
+| TEST-01 | Phase 64 | Complete |
+| TEST-02 | Phase 64 | Complete |
+| TEST-03 | Phase 64 | Complete |
+| TEST-04 | Phase 64 | Complete |
+| TEST-05 | Phase 64 | Complete |
+| PKG-01 | Phase 64 | Complete |
 | DOCS-01 | Phase 65 | Pending |
 | DOCS-02 | Phase 65 | Pending |
 | DOCS-03 | Phase 65 | Pending |
@@ -150,13 +150,13 @@ Plans:
 
 ## Next Up
 
-**Phase 64: Public Testing API & Package Boundary** - design and implement the public test-only helper surface while preserving private package boundaries and verifier invariants.
+**Phase 65: Documentation Truth** - rewrite adopter-facing docs around the public testing API and clearly mark private support internals as repo-only.
 
-`$gsd-discuss-phase 64`
+`$gsd-discuss-phase 65`
 
 Also available:
 
-- `$gsd-plan-phase 64` - skip discussion and plan directly
+- `$gsd-plan-phase 65` - skip discussion and plan directly
 
 ---
-*Roadmap updated: 2026-06-15 after v1.9 roadmap creation*
+*Roadmap updated: 2026-06-16 after Phase 64 completion*

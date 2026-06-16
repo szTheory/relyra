@@ -15,7 +15,7 @@
 
 ### Package And Docs Truth
 
-- [ ] **PKG-01**: Package/release parity proves `lib/relyra/testing*` ships and `lib/relyra/test_support*` remains excluded.
+- [x] **PKG-01**: Package/release parity proves `lib/relyra/testing*` ships and `lib/relyra/test_support*` remains excluded.
 - [ ] **DOCS-01**: README, Getting Started, overview, recipes, and batteries-included docs no longer instruct Hex adopters to use private `Relyra.TestSupport`.
 - [ ] **DOCS-02**: Public docs clearly label `Relyra.Testing` as test-only, with ephemeral/explicit cert handling and no production IdP claim.
 - [ ] **DOCS-03**: Existing docs/tests that mention local proof are updated to the new public API or explicitly marked repo-internal.
@@ -68,7 +68,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-03 | Phase 64 | Complete |
 | TEST-04 | Phase 64 | Complete |
 | TEST-05 | Phase 64 | Complete |
-| PKG-01 | Phase 64 | Pending |
+| PKG-01 | Phase 64 | Complete |
 | DOCS-01 | Phase 65 | Pending |
 | DOCS-02 | Phase 65 | Pending |
 | DOCS-03 | Phase 65 | Pending |
