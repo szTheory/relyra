@@ -7,9 +7,64 @@ defmodule Relyra.Testing do
   terms, ETS tables, or production resolver state.
   """
 
+  alias Relyra.Connection
   alias Relyra.Testing.Fixture
+  alias Relyra.Testing.Signer
+
+  @default_connection_id "conn-123"
+  @default_sp_entity_id "https://sp.example.com/metadata"
+  @default_acs_url "https://sp.example.com/saml/acs"
+  @default_idp_entity_id "https://idp.example.com/metadata"
+  @default_name_id "user@example.com"
+  @default_relay_state "rs_1234567890abcdef"
+  @default_request_id "id_request_123"
+  @default_assertion_id "assertion-1"
+  @default_not_before "2000-01-01T00:00:00Z"
+  @default_not_on_or_after "2099-01-01T00:00:00Z"
 
   @type consume_opt :: {atom(), term()}
+
+  @doc """
+  Builds a signed success testing fixture.
+
+  The fixture contains a signed test response, Base64 POST payload, matching
+  test certificate, connection, request intent, relay state, and expected
+  outcome. It is test-only data for the real verifier path; it is not an IdP,
+  broker, or production trust source.
+  """
+  @spec signed_success(keyword()) :: Fixture.t()
+  def signed_success(opts \\ []) when is_list(opts) do
+    fields = signed_success_fields(opts)
+
+    %{response_xml: response_xml, cert_chain: cert_chain} =
+      Signer.signed_response(
+        connection_id: fields.connection_id,
+        issuer: fields.issuer,
+        destination: fields.acs_url,
+        recipient: fields.acs_url,
+        audience: fields.sp_entity_id,
+        name_id: fields.name_id,
+        in_response_to: fields.request_id,
+        assertion_id: fields.assertion_id,
+        not_before: fields.not_before,
+        not_on_or_after: fields.not_on_or_after,
+        subject_confirmation_not_on_or_after: fields.subject_confirmation_not_on_or_after
+      )
+
+    connection = connection(fields, cert_chain)
+    request_intent = request_intent(fields)
+
+    %Fixture{
+      response_xml: response_xml,
+      encoded_response: Base.encode64(response_xml),
+      cert_chain: cert_chain,
+      idp_certificates: cert_chain,
+      connection: connection,
+      request_intent: request_intent,
+      relay_state: fields.relay_state,
+      expected: {:ok, :verified}
+    }
+  end
 
   @doc """
   Builds POST parameters for a testing fixture.
@@ -49,4 +104,52 @@ defmodule Relyra.Testing do
   defp maybe_put_relay_state(params, _key, nil), do: params
   defp maybe_put_relay_state(params, _key, ""), do: params
   defp maybe_put_relay_state(params, key, relay_state), do: Map.put(params, key, relay_state)
+
+  defp signed_success_fields(opts) do
+    idp_entity_id = Keyword.get(opts, :idp_entity_id, @default_idp_entity_id)
+    issuer = Keyword.get(opts, :issuer, idp_entity_id)
+    not_on_or_after = Keyword.get(opts, :not_on_or_after, @default_not_on_or_after)
+
+    %{
+      connection_id: Keyword.get(opts, :connection_id, @default_connection_id),
+      sp_entity_id: Keyword.get(opts, :sp_entity_id, @default_sp_entity_id),
+      acs_url: Keyword.get(opts, :acs_url, @default_acs_url),
+      idp_entity_id: idp_entity_id,
+      issuer: issuer,
+      name_id: Keyword.get(opts, :name_id, @default_name_id),
+      relay_state: Keyword.get(opts, :relay_state, @default_relay_state),
+      request_id: Keyword.get(opts, :request_id, @default_request_id),
+      assertion_id: Keyword.get(opts, :assertion_id, @default_assertion_id),
+      not_before: Keyword.get(opts, :not_before, @default_not_before),
+      not_on_or_after: not_on_or_after,
+      subject_confirmation_not_on_or_after:
+        Keyword.get(opts, :subject_confirmation_not_on_or_after, not_on_or_after)
+    }
+  end
+
+  defp connection(fields, cert_chain) do
+    %Connection{
+      id: fields.connection_id,
+      connection_id: fields.connection_id,
+      idp_entity_id: fields.issuer,
+      sp_entity_id: fields.sp_entity_id,
+      acs_url: fields.acs_url,
+      idp_certificates: cert_chain,
+      cert_chain: cert_chain
+    }
+  end
+
+  defp request_intent(fields) do
+    %{
+      request_id: fields.request_id,
+      connection_id: fields.connection_id,
+      relay_state: fields.relay_state,
+      in_response_to: fields.request_id,
+      destination: fields.acs_url,
+      recipient: fields.acs_url,
+      issuer: fields.issuer,
+      sp_entity_id: fields.sp_entity_id,
+      acs_url: fields.acs_url
+    }
+  end
 end
