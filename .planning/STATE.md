@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Loose Ends & Adoption Honesty
 status: executing
-last_updated: "2026-06-15T22:03:04.399Z"
-last_activity: 2026-06-15 -- Phase 64 planning complete
+last_updated: "2026-06-16T02:34:52.633Z"
+last_activity: 2026-06-16
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 25
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-15)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.9 Loose Ends & Adoption Honesty — roadmap drafted
+**Current focus:** Phase 64 — public-testing-api-package-boundary
 
 ## Current Position
 
-Phase: 64 - Public Testing API & Package Boundary (not started)
-Plan: —
-Status: Ready to execute
-Last activity: 2026-06-15 -- Phase 64 planning complete
+Phase: 64 (public-testing-api-package-boundary) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute Plan 64-02
+Last activity: 2026-06-16 -- Completed 64-01 public testing core fixtures
 
 ## Performance Metrics
 
@@ -36,6 +36,7 @@ Last activity: 2026-06-15 -- Phase 64 planning complete
 - Previous milestone: v1.7 Adoption Evidence Demo (Phases 51-57.1)
 - v1.8 phase progress: 6/6 phases complete
 - v1.9 planned phase progress: 0/4 phases complete
+- Phase 64 Plan 01 completed in 8min (2 tasks, 5 files)
 
 ## Accumulated Context
 
@@ -50,6 +51,9 @@ Last activity: 2026-06-15 -- Phase 64 planning complete
 - Demand-gated protocol scope is unchanged and still paused: AUTHN-POST-01, KMS-01, SIGNED-META-01.
 - v1.9 rolls SEED-002, SEED-003, and narrow maintenance sync into a bounded adoption-honesty milestone.
 - Maintainer explicitly approved planning a public `Relyra.Testing` direction; concrete API shape still needs phase-level design/review and must remain test-only.
+- Relyra.Testing ships as plain Phoenix-free functions and explicit fixture structs, not macros.
+- Signed success fixtures generate fresh test key material per fixture and return trust material explicitly.
+- Public testing code reuses the verifier parser/C14N primitives and does not call Relyra.TestSupport.
 
 ### Blockers/Concerns
 
@@ -69,5 +73,5 @@ Last activity: 2026-06-15 -- Phase 64 planning complete
 
 ## Session Continuity
 
-Last session: 2026-06-15 — Phase 64 context gathered (assumptions mode)
-Resume at: `.planning/phases/64-public-testing-api-package-boundary/64-CONTEXT.md`, then `$gsd-plan-phase 64`.
+Last session: 2026-06-16T02:34:52.628Z — Completed 64-01-PLAN.md
+Resume at: `.planning/phases/64-public-testing-api-package-boundary/64-02-PLAN.md`.
