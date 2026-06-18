@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Loose Ends & Adoption Honesty
 status: executing
-last_updated: "2026-06-18T20:21:50.467Z"
+last_updated: "2026-06-18T20:31:04.773Z"
 last_activity: 2026-06-18
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 5
+  completed_plans: 6
   percent: 25
 ---
 
@@ -25,9 +25,9 @@ See: `.planning/PROJECT.md` (updated 2026-06-15)
 ## Current Position
 
 Phase: 66 (demo-fakeidp-disposition) — EXECUTING
-Plan: 2 of 4
-Status: Ready to execute
-Last activity: 2026-06-18 -- Phase 66 Plan 01 audit completed
+Plan: 4 of 4 (next active: 66-04 Document FakeIdP Retention; 66-03 removal branch inactive after `retain_fakeidp`)
+Status: Ready to execute retention documentation branch
+Last activity: 2026-06-18 -- Phase 66 Plan 02 retained FakeIdP; 66-04 documentation branch selected
 
 ## Performance Metrics
 
@@ -41,6 +41,7 @@ Last activity: 2026-06-18 -- Phase 66 Plan 01 audit completed
 - Phase 64 Plan 03 completed in 5min (2 tasks, 4 files)
 - Phase 64 Plan 04 completed in 3min (2 tasks, 2 files)
 - Phase 66 Plan 01 completed in 9min (3 tasks, 1 file)
+- Phase 66 Plan 02 completed in 8min (1 task, 4 planning files; decision checkpoint)
 
 ## Accumulated Context
 
@@ -65,6 +66,7 @@ Last activity: 2026-06-18 -- Phase 66 Plan 01 audit completed
 - Core public testing modules are guarded by an external Phoenix-absent compile/load subprocess, not source scanning alone.
 - [Phase 64]: The artifact-level package proof intentionally builds and unpacks a local Hex package even though it is slower than unit-only checks.
 - [Phase 64]: Package proof stays on the existing mix.exs package whitelist and ReleaseParity.filter_package_paths/1 model.
+- [Phase 66]: Retained LedgerLoop FakeIdP browser flow (retain_fakeidp); SEED-003 resolution directive is documentation. — Plan 66-04 is next; Plan 66-03 removal branch is inactive.
 
 ### Blockers/Concerns
 
@@ -84,5 +86,5 @@ Last activity: 2026-06-18 -- Phase 66 Plan 01 audit completed
 
 ## Session Continuity
 
-Last session: 2026-06-18T20:21:50.463Z
-Resume at: `$gsd-execute-phase 66`
+Last session: 2026-06-18T20:31:04.769Z
+Resume at: `.planning/phases/66-demo-fakeidp-disposition/66-04-PLAN.md` (retention documentation branch; do not execute 66-03 for `retain_fakeidp`)
