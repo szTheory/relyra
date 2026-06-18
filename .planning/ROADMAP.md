@@ -100,12 +100,12 @@ Plans:
 
 **Requirements:** DEMO-01, DEMO-02, DEMO-03
 
-**Plans:** 3 executed + 1 inactive conditional branch
+**Plans:** 3 executed + 1 inactive conditional branch closed
 
 Plans:
 - [x] 66-01-PLAN.md — Audit FakeIdP Current State & SEED-003
 - [x] 66-02-PLAN.md — Decide FakeIdP Disposition (`retain_fakeidp`)
-- [ ] 66-03-PLAN.md — Implement FakeIdP Removal (Conditional; inactive after `retain_fakeidp`)
+- [x] 66-03-PLAN.md — Implement FakeIdP Removal (Conditional; skipped inactive after `retain_fakeidp`)
 - [x] 66-04-PLAN.md — Document FakeIdP Retention (Conditional; completed retention branch)
 
 **Success criteria:**
