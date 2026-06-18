@@ -2,7 +2,7 @@
 
 This is the canonical fallback runbook for IdPs that do not have a shipped Relyra
 preset or that need custom operator mapping on top of a vendor admin surface.
-Use it only after the local `FakeIdP` proof in
+Use it only after the local testing fixtures proof in
 [Getting Started](../getting_started.md) is green.
 
 Relyra's first-class batteries-included support covers **Okta, Microsoft Entra ID,
@@ -19,7 +19,7 @@ exact Relyra seams that matter for a safe first login.
 
 The safe Day-1 order stays the same:
 
-1. Prove the local trust path with `Relyra.TestSupport.FakeIdP`.
+1. Prove the local trust path with `Relyra.Testing`.
 2. Publish your SP metadata from Relyra's real runtime fields.
 3. Import or transcribe the IdP metadata Relyra actually consumes.
 4. Verify NameID and claim choices before treating the provider as complete.
@@ -27,7 +27,7 @@ The safe Day-1 order stays the same:
 
 Receipt:
 
-- One successful SP-initiated login after the local `FakeIdP` proof already passed.
+- One successful SP-initiated login after the local testing fixtures proof already passed.
 
 ## Relyra owns / IdP owns / Host owns
 
@@ -227,9 +227,9 @@ seams the installer created:
    generator output). For production, persist the connection and switch to
    [ConnectionResolver.Ecto](../production_ecto_path.md#4-wire-connectionresolver-ecto).
 
-2. **Use the production ACS route** — After
-   [Getting Started §3](../getting_started.md#3-prove-local-login-with-testsupport)
-   passes with TestSupport, switch from the stub ACS to the installer's
+3. **Use the production ACS route** — After
+   [Getting Started §3](../getting_started.md#3-prove-local-login-with-relyratesting)
+   passes with `Relyra.Testing`, switch from the stub ACS to the installer's
    `saml_routes()` / `ACSController` path so POSTbacks hit
    `Relyra.consume_response/3`.
 
@@ -259,7 +259,7 @@ completes without a typed rejection.
 
 Use a fixed order so you do not debug three moving parts at once:
 
-1. `FakeIdP` proof: make sure the local trust path already succeeds.
+1. `Relyra.Testing` proof: make sure the local trust path already succeeds.
 2. Metadata values: verify `sp_entity_id`, `acs_url`, `idp_entity_id`, and
    `idp_sso_url` exactly.
 3. Signing certificates: confirm the active IdP signing certs in Relyra match the

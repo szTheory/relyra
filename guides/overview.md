@@ -10,7 +10,7 @@ Use this page to navigate Relyra docs by job instead of chasing footers.
 **Proof journey (in order):**
 
 1. Run `mix relyra.install --module MyApp --repo MyApp.Repo` and confirm scaffold files land in the host app.
-2. Prove local sign-in with the `Relyra.TestSupport` macro (`setup_saml_connection/2`, `post_saml_response/2`) and stub ACS router — see [Getting Started §3](getting_started.md#3-prove-local-login-with-testsupport).
+2. Prove local sign-in with `Relyra.Testing` data-first helpers and stub ACS router — see [Getting Started §3](getting_started.md#3-prove-local-login-with-relyratesting).
 3. Pick exactly one first-class provider runbook and finish it end-to-end:
    - [Okta](recipes/okta.md)
    - [Microsoft Entra ID](recipes/entra.md)
