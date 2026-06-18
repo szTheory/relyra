@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Loose Ends & Adoption Honesty
-status: verifying
-last_updated: "2026-06-18T20:40:06.709Z"
+status: ready_to_plan
+last_updated: 2026-06-18T23:16:07.589Z
 last_activity: 2026-06-18
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 7
-  percent: 25
+  completed_plans: 9
+  percent: 75
+stopped_at: Phase 66 verified complete (4/4) — ready to discuss Phase 67
 ---
 
 # Project State
@@ -20,14 +21,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-15)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 66 — demo-fakeidp-disposition
+**Current focus:** Phase 67 — maintenance narrative sync
 
 ## Current Position
 
-Phase: 66 (demo-fakeidp-disposition) — VERIFYING
-Plan: 4 of 4 (completed: 66-04 Document FakeIdP Retention; 66-03 removal branch inactive after `retain_fakeidp`)
-Status: Phase 66 retention branch complete — ready for verification
-Last activity: 2026-06-18 -- SEED-003: RESOLVED by `guides/fake_idp_demo.md`
+Phase: 67
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-06-18
 
 ## Performance Metrics
 
@@ -35,7 +36,7 @@ Last activity: 2026-06-18 -- SEED-003: RESOLVED by `guides/fake_idp_demo.md`
 - Highest shipped phase: 63
 - Previous milestone: v1.7 Adoption Evidence Demo (Phases 51-57.1)
 - v1.8 phase progress: 6/6 phases complete
-- v1.9 planned phase progress: 1/4 phases complete
+- v1.9 planned phase progress: 3/4 phases complete
 - Phase 64 Plan 01 completed in 8min (2 tasks, 5 files)
 - Phase 64 Plan 02 completed in 8min (2 tasks, 5 files)
 - Phase 64 Plan 03 completed in 5min (2 tasks, 4 files)
@@ -88,4 +89,4 @@ Last activity: 2026-06-18 -- SEED-003: RESOLVED by `guides/fake_idp_demo.md`
 ## Session Continuity
 
 Last session: 2026-06-18T20:39:38.772Z
-Resume at: None — Phase 66 Plan 04 completed; ready for verification and Phase 67 planning/execution.
+Resume at: `$gsd-discuss-phase 67`

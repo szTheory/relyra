@@ -27,6 +27,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v1.6 shipped 2026-05-28** — Adoption Truth. Phases 47-49.2 complete (15/15 plans, 6/6 ADOPT requirements). Doc-only milestone: TestSupport-first Getting Started, `guides/production_ecto_path.md`, incident playbook login-trace surfaces, CONFORMANCE scope boundary + ENC manifest honesty, jtbd_gap_map refresh, preset taxonomy alignment. Gap-closure phases 49.1-49.2 closed audit handoffs and Nyquist retro. **No new SAML protocol surface area.** Pause default held until the 2026-06-12 private adoption-evidence trigger.
 - **v1.7 shipped 2026-06-13** — Adoption Evidence Demo. Phases 51-56 complete (23/23 plans, 30/30 requirements), merged via PR #31. Runnable `demo/ledger_loop` Phoenix host app with Relyra as a path dependency (excluded from Hex): deterministic Northstar Health seed story, production-like Ecto connection/request/replay stores, host-owned customer/admin setup + mounted LiveAdmin, local FakeIdP browser proof + optional Keycloak profile, `scripts/demo` Docker DX, isolated `ci.demo_app` lane, and an evaluator-first demo guide. **No protocol surface, public API, or security-posture change.**
 - **v1.8 shipped 2026-06-14** — Brand System & Identity. Phases 58-63 complete (6/6 plans, 16/16 requirements). Self-contained `brandbook/` package: WCAG-verified Canonical Lock Set + re-runnable `contrast.exs`, a chosen cage-free logo system (direction A — Relying Path monogram, full lockup set), design tokens (`tokens.css` `--rl-*` + Tailwind example), a standalone HTML brand book + examples, and real-world integration (ex_doc logo/favicon, OpenGraph card, README banner, demo reskin). Non-protocol brand/design milestone — **no `lib/`, security, public API, or `@version` change**. (Note: release-please independently cut **Hex 1.8.0** from the v1.7 demo `feat` commits while this milestone was built — the GSD "v1.8" planning label is distinct from that release; the brand `feat(58–63)` commits will feed the next release-please version.) See `.planning/milestones/v1.8-ROADMAP.md`.
+- **v1.9 progress 2026-06-18** — Phase 66 complete and verified: LedgerLoop FakeIdP is intentionally retained as demo-local test support, documented in `guides/fake_idp_demo.md`, and SEED-003 is resolved with evidence. No protocol surface, public API, or security-posture change.
 
 ## Current Milestone: v1.9 Loose Ends & Adoption Honesty
 
@@ -166,7 +167,7 @@ The v1.x milestone arc:
 
 - [ ] **TESTING** — Published Hex adopters have an honest, deliberate testing story: either a curated `Relyra.Testing` API with safe test-only fixture generation, or phase-level evidence explaining any narrowed surface.
 - [ ] **DOCS** — `Relyra.TestSupport` docs and package contents no longer contradict each other.
-- [ ] **DEMO** — LedgerLoop's FakeIdP login WIP is either finished and verified or removed in favor of the existing route-affordance login path.
+- [x] **DEMO** — LedgerLoop's FakeIdP login WIP is retained, verified, and documented as demo-local test support; SEED-003 is resolved with evidence.
 - [ ] **MAINT** — Narrow narrative/maintenance loose ends are triaged and closed or explicitly deferred.
 
 ### Out of Scope
@@ -272,4 +273,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-06-15 — started milestone v1.9 Loose Ends & Adoption Honesty. Scope includes SEED-002, SEED-003, narrow maintenance sync, and explicit public `Relyra.Testing` planning approval; demand-gated protocol features remain out of scope.*
+*Last updated: 2026-06-18 — Phase 66 verified complete. LedgerLoop FakeIdP is retained as demo-local test support and SEED-003 is resolved with documentation evidence; demand-gated protocol features remain out of scope.*
