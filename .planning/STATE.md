@@ -26,8 +26,8 @@ See: `.planning/PROJECT.md` (updated 2026-06-15)
 
 Phase: 66 (demo-fakeidp-disposition) — EXECUTING
 Plan: 4 of 4 (next active: 66-04 Document FakeIdP Retention; 66-03 removal branch inactive after `retain_fakeidp`)
-Status: Ready to execute retention documentation branch
-Last activity: 2026-06-18 -- Phase 66 Plan 02 retained FakeIdP; 66-04 documentation branch selected
+Status: FakeIdP retention documented; preparing plan summary and tracking close-out
+Last activity: 2026-06-18 -- `guides/fake_idp_demo.md` created; SEED-003: RESOLVED by documentation
 
 ## Performance Metrics
 
@@ -66,7 +66,7 @@ Last activity: 2026-06-18 -- Phase 66 Plan 02 retained FakeIdP; 66-04 documentat
 - Core public testing modules are guarded by an external Phoenix-absent compile/load subprocess, not source scanning alone.
 - [Phase 64]: The artifact-level package proof intentionally builds and unpacks a local Hex package even though it is slower than unit-only checks.
 - [Phase 64]: Package proof stays on the existing mix.exs package whitelist and ReleaseParity.filter_package_paths/1 model.
-- [Phase 66]: Retained LedgerLoop FakeIdP browser flow (retain_fakeidp); SEED-003 resolution directive is documentation. — Plan 66-04 is next; Plan 66-03 removal branch is inactive.
+- [Phase 66]: SEED-003: RESOLVED by retaining the LedgerLoop FakeIdP browser flow as demo-local, test-only support and documenting purpose, access, success behavior, tamper behavior, limits, and the port-4000 browser-lane caveat in `guides/fake_idp_demo.md`; Plan 66-03 removal branch remains inactive after `retain_fakeidp`.
 
 ### Blockers/Concerns
 
