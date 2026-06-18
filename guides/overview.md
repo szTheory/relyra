@@ -18,7 +18,7 @@ Use this page to navigate Relyra docs by job instead of chasing footers.
    - [ADFS](recipes/adfs.md)
    - [Generic SAML](recipes/generic_saml.md) — Ping, OneLogin, Shibboleth, Keycloak, and more
 
-Receipt: host-side test passes with `assert_saml_login/2`, then one hosted IdP login works with a concrete operator receipt.
+Receipt: host-side test passes with standard Phoenix `conn` assertions, then one hosted IdP login works with a concrete operator receipt.
 
 ## Day-2 — Operate in production
 

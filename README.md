@@ -41,7 +41,7 @@ Use one Day-1 route:
 1. Browse the [documentation overview](guides/overview.md) — Day-1, Day-2, and Reference sections.
 2. Install the library and scaffold the host app with `mix relyra.install`.
 3. Follow [Getting Started](guides/getting_started.md).
-4. Prove a local sign-in with the `Relyra.TestSupport` macro (`setup_saml_connection/2`, `post_saml_response/2`) — see [Getting Started §3](guides/getting_started.md#3-prove-local-login-with-testsupport).
+4. Prove a local sign-in with `Relyra.Testing.signed_success/1` and `Relyra.Testing.Phoenix.post_response/5` — see [Getting Started §3](guides/getting_started.md#3-prove-local-login-with-relyratesting).
 5. Choose exactly one first-class provider runbook.
 6. Return to the production follow-ons after the first provider is working.
 
@@ -67,7 +67,7 @@ In this repo, "batteries included" means the provider has a shipped preset modul
 a repo-native runbook, provider-specific field vocabulary, and Day-1 guidance that
 ends in a concrete receipt.
 
-Use these runbooks only after you complete the local TestSupport proof in Getting Started:
+Use these runbooks only after you complete the local testing proof in Getting Started:
 
 - [Okta runbook](guides/recipes/okta.md)
 - [Microsoft Entra ID runbook](guides/recipes/entra.md)
@@ -96,7 +96,7 @@ and the generic SAML runbook families named above.
 - Hardened XML, signature, and protocol checks.
 - Provider presets for Okta, Microsoft Entra ID, Google Workspace, and ADFS, plus a
   generic SAML runbook for seven additional IdP families.
-- `Relyra.TestSupport` and `Relyra.TestSupport.FakeIdP` for local proof.
+- `Relyra.Testing` and `Relyra.Testing.Phoenix` for local proof.
 - `mix relyra.install` for minimal host-app scaffolding.
 - Optional LiveAdmin, metadata lifecycle, certificate lifecycle, telemetry,
   audit seams, scheduled refresh, and diagnostic surfaces for later-stage
@@ -134,3 +134,4 @@ These surfaces matter after Day-1, but they should not compete with onboarding:
 LiveAdmin is optional. Metadata refresh, certificate rollover, audit review,
 telemetry wiring, and diagnostic bundles belong after the first successful
 provider login, not before it.
+it.
