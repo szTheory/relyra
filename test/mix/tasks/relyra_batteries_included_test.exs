@@ -16,7 +16,7 @@ defmodule Mix.Tasks.Relyra.BatteriesIncludedTest do
     report = File.read!(temp_output_path)
 
     assert report =~ "# Batteries Included Proof"
-    assert report =~ "FakeIdP"
+    assert report =~ "local-first proof uses testing fixtures"
 
     assert report =~
              "Okta, Microsoft Entra ID, Google Workspace, Active Directory Federation Services"
