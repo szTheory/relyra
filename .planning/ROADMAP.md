@@ -39,7 +39,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 |-------|------|------|--------------|--------|
 | 64 | Public Testing API & Package Boundary | Ship a curated public test-only helper surface while preserving private support boundaries and verifier invariants. | TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, PKG-01 | Complete (2026-06-16, 4/4 plans) |
 | 65 | Documentation Truth | Rewrite adopter-facing docs around the public testing API and clearly mark private support internals as repo-only. | DOCS-01, DOCS-02, DOCS-03 | Complete |
-| 66 | Demo FakeIdP Disposition | Verify, finish, document, or remove the LedgerLoop FakeIdP browser flow so the demo has one intentional login story. | DEMO-01, DEMO-02, DEMO-03 | In Progress (2026-06-18, 2/4 plans; retain branch selected) |
+| 66 | Demo FakeIdP Disposition | Verify, finish, document, or remove the LedgerLoop FakeIdP browser flow so the demo has one intentional login story. | DEMO-01, DEMO-02, DEMO-03 | Complete (2026-06-18; retain branch documented, 66-03 inactive) |
 | 67 | Maintenance Narrative Sync | Close or explicitly defer the remaining narrative, seed, CVE, CI/release, and Phase 29 review loose ends. | MAINT-01, MAINT-02, MAINT-03 | Pending |
 
 ## Phase Details
@@ -100,13 +100,13 @@ Plans:
 
 **Requirements:** DEMO-01, DEMO-02, DEMO-03
 
-**Plans:** 2/4 plans executed
+**Plans:** 3 executed + 1 inactive conditional branch
 
 Plans:
 - [x] 66-01-PLAN.md — Audit FakeIdP Current State & SEED-003
 - [x] 66-02-PLAN.md — Decide FakeIdP Disposition (`retain_fakeidp`)
 - [ ] 66-03-PLAN.md — Implement FakeIdP Removal (Conditional; inactive after `retain_fakeidp`)
-- [ ] 66-04-PLAN.md — Document FakeIdP Retention (Conditional; next active plan)
+- [x] 66-04-PLAN.md — Document FakeIdP Retention (Conditional; completed retention branch)
 
 **Success criteria:**
 
@@ -145,7 +145,7 @@ Plans:
 | DOCS-03 | Phase 65 | Pending |
 | DEMO-01 | Phase 66 | Complete |
 | DEMO-02 | Phase 66 | Complete |
-| DEMO-03 | Phase 66 | Pending |
+| DEMO-03 | Phase 66 | Complete |
 | MAINT-01 | Phase 67 | Pending |
 | MAINT-02 | Phase 67 | Pending |
 | MAINT-03 | Phase 67 | Pending |
@@ -158,13 +158,9 @@ Plans:
 
 ## Next Up
 
-**Phase 66 Plan 04: Document FakeIdP Retention** - document the retained LedgerLoop FakeIdP browser flow and complete the SEED-003 evidence path.
+**Phase 67: Maintenance Narrative Sync** - continue the v1.9 loose-end sweep now that the retained FakeIdP branch has resolved SEED-003.
 
-`.planning/phases/66-demo-fakeidp-disposition/66-04-PLAN.md`
-
-Also available:
-
-- Plan 66-03 is inactive for the `retain_fakeidp` disposition.
+Phase 66 is ready for verification. Plan 66-03 remains inactive for the `retain_fakeidp` disposition.
 
 ---
-*Roadmap updated: 2026-06-18 after Phase 66 Plan 02 checkpoint decision*
+*Roadmap updated: 2026-06-18 after Phase 66 Plan 04 retention documentation*

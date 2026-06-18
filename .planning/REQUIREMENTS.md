@@ -24,7 +24,7 @@
 
 - [x] **DEMO-01**: LedgerLoop FakeIdP browser flow current state is verified through route/controller/browser or demo-lane tests.
 - [x] **DEMO-02**: The demo has one intentional documented browser-login path: either retain and document `/fake_idp/*`, or remove it and keep route-affordance login as canonical.
-- [ ] **DEMO-03**: SEED-003 is resolved with evidence, not left dormant with stale route assumptions.
+- [x] **DEMO-03**: SEED-003 is resolved with evidence, not left dormant with stale route assumptions.
 
 ### Maintenance Sync
 
@@ -74,7 +74,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOCS-03 | Phase 65 | Pending |
 | DEMO-01 | Phase 66 | Complete |
 | DEMO-02 | Phase 66 | Complete |
-| DEMO-03 | Phase 66 | Pending |
+| DEMO-03 | Phase 66 | Complete |
 | MAINT-01 | Phase 67 | Pending |
 | MAINT-02 | Phase 67 | Pending |
 | MAINT-03 | Phase 67 | Pending |
