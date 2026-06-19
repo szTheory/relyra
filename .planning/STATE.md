@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Docker DX & Fleet Proxy
-status: planning
+status: roadmapped
 last_updated: "2026-06-19T19:19:17.148Z"
 last_activity: 2026-06-19
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,19 +20,20 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-19)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Awaiting next milestone
+**Current focus:** v1.10 Docker DX & Fleet Proxy — demo + docker + docs only; zero `lib/`/API/protocol/Hex-whitelist change.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 68 - Build caching & correctness (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-19 — Milestone v1.10 started
+Status: Roadmapped — Phases 68-72 defined, awaiting `/gsd-plan-phase 68`
+Last activity: 2026-06-19 — v1.10 roadmap created (Phases 68-72, 12 requirements mapped)
 
 ## Performance Metrics
 
 - Last shipped milestone: v1.9 Loose Ends & Adoption Honesty (Phases 64-67, 15/15 requirements, archived 2026-06-19)
 - Highest shipped phase: 67
+- Current milestone: v1.10 Docker DX & Fleet Proxy (Phases 68-72)
 - Previous milestone: v1.8 Brand System & Identity (Phases 58-63)
 - v1.9 phase progress: 4/4 phases complete, 13/13 plans complete
 - v1.9 audit status: `tech_debt` for non-blocking validation metadata cleanup; 15/15 requirements satisfied
@@ -49,33 +50,18 @@ Last activity: 2026-06-19 — Milestone v1.10 started
 
 ### Decisions
 
-- v1.8 is brand/design only — zero changes to lib/ security seams, public API, or protocol surface.
-- Brand book (`prompts/relyra-brand-book.md`) is decision-complete; this milestone renders the missing artifacts.
-- Locked brand constraints: no rectangular logo cages, logotype tight to mark, primary lockup has no subtitle, at least one integrated typemark, title-case "Relyra" only, no lyre/shield/padlock/key/flame/bird imagery.
-- Repo-safety budget: vector-first (SVG/HTML/CSS/JSON), no committed font binaries, ~1 MB total brandbook/, exactly one optimized PNG.
-- Phase 59 has an interactive checkpoint: maintainer picks the winning logo direction before the full lockup set is developed.
-- Phase 62 is the only phase that touches files outside brandbook/: mix.exs ex_doc config, README.md, demo/ledger_loop CSS.
+- v1.10 is demo + docker + docs ONLY — zero changes to lib/ security seams, public API, behaviour callbacks, protocol surface, or the Hex package whitelist (`mix.exs` package.files). Nothing new ships in the tarball.
+- v1.10 locked decisions: simple `relyra.localhost` hostname (static `COMPOSE_PROJECT_NAME=relyra`, single checkout at a time, `RELYRA_HOST` override hook retained); scheme `http` (no mkcert); shared Traefik proxy on external `proxy` network per the `scoria` sibling-lib convention; Keycloak fully behind the proxy.
+- v1.10 dependency chain: 68 (caching) → 69 (compose/proxy) → 70 (keycloak, needs proxy) → 71 (launcher, wraps the compose files) → 72 (docs, describes the finished surface).
+- v1.10 phase→category map: 68=DKR-01..04, 69=FLEET-01..03, 70=KC-01, 71=DX-01..02, 72=DOC-01..02.
+- v1.10 risks to respect: `*.localhost` is browser-only (never rely on it for curl/BEAM/psql); prefix Traefik router/service names `relyra-*`; bind host ports to `127.0.0.1`; keep proxy config out of the auto-loaded `docker-compose.override.yml`; use `KC_PROXY_HEADERS=xforwarded` (not deprecated `KC_PROXY=edge`).
+- Brand voice source of truth for v1.10 docs: `brandbook/notes/decision-log.md` Canonical Lock Set (newest; supersedes `prompts/relyra-brand-book.md`).
 - Demand-gated protocol scope is unchanged and still paused: AUTHN-POST-01, KMS-01, SIGNED-META-01.
 - v1.9 resolved SEED-002, SEED-003, and narrow maintenance sync as bounded adoption-honesty cleanup; SEED-001 is historical v1.7 work, not a future candidate.
-- Maintainer explicitly approved the public `Relyra.Testing` direction; Phase 64 fixed the concrete test-only API shape without production trust-boundary changes.
-- Relyra.Testing ships as plain Phoenix-free functions and explicit fixture structs, not macros.
-- Signed success fixtures generate fresh test key material per fixture and return trust material explicitly.
-- Public testing code reuses the verifier parser/C14N primitives and does not call Relyra.TestSupport.
-- Representative public negative fixtures are limited to wrong audience, post-signing digest tamper, and wrong-key invalid signature.
-- Public negative fixture tests pin exact `%Relyra.Error{type: ...}` results through `Relyra.consume_response/3`.
-- The public testing fixture crypto suite is tracked in `ci.security` and the anti-hollow meta-gate as a dedicated `cmd mix test` process.
-- Relyra.Testing.Phoenix is the only public testing layer that references Phoenix.ConnTest.
-- Core public testing modules are guarded by an external Phoenix-absent compile/load subprocess, not source scanning alone.
-- [Phase 64]: The artifact-level package proof intentionally builds and unpacks a local Hex package even though it is slower than unit-only checks.
-- [Phase 64]: Package proof stays on the existing mix.exs package whitelist and ReleaseParity.filter_package_paths/1 model.
-- [Phase 66]: SEED-003: RESOLVED by retaining the LedgerLoop FakeIdP browser flow as demo-local, test-only support and documenting purpose, access, success behavior, tamper behavior, limits, and the port-4000 browser-lane caveat in `guides/fake_idp_demo.md`; Plan 66-03 removal branch remains inactive after `retain_fakeidp`.
-- [Phase 67]: MAINT-02 CVE backfill is assigned and recorded as `CVE-2026-49454` for `GHSA-jv46-xfwm-36j7`; CVE Services is `PUBLISHED` and NVD is `Received` with no configurations as of the 2026-06-19 live check.
-- [Phase 67]: MAINT-02 CI/release guard status remains evidence-based: `mix ci.security` keeps dedicated `cmd mix test` suites, primary release-please publishing runs `mix qa`, `mix ci.release`, and `mix ci.security`, release-please PR and planning-only PR workflows attach the security matrix checks, and public `main` branch metadata requires `security (27, 1.19.5)` plus `security (28, 1.19.5)`.
-- [Phase 67]: MAINT-03 seed cleanup resolved SEED-001 through the shipped v1.7 LedgerLoop adoption-evidence demo, SEED-002 through the public `Relyra.Testing` package/docs path from Phases 64-65, and SEED-003 through the Phase 66 `retain_fakeidp` decision plus `guides/fake_idp_demo.md`; all three seeds are historical records, not dormant milestone candidates.
 
 ### Blockers/Concerns
 
-- Public `Relyra.Testing` is a public API/package-posture change. Phase planning must keep adversarial corpus internals private, use ephemeral key material, and avoid production trust-boundary changes.
+- None for v1.10. The milestone-wide invariant (no `lib/`/API/protocol/Hex-whitelist change) is the primary guardrail; every phase plan must keep repo gates (`mix qa`, `mix ci.security`, `mix format --check-formatted`, `mix test --warnings-as-errors`) green by not touching `lib/`.
 
 ## Deferred Items
 
@@ -85,14 +71,17 @@ Last activity: 2026-06-19 — Milestone v1.10 started
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand |
 | verification | Phase 53 human-needed UI testing (demo Setup/Operator UX click-through) | deferred; run `/gsd:verify-work 53` |
+| v1.10_future | TLS via mkcert for `*.relyra.localhost` | deferred; http suffices on localhost |
+| v1.10_future | Hashed per-checkout instance hostnames (scoria-style) | deferred; simple `relyra.localhost` chosen |
+| v1.10_future | Production multi-stage `mix release` Dockerfile | deferred; dev/demo DX only |
 | brand_future | BRAND-F01 — animated/motion brand assets | deferred to future milestone |
 | brand_future | BRAND-F02 — full 19-icon icon library | deferred to future milestone |
 
 ## Session Continuity
 
-Last session: 2026-06-18T23:31:14.217Z
-Resume at: `/gsd-new-milestone` if starting a new milestone; otherwise stay paused until a demand signal appears
+Last session: 2026-06-19 — v1.10 roadmap created
+Resume at: `/gsd-plan-phase 68`
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Plan the first phase with `/gsd-plan-phase 68`

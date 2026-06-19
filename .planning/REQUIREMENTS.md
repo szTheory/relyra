@@ -57,8 +57,15 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DKR-01..04 | — | pending roadmap |
-| FLEET-01..03 | — | pending roadmap |
-| KC-01 | — | pending roadmap |
-| DX-01..02 | — | pending roadmap |
-| DOC-01..02 | — | pending roadmap |
+| DKR-01 | Phase 68 | Pending |
+| DKR-02 | Phase 68 | Pending |
+| DKR-03 | Phase 68 | Pending |
+| DKR-04 | Phase 68 | Pending |
+| FLEET-01 | Phase 69 | Pending |
+| FLEET-02 | Phase 69 | Pending |
+| FLEET-03 | Phase 69 | Pending |
+| KC-01 | Phase 70 | Pending |
+| DX-01 | Phase 71 | Pending |
+| DX-02 | Phase 71 | Pending |
+| DOC-01 | Phase 72 | Pending |
+| DOC-02 | Phase 72 | Pending |
