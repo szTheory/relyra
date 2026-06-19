@@ -79,7 +79,7 @@ defmodule Mix.Tasks.Relyra.BatteriesIncluded do
     [
       "# Batteries Included Proof",
       "",
-      "Generated from the shipped installer, test-support seam, provider registry, and focused proof commands in this repository.",
+      "Generated from the shipped installer, public testing fixture proof, provider registry, and focused proof commands in this repository.",
       "",
       "## Rerun Commands",
       "",
