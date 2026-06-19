@@ -57,7 +57,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 - CVE ID backfill into `docs/advisories/2026-001-...` is assigned/backfilled as `CVE-2026-49454` for `GHSA-jv46-xfwm-36j7` (checked 2026-06-19: CVE Services `PUBLISHED`; NVD `Received` with no configurations; weekly `cve-advisory-check.yml` + `scripts/check_cve_assignment.sh` assert the expected CVE).
 - **CI/CD (2026-06-19):** `mix ci.security` remains dedicated `cmd mix test` security suites; primary release-please publishing runs `mix qa`, `mix ci.release`, and `mix ci.security`; release-please PR and planning-only PR check workflows attach the two security matrix checks; public `main` branch metadata requires `security (27, 1.19.5)` plus `security (28, 1.19.5)`. `.github/workflows/publish-hex.yml` is a manual recovery workflow currently guarded by `mix ci.release` and `mix ci.security`.
-- Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`) — non-blocking.
+- Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`) are reconciled in `.planning/todos/completed/29-code-review-followups.md`: WR-02..WR-05 and IN-01 remain deferred hardening/interop/refactor debt, while IN-02 and IN-03 are left with documented reasons. This is planning disposition truth only, not a Phase 67 crypto/parser/security-source change.
 
 ## Shipped Milestones — v1.x Arc Summary
 
@@ -273,4 +273,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-06-18 — Phase 66 verified complete. LedgerLoop FakeIdP is retained as demo-local test support and SEED-003 is resolved with documentation evidence; demand-gated protocol features remain out of scope.*
+*Last updated: 2026-06-19 — Phase 67 MAINT-02 carry-forward wording now points Phase 29 warning/info items to explicit dispositions; demand-gated protocol features remain out of scope.*
