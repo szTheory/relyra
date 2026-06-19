@@ -15,23 +15,26 @@ services:
       retries: 5
 
   demo_app:
-    image: hexpm/elixir:1.15.7-erlang-26.1.2-alpine-3.18.4
+    build:
+      context: .
+      dockerfile: demo/ledger_loop/Dockerfile.dev
     profiles: ["core"]
+    command: mix phx.server
     volumes:
       - .:/app
+      # Named volumes mask the bind mount at the nested demo paths so macOS-compiled
+      # host artifacts never enter the Linux container (DKR-02, D-04).
+      - relyra_deps:/app/demo/ledger_loop/deps
+      - relyra_build:/app/demo/ledger_loop/_build
+      # Persist runtime hex/mix state and the lock-hash stamp across down/up (DKR-03).
+      - relyra_hex:/root/.hex
+      - relyra_mix:/root/.mix
     working_dir: /app/demo/ledger_loop
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "${PORT:-4000}:4000"
-    command: >
-      sh -c "apk add --no-cache inotify-tools curl &&
-             mix local.hex --force &&
-             mix local.rebar --force &&
-             mix deps.get &&
-             mix ecto.setup &&
-             mix phx.server"
     environment:
       - MIX_ENV=dev
       - PGHOST=db
@@ -83,3 +86,9 @@ services:
       sh -c "npm install && npx playwright test --config playwright.demo.config.mjs"
     environment:
       - BASE_URL=http://demo_app:4000
+
+volumes:
+  relyra_deps:
+  relyra_build:
+  relyra_hex:
+  relyra_mix:
