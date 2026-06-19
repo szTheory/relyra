@@ -40,7 +40,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 | 64 | Public Testing API & Package Boundary | Ship a curated public test-only helper surface while preserving private support boundaries and verifier invariants. | TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, PKG-01 | Complete (2026-06-16, 4/4 plans) |
 | 65 | Documentation Truth | Rewrite adopter-facing docs around the public testing API and clearly mark private support internals as repo-only. | DOCS-01, DOCS-02, DOCS-03 | Complete |
 | 66 | Demo FakeIdP Disposition | Verify, finish, document, or remove the LedgerLoop FakeIdP browser flow so the demo has one intentional login story. | DEMO-01, DEMO-02, DEMO-03 | Complete (2026-06-18, retain branch documented; 66-03 inactive) |
-| 67 | Maintenance Narrative Sync | Close or explicitly defer the remaining narrative, seed, CVE, CI/release, and Phase 29 review loose ends. | MAINT-01, MAINT-02, MAINT-03 | In Progress (3/4 plans) |
+| 67 | Maintenance Narrative Sync | Close or explicitly defer the remaining narrative, seed, CVE, CI/release, and Phase 29 review loose ends. | MAINT-01, MAINT-02, MAINT-03 | Complete (2026-06-19, 4/4 plans) |
 
 ## Phase Details
 
@@ -140,15 +140,15 @@ Plans:
 | TEST-04 | Phase 64 | Complete |
 | TEST-05 | Phase 64 | Complete |
 | PKG-01 | Phase 64 | Complete |
-| DOCS-01 | Phase 65 | Pending |
-| DOCS-02 | Phase 65 | Pending |
-| DOCS-03 | Phase 65 | Pending |
+| DOCS-01 | Phase 65 | Complete |
+| DOCS-02 | Phase 65 | Complete |
+| DOCS-03 | Phase 65 | Complete |
 | DEMO-01 | Phase 66 | Complete |
 | DEMO-02 | Phase 66 | Complete |
 | DEMO-03 | Phase 66 | Complete |
-| MAINT-01 | Phase 67 | Pending |
-| MAINT-02 | Phase 67 | Pending |
-| MAINT-03 | Phase 67 | Pending |
+| MAINT-01 | Phase 67 | Complete |
+| MAINT-02 | Phase 67 | Complete |
+| MAINT-03 | Phase 67 | Complete |
 
 **Coverage:**
 
@@ -158,9 +158,9 @@ Plans:
 
 ## Next Up
 
-**Phase 67: Maintenance Narrative Sync** - continue the v1.9 loose-end sweep now that the retained FakeIdP branch has resolved SEED-003.
+**v1.9 phase execution complete** - Phase 67 verified the maintenance loose-end sweep and left only formal milestone audit/archive follow-up.
 
-Phase 66 is verified complete. Plan 66-03 remains inactive for the `retain_fakeidp` disposition.
+Phase 66 remains verified complete. Plan 66-03 remains inactive for the `retain_fakeidp` disposition.
 
 ---
-*Roadmap updated: 2026-06-18 after Phase 66 verification*
+*Roadmap updated: 2026-06-19 after Phase 67 verification*

@@ -16,9 +16,9 @@
 ### Package And Docs Truth
 
 - [x] **PKG-01**: Package/release parity proves `lib/relyra/testing*` ships and `lib/relyra/test_support*` remains excluded.
-- [ ] **DOCS-01**: README, Getting Started, overview, recipes, and batteries-included docs no longer instruct Hex adopters to use private `Relyra.TestSupport`.
-- [ ] **DOCS-02**: Public docs clearly label `Relyra.Testing` as test-only, with ephemeral/explicit cert handling and no production IdP claim.
-- [ ] **DOCS-03**: Existing docs/tests that mention local proof are updated to the new public API or explicitly marked repo-internal.
+- [x] **DOCS-01**: README, Getting Started, overview, recipes, and batteries-included docs no longer instruct Hex adopters to use private `Relyra.TestSupport`.
+- [x] **DOCS-02**: Public docs clearly label `Relyra.Testing` as test-only, with ephemeral/explicit cert handling and no production IdP claim.
+- [x] **DOCS-03**: Existing docs/tests that mention local proof are updated to the new public API or explicitly marked repo-internal.
 
 ### Demo FakeIdP Disposition
 
@@ -28,9 +28,9 @@
 
 ### Maintenance Sync
 
-- [ ] **MAINT-01**: JTBD Scene 3 and ADFS-related narrative drift are reviewed and synced if still stale.
-- [ ] **MAINT-02**: CVE ID backfill status, CI/release guard notes, and Phase 29 warning-level items are triaged with close/defer decisions.
-- [ ] **MAINT-03**: Seeds are cleaned up or reclassified so completed/stale loose ends do not resurface as new milestone candidates.
+- [x] **MAINT-01**: JTBD Scene 3 and ADFS-related narrative drift are reviewed and synced if still stale.
+- [x] **MAINT-02**: CVE ID backfill status, CI/release guard notes, and Phase 29 warning-level items are triaged with close/defer decisions.
+- [x] **MAINT-03**: Seeds are cleaned up or reclassified so completed/stale loose ends do not resurface as new milestone candidates.
 
 ## Future Requirements
 
@@ -69,15 +69,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-04 | Phase 64 | Complete |
 | TEST-05 | Phase 64 | Complete |
 | PKG-01 | Phase 64 | Complete |
-| DOCS-01 | Phase 65 | Pending |
-| DOCS-02 | Phase 65 | Pending |
-| DOCS-03 | Phase 65 | Pending |
+| DOCS-01 | Phase 65 | Complete |
+| DOCS-02 | Phase 65 | Complete |
+| DOCS-03 | Phase 65 | Complete |
 | DEMO-01 | Phase 66 | Complete |
 | DEMO-02 | Phase 66 | Complete |
 | DEMO-03 | Phase 66 | Complete |
-| MAINT-01 | Phase 67 | Pending |
-| MAINT-02 | Phase 67 | Pending |
-| MAINT-03 | Phase 67 | Pending |
+| MAINT-01 | Phase 67 | Complete |
+| MAINT-02 | Phase 67 | Complete |
+| MAINT-03 | Phase 67 | Complete |
 
 **Coverage:**
 - v1.9 requirements: 15 total
@@ -86,4 +86,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-06-15*
-*Last updated: 2026-06-15 after v1.9 roadmap creation*
+*Last updated: 2026-06-19 after Phase 67 verification*
