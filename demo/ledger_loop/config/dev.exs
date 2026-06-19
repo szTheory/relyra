@@ -62,6 +62,14 @@ config :ledger_loop, LedgerLoopWeb.Endpoint,
     ]
   ]
 
+# Use polling backend so file-change events propagate across the macOS→Docker bind mount.
+# This is the application-env key that controls HOW files are watched — it MUST be a
+# separate top-level block here, NOT merged into the Endpoint block above (backend: placed
+# inside the Endpoint keyword is silently ignored; DKR-04, Pitfall 1 from research).
+config :phoenix_live_reload,
+  backend: :fs_poll,
+  backend_opts: [interval: 500]
+
 # Enable dev routes for dashboard and mailbox
 config :ledger_loop, dev_routes: true
 
