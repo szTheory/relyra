@@ -14,7 +14,7 @@ This document answers a different question:
 **How complete is Relyra's user-flow map, what is still missing, and where do
 future milestones stop paying for themselves?**
 
-Last refreshed: 2026-05-27
+Last refreshed: 2026-06-19
 
 ## What changed since last refresh
 
@@ -35,7 +35,7 @@ Status: **Strong**
 
 What is clearly supported:
 - install and scaffold into a Phoenix app
-- prove the path locally with `FakeIdP`
+- prove the path locally with public `Relyra.Testing` fixtures
 - land one real-provider path with a shipped preset (Okta, Entra, Google Workspace, or ADFS)
 - persist tenant-scoped connection state
 - use a clear Day-1 -> Day-2 onboarding spine
@@ -239,9 +239,10 @@ stub only until external demand.
 ### 4. Optional polish — only on real demand
 
 Reason:
-Case study FakeIdP reference cleanup and customer-admin workflow polish are
-worthwhile but not JTBD-coverage-gated. Pursue when a concrete adopter or
-support signal appears.
+Customer-admin workflow polish remains worthwhile but not JTBD-coverage-gated.
+The LedgerLoop FakeIdP browser flow is now explicitly retained as demo-local
+test support, so it is no longer an active cleanup gap. Pursue additional polish
+when a concrete adopter or support signal appears.
 
 ## Diminishing-returns threshold
 

@@ -80,7 +80,7 @@ Use these runbooks only after you complete the local testing proof in Getting St
   The operator runbook at [guides/recipes/generic_saml.md](guides/recipes/generic_saml.md)
   covers **Ping, OneLogin, Shibboleth, Keycloak, IBM Security Verify, CyberArk, and
   Oracle Access Manager** with vendor decoder tables and field-mapping guidance. Use it
-  after the local TestSupport proof and before you start translating your provider's
+  after the local `Relyra.Testing` proof and before you start translating your provider's
   admin vocabulary.
 - **Custom SAML:** Supported when you bring your own IdP-specific field mapping and
   operator verification beyond the generic runbook tables.
