@@ -2,41 +2,40 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Loose Ends & Adoption Honesty
-status: milestone_complete
-last_updated: 2026-06-19T15:17:10.813Z
-last_activity: 2026-06-19 -- Phase 67 verified complete
+status: Awaiting next milestone
+last_updated: "2026-06-19T16:04:35.031Z"
+last_activity: 2026-06-19 — Milestone v1.9 completed and archived
 progress:
   total_phases: 4
   completed_phases: 4
   total_plans: 13
   completed_plans: 13
   percent: 100
-stopped_at: Milestone complete (Phase 67 was final phase)
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-06-15)
+See: `.planning/PROJECT.md` (updated 2026-06-19)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Milestone complete
+**Current focus:** Awaiting next milestone
 
 ## Current Position
 
-Phase: 67
-Plan: Complete
-Status: Milestone complete
-Last activity: 2026-06-19 -- Phase 67 verified complete
+Phase: Milestone v1.9 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-06-19 — Milestone v1.9 completed and archived
 
 ## Performance Metrics
 
-- Last shipped milestone: v1.8 Brand System & Identity (Phases 58-63, 16/16 requirements)
-- Highest shipped phase: 63
-- Previous milestone: v1.7 Adoption Evidence Demo (Phases 51-57.1)
-- v1.8 phase progress: 6/6 phases complete
-- v1.9 planned phase progress: 4/4 phases complete; formal milestone audit/archive remains as follow-up
+- Last shipped milestone: v1.9 Loose Ends & Adoption Honesty (Phases 64-67, 15/15 requirements, archived 2026-06-19)
+- Highest shipped phase: 67
+- Previous milestone: v1.8 Brand System & Identity (Phases 58-63)
+- v1.9 phase progress: 4/4 phases complete, 13/13 plans complete
+- v1.9 audit status: `tech_debt` for non-blocking validation metadata cleanup; 15/15 requirements satisfied
 - Phase 64 Plan 01 completed in 8min (2 tasks, 5 files)
 - Phase 64 Plan 02 completed in 8min (2 tasks, 5 files)
 - Phase 64 Plan 03 completed in 5min (2 tasks, 4 files)
@@ -92,4 +91,8 @@ Last activity: 2026-06-19 -- Phase 67 verified complete
 ## Session Continuity
 
 Last session: 2026-06-18T23:31:14.217Z
-Resume at: `$gsd-complete-milestone` or equivalent milestone audit/archive flow
+Resume at: `/gsd-new-milestone` if starting a new milestone; otherwise stay paused until a demand signal appears
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

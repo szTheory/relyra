@@ -213,6 +213,52 @@
 
 ---
 
+## Milestone: v1.9 - Loose Ends & Adoption Honesty
+
+**Shipped:** 2026-06-19
+**Phases:** 4 | **Plans:** 13
+
+### What Was Built
+
+- Public `Relyra.Testing` fixtures: signed success, typed rejection fixtures, explicit consume opts, package-included public modules, and Phoenix-optional ACS dispatch.
+- Documentation truth: README, Getting Started, recipes, overview, generated batteries proof, demo tests, and drift tests now route Hex adopters through public `Relyra.Testing`, not private `Relyra.TestSupport`.
+- LedgerLoop FakeIdP disposition: retained as demo-local browser proof, documented in `guides/fake_idp_demo.md`, with success/tamper behavior and port-4000 caveat explicit.
+- Maintenance sync: `CVE-2026-49454` backfilled, CI/release guard notes refreshed, Phase 29 warning follow-ups given item-level dispositions, and SEED-001..003 moved to resolved/historical status.
+
+### What Worked
+
+- Treating public test helpers as a test-only API kept adopter DX honest without moving private adversarial corpus internals into Hex.
+- Release parity proof stayed artifact-level: local Hex unpack checks proved `lib/relyra/testing*` ships and `lib/relyra/test_support*` does not.
+- Phase 66's explicit retain/remove checkpoint prevented stale FakeIdP work from lingering as ambiguous demo scope.
+- Phase 67 separated planning truth from code fixes: warning dispositions were recorded without implying crypto/parser changes.
+
+### What Was Inefficient
+
+- The milestone audit had to be created during completion because `v1.9-MILESTONE-AUDIT.md` was missing at closeout.
+- Nyquist validation metadata stayed uneven across phases even though phase verification and requirements coverage were complete.
+- `~/.agents/gsd-core/bin/gsd-tools.cjs` was broken locally due to missing package metadata; the PATH `gsd-tools` binary worked and should be preferred in this environment.
+
+### Patterns Established
+
+- Public testing helpers should return explicit fixture/trust material and avoid global resolver or Application env mutation.
+- Package-boundary claims should be proven against an unpacked artifact, not source tree presence alone.
+- Demo-local IdP support can remain when it is named precisely, bounded to local proof, and documented with caveats.
+- Resolved seeds should be marked as historical records so they do not resurface as future milestone candidates.
+
+### Key Lessons
+
+1. A public testing API can improve adoption honesty without weakening the production trust boundary when it reuses verifier primitives and keeps trust material explicit.
+2. Documentation truth needs executable drift tests; otherwise private helper names leak back into adopter-facing paths.
+3. Closeout audits should run before completion, even when phase verification is already green, because audit metadata quality is a separate planning concern.
+
+### Cost Observations
+
+- Model mix: not measured.
+- Timeline: v1.9 started 2026-06-15 and shipped 2026-06-19.
+- Notable: completion used manual in-process integration review because subagent delegation was not explicitly requested in this Codex runtime.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution

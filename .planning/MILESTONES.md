@@ -1,5 +1,31 @@
 # Milestones
 
+## v1.9 Loose Ends & Adoption Honesty (Shipped: 2026-06-19)
+
+**Phases completed:** 4 phases, 13 plans, 27 tasks
+
+**Key accomplishments:**
+
+- Public `Relyra.Testing` core fixtures with real XMLDSig success proof through `Relyra.consume_response/3`.
+- Public `Relyra.Testing` negative fixtures that reject with exact typed errors through the real verifier path.
+- Optional Phoenix ACS fixture dispatch with a scoped no-Phoenix compile/load gate for core public testing helpers.
+- Release parity tests now prove public `Relyra.Testing` files ship while private `Relyra.TestSupport` files remain outside package artifacts.
+- Adopter-facing docs and proof artifacts now use the public Relyra.Testing API while private TestSupport and demo FakeIdP internals remain repo-only.
+- LedgerLoop FakeIdP audit mapped the active Phoenix route surface, verified green in-process SAML success/tamper coverage, and found the dedicated browser lane currently blocked by local port-4000 coupling
+- Retain FakeIdP decision routes Phase 66 to the documentation branch, with SEED-003 to be resolved by dedicated FakeIdP documentation
+- Removal branch skipped because the user selected `retain_fakeidp`; the FakeIdP code remains intentionally retained and documented
+- LedgerLoop FakeIdP retention is documented as a demo-local browser proof, and SEED-003 is resolved by explicit documentation evidence
+- Public testing and provider taxonomy copy now matches the shipped `Relyra.Testing` and four-first-class-provider reality.
+- CVE-2026-49454 is now the local advisory truth for RELYRA-2026-001, with CI/release guard status reconciled to live evidence.
+- Phase 29 warning/info follow-ups are now explicit planning dispositions without claiming any Phase 67 security-source fixes.
+- Resolved seed metadata and planning status prevent completed v1.7, public testing, and demo FakeIdP loose ends from resurfacing as future milestone candidates.
+
+**Audit:** `.planning/milestones/v1.9-MILESTONE-AUDIT.md` records `tech_debt` with 15/15 requirements satisfied, 4/4 phases verified, 5/5 integrations wired, and no blocking gaps. The accepted debt is validation metadata hygiene only: Phase 64/67 VALIDATION task rows, Phase 65 frontmatter, and a missing Phase 66 validation artifact.
+
+**Archived:** `.planning/milestones/v1.9-ROADMAP.md` and `.planning/milestones/v1.9-REQUIREMENTS.md`.
+
+---
+
 ## v1.8 Brand System & Identity (Shipped: 2026-06-14)
 
 **Phases completed:** 6 phases (58–63), 6 plans · 39 commits · non-protocol brand/design milestone
