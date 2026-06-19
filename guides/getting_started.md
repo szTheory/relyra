@@ -82,7 +82,7 @@ The testing module produces explicit fixture data for the real verifier path.
 > #### Info
 > Testing fixtures are signed using ephemeral RSA key pairs generated dynamically
 > at runtime. These keys do not exist on disk, are discarded when the Beam process
-> exits, and exist solely to exercise the `Relyra.security` cryptographic verification
+> exits, and exist solely to exercise Relyra's cryptographic verification
 > seams locally without checking in static key material.
 
 Prerequisites:
@@ -121,6 +121,15 @@ defmodule MyAppWeb.SamlLoginTest do
   test "adopters can write a tiny integration test" do
     conn = Phoenix.ConnTest.build_conn()
     fixture = Relyra.Testing.signed_success(name_id: "alice@example.com")
+
+    assert {:ok, login_result} =
+             Relyra.consume_response(
+               fixture.response_xml,
+               fixture.request_intent,
+               Relyra.Testing.consume_opts(fixture)
+             )
+
+    assert login_result.principal.name_id == "alice@example.com"
 
     conn =
       Relyra.Testing.Phoenix.post_response(

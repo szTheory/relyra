@@ -17,6 +17,11 @@ defmodule Mix.Tasks.Relyra.BatteriesIncludedTest do
 
     assert report =~ "# Batteries Included Proof"
     assert report =~ "local-first proof uses testing fixtures"
+    assert report =~ "`Relyra.Testing` data-first helpers"
+    assert report =~ "`mix test test/testing_demo_test.exs --warnings-as-errors`"
+    assert report =~ "`test/testing_demo_test.exs`"
+    refute report =~ "test/test_support_demo_test.exs"
+    refute report =~ "Relyra.TestSupport"
 
     assert report =~
              "Okta, Microsoft Entra ID, Google Workspace, Active Directory Federation Services"
