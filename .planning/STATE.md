@@ -2,18 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Loose Ends & Adoption Honesty
-current_phase: 67
 status: executing
-last_updated: "2026-06-19T01:30:57.853Z"
-last_activity: 2026-06-19
-last_activity_desc: Phase 67 planning complete
+last_updated: "2026-06-19T14:20:24.758Z"
+last_activity: 2026-06-19 -- Phase 67 execution started
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 75
-stopped_at: Phase 67 context gathered (assumptions mode) - ready to plan Phase 67
+  completed_phases: 2
+  total_plans: 13
+  completed_plans: 8
+  percent: 50
 ---
 
 # Project State
@@ -23,14 +20,14 @@ stopped_at: Phase 67 context gathered (assumptions mode) - ready to plan Phase 6
 See: `.planning/PROJECT.md` (updated 2026-06-15)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 67 — maintenance narrative sync
+**Current focus:** Phase 67 — maintenance-narrative-sync
 
 ## Current Position
 
-Phase: 67
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-19 — Phase 67 planning complete
+Phase: 67 (maintenance-narrative-sync) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 67
+Last activity: 2026-06-19 -- Phase 67 execution started
 
 ## Performance Metrics
 
@@ -71,6 +68,8 @@ Last activity: 2026-06-19 — Phase 67 planning complete
 - [Phase 64]: The artifact-level package proof intentionally builds and unpacks a local Hex package even though it is slower than unit-only checks.
 - [Phase 64]: Package proof stays on the existing mix.exs package whitelist and ReleaseParity.filter_package_paths/1 model.
 - [Phase 66]: SEED-003: RESOLVED by retaining the LedgerLoop FakeIdP browser flow as demo-local, test-only support and documenting purpose, access, success behavior, tamper behavior, limits, and the port-4000 browser-lane caveat in `guides/fake_idp_demo.md`; Plan 66-03 removal branch remains inactive after `retain_fakeidp`.
+- [Phase 67]: MAINT-02 CVE backfill is assigned and recorded as `CVE-2026-49454` for `GHSA-jv46-xfwm-36j7`; CVE Services is `PUBLISHED` and NVD is `Received` with no configurations as of the 2026-06-19 live check.
+- [Phase 67]: MAINT-02 CI/release guard status remains evidence-based: `mix ci.security` keeps dedicated `cmd mix test` suites, primary release-please publishing runs `mix qa`, `mix ci.release`, and `mix ci.security`, release-please PR and planning-only PR workflows attach the security matrix checks, and public `main` branch metadata requires `security (27, 1.19.5)` plus `security (28, 1.19.5)`.
 
 ### Blockers/Concerns
 
@@ -83,7 +82,7 @@ Last activity: 2026-06-19 — Phase 67 planning complete
 | demand_gated | AUTHN-POST-01 | save-for-demand |
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand |
-| maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | pending async |
+| maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | assigned/backfilled as `CVE-2026-49454`; CVE Services `PUBLISHED`, NVD `Received` |
 | verification | Phase 53 human-needed UI testing (demo Setup/Operator UX click-through) | deferred; run `/gsd:verify-work 53` |
 | brand_future | BRAND-F01 — animated/motion brand assets | deferred to future milestone |
 | brand_future | BRAND-F02 — full 19-icon icon library | deferred to future milestone |

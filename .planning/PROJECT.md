@@ -55,8 +55,8 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 **Known carry-forward maintenance items (low priority, surface only on need):**
 
-- CVE ID backfill into `docs/advisories/2026-001-...` when GitHub assigns it (checked 2026-05-28 — `cve_id` still null; weekly `cve-advisory-check.yml` + `scripts/check_cve_assignment.sh`).
-- **CI/CD (2026-05-28):** `security-gates` required on `main` (OTP 27+28); `enforce_admins`; Hex **1.5.2** publish runs `mix qa` + `ci.security`; release-please automerge + `release-please-pr-checks`; daily branch-protection re-assert via `BRANCH_PROTECTION_PAT`.
+- CVE ID backfill into `docs/advisories/2026-001-...` is assigned/backfilled as `CVE-2026-49454` for `GHSA-jv46-xfwm-36j7` (checked 2026-06-19: CVE Services `PUBLISHED`; NVD `Received` with no configurations; weekly `cve-advisory-check.yml` + `scripts/check_cve_assignment.sh` assert the expected CVE).
+- **CI/CD (2026-06-19):** `mix ci.security` remains dedicated `cmd mix test` security suites; primary release-please publishing runs `mix qa`, `mix ci.release`, and `mix ci.security`; release-please PR and planning-only PR check workflows attach the two security matrix checks; public `main` branch metadata requires `security (27, 1.19.5)` plus `security (28, 1.19.5)`. `.github/workflows/publish-hex.yml` is a manual recovery workflow currently guarded by `mix ci.release` and `mix ci.security`.
 - Phase 29 warning-level review items (`WR-02..WR-05`, `IN-01..IN-03`) — non-blocking.
 
 ## Shipped Milestones — v1.x Arc Summary
