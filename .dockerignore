@@ -1,0 +1,33 @@
+# Security: exclude git history and planning docs from the build context.
+# These must never appear in image layers (D-07, T-68-01).
+.git/
+.planning/
+
+# Elixir build artifacts (root and demo app nested paths — D-07).
+# Root-level patterns alone would miss the nested paths because the bind mount
+# exposes the whole repo and working_dir is /app/demo/ledger_loop.
+_build/
+deps/
+demo/ledger_loop/_build/
+demo/ledger_loop/deps/
+
+# Node / frontend build artifacts
+node_modules/
+priv/static/assets/
+
+# Docker compose files (these are config, not source — keep out of layers)
+docker-compose*.yml
+
+# Archive artifacts
+*.tar
+*.ez
+
+# OS cruft
+.DS_Store
+erl_crash.dump
+
+# Test coverage output
+/cover/
+
+# Temp files
+/tmp/
