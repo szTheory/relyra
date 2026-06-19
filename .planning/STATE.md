@@ -4,17 +4,17 @@ milestone: v1.10
 milestone_name: Phases
 current_phase: 68
 current_phase_name: build-caching-correctness
-status: executing
+status: verifying
 stopped_at: Completed 68-01-PLAN.md
-last_updated: "2026-06-19T20:04:12.673Z"
+last_updated: "2026-06-19T20:10:03.330Z"
 last_activity: 2026-06-19
 last_activity_desc: Phase 68 execution started
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-19)
 
 Phase: 68 (build-caching-correctness) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-19 — Phase 68 execution started
 
 ## Performance Metrics
@@ -63,6 +63,8 @@ Last activity: 2026-06-19 — Phase 68 execution started
 - Demand-gated protocol scope is unchanged and still paused: AUTHN-POST-01, KMS-01, SIGNED-META-01.
 - v1.9 resolved SEED-002, SEED-003, and narrow maintenance sync as bounded adoption-honesty cleanup; SEED-001 is historical v1.7 work, not a future candidate.
 - [Phase ?]: curl added to Dockerfile.dev apk list to preserve existing demo_app healthcheck probe after removing inline apk install block
+- [Phase ?]: Named volumes attach at nested demo paths — NOT generic /app/deps or /app/_build — ensuring macOS host artifacts never enter the Linux container (DKR-02, D-04)
+- [Phase ?]: config :phoenix_live_reload backend: :fs_poll added as separate top-level block in dev.exs, NOT inside Endpoint live_reload: keyword which silently ignores backend: (DKR-04, D-10 corrected, Pitfall 1)
 
 ### Blockers/Concerns
 
@@ -82,13 +84,14 @@ Last activity: 2026-06-19 — Phase 68 execution started
 | brand_future | BRAND-F01 — animated/motion brand assets | deferred to future milestone |
 | brand_future | BRAND-F02 — full 19-icon icon library | deferred to future milestone |
 | Phase 68 P01 | 128 | 3 tasks | 3 files |
+| Phase 68 P02 | 2m 26s | 2 tasks | 2 files |
 
 ## Session Continuity
 
 **Stopped at:** Completed 68-01-PLAN.md
 **Resume file:** None
 
-Last session: 2026-06-19T20:04:12.666Z
+Last session: 2026-06-19T20:09:50.835Z
 Resume at: `/gsd-plan-phase 68`
 
 ## Operator Next Steps
