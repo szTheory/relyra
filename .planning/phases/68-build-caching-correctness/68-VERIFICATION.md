@@ -1,10 +1,12 @@
 ---
 phase: 68-build-caching-correctness
 verified: 2026-06-19T00:00:00Z
-status: human_needed
-score: 4/4 file-level contracts verified (4 runtime behaviors require human verification)
-behavior_unverified: 4
+human_verified: 2026-06-19T21:10:00Z
+status: passed
+score: 4/4 file-level contracts verified; 4/4 runtime receipts human-verified (DKR-01..04 pass)
+behavior_unverified: 0
 overrides_applied: 0
+human_verification_result: "All 4 runtime receipts pass (see 68-UAT.md). Booting the demo in Docker surfaced 3 real defects fixed during UAT (dev.exs invalid `E` regex modifier; Dockerfile.dev base image too old to compile relyra — bumped to Elixir 1.19.5/OTP 28; :fs_poll :dirs scope vs Phoenix 1.8 dangling colocated symlink). Code fixes landed via PR #41."
 behavior_unverified_items:
   - truth: "DKR-01 — a source-only edit rebuilds the demo image without re-running mix deps.get/deps.compile (dependency layer stays CACHED)."
     test: "Run `docker compose --profile core build` (first build compiles dep layer). Edit any .ex under demo/ledger_loop/lib/ (NOT mix.exs/mix.lock). Run `docker compose --profile core build` again."
@@ -40,8 +42,8 @@ human_verification:
 # Phase 68: Build caching & correctness — Verification Report
 
 **Phase Goal:** A developer iterates on the demo in Docker as fast as native — small source/style edits reload instantly and never trigger a dependency re-fetch or recompile.
-**Verified:** 2026-06-19
-**Status:** human_needed
+**Verified:** 2026-06-19 (file contracts) · 2026-06-19 (human runtime receipts)
+**Status:** passed — all 4 runtime receipts (DKR-01..04) human-verified; 3 boot defects found and fixed during UAT (code via PR #41, see 68-UAT.md)
 **Re-verification:** No — initial verification
 
 ## Goal Achievement

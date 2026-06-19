@@ -123,7 +123,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 68. Build caching & correctness | 2/2 | Complete   | 2026-06-19 |
+| 68. Build caching & correctness | 2/2 | Complete    | 2026-06-19 |
 | 69. Compose split & fleet proxy | 0/? | Not started | - |
 | 70. Keycloak behind the proxy | 0/? | Not started | - |
 | 71. Launcher DX & banner | 0/? | Not started | - |
