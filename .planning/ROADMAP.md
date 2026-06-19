@@ -51,7 +51,9 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   3. Running `up` a second time after a `down` re-resolves dependencies only when `mix.lock` changed (lock-hash stamp) and runs `ecto.create`/`ecto.migrate` idempotently — no blind re-resolution or re-seed.
   4. Editing a LiveView `.heex` template or stylesheet live-reloads in the browser with no container restart and no dependency work (`phoenix_live_reload` `:fs_poll` crosses the macOS→Docker mount boundary).
 **Scope note**: Touches `demo/ledger_loop/Dockerfile.dev`, `demo/ledger_loop/docker-entrypoint.sh`, `.dockerignore`, named-volume overlay in compose, and `demo/ledger_loop/config/dev.exs`. No `lib/` change.
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 68-01-PLAN.md — The build: Dockerfile.dev (cached dep layer, pinned base), docker-entrypoint.sh (lock-hash gate + ecto ordering), repo-root .dockerignore [DKR-01, DKR-03]
+- [ ] 68-02-PLAN.md — Wire + run: docker-compose.yml demo_app overlay (build + nested named volumes + command) and dev.exs top-level `:fs_poll` block [DKR-02, DKR-03, DKR-04]
 **UI hint**: yes
 
 ### Phase 69: Compose split & fleet proxy
