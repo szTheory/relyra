@@ -17,6 +17,24 @@ This todo is complete as a tracking artifact because the deferral decision is
 recorded, the warning set is preserved here, and it no longer represents
 unfinished in-milestone execution work.
 
+## Phase 67 item dispositions
+
+Phase 67 reconciles these entries as planning truth only. No Phase 67 code work
+was performed in `signature.ex`, `pure_beam.ex`, `auto_refresh.ex`, or
+`algorithm_policy.ex`; the Phase 29/30 crypto gates remain the shipped bypass
+fix. Do not treat a disposition here as evidence that the underlying hardening
+work was implemented.
+
+| Item | Disposition | Reason / evidence |
+| --- | --- | --- |
+| WR-02 | Deferred | Fail-closed SignedInfo prefix-list interop debt. `signed_info_prefix_list/1` still delegates to `C14N.prefix_list_from_transforms/1` over the `SignedInfo` node; future work should scope the lookup to `CanonicalizationMethod` if a real IdP needs this. This can reject otherwise-valid interop cases, not accept forged signatures. |
+| WR-03 | Deferred | Reference URI to consumed-node defense-in-depth. `signed_candidates/1` still binds the consumed assertion node and the first digest inputs from the selected signature without explicitly proving `Reference/@URI == #<Assertion.ID>`. Existing duplicate-ID, signature, and digest gates stay intact; future hardening should bind the digest to the matching Reference URI. |
+| WR-04 | Deferred | Fail-closed metadata enveloped-signature interop debt. Metadata-root verification still relies on the declared enveloped-signature transform for pruning; omitting it leaves the signature material in canonical bytes and causes rejection. Future work may prune or explicitly reject metadata whose Reference targets the enclosing element without the transform. |
+| WR-05 | Deferred | Security-hardening follow-up for metadata trust extraction guard ordering. `extract_candidate_signing_pems/1` still scans the fetched XML before `PureBeam.parse_metadata_root_safely/2` applies byte guards; the extracted PEMs are only matched to operator-pinned fingerprints before the shared metadata-root crypto verifier runs. Phase 67 made no guard-order code change. |
+| IN-01 | Deferred | Algorithm-policy refactor cleanup. RSA-SHA-2 suffix handling remains split across method allowlist enforcement and digest-atom selection/signing helpers; this is maintainability debt, not a changed policy. |
+| IN-02 | Left with reason | Current schema-default safety remains: `require_signed_metadata` defaults to `true` in the Ecto schema and migration, and the refresh path verifies only when the value is exactly `true`; explicit `false` remains the rare operator override path. No Phase 67 change claims to tighten that branch. |
+| IN-03 | Left with reason | No security-relevant consumer found for `render_signed_xml/1` output. The verifier consumes tree-bound `:node` canonical bytes for crypto; `:signed_xml` is retained as a legacy opaque field and redaction-sensitive surfaces drop it. Consider future removal only as compatibility cleanup. |
+
 ## Warnings
 
 - **WR-02 — SignedInfo prefix-list mis-selection.** `signed_info_prefix_list/1`
