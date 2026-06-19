@@ -1,15 +1,19 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.10
-milestone_name: Docker DX & Fleet Proxy
-status: Planned — Phase 68 planned (2 plans, checker PASS); ready for `/gsd-execute-phase 68`
-last_updated: "2026-06-19T20:30:00.000Z"
-last_activity: 2026-06-19 — Phase 68 planned (research + 2 plans + validation; plan-checker PASS on iteration 2)
+milestone_name: Phases
+current_phase: 68
+current_phase_name: build-caching-correctness
+status: executing
+stopped_at: Completed 68-01-PLAN.md
+last_updated: "2026-06-19T20:04:12.673Z"
+last_activity: 2026-06-19
+last_activity_desc: Phase 68 execution started
 progress:
-  total_phases: 5
+  total_phases: 1
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -20,14 +24,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-19)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** v1.10 Docker DX & Fleet Proxy — demo + docker + docs only; zero `lib/`/API/protocol/Hex-whitelist change.
+**Current focus:** Phase 68 — build-caching-correctness
 
 ## Current Position
 
-Phase: 68 - Build caching & correctness (planned)
-Plan: 68-01 (the build), 68-02 (wire + run) — both authored, plan-checker PASS
-Status: Planned — ready for `/gsd-execute-phase 68`
-Last activity: 2026-06-19 — Phase 68 planned (research + 2 plans + validation; plan-checker PASS on iteration 2)
+Phase: 68 (build-caching-correctness) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-06-19 — Phase 68 execution started
 
 ## Performance Metrics
 
@@ -58,6 +62,7 @@ Last activity: 2026-06-19 — Phase 68 planned (research + 2 plans + validation;
 - Brand voice source of truth for v1.10 docs: `brandbook/notes/decision-log.md` Canonical Lock Set (newest; supersedes `prompts/relyra-brand-book.md`).
 - Demand-gated protocol scope is unchanged and still paused: AUTHN-POST-01, KMS-01, SIGNED-META-01.
 - v1.9 resolved SEED-002, SEED-003, and narrow maintenance sync as bounded adoption-honesty cleanup; SEED-001 is historical v1.7 work, not a future candidate.
+- [Phase ?]: curl added to Dockerfile.dev apk list to preserve existing demo_app healthcheck probe after removing inline apk install block
 
 ### Blockers/Concerns
 
@@ -76,10 +81,14 @@ Last activity: 2026-06-19 — Phase 68 planned (research + 2 plans + validation;
 | v1.10_future | Production multi-stage `mix release` Dockerfile | deferred; dev/demo DX only |
 | brand_future | BRAND-F01 — animated/motion brand assets | deferred to future milestone |
 | brand_future | BRAND-F02 — full 19-icon icon library | deferred to future milestone |
+| Phase 68 P01 | 128 | 3 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-06-19T19:31:07.647Z
+**Stopped at:** Completed 68-01-PLAN.md
+**Resume file:** None
+
+Last session: 2026-06-19T20:04:12.666Z
 Resume at: `/gsd-plan-phase 68`
 
 ## Operator Next Steps

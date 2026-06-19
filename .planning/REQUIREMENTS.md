@@ -13,9 +13,9 @@
 
 ### Build caching & correctness (DKR)
 
-- [ ] **DKR-01**: A developer builds the demo from a dedicated `Dockerfile.dev` that copies `mix.exs`/`mix.lock` before source and fetches/compiles deps in a cached layer (with BuildKit cache mounts for the Hex/rebar caches), so a source edit never invalidates the dependency layer.
+- [x] **DKR-01**: A developer builds the demo from a dedicated `Dockerfile.dev` that copies `mix.exs`/`mix.lock` before source and fetches/compiles deps in a cached layer (with BuildKit cache mounts for the Hex/rebar caches), so a source edit never invalidates the dependency layer.
 - [ ] **DKR-02**: `deps/` and `_build/` are backed by container-private named volumes that mask the bind-mounted source, so the macOS host's compiled artifacts are never shared into the Linux container (no NIF/arch breakage, no recompile churn).
-- [ ] **DKR-03**: A container entrypoint re-runs `mix deps.get`/`deps.compile` only when `mix.lock` changed (hash stamp) and runs `ecto.create`/`ecto.migrate` idempotently — no blind dependency re-resolution or re-seed on every `up`.
+- [x] **DKR-03**: A container entrypoint re-runs `mix deps.get`/`deps.compile` only when `mix.lock` changed (hash stamp) and runs `ecto.create`/`ecto.migrate` idempotently — no blind dependency re-resolution or re-seed on every `up`.
 - [ ] **DKR-04**: Editing a LiveView template or stylesheet live-reloads in the browser without a container restart or dependency re-fetch (`phoenix_live_reload` `:fs_poll` works across the macOS→Docker mount boundary).
 
 ### Fleet coexistence & proxy (FLEET)
@@ -57,9 +57,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DKR-01 | Phase 68 | Pending |
+| DKR-01 | Phase 68 | Complete |
 | DKR-02 | Phase 68 | Pending |
-| DKR-03 | Phase 68 | Pending |
+| DKR-03 | Phase 68 | Complete |
 | DKR-04 | Phase 68 | Pending |
 | FLEET-01 | Phase 69 | Pending |
 | FLEET-02 | Phase 69 | Pending |
