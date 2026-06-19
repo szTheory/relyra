@@ -40,7 +40,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 | 64 | Public Testing API & Package Boundary | Ship a curated public test-only helper surface while preserving private support boundaries and verifier invariants. | TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, PKG-01 | Complete (2026-06-16, 4/4 plans) |
 | 65 | Documentation Truth | Rewrite adopter-facing docs around the public testing API and clearly mark private support internals as repo-only. | DOCS-01, DOCS-02, DOCS-03 | Complete |
 | 66 | Demo FakeIdP Disposition | Verify, finish, document, or remove the LedgerLoop FakeIdP browser flow so the demo has one intentional login story. | DEMO-01, DEMO-02, DEMO-03 | Complete (2026-06-18, retain branch documented; 66-03 inactive) |
-| 67 | Maintenance Narrative Sync | Close or explicitly defer the remaining narrative, seed, CVE, CI/release, and Phase 29 review loose ends. | MAINT-01, MAINT-02, MAINT-03 | Pending |
+| 67 | Maintenance Narrative Sync | Close or explicitly defer the remaining narrative, seed, CVE, CI/release, and Phase 29 review loose ends. | MAINT-01, MAINT-02, MAINT-03 | In Progress (2/4 plans) |
 
 ## Phase Details
 
