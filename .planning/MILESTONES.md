@@ -34,7 +34,7 @@
 - Implemented admin session mocking and deep link routing to LiveAdmin trace UI for operator demonstration.
 - Demo orchestrator CLI wrapper for abstracting Docker Compose profiles.
 
-**Known deferred items at close:** Phase 53 has a `human_needed` verification (demo Setup/Operator UX click-through) deferred to `/gsd:verify-work 53`. Two dormant seeds opened: SEED-002 (TestSupport vs Hex-package decision) and SEED-003 (demo FakeIdP login WIP). See STATE.md "Deferred Items".
+**Known deferred items at close:** Phase 53 has a `human_needed` verification (demo Setup/Operator UX click-through) deferred to `/gsd:verify-work 53`. Two seeds opened historically at v1.7 close: SEED-002 (TestSupport vs Hex-package decision) and SEED-003 (demo FakeIdP login WIP). Current Phase 67 status: SEED-001 is resolved by this shipped LedgerLoop adoption-evidence demo milestone, SEED-002 is resolved by public `Relyra.Testing` package/docs truth from Phases 64-65, and SEED-003 is resolved by the Phase 66 `retain_fakeidp` decision plus `guides/fake_idp_demo.md`; none of these seeds are dormant milestone candidates.
 
 **Merged:** PR #31 (squash) to `main` on 2026-06-13; `demo-app` + `security` + `keycloak` CI lanes green.
 

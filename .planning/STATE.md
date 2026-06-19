@@ -55,8 +55,8 @@ Last activity: 2026-06-19 -- Phase 67 execution started
 - Phase 59 has an interactive checkpoint: maintainer picks the winning logo direction before the full lockup set is developed.
 - Phase 62 is the only phase that touches files outside brandbook/: mix.exs ex_doc config, README.md, demo/ledger_loop CSS.
 - Demand-gated protocol scope is unchanged and still paused: AUTHN-POST-01, KMS-01, SIGNED-META-01.
-- v1.9 rolls SEED-002, SEED-003, and narrow maintenance sync into a bounded adoption-honesty milestone.
-- Maintainer explicitly approved planning a public `Relyra.Testing` direction; concrete API shape still needs phase-level design/review and must remain test-only.
+- v1.9 resolved SEED-002, SEED-003, and narrow maintenance sync as bounded adoption-honesty cleanup; SEED-001 is historical v1.7 work, not a future candidate.
+- Maintainer explicitly approved the public `Relyra.Testing` direction; Phase 64 fixed the concrete test-only API shape without production trust-boundary changes.
 - Relyra.Testing ships as plain Phoenix-free functions and explicit fixture structs, not macros.
 - Signed success fixtures generate fresh test key material per fixture and return trust material explicitly.
 - Public testing code reuses the verifier parser/C14N primitives and does not call Relyra.TestSupport.
@@ -70,6 +70,7 @@ Last activity: 2026-06-19 -- Phase 67 execution started
 - [Phase 66]: SEED-003: RESOLVED by retaining the LedgerLoop FakeIdP browser flow as demo-local, test-only support and documenting purpose, access, success behavior, tamper behavior, limits, and the port-4000 browser-lane caveat in `guides/fake_idp_demo.md`; Plan 66-03 removal branch remains inactive after `retain_fakeidp`.
 - [Phase 67]: MAINT-02 CVE backfill is assigned and recorded as `CVE-2026-49454` for `GHSA-jv46-xfwm-36j7`; CVE Services is `PUBLISHED` and NVD is `Received` with no configurations as of the 2026-06-19 live check.
 - [Phase 67]: MAINT-02 CI/release guard status remains evidence-based: `mix ci.security` keeps dedicated `cmd mix test` suites, primary release-please publishing runs `mix qa`, `mix ci.release`, and `mix ci.security`, release-please PR and planning-only PR workflows attach the security matrix checks, and public `main` branch metadata requires `security (27, 1.19.5)` plus `security (28, 1.19.5)`.
+- [Phase 67]: MAINT-03 seed cleanup resolved SEED-001 through the shipped v1.7 LedgerLoop adoption-evidence demo, SEED-002 through the public `Relyra.Testing` package/docs path from Phases 64-65, and SEED-003 through the Phase 66 `retain_fakeidp` decision plus `guides/fake_idp_demo.md`; all three seeds are historical records, not dormant milestone candidates.
 
 ### Blockers/Concerns
 
@@ -82,7 +83,6 @@ Last activity: 2026-06-19 -- Phase 67 execution started
 | demand_gated | AUTHN-POST-01 | save-for-demand |
 | demand_gated | KMS-01 | save-for-demand |
 | demand_gated | SIGNED-META-01 | save-for-demand |
-| maintenance | CVE ID backfill into `docs/advisories/2026-001-...` | assigned/backfilled as `CVE-2026-49454`; CVE Services `PUBLISHED`, NVD `Received` |
 | verification | Phase 53 human-needed UI testing (demo Setup/Operator UX click-through) | deferred; run `/gsd:verify-work 53` |
 | brand_future | BRAND-F01 — animated/motion brand assets | deferred to future milestone |
 | brand_future | BRAND-F02 — full 19-icon icon library | deferred to future milestone |
