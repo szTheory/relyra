@@ -29,9 +29,20 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v1.8 shipped 2026-06-14** — Brand System & Identity. Phases 58-63 complete (6/6 plans, 16/16 requirements). Self-contained `brandbook/` package: WCAG-verified Canonical Lock Set + re-runnable `contrast.exs`, a chosen cage-free logo system (direction A — Relying Path monogram, full lockup set), design tokens (`tokens.css` `--rl-*` + Tailwind example), a standalone HTML brand book + examples, and real-world integration (ex_doc logo/favicon, OpenGraph card, README banner, demo reskin). Non-protocol brand/design milestone — **no `lib/`, security, public API, or `@version` change**. (Note: release-please independently cut **Hex 1.8.0** from the v1.7 demo `feat` commits while this milestone was built — the GSD "v1.8" planning label is distinct from that release; the brand `feat(58–63)` commits will feed the next release-please version.) See `.planning/milestones/v1.8-ROADMAP.md`.
 - **v1.9 shipped 2026-06-19** — Loose Ends & Adoption Honesty. Phases 64-67 complete (13/13 plans, 15/15 requirements). Public `Relyra.Testing` fixture helpers now ship in Hex while private `Relyra.TestSupport` stays repo-only; adopter docs point to the public testing story; LedgerLoop FakeIdP is retained as documented demo-local support; SEED-001..003 are historical/resolved; and `CVE-2026-49454` is backfilled. No protocol-surface, parser, crypto, replay, audit, release, or Hex-publish posture change beyond the explicitly approved public test-only API/package surface. See `.planning/milestones/v1.9-ROADMAP.md`.
 
-## Current Milestone
+## Current Milestone: v1.10 Docker DX & Fleet Proxy
 
-None. v1.9 is archived, and Relyra is awaiting the next maintainer-selected milestone or real adopter demand signal.
+**Goal:** Make the `demo/ledger_loop` Docker experience fast, conflict-free across the maintainer's other Elixir OSS lib demos, and self-documenting — without touching any `lib/` security seam, public API, or protocol surface.
+
+**Target features:**
+- Fast, cached, correct container build: a real `Dockerfile.dev` with BuildKit cache mounts + named `deps`/`_build` volumes + a lock-hash-gated entrypoint, so small source/style edits never re-fetch or re-compile dependencies (`phoenix_live_reload` `:fs_poll` for live edits across the macOS→Docker mount boundary).
+- Fleet coexistence: solo `docker compose up` stays zero-setup at `localhost` (Postgres no longer published); an opt-in shared **Traefik** proxy on an external `proxy` network routes the demo at `relyra.localhost` so multiple sibling lib demos run at once with no port contention.
+- Keycloak fully behind the proxy at `keycloak.relyra.localhost` (realm URL fixes + `KC_HOSTNAME`/`KC_PROXY_HEADERS`) so the real-IdP SAML round-trip works with nice hostnames.
+- Self-documenting launch: a `Makefile` primary launcher (with `scripts/demo` delegating), a copy-pasteable URL/route map printed on start, plus `make fleet`/`doctor`.
+- Documentation in `guides/docker_dev_dx.md` (house voice, persona/JTBD-first, per the newest `brandbook/`), with demo README / `guides/demo.md` / top-level README routing updated.
+
+**Convention source of truth:** replicate the maintainer's own newest sibling-lib convention (`scoria`: `Makefile` + `docker/traefik/compose.yml` + `docs/docker_dev_dx.md`), cross-checked vs `sigra` and `rulestead`. Hostnames use simple `relyra.localhost` (static `COMPOSE_PROJECT_NAME=relyra`); scheme stays `http` (no mkcert). Design north-star: the approved plan at `/Users/jon/.claude/plans/does-this-not-have-cozy-lighthouse.md`.
+
+**Hard constraint:** demo + docker + docs only. Zero changes to `lib/` security seams, public API, protocol surface, or the Hex package whitelist. No new published package surface.
 
 **Still out of scope:** demand-gated protocol features (`AUTHN-POST-01`, `KMS-01`, `SIGNED-META-01`) unless a real adopter issue triggers a later milestone.
 
@@ -39,7 +50,7 @@ None. v1.9 is archived, and Relyra is awaiting the next maintainer-selected mile
 
 ## Next Milestone Goals
 
-No automatic next milestone. Start the next cycle with `/gsd-new-milestone` only if a concrete demand signal or maintainer-selected cleanup goal appears.
+v1.10 (Docker DX & Fleet Proxy) is active — see "Current Milestone" above. After v1.10 ships, return to the demand-gated pause default below.
 
 **Demand-gated future candidates** (investigation threads in `.planning/threads/`; trigger = real GitHub issue):
 
@@ -275,4 +286,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-06-19 after v1.9 milestone archival*
+*Last updated: 2026-06-19 — v1.10 Docker DX & Fleet Proxy milestone started*
