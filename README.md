@@ -134,4 +134,3 @@ These surfaces matter after Day-1, but they should not compete with onboarding:
 LiveAdmin is optional. Metadata refresh, certificate rollover, audit review,
 telemetry wiring, and diagnostic bundles belong after the first successful
 provider login, not before it.
-it.
