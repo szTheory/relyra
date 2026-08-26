@@ -101,8 +101,18 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   2. The seeded realm's clientId, root/base/admin URLs, ACS, and redirect URIs point at `http://relyra.localhost` (ACS = `http://relyra.localhost/saml/<connection_id>/acs`), with a documented split-horizon note that container-to-container calls use the `keycloak:8080` service name and `*.localhost` is browser-only.
   3. A browser-driven Keycloak login redirects to `keycloak.relyra.localhost`, returns a signed assertion to `relyra.localhost/saml/.../acs`, and Relyra verifies it (recipient/Destination match) and establishes a session.
 
-**Scope note**: Touches `docker/keycloak/realm-demo-app.json` and the keycloak service/env in `docker-compose.proxy.yml`. No `lib/` change — Relyra's verification is exercised, not modified.
-**Plans**: 10/10 plans executed
+**Scope note**: Touches `docker/keycloak/realm-demo-app.json` and the keycloak service/env in `docker-compose.proxy.yml`. Relyra's verification is exercised, not modified. Gap closure permits only the demonstrably required `ConnectionTraceLive` narrow-viewport presentation wrapper; parser, crypto, replay, algorithm policy, public API, and behaviour seams remain untouched.
+**Plans**: 10/14 plans executed
+
+**Wave 10** *(independent closures after Plan 70-10)*
+
+- [ ] 70-11-PLAN.md — Decouple focused Keycloak acceptance from repository gates and add its recurring CI owner [G-70-1, KC-01]
+- [ ] 70-12-PLAN.md — Remediate the advisory-vulnerable Req/Finch/Mint lock resolution without suppression [G-70-1, KC-01]
+- [ ] 70-13-PLAN.md — Add the safe long-trace fixture and scoped narrow-width evidence access [G-70-2, KC-01]
+
+**Wave 11** *(blocked on Plan 70-13)*
+
+- [ ] 70-14-PLAN.md — Automate failed-state, recovery, keyboard, viewport, and long-value proof in recurring CI [G-70-2, KC-01]
 
 **Wave 1**
 
@@ -175,7 +185,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 |-------|----------------|--------|-----------|
 | 68. Build caching & correctness | 2/2 | Complete    | 2026-06-19 |
 | 69. Compose split & fleet proxy | 3/3 | Complete | 2026-08-26 |
-| 70. Keycloak behind the proxy | 10/10 | In Progress|  |
+| 70. Keycloak behind the proxy | 10/14 | In Progress|  |
 | 71. Launcher DX & banner | 0/? | Not started | - |
 | 72. Documentation | 0/? | Not started | - |
 
