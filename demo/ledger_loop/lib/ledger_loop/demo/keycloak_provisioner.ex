@@ -111,7 +111,12 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
 
   defp disable_connection(audit) do
     case Repo.get_by(Connection, connection_id: @connection_id) do
-      %Connection{status: :enabled} -> Connections.disable(@connection_id, repo: Repo, audit: audit)
+      %Connection{status: :enabled} ->
+        case Connections.disable(@connection_id, repo: Repo, audit: audit) do
+          {:ok, _connection} -> :ok
+          {:error, _reason} = error -> error
+        end
+
       _connection -> :ok
     end
   end

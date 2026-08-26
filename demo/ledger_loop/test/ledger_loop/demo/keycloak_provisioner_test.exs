@@ -6,6 +6,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
   alias LedgerLoop.Repo
   alias Relyra.ConnectionResolver.Ecto, as: ConnectionResolver
   alias Relyra.Ecto.{AuditEvent, Certificate, Connection}
+  alias Relyra.Metadata.TrustAnchor
 
   @issuer "http://keycloak.relyra.localhost/realms/demo-app"
   @sarah "sarah@northstar.example.com"
@@ -84,14 +85,16 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
 
     assert {:ok, snapshot} = resolver_result()
 
+    snapshot_fingerprints = Enum.map(snapshot.idp_certificates, &TrustAnchor.fingerprint/1)
+
     assert Enum.any?(
-             snapshot.idp_certificates,
-             &(&1.fingerprint_sha256 == descriptor_fingerprint(descriptor_b))
+             snapshot_fingerprints,
+             &(&1 == descriptor_fingerprint(descriptor_b))
            )
 
     refute Enum.all?(
-             snapshot.idp_certificates,
-             &(&1.fingerprint_sha256 == descriptor_fingerprint(descriptor_a))
+             snapshot_fingerprints,
+             &(&1 == descriptor_fingerprint(descriptor_a))
            )
 
     connection = keycloak_connection!()
