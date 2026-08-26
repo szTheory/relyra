@@ -1,40 +1,25 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
-test('Keycloak login journey', async ({ page }) => {
-  // First, automate the Setup UI
-  await page.goto('/setup');
-  
-  await page.click('text=IdP Metadata');
-  await page.fill('textarea[name="metadata"]', 'dummy metadata');
-  await page.click('button:has-text("Save Metadata")');
-  await expect(page.locator('text=Metadata saved successfully!')).toBeVisible();
-  
-  await page.click('text=Mapping Preview');
-  await page.click('text=Next');
-  
-  await page.click('text=Test & Enable');
-  
-  // Navigate to root to login
-  await page.goto('/');
-  
-  // Click SAML SSO login. We assume there's a button.
-  // Wait for page to load
-  await page.waitForLoadState('networkidle');
-  
-  // The actual text might be 'Login with SAML' or 'SAML SSO'
-  const samlLoginButton = page.locator('text=Login with SAML').or(page.locator('text=SAML SSO')).or(page.locator('text=SSO Login'));
-  if (await samlLoginButton.count() > 0) {
-    await samlLoginButton.first().click();
-  } else {
-    // Try visiting the auth URL directly if button is missing
-    await page.goto('/auth/saml/login');
-  }
+const connectionId = "01H0B4Y1A2B3C4D5E6F7G8H9J4";
 
-  // Keycloak login
-  await page.fill('input[name="username"], #username', 'admin');
-  await page.fill('input[name="password"], #password', 'admin');
-  await page.click('input[type="submit"], button[type="submit"], #kc-login');
+test("Keycloak signs Sarah into LedgerLoop through the public scoped ACS", async ({
+  page,
+}) => {
+  await page.goto("/login/test");
+  await page.getByRole("link", { name: "Sign in with Keycloak" }).click();
 
-  // Verify successful redirect back to the app
-  await expect(page).not.toHaveURL(/keycloak/);
+  await expect(page).toHaveURL(/keycloak\.relyra\.localhost/);
+  await page.locator("#username").fill("sarah@northstar.example.com");
+  await page.locator("#password").fill("sarah-password");
+
+  const acsResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith(`/saml/${connectionId}/acs`) &&
+      response.request().method() === "POST",
+  );
+
+  await page.locator("#kc-login").click();
+
+  await expect(await acsResponse).toHaveProperty("status", 302);
+  await expect(page.locator("#workspace-title")).toHaveText(/LedgerLoop Workspace/);
 });
