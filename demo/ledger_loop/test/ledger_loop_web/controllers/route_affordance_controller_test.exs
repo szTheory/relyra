@@ -7,6 +7,22 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
 
   setup do
     Reset.reset!()
+
+    previous_config = Application.get_env(:ledger_loop, :demo_admin_auth)
+
+    Application.put_env(:ledger_loop, :demo_admin_auth,
+      username: "test-admin",
+      password: "test-password"
+    )
+
+    on_exit(fn ->
+      if previous_config do
+        Application.put_env(:ledger_loop, :demo_admin_auth, previous_config)
+      else
+        Application.delete_env(:ledger_loop, :demo_admin_auth)
+      end
+    end)
+
     :ok
   end
 
@@ -44,8 +60,29 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
   end
 
   describe "admin_login" do
-    test "sets admin session keys and redirects to /relyra/admin", %{conn: conn} do
-      conn = get(conn, "/login/admin")
+    test "rejects absent and invalid host credentials before admin scope establishment", %{conn: conn} do
+      for conn <- [
+            conn,
+            put_req_header(conn, "authorization", Plug.BasicAuth.encode_basic_auth("wrong", "credentials"))
+          ], path <- ["/login/admin", "/relyra/admin/connections/new"] do
+        response = get(conn, path)
+
+        assert response.status == 401
+        assert get_resp_header(response, "www-authenticate") == [~s(Basic realm="Application")]
+        assert get_session(response, :admin_actor) == nil
+        assert get_session(response, :admin_actor_label) == nil
+        assert get_session(response, :admin_organization_id) == nil
+      end
+    end
+
+    test "sets fixed admin session keys only after valid host credentials", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header(
+          "authorization",
+          Plug.BasicAuth.encode_basic_auth("test-admin", "test-password")
+        )
+        |> get("/login/admin")
 
       assert redirected_to(conn) == "/relyra/admin"
       assert get_session(conn, :admin_actor) == "demo_admin"
