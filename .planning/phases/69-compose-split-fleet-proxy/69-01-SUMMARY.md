@@ -20,6 +20,23 @@ metrics:
   duration: 24m
   completed_date: 2026-08-26
 status: complete
+coverage:
+  - id: D1
+    description: "Plain Compose provides healthy loopback-only app ingress, no PostgreSQL host binding, and persistent named volumes."
+    requirement: FLEET-01
+    verification:
+      - kind: integration
+        ref: "scripts/test_fleet_proxy_e2e.sh#solo lifecycle and volume persistence"
+        status: pass
+    human_judgment: false
+  - id: D2
+    description: "The explicit Phoenix public URL/origin policy supports a connected LiveView and usable endpoint URLs at the solo origin."
+    requirement: FLEET-03
+    verification:
+      - kind: automated_ui
+        ref: "test/browser/fleet_proxy.spec.mjs#setup LiveView stays connected and exposes usable public URLs"
+        status: pass
+    human_judgment: false
 ---
 
 # Phase 69 Plan 01: Compose Split Fleet Proxy Summary

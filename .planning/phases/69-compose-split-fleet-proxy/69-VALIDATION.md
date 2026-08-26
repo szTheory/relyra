@@ -1,75 +1,54 @@
 ---
 phase: 69
 slug: compose-split-fleet-proxy
-status: draft
+status: complete
 nyquist_compliant: true
 wave_0_complete: true
 created: 2026-08-16
+updated: 2026-08-26
 ---
 
 # Phase 69 — Validation Strategy
-
-> Per-phase validation contract for feedback sampling during execution.
-
----
 
 ## Test Infrastructure
 
 | Property | Value |
 |----------|-------|
-| **Framework** | ExUnit / Mix plus Docker Compose CLI receipts |
-| **Config file** | `mix.exs`; `docker-compose.yml` and its solo/fleet overlays |
-| **Quick run command** | `docker compose config && docker compose -f docker-compose.yml -f docker-compose.proxy.yml config` |
-| **Full suite command** | `mix qa && mix test --warnings-as-errors && mix ci.security && mix format --check-formatted` |
-| **Estimated runtime** | ~180 seconds, excluding interactive Docker/browser receipts |
+| **Framework** | Docker Compose lifecycle assertions, curl, Playwright/Chromium, ExUnit, actionlint |
+| **Hermetic E2E** | `npm run demo:fleet-proxy` |
+| **CI integrity** | `mix test test/release/fleet_proxy_ci_integrity_test.exs --warnings-as-errors` |
+| **Full repository gates** | `mix qa && mix test --warnings-as-errors && mix ci.security && mix format --check-formatted` |
+| **Required status context** | `fleet-proxy-e2e` |
+| **Moving upstream monitor** | Daily `rulestead-main-canary` at 06:17 UTC; non-required |
 
----
+## Automated Verification Map
 
-## Sampling Rate
+| Behavior | Requirement | Test Type | Automated Evidence | Status |
+|----------|-------------|-----------|--------------------|--------|
+| Solo health, loopback ingress, no db publication, and persistent named volumes | FLEET-01 | integration | `scripts/test_fleet_proxy_e2e.sh` solo lifecycle | ✅ green |
+| Explicit public URL/origin policy at localhost | FLEET-03 | automated UI | `fleet_proxy.spec.mjs` at `http://localhost:4000` | ✅ green |
+| Neutral proxy starts idempotently with stable container identity | FLEET-02 | integration | shared proxy ID/dashboard assertions | ✅ green |
+| Relyra and pinned sibling route concurrently without host-port contention | FLEET-02 | E2E | Host-route curl assertions through Traefik | ✅ green |
+| Stopping Relyra preserves sibling, proxy, and external network | FLEET-02 | E2E | post-shutdown route/container/network assertions | ✅ green |
+| Fleet LiveView WebSocket, public URLs, selection, and horizontal access | FLEET-03 | automated UI | `fleet_proxy.spec.mjs` at `http://relyra.localhost` | ✅ green |
+| Required-check synchronization and unfiltered workflow trigger | FLEET-01..03 | integration/meta | `fleet_proxy_ci_integrity_test.exs`, actionlint, yamllint | ✅ green |
+| Real Rulestead main coexistence drift | FLEET-02 | scheduled canary | `scripts/test_rulestead_proxy_canary.sh` | recurring monitor |
 
-- **After every task commit:** Render the relevant Compose configuration and run `mix format --check-formatted demo/ledger_loop/config/*.exs` when Elixir config changed.
-- **After every plan wave:** Run both Compose render commands and the plan's scoped assertions.
-- **Before `$gsd-verify-work`:** Run the full suite, then complete both solo and fleet runtime receipts.
-- **Max feedback latency:** 30 seconds for static Compose/config checks; runtime receipts are phase-gate checks.
+## Sampling and Failure Evidence
 
----
-
-## Per-Task Verification Map
-
-| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 69-01-01 | 01 | 1 | FLEET-01 | T-69-01 / T-69-03 | Container listens on its network while only the app is host-published on `127.0.0.1`; Postgres has no host publication | config render | `docker compose config --format json` plus the Plan 69-01 Task 1 `jq` assertions for unprofiled services, loopback app publication, and absent `db.ports` | ✅ inline plan gate | ⬜ pending |
-| 69-01-02 | 01 | 1 | FLEET-03 | T-69-02 | Phoenix retains the container-wide bind needed by Docker/Traefik, uses the selected public URL, and accepts only the explicit origin list | config evaluation | `cd demo/ledger_loop && mix format --check-formatted config/runtime.exs config/dev.exs && MIX_ENV=dev PHX_HOST=relyra.localhost PHX_SCHEME=http PHX_PORT=80 DEMO_CHECK_ORIGINS='//localhost,//relyra.localhost,//*.relyra.localhost' mix run --no-start -e '…'` using the Plan 69-01 Task 2 endpoint assertions | ✅ inline plan gate | ⬜ pending |
-| 69-02-01 | 02 | 2 | FLEET-02 | T-69-06 / T-69-07 / T-69-09 | Neutral Traefik publishes web/dashboard only on loopback, disables implicit exposure, and uses the external network | config render | `docker compose -f docker/traefik/compose.yml config --format json` plus the Plan 69-02 Task 1 image, loopback-port, and external-network assertions | ✅ inline plan gate | ⬜ pending |
-| 69-02-02 | 02 | 2 | FLEET-02 / FLEET-03 | T-69-04 / T-69-08 | Fleet publishes no app/db ports, attaches only the app to `proxy`, and wires namespaced routing plus endpoint env | config render + smoke | `docker compose -f docker-compose.yml -f docker-compose.proxy.yml config --format json` plus the Plan 69-02 Task 2 port, network, label, and environment assertions | ✅ inline plan gate | ⬜ pending |
-
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
-
----
-
-## Wave 0 Requirements
-
-No test scaffold is missing: all four implementation tasks carry a deterministic inline automated gate, so Wave 0 is complete. Runtime Docker and browser receipts remain phase-gate verification performed after implementation; they are not substitutes for the per-task automated commands.
-
----
+- The hermetic suite runs for every pull request, push to `main`, schedule, and manual dispatch. It has no path filters, so branch protection cannot leave it pending because of a skipped workflow.
+- Playwright uses one worker, host-resolver rules, semantic DOM/LiveView assertions, and trace-on-first-retry.
+- The shell harness captures Compose status, container logs, Traefik logs, sibling logs, and network inspection before cleanup on failure.
+- The real Rulestead main canary is deliberately separate from branch protection because upstream movement is not hermetic.
 
 ## Manual-Only Verifications
 
-| Behavior | Requirement | Why Manual | Test Instructions |
-|----------|-------------|------------|-------------------|
-| Solo stack starts from plain `docker compose up` and serves the operator UI | FLEET-01 | Requires Docker lifecycle and browser access | Start the stack without profiles or explicit overlays; open the loopback URL; confirm the page loads and no Postgres host port appears in `docker compose ps`. |
-| Shared proxy routes two sibling demos without port contention | FLEET-02 | Requires the external network, Traefik, and a second checkout/demo | Run `docker network inspect proxy >/dev/null 2>&1 || docker network create proxy`, then `docker compose -f docker/traefik/compose.yml up -d`; start Relyra with the fleet overlay, start one sibling demo on the same `proxy` network, and request both `*.localhost` hosts. |
-| LiveView WebSocket connects for solo and proxy public hosts | FLEET-03 | Browser WebSocket behavior is not proven by static endpoint config | Load the operator UI at each public host and verify the LiveView connection remains established without origin errors. |
-
----
+None for Phase 69. Visual identity is unchanged, and every relevant interaction/layout claim is expressed as a semantic browser assertion rather than subjective screenshot approval.
 
 ## Validation Sign-Off
 
-- [x] All four real tasks have an `<automated>` verification command
-- [x] Sampling continuity: every task has an automated gate
-- [x] Wave 0 covers all MISSING references (none; inline gates exist for every task)
-- [x] No watch-mode flags
-- [x] Feedback latency < 30 seconds for static/config automated checks
-- [x] `nyquist_compliant: true` set in frontmatter
-
-**Approval:** approved for execution; runtime and browser receipts remain pending phase sign-off
+- [x] Every FLEET-01..03 runtime truth has deterministic integration or browser coverage.
+- [x] Required workflow is unfiltered and enforced by exact context name.
+- [x] Required-check consumers are protected by a static drift test.
+- [x] Diagnostics are retained for CI failures.
+- [x] Human UAT is not required for Phase 69 completion.

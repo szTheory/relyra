@@ -20,6 +20,26 @@ metrics:
   duration: 42m
   completed_date: 2026-08-26
 status: complete
+coverage:
+  - id: D1
+    description: "The neutral shared Traefik proxy starts idempotently on the external proxy network with loopback-only ingress."
+    requirement: FLEET-02
+    verification:
+      - kind: integration
+        ref: "scripts/test_fleet_proxy_e2e.sh#shared proxy idempotency"
+        status: pass
+    human_judgment: false
+  - id: D2
+    description: "Relyra and a pinned sibling route concurrently, and stopping Relyra leaves the sibling, proxy, and external network operational."
+    requirement: FLEET-02
+    verification:
+      - kind: e2e
+        ref: "scripts/test_fleet_proxy_e2e.sh#fleet sibling coexistence and lifecycle isolation"
+        status: pass
+      - kind: automated_ui
+        ref: "test/browser/fleet_proxy.spec.mjs#fleet LiveView public-origin contract"
+        status: pass
+    human_judgment: false
 ---
 
 # Phase 69 Plan 02: Compose Split Fleet Proxy Summary

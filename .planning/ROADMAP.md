@@ -34,7 +34,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 ## v1.10 Phases
 
 - [x] **Phase 68: Build caching & correctness** - Cached, arch-correct container build so source edits never re-fetch or recompile deps and live edits reload. (completed 2026-06-19)
-- [ ] **Phase 69: Compose split & fleet proxy** - Solo-first compose with no published Postgres port plus an opt-in Traefik overlay so sibling lib demos coexist.
+- [x] **Phase 69: Compose split & fleet proxy** - Solo-first compose with no published Postgres port plus an opt-in Traefik overlay so sibling lib demos coexist.
 - [ ] **Phase 70: Keycloak behind the proxy** - Real-IdP Keycloak round-trip works end-to-end at nice hostnames behind the shared proxy.
 - [ ] **Phase 71: Launcher DX & banner** - A Makefile primary launcher with a copy-pasteable URL/route map, `make fleet`, and `doctor`.
 - [ ] **Phase 72: Documentation** - House-voice Docker DX guide plus demo/README routing updates describing the finished surface.
@@ -74,7 +74,8 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   4. The demo's Phoenix endpoint `url`/`check_origin` are correct for both the solo host (`localhost:<port>`) and the proxy host (`relyra.localhost`), so the LiveView operator-UI websocket connects and Relyra's recipient/Destination checks match the public ACS URL.
 
 **Scope note**: Touches `docker-compose.yml`, `docker-compose.override.yml`, `docker-compose.proxy.yml`, `docker/traefik/compose.yml`, and `demo/ledger_loop/config/runtime.exs`/`config.exs`. Traefik router/service names prefixed `relyra-*` to avoid cross-project namespace collisions; host ports bound to `127.0.0.1`. No `lib/` change.
-**Plans**: 2/2 plans executed
+**Plans**: 3/3 plans executed
+
 **Wave 1**
 
 - [x] 69-01-PLAN.md — Tracer: zero-setup solo Compose path and explicit Phoenix URL/origin policy [FLEET-01, FLEET-03]
@@ -82,6 +83,10 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 69-02-PLAN.md — Neutral shared Traefik proxy and collision-free Relyra fleet overlay [FLEET-02, FLEET-03]
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 69-03-PLAN.md — Automated fleet lifecycle/browser proof, required CI context, and scheduled Rulestead canary [FLEET-01, FLEET-02, FLEET-03]
 
 **UI hint**: yes
 
@@ -132,7 +137,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 68. Build caching & correctness | 2/2 | Complete    | 2026-06-19 |
-| 69. Compose split & fleet proxy | 2/2 | In Progress|  |
+| 69. Compose split & fleet proxy | 3/3 | Complete | 2026-08-26 |
 | 70. Keycloak behind the proxy | 0/? | Not started | - |
 | 71. Launcher DX & banner | 0/? | Not started | - |
 | 72. Documentation | 0/? | Not started | - |
