@@ -21,7 +21,7 @@
 ### Fleet coexistence & proxy (FLEET)
 
 - [x] **FLEET-01**: A plain `docker compose up` runs the demo standalone, reachable at `http://localhost:<port>`, with zero proxy setup and with Postgres NOT published to a host port (eliminating the `:5432` machine-wide collision).
-- [ ] **FLEET-02**: A shared Traefik proxy on an external `proxy` network can be started idempotently with `docker network inspect proxy >/dev/null 2>&1 || docker network create proxy`, then `docker compose -f docker/traefik/compose.yml up -d`, and, via an opt-in `docker-compose.proxy.yml` overlay, routes the demo at `http://relyra.localhost` — so multiple sibling lib demos run concurrently with no host-port contention, and the proxy is never a hard dependency of the solo path.
+- [x] **FLEET-02**: A shared Traefik proxy on an external `proxy` network can be started idempotently with `docker network inspect proxy >/dev/null 2>&1 || docker network create proxy`, then `docker compose -f docker/traefik/compose.yml up -d`, and, via an opt-in `docker-compose.proxy.yml` overlay, routes the demo at `http://relyra.localhost` — so multiple sibling lib demos run concurrently with no host-port contention, and the proxy is never a hard dependency of the solo path.
 - [x] **FLEET-03**: The demo's Phoenix endpoint `url`/`check_origin` are correct for both the solo host (`localhost:<port>`) and the proxy host (`relyra.localhost`), so the LiveView operator UI websocket connects and Relyra's recipient/Destination checks match the public ACS URL.
 
 ### Keycloak behind the proxy (KC)
@@ -62,7 +62,7 @@
 | DKR-03 | Phase 68 | Complete |
 | DKR-04 | Phase 68 | Complete |
 | FLEET-01 | Phase 69 | Complete |
-| FLEET-02 | Phase 69 | Pending |
+| FLEET-02 | Phase 69 | Complete |
 | FLEET-03 | Phase 69 | Complete |
 | KC-01 | Phase 70 | Pending |
 | DX-01 | Phase 71 | Pending |
