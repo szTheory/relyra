@@ -15,17 +15,19 @@ REPO_NAME="${REPO_NAME##*/}"
 REPO_NAME="${REPO_NAME:-relyra}"
 REPO="${OWNER}/${REPO_NAME}"
 
-# Matrix job names from .github/workflows/security-gates.yml (otp 27 + 28).
+# Required job names from security-gates.yml plus fleet-proxy-e2e.yml.
 REQUIRED_CHECKS=(
   "security (27, 1.19.5)"
   "security (28, 1.19.5)"
+  "fleet-proxy-e2e"
 )
 
 print_expected_text() {
   cat <<'TEXT'
-Expected required status checks (security-gates workflow):
+Expected required status checks:
   - security (27, 1.19.5)
   - security (28, 1.19.5)
+  - fleet-proxy-e2e
 
 Expected non-context branch protection fields:
   - required_status_checks.strict: true
@@ -92,4 +94,3 @@ gh api -X PUT \
 
 echo "OK: branch protection configured for ${REPO}@${BRANCH}."
 print_expected_text
-

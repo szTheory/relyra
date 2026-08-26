@@ -1,9 +1,8 @@
 name: Planning PR Checks
 
-# PRs that only touch .planning/** (or prompts/**) skip security-gates via paths-ignore,
-# but branch protection still requires security (27/28). Dispatch alone does not attach
-# checks to the PR under enforce_admins — push a .github/ marker commit so pull_request
-# security-gates runs on the full PR diff.
+# PRs that only touch .planning/** (or prompts/**) skip security-gates via paths-ignore.
+# Branch protection also requires the unfiltered fleet-proxy-e2e check. Push a .github/
+# marker commit so security-gates joins the already-running fleet check on the full PR diff.
 
 on:
   pull_request:
@@ -64,7 +63,7 @@ jobs:
 
           echo "planning_only=$planning_only" >> "$GITHUB_OUTPUT"
 
-      - name: Check required security-gates on planning PR
+      - name: Check required checks on planning PR
         id: checks
         if: ${{ steps.scope.outputs.planning_only == 'true' }}
         env:
@@ -74,7 +73,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)")
+          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)" "fleet-proxy-e2e")
 
           all_success=true
 
