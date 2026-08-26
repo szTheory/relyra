@@ -278,11 +278,11 @@ Keep the default host in `config.exs`; the runtime block overrides only in non-t
 |---|-------|---------|---------------|
 | A1 | Unique host ports could substitute for Traefik fleet routing. | Alternatives Considered | Low; it is not selected and does not fulfill the locked hostname experience. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **The core-profile contradiction must be resolved in the plan rather than ignored.**
+1. **RESOLVED — Plan 69-01 Task 1 removes the core-profile contradiction.**
    - What we know: Current `db` and `demo_app` have `profiles: ["core"]`, while FLEET-01 requires bare `docker compose up`. [VERIFIED: docker-compose.yml] [CITED: https://docs.docker.com/compose/how-tos/profiles/]
-   - Recommendation: The first plan task removes `profiles` from exactly `db` and `demo_app`; Keycloak and Playwright retain their profiles. This is the least change that makes the stated acceptance command true. [HIGH confidence]
+   - Resolution: Plan 69-01 Task 1 removes `profiles` from exactly `db` and `demo_app`; Keycloak retains profile `keycloak` and Playwright retains profile `browser`. This makes bare `docker compose up` select the two core services while preserving the optional profiles. [HIGH confidence]
 
 ## Environment Availability
 

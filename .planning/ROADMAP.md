@@ -69,12 +69,20 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 **Success Criteria** (what must be TRUE):
 
   1. A plain `docker compose up` runs the demo standalone, reachable at `http://localhost:<port>`, with Postgres NOT published to a host port (the auto-loaded `docker-compose.override.yml` publishes only `127.0.0.1:<port>:4000`).
-  2. `make proxy` idempotently creates the external `proxy` network and starts the shared Traefik proxy; the opt-in `docker-compose.proxy.yml` overlay routes the demo at `http://relyra.localhost` and the proxy is never a hard dependency of the solo path.
+  2. `docker network inspect proxy >/dev/null 2>&1 || docker network create proxy`, then `docker compose -f docker/traefik/compose.yml up -d`, idempotently creates or reuses the external `proxy` network and starts the shared Traefik proxy; the opt-in `docker-compose.proxy.yml` overlay routes the demo at `http://relyra.localhost` and the proxy is never a hard dependency of the solo path. The `make proxy` wrapper belongs to Phase 71/DX-01.
   3. Two sibling lib demos (relyra + another) run concurrently behind the proxy with no host-port error, because neither publishes Postgres and both route by `Host()` label on the shared network.
   4. The demo's Phoenix endpoint `url`/`check_origin` are correct for both the solo host (`localhost:<port>`) and the proxy host (`relyra.localhost`), so the LiveView operator-UI websocket connects and Relyra's recipient/Destination checks match the public ACS URL.
 
 **Scope note**: Touches `docker-compose.yml`, `docker-compose.override.yml`, `docker-compose.proxy.yml`, `docker/traefik/compose.yml`, and `demo/ledger_loop/config/runtime.exs`/`config.exs`. Traefik router/service names prefixed `relyra-*` to avoid cross-project namespace collisions; host ports bound to `127.0.0.1`. No `lib/` change.
-**Plans**: TBD
+**Plans**: 2 plans
+**Wave 1**
+
+- [ ] 69-01-PLAN.md — Tracer: zero-setup solo Compose path and explicit Phoenix URL/origin policy [FLEET-01, FLEET-03]
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 69-02-PLAN.md — Neutral shared Traefik proxy and collision-free Relyra fleet overlay [FLEET-02, FLEET-03]
+
 **UI hint**: yes
 
 ### Phase 70: Keycloak behind the proxy
