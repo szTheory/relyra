@@ -4,6 +4,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
   alias LedgerLoop.Accounts.{LoginReceipt, SAMLIdentity}
   alias LedgerLoop.Demo.{KeycloakProvisioner, Reset}
   alias LedgerLoop.Repo
+  alias Relyra.ConnectionResolver.Ecto, as: ConnectionResolver
   alias Relyra.Ecto.{AuditEvent, Certificate, Connection}
 
   @issuer "http://keycloak.relyra.localhost/realms/demo-app"
@@ -15,7 +16,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
   end
 
   test "initial provisioning is audited and a byte-identical descriptor is unchanged" do
-    descriptor = descriptor("A")
+    descriptor = descriptor(:a)
 
     assert {:ok, :provisioned} =
              KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor} end)
@@ -52,13 +53,58 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     test "#{stage} failure leaves Keycloak unavailable and creates no receipt" do
       assert {:error, {unquote(stage), _reason}} =
                KeycloakProvisioner.provision!(
-                 descriptor_fetcher: fn _url -> {:ok, descriptor("A")} end,
+                 descriptor_fetcher: fn _url -> {:ok, descriptor(:a)} end,
                  fail_at: unquote(stage)
                )
 
       assert_no_enabled_keycloak_connection()
       assert Repo.aggregate(LoginReceipt, :count, :id) == 0
     end
+  end
+
+  test "a signing-key rotation stays unavailable until the new trust is active" do
+    descriptor_a = descriptor(:a)
+    descriptor_b = descriptor(:b)
+
+    assert {:ok, :provisioned} =
+             KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor_a} end)
+
+    parent = self()
+
+    assert {:ok, :provisioned} =
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor_b} end,
+               after_disable: fn ->
+                 send(parent, {:resolver_after_disable, resolver_result()})
+                 :ok
+               end
+             )
+
+    assert_receive {:resolver_after_disable, {:error, %{type: :connection_unavailable}}}
+
+    assert {:ok, snapshot} = resolver_result()
+
+    assert Enum.any?(
+             snapshot.idp_certificates,
+             &(&1.fingerprint_sha256 == descriptor_fingerprint(descriptor_b))
+           )
+
+    refute Enum.all?(
+             snapshot.idp_certificates,
+             &(&1.fingerprint_sha256 == descriptor_fingerprint(descriptor_a))
+           )
+
+    connection = keycloak_connection!()
+    counts_after_rotation = trust_counts(connection.id)
+
+    assert {:ok, :unchanged} =
+             KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor_b} end)
+
+    assert counts_after_rotation == trust_counts(connection.id)
+  end
+
+  defp resolver_result do
+    ConnectionResolver.resolve_connection(%{connection_id: KeycloakProvisioner.connection_id()}, repo: Repo)
   end
 
   defp assert_no_enabled_keycloak_connection do
@@ -106,12 +152,8 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     }
   end
 
-  defp descriptor(_label) do
-    certificate =
-      __DIR__
-      |> Path.join("../../../priv/fake_idp/idp_cert.pem")
-      |> File.read!()
-      |> String.replace(~r/-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\s+/, "")
+  defp descriptor(which) do
+    certificate = certificate_body(which)
 
     """
     <EntityDescriptor entityID="#{@issuer}" xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
@@ -121,6 +163,21 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
       </IDPSSODescriptor>
     </EntityDescriptor>
     """
+  end
+
+  defp certificate_body(:a) do
+    __DIR__
+    |> Path.join("../../../priv/fake_idp/idp_cert.pem")
+    |> File.read!()
+    |> String.replace(~r/-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\s+/, "")
+  end
+
+  defp certificate_body(:b) do
+    __DIR__
+    |> Path.join("../../../../../test/relyra/ecto/escape_hatch_audit_test.exs")
+    |> File.read!()
+    |> then(&Regex.run(~r/<X509Certificate>([A-Za-z0-9+\/=]+)<\/X509Certificate>/, &1))
+    |> List.last()
   end
 
   defp descriptor_fingerprint(descriptor) do
