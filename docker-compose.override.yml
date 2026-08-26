@@ -1,0 +1,6 @@
+# Docker Compose loads this file automatically for the plain local demo path.
+# Explicit fleet `-f` commands intentionally omit these host ports.
+services:
+  demo_app:
+    ports:
+      - "127.0.0.1:${PORT:-4000}:4000"
