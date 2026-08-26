@@ -17,6 +17,13 @@ log() {
 log "validating the proxy-only Keycloak graph"
 rendered="$(${COMPOSE[@]} config --format json)"
 
+# The realm must use the same public host for browser origins as it uses for
+# entity ID, metadata, and ACS endpoints.  This assertion intentionally lands
+# before the realm contract is corrected below (TDD RED).
+jq -e '
+  .clients[0].webOrigins == ["http://${RELYRA_HOST}"]
+' docker/keycloak/realm-demo-app.json >/dev/null
+
 jq -e '
   .services.keycloak.ports == null and
   (.services.keycloak.networks | keys | sort) == ["default", "proxy"] and
