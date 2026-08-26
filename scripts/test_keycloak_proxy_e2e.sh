@@ -77,6 +77,11 @@ if [[ "${KEYCLOAK_PROXY_STATIC_ONLY:-0}" == "1" ]]; then
   exit 0
 fi
 
+if [[ "${KEYCLOAK_PROXY_DIAGNOSTICS_SELF_TEST:-0}" == "1" ]]; then
+  diagnostics_self_test
+  exit 0
+fi
+
 cleanup() {
   local result_code=$?
   trap - EXIT INT TERM
