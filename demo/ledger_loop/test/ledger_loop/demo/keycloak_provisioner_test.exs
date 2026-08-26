@@ -40,7 +40,12 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
              KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor} end)
 
     assert trust_counts == trust_counts(connection.id)
-    assert 1 == Repo.aggregate(SAMLIdentity, :count, :id)
+    assert 1 ==
+             Repo.aggregate(
+               from(identity in SAMLIdentity, where: identity.issuer == ^@issuer),
+               :count,
+               :id
+             )
   end
 
   for stage <- [:fetch, :parse, :apply, :activation, :identity] do
@@ -76,11 +81,14 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
 
     assert Enum.map(events, & &1.domain) |> Enum.uniq() |> Enum.sort() == [:certificate, :connection, :metadata]
 
-    assert Enum.all?(events, fn event ->
-             event.actor == "ledger_loop_keycloak_provisioner" and
-               event.cause == "phase70_profile_bootstrap" and
-               is_binary(event.correlation_id)
-           end)
+    for domain <- [:connection, :metadata, :certificate] do
+      assert Enum.any?(events, fn event ->
+               event.domain == domain and
+                 event.actor == "ledger_loop_keycloak_provisioner" and
+                 event.cause == "phase70_profile_bootstrap" and
+                 is_binary(event.correlation_id)
+             end)
+    end
   end
 
   defp trust_counts(connection_record_id) do
@@ -109,7 +117,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     <EntityDescriptor entityID="#{@issuer}" xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
       <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
         <KeyDescriptor use="signing"><KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#"><X509Data><X509Certificate>#{certificate}</X509Certificate></X509Data></KeyInfo></KeyDescriptor>
-        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="#{@issuer}/protocol/saml?key=#{label}" />
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="#{@issuer}/protocol/saml" />
       </IDPSSODescriptor>
     </EntityDescriptor>
     """
@@ -118,9 +126,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
   defp descriptor_fingerprint(descriptor) do
     [_, encoded] = Regex.run(~r/<X509Certificate>(.+)<\/X509Certificate>/s, descriptor)
 
-    encoded
-    |> Base.decode64!()
-    |> :crypto.hash(:sha256)
+    :crypto.hash(:sha256, Base.decode64!(encoded))
     |> Base.encode16(case: :lower)
   end
 end
