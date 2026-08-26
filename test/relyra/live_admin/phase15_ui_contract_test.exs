@@ -138,7 +138,7 @@ defmodule Relyra.LiveAdmin.Phase15UiContractTest do
            )
   end
 
-  test "login trace page lists seeded login rows with six expandable step rows" do
+  test "login trace page retains native details and exposes step evidence in a labelled focusable overflow region" do
     connection =
       insert_connection!("conn_trace", "org_phase15", status: :enabled, cert_ready?: true)
 
@@ -148,11 +148,12 @@ defmodule Relyra.LiveAdmin.Phase15UiContractTest do
         domain: :login,
         action: :succeeded,
         actor: "system:login_trace",
-        cause: "sp_initiated",
+        cause: String.duplicate("safe-long-trace-cause-", 8),
         correlation_id: "corr-phase15-trace",
         before_summary: %{},
         after_summary: %{
-          "steps" => login_trace_steps(),
+          "steps" =>
+            login_trace_steps("response.validate", String.duplicate("SAFE_LONG_ERROR_CODE_", 8)),
           "overall_outcome" => "ok"
         },
         diff_summary: %{"kind" => "login_trace"}
@@ -163,6 +164,12 @@ defmodule Relyra.LiveAdmin.Phase15UiContractTest do
 
     assert has_element?(view, ~s([data-testid="login-trace-page"]))
     assert has_element?(view, ~s([data-testid="login-trace-row-#{event.id}"]))
+    assert has_element?(view, ~s(details[open][data-testid="login-trace-row-#{event.id}"]))
+
+    assert has_element?(
+             view,
+             ~s([data-testid="login-trace-evidence-region"][role="region"][tabindex="0"][aria-label="Login trace step evidence"])
+           )
 
     for step_name <- @trace_step_names do
       assert has_element?(view, ~s([data-testid="login-trace-step-#{step_name}"]))
@@ -197,9 +204,12 @@ defmodule Relyra.LiveAdmin.Phase15UiContractTest do
            )
   end
 
-  defp login_trace_steps do
+  defp login_trace_steps(error_step, error_code) do
     Map.new(@trace_step_names, fn step_name ->
-      {step_name, %{"outcome" => "ok", "duration_ms" => 5}}
+      step = %{"outcome" => "ok", "duration_ms" => 5}
+
+      {step_name,
+       if(step_name == error_step, do: Map.put(step, "error_code", error_code), else: step)}
     end)
   end
 
