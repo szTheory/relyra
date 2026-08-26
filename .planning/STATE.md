@@ -5,16 +5,16 @@ milestone_name: Phases
 current_phase: 70
 current_phase_name: keycloak-behind-the-proxy
 status: executing
-stopped_at: Completed 70-08-PLAN.md
-last_updated: "2026-08-26T19:35:13.841Z"
+stopped_at: Completed 70-09-PLAN.md
+last_updated: "2026-08-26T20:20:11.535Z"
 last_activity: 2026-08-26
 last_activity_desc: Phase 70 execution started
 progress:
   total_phases: 3
-  completed_phases: 3
-  total_plans: 13
+  completed_phases: 2
+  total_plans: 14
   completed_plans: 13
-  percent: 100
+  percent: 67
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-19)
 ## Current Position
 
 Phase: 70 (keycloak-behind-the-proxy) — EXECUTING
-Plan: 2 of 8
+Plan: 2 of 9
 Status: Ready to execute
 Last activity: 2026-08-26 — Phase 70 execution started
 
@@ -65,6 +65,7 @@ Last activity: 2026-08-26 — Phase 70 execution started
 | Phase 70-keycloak-behind-the-proxy P06 | 6min | 1 tasks | 2 files |
 | Phase 70 P07 | 8m | 2 tasks | 2 files |
 | Phase 70-keycloak-behind-the-proxy P08 | 20m | 2 tasks | 9 files |
+| Phase 70 P09 | ~10 minutes | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,7 @@ Last activity: 2026-08-26 — Phase 70 execution started
 - [Phase ?]: Keycloak E2E diagnostics retain only validated redacted container-state.log, relyra.log, and audit-actions.log files.
 - [Phase ?]: A single runtime Basic-auth pipeline guards both demo admin scope establishment and every mounted LiveAdmin route.
 - [Phase ?]: The Keycloak harness generates and redacts an ephemeral host-admin credential pair for authenticated trace evidence.
+- [Phase ?]: Keycloak identity creation, attributed mapping audit, and final enablement share one host-owned transaction.
 
 ### Blockers/Concerns
 
@@ -122,10 +124,10 @@ Last activity: 2026-08-26 — Phase 70 execution started
 
 ## Session Continuity
 
-**Stopped at:** Completed 70-08-PLAN.md
+**Stopped at:** Completed 70-09-PLAN.md
 **Resume file:** None
 
-Last session: 2026-08-26T19:35:13.812Z
+Last session: 2026-08-26T20:20:11.527Z
 Resume at: `/gsd-next`
 
 ## Operator Next Steps
