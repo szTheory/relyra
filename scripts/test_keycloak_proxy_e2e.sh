@@ -18,6 +18,13 @@ NETWORK_WAS_PRESENT=false
 CURRENT_LAYER="setup"
 PLAYWRIGHT_TMP_DIR=""
 
+if [[ -z "${DEMO_ADMIN_USERNAME:-}" || -z "${DEMO_ADMIN_PASSWORD:-}" ]]; then
+  DEMO_ADMIN_USERNAME="phase70-admin"
+  DEMO_ADMIN_PASSWORD="$(openssl rand -hex 32)"
+fi
+
+export DEMO_ADMIN_USERNAME DEMO_ADMIN_PASSWORD
+
 log() {
   printf '[keycloak-proxy-e2e] %s\n' "$*"
 }
@@ -32,7 +39,7 @@ redact_diagnostics() {
     xml { next }
     { print }
   ' | sed -E \
-    -e 's/(KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=([^[:space:]&]+)/\1=[REDACTED]/Ig' \
+    -e 's/(DEMO_ADMIN_PASSWORD|KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=([^[:space:]&]+)/\1=[REDACTED]/Ig' \
     -e 's/(SAML(Response|Request)=)[^&[:space:]]+/\1[REDACTED]/Ig' \
     -e 's/(Authorization:|Cookie:).*/\1 [REDACTED]/Ig' \
     -e 's#postgres(ql)?://[^[:space:]]+#postgres://[REDACTED]#Ig' \
@@ -84,7 +91,7 @@ validate_diagnostic_tree() {
     [[ -f "$staging_dir/$file" && ! -L "$staging_dir/$file" ]] || return 1
     awk '
       /SAML(Response|Request)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
-      /(KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
+      /(DEMO_ADMIN_PASSWORD|KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
       /Authorization:|Cookie:/ && $0 !~ /\[REDACTED\]/ { exit 1 }
       /postgres(ql)?:\/\// && $0 !~ /postgres:\/\/\[REDACTED\]/ { exit 1 }
       /<\?xml|<(Response|Assertion|EntityDescriptor)([[:space:]>]|$)|-----BEGIN |-----END / { exit 1 }
@@ -122,6 +129,7 @@ diagnostics_self_test() {
   local output
   output="$(printf '%s\n' \
     'KEYCLOAK_SARAH_PASSWORD=sarah-password' \
+    'DEMO_ADMIN_PASSWORD=admin-password-sentinel' \
     'SAMLResponse=encoded-assertion' \
     'Authorization: Bearer secret' \
     'Cookie: session=secret' \
@@ -130,12 +138,13 @@ diagnostics_self_test() {
     '-----BEGIN CERTIFICATE-----' | redact_diagnostics)"
 
   [[ "$output" == *'KEYCLOAK_SARAH_PASSWORD=[REDACTED]'* ]] &&
+    [[ "$output" == *'DEMO_ADMIN_PASSWORD=[REDACTED]'* ]] &&
     [[ "$output" == *'SAMLResponse=[REDACTED]'* ]] &&
     [[ "$output" == *'Authorization: [REDACTED]'* ]] &&
     [[ "$output" == *'Cookie: [REDACTED]'* ]] &&
     [[ "$output" == *'postgres://[REDACTED]'* ]] &&
     [[ "$output" == *'[REDACTED_XML_OR_PEM]'* ]] &&
-    ! grep -Eq 'sarah-password|encoded-assertion|Bearer secret|session=secret|postgres:postgres|<Response|BEGIN CERTIFICATE' <<<"$output"
+    ! grep -Eq 'sarah-password|admin-password-sentinel|encoded-assertion|Bearer secret|session=secret|postgres:postgres|<Response|BEGIN CERTIFICATE' <<<"$output"
 
   log "diagnostic redaction self-test passed"
 }
@@ -316,9 +325,9 @@ render_stack() {
   local host="$1"
 
   if [[ "$host" == "relyra.localhost" ]]; then
-    env -u RELYRA_HOST "${COMPOSE[@]}" config --format json
+    env -u RELYRA_HOST -u DEMO_ADMIN_USERNAME -u DEMO_ADMIN_PASSWORD "${COMPOSE[@]}" config --format json
   else
-    RELYRA_HOST="$host" "${COMPOSE[@]}" config --format json
+    RELYRA_HOST="$host" env -u DEMO_ADMIN_USERNAME -u DEMO_ADMIN_PASSWORD "${COMPOSE[@]}" config --format json
   fi
 }
 
@@ -462,6 +471,8 @@ PLAYWRIGHT_TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/relyra-keycloak-playwright.XXXX
 run_step browser_authentication env \
   BASE_URL="http://${PUBLIC_HOST}" \
   KEYCLOAK_SARAH_PASSWORD="${KEYCLOAK_SARAH_PASSWORD:-sarah-password}" \
+  DEMO_ADMIN_USERNAME="$DEMO_ADMIN_USERNAME" \
+  DEMO_ADMIN_PASSWORD="$DEMO_ADMIN_PASSWORD" \
   KEYCLOAK_PROXY_PLAYWRIGHT_TMP_DIR="$PLAYWRIGHT_TMP_DIR" \
   npx playwright test --config playwright.keycloak-proxy.config.mjs
 

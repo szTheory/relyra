@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test";
 
 const connectionId = "01H0B4Y1A2B3C4D5E6F7G8H9J4";
 const sarahPassword = process.env.KEYCLOAK_SARAH_PASSWORD || "sarah-password";
+const adminUsername = process.env.DEMO_ADMIN_USERNAME;
+const adminPassword = process.env.DEMO_ADMIN_PASSWORD;
 
 test("Keycloak signs Sarah into LedgerLoop through the public scoped ACS", async ({
   page,
@@ -35,6 +37,15 @@ test("Keycloak signs Sarah into LedgerLoop through the public scoped ACS", async
     ),
   ).toBeVisible();
 
+  if (!adminUsername || !adminPassword) {
+    throw new Error("DEMO_ADMIN_USERNAME and DEMO_ADMIN_PASSWORD are required");
+  }
+
+  const adminAuthorization = `Basic ${Buffer.from(
+    `${adminUsername}:${adminPassword}`,
+  ).toString("base64")}`;
+
+  await page.setExtraHTTPHeaders({ authorization: adminAuthorization });
   await page.goto("/login/admin");
   await expect(page).toHaveURL("http://relyra.localhost/relyra/admin");
   await page.goto(`/relyra/admin/connections/${connectionId}/trace`);
