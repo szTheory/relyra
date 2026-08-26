@@ -78,8 +78,38 @@ defmodule LedgerLoop.Demo.Reset do
 
         {:ok, _} = AuditWriter.append_event(Repo, attrs)
       end
+
+      maybe_insert_trace_visual_fixture(support_id)
     end)
 
     :ok
+  end
+
+  defp maybe_insert_trace_visual_fixture(support_id) do
+    if System.get_env("DEMO_TRACE_VISUAL_FIXTURE") == "1" do
+      {:ok, _} =
+        AuditWriter.append_event(Repo, %{
+          connection_record_id: support_id,
+          domain: :login,
+          action: :failed,
+          actor: "demo_trace_visual_fixture",
+          cause:
+            "visual_fixture_long_failure_cause operator-readable deterministic support evidence for narrow trace viewport validation without protected login material",
+          correlation_id: "visual-fixture-correlation-safe-deterministic",
+          before_summary: %{},
+          after_summary: %{
+            "overall_outcome" => "error",
+            "steps" => %{
+              "response.validate" => %{
+                "outcome" => "error",
+                "error_code" =>
+                  "SAFE_LONG_KNOWN_STEP_ERROR_CODE_for_deterministic_narrow_viewport_evidence_without_sensitive_payloads",
+                "duration_ms" => 17
+              }
+            }
+          },
+          diff_summary: %{"kind" => "login_trace", "fixture" => "trace_visual"}
+        })
+    end
   end
 end

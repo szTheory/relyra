@@ -102,19 +102,25 @@ defmodule LedgerLoop.Demo.ResetTest do
     end
 
     test "default reset retains the six support trace events without the visual fixture" do
-      with_demo_trace_visual_fixture(nil, fn ->
-        LedgerLoop.Demo.Reset.reset!()
+      for value <- [nil, "true"] do
+        with_demo_trace_visual_fixture(value, fn ->
+          LedgerLoop.Demo.Reset.reset!()
 
-        trace_events =
-          Repo.all(
-            from event in AuditEvent,
-              where: event.domain == :login,
-              order_by: [asc: event.inserted_at]
-          )
+          trace_events =
+            Repo.all(
+              from event in AuditEvent,
+                where: event.domain == :login,
+                order_by: [asc: event.inserted_at]
+            )
 
-        assert length(trace_events) == 6
-        refute Enum.any?(trace_events, &(&1.cause == "visual_fixture_long_failure_cause"))
-      end)
+          assert length(trace_events) == 6
+
+          refute Enum.any?(
+                   trace_events,
+                   &String.starts_with?(&1.cause, "visual_fixture_long_failure_cause")
+                 )
+        end)
+      end
     end
 
     test "exact visual-fixture opt-in adds one safe long failed login trace" do
@@ -122,16 +128,16 @@ defmodule LedgerLoop.Demo.ResetTest do
         LedgerLoop.Demo.Reset.reset!()
 
         fixture_event =
-          Repo.one!(
-            from event in AuditEvent,
-              where: event.domain == :login and event.cause == "visual_fixture_long_failure_cause"
-          )
+          Repo.all(from event in AuditEvent, where: event.domain == :login)
+          |> Enum.find(&String.starts_with?(&1.cause, "visual_fixture_long_failure_cause"))
+
+        assert fixture_event
 
         exported = Export.export_login(fixture_event)
 
         assert fixture_event.action == :failed
         assert String.length(fixture_event.cause) > 80
-        assert String.length(exported.correlation_id) == 16
+        assert exported.correlation_id =~ ~r/^[0-9a-f]{64}$/
         assert exported.correlation_id != fixture_event.correlation_id
         assert [%{"step" => "response.validate", "error_code" => error_code}] = exported.steps
         assert String.length(error_code) > 80

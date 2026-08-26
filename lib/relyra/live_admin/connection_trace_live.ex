@@ -95,36 +95,44 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
               <span style="color: #0066cc; font-size: 13px;">{length(trace.steps)} steps</span>
             </summary>
 
-            <table style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px;">
-              <thead>
-                <tr style="border-bottom: 2px solid #eee; text-align: left;">
-                  <th style="padding: 8px;">Step</th>
-                  <th style="padding: 8px;">Outcome</th>
-                  <th style="padding: 8px;">Error code</th>
-                  <th style="padding: 8px;">Duration</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  :for={step <- trace.steps}
-                  data-testid={"login-trace-step-#{step["step"]}"}
-                  style="border-bottom: 1px solid #eee;"
-                >
-                  <td style="padding: 8px;">{step_label(step["step"])}</td>
-                  <td style="padding: 8px;">
-                    <span style={"padding: 2px 8px; border-radius: 4px; " <> outcome_style(step["outcome"])}>
-                      {step["outcome"] || "—"}
-                    </span>
-                  </td>
-                  <td style="padding: 8px; font-family: monospace; font-size: 13px;">
-                    {step["error_code"] || "—"}
-                  </td>
-                  <td style="padding: 8px; font-variant-numeric: tabular-nums;">
-                    {format_duration(step["duration_ms"])}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div
+              role="region"
+              aria-label="Login trace step evidence"
+              tabindex="0"
+              data-testid="login-trace-evidence-region"
+              style="max-width: 100%; overflow-x: auto; margin-top: 16px;"
+            >
+              <table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #eee; text-align: left;">
+                    <th style="padding: 8px;">Step</th>
+                    <th style="padding: 8px;">Outcome</th>
+                    <th style="padding: 8px;">Error code</th>
+                    <th style="padding: 8px;">Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    :for={step <- trace.steps}
+                    data-testid={"login-trace-step-#{step["step"]}"}
+                    style="border-bottom: 1px solid #eee;"
+                  >
+                    <td style="padding: 8px;">{step_label(step["step"])}</td>
+                    <td style="padding: 8px;">
+                      <span style={"padding: 2px 8px; border-radius: 4px; " <> outcome_style(step["outcome"])}>
+                        {step["outcome"] || "—"}
+                      </span>
+                    </td>
+                    <td style="padding: 8px; font-family: monospace; font-size: 13px;">
+                      {step["error_code"] || "—"}
+                    </td>
+                    <td style="padding: 8px; font-variant-numeric: tabular-nums;">
+                      {format_duration(step["duration_ms"])}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </details>
         </div>
       </div>
