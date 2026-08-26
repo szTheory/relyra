@@ -31,19 +31,71 @@ log() {
 
 redact_diagnostics() {
   awk '
+    function protected_opening(line, rest, token, local_name, following) {
+      rest = line
+      while (match(rest, /<[A-Za-z_][A-Za-z0-9_.:-]*/)) {
+        token = substr(rest, RSTART + 1, RLENGTH - 1)
+        following = substr(rest, RSTART + RLENGTH, 1)
+        local_name = token
+        sub(/^.*:/, "", local_name)
+
+        if (token ~ /^([A-Za-z_][A-Za-z0-9_.-]*:)?(Response|Assertion|EntityDescriptor)$/ &&
+            following ~ /[[:space:]>\/]/) {
+          return token
+        }
+
+        rest = substr(rest, RSTART + RLENGTH)
+      }
+
+      return ""
+    }
+
+    function closes_protected_root(line, root, rest, token, following) {
+      rest = line
+      while (match(rest, /<\/[A-Za-z_][A-Za-z0-9_.:-]*/)) {
+        token = substr(rest, RSTART + 2, RLENGTH - 2)
+        following = substr(rest, RSTART + RLENGTH, 1)
+
+        if (token == root && following ~ /[[:space:]>]/) {
+          return 1
+        }
+
+        rest = substr(rest, RSTART + RLENGTH)
+      }
+
+      return 0
+    }
+
     /-----BEGIN / { pem = 1; print "[REDACTED_XML_OR_PEM]"; next }
     pem && /-----END / { pem = 0; next }
     pem { next }
-    /<\?xml|<(Response|Assertion|EntityDescriptor)([[:space:]>]|$)/ { xml = 1; print "[REDACTED_XML_OR_PEM]"; next }
-    xml && /<\/(Response|Assertion|EntityDescriptor)>/ { xml = 0; next }
-    xml { next }
+    xml {
+      if (closes_protected_root($0, protected_root)) {
+        xml = 0
+        protected_root = ""
+      }
+      next
+    }
+    {
+      protected_root = protected_opening($0)
+      if (protected_root != "") {
+        print "[REDACTED_XML_OR_PEM]"
+        if (!closes_protected_root($0, protected_root)) {
+          xml = 1
+        } else {
+          protected_root = ""
+        }
+        next
+      }
+    }
+    /<\?xml/ { print "[REDACTED_XML_OR_PEM]"; next }
     { print }
   ' | sed -E \
     -e 's/(DEMO_ADMIN_PASSWORD|KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=([^[:space:]&]+)/\1=[REDACTED]/Ig' \
     -e 's/(SAML(Response|Request)=)[^&[:space:]]+/\1[REDACTED]/Ig' \
     -e 's/(Authorization:|Cookie:).*/\1 [REDACTED]/Ig' \
     -e 's#postgres(ql)?://[^[:space:]]+#postgres://[REDACTED]#Ig' \
-    -e 's#.*(<\?xml|<[^>]*(Response|Assertion|EntityDescriptor)|-----BEGIN |-----END ).*#[REDACTED_XML_OR_PEM]#'
+    -e 's#.*(<\?xml|<[^>]*([A-Za-z_][A-Za-z0-9_.-]*:)?(Response|Assertion|EntityDescriptor)|-----BEGIN |-----END ).*#[REDACTED_XML_OR_PEM]#'
 }
 
 diagnostic_artifact_dir_is_safe() {
@@ -90,11 +142,67 @@ validate_diagnostic_tree() {
   for file in container-state.log relyra.log audit-actions.log; do
     [[ -f "$staging_dir/$file" && ! -L "$staging_dir/$file" ]] || return 1
     awk '
+      function protected_opening(line, rest, token, local_name, following) {
+        rest = line
+        while (match(rest, /<[A-Za-z_][A-Za-z0-9_.:-]*/)) {
+          token = substr(rest, RSTART + 1, RLENGTH - 1)
+          following = substr(rest, RSTART + RLENGTH, 1)
+          local_name = token
+          sub(/^.*:/, "", local_name)
+
+          if (token ~ /^([A-Za-z_][A-Za-z0-9_.-]*:)?(Response|Assertion|EntityDescriptor)$/ &&
+              following ~ /[[:space:]>\/]/) {
+            return token
+          }
+
+          rest = substr(rest, RSTART + RLENGTH)
+        }
+
+        return ""
+      }
+
+      function closes_protected_root(line, root, rest, token, following) {
+        rest = line
+        while (match(rest, /<\/[A-Za-z_][A-Za-z0-9_.:-]*/)) {
+          token = substr(rest, RSTART + 2, RLENGTH - 2)
+          following = substr(rest, RSTART + RLENGTH, 1)
+
+          if (token == root && following ~ /[[:space:]>]/) {
+            return 1
+          }
+
+          rest = substr(rest, RSTART + RLENGTH)
+        }
+
+        return 0
+      }
+
       /SAML(Response|Request)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
       /(DEMO_ADMIN_PASSWORD|KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
       /Authorization:|Cookie:/ && $0 !~ /\[REDACTED\]/ { exit 1 }
       /postgres(ql)?:\/\// && $0 !~ /postgres:\/\/\[REDACTED\]/ { exit 1 }
-      /<\?xml|<(Response|Assertion|EntityDescriptor)([[:space:]>]|$)|-----BEGIN |-----END / { exit 1 }
+      /<\?xml|-----BEGIN |-----END / { exit 1 }
+      {
+        if (protected_xml) {
+          if (closes_protected_root($0, protected_root)) {
+            exit 1
+          }
+          next
+        }
+
+        protected_root = protected_opening($0)
+        if (protected_root != "") {
+          protected_xml = 1
+          if (closes_protected_root($0, protected_root)) {
+            exit 1
+          }
+        }
+      }
+      END {
+        if (protected_xml) {
+          exit 1
+        }
+      }
     ' "$staging_dir/$file" || return 1
   done
 }
@@ -213,7 +321,7 @@ diagnostics_policy_self_test() {
 
   clean_stage="$(new_diagnostic_staging_dir "$retained_dir")"
   for filename in container-state.log relyra.log audit-actions.log; do
-    printf '%s\n%s\n' "$sentinels" "$qualified_response" |
+    printf '%s\n%s\n' "$qualified_response" "$sentinels" |
       write_redacted_diagnostic "$clean_stage" "$filename"
   done
   validate_diagnostic_tree "$clean_stage"
