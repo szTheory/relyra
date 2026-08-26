@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(CDPATH='' cd -P -- "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 PROXY_NETWORK="${DEMO_PROXY_NETWORK:-proxy}"
 PROJECT_NAME="${KEYCLOAK_PROXY_PROJECT_NAME:-relyra-keycloak-e2e-${RANDOM}}"
-ARTIFACT_DIR="${KEYCLOAK_PROXY_ARTIFACT_DIR:-playwright-report/keycloak-proxy-diagnostics-${PROJECT_NAME}}"
+ARTIFACT_ROOT="$ROOT_DIR/playwright-report"
+ARTIFACT_NAME="keycloak-proxy-diagnostics-${PROJECT_NAME}"
+ARTIFACT_DIR="$ARTIFACT_ROOT/$ARTIFACT_NAME"
 PUBLIC_HOST="${RELYRA_HOST:-relyra.localhost}"
 KEYCLOAK_PUBLIC_HOST="keycloak.${PUBLIC_HOST}"
 COMPOSE=(docker compose --project-name "$PROJECT_NAME" -f docker-compose.yml -f docker-compose.proxy.yml --profile keycloak)
@@ -100,16 +102,24 @@ redact_diagnostics() {
 
 diagnostic_artifact_dir_is_safe() {
   local candidate="$1"
-  local base
+  local parent
+  local canonical_parent
 
-  base="$(basename "$candidate")"
-  [[ "$candidate" != "/" && "$candidate" != "." && "$base" == keycloak-proxy-diagnostics-* ]]
+  [[ "$PROJECT_NAME" =~ ^relyra-keycloak-e2e-[A-Za-z0-9_-]+$ ]] || return 1
+  [[ "$ARTIFACT_NAME" =~ ^keycloak-proxy-diagnostics-[A-Za-z0-9_-]+$ ]] || return 1
+  [[ "$candidate" == "$ARTIFACT_DIR" ]] || return 1
+
+  parent="$(dirname "$candidate")"
+  [[ "$parent" == "$ARTIFACT_ROOT" && -d "$ARTIFACT_ROOT" && ! -L "$ARTIFACT_ROOT" ]] || return 1
+  canonical_parent="$(CDPATH='' cd -P -- "$parent" && pwd)" || return 1
+  [[ "$canonical_parent" == "$ARTIFACT_ROOT" ]]
 }
 
 new_diagnostic_staging_dir() {
   local destination="$1"
   local parent
 
+  mkdir -p "$ARTIFACT_ROOT" || return 1
   diagnostic_artifact_dir_is_safe "$destination" || return 1
   parent="$(dirname "$destination")"
   mkdir -p "$parent" || return 1
@@ -304,6 +314,7 @@ diagnostics_policy_self_test() {
   local rejected_stage
   local unredacted_stage
   local retained_dir
+  local unsafe_destination
   local sentinels
   local qualified_response
   local qualified_entity_descriptor
@@ -312,7 +323,8 @@ diagnostics_policy_self_test() {
   local filename
 
   self_test_root="$(mktemp -d "${TMPDIR:-/tmp}/relyra-keycloak-diagnostics-self-test.XXXXXX")"
-  retained_dir="$self_test_root/keycloak-proxy-diagnostics-self-test"
+  retained_dir="$ARTIFACT_DIR"
+  unsafe_destination="$self_test_root/keycloak-proxy-diagnostics-unowned"
   sentinels=$'KEYCLOAK_SARAH_PASSWORD=sarah-password-sentinel\nDEMO_ADMIN_PASSWORD=admin-password-sentinel\nusername=sarah-form-sentinel\nSAMLResponse=saml-response-sentinel\nSAMLRequest=saml-request-sentinel\n<Response>response-xml-sentinel</Response>\n<Assertion>assertion-xml-sentinel</Assertion>\n<EntityDescriptor>descriptor-xml-sentinel</EntityDescriptor>\n-----BEGIN PRIVATE KEY-----\npem-sentinel\nAuthorization: Bearer authorization-sentinel\nCookie: session=cookie-sentinel\npostgres://relyra:database-sentinel@db/relyra'
   qualified_response=$'phase70-safe-before\n<samlp:Response ID="phase70-response-tag-sentinel">\n  <saml:Assertion ID="phase70-assertion-tag-sentinel">\n    <saml:AttributeValue>phase70-xml-value-sentinel</saml:AttributeValue>\n  </saml:Assertion>\n</samlp:Response>\nphase70-safe-after'
   qualified_entity_descriptor=$'<metadata:EntityDescriptor entityID="phase70-descriptor-tag-sentinel">\n  phase70-descriptor-value-sentinel\n</metadata:EntityDescriptor>'
@@ -343,6 +355,14 @@ diagnostics_policy_self_test() {
   ! validate_diagnostic_tree "$rejected_stage"
   discard_diagnostics "$rejected_stage" "$retained_dir"
   [[ ! -e "$rejected_stage" && ! -e "$retained_dir" ]]
+
+  mkdir -p "$unsafe_destination"
+  touch "$unsafe_destination/phase70-unowned-artifact-sentinel"
+  ! diagnostic_artifact_dir_is_safe "$unsafe_destination"
+  discard_diagnostics "" "$unsafe_destination" || true
+  [[ -e "$unsafe_destination/phase70-unowned-artifact-sentinel" ]]
+  rm -- "$unsafe_destination/phase70-unowned-artifact-sentinel"
+  rmdir "$unsafe_destination"
 
   for fixture in "$qualified_response" "$qualified_entity_descriptor" "$same_line_response" "$unterminated_response"; do
     unredacted_stage="$(new_diagnostic_staging_dir "$retained_dir")"
