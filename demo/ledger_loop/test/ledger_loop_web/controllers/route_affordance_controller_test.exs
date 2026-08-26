@@ -60,11 +60,18 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
   end
 
   describe "admin_login" do
-    test "rejects absent and invalid host credentials before admin scope establishment", %{conn: conn} do
+    test "rejects absent and invalid host credentials before admin scope establishment", %{
+      conn: conn
+    } do
       for conn <- [
             conn,
-            put_req_header(conn, "authorization", Plug.BasicAuth.encode_basic_auth("wrong", "credentials"))
-          ], path <- ["/login/admin", "/relyra/admin/connections/new"] do
+            put_req_header(
+              conn,
+              "authorization",
+              Plug.BasicAuth.encode_basic_auth("wrong", "credentials")
+            )
+          ],
+          path <- ["/login/admin", "/relyra/admin/connections/new"] do
         response = get(conn, path)
 
         assert response.status == 401
