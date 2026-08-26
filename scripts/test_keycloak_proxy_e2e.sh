@@ -16,6 +16,7 @@ REALM_PATH="docker/keycloak/realm-demo-app.json"
 PROXY_WAS_RUNNING=false
 NETWORK_WAS_PRESENT=false
 CURRENT_LAYER="setup"
+PLAYWRIGHT_TMP_DIR=""
 
 log() {
   printf '[keycloak-proxy-e2e] %s\n' "$*"
@@ -89,6 +90,21 @@ NODE
   rmdir "$self_test_artifacts"
 
   log "browser artifact policy self-test passed"
+}
+
+cleanup_playwright_tmp() {
+  local candidate="${1:-$PLAYWRIGHT_TMP_DIR}"
+  local tmp_root="${TMPDIR:-/tmp}"
+
+  [[ -n "$candidate" ]] || return 0
+  [[ "$candidate" == "$tmp_root"/relyra-keycloak-playwright.* ]] || {
+    log "refusing to remove unexpected Playwright temporary directory"
+    return 1
+  }
+  [[ -d "$candidate" ]] || return 0
+
+  rm -rf -- "$candidate"
+  PLAYWRIGHT_TMP_DIR=""
 }
 
 capture_diagnostics() {
@@ -231,11 +247,11 @@ run_step fake_idp_regression bash -c \
   exit 1
 }
 
-mkdir -p "$ARTIFACT_DIR"
-
 cleanup() {
   local result_code=$?
   trap - EXIT INT TERM
+
+  cleanup_playwright_tmp || result_code=1
 
   if [[ "$result_code" -ne 0 ]]; then
     capture_diagnostics
@@ -288,11 +304,15 @@ run_step realm_contract "${COMPOSE[@]}" exec -T demo_app sh -c \
   "curl -fsS http://keycloak:8080/realms/demo-app/protocol/saml/descriptor | grep -F 'entityID=\"http://${KEYCLOAK_PUBLIC_HOST}/realms/demo-app\"' >/dev/null"
 run_step descriptor_trust "${COMPOSE[@]}" wait keycloak_provisioner
 
+PLAYWRIGHT_TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/relyra-keycloak-playwright.XXXXXX")"
+
 run_step browser_authentication env \
   BASE_URL="http://${PUBLIC_HOST}" \
   KEYCLOAK_SARAH_PASSWORD="${KEYCLOAK_SARAH_PASSWORD:-sarah-password}" \
-  KEYCLOAK_PROXY_PLAYWRIGHT_ARTIFACT_DIR="${ARTIFACT_DIR}/playwright" \
+  KEYCLOAK_PROXY_PLAYWRIGHT_TMP_DIR="$PLAYWRIGHT_TMP_DIR" \
   npx playwright test --config playwright.keycloak-proxy.config.mjs
+
+cleanup_playwright_tmp
 
 run_step acs_validation "${COMPOSE[@]}" exec -T demo_app mix run -e '
   import Ecto.Query
