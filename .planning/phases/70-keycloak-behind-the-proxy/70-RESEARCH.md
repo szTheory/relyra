@@ -267,17 +267,17 @@ The exact selector/receipt placement is discretionary; the test must use accessi
 |---|-------|---------|---------------|
 | A1 | The existing root Playwright package/configuration can host a new Keycloak proxy command without a new dependency. | Standard Stack / Validation | Low; planner must read `package.json` and existing fleet config before selecting the exact command. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Exact optional-profile orchestration point**
+1. **Exact optional-profile orchestration point — RESOLVED**
    - What we know: It must run after Keycloak and LedgerLoop readiness, be idempotent, and leave normal reset independent. [VERIFIED: 70-CONTEXT.md]
-   - What's unclear: Whether a Mix task is invoked by a dedicated one-shot Compose service or by the host E2E harness.
-   - Recommendation: Prefer a dedicated profile-scoped one-shot service/task with a bounded retry loop; have the host harness invoke/await it and capture diagnostics.
+   - Selected outcome: Use a dedicated profile-scoped one-shot Compose service that invokes the demo-owned Mix provisioner after Keycloak and LedgerLoop readiness; the host E2E harness starts, awaits, and diagnoses that service.
+   - Rationale: This keeps provisioning optional and profile-scoped, gives Compose an explicit readiness dependency, and preserves the host harness as lifecycle owner without coupling ordinary LedgerLoop reset or boot to Keycloak.
 
-2. **Genuine-response replay companion**
+2. **Genuine-response replay companion — RESOLVED**
    - What we know: It is optional and must not mutate browser XML or weaken verification. [VERIFIED: 70-CONTEXT.md]
-   - What's unclear: Whether the current harness can capture/replay the POST without brittleness.
-   - Recommendation: Treat as a conditional enhancement; KC-01 is satisfied by the positive signed journey plus existing FakeIdP negative lane.
+   - Selected outcome: Intentionally omit genuine-response replay from Phase 70.
+   - Rationale: The user left replay to the agent's discretion only if a genuine response could be reused cleanly. Capturing and replaying the browser POST would add brittle interception/storage handling, while KC-01 is fully proven by the genuine signed positive journey and the existing deterministic FakeIdP replay/tamper security lanes remain intact.
 
 ## Environment Availability
 

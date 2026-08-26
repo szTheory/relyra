@@ -18,7 +18,7 @@ created: 2026-08-26
 | Property | Value |
 |----------|-------|
 | **Framework** | ExUnit/Mix, Playwright, and Docker Compose |
-| **Config file** | `playwright.fleet-proxy.config.mjs` as the existing host-side proxy pattern; add a Keycloak-specific config only if spec selection cannot reuse it |
+| **Config file** | `playwright.keycloak-proxy.config.mjs`, following the existing host-side `playwright.fleet-proxy.config.mjs` pattern |
 | **Quick run command** | `cd demo/ledger_loop && mix test test/ledger_loop/demo/keycloak_provisioner_test.exs test/ledger_loop_web/controllers/route_affordance_controller_test.exs --warnings-as-errors` |
 | **Full suite command** | `npm run demo:keycloak-proxy && mix qa && mix ci.security && mix format --check-formatted` |
 | **Estimated runtime** | ~600 seconds |
@@ -38,15 +38,15 @@ created: 2026-08-26
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 70-01-01 | 01 | 1 | KC-01 | T-70-01..05 | Tracer proves proxy-only topology, descriptor-derived audited trust, genuine signed ACS, receipt, and six-step Login Trace. | integration/E2E | `npm run demo:keycloak-proxy` | ❌ W0 | ⬜ pending |
+| 70-01-01 | 01 | 1 | KC-01 | T-70-01..05 | Tracer proves proxy-only topology, descriptor-derived audited trust, genuine signed ACS, receipt, and six-step Login Trace. | integration/E2E | `bash -n scripts/test_keycloak_proxy_e2e.sh && KEYCLOAK_PROXY_STATIC_ONLY=1 bash scripts/test_keycloak_proxy_e2e.sh && npm run demo:keycloak-proxy` | ❌ W0 | ⬜ pending |
 | 70-02-01 | 02 | 2 | KC-01 | T-70-06..09 | Initial provisioning, unchanged-run idempotency, attribution, and fail-closed stages use the real Repo and audited seams. | ExUnit integration | `cd demo/ledger_loop && mix test test/ledger_loop/demo/keycloak_provisioner_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
 | 70-02-02 | 02 | 2 | KC-01 | T-70-06..09 | Generated signing-key rotation replaces configured trust before re-enable and is idempotent afterward. | ExUnit integration | `cd demo/ledger_loop && mix test test/ledger_loop/demo/keycloak_provisioner_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
-| 70-03-01 | 03 | 2 | KC-01 | T-70-10..14 | Default/override render checks prove one host input, no direct/management exposure, and no stale browser URLs. | integration/static | `KEYCLOAK_PROXY_STATIC_ONLY=1 bash scripts/test_keycloak_proxy_e2e.sh` | ❌ W0 | ⬜ pending |
-| 70-03-02 | 03 | 2 | KC-01 | T-70-10..14 | Fresh realm lifecycle and diagnostic self-tests prove stale imports and sensitive artifacts cannot hide failures. | integration/static | `KEYCLOAK_PROXY_DIAGNOSTICS_SELF_TEST=1 bash scripts/test_keycloak_proxy_e2e.sh` | ❌ W0 | ⬜ pending |
+| 70-03-01 | 03 | 2 | KC-01 | T-70-10..14 | Default/override render checks prove one host input, no direct/management exposure, and no stale browser URLs. | integration/static | `bash -n scripts/test_keycloak_proxy_e2e.sh && KEYCLOAK_PROXY_STATIC_ONLY=1 bash scripts/test_keycloak_proxy_e2e.sh` | ❌ W0 | ⬜ pending |
+| 70-03-02 | 03 | 2 | KC-01 | T-70-10..14 | Fresh realm lifecycle and diagnostic self-tests prove stale imports and sensitive artifacts cannot hide failures. | integration/static | `KEYCLOAK_PROXY_DIAGNOSTICS_SELF_TEST=1 bash scripts/test_keycloak_proxy_e2e.sh && KEYCLOAK_PROXY_FORCE_FAILURE=keycloak_readiness bash scripts/test_keycloak_proxy_e2e.sh 2>&1 \| rg 'layer=keycloak_readiness'` | ❌ W0 | ⬜ pending |
 | 70-04-01 | 04 | 3 | KC-01 | T-70-15..18 | Conditional native Keycloak link appears only for the enabled stable connection and FakeIdP remains present. | Phoenix controller | `cd demo/ledger_loop && mix test test/ledger_loop_web/controllers/route_affordance_controller_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
-| 70-04-02 | 04 | 3 | KC-01 | T-70-15..18 | Exact verified session-establishment receipt copy is derived from a durable LoginReceipt. | Phoenix controller | `cd demo/ledger_loop && mix test test/ledger_loop_web/controllers/page_controller_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
-| 70-05-01 | 05 | 4 | KC-01 | T-70-19..23 | Browser begins at the semantic link, observes exact ACS POST, exact receipt, and correlation-specific successful trace. | Playwright E2E | `npm run demo:keycloak-proxy` | ❌ W0 | ⬜ pending |
-| 70-05-02 | 05 | 4 | KC-01 | T-70-19..23 | FakeIdP success/tamper and permanent warnings/security/format gates remain independent. | regression | `cd demo/ledger_loop && mix test test/ledger_loop_web/fake_idp_flow_test.exs --warnings-as-errors` | ✅ | ⬜ pending |
+| 70-04-02 | 04 | 3 | KC-01 | T-70-15..18 | Exact verified session-establishment receipt copy is derived from a durable LoginReceipt. | Phoenix controller | `cd demo/ledger_loop && mix test test/ledger_loop_web/controllers/page_controller_test.exs test/ledger_loop_web/controllers/route_affordance_controller_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
+| 70-05-01 | 05 | 4 | KC-01 | T-70-19..23 | Browser begins at the semantic link, observes exact ACS POST, exact receipt, and correlation-specific successful trace. | Playwright E2E | `npx playwright test --config=playwright.keycloak-proxy.config.mjs --list && npm run demo:keycloak-proxy` | ❌ W0 | ⬜ pending |
+| 70-05-02 | 05 | 4 | KC-01 | T-70-19..23 | FakeIdP success/tamper and permanent warnings/security/format gates remain independent. | regression | `cd demo/ledger_loop && mix test test/ledger_loop_web/fake_idp_flow_test.exs --warnings-as-errors && cd ../.. && npm run demo:keycloak-proxy && mix test --warnings-as-errors && mix qa && mix ci.security && mix format --check-formatted` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
