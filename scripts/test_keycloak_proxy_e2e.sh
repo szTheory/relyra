@@ -23,12 +23,99 @@ log() {
 }
 
 redact_diagnostics() {
-  sed -E \
-    -e 's/(KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password)=([^[:space:]&]+)/\1=[REDACTED]/Ig' \
-    -e 's/(SAMLResponse=)[^&[:space:]]+/\1[REDACTED]/Ig' \
+  awk '
+    /-----BEGIN / { pem = 1; print "[REDACTED_XML_OR_PEM]"; next }
+    pem && /-----END / { pem = 0; next }
+    pem { next }
+    /<\?xml|<(Response|Assertion|EntityDescriptor)([[:space:]>]|$)/ { xml = 1; print "[REDACTED_XML_OR_PEM]"; next }
+    xml && /<\/(Response|Assertion|EntityDescriptor)>/ { xml = 0; next }
+    xml { next }
+    { print }
+  ' | sed -E \
+    -e 's/(KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=([^[:space:]&]+)/\1=[REDACTED]/Ig' \
+    -e 's/(SAML(Response|Request)=)[^&[:space:]]+/\1[REDACTED]/Ig' \
     -e 's/(Authorization:|Cookie:).*/\1 [REDACTED]/Ig' \
     -e 's#postgres(ql)?://[^[:space:]]+#postgres://[REDACTED]#Ig' \
     -e 's#.*(<\?xml|<[^>]*(Response|Assertion|EntityDescriptor)|-----BEGIN |-----END ).*#[REDACTED_XML_OR_PEM]#'
+}
+
+diagnostic_artifact_dir_is_safe() {
+  local candidate="$1"
+  local base
+
+  base="$(basename "$candidate")"
+  [[ "$candidate" != "/" && "$candidate" != "." && "$base" == keycloak-proxy-diagnostics-* ]]
+}
+
+new_diagnostic_staging_dir() {
+  local destination="$1"
+  local parent
+
+  diagnostic_artifact_dir_is_safe "$destination" || return 1
+  parent="$(dirname "$destination")"
+  mkdir -p "$parent" || return 1
+  umask 077
+  mktemp -d "$parent/.keycloak-proxy-diagnostics-stage.XXXXXX"
+}
+
+write_redacted_diagnostic() {
+  local staging_dir="$1"
+  local filename="$2"
+
+  case "$filename" in
+    container-state.log | relyra.log | audit-actions.log) ;;
+    *) return 1 ;;
+  esac
+
+  redact_diagnostics >"$staging_dir/$filename"
+}
+
+validate_diagnostic_tree() {
+  local staging_dir="$1"
+  local file
+  local filenames
+
+  [[ -d "$staging_dir" && ! -L "$staging_dir" ]] || return 1
+  filenames="$(find "$staging_dir" -mindepth 1 -maxdepth 1 -type f -exec basename {} \; | sort)"
+  [[ "$filenames" == $'audit-actions.log\ncontainer-state.log\nrelyra.log' ]] || return 1
+  [[ "$(find "$staging_dir" -mindepth 1 -maxdepth 1 ! -type f -print -quit)" == "" ]] || return 1
+
+  for file in container-state.log relyra.log audit-actions.log; do
+    [[ -f "$staging_dir/$file" && ! -L "$staging_dir/$file" ]] || return 1
+    awk '
+      /SAML(Response|Request)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
+      /(KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
+      /Authorization:|Cookie:/ && $0 !~ /\[REDACTED\]/ { exit 1 }
+      /postgres(ql)?:\/\// && $0 !~ /postgres:\/\/\[REDACTED\]/ { exit 1 }
+      /<\?xml|<(Response|Assertion|EntityDescriptor)([[:space:]>]|$)|-----BEGIN |-----END / { exit 1 }
+    ' "$staging_dir/$file" || return 1
+  done
+}
+
+discard_diagnostics() {
+  local staging_dir="$1"
+  local destination="$2"
+
+  [[ -n "$staging_dir" ]] && rm -rf -- "$staging_dir"
+  diagnostic_artifact_dir_is_safe "$destination" && rm -rf -- "$destination"
+}
+
+promote_diagnostics() {
+  local staging_dir="$1"
+  local destination="$2"
+
+  validate_diagnostic_tree "$staging_dir" && diagnostic_artifact_dir_is_safe "$destination" || {
+    discard_diagnostics "$staging_dir" "$destination"
+    return 1
+  }
+  rm -rf -- "$destination" || {
+    discard_diagnostics "$staging_dir" "$destination"
+    return 1
+  }
+  mv "$staging_dir" "$destination" || {
+    discard_diagnostics "$staging_dir" "$destination"
+    return 1
+  }
 }
 
 diagnostics_self_test() {
@@ -112,11 +199,16 @@ diagnostics_policy_self_test() {
   printf '%s\n' "$sentinels" | write_redacted_diagnostic "$clean_stage" audit-actions.log
   validate_diagnostic_tree "$clean_stage"
   promote_diagnostics "$clean_stage" "$retained_dir"
-  [[ "$(find "$retained_dir" -maxdepth 1 -type f -printf '%f\n' | sort)" == $'audit-actions.log\ncontainer-state.log\nrelyra.log' ]]
+  [[ "$(find "$retained_dir" -maxdepth 1 -type f -exec basename {} \; | sort)" == $'audit-actions.log\ncontainer-state.log\nrelyra.log' ]]
   ! grep -R -E 'sarah-password-sentinel|sarah-form-sentinel|saml-response-sentinel|saml-request-sentinel|response-xml-sentinel|assertion-xml-sentinel|descriptor-xml-sentinel|pem-sentinel|authorization-sentinel|cookie-sentinel|database-sentinel' "$retained_dir"
 
   rejected_stage="$(new_diagnostic_staging_dir "$retained_dir")"
-  touch "$rejected_stage/trace.zip"
+  touch "$rejected_stage/unknown.txt" \
+    "$rejected_stage/trace.zip" \
+    "$rejected_stage/video.webm" \
+    "$rejected_stage/screenshot.png" \
+    "$rejected_stage/snapshot.html" \
+    "$rejected_stage/network.har"
   ! validate_diagnostic_tree "$rejected_stage"
   discard_diagnostics "$rejected_stage" "$retained_dir"
   [[ ! -e "$rejected_stage" && ! -e "$retained_dir" ]]
@@ -145,15 +237,28 @@ cleanup_playwright_tmp() {
 }
 
 capture_diagnostics() {
-  mkdir -p "$ARTIFACT_DIR"
+  local staging_dir
+
+  staging_dir="$(new_diagnostic_staging_dir "$ARTIFACT_DIR")" || {
+    printf '[keycloak-proxy-e2e] layer=%s status=failed diagnostics=discarded\n' "$CURRENT_LAYER" >&2
+    return 1
+  }
 
   {
     printf 'layer=%s\n' "$CURRENT_LAYER"
     "${COMPOSE[@]}" ps -a
     "${PROXY_COMPOSE[@]}" ps traefik
-  } | redact_diagnostics >"$ARTIFACT_DIR/container-state.log" 2>&1 || true
+  } 2>&1 | write_redacted_diagnostic "$staging_dir" container-state.log || {
+    discard_diagnostics "$staging_dir" "$ARTIFACT_DIR"
+    printf '[keycloak-proxy-e2e] layer=%s status=failed diagnostics=discarded\n' "$CURRENT_LAYER" >&2
+    return 1
+  }
 
-  "${COMPOSE[@]}" logs --no-color | redact_diagnostics >"$ARTIFACT_DIR/relyra.log" 2>&1 || true
+  "${COMPOSE[@]}" logs --no-color 2>&1 | write_redacted_diagnostic "$staging_dir" relyra.log || {
+    discard_diagnostics "$staging_dir" "$ARTIFACT_DIR"
+    printf '[keycloak-proxy-e2e] layer=%s status=failed diagnostics=discarded\n' "$CURRENT_LAYER" >&2
+    return 1
+  }
 
   "${COMPOSE[@]}" exec -T demo_app mix run -e '
     import Ecto.Query
@@ -161,7 +266,16 @@ capture_diagnostics() {
     alias Relyra.Ecto.AuditEvent
     actions = Repo.all(from event in AuditEvent, select: {event.domain, event.action}, limit: 20)
     Enum.each(actions, fn {domain, action} -> IO.puts("audit=#{domain}:#{action}") end)
-  ' 2>&1 | redact_diagnostics >"$ARTIFACT_DIR/audit-actions.log" || true
+  ' 2>&1 | write_redacted_diagnostic "$staging_dir" audit-actions.log || {
+    discard_diagnostics "$staging_dir" "$ARTIFACT_DIR"
+    printf '[keycloak-proxy-e2e] layer=%s status=failed diagnostics=discarded\n' "$CURRENT_LAYER" >&2
+    return 1
+  }
+
+  promote_diagnostics "$staging_dir" "$ARTIFACT_DIR" || {
+    printf '[keycloak-proxy-e2e] layer=%s status=failed diagnostics=discarded\n' "$CURRENT_LAYER" >&2
+    return 1
+  }
 }
 
 fail_layer() {
@@ -291,7 +405,7 @@ cleanup() {
   cleanup_playwright_tmp || result_code=1
 
   if [[ "$result_code" -ne 0 ]]; then
-    capture_diagnostics
+    capture_diagnostics || true
   fi
 
   # This project name is generated per run.  Removing its volumes forces a
