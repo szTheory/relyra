@@ -36,7 +36,7 @@
       "baseUrl": "http://${RELYRA_HOST}",
       "adminUrl": "http://${RELYRA_HOST}/saml/01H0B4Y1A2B3C4D5E6F7G8H9J4/acs",
       "redirectUris": ["http://${RELYRA_HOST}/saml/01H0B4Y1A2B3C4D5E6F7G8H9J4/acs"],
-      "webOrigins": ["+"],
+      "webOrigins": ["http://${RELYRA_HOST}"],
       "attributes": {
         "saml.authnstatement": "true",
         "saml.server.signature": "true",
