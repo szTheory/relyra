@@ -47,18 +47,17 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_HOSTNAME: localhost
-      KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
       JAVA_OPTS_APPEND: "-Dpicketlink.xmlsig.includeKeyInfo=false"
-    ports:
-      - "${KC_PORT:-8080}:8080"
     volumes:
       - ./docker/keycloak/realm-demo-app.json:/opt/keycloak/data/import/realm-demo-app.json:ro
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c '{ printf \"HEAD /health/ready HTTP/1.0\\r\\n\\r\\n\" >&0; grep -q \"HTTP/1.0 200\"; } 0<>/dev/tcp/localhost/9000'"
+        ]
       interval: 5s
       timeout: 5s
       retries: 30

@@ -10,16 +10,16 @@
   "bruteForceProtected": false,
   "users": [
     {
-      "username": "admin",
+      "username": "sarah@northstar.example.com",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Admin",
-      "lastName": "User",
-      "email": "admin@example.com",
+      "firstName": "Sarah",
+      "lastName": "Northstar",
+      "email": "sarah@northstar.example.com",
       "credentials": [
         {
           "type": "password",
-          "value": "admin",
+          "value": "${KEYCLOAK_SARAH_PASSWORD}",
           "temporary": false
         }
       ]
@@ -27,15 +27,15 @@
   ],
   "clients": [
     {
-      "clientId": "http://localhost:4000",
+      "clientId": "http://${RELYRA_HOST}/saml/01H0B4Y1A2B3C4D5E6F7G8H9J4/metadata",
       "name": "Relyra Demo SP",
       "enabled": true,
       "protocol": "saml",
       "fullScopeAllowed": true,
-      "rootUrl": "http://localhost:4000",
-      "baseUrl": "http://localhost:4000",
-      "adminUrl": "http://localhost:4000/saml/sso/acs",
-      "redirectUris": ["http://localhost:4000/saml/sso/acs", "http://demo_app:4000/saml/sso/acs"],
+      "rootUrl": "http://${RELYRA_HOST}",
+      "baseUrl": "http://${RELYRA_HOST}",
+      "adminUrl": "http://${RELYRA_HOST}/saml/01H0B4Y1A2B3C4D5E6F7G8H9J4/acs",
+      "redirectUris": ["http://${RELYRA_HOST}/saml/01H0B4Y1A2B3C4D5E6F7G8H9J4/acs"],
       "webOrigins": ["+"],
       "attributes": {
         "saml.authnstatement": "true",
@@ -46,7 +46,7 @@
         "saml.server.signature.keyinfo.ext": "false",
         "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
         "saml.force.post.binding": "true",
-        "saml.assertion.consumer.url.post": "http://localhost:4000/saml/sso/acs",
+        "saml.assertion.consumer.url.post": "http://${RELYRA_HOST}/saml/01H0B4Y1A2B3C4D5E6F7G8H9J4/acs",
         "saml_force_name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
       }
     }

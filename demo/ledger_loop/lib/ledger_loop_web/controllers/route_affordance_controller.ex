@@ -3,7 +3,11 @@ defmodule LedgerLoopWeb.RouteAffordanceController do
 
   def login(conn, _params) do
     conn_id = LedgerLoop.Demo.Fixtures.relyra_enabled_scenario_id()
-    render(conn, :login, conn_id: conn_id)
+
+    render(conn, :login,
+      conn_id: conn_id,
+      keycloak_connection_id: LedgerLoop.Demo.KeycloakProvisioner.connection_id()
+    )
   end
 
   def admin_login(conn, _params) do
