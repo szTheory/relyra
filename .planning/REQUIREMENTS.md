@@ -26,7 +26,7 @@
 
 ### Keycloak behind the proxy (KC)
 
-- [ ] **KC-01**: The optional Keycloak real-IdP profile runs behind the proxy at `http://keycloak.relyra.localhost` with correct `KC_HOSTNAME` + `KC_PROXY_HEADERS=xforwarded` and realm URLs/redirect-URIs pointing at `relyra.localhost`, so the full Keycloak-backed SAML login round-trip succeeds end-to-end.
+- [x] **KC-01**: The optional Keycloak real-IdP profile runs behind the proxy at `http://keycloak.relyra.localhost` with correct `KC_HOSTNAME` + `KC_PROXY_HEADERS=xforwarded` and realm URLs/redirect-URIs pointing at `relyra.localhost`, so the full Keycloak-backed SAML login round-trip succeeds end-to-end.
 
 ### Launcher DX & self-documenting launch (DX)
 
@@ -64,7 +64,7 @@
 | FLEET-01 | Phase 69 | Complete |
 | FLEET-02 | Phase 69 | Complete |
 | FLEET-03 | Phase 69 | Complete |
-| KC-01 | Phase 70 | Pending |
+| KC-01 | Phase 70 | Complete |
 | DX-01 | Phase 71 | Pending |
 | DX-02 | Phase 71 | Pending |
 | DOC-01 | Phase 72 | Pending |

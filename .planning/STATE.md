@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Phases
-current_phase: 69
+current_phase: 70
+current_phase_name: keycloak-behind-the-proxy
 status: executing
-stopped_at: Phase 70 context gathered
-last_updated: "2026-08-26T15:54:59.484Z"
+stopped_at: Completed 70-01-PLAN.md
+last_updated: "2026-08-26T16:39:21.339Z"
 last_activity: 2026-08-26
-last_activity_desc: Phase 69 marked complete
+last_activity_desc: Phase 70 execution started
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 10
-  completed_plans: 5
-  percent: 67
-current_phase_name: compose-split-fleet-proxy
+  completed_plans: 6
+  percent: 60
 ---
 
 # Project State
@@ -24,14 +24,14 @@ current_phase_name: compose-split-fleet-proxy
 See: `.planning/PROJECT.md` (updated 2026-06-19)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 69 — compose-split-fleet-proxy
+**Current focus:** Phase 70 — keycloak-behind-the-proxy
 
 ## Current Position
 
-Phase: 69 — COMPLETE
-Plan: 3 of 3
+Phase: 70 (keycloak-behind-the-proxy) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-08-26 — Phase 69 marked complete
+Last activity: 2026-08-26 — Phase 70 execution started
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Last activity: 2026-08-26 — Phase 69 marked complete
 | Phase 69-compose-split-fleet-proxy P01 | 24m | 2 tasks | 4 files |
 | Phase 69 P02 | 42m | 2 tasks | 2 files |
 | Phase 69 P03 | 17m | 2 tasks | 21 files |
+| Phase 70 P01 | 9min | 1 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Last activity: 2026-08-26 — Phase 69 marked complete
 - [Phase ?]: Phoenix public URL and LiveView origins derive from explicit runtime environment values outside test.
 - [Phase ?]: Shared ingress remains neutral: dev_proxy on external proxy network; Relyra owns only relyra-local-demo labels.
 - [Phase ?]: Fleet mode uses explicit base-plus-proxy Compose files, excluding the automatic solo port overlay.
+- [Phase ?]: Keycloak trace proof uses the three persisted verifier steps; workspace return and LoginReceipt separately prove host mapping and session establishment.
 
 ### Blockers/Concerns
 
@@ -101,10 +103,10 @@ Last activity: 2026-08-26 — Phase 69 marked complete
 
 ## Session Continuity
 
-**Stopped at:** Phase 70 context gathered
-**Resume file:** .planning/phases/70-keycloak-behind-the-proxy/70-CONTEXT.md
+**Stopped at:** Completed 70-01-PLAN.md
+**Resume file:** None
 
-Last session: 2026-08-26T15:20:44.526Z
+Last session: 2026-08-26T16:39:21.332Z
 Resume at: `/gsd-next`
 
 ## Operator Next Steps
