@@ -1,0 +1,22 @@
+services:
+  demo_app:
+    environment:
+      PHX_HOST: ${RELYRA_HOST:-relyra.localhost}
+      PHX_SCHEME: http
+      PHX_PORT: "80"
+      DEMO_CHECK_ORIGINS: ${DEMO_CHECK_ORIGINS:-//localhost,//relyra.localhost,//*.relyra.localhost}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEMO_PROXY_NETWORK:-proxy}"
+      - "traefik.http.routers.relyra-local-demo.rule=Host(`${RELYRA_HOST:-relyra.localhost}`)"
+      - "traefik.http.routers.relyra-local-demo.entrypoints=web"
+      - "traefik.http.routers.relyra-local-demo.service=relyra-local-demo"
+      - "traefik.http.services.relyra-local-demo.loadbalancer.server.port=4000"
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: ${DEMO_PROXY_NETWORK:-proxy}
