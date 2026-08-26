@@ -1,6 +1,6 @@
 ---
 phase: 70-keycloak-behind-the-proxy
-reviewed: 2026-08-26T00:00:00Z
+reviewed: 2026-08-26T21:20:12Z
 depth: standard
 files_reviewed: 16
 files_reviewed_list:
@@ -22,83 +22,72 @@ files_reviewed_list:
   - scripts/test_keycloak_proxy_e2e.sh
 findings:
   critical: 2
-  warning: 1
+  warning: 0
   info: 0
-  total: 3
+  total: 2
 status: issues_found
 ---
 
 # Phase 70: Code Review Report
 
-**Reviewed:** 2026-08-26T00:00:00Z
+**Reviewed:** 2026-08-26T21:20:12Z
 **Depth:** standard
 **Files Reviewed:** 16
 **Status:** issues_found
 
 ## Summary
 
-The review found two ship-blocking boundary failures: descriptor-provided SSO endpoints are trusted without enforcing the locked public Keycloak endpoint, and the diagnostics override can recursively delete an arbitrary matching directory. The provisioner also omits the phase's specified stable internal connection UUID.
+The optional Keycloak profile, Basic-auth admin boundary, and diagnostics harness were reviewed with the host mapping and artifact-retention paths traced into their called Ecto and shell helpers. Two blocker-level defects remain: reprovisioning does not verify that Sarah's existing external identity belongs to Sarah's LedgerLoop user, and an environment-controlled diagnostics destination can delete an unrelated directory.
 
 ## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: Descriptor SSO endpoint is accepted without public-host validation
+### CR-01: Reprovisioning can retain an identity mapped to the wrong user
+
+**File:** `demo/ledger_loop/lib/ledger_loop/demo/keycloak_provisioner.ex:98-106`
 
 **Classification:** BLOCKER
 
-**File:** `demo/ledger_loop/lib/ledger_loop/demo/keycloak_provisioner.ex:68`
+**Issue:** The unchanged shortcut treats any `SAMLIdentity` with Sarah's issuer and subject as valid; it never checks `identity.user_id`. `ensure_sarah_identity/4` also treats that existing row as success at lines 249-263. If the row is associated with a different LedgerLoop user (for example, after a bad prior mapping or data repair), an unchanged descriptor returns `{:ok, :unchanged}` and the connection remains enabled. A real Keycloak assertion for Sarah will then establish a receipt for the other user. This violates the phase's required Sarah identity mapping and is an authentication/account-assignment vulnerability.
 
-**Issue:** `descriptor_candidate/3` checks only `candidate.idp_entity_id`. `MetadataApply.apply_revision/4` subsequently applies `candidate.idp_sso_url`, so a descriptor with the expected entity ID but `SingleSignOnService Location` on an attacker-controlled host is accepted and makes the stable login route redirect users there. This violates the phase's fixed public issuer/SSO contract and expands the descriptor trust boundary beyond the configured Keycloak public identity.
-
-**Fix:** Require the selected SSO URL to equal the expected public endpoint before any mutation, and add a failing descriptor test.
+**Fix:** Resolve the canonical Sarah user before the unchanged check and require the identity's `user_id` to match it; reject or repair a mismatched mapping inside the same audited transaction. Add a regression that seeds the same issuer/subject for another user and asserts provisioning does not return unchanged or enable the connection.
 
 ```elixir
-expected_sso_url = "#{public_issuer(host)}/protocol/saml"
+user = Repo.get_by!(User, email: @sarah_email)
 
-with {:ok, parsed} <- parser.(descriptor),
-     candidate <- Import.build_candidate(parsed),
-     true <- candidate.idp_entity_id == public_issuer(host),
-     true <- candidate.idp_sso_url == expected_sso_url do
-  {:ok, candidate}
-else
-  false -> {:error, {:parse, :unexpected_public_descriptor_endpoint}}
-  {:error, reason} -> {:error, {:parse, reason}}
-end
+identity_matches? =
+  Repo.exists?(
+    from identity in SAMLIdentity,
+      where:
+        identity.subject == ^@sarah_email and
+          identity.issuer == ^public_issuer(host) and
+          identity.user_id == ^user.id
+  )
 ```
 
-### CR-02: Diagnostics destination validation permits arbitrary recursive deletion
+### CR-02: Diagnostic cleanup accepts arbitrary directories and recursively deletes them
+
+**File:** `scripts/test_keycloak_proxy_e2e.sh:9, 101-107, 215, 222-234`
 
 **Classification:** BLOCKER
 
-**File:** `scripts/test_keycloak_proxy_e2e.sh:117`
+**Issue:** `KEYCLOAK_PROXY_ARTIFACT_DIR` is accepted as a full path. The only validation is that `basename` starts with `keycloak-proxy-diagnostics-`; it does not require the directory to be below `playwright-report` or another harness-owned root. On any failed run, `discard_diagnostics/2` and `promote_diagnostics/2` execute `rm -rf -- "$destination"`. Thus a value such as `/path/to/valuable/keycloak-proxy-diagnostics-backup` passes the guard and is deleted. This defeats the script's stated owned-artifact safety boundary and creates an avoidable data-loss path in CI or shell wrappers that forward environment variables.
 
-**Issue:** `KEYCLOAK_PROXY_ARTIFACT_DIR` is accepted when its basename merely starts with `keycloak-proxy-diagnostics-`; it may be an absolute path or contain traversal components. Both `promote_diagnostics` and `discard_diagnostics` then execute `rm -rf -- "$destination"` (lines 188 and 195). A typo or externally supplied environment can therefore erase an existing arbitrary directory such as `/important/keycloak-proxy-diagnostics-old`.
+**Fix:** Derive the destination from an immutable, repository-owned base directory and allow only a validated leaf name/project token. Canonicalize the parent and reject destinations whose canonical parent is not exactly that base before every deletion or move.
 
-**Fix:** Constrain the resolved artifact destination to a dedicated, repository-owned parent directory (or an explicitly created temporary parent), reject absolute/traversal paths and symlinks, and delete only a directory created and ownership-marked by this invocation.
+```bash
+ARTIFACT_ROOT="$ROOT_DIR/playwright-report"
+ARTIFACT_NAME="keycloak-proxy-diagnostics-${PROJECT_NAME}"
+[[ "$ARTIFACT_NAME" =~ ^keycloak-proxy-diagnostics-[A-Za-z0-9_-]+$ ]] || exit 1
+ARTIFACT_DIR="$ARTIFACT_ROOT/$ARTIFACT_NAME"
 
-## Warnings
-
-### WR-01: Provisioned connection does not use the required stable record UUID
-
-**Classification:** WARNING
-
-**File:** `demo/ledger_loop/lib/ledger_loop/demo/keycloak_provisioner.ex:130`
-
-**Issue:** The phase contract specifies stable connection record UUID `abababab-7070-4700-8700-ababababab70`, but the creation attributes contain only the public `connection_id`. `Relyra.Ecto.Connection` auto-generates its binary primary key, so each clean provisioning receives a random internal record ID instead of the required stable one. This makes the declared deterministic connection identity and audit reference contract untrue.
-
-**Fix:** Pass the specified `:id` in the create attributes (and add an assertion for it in the provisioning test), assuming the schema permits caller-supplied binary IDs:
-
-```elixir
-attrs = %{
-  id: "abababab-7070-4700-8700-ababababab70",
-  connection_id: @connection_id,
-  # ...
-}
+# In diagnostic_artifact_dir_is_safe:
+[[ "$(dirname "$candidate")" == "$ARTIFACT_ROOT" ]] || return 1
 ```
 
 ---
 
-_Reviewed: 2026-08-26T00:00:00Z_
+_Reviewed: 2026-08-26T21:20:12Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
