@@ -73,3 +73,16 @@
 - Phase 71 launcher/banner/doctor/fleet UX consumes the finalized topology.
 - Phase 72 docs teach FakeIdP versus Keycloak proof lanes and public versus internal URLs.
 - TLS/mkcert, multi-checkout hostnames, production Keycloak deployment, and cookie-backed host authentication remain out of scope.
+
+---
+
+## Execution checkpoint: Login Trace lifecycle boundary
+
+During Plan 70-01 execution, the genuine signed Keycloak login succeeded and produced a durable `LoginReceipt`, but the canonical successful Login Trace contained the three steps emitted inside `consume_response/3`: validation, signature verification, and replay checking. Response decoding occurs before the consume trace starts; user mapping and session establishment occur after the trace is flushed.
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Expand Phase 70 into `lib/relyra/**` | Change the library telemetry lifecycle so one audit row spans pre-consume decoding through post-consume host mapping/session work. | |
+| Preserve the demo/Docker/docs boundary | Assert the canonical three verifier steps and prove host mapping/session establishment separately through workspace return and the durable receipt. | ✓ |
+
+**User's choice:** Preserve the locked v1.10 boundary. D-19 and Plans 70-01/70-05 were corrected to match the existing telemetry contract; no synthetic trace steps or library changes are authorized.
