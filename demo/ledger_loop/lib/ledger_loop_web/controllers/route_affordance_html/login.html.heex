@@ -5,7 +5,7 @@
 
   <h1 id="login-title">Start Test Login</h1>
   <p>
-    Relyra verifies SAML trust; LedgerLoop owns user mapping, session establishment, and authorization.
+    Relyra verifies SAML trust; LedgerLoop owns user mapping and records a session-establishment receipt.
   </p>
 
   <div style="margin: 2rem 0;">
@@ -14,9 +14,11 @@
     </a>
   </div>
 
-  <div style="margin: 2rem 0;">
-    <a href={"/saml/#{@keycloak_connection_id}/login"} class="button button-secondary">
-      Sign in with Keycloak
-    </a>
-  </div>
+  <%= if @keycloak_connection_id do %>
+    <div style="margin: 2rem 0;">
+      <a href={"/saml/#{@keycloak_connection_id}/login"} class="button button-secondary">
+        Test with Keycloak (optional real IdP)
+      </a>
+    </div>
+  <% end %>
 </main>

@@ -1,12 +1,22 @@
 defmodule LedgerLoopWeb.RouteAffordanceController do
   use LedgerLoopWeb, :controller
 
+  alias LedgerLoop.Repo
+  alias Relyra.Ecto.Connection
+
   def login(conn, _params) do
     conn_id = LedgerLoop.Demo.Fixtures.relyra_enabled_scenario_id()
+    keycloak_connection_id = LedgerLoop.Demo.KeycloakProvisioner.connection_id()
+
+    keycloak_connection_id =
+      case Repo.get_by(Connection, connection_id: keycloak_connection_id) do
+        %Connection{status: :enabled} -> keycloak_connection_id
+        _connection -> nil
+      end
 
     render(conn, :login,
       conn_id: conn_id,
-      keycloak_connection_id: LedgerLoop.Demo.KeycloakProvisioner.connection_id()
+      keycloak_connection_id: keycloak_connection_id
     )
   end
 

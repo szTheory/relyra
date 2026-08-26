@@ -70,7 +70,8 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
       organization_id: "northstar-keycloak-test",
       status: status,
       provider_preset: :okta,
-      sp_entity_id: "http://relyra.localhost/saml/#{KeycloakProvisioner.connection_id()}/metadata",
+      sp_entity_id:
+        "http://relyra.localhost/saml/#{KeycloakProvisioner.connection_id()}/metadata",
       acs_url: "http://relyra.localhost/saml/#{KeycloakProvisioner.connection_id()}/acs",
       idp_entity_id: KeycloakProvisioner.public_issuer(),
       idp_sso_url: "#{KeycloakProvisioner.public_issuer()}/protocol/saml"
