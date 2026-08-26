@@ -5,14 +5,105 @@ ROOT_DIR="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 PROXY_NETWORK="${DEMO_PROXY_NETWORK:-proxy}"
-COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.proxy.yml --profile keycloak)
+PROJECT_NAME="${KEYCLOAK_PROXY_PROJECT_NAME:-relyra-keycloak-e2e-${RANDOM}}"
+ARTIFACT_DIR="${KEYCLOAK_PROXY_ARTIFACT_DIR:-playwright-report/keycloak-proxy-diagnostics-${PROJECT_NAME}}"
+PUBLIC_HOST="${RELYRA_HOST:-relyra.localhost}"
+KEYCLOAK_PUBLIC_HOST="keycloak.${PUBLIC_HOST}"
+COMPOSE=(docker compose --project-name "$PROJECT_NAME" -f docker-compose.yml -f docker-compose.proxy.yml --profile keycloak)
+ACTIVE_RELYRA_COMPOSE=(docker compose --project-name relyra-demo -f docker-compose.yml -f docker-compose.proxy.yml --profile keycloak)
 PROXY_COMPOSE=(docker compose -f docker/traefik/compose.yml)
 REALM_PATH="docker/keycloak/realm-demo-app.json"
 PROXY_WAS_RUNNING=false
 NETWORK_WAS_PRESENT=false
+CURRENT_LAYER="setup"
 
 log() {
   printf '[keycloak-proxy-e2e] %s\n' "$*"
+}
+
+redact_diagnostics() {
+  sed -E \
+    -e 's/(KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password)=([^[:space:]&]+)/\1=[REDACTED]/Ig' \
+    -e 's/(SAMLResponse=)[^&[:space:]]+/\1[REDACTED]/Ig' \
+    -e 's/(Authorization:|Cookie:).*/\1 [REDACTED]/Ig' \
+    -e 's#postgres(ql)?://[^[:space:]]+#postgres://[REDACTED]#Ig' \
+    -e 's#.*(<\?xml|<[^>]*(Response|Assertion|EntityDescriptor)|-----BEGIN |-----END ).*#[REDACTED_XML_OR_PEM]#'
+}
+
+diagnostics_self_test() {
+  local output
+  output="$(printf '%s\n' \
+    'KEYCLOAK_SARAH_PASSWORD=sarah-password' \
+    'SAMLResponse=encoded-assertion' \
+    'Authorization: Bearer secret' \
+    'Cookie: session=secret' \
+    'postgres://postgres:postgres@db/relyra' \
+    '<Response>raw assertion</Response>' \
+    '-----BEGIN CERTIFICATE-----' | redact_diagnostics)"
+
+  [[ "$output" == *'KEYCLOAK_SARAH_PASSWORD=[REDACTED]'* ]] &&
+    [[ "$output" == *'SAMLResponse=[REDACTED]'* ]] &&
+    [[ "$output" == *'Authorization: [REDACTED]'* ]] &&
+    [[ "$output" == *'Cookie: [REDACTED]'* ]] &&
+    [[ "$output" == *'postgres://[REDACTED]'* ]] &&
+    [[ "$output" == *'[REDACTED_XML_OR_PEM]'* ]] &&
+    ! grep -Eq 'sarah-password|encoded-assertion|Bearer secret|session=secret|postgres:postgres|<Response|BEGIN CERTIFICATE' <<<"$output"
+
+  log "diagnostic redaction self-test passed"
+}
+
+capture_diagnostics() {
+  mkdir -p "$ARTIFACT_DIR"
+
+  {
+    printf 'layer=%s\n' "$CURRENT_LAYER"
+    "${COMPOSE[@]}" ps -a
+    "${PROXY_COMPOSE[@]}" ps traefik
+  } | redact_diagnostics >"$ARTIFACT_DIR/container-state.log" 2>&1 || true
+
+  "${COMPOSE[@]}" logs --no-color | redact_diagnostics >"$ARTIFACT_DIR/relyra.log" 2>&1 || true
+
+  "${COMPOSE[@]}" exec -T demo_app mix run -e '
+    import Ecto.Query
+    alias LedgerLoop.Repo
+    alias Relyra.Ecto.AuditEvent
+    actions = Repo.all(from event in AuditEvent, select: {event.domain, event.action}, limit: 20)
+    Enum.each(actions, fn {domain, action} -> IO.puts("audit=#{domain}:#{action}") end)
+  ' 2>&1 | redact_diagnostics >"$ARTIFACT_DIR/audit-actions.log" || true
+}
+
+fail_layer() {
+  local layer="$1"
+  local detail="$2"
+  CURRENT_LAYER="$layer"
+  printf '[keycloak-proxy-e2e] layer=%s status=failed detail=%s\n' "$layer" "$detail" >&2
+  exit 1
+}
+
+run_step() {
+  local layer="$1"
+  shift
+  CURRENT_LAYER="$layer"
+
+  if [[ "${KEYCLOAK_PROXY_FORCE_FAILURE:-}" == "$layer" ]]; then
+    fail_layer "$layer" "forced failure"
+  fi
+
+  "$@" || fail_layer "$layer" "step failed"
+}
+
+wait_for_http() {
+  local url="$1"
+  shift
+
+  for _attempt in $(seq 1 60); do
+    if curl --noproxy "*" -fsS "$@" "$url" >/dev/null; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  return 1
 }
 
 render_stack() {
@@ -82,10 +173,31 @@ if [[ "${KEYCLOAK_PROXY_DIAGNOSTICS_SELF_TEST:-0}" == "1" ]]; then
   exit 0
 fi
 
+# This deterministic path exercises a layer classification without acquiring
+# Docker resources, which keeps the diagnostics proof hermetic and fast.
+if [[ -n "${KEYCLOAK_PROXY_FORCE_FAILURE:-}" ]]; then
+  run_step "$KEYCLOAK_PROXY_FORCE_FAILURE" true
+fi
+
+[[ "$PROJECT_NAME" == relyra-keycloak-e2e-* ]] || {
+  log "refusing non-owned Compose project name: $PROJECT_NAME"
+  exit 1
+}
+
+mkdir -p "$ARTIFACT_DIR"
+
 cleanup() {
   local result_code=$?
   trap - EXIT INT TERM
-  "${COMPOSE[@]}" down --remove-orphans >/dev/null 2>&1 || true
+
+  if [[ "$result_code" -ne 0 ]]; then
+    capture_diagnostics
+  fi
+
+  # This project name is generated per run.  Removing its volumes forces a
+  # fresh Keycloak realm import without touching a shared proxy or another
+  # Relyra stack.
+  "${COMPOSE[@]}" down --remove-orphans --volumes >/dev/null 2>&1 || true
 
   if [[ "$PROXY_WAS_RUNNING" == "false" ]]; then
     "${PROXY_COMPOSE[@]}" down --remove-orphans >/dev/null 2>&1 || true
@@ -99,10 +211,15 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-if [[ -n "$("${COMPOSE[@]}" ps -aq 2>/dev/null)" ]]; then
+if [[ -n "$("${ACTIVE_RELYRA_COMPOSE[@]}" ps -aq 2>/dev/null)" ]]; then
   log "refusing to reuse an active relyra-demo project; stop it before running this test"
   exit 1
 fi
+
+# Remove only a prior run under this harness's reserved project namespace.
+# This forces --import-realm to create the current realm contract rather than
+# accepting stale Keycloak state from an older proof run.
+"${COMPOSE[@]}" down --remove-orphans --volumes >/dev/null 2>&1 || true
 
 if [[ -n "$("${PROXY_COMPOSE[@]}" ps -q traefik 2>/dev/null)" ]]; then
   PROXY_WAS_RUNNING=true
@@ -117,27 +234,19 @@ fi
 "${PROXY_COMPOSE[@]}" up -d
 "${COMPOSE[@]}" up -d --build
 
-ready=false
-for _attempt in $(seq 1 60); do
-  if curl --noproxy "*" -fsS --resolve "relyra.localhost:80:127.0.0.1" http://relyra.localhost/readyz >/dev/null; then
-    ready=true
-    break
-  fi
-  sleep 1
-done
+run_step proxy_dns wait_for_http "http://${PUBLIC_HOST}/readyz" --resolve "${PUBLIC_HOST}:80:127.0.0.1"
+run_step keycloak_readiness "${COMPOSE[@]}" exec -T keycloak bash -c \
+  "{ printf 'HEAD /health/ready HTTP/1.0\\r\\n\\r\\n' >&0; grep -q 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000"
+run_step realm_contract "${COMPOSE[@]}" exec -T demo_app sh -c \
+  "curl -fsS http://keycloak:8080/realms/demo-app/protocol/saml/descriptor | grep -F 'entityID=\"http://${KEYCLOAK_PUBLIC_HOST}/realms/demo-app\"' >/dev/null"
+run_step descriptor_trust "${COMPOSE[@]}" wait keycloak_provisioner
 
-if [[ "$ready" != "true" ]]; then
-  log "LedgerLoop public readiness did not succeed"
-  exit 1
-fi
-
-"${COMPOSE[@]}" wait keycloak_provisioner
-
-BASE_URL=http://relyra.localhost \
-KEYCLOAK_SARAH_PASSWORD="${KEYCLOAK_SARAH_PASSWORD:-sarah-password}" \
+run_step browser_authentication env \
+  BASE_URL="http://${PUBLIC_HOST}" \
+  KEYCLOAK_SARAH_PASSWORD="${KEYCLOAK_SARAH_PASSWORD:-sarah-password}" \
   npx playwright test --config playwright.keycloak-proxy.config.mjs
 
-"${COMPOSE[@]}" exec -T demo_app mix run -e '
+run_step acs_validation "${COMPOSE[@]}" exec -T demo_app mix run -e '
   import Ecto.Query
   alias LedgerLoop.{Repo, Accounts.LoginReceipt}
   alias Relyra.Ecto.{AuditEvent, Connection}
@@ -149,6 +258,23 @@ KEYCLOAK_SARAH_PASSWORD="${KEYCLOAK_SARAH_PASSWORD:-sarah-password}" \
   canonical_steps = MapSet.new(Map.keys(steps))
   IO.puts("receipt_count=#{receipts} canonical_trace_steps=#{inspect(MapSet.to_list(canonical_steps) |> Enum.sort())} trace_found=#{not is_nil(latest)}")
   unless receipts == 1 and canonical_steps == expected_steps, do: System.halt(1)
+'
+
+run_step user_mapping "${COMPOSE[@]}" exec -T demo_app mix run -e '
+  alias LedgerLoop.Repo
+  alias LedgerLoop.Accounts.LoginReceipt
+  count = Repo.aggregate(LoginReceipt, :count, :id)
+  IO.puts("mapped_receipt_count=#{count}")
+  unless count == 1, do: System.halt(1)
+'
+
+run_step session_receipt "${COMPOSE[@]}" exec -T demo_app mix run -e '
+  alias LedgerLoop.Repo
+  alias LedgerLoop.Accounts.LoginReceipt
+  case Repo.one(LoginReceipt) do
+    nil -> System.halt(1)
+    _receipt -> IO.puts("session_receipt=present")
+  end
 '
 
 log "verified signed ACS, workspace return, durable receipt, and canonical validation/signature/replay trace"
