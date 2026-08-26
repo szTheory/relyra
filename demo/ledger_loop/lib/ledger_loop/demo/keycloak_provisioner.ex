@@ -10,7 +10,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
 
   alias LedgerLoop.Accounts.{SAMLIdentity, User}
   alias LedgerLoop.Repo
-  alias Relyra.Ecto.{CertificateInventory, Connection, Connections}
+  alias Relyra.Ecto.{CertificateInventory, Connection, Connections, MetadataApply}
   alias Relyra.Metadata.{Import, Parser}
 
   @connection_id "01H0B4Y1A2B3C4D5E6F7G8H9J4"
@@ -29,19 +29,21 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
     host = Keyword.get(opts, :relyra_host, "relyra.localhost")
     url = Keyword.get(opts, :descriptor_url, descriptor_url(host))
     fetcher = Keyword.get(opts, :descriptor_fetcher, &fetch_descriptor/1)
+    parser = Keyword.get(opts, :descriptor_parser, &Parser.parse/1)
     audit = audit_context()
 
     result =
       with :ok <- maybe_fail(opts, :fetch),
            {:ok, descriptor} <- fetch_descriptor(fetcher, url),
            :ok <- maybe_fail(opts, :parse),
-           {:ok, facts} <- descriptor_facts(descriptor, host),
+           {:ok, candidate} <- descriptor_candidate(descriptor, host, parser),
+           facts <- candidate_facts(candidate),
            :ok <- maybe_unchanged(facts, host),
            :ok <- disable_connection(audit),
            :ok <- run_after_disable(opts),
            {:ok, _connection} <- ensure_draft_connection(host, audit),
            :ok <- maybe_fail(opts, :apply),
-           {:ok, _revision} <- import_descriptor(descriptor, audit),
+           {:ok, _revision} <- apply_descriptor_candidate(candidate, descriptor, audit),
            :ok <- maybe_fail(opts, :activation),
            {:ok, _certificate} <- activate_and_reconcile_certificates(facts.fingerprints, audit),
            :ok <- maybe_fail(opts, :identity),
@@ -64,20 +66,23 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
     end
   end
 
-  defp descriptor_facts(descriptor, host) do
-    with {:ok, parsed} <- Parser.parse(descriptor),
+  defp descriptor_candidate(descriptor, host, parser) do
+    with {:ok, parsed} <- parser.(descriptor),
          candidate <- Import.build_candidate(parsed),
          true <- candidate.idp_entity_id == public_issuer(host) do
-      {:ok,
-       %{
-         issuer: candidate.idp_entity_id,
-         sso_url: candidate.idp_sso_url,
-         fingerprints: candidate.certificates |> Enum.map(& &1.fingerprint_sha256) |> MapSet.new()
-       }}
+      {:ok, candidate}
     else
       false -> {:error, {:parse, :unexpected_public_issuer}}
       {:error, reason} -> {:error, {:parse, reason}}
     end
+  end
+
+  defp candidate_facts(candidate) do
+    %{
+      issuer: candidate.idp_entity_id,
+      sso_url: candidate.idp_sso_url,
+      fingerprints: candidate.certificates |> Enum.map(& &1.fingerprint_sha256) |> MapSet.new()
+    }
   end
 
   defp maybe_unchanged(facts, host) do
@@ -117,7 +122,8 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
           {:error, _reason} = error -> error
         end
 
-      _connection -> :ok
+      _connection ->
+        :ok
     end
   end
 
@@ -140,11 +146,19 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
     end
   end
 
-  defp import_descriptor(descriptor, audit) do
-    case Import.import_xml(@connection_id, descriptor,
+  defp apply_descriptor_candidate(candidate, descriptor, audit) do
+    case MetadataApply.apply_revision(
+           @connection_id,
+           Map.from_struct(candidate),
+           %{
+             source_kind: :xml_import,
+             trigger: :manual_import,
+             actor: @actor,
+             cause: @cause,
+             content_hash_sha256: sha256(descriptor),
+             trust_summary: candidate.trust_summary
+           },
            repo: Repo,
-           actor: @actor,
-           cause: @cause,
            audit: audit
          ) do
       {:ok, revision} -> {:ok, revision}
@@ -153,7 +167,8 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
   end
 
   defp activate_and_reconcile_certificates(fingerprints, audit) do
-    connection = Repo.get_by!(Connection, connection_id: @connection_id) |> Repo.preload(:certificates)
+    connection =
+      Repo.get_by!(Connection, connection_id: @connection_id) |> Repo.preload(:certificates)
 
     with {:ok, certificate} <- activate_imported_certificate(connection, fingerprints, audit),
          :ok <- retire_stale_signing_certificates(certificate.fingerprint_sha256, audit) do
@@ -175,8 +190,12 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
         end)
 
     case certificate do
-      nil -> {:error, :missing_imported_signing_certificate}
-      %{lifecycle_state: :active} -> {:ok, certificate}
+      nil ->
+        {:error, :missing_imported_signing_certificate}
+
+      %{lifecycle_state: :active} ->
+        {:ok, certificate}
+
       certificate ->
         CertificateInventory.activate_signing_certificate(
           Repo,
@@ -261,4 +280,6 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
   defp audit_context do
     %{actor: @actor, cause: @cause, correlation_id: "keycloak-profile-#{@connection_id}"}
   end
+
+  defp sha256(value), do: :crypto.hash(:sha256, value) |> Base.encode16(case: :lower)
 end
