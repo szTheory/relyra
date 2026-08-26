@@ -3,17 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Phases
 current_phase: 69
+current_phase_name: compose-split-fleet-proxy
 status: executing
-stopped_at: Phase 69 context gathered (assumptions mode)
-last_updated: "2026-08-26T01:50:51.730Z"
-last_activity: 2026-06-19
-last_activity_desc: "Phase 68 complete & verified (all 4 runtime receipts pass; 3 boot defects fixed via PR #41)"
+stopped_at: Completed 69-01-PLAN.md
+last_updated: "2026-08-26T10:39:07.937Z"
+last_activity: 2026-08-25
+last_activity_desc: Phase 69 execution started
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 4
   completed_plans: 2
-  percent: 20
+  percent: 50
 ---
 
 # Project State
@@ -23,14 +24,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-19)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 69 — Compose split & fleet proxy
+**Current focus:** Phase 69 — compose-split-fleet-proxy
 
 ## Current Position
 
-Phase: 69
-Plan: Not started
+Phase: 69 (compose-split-fleet-proxy) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-06-19 — Phase 68 complete & verified (all 4 runtime receipts pass; 3 boot defects fixed via PR #41)
+Last activity: 2026-08-25 — Phase 69 execution started
 
 ## Performance Metrics
 
@@ -49,6 +50,12 @@ Last activity: 2026-06-19 — Phase 68 complete & verified (all 4 runtime receip
 - Phase 66 Plan 04 completed in 3min (2 tasks, 3 files; retained FakeIdP documentation; SEED-003 resolved)
 - Phase 67 completed 2026-06-19 (4/4 plans; MAINT-01..MAINT-03 verified; CVE backfill and seed cleanup reconciled)
 
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 69-compose-split-fleet-proxy P01 | 24m | 2 tasks | 4 files |
+
 ## Accumulated Context
 
 ### Decisions
@@ -64,6 +71,8 @@ Last activity: 2026-06-19 — Phase 68 complete & verified (all 4 runtime receip
 - [Phase ?]: curl added to Dockerfile.dev apk list to preserve existing demo_app healthcheck probe after removing inline apk install block
 - [Phase ?]: Named volumes attach at nested demo paths — NOT generic /app/deps or /app/_build — ensuring macOS host artifacts never enter the Linux container (DKR-02, D-04)
 - [Phase ?]: config :phoenix_live_reload backend: :fs_poll added as separate top-level block in dev.exs, NOT inside Endpoint live_reload: keyword which silently ignores backend: (DKR-04, D-10 corrected, Pitfall 1)
+- [Phase ?]: Solo Compose auto-loads a loopback-only demo_app ingress while PostgreSQL remains internal.
+- [Phase ?]: Phoenix public URL and LiveView origins derive from explicit runtime environment values outside test.
 
 ### Blockers/Concerns
 
@@ -87,10 +96,10 @@ Last activity: 2026-06-19 — Phase 68 complete & verified (all 4 runtime receip
 
 ## Session Continuity
 
-**Stopped at:** Phase 69 context gathered (assumptions mode)
-**Resume file:** .planning/phases/69-compose-split-fleet-proxy/69-CONTEXT.md
+**Stopped at:** Completed 69-01-PLAN.md
+**Resume file:** None
 
-Last session: 2026-06-19T21:34:20.426Z
+Last session: 2026-08-26T10:39:07.930Z
 Resume at: `/gsd-plan-phase 69` (or `/gsd-discuss-phase 69` first)
 
 ## Operator Next Steps

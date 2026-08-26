@@ -74,7 +74,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   4. The demo's Phoenix endpoint `url`/`check_origin` are correct for both the solo host (`localhost:<port>`) and the proxy host (`relyra.localhost`), so the LiveView operator-UI websocket connects and Relyra's recipient/Destination checks match the public ACS URL.
 
 **Scope note**: Touches `docker-compose.yml`, `docker-compose.override.yml`, `docker-compose.proxy.yml`, `docker/traefik/compose.yml`, and `demo/ledger_loop/config/runtime.exs`/`config.exs`. Traefik router/service names prefixed `relyra-*` to avoid cross-project namespace collisions; host ports bound to `127.0.0.1`. No `lib/` change.
-**Plans**: 2 plans
+**Plans**: 0/2 plans executed
 **Wave 1**
 
 - [ ] 69-01-PLAN.md — Tracer: zero-setup solo Compose path and explicit Phoenix URL/origin policy [FLEET-01, FLEET-03]
@@ -132,7 +132,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 68. Build caching & correctness | 2/2 | Complete    | 2026-06-19 |
-| 69. Compose split & fleet proxy | 0/? | Not started | - |
+| 69. Compose split & fleet proxy | 0/2 | Planned    |  |
 | 70. Keycloak behind the proxy | 0/? | Not started | - |
 | 71. Launcher DX & banner | 0/? | Not started | - |
 | 72. Documentation | 0/? | Not started | - |
