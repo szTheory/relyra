@@ -102,7 +102,24 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   3. A browser-driven Keycloak login redirects to `keycloak.relyra.localhost`, returns a signed assertion to `relyra.localhost/saml/.../acs`, and Relyra verifies it (recipient/Destination match) and establishes a session.
 
 **Scope note**: Touches `docker/keycloak/realm-demo-app.json` and the keycloak service/env in `docker-compose.proxy.yml`. No `lib/` change — Relyra's verification is exercised, not modified.
-**Plans**: TBD
+**Plans**: 5 plans
+
+**Wave 1**
+
+- [ ] 70-01-PLAN.md — Tracer: proxy topology → audited descriptor trust → genuine signed ACS → receipt/Login Trace [KC-01]
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 70-02-PLAN.md — Provisioner idempotency, fail-closed behavior, audit evidence, and generated-key rotation [KC-01]
+- [ ] 70-03-PLAN.md — Split-horizon render contract, fresh realm lifecycle, and redacted layered diagnostics [KC-01]
+
+**Wave 3** *(blocked on Plan 70-02)*
+
+- [ ] 70-04-PLAN.md — Conditional optional-Keycloak affordance and truthful durable receipt UI [KC-01]
+
+**Wave 4** *(blocked on Plans 70-03 and 70-04)*
+
+- [ ] 70-05-PLAN.md — Evaluator-grade ACS/receipt/trace browser proof and independent FakeIdP/security regression gates [KC-01]
 
 ### Phase 71: Launcher DX & banner
 
