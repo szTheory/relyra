@@ -5,8 +5,8 @@ milestone_name: Phases
 current_phase: 70
 current_phase_name: keycloak-behind-the-proxy
 status: executing
-stopped_at: Completed 70-06-PLAN.md
-last_updated: "2026-08-26T18:38:37.245Z"
+stopped_at: Completed 70-07-PLAN.md
+last_updated: "2026-08-26T18:44:54.409Z"
 last_activity: 2026-08-26
 last_activity_desc: Phase 70 execution started
 progress:
@@ -29,7 +29,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-19)
 ## Current Position
 
 Phase: 70 (keycloak-behind-the-proxy) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-08-26 — Phase 70 execution started
 
@@ -63,6 +63,7 @@ Last activity: 2026-08-26 — Phase 70 execution started
 | Phase 70 P04 | 14min | 2 tasks | 6 files |
 | Phase 70 P05 | 7m | 2 tasks | 3 files |
 | Phase 70-keycloak-behind-the-proxy P06 | 6min | 1 tasks | 2 files |
+| Phase 70 P07 | 8m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Last activity: 2026-08-26 — Phase 70 execution started
 - [Phase ?]: Workspace proof uses only durable LoginReceipt presence and exact receipt wording, without cookie or authorization claims.
 - [Phase ?]: Keycloak trace proof uses only the three persisted verifier steps; workspace return and LoginReceipt separately prove host mapping and session establishment.
 - [Phase ?]: Keycloak descriptor bootstrap parses once into a canonical candidate reused for preflight, audited metadata apply, and certificate activation.
+- [Phase ?]: Credential-bearing Keycloak Playwright runs disable all attachments and delete a per-run temporary output directory before diagnostics.
+- [Phase ?]: Keycloak E2E diagnostics retain only validated redacted container-state.log, relyra.log, and audit-actions.log files.
 
 ### Blockers/Concerns
 
@@ -116,10 +119,10 @@ Last activity: 2026-08-26 — Phase 70 execution started
 
 ## Session Continuity
 
-**Stopped at:** Completed 70-06-PLAN.md
+**Stopped at:** Completed 70-07-PLAN.md
 **Resume file:** None
 
-Last session: 2026-08-26T18:38:37.239Z
+Last session: 2026-08-26T18:44:54.403Z
 Resume at: `/gsd-next`
 
 ## Operator Next Steps
