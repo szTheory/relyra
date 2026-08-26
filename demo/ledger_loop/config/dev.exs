@@ -20,7 +20,6 @@ config :ledger_loop, LedgerLoopWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}],
-  check_origin: false,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "1E2JSI1+eKgEauIWXniOv9+E05Ses3L8mLv7Ux7YwO22vUILloECAPW73JGQkng5",
