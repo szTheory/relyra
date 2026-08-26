@@ -70,7 +70,8 @@
       "retain_threads_and_retrospective": true,
       "prompts_dir": "prompts/",
       "path_to_done_thread": true
-    }
+    },
+    "test_command": "mix test --warnings-as-errors"
   },
   "hooks": {
     "context_warnings": true
@@ -88,7 +89,9 @@
     ],
     "adoption_truth_doc_wedge": true,
     "doc_ux_audit": {
-      "forbid_planning_paths_in_extras": ["docs/jtbd_gap_map.md"],
+      "forbid_planning_paths_in_extras": [
+        "docs/jtbd_gap_map.md"
+      ],
       "conformance_notes_adopter_facing": true
     }
   },
