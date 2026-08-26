@@ -60,6 +60,45 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
   end
 
   describe "admin_login" do
+    test "rejects absent and partial runtime credentials before admin scope establishment" do
+      configurations = [
+        absent: :absent,
+        username_only: [username: "test-admin"],
+        password_only: [password: "test-password"],
+        empty_username: [username: "", password: "test-password"],
+        empty_password: [username: "test-admin", password: ""]
+      ]
+
+      for {_name, configuration} <- configurations do
+        if configuration == :absent do
+          Application.delete_env(:ledger_loop, :demo_admin_auth)
+        else
+          Application.put_env(:ledger_loop, :demo_admin_auth, configuration)
+        end
+
+        for path <- ["/login/admin", "/relyra/admin/connections/new"] do
+          response =
+            build_conn()
+            |> put_req_header(
+              "authorization",
+              Plug.BasicAuth.encode_basic_auth("test-admin", "test-password")
+            )
+            |> get(path)
+
+          assert response.status == 401
+          assert get_resp_header(response, "www-authenticate") == [~s(Basic realm="Application")]
+          assert get_session(response, :admin_actor) == nil
+          assert get_session(response, :admin_actor_label) == nil
+          assert get_session(response, :admin_organization_id) == nil
+        end
+      end
+
+      Application.put_env(:ledger_loop, :demo_admin_auth,
+        username: "test-admin",
+        password: "test-password"
+      )
+    end
+
     test "rejects absent and invalid host credentials before admin scope establishment", %{
       conn: conn
     } do
