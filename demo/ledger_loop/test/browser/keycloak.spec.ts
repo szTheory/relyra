@@ -7,20 +7,53 @@ test("Keycloak signs Sarah into LedgerLoop through the public scoped ACS", async
   page,
 }) => {
   await page.goto("/login/test");
-  await page.getByRole("link", { name: "Sign in with Keycloak" }).click();
+  await page
+    .getByRole("link", { name: "Test with Keycloak (optional real IdP)" })
+    .click();
 
-  await expect(page).toHaveURL(/keycloak\.relyra\.localhost/);
+  await expect(page).toHaveURL("http://keycloak.relyra.localhost/");
   await page.locator("#username").fill("sarah@northstar.example.com");
   await page.locator("#password").fill(sarahPassword);
 
   const acsResponse = page.waitForResponse(
     (response) =>
-      response.url().endsWith(`/saml/${connectionId}/acs`) &&
+      new URL(response.url()).pathname === `/saml/${connectionId}/acs` &&
       response.request().method() === "POST",
   );
 
   await page.locator("#kc-login").click();
 
   expect((await acsResponse).status()).toBe(302);
-  await expect(page.locator("#workspace-title")).toHaveText(/LedgerLoop Workspace/);
+  await expect(page).toHaveURL("http://relyra.localhost/");
+  await expect(page.locator("#workspace-title")).toHaveText("LedgerLoop Workspace");
+  await expect(page.getByText("Verified sign-in receipt")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt.",
+    ),
+  ).toBeVisible();
+
+  await page.goto("/login/admin");
+  await expect(page).toHaveURL("http://relyra.localhost/relyra/admin");
+  await page.goto(`/relyra/admin/connections/${connectionId}/trace`);
+
+  const newestSuccessfulTrace = page
+    .locator('[data-testid^="login-trace-row-"]')
+    .filter({ hasText: "succeeded" })
+    .first();
+
+  await expect(newestSuccessfulTrace).toContainText(/correlation [\w-]+/);
+
+  for (const [step, label] of [
+    ["response.validate", "Validate response"],
+    ["signature.verify", "Verify signature"],
+    ["replay.check", "Replay check"],
+  ]) {
+    const stepRow = newestSuccessfulTrace.locator(
+      `[data-testid="login-trace-step-${step}"]`,
+    );
+
+    await expect(stepRow).toContainText(label);
+    await expect(stepRow).toContainText("ok");
+  }
 });
