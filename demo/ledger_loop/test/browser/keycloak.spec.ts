@@ -11,7 +11,9 @@ test("Keycloak signs Sarah into LedgerLoop through the public scoped ACS", async
     .getByRole("link", { name: "Test with Keycloak (optional real IdP)" })
     .click();
 
-  await expect(page).toHaveURL("http://keycloak.relyra.localhost/");
+  await expect
+    .poll(() => new URL(page.url()).origin)
+    .toBe("http://keycloak.relyra.localhost");
   await page.locator("#username").fill("sarah@northstar.example.com");
   await page.locator("#password").fill(sarahPassword);
 
