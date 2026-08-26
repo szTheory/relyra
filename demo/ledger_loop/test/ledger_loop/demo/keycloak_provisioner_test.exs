@@ -47,7 +47,9 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     assert mapping_event.action == :created
     assert mapping_event.actor == "ledger_loop_keycloak_provisioner"
     assert mapping_event.cause == "phase70_profile_bootstrap"
-    assert mapping_event.correlation_id == "keycloak-profile-#{KeycloakProvisioner.connection_id()}"
+
+    assert mapping_event.correlation_id ==
+             "keycloak-profile-#{KeycloakProvisioner.connection_id()}"
 
     assert [%Certificate{lifecycle_state: :active, role: :signing} = certificate] =
              Repo.all(
@@ -95,9 +97,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     assert Repo.aggregate(LoginReceipt, :count, :id) == 0
 
     assert {:ok, :provisioned} =
-             KeycloakProvisioner.provision!(
-               descriptor_fetcher: fn _url -> {:ok, descriptor} end
-             )
+             KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor} end)
 
     assert_one_keycloak_identity_and_mapping_audit()
   end
@@ -108,7 +108,9 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     assert {:error, {:identity, {:enable, :injected_enable_failure}}} =
              KeycloakProvisioner.provision!(
                descriptor_fetcher: fn _url -> {:ok, descriptor} end,
-               connection_enabler: fn _connection_id, _opts -> {:error, :injected_enable_failure} end
+               connection_enabler: fn _connection_id, _opts ->
+                 {:error, :injected_enable_failure}
+               end
              )
 
     assert_no_enabled_keycloak_connection()
@@ -116,9 +118,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     assert Repo.aggregate(LoginReceipt, :count, :id) == 0
 
     assert {:ok, :provisioned} =
-             KeycloakProvisioner.provision!(
-               descriptor_fetcher: fn _url -> {:ok, descriptor} end
-             )
+             KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor} end)
 
     assert_one_keycloak_identity_and_mapping_audit()
   end
@@ -237,7 +237,8 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
              from(event in AuditEvent,
                where:
                  event.domain == :mapping and
-                   event.correlation_id == ^"keycloak-profile-#{KeycloakProvisioner.connection_id()}"
+                   event.correlation_id ==
+                     ^"keycloak-profile-#{KeycloakProvisioner.connection_id()}"
              ),
              :count,
              :id

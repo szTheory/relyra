@@ -10,7 +10,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
 
   alias LedgerLoop.Accounts.{SAMLIdentity, User}
   alias LedgerLoop.Repo
-  alias Relyra.Ecto.{CertificateInventory, Connection, Connections, MetadataApply}
+  alias Relyra.Ecto.{AuditWriter, CertificateInventory, Connection, Connections, MetadataApply}
   alias Relyra.Metadata.{Import, Parser}
 
   @connection_id "01H0B4Y1A2B3C4D5E6F7G8H9J4"
@@ -47,8 +47,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
            :ok <- maybe_fail(opts, :activation),
            {:ok, _certificate} <- activate_and_reconcile_certificates(facts.fingerprints, audit),
            :ok <- maybe_fail(opts, :identity),
-           :ok <- ensure_sarah_identity(host),
-           {:ok, _enabled} <- enable_connection(audit) do
+           {:ok, _enabled} <- finalize_identity_and_enable(host, audit, opts) do
         {:ok, :provisioned}
       else
         :unchanged -> {:ok, :unchanged}
@@ -227,7 +226,29 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
     end)
   end
 
-  defp ensure_sarah_identity(host) do
+  defp finalize_identity_and_enable(host, audit, opts) do
+    case Repo.transaction(fn ->
+           connection =
+             Repo.one!(
+               from connection in Connection,
+                 where: connection.connection_id == ^@connection_id,
+                 lock: "FOR UPDATE"
+             )
+
+           with :ok <- ensure_sarah_identity(connection, host, audit, opts),
+                {:ok, enabled} <- enable_connection(audit, opts) |> wrap_enable_error() do
+             enabled
+           else
+             {:error, reason} -> Repo.rollback({:identity, reason})
+           end
+         end) do
+      {:ok, enabled} -> {:ok, enabled}
+      {:error, {:identity, _reason} = reason} -> {:error, reason}
+      {:error, reason} -> {:error, {:identity, reason}}
+    end
+  end
+
+  defp ensure_sarah_identity(connection, host, audit, opts) do
     user = Repo.get_by!(User, email: @sarah_email)
     issuer = public_issuer(host)
 
@@ -240,8 +261,8 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
         |> SAMLIdentity.changeset(%{user_id: user.id, subject: @sarah_email, issuer: issuer})
         |> Repo.insert()
         |> case do
-          {:ok, _identity} -> :ok
-          {:error, changeset} -> {:error, {:identity, changeset}}
+          {:ok, identity} -> append_mapping_audit(connection, identity, audit, opts)
+          {:error, changeset} -> {:error, {:insert, changeset}}
         end
 
       _identity ->
@@ -249,7 +270,39 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
     end
   end
 
-  defp enable_connection(audit), do: Connections.enable(@connection_id, repo: Repo, audit: audit)
+  defp append_mapping_audit(connection, identity, audit, opts) do
+    audit_writer = Keyword.get(opts, :mapping_audit_writer, &AuditWriter.append_event/2)
+
+    case audit_writer.(Repo, %{
+           connection_record_id: connection.id,
+           domain: :mapping,
+           action: :created,
+           actor: Map.fetch!(audit, :actor),
+           cause: Map.fetch!(audit, :cause),
+           correlation_id: Map.fetch!(audit, :correlation_id),
+           before_view: %{identity_mapping: :absent},
+           after_view: %{
+             issuer: identity.issuer,
+             subject: identity.subject,
+             user_id: identity.user_id
+           },
+           diff_summary: %{
+             changed_fields: [:issuer, :subject, :user_id],
+             mutation: :identity_mapping_created
+           }
+         }) do
+      {:ok, _event} -> :ok
+      {:error, reason} -> {:error, {:audit, reason}}
+    end
+  end
+
+  defp enable_connection(audit, opts) do
+    enabler = Keyword.get(opts, :connection_enabler, &Connections.enable/2)
+    enabler.(@connection_id, repo: Repo, audit: audit)
+  end
+
+  defp wrap_enable_error({:ok, _enabled} = result), do: result
+  defp wrap_enable_error({:error, reason}), do: {:error, {:enable, reason}}
 
   defp fail_closed({:ok, _outcome} = result, _audit), do: result
 
