@@ -1,12 +1,45 @@
 defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
-  use LedgerLoopWeb.ConnCase, async: true
+  use LedgerLoopWeb.ConnCase, async: false
+
+  alias LedgerLoop.Demo.{Fixtures, KeycloakProvisioner, Reset}
+  alias LedgerLoop.Repo
+  alias Relyra.Ecto.Connection
+
+  setup do
+    Reset.reset!()
+    :ok
+  end
 
   describe "login" do
-    test "renders the login page with a FakeIdP SSO link", %{conn: conn} do
+    test "keeps FakeIdP available without a Keycloak connection", %{conn: conn} do
       conn = get(conn, "/login/test")
 
-      expected_id = LedgerLoop.Demo.Fixtures.relyra_enabled_scenario_id()
+      expected_id = Fixtures.relyra_enabled_scenario_id()
       assert html_response(conn, 200) =~ "/saml/#{expected_id}/login"
+      refute html_response(conn, 200) =~ "Test with Keycloak (optional real IdP)"
+      refute html_response(conn, 200) =~ "/saml/#{KeycloakProvisioner.connection_id()}/login"
+    end
+
+    test "keeps the Keycloak job hidden when its connection is disabled", %{conn: conn} do
+      insert_keycloak_connection!(:disabled)
+
+      conn = get(conn, "/login/test")
+
+      assert html_response(conn, 200) =~ "/saml/#{Fixtures.relyra_enabled_scenario_id()}/login"
+      refute html_response(conn, 200) =~ "Test with Keycloak (optional real IdP)"
+      refute html_response(conn, 200) =~ "/saml/#{KeycloakProvisioner.connection_id()}/login"
+    end
+
+    test "renders the optional Keycloak job only for its enabled stable connection", %{conn: conn} do
+      insert_keycloak_connection!(:enabled)
+
+      conn = get(conn, "/login/test")
+      response = html_response(conn, 200)
+      keycloak_id = KeycloakProvisioner.connection_id()
+
+      assert response =~ "/saml/#{Fixtures.relyra_enabled_scenario_id()}/login"
+      assert response =~ "Test with Keycloak (optional real IdP)"
+      assert response =~ ~s(href="/saml/#{keycloak_id}/login")
     end
   end
 
@@ -28,5 +61,19 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
       expected_id = LedgerLoop.Demo.Fixtures.relyra_support_scenario_id()
       assert redirected_to(conn) == "/relyra/admin/connections/#{expected_id}/trace"
     end
+  end
+
+  defp insert_keycloak_connection!(status) do
+    Repo.insert!(%Connection{
+      connection_id: KeycloakProvisioner.connection_id(),
+      display_name: "Northstar Health — Keycloak real IdP",
+      organization_id: "northstar-keycloak-test",
+      status: status,
+      provider_preset: :okta,
+      sp_entity_id: "http://relyra.localhost/saml/#{KeycloakProvisioner.connection_id()}/metadata",
+      acs_url: "http://relyra.localhost/saml/#{KeycloakProvisioner.connection_id()}/acs",
+      idp_entity_id: KeycloakProvisioner.public_issuer(),
+      idp_sso_url: "#{KeycloakProvisioner.public_issuer()}/protocol/saml"
+    })
   end
 end
