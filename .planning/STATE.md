@@ -5,16 +5,16 @@ milestone_name: Phases
 current_phase: 70
 current_phase_name: keycloak-behind-the-proxy
 status: executing
-stopped_at: Completed 70-07-PLAN.md
-last_updated: "2026-08-26T18:44:54.409Z"
+stopped_at: Completed 70-08-PLAN.md
+last_updated: "2026-08-26T19:35:13.841Z"
 last_activity: 2026-08-26
 last_activity_desc: Phase 70 execution started
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 12
-  completed_plans: 11
-  percent: 67
+  completed_phases: 3
+  total_plans: 13
+  completed_plans: 13
+  percent: 100
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-19)
 ## Current Position
 
 Phase: 70 (keycloak-behind-the-proxy) — EXECUTING
-Plan: 3 of 7
+Plan: 2 of 8
 Status: Ready to execute
 Last activity: 2026-08-26 — Phase 70 execution started
 
@@ -64,6 +64,7 @@ Last activity: 2026-08-26 — Phase 70 execution started
 | Phase 70 P05 | 7m | 2 tasks | 3 files |
 | Phase 70-keycloak-behind-the-proxy P06 | 6min | 1 tasks | 2 files |
 | Phase 70 P07 | 8m | 2 tasks | 2 files |
+| Phase 70-keycloak-behind-the-proxy P08 | 20m | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,8 @@ Last activity: 2026-08-26 — Phase 70 execution started
 - [Phase ?]: Keycloak descriptor bootstrap parses once into a canonical candidate reused for preflight, audited metadata apply, and certificate activation.
 - [Phase ?]: Credential-bearing Keycloak Playwright runs disable all attachments and delete a per-run temporary output directory before diagnostics.
 - [Phase ?]: Keycloak E2E diagnostics retain only validated redacted container-state.log, relyra.log, and audit-actions.log files.
+- [Phase ?]: A single runtime Basic-auth pipeline guards both demo admin scope establishment and every mounted LiveAdmin route.
+- [Phase ?]: The Keycloak harness generates and redacts an ephemeral host-admin credential pair for authenticated trace evidence.
 
 ### Blockers/Concerns
 
@@ -119,10 +122,10 @@ Last activity: 2026-08-26 — Phase 70 execution started
 
 ## Session Continuity
 
-**Stopped at:** Completed 70-07-PLAN.md
+**Stopped at:** Completed 70-08-PLAN.md
 **Resume file:** None
 
-Last session: 2026-08-26T18:44:54.403Z
+Last session: 2026-08-26T19:35:13.812Z
 Resume at: `/gsd-next`
 
 ## Operator Next Steps
