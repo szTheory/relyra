@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 3
+open_count: 4
 waived_count: 0
 fixed_count: 0
-total_count: 3
-last_updated: 2026-08-26T22:08:47.457Z
+total_count: 4
+last_updated: 2026-08-26T22:16:16.898Z
 ---
 
 # Broken Windows Ledger
@@ -18,6 +18,7 @@ last_updated: 2026-08-26T22:08:47.457Z
 | 1 | 70 | lint-warning | demo/ledger_loop/lib/ledger_loop_web/live/setup_live.html.heex |  | Repository-wide mix format --check-formatted is blocked by pre-existing unrelated formatting drift. | open |  | 2026-08-26T17:06:05.568Z |  |
 | 2 | 70 | unrun-verify | scripts/test_keycloak_proxy_e2e.sh |  | mix ci.security and final standalone format check were interrupted by the executor command window; rerun before release. | open |  | 2026-08-26T19:35:20.719Z |  |
 | 3 | 70 | deviation | .github/workflows/keycloak-proxy-e2e.yml |  | Ruby and ci_monitor workflow validators unavailable; installed PyYAML plus existing workflow version comparison used. | open |  | 2026-08-26T22:08:47.457Z |  |
+| 4 | 70 | unmet-truth | mix.lock |  | mix deps.audit remains non-zero for pre-existing Decimal 2.4.1 GHSA-rhv4-8758-jx7v outside Plan 70-12 Req/Finch/Mint scope | open |  | 2026-08-26T22:16:16.898Z |  |
 
 ````json
 [
@@ -55,6 +56,18 @@ last_updated: 2026-08-26T22:08:47.457Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-08-26T22:08:47.457Z",
+    "resolved_at": null
+  },
+  {
+    "id": 4,
+    "kind": "unmet-truth",
+    "phase": "70",
+    "file": "mix.lock",
+    "line": null,
+    "description": "mix deps.audit remains non-zero for pre-existing Decimal 2.4.1 GHSA-rhv4-8758-jx7v outside Plan 70-12 Req/Finch/Mint scope",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-26T22:16:16.898Z",
     "resolved_at": null
   }
 ]
