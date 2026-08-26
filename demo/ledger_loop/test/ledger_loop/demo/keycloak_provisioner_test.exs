@@ -5,7 +5,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
   alias LedgerLoop.Demo.{KeycloakProvisioner, Reset}
   alias LedgerLoop.Repo
   alias Relyra.ConnectionResolver.Ecto, as: ConnectionResolver
-  alias Relyra.Ecto.{AuditEvent, Certificate, Connection}
+  alias Relyra.Ecto.{AuditEvent, Certificate, Connection, MetadataRevision}
   alias Relyra.Metadata.TrustAnchor
 
   @issuer "http://keycloak.relyra.localhost/realms/demo-app"
@@ -18,9 +18,21 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
 
   test "initial provisioning is audited and a byte-identical descriptor is unchanged" do
     descriptor = descriptor(:a)
+    parent = self()
+
+    descriptor_parser = fn xml ->
+      send(parent, :descriptor_parsed)
+      Relyra.Metadata.Parser.parse(xml)
+    end
 
     assert {:ok, :provisioned} =
-             KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor} end)
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor} end,
+               descriptor_parser: descriptor_parser
+             )
+
+    assert_receive :descriptor_parsed
+    refute_receive :descriptor_parsed
 
     connection = keycloak_connection!()
     assert connection.status == :enabled
@@ -31,7 +43,10 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
              Repo.all(from identity in SAMLIdentity, where: identity.issuer == ^@issuer)
 
     assert [%Certificate{lifecycle_state: :active, role: :signing} = certificate] =
-             Repo.all(from certificate in Certificate, where: certificate.connection_record_id == ^connection.id)
+             Repo.all(
+               from certificate in Certificate,
+                 where: certificate.connection_record_id == ^connection.id
+             )
 
     assert certificate.fingerprint_sha256 == descriptor_fingerprint(descriptor)
     assert_audited_trust_events(connection.id)
@@ -39,15 +54,52 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     trust_counts = trust_counts(connection.id)
 
     assert {:ok, :unchanged} =
-             KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor} end)
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor} end,
+               descriptor_parser: descriptor_parser
+             )
+
+    assert_receive :descriptor_parsed
+    refute_receive :descriptor_parsed
 
     assert trust_counts == trust_counts(connection.id)
+
     assert 1 ==
              Repo.aggregate(
                from(identity in SAMLIdentity, where: identity.issuer == ^@issuer),
                :count,
                :id
              )
+  end
+
+  test "wrong public issuer leaves all Keycloak trust and identity state unavailable" do
+    wrong_issuer = "http://keycloak.other.localhost/realms/demo-app"
+    invalid_descriptor = String.replace(descriptor(:a), @issuer, wrong_issuer)
+
+    assert {:error, {:parse, :unexpected_public_issuer}} =
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, invalid_descriptor} end
+             )
+
+    assert Repo.get_by(Connection, connection_id: KeycloakProvisioner.connection_id()) == nil
+    assert Repo.aggregate(MetadataRevision, :count, :id) == 0
+    assert Repo.aggregate(LoginReceipt, :count, :id) == 0
+
+    assert Repo.aggregate(
+             from(identity in SAMLIdentity, where: identity.issuer == ^wrong_issuer),
+             :count,
+             :id
+           ) == 0
+  end
+
+  test "provisioner persists canonical candidates without raw XML import" do
+    source =
+      __DIR__
+      |> Path.join("../../../lib/ledger_loop/demo/keycloak_provisioner.ex")
+      |> File.read!()
+
+    assert source =~ "MetadataApply.apply_revision"
+    refute source =~ "Import.import_xml"
   end
 
   for stage <- [:fetch, :parse, :apply, :activation, :identity] do
@@ -68,7 +120,9 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     descriptor_b = descriptor(:b)
 
     assert {:ok, :provisioned} =
-             KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor_a} end)
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor_a} end
+             )
 
     parent = self()
 
@@ -101,13 +155,17 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     counts_after_rotation = trust_counts(connection.id)
 
     assert {:ok, :unchanged} =
-             KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor_b} end)
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor_b} end
+             )
 
     assert counts_after_rotation == trust_counts(connection.id)
   end
 
   defp resolver_result do
-    ConnectionResolver.resolve_connection(%{connection_id: KeycloakProvisioner.connection_id()}, repo: Repo)
+    ConnectionResolver.resolve_connection(%{connection_id: KeycloakProvisioner.connection_id()},
+      repo: Repo
+    )
   end
 
   defp assert_no_enabled_keycloak_connection do
@@ -125,10 +183,16 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     events =
       Repo.all(
         from event in AuditEvent,
-          where: event.connection_record_id == ^connection_record_id and event.domain in [:connection, :metadata, :certificate]
+          where:
+            event.connection_record_id == ^connection_record_id and
+              event.domain in [:connection, :metadata, :certificate]
       )
 
-    assert Enum.map(events, & &1.domain) |> Enum.uniq() |> Enum.sort() == [:certificate, :connection, :metadata]
+    assert Enum.map(events, & &1.domain) |> Enum.uniq() |> Enum.sort() == [
+             :certificate,
+             :connection,
+             :metadata
+           ]
 
     for domain <- [:connection, :metadata, :certificate] do
       assert Enum.any?(events, fn event ->
@@ -142,12 +206,26 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
 
   defp trust_counts(connection_record_id) do
     %{
-      connections: Repo.aggregate(from(connection in Connection, where: connection.id == ^connection_record_id), :count, :id),
-      certificates: Repo.aggregate(from(certificate in Certificate, where: certificate.connection_record_id == ^connection_record_id), :count, :id),
+      connections:
+        Repo.aggregate(
+          from(connection in Connection, where: connection.id == ^connection_record_id),
+          :count,
+          :id
+        ),
+      certificates:
+        Repo.aggregate(
+          from(certificate in Certificate,
+            where: certificate.connection_record_id == ^connection_record_id
+          ),
+          :count,
+          :id
+        ),
       audits:
         Repo.aggregate(
           from(event in AuditEvent,
-            where: event.connection_record_id == ^connection_record_id and event.domain in [:connection, :metadata, :certificate]
+            where:
+              event.connection_record_id == ^connection_record_id and
+                event.domain in [:connection, :metadata, :certificate]
           ),
           :count,
           :id
