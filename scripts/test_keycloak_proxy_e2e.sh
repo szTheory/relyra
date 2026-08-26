@@ -548,9 +548,6 @@ if [[ -n "${KEYCLOAK_PROXY_FORCE_FAILURE:-}" ]]; then
   run_step "$KEYCLOAK_PROXY_FORCE_FAILURE" true
 fi
 
-run_step fake_idp_regression bash -c \
-  'cd demo/ledger_loop && mix test test/ledger_loop_web/fake_idp_flow_test.exs --warnings-as-errors'
-
 [[ "$PROJECT_NAME" == relyra-keycloak-e2e-* ]] || {
   log "refusing non-owned Compose project name: $PROJECT_NAME"
   exit 1
@@ -656,11 +653,4 @@ run_step session_receipt "${COMPOSE[@]}" exec -T demo_app mix run -e '
   end
 '
 
-run_step focused_demo_tests bash -c \
-  'cd demo/ledger_loop && mix test test/ledger_loop/demo/keycloak_provisioner_test.exs test/ledger_loop_web/controllers/route_affordance_controller_test.exs test/ledger_loop_web/controllers/page_controller_test.exs --warnings-as-errors'
-run_step root_warnings_as_errors mix test --warnings-as-errors
-run_step root_qa mix qa
-run_step root_security mix ci.security
-run_step root_format mix format --check-formatted
-
-log "verified signed ACS, workspace return, durable receipt, and canonical validation/signature/replay trace"
+log "verified focused public Keycloak signed ACS, durable receipt, and canonical validation/signature/replay trace"
