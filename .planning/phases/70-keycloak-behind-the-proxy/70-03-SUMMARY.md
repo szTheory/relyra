@@ -74,6 +74,7 @@ status: complete
 - Passed `KEYCLOAK_PROXY_STATIC_ONLY=1 bash scripts/test_keycloak_proxy_e2e.sh` for default and override render paths without starting containers.
 - Passed `KEYCLOAK_PROXY_DIAGNOSTICS_SELF_TEST=1 bash scripts/test_keycloak_proxy_e2e.sh`.
 - Confirmed `KEYCLOAK_PROXY_FORCE_FAILURE=keycloak_readiness bash scripts/test_keycloak_proxy_e2e.sh 2>&1 | rg 'layer=keycloak_readiness'` emits the named redacted layer.
+- Passed `npm run demo:keycloak-proxy`: a fresh harness-owned Keycloak realm provisioned, the public signed ACS Playwright journey passed, the durable receipt and canonical trace steps were confirmed, and only the harness stack was removed.
 
 ## Deviations from Plan
 
