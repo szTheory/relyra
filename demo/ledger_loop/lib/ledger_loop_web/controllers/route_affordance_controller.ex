@@ -21,10 +21,13 @@ defmodule LedgerLoopWeb.RouteAffordanceController do
   end
 
   def admin_login(conn, _params) do
+    %{actor: actor, actor_label: actor_label, organization_id: organization_id} =
+      conn.assigns.demo_admin_principal
+
     conn
-    |> put_session(:admin_actor, "demo_admin")
-    |> put_session(:admin_actor_label, "Demo Administrator")
-    |> put_session(:admin_organization_id, "northstar")
+    |> put_session(:admin_actor, actor)
+    |> put_session(:admin_actor_label, actor_label)
+    |> put_session(:admin_organization_id, organization_id)
     |> redirect(to: "/relyra/admin")
   end
 

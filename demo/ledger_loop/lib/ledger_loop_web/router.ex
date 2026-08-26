@@ -37,6 +37,10 @@ defmodule LedgerLoopWeb.Router do
     plug(:accepts, ["json"])
   end
 
+  pipeline :demo_admin do
+    plug LedgerLoopWeb.Plugs.DemoAdminAuth
+  end
+
   scope "/" do
     pipe_through(:health)
 
@@ -50,11 +54,16 @@ defmodule LedgerLoopWeb.Router do
     get "/", LedgerLoopWeb.PageController, :home
     live "/setup/sso", LedgerLoopWeb.SetupLive, :index
     get "/login/test", LedgerLoopWeb.RouteAffordanceController, :login
-    get "/login/admin", LedgerLoopWeb.RouteAffordanceController, :admin_login
     get "/support/scenario", LedgerLoopWeb.RouteAffordanceController, :support
 
     get "/fake_idp/login", LedgerLoopWeb.FakeIdPController, :login
     post "/fake_idp/sso", LedgerLoopWeb.FakeIdPController, :sso
+  end
+
+  scope "/" do
+    pipe_through [:browser, :demo_admin]
+
+    get "/login/admin", LedgerLoopWeb.RouteAffordanceController, :admin_login
 
     relyra_admin_routes("/relyra/admin",
       repo: LedgerLoop.Repo,
