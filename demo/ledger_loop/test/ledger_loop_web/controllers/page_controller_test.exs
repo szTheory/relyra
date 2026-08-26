@@ -1,7 +1,9 @@
 defmodule LedgerLoopWeb.PageControllerTest do
   use LedgerLoopWeb.ConnCase
 
+  alias LedgerLoop.Accounts.{LoginReceipt, User}
   alias LedgerLoop.Demo.Reset
+  alias LedgerLoop.Repo
 
   setup do
     Reset.reset!()
@@ -70,5 +72,22 @@ defmodule LedgerLoopWeb.PageControllerTest do
         ] do
       refute response =~ forbidden
     end
+  end
+
+  test "GET / displays the verified receipt only after LedgerLoop records it", %{conn: conn} do
+    receipt_copy =
+      "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt."
+
+    conn = get(conn, ~p"/")
+    refute html_response(conn, 200) =~ receipt_copy
+
+    user = Repo.get_by!(User, email: "sarah@northstar.example.com")
+
+    %LoginReceipt{}
+    |> LoginReceipt.changeset(%{user_id: user.id, scenario_key: "verified-sign-in-receipt"})
+    |> Repo.insert!()
+
+    conn = get(conn, ~p"/")
+    assert html_response(conn, 200) =~ receipt_copy
   end
 end
