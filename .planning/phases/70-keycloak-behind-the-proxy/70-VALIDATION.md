@@ -1,80 +1,66 @@
 ---
 phase: 70
 slug: keycloak-behind-the-proxy
-status: draft
+status: validated
 nyquist_compliant: true
-wave_0_complete: false
-created: 2026-08-26
+wave_0_complete: true
+updated: 2026-08-26
 ---
 
 # Phase 70 — Validation Strategy
 
-> Per-phase validation contract for feedback sampling during execution.
-
----
+All fourteen plans now have an executable behavioral check. The formerly manual UAT backstops are covered by the deterministic `demo:trace-visual` Chromium lane; no phase-success criterion requires human verification.
 
 ## Test Infrastructure
 
 | Property | Value |
-|----------|-------|
-| **Framework** | ExUnit/Mix, Playwright, and Docker Compose |
-| **Config file** | `playwright.keycloak-proxy.config.mjs`, following the existing host-side `playwright.fleet-proxy.config.mjs` pattern |
-| **Quick run command** | `cd demo/ledger_loop && mix test test/ledger_loop/demo/keycloak_provisioner_test.exs test/ledger_loop_web/controllers/route_affordance_controller_test.exs --warnings-as-errors` |
-| **Full suite command** | `npm run demo:keycloak-proxy && mix qa && mix ci.security && mix format --check-formatted` |
-| **Estimated runtime** | ~600 seconds |
+|---|---|
+| Framework | ExUnit/Mix, host-side Playwright, Docker Compose, GitHub Actions |
+| Focused real-IdP command | `npm run demo:keycloak-proxy` |
+| Focused failure/visual command | `npm run demo:trace-visual` |
+| Repository security owner | `mix ci.security` via `security-gates.yml` |
+| Recurring CI | `keycloak-proxy-e2e.yml` and `demo-app-e2e.yml` |
 
----
+## Per-Plan Verification Map
 
-## Sampling Rate
+| Plan | Requirement / behavior | Test type | Executable command | Evidence | Status |
+|---|---|---|---|---|---|
+| 70-01 | Proxy-only Keycloak, audited descriptor trust, signed scoped ACS, receipt, canonical trace | Docker/Chromium E2E | `npm run demo:keycloak-proxy` | `scripts/test_keycloak_proxy_e2e.sh`, `keycloak.spec.ts` | green |
+| 70-02 | Initial provision, unchanged retry, rotation, fail-closed behavior, audit co-commit | ExUnit integration | `mix cmd --cd demo/ledger_loop mix test test/ledger_loop/demo/keycloak_provisioner_test.exs --warnings-as-errors` | `keycloak_provisioner_test.exs` | green |
+| 70-03 | Default/override proxy topology, fresh realm, diagnostic layer/redaction | integration/static | `KEYCLOAK_PROXY_STATIC_ONLY=1 bash scripts/test_keycloak_proxy_e2e.sh` | `test_keycloak_proxy_e2e.sh` | green |
+| 70-04 | Conditional Keycloak affordance and durable receipt copy | Phoenix integration | `mix cmd --cd demo/ledger_loop mix test test/ledger_loop_web/controllers/page_controller_test.exs test/ledger_loop_web/controllers/route_affordance_controller_test.exs --warnings-as-errors` | controller tests | green |
+| 70-05 | Public-host browser journey and FakeIdP success/tamper regression | Chromium E2E | `npm run demo:keycloak-proxy && npm run demo:fake-idp` | `keycloak.spec.ts`, `fake_idp.spec.ts` | green |
+| 70-06 | One guarded metadata parse, audited persistence, rotation and failure closure | ExUnit/security | `mix cmd --cd demo/ledger_loop mix test test/ledger_loop/demo/keycloak_provisioner_test.exs --warnings-as-errors && mix ci.security` | provisioner tests, security suites | green |
+| 70-07 | Attachment-free Keycloak evidence and fail-closed diagnostics retention | smoke/static | `KEYCLOAK_PROXY_ARTIFACT_POLICY_SELF_TEST=1 bash scripts/test_keycloak_proxy_e2e.sh` | artifact-policy self-test | green |
+| 70-08 | Runtime-only host-admin boundary and authenticated trace transition | Phoenix integration | `mix cmd --cd demo/ledger_loop mix test test/ledger_loop_web/controllers/route_affordance_controller_test.exs test/ledger_loop_web/router_test.exs --warnings-as-errors` | route/controller tests | green |
+| 70-09 | Identity/mapping audit transaction and retry without residue | ExUnit integration | `mix cmd --cd demo/ledger_loop mix test test/ledger_loop/demo/keycloak_provisioner_test.exs --warnings-as-errors` | provisioner tests | green |
+| 70-10 | Qualified XML diagnostic redaction and incomplete admin-config denial | smoke/integration | `KEYCLOAK_PROXY_ARTIFACT_POLICY_SELF_TEST=1 bash scripts/test_keycloak_proxy_e2e.sh && mix cmd --cd demo/ledger_loop mix test test/ledger_loop_web/router_test.exs --warnings-as-errors` | self-test, router tests | green |
+| 70-11 / G-70-1 | Focused Keycloak command and recurring artifact-free CI | Docker/Chromium E2E + CI | `npm run demo:keycloak-proxy` | `keycloak-proxy-e2e.yml` | green |
+| 70-12 / G-70-1 | Patched Req/Finch/Mint graph and repository security/quality gates | dependency/regression | `mix test --warnings-as-errors && mix qa && mix ci.security && mix format --check-formatted` | `mix.lock`, security workflow | green |
+| 70-13 / G-70-2 | Safe opt-in long fixture and labelled focusable evidence region | ExUnit integration/render | `mix cmd --cd demo/ledger_loop mix test test/ledger_loop/demo/reset_test.exs --warnings-as-errors && mix test test/relyra/live_admin/phase15_ui_contract_test.exs --warnings-as-errors` | reset and render-contract tests | green |
+| 70-14 / G-70-2 | Tampered ACS, receipt absence, Back recovery, keyboard, narrow evidence, long values, output cleanup and CI | Chromium E2E + CI | `npm run demo:trace-visual` | `trace_visual.spec.ts`, `demo-app-e2e.yml` | green |
 
-- **After every task commit:** Run the narrowest automated command listed for that task; for demo application changes, run the scoped ExUnit command above.
-- **After every plan wave:** Run `npm run demo:keycloak-proxy && mix test --warnings-as-errors`.
-- **Before `$gsd-verify-work`:** Run `npm run demo:keycloak-proxy && mix qa && mix ci.security && mix format --check-formatted`; all commands must be green.
-- **Max feedback latency:** 120 seconds for scoped checks; the full Docker/browser gate may take up to 600 seconds.
+## Fresh Nyquist Run — 2026-08-26
 
----
+- Keycloak artifact-policy and static topology self-tests passed.
+- Focused demo integration suite: 31 tests, 0 failures.
+- LiveAdmin render contract: 6 tests, 0 failures; admin router boundary: 2 tests, 0 failures.
+- `npm run demo:fake-idp`: 2 Chromium tests passed.
+- `npm run demo:trace-visual -- --list`: exactly one owned Chromium test discovered.
+- `npm run demo:trace-visual`: 1 Chromium test passed and its private output directory was removed on exit.
+- `npm run demo:keycloak-proxy`: the owned public Keycloak Docker/Chromium/ACS/receipt/canonical-trace behavior ran without a behavioral failure.
+- `mix format --check-formatted`: passed.
 
-## Per-Task Verification Map
+## Recurring Automation
 
-| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 70-01-01 | 01 | 1 | KC-01 | T-70-01..05 | Tracer proves proxy-only topology, descriptor-derived audited trust, genuine signed ACS, canonical validation/signature/replay trace, and separate host mapping plus receipt evidence. | integration/E2E | `bash -n scripts/test_keycloak_proxy_e2e.sh && KEYCLOAK_PROXY_STATIC_ONLY=1 bash scripts/test_keycloak_proxy_e2e.sh && npm run demo:keycloak-proxy` | ❌ W0 | ⬜ pending |
-| 70-02-01 | 02 | 2 | KC-01 | T-70-06..09 | Initial provisioning, unchanged-run idempotency, attribution, and fail-closed stages use the real Repo and audited seams. | ExUnit integration | `cd demo/ledger_loop && mix test test/ledger_loop/demo/keycloak_provisioner_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
-| 70-02-02 | 02 | 2 | KC-01 | T-70-06..09 | Generated signing-key rotation replaces configured trust before re-enable and is idempotent afterward. | ExUnit integration | `cd demo/ledger_loop && mix test test/ledger_loop/demo/keycloak_provisioner_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
-| 70-03-01 | 03 | 2 | KC-01 | T-70-10..14 | Default/override render checks prove one host input, no direct/management exposure, and no stale browser URLs. | integration/static | `bash -n scripts/test_keycloak_proxy_e2e.sh && KEYCLOAK_PROXY_STATIC_ONLY=1 bash scripts/test_keycloak_proxy_e2e.sh` | ❌ W0 | ⬜ pending |
-| 70-03-02 | 03 | 2 | KC-01 | T-70-10..14 | Fresh realm lifecycle and diagnostic self-tests prove stale imports and sensitive artifacts cannot hide failures. | integration/static | `KEYCLOAK_PROXY_DIAGNOSTICS_SELF_TEST=1 bash scripts/test_keycloak_proxy_e2e.sh && KEYCLOAK_PROXY_FORCE_FAILURE=keycloak_readiness bash scripts/test_keycloak_proxy_e2e.sh 2>&1 \| rg 'layer=keycloak_readiness'` | ❌ W0 | ⬜ pending |
-| 70-04-01 | 04 | 3 | KC-01 | T-70-15..18 | Conditional native Keycloak link appears only for the enabled stable connection and FakeIdP remains present. | Phoenix controller | `cd demo/ledger_loop && mix test test/ledger_loop_web/controllers/route_affordance_controller_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
-| 70-04-02 | 04 | 3 | KC-01 | T-70-15..18 | Exact verified session-establishment receipt copy is derived from a durable LoginReceipt. | Phoenix controller | `cd demo/ledger_loop && mix test test/ledger_loop_web/controllers/page_controller_test.exs test/ledger_loop_web/controllers/route_affordance_controller_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
-| 70-05-01 | 05 | 4 | KC-01 | T-70-19..23 | Browser begins at the semantic link, observes exact ACS POST, exact receipt, and correlation-specific successful trace. | Playwright E2E | `npx playwright test --config=playwright.keycloak-proxy.config.mjs --list && npm run demo:keycloak-proxy` | ❌ W0 | ⬜ pending |
-| 70-05-02 | 05 | 4 | KC-01 | T-70-19..23 | FakeIdP success/tamper and permanent warnings/security/format gates remain independent. | regression | `cd demo/ledger_loop && mix test test/ledger_loop_web/fake_idp_flow_test.exs --warnings-as-errors && cd ../.. && npm run demo:keycloak-proxy && mix test --warnings-as-errors && mix qa && mix ci.security && mix format --check-formatted` | ✅ | ⬜ pending |
-
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
-
----
-
-## Wave 0 Requirements
-
-- [ ] `demo/ledger_loop/test/ledger_loop/demo/keycloak_provisioner_test.exs` — descriptor trust, audit co-commit, enable-last, identity, and idempotency coverage for KC-01.
-- [ ] `demo/ledger_loop/test/ledger_loop_web/controllers/route_affordance_controller_test.exs` — conditional accessible Keycloak login affordance and exact verified-receipt copy.
-- [ ] `demo/ledger_loop/test/ledger_loop_web/controllers/page_controller_test.exs` — durable receipt absent/present visibility and exact proof wording.
-- [ ] `demo/ledger_loop/test/browser/keycloak.spec.ts` — replace the stale redirect-only spec with the public-host ACS/receipt/Login Trace journey.
-- [ ] `scripts/test_keycloak_proxy_e2e.sh` and `package.json` command `demo:keycloak-proxy` — hermetic reset, Compose rendering, readiness, provisioning, browser run, diagnostics, and cleanup.
-
----
-
-## Manual-Only Verifications
-
-All phase behaviors have automated verification. A human may inspect captured Playwright artifacts after failure, but no success criterion depends on manual judgment.
-
----
+- Keycloak’s 30-minute Docker/Chromium proof runs on pull requests, `main`, a daily schedule, and manual dispatch in `keycloak-proxy-e2e.yml`.
+- The deterministic failure/visual proof runs after FakeIdP in `demo-app-e2e.yml` on pull requests and `main`.
+- Repository-wide dependency and crypto gates remain separate under `security-gates.yml`; the focused scenario command does not hide their status.
 
 ## Validation Sign-Off
 
-- [x] All tasks have `<automated>` verify or Wave 0 dependencies
-- [x] Sampling continuity: no 3 consecutive tasks without automated verify
-- [x] Wave 0 covers all MISSING references
-- [x] No watch-mode flags
-- [x] Feedback latency < 600s
-- [x] `nyquist_compliant: true` set in frontmatter
-
-**Approval:** plan coverage approved; Wave 0 artifacts pending execution
+- [x] All 14 plans have runnable automated verification.
+- [x] G-70-1 has a focused behavior gate and separate recurring security ownership.
+- [x] G-70-2 has automated failed-state, recovery, keyboard, narrow-viewport, long-value, and credential-output lifecycle coverage.
+- [x] No manual-only success criterion remains.
+- [x] No implementation file was modified by this audit.
