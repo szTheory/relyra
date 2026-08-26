@@ -42,6 +42,13 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
     assert [%SAMLIdentity{issuer: @issuer, subject: @sarah}] =
              Repo.all(from identity in SAMLIdentity, where: identity.issuer == ^@issuer)
 
+    assert [%AuditEvent{} = mapping_event] = mapping_events(connection.id)
+    assert mapping_event.domain == :mapping
+    assert mapping_event.action == :created
+    assert mapping_event.actor == "ledger_loop_keycloak_provisioner"
+    assert mapping_event.cause == "phase70_profile_bootstrap"
+    assert mapping_event.correlation_id == "keycloak-profile-#{KeycloakProvisioner.connection_id()}"
+
     assert [%Certificate{lifecycle_state: :active, role: :signing} = certificate] =
              Repo.all(
                from certificate in Certificate,
@@ -70,6 +77,50 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
                :count,
                :id
              )
+
+    assert [^mapping_event] = mapping_events(connection.id)
+  end
+
+  test "mapping-audit failure rolls back Sarah identity and remains retryable" do
+    descriptor = descriptor(:a)
+
+    assert {:error, {:identity, {:audit, :injected_audit_failure}}} =
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor} end,
+               mapping_audit_writer: fn _repo, _attrs -> {:error, :injected_audit_failure} end
+             )
+
+    assert_no_enabled_keycloak_connection()
+    assert_no_keycloak_identity_or_mapping_audit()
+    assert Repo.aggregate(LoginReceipt, :count, :id) == 0
+
+    assert {:ok, :provisioned} =
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor} end
+             )
+
+    assert_one_keycloak_identity_and_mapping_audit()
+  end
+
+  test "enablement failure rolls back Sarah identity and mapping audit together" do
+    descriptor = descriptor(:a)
+
+    assert {:error, {:identity, {:enable, :injected_enable_failure}}} =
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor} end,
+               connection_enabler: fn _connection_id, _opts -> {:error, :injected_enable_failure} end
+             )
+
+    assert_no_enabled_keycloak_connection()
+    assert_no_keycloak_identity_or_mapping_audit()
+    assert Repo.aggregate(LoginReceipt, :count, :id) == 0
+
+    assert {:ok, :provisioned} =
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor} end
+             )
+
+    assert_one_keycloak_identity_and_mapping_audit()
   end
 
   test "wrong public issuer leaves all Keycloak trust and identity state unavailable" do
@@ -173,6 +224,45 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
       nil -> :ok
       %Connection{status: status} -> refute status == :enabled
     end
+  end
+
+  defp assert_no_keycloak_identity_or_mapping_audit do
+    assert Repo.aggregate(
+             from(identity in SAMLIdentity, where: identity.issuer == ^@issuer),
+             :count,
+             :id
+           ) == 0
+
+    assert Repo.aggregate(
+             from(event in AuditEvent,
+               where:
+                 event.domain == :mapping and
+                   event.correlation_id == ^"keycloak-profile-#{KeycloakProvisioner.connection_id()}"
+             ),
+             :count,
+             :id
+           ) == 0
+  end
+
+  defp assert_one_keycloak_identity_and_mapping_audit do
+    assert Repo.aggregate(
+             from(identity in SAMLIdentity, where: identity.issuer == ^@issuer),
+             :count,
+             :id
+           ) == 1
+
+    assert [%AuditEvent{}] = mapping_events(keycloak_connection!().id)
+  end
+
+  defp mapping_events(connection_record_id) do
+    Repo.all(
+      from event in AuditEvent,
+        where:
+          event.connection_record_id == ^connection_record_id and
+            event.domain == :mapping and
+            event.action == :created and
+            event.correlation_id == ^"keycloak-profile-#{KeycloakProvisioner.connection_id()}"
+    )
   end
 
   defp keycloak_connection! do
