@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 70-keycloak-behind-the-proxy
 source: [70-VERIFICATION.md]
 started: 2026-08-26T21:11:23Z
-updated: 2026-08-26T21:47:29Z
+updated: 2026-08-26T22:42:11Z
 ---
 
 ## Current Test
@@ -15,22 +15,22 @@ updated: 2026-08-26T21:47:29Z
 ### 1. Live full round trip
 
 expected: Run `npm run demo:keycloak-proxy` with Docker and the host browser available. Public proxy hosts, descriptor trust, the browser ACS journey, one receipt, and exactly Validate response, Verify signature, and Replay check must all pass.
-result: issue
-reported: "Automated run passed the real Keycloak Chromium journey, scoped ACS 302, one durable receipt, and the exact three canonical trace steps, but the command exited 1 in root_security because mint 1.8.0 and req 0.5.18 are vulnerable."
-severity: major
+result: pass
+source: automated
+verification: "Fresh focused Keycloak Docker/Chromium lifecycle exited 0 with one receipt and exactly response.validate, signature.verify, and replay.check; Req/Mint security remediation passed repository gates."
 
 ### 2. Visual and failed-state backstops
 
 expected: Exercise a failed Keycloak journey and inspect Login Trace with keyboard navigation, a narrow viewport, and long values. No false success or receipt remains after failure; recovery is clear and all evidence stays visible and operable.
-result: issue
-reported: "Automated inspection found no executable browser assertions for the failed-destination, keyboard, narrow-viewport, or long-value expectations; they remain manual prose-only backstops."
-severity: major
+result: pass
+source: automated
+verification: "Fresh trace-visual Chromium gate passed tampered ACS rejection, receipt absence, Back recovery, native-details keyboard operation, 360px evidence access, and long safe values with no retained browser output."
 
 ## Summary
 
 total: 2
-passed: 0
-issues: 2
+passed: 2
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
@@ -39,7 +39,7 @@ blocked: 0
 
 - gap_id: G-70-1
   truth: "Run `npm run demo:keycloak-proxy` with Docker and the host browser available. Public proxy hosts, descriptor trust, the browser ACS journey, one receipt, and exactly Validate response, Verify signature, and Replay check must all pass."
-  status: failed
+  status: resolved
   reason: "Automated run passed the real Keycloak Chromium journey, scoped ACS 302, one durable receipt, and the exact three canonical trace steps, but the command exited 1 in root_security because mint 1.8.0 and req 0.5.18 are vulnerable."
   severity: major
   test: 1
@@ -55,10 +55,12 @@ blocked: 0
     - "Decouple repository-wide gates from the focused Keycloak acceptance command without suppressing advisories."
     - "Upgrade Req and its resolved Finch/Mint graph in a dedicated security dependency change."
     - "Add a focused recurring Keycloak proxy CI gate as the only public Keycloak/Traefik/ACS integration proof."
-  debug_session: .planning/debug/phase-70-keycloak-gate-not-green.md
+  debug_session: .planning/debug/resolved/phase-70-keycloak-gate-not-green.md
+  resolved_by: [70-11-PLAN.md, 70-12-PLAN.md]
+  resolved_at: 2026-08-26
 - gap_id: G-70-2
   truth: "Exercise a failed Keycloak journey and inspect Login Trace with keyboard navigation, a narrow viewport, and long values. No false success or receipt remains after failure; recovery is clear and all evidence stays visible and operable."
-  status: failed
+  status: resolved
   reason: "Automated inspection found no executable browser assertions for the failed-destination, keyboard, narrow-viewport, or long-value expectations; they remain manual prose-only backstops."
   severity: major
   test: 2
@@ -77,4 +79,6 @@ blocked: 0
     - "Assert failed ACS leaves no workspace or receipt, exposes the typed rejection, and provides operable Back recovery."
     - "Assert native details keyboard behavior, narrow-viewport accessibility, and visible safe long cause/error-code values."
     - "Run the deterministic trace-visual project in the existing demo-app E2E CI lane."
-  debug_session: .planning/debug/phase-70-visual-failure-automation-gap.md
+  debug_session: .planning/debug/resolved/phase-70-visual-failure-automation-gap.md
+  resolved_by: [70-13-PLAN.md, 70-14-PLAN.md]
+  resolved_at: 2026-08-26
