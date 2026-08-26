@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
 RULESTEAD_DIR="${RULESTEAD_DIR:-$ROOT_DIR/rulestead}"
 ARTIFACT_DIR="${RULESTEAD_CANARY_ARTIFACT_DIR:-playwright-report/rulestead-canary}"
 PROXY_NETWORK="proxy"

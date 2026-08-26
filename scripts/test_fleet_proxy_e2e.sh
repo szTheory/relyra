@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 ARTIFACT_DIR="${FLEET_PROXY_ARTIFACT_DIR:-playwright-report/fleet-proxy-diagnostics}"
@@ -13,7 +13,6 @@ PROXY_COMPOSE=(docker compose -f docker/traefik/compose.yml)
 SIBLING_STACK=(docker compose -f "$SIBLING_COMPOSE")
 PROXY_WAS_RUNNING=false
 NETWORK_WAS_PRESENT=false
-TEST_SUCCEEDED=false
 
 mkdir -p "$ARTIFACT_DIR"
 
@@ -68,7 +67,6 @@ cleanup() {
   fi
 
   if [[ "$status" -eq 0 ]]; then
-    TEST_SUCCEEDED=true
     log "all hermetic lifecycle and browser assertions passed"
   else
     log "failed; diagnostics saved under $ARTIFACT_DIR"
