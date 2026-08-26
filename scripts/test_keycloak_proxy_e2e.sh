@@ -197,19 +197,33 @@ diagnostics_policy_self_test() {
   local unredacted_stage
   local retained_dir
   local sentinels
+  local qualified_response
+  local qualified_entity_descriptor
+  local same_line_response
+  local unterminated_response
+  local filename
 
   self_test_root="$(mktemp -d "${TMPDIR:-/tmp}/relyra-keycloak-diagnostics-self-test.XXXXXX")"
   retained_dir="$self_test_root/keycloak-proxy-diagnostics-self-test"
   sentinels=$'KEYCLOAK_SARAH_PASSWORD=sarah-password-sentinel\nDEMO_ADMIN_PASSWORD=admin-password-sentinel\nusername=sarah-form-sentinel\nSAMLResponse=saml-response-sentinel\nSAMLRequest=saml-request-sentinel\n<Response>response-xml-sentinel</Response>\n<Assertion>assertion-xml-sentinel</Assertion>\n<EntityDescriptor>descriptor-xml-sentinel</EntityDescriptor>\n-----BEGIN PRIVATE KEY-----\npem-sentinel\nAuthorization: Bearer authorization-sentinel\nCookie: session=cookie-sentinel\npostgres://relyra:database-sentinel@db/relyra'
+  qualified_response=$'phase70-safe-before\n<samlp:Response ID="phase70-response-tag-sentinel">\n  <saml:Assertion ID="phase70-assertion-tag-sentinel">\n    <saml:AttributeValue>phase70-xml-value-sentinel</saml:AttributeValue>\n  </saml:Assertion>\n</samlp:Response>\nphase70-safe-after'
+  qualified_entity_descriptor=$'<metadata:EntityDescriptor entityID="phase70-descriptor-tag-sentinel">\n  phase70-descriptor-value-sentinel\n</metadata:EntityDescriptor>'
+  same_line_response='<alternate:Response ID="phase70-same-line-tag-sentinel">phase70-same-line-value-sentinel</alternate:Response>'
+  unterminated_response=$'<samlp:Response ID="phase70-unterminated-tag-sentinel">\n  <saml:Assertion>phase70-unterminated-value-sentinel'
 
   clean_stage="$(new_diagnostic_staging_dir "$retained_dir")"
-  printf '%s\n' "$sentinels" | write_redacted_diagnostic "$clean_stage" container-state.log
-  printf '%s\n' "$sentinels" | write_redacted_diagnostic "$clean_stage" relyra.log
-  printf '%s\n' "$sentinels" | write_redacted_diagnostic "$clean_stage" audit-actions.log
+  for filename in container-state.log relyra.log audit-actions.log; do
+    printf '%s\n%s\n' "$sentinels" "$qualified_response" |
+      write_redacted_diagnostic "$clean_stage" "$filename"
+  done
   validate_diagnostic_tree "$clean_stage"
   promote_diagnostics "$clean_stage" "$retained_dir"
   [[ "$(find "$retained_dir" -maxdepth 1 -type f -exec basename {} \; | sort)" == $'audit-actions.log\ncontainer-state.log\nrelyra.log' ]]
-  ! grep -R -E 'sarah-password-sentinel|admin-password-sentinel|sarah-form-sentinel|saml-response-sentinel|saml-request-sentinel|response-xml-sentinel|assertion-xml-sentinel|descriptor-xml-sentinel|pem-sentinel|authorization-sentinel|cookie-sentinel|database-sentinel' "$retained_dir"
+  for filename in container-state.log relyra.log audit-actions.log; do
+    grep -Fx 'phase70-safe-before' "$retained_dir/$filename"
+    grep -Fx 'phase70-safe-after' "$retained_dir/$filename"
+  done
+  ! grep -R -E 'sarah-password-sentinel|admin-password-sentinel|sarah-form-sentinel|saml-response-sentinel|saml-request-sentinel|response-xml-sentinel|assertion-xml-sentinel|descriptor-xml-sentinel|pem-sentinel|authorization-sentinel|cookie-sentinel|database-sentinel|samlp:Response|saml:Assertion|saml:AttributeValue|phase70-(response|assertion|xml-value)-sentinel' "$retained_dir"
 
   rejected_stage="$(new_diagnostic_staging_dir "$retained_dir")"
   touch "$rejected_stage/unknown.txt" \
@@ -222,11 +236,16 @@ diagnostics_policy_self_test() {
   discard_diagnostics "$rejected_stage" "$retained_dir"
   [[ ! -e "$rejected_stage" && ! -e "$retained_dir" ]]
 
-  unredacted_stage="$(new_diagnostic_staging_dir "$retained_dir")"
-  printf 'SAMLResponse=must-not-survive\n' >"$unredacted_stage/relyra.log"
-  ! validate_diagnostic_tree "$unredacted_stage"
-  discard_diagnostics "$unredacted_stage" "$retained_dir"
-  [[ ! -e "$unredacted_stage" && ! -e "$retained_dir" ]]
+  for fixture in "$qualified_response" "$qualified_entity_descriptor" "$same_line_response" "$unterminated_response"; do
+    unredacted_stage="$(new_diagnostic_staging_dir "$retained_dir")"
+    for filename in container-state.log relyra.log audit-actions.log; do
+      printf 'ordinary safe diagnostic line\n' >"$unredacted_stage/$filename"
+    done
+    printf '%s\n' "$fixture" >"$unredacted_stage/relyra.log"
+    ! validate_diagnostic_tree "$unredacted_stage"
+    ! promote_diagnostics "$unredacted_stage" "$retained_dir"
+    [[ ! -e "$unredacted_stage" && ! -e "$retained_dir" ]]
+  done
   rmdir "$self_test_root"
 }
 
