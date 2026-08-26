@@ -45,6 +45,15 @@
       </nav>
     </section>
 
+    <%= if @has_login_receipt? do %>
+      <section class="workspace-panel" aria-labelledby="verified-receipt-title">
+        <h2 id="verified-receipt-title">Verified sign-in receipt</h2>
+        <p>
+          Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt.
+        </p>
+      </section>
+    <% end %>
+
     <section class="workspace-panel" aria-labelledby="route-mounts-title">
       <h2 id="route-mounts-title">Mounted route scopes</h2>
       <p>Mounted SAML routes: /saml</p>
