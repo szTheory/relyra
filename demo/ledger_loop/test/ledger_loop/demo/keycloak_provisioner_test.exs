@@ -1,7 +1,7 @@
 defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
   use LedgerLoop.DataCase, async: false
 
-  alias LedgerLoop.Accounts.{LoginReceipt, SAMLIdentity}
+  alias LedgerLoop.Accounts.{LoginReceipt, SAMLIdentity, User}
   alias LedgerLoop.Demo.{KeycloakProvisioner, Reset}
   alias LedgerLoop.Repo
   alias Relyra.ConnectionResolver.Ecto, as: ConnectionResolver
@@ -121,6 +121,26 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
              KeycloakProvisioner.provision!(descriptor_fetcher: fn _url -> {:ok, descriptor} end)
 
     assert_one_keycloak_identity_and_mapping_audit()
+  end
+
+  test "a Sarah Keycloak identity mapped to another user fails closed" do
+    other_user = Repo.get_by!(User, email: "chen@northstar.example.com")
+
+    Repo.insert!(
+      SAMLIdentity.changeset(%SAMLIdentity{}, %{
+        user_id: other_user.id,
+        subject: @sarah,
+        issuer: @issuer
+      })
+    )
+
+    assert {:error, {:identity, {:user_mismatch, _identity_id}}} =
+             KeycloakProvisioner.provision!(
+               descriptor_fetcher: fn _url -> {:ok, descriptor(:a)} end
+             )
+
+    assert_no_enabled_keycloak_connection()
+    assert Repo.aggregate(LoginReceipt, :count, :id) == 0
   end
 
   test "wrong public issuer leaves all Keycloak trust and identity state unavailable" do

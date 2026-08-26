@@ -87,6 +87,8 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
   defp maybe_unchanged(facts, host) do
     case Repo.get_by(Connection, connection_id: @connection_id) do
       %Connection{status: :enabled} = connection ->
+        user = Repo.get_by!(User, email: @sarah_email)
+
         active_fingerprints =
           Repo.all(
             from certificate in Ecto.assoc(connection, :certificates),
@@ -95,14 +97,17 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
           |> Enum.map(& &1.fingerprint_sha256)
           |> MapSet.new()
 
-        identity_exists? =
+        identity_matches? =
           Repo.exists?(
             from identity in SAMLIdentity,
-              where: identity.subject == ^@sarah_email and identity.issuer == ^public_issuer(host)
+              where:
+                identity.subject == ^@sarah_email and
+                  identity.issuer == ^public_issuer(host) and
+                  identity.user_id == ^user.id
           )
 
         if connection.idp_entity_id == facts.issuer and connection.idp_sso_url == facts.sso_url and
-             active_fingerprints == facts.fingerprints and identity_exists? do
+             active_fingerprints == facts.fingerprints and identity_matches? do
           :unchanged
         else
           :ok
@@ -265,8 +270,11 @@ defmodule LedgerLoop.Demo.KeycloakProvisioner do
           {:error, changeset} -> {:error, {:insert, changeset}}
         end
 
-      _identity ->
+      %SAMLIdentity{user_id: user_id} when user_id == user.id ->
         :ok
+
+      %SAMLIdentity{} = identity ->
+        {:error, {:user_mismatch, identity.id}}
     end
   end
 
