@@ -89,7 +89,44 @@ NODE
   [[ -z "$(find "$self_test_artifacts" -mindepth 1 -print -quit)" ]]
   rmdir "$self_test_artifacts"
 
+  diagnostics_policy_self_test
+
   log "browser artifact policy self-test passed"
+}
+
+diagnostics_policy_self_test() {
+  local self_test_root
+  local clean_stage
+  local rejected_stage
+  local unredacted_stage
+  local retained_dir
+  local sentinels
+
+  self_test_root="$(mktemp -d "${TMPDIR:-/tmp}/relyra-keycloak-diagnostics-self-test.XXXXXX")"
+  retained_dir="$self_test_root/keycloak-proxy-diagnostics-self-test"
+  sentinels=$'KEYCLOAK_SARAH_PASSWORD=sarah-password-sentinel\nusername=sarah-form-sentinel\nSAMLResponse=saml-response-sentinel\nSAMLRequest=saml-request-sentinel\n<Response>response-xml-sentinel</Response>\n<Assertion>assertion-xml-sentinel</Assertion>\n<EntityDescriptor>descriptor-xml-sentinel</EntityDescriptor>\n-----BEGIN PRIVATE KEY-----\npem-sentinel\nAuthorization: Bearer authorization-sentinel\nCookie: session=cookie-sentinel\npostgres://relyra:database-sentinel@db/relyra'
+
+  clean_stage="$(new_diagnostic_staging_dir "$retained_dir")"
+  printf '%s\n' "$sentinels" | write_redacted_diagnostic "$clean_stage" container-state.log
+  printf '%s\n' "$sentinels" | write_redacted_diagnostic "$clean_stage" relyra.log
+  printf '%s\n' "$sentinels" | write_redacted_diagnostic "$clean_stage" audit-actions.log
+  validate_diagnostic_tree "$clean_stage"
+  promote_diagnostics "$clean_stage" "$retained_dir"
+  [[ "$(find "$retained_dir" -maxdepth 1 -type f -printf '%f\n' | sort)" == $'audit-actions.log\ncontainer-state.log\nrelyra.log' ]]
+  ! grep -R -E 'sarah-password-sentinel|sarah-form-sentinel|saml-response-sentinel|saml-request-sentinel|response-xml-sentinel|assertion-xml-sentinel|descriptor-xml-sentinel|pem-sentinel|authorization-sentinel|cookie-sentinel|database-sentinel' "$retained_dir"
+
+  rejected_stage="$(new_diagnostic_staging_dir "$retained_dir")"
+  touch "$rejected_stage/trace.zip"
+  ! validate_diagnostic_tree "$rejected_stage"
+  discard_diagnostics "$rejected_stage" "$retained_dir"
+  [[ ! -e "$rejected_stage" && ! -e "$retained_dir" ]]
+
+  unredacted_stage="$(new_diagnostic_staging_dir "$retained_dir")"
+  printf 'SAMLResponse=must-not-survive\n' >"$unredacted_stage/relyra.log"
+  ! validate_diagnostic_tree "$unredacted_stage"
+  discard_diagnostics "$unredacted_stage" "$retained_dir"
+  [[ ! -e "$unredacted_stage" && ! -e "$retained_dir" ]]
+  rmdir "$self_test_root"
 }
 
 cleanup_playwright_tmp() {
