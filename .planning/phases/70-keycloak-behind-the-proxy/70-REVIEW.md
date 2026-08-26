@@ -1,6 +1,6 @@
 ---
 phase: 70-keycloak-behind-the-proxy
-reviewed: 2026-08-26T19:43:08Z
+reviewed: 2026-08-26T20:24:17Z
 depth: standard
 files_reviewed: 16
 files_reviewed_list:
@@ -30,24 +30,32 @@ status: issues_found
 
 # Phase 70: Code Review Report
 
-**Reviewed:** 2026-08-26T19:43:08Z
+**Reviewed:** 2026-08-26T20:24:17Z
 **Depth:** standard
 **Files Reviewed:** 16
 **Status:** issues_found
 
 ## Summary
 
-The router does correctly place both `/login/admin` and the complete LiveAdmin mount behind the runtime-configured Basic-auth plug, and the focused admin/FakeIdP tests pass. However, the Keycloak provisioner creates a durable SAML identity mapping outside the audited transaction required for trust mutations. It can leave that mapping behind when a later provisioning stage fails. The new auth boundary also lacks a regression case for missing runtime credentials.
+The reviewed provisioner now correctly encloses identity creation, its mapping audit, and final enablement in one outer transaction; the focused rollback and retry tests pass. The remaining blocker is in the harness's claimed fail-closed diagnostic redaction: namespaced, multiline SAML XML can retain assertion contents. The Basic-auth fail-closed behavior itself is implemented, but its missing-configuration branch lacks a regression test.
 
 ## Critical Issues
 
-### CR-01: Keycloak identity mapping is written without an audit co-commit
+### CR-01: Namespaced multiline SAML XML can be retained in failure diagnostics
 
-**File:** `demo/ledger_loop/lib/ledger_loop/demo/keycloak_provisioner.ex:230-245`
+**File:** `scripts/test_keycloak_proxy_e2e.sh:37-46, 92-98`
 
-**Issue:** `ensure_sarah_identity/1` inserts a durable issuer/subject-to-user mapping directly with `Repo.insert/1`. Unlike the connection, metadata, and certificate operations, it neither calls `Relyra.Ecto.AuditWriter.append_event/2` nor runs the identity write and audit event in one database transaction. Further, `ensure_sarah_identity/1` runs before `enable_connection/1` (line 50), so an enable failure leaves the mapping committed while `fail_closed/2` only disables the connection. This violates the project invariant that mapping/trust mutations co-commit an append-only audit row and leaves a latent authorization association after a failed provision.
+**Issue:** The redactor and post-redaction validator recognize only unprefixed opening tags (`<Response>`, `<Assertion>`, and `<EntityDescriptor>`). SAML responses normally use namespace-qualified elements such as `<samlp:Response>` and `<saml:Assertion>`. For a multiline prefixed response, the final `sed` rule redacts the opening-tag line but does not enter the AWK XML-drop state; subsequent lines such as `<saml:AttributeValue>secret</saml:AttributeValue>` are preserved. The validator repeats the same unprefixed pattern, so it promotes that artifact. This violates the phase's explicit no-assertion/credential diagnostic-retention guarantee.
 
-**Fix:** Move the identity creation into an explicit `Repo.transaction/1` that also appends a `:mapping` audit event using the provisioner's existing actor/cause/correlation context; roll back if either write fails. Make connection enablement part of the same transaction, or compensate by deleting/rolling back the newly-created identity when enablement fails. Add regression tests that force the identity-audit and enable stages to fail and assert both that no identity remains and that successful creation has the matching audit row.
+**Fix:** Treat optional namespace prefixes as part of every XML detector and test the actual multiline form before promotion. A single stateful redactor/validator is less error-prone than split AWK/sed rules; at minimum, cover both start and end tags:
+
+```bash
+# Match <Response>, <samlp:Response>, etc. in the redactor and validator.
+xml_start_re='<(?:[[:alnum:]_.-]+:)?(Response|Assertion|EntityDescriptor)([[:space:]>]|$)'
+xml_end_re='</(?:[[:alnum:]_.-]+:)?(Response|Assertion|EntityDescriptor)[[:space:]]*>'
+```
+
+Add a sentinel self-test containing a multiline `<samlp:Response>` with nested `<saml:Assertion>`/`<saml:AttributeValue>` and assert neither the sentinel nor any inner XML is retained.
 
 ## Warnings
 
@@ -55,12 +63,12 @@ The router does correctly place both `/login/admin` and the complete LiveAdmin m
 
 **File:** `demo/ledger_loop/test/ledger_loop_web/controllers/route_affordance_controller_test.exs:8-27`
 
-**Issue:** The setup always installs a valid `:demo_admin_auth` configuration, so the tests only exercise absent or invalid request credentials. They never exercise the required security case where `DEMO_ADMIN_USERNAME`/`DEMO_ADMIN_PASSWORD` are absent or incomplete and `DemoAdminAuth.configured_credentials/0` must challenge and halt. A future fallback, stale configuration, or runtime config-shape regression could silently reopen the admin mount without failing this suite.
+**Issue:** The setup always installs valid `:demo_admin_auth` credentials, so only absent or invalid request credentials are exercised. The required branch where runtime credentials are missing or partial and `DemoAdminAuth` must challenge and halt has no regression coverage. A configuration fallback or shape regression could reopen the mounted admin surface without failing the suite.
 
-**Fix:** Add a separate test that deletes `Application.delete_env(:ledger_loop, :demo_admin_auth)` (and cases with an empty username or password), requests both `/login/admin` and `/relyra/admin/connections/new`, and asserts `401`, the Basic challenge, and absence of all three admin session keys. Restore configuration in `on_exit` as the existing setup does.
+**Fix:** Add a separate test that removes the application config (and covers empty username/password), requests both `/login/admin` and `/relyra/admin/connections/new`, and asserts `401`, the Basic challenge, and absence of all admin session keys. Restore the previous setting in `on_exit`, following the existing setup pattern.
 
 ---
 
-_Reviewed: 2026-08-26T19:43:08Z_
+_Reviewed: 2026-08-26T20:24:17Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
