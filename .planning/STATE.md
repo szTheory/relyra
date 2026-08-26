@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Phases
-current_phase: 70
-current_phase_name: keycloak-behind-the-proxy
-status: executing
-stopped_at: Completed 70-09-PLAN.md
-last_updated: "2026-08-26T20:20:11.535Z"
+current_phase: 71
+status: ready
+stopped_at: Phase 70 complete
+last_updated: "2026-08-26T22:58:27.485Z"
 last_activity: 2026-08-26
-last_activity_desc: Phase 70 execution started
+last_activity_desc: Phase 70 complete
 progress:
-  total_phases: 3
-  completed_phases: 2
-  total_plans: 14
-  completed_plans: 13
-  percent: 67
+  total_phases: 5
+  completed_phases: 3
+  total_plans: 19
+  completed_plans: 19
+  percent: 60
+current_phase_name: launcher-dx-and-banner
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-19)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 70 — keycloak-behind-the-proxy
+**Current focus:** Phase 71 — launcher DX & banner
 
 ## Current Position
 
-Phase: 70 (keycloak-behind-the-proxy) — EXECUTING
-Plan: 2 of 9
-Status: Ready to execute
-Last activity: 2026-08-26 — Phase 70 execution started
+Phase: 71 (launcher DX & banner)
+Plan: Not started
+Status: Ready to discuss
+Last activity: 2026-08-26 — Phase 70 complete
 
 ## Performance Metrics
 
@@ -66,6 +66,11 @@ Last activity: 2026-08-26 — Phase 70 execution started
 | Phase 70 P07 | 8m | 2 tasks | 2 files |
 | Phase 70-keycloak-behind-the-proxy P08 | 20m | 2 tasks | 9 files |
 | Phase 70 P09 | ~10 minutes | 1 tasks | 2 files |
+| Phase 70 P10 | 12m | 2 tasks | 2 files |
+| Phase 70 P11 | 7m | 2 tasks | 2 files |
+| Phase 70 P12 | 6m | 1 task | 1 file |
+| Phase 70 P13 | — | 1 task | 4 files |
+| Phase 70 P14 | — | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -100,11 +105,14 @@ Last activity: 2026-08-26 — Phase 70 execution started
 - [Phase ?]: A single runtime Basic-auth pipeline guards both demo admin scope establishment and every mounted LiveAdmin route.
 - [Phase ?]: The Keycloak harness generates and redacts an ephemeral host-admin credential pair for authenticated trace evidence.
 - [Phase ?]: Keycloak identity creation, attributed mapping audit, and final enablement share one host-owned transaction.
+- [Phase ?]: Diagnostic redaction and promotion validation independently track exact protected XML root QNames and fail closed at EOF.
+- [Phase ?]: Keycloak scenario status is limited to public topology, signed ACS, receipt, trace, diagnostics, and cleanup evidence.
+- [Phase ?]: The recurring Keycloak CI workflow is artifact-free and leaves dependency/security ownership to security-gates.yml.
 
 ### Blockers/Concerns
 
 - The milestone-wide invariant (no `lib/`/API/protocol/Hex-whitelist change) is the primary guardrail; every phase plan must keep repo gates (`mix qa`, `mix ci.security`, `mix format --check-formatted`, `mix test --warnings-as-errors`) green by not touching `lib/`.
-- Repository QA dependency audit currently fails on pre-existing mint 1.8.0 and req 0.5.18 advisories; upgrade in a dedicated security dependency change before push.
+- Direct `mix deps.audit` still reports the documented pre-existing Decimal 2.4.1 advisory; Phase 70 remediated Req/Mint without adding a suppression, and `mix ci.security` remains green.
 
 ## Deferred Items
 
@@ -124,13 +132,12 @@ Last activity: 2026-08-26 — Phase 70 execution started
 
 ## Session Continuity
 
-**Stopped at:** Completed 70-09-PLAN.md
+**Stopped at:** Phase 70 complete
 **Resume file:** None
 
-Last session: 2026-08-26T20:20:11.527Z
+Last session: 2026-08-26T22:09:14.283Z
 Resume at: `/gsd-next`
 
 ## Operator Next Steps
 
-- Merge PR #41 (demo Docker dev boot fixes) so Phase 68's code lands on main
-- Plan the next phase with `/gsd-plan-phase 69` (or `/gsd-discuss-phase 69` first)
+- Discuss Phase 71 with `/gsd-discuss-phase 71` before planning the launcher and banner work.

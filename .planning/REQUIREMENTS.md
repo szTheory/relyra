@@ -64,7 +64,7 @@
 | FLEET-01 | Phase 69 | Complete |
 | FLEET-02 | Phase 69 | Complete |
 | FLEET-03 | Phase 69 | Complete |
-| KC-01 | Phase 70 | Gaps Found |
+| KC-01 | Phase 70 | Complete |
 | DX-01 | Phase 71 | Pending |
 | DX-02 | Phase 71 | Pending |
 | DOC-01 | Phase 72 | Pending |

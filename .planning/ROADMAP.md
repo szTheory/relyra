@@ -35,7 +35,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 
 - [x] **Phase 68: Build caching & correctness** - Cached, arch-correct container build so source edits never re-fetch or recompile deps and live edits reload. (completed 2026-06-19)
 - [x] **Phase 69: Compose split & fleet proxy** - Solo-first compose with no published Postgres port plus an opt-in Traefik overlay so sibling lib demos coexist.
-- [ ] **Phase 70: Keycloak behind the proxy** - Real-IdP Keycloak round-trip works end-to-end at nice hostnames behind the shared proxy.
+- [x] **Phase 70: Keycloak behind the proxy** - Real-IdP Keycloak round-trip works end-to-end at nice hostnames behind the shared proxy. (completed 2026-08-26)
 - [ ] **Phase 71: Launcher DX & banner** - A Makefile primary launcher with a copy-pasteable URL/route map, `make fleet`, and `doctor`.
 - [ ] **Phase 72: Documentation** - House-voice Docker DX guide plus demo/README routing updates describing the finished surface.
 
@@ -102,17 +102,17 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   3. A browser-driven Keycloak login redirects to `keycloak.relyra.localhost`, returns a signed assertion to `relyra.localhost/saml/.../acs`, and Relyra verifies it (recipient/Destination match) and establishes a session.
 
 **Scope note**: Touches `docker/keycloak/realm-demo-app.json` and the keycloak service/env in `docker-compose.proxy.yml`. Relyra's verification is exercised, not modified. Gap closure permits only the demonstrably required `ConnectionTraceLive` narrow-viewport presentation wrapper; parser, crypto, replay, algorithm policy, public API, and behaviour seams remain untouched.
-**Plans**: 11/14 plans executed
+**Plans**: 14/14 plans complete
 
 **Wave 10** *(independent closures after Plan 70-10)*
 
 - [x] 70-11-PLAN.md — Decouple focused Keycloak acceptance from repository gates and add its recurring CI owner [G-70-1, KC-01]
-- [ ] 70-12-PLAN.md — Remediate the advisory-vulnerable Req/Finch/Mint lock resolution without suppression [G-70-1, KC-01]
-- [ ] 70-13-PLAN.md — Add the safe long-trace fixture and scoped narrow-width evidence access [G-70-2, KC-01]
+- [x] 70-12-PLAN.md — Remediate the advisory-vulnerable Req/Finch/Mint lock resolution without suppression [G-70-1, KC-01]
+- [x] 70-13-PLAN.md — Add the safe long-trace fixture and scoped narrow-width evidence access [G-70-2, KC-01]
 
 **Wave 11** *(blocked on Plan 70-13)*
 
-- [ ] 70-14-PLAN.md — Automate failed-state, recovery, keyboard, viewport, and long-value proof in recurring CI [G-70-2, KC-01]
+- [x] 70-14-PLAN.md — Automate failed-state, recovery, keyboard, viewport, and long-value proof in recurring CI [G-70-2, KC-01]
 
 **Wave 1**
 
@@ -185,13 +185,13 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 |-------|----------------|--------|-----------|
 | 68. Build caching & correctness | 2/2 | Complete    | 2026-06-19 |
 | 69. Compose split & fleet proxy | 3/3 | Complete | 2026-08-26 |
-| 70. Keycloak behind the proxy | 11/14 | In Progress|  |
+| 70. Keycloak behind the proxy | 14/14 | Complete | 2026-08-26 |
 | 71. Launcher DX & banner | 0/? | Not started | - |
 | 72. Documentation | 0/? | Not started | - |
 
 ## Current Status
 
-v1.10 - Docker DX & Fleet Proxy is active (Phases 68-72). Next: `/gsd-plan-phase 68`.
+v1.10 - Docker DX & Fleet Proxy is active (Phases 68-72). Phases 68-70 are complete; next: `/gsd-discuss-phase 71`.
 
 ## Demand-Gated Future Candidates
 
