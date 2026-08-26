@@ -5,15 +5,15 @@ milestone_name: Phases
 current_phase: 70
 current_phase_name: keycloak-behind-the-proxy
 status: executing
-stopped_at: Completed 70-03-PLAN.md
-last_updated: "2026-08-26T16:58:39.629Z"
+stopped_at: Completed 70-04-PLAN.md
+last_updated: "2026-08-26T17:05:31.311Z"
 last_activity: 2026-08-26
 last_activity_desc: Phase 70 execution started
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
   percent: 67
 ---
 
@@ -29,7 +29,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-19)
 ## Current Position
 
 Phase: 70 (keycloak-behind-the-proxy) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-08-26 — Phase 70 execution started
 
@@ -60,6 +60,7 @@ Last activity: 2026-08-26 — Phase 70 execution started
 | Phase 70 P01 | 9min | 1 tasks | 10 files |
 | Phase 70 P02 | 18min | 2 tasks | 2 files |
 | Phase 70 P03 | 6m | 2 tasks | 2 files |
+| Phase 70 P04 | 14min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Last activity: 2026-08-26 — Phase 70 execution started
 - [Phase ?]: Changed Keycloak descriptors disable before import, activate new signing trust, retire stale trust, then enable last.
 - [Phase ?]: Keycloak proxy proof renders default and RELYRA_HOST override contracts from one public-host input.
 - [Phase ?]: The E2E harness uses an owned Compose project and redacted named-layer diagnostics.
+- [Phase ?]: The optional Keycloak job renders only when its stable persisted connection is enabled; FakeIdP remains the first deterministic job.
+- [Phase ?]: Workspace proof uses only durable LoginReceipt presence and exact receipt wording, without cookie or authorization claims.
 
 ### Blockers/Concerns
 
@@ -109,10 +112,10 @@ Last activity: 2026-08-26 — Phase 70 execution started
 
 ## Session Continuity
 
-**Stopped at:** Completed 70-03-PLAN.md
+**Stopped at:** Completed 70-04-PLAN.md
 **Resume file:** None
 
-Last session: 2026-08-26T16:58:39.623Z
+Last session: 2026-08-26T17:05:31.306Z
 Resume at: `/gsd-next`
 
 ## Operator Next Steps
