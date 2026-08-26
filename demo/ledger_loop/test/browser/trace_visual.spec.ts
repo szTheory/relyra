@@ -40,6 +40,8 @@ test("tampered FakeIdP rejection remains recoverable and its trace evidence stay
   ).toString("base64")}`;
 
   await page.setExtraHTTPHeaders({ authorization });
+  await page.goto("/login/admin");
+  await expect(page).toHaveURL(/\/relyra\/admin$/);
   await page.goto(`/relyra/admin/connections/${enabledConnectionId}/trace`);
 
   const newestFailedTrace = page
@@ -63,7 +65,11 @@ test("tampered FakeIdP rejection remains recoverable and its trace evidence stay
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto(`/relyra/admin/connections/${enabledConnectionId}/trace`);
 
-  const evidence = page.getByRole("region", {
+  const narrowFailedTrace = page
+    .locator('[data-testid^="login-trace-row-"]')
+    .filter({ hasText: "digest_mismatch" })
+    .first();
+  const evidence = narrowFailedTrace.getByRole("region", {
     name: "Login trace step evidence",
   });
   await evidence.focus();
@@ -79,6 +85,9 @@ test("tampered FakeIdP rejection remains recoverable and its trace evidence stay
     region.scrollLeft = region.scrollWidth;
   });
   expect(await evidence.evaluate((region) => region.scrollLeft)).toBeGreaterThan(0);
+  await expect(
+    evidence.getByRole("columnheader", { name: "Duration" }),
+  ).toBeInViewport();
 
   await page.goto("/support/scenario");
   await expect(page).toHaveURL(

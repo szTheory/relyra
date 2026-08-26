@@ -5,7 +5,8 @@
     "admin-ui:smoke": "playwright test --config playwright.admin-ui.config.mjs",
     "demo:fake-idp": "playwright test --config playwright.fake-idp.config.mjs",
     "demo:fleet-proxy": "bash scripts/test_fleet_proxy_e2e.sh",
-    "demo:keycloak-proxy": "bash scripts/test_keycloak_proxy_e2e.sh"
+    "demo:keycloak-proxy": "bash scripts/test_keycloak_proxy_e2e.sh",
+    "demo:trace-visual": "bash scripts/test_trace_visual_e2e.sh"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2"
