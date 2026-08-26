@@ -52,6 +52,45 @@ diagnostics_self_test() {
   log "diagnostic redaction self-test passed"
 }
 
+artifact_policy_self_test() {
+  local playwright_tmp
+  local self_test_artifacts
+
+  node --input-type=module <<'NODE'
+import config from "./playwright.keycloak-proxy.config.mjs";
+
+const reporterNames = config.reporter.map((reporter) =>
+  Array.isArray(reporter) ? reporter[0] : reporter,
+);
+
+if (
+  config.use.trace !== "off" ||
+    config.use.video !== "off" ||
+    config.use.screenshot !== "off" ||
+    reporterNames.length !== 1 ||
+    reporterNames[0] !== "list"
+) {
+  process.exit(1);
+}
+NODE
+
+  self_test_artifacts="$(mktemp -d "${TMPDIR:-/tmp}/relyra-keycloak-artifact-self-test.XXXXXX")"
+  playwright_tmp="$(mktemp -d "${TMPDIR:-/tmp}/relyra-keycloak-playwright.XXXXXX")"
+  mkdir -p "$playwright_tmp/test-results"
+  touch "$playwright_tmp/test-results/trace.zip" \
+    "$playwright_tmp/test-results/video.webm" \
+    "$playwright_tmp/test-results/screenshot.png" \
+    "$playwright_tmp/test-results/snapshot.html" \
+    "$playwright_tmp/test-results/network.har"
+
+  cleanup_playwright_tmp "$playwright_tmp"
+  [[ ! -e "$playwright_tmp" ]]
+  [[ -z "$(find "$self_test_artifacts" -mindepth 1 -print -quit)" ]]
+  rmdir "$self_test_artifacts"
+
+  log "browser artifact policy self-test passed"
+}
+
 capture_diagnostics() {
   mkdir -p "$ARTIFACT_DIR"
 
@@ -170,6 +209,11 @@ fi
 
 if [[ "${KEYCLOAK_PROXY_DIAGNOSTICS_SELF_TEST:-0}" == "1" ]]; then
   diagnostics_self_test
+  exit 0
+fi
+
+if [[ "${KEYCLOAK_PROXY_ARTIFACT_POLICY_SELF_TEST:-0}" == "1" ]]; then
+  artifact_policy_self_test
   exit 0
 fi
 
