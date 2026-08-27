@@ -235,7 +235,7 @@ v1.10 - Docker DX & Fleet Proxy implementation is complete. Phases 68-72 are ver
 **Goal:** Evaluators can configure the mounted connection-scoped SAML endpoints and reach validation traces through documented runtime Basic Auth, with deterministic allow/deny evidence.
 **Requirements**: None mapped — audit closure is tracked by CONTEXT decisions D-01 through D-05.
 **Depends on:** Phase 72
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 **Wave 1**
@@ -248,5 +248,5 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 72.1-03-PLAN.md — Align Solo/Fleet/Keycloak evaluator documentation with scoped routes and 401 recovery.
+- [x] 72.1-03-PLAN.md — Align Solo/Fleet/Keycloak evaluator documentation with scoped routes and 401 recovery.
 - [ ] 72.1-04-PLAN.md — Prove denied-then-authenticated Keycloak trace access and run full security gates.
