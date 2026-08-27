@@ -18,6 +18,7 @@ defmodule LedgerLoopWeb.SetupLive do
       socket
       |> assign(:active_step, :sp_settings)
       |> assign(:connection, connection)
+      |> assign(:saml_urls, saml_urls(connection))
       |> assign(:metadata_saved, false)
       |> assign(:mappings, [
         %{saml: "urn:oid:0.9.2342.19200300.100.1.3", local: "email"},
@@ -29,10 +30,12 @@ defmodule LedgerLoopWeb.SetupLive do
   end
 
   def handle_event("test_login", _params, socket) do
-    if socket.assigns.connection do
-      {:noreply, redirect(socket, to: "/auth/saml/login?connection_id=#{socket.assigns.connection.connection_id}")}
-    else
-      {:noreply, redirect(socket, to: "/auth/saml/login")}
+    case socket.assigns.saml_urls do
+      %{login_path: login_path} ->
+        {:noreply, redirect(socket, to: login_path)}
+
+      nil ->
+        {:noreply, socket}
     end
   end
 
@@ -50,5 +53,21 @@ defmodule LedgerLoopWeb.SetupLive do
     next_index = min(current_index + 1, length(@steps) - 1)
     next_step = Enum.at(@steps, next_index)
     {:noreply, assign(socket, :active_step, next_step)}
+  end
+
+  defp saml_urls(nil), do: nil
+
+  defp saml_urls(%Connection{connection_id: connection_id}) do
+    metadata_path = ~p"/saml/#{connection_id}/metadata"
+    login_path = ~p"/saml/#{connection_id}/login"
+    acs_path = ~p"/saml/#{connection_id}/acs"
+    endpoint_url = LedgerLoopWeb.Endpoint.url()
+
+    %{
+      metadata: endpoint_url <> metadata_path,
+      login: endpoint_url <> login_path,
+      acs: endpoint_url <> acs_path,
+      login_path: login_path
+    }
   end
 end
