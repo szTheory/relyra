@@ -185,7 +185,15 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   3. A reader following only the new guide reaches a successful FakeIdP login without external context (the "Receipt" proof lines are reproducible).
 
 **Scope note**: Touches `guides/docker_dev_dx.md`, `demo/ledger_loop/README.md`, `guides/demo.md`, and `README.md`. Brand voice per `brandbook/notes/decision-log.md` Canonical Lock Set (newest source, supersedes `prompts/relyra-brand-book.md`). No `lib/` change; no new Hex package surface.
-**Plans**: TBD
+**Plans**: 2 plans
+
+**Wave 1**
+
+- [ ] 72-01-PLAN.md — Tracer: self-contained Solo/FakeIdP zero-to-login Docker guide, then Fleet/Keycloak/cache/recovery expansion [DOC-01]
+
+**Wave 2** *(blocked on Plan 72-01)*
+
+- [ ] 72-02-PLAN.md — Make-first demo, HexDocs, and repository routing with Local Mix and Day-1 preserved [DOC-02]
 
 ## Progress
 

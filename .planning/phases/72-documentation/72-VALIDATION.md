@@ -50,13 +50,13 @@ created: 2026-08-27
 ## Wave 0 Requirements
 
 - [ ] Extend `test/docs/demo_guide_drift_test.exs` with static assertions for the new guide's existence and content, canonical commands and origins, optional-path ordering, recovery vocabulary, receipt ownership, and all three router links.
-- [ ] Keep `mix.exs` unchanged unless the plan establishes that ExDoc extras are documentation metadata rather than the explicitly excluded new Hex package surface; if included, update the published-extra link contract in `test/docs/markdown_link_smoke_test.exs` in the same task.
+- [ ] Assert deterministically that `mix.exs` and its ExDoc extras remain unchanged, and that the published `guides/demo.md` router uses and tests the absolute canonical repository URL `https://github.com/szTheory/relyra/blob/main/guides/docker_dev_dx.md`.
 
 ---
 
-## Manual-Only Verifications
+## Automated Verification Coverage
 
-All phase behaviors have automated verification. Live Docker/browser behavior is covered by the owned launcher and E2E harnesses from Phases 68–71; Phase 72 adds deterministic documentation contracts rather than a blocking manual gate.
+All phase behaviors have automated verification. Live Docker/browser behavior is covered by the owned launcher and E2E harnesses from Phases 68–71; Phase 72 adds deterministic documentation contracts with no blocking human acceptance state.
 
 ---
 

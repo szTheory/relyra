@@ -327,10 +327,8 @@ All material implementation claims are grounded in the repository, locked contex
 
 ## Open Questions
 
-1. **Should `guides/docker_dev_dx.md` be added to ExDoc extras?**
-   - What we know: the existing `guides/` directory is included in package files, but `mix.exs` explicitly lists ExDoc extras and the locked phase boundary excludes Hex packaging changes. [VERIFIED: codebase grep + CONTEXT.md]
-   - What's unclear: whether the guide should be published in HexDocs now or remain repository-local while linked from GitHub/demo routes.
-   - Recommendation: keep `mix.exs` unchanged unless planning confirms this is documentation metadata rather than a prohibited packaging-surface change; use an absolute GitHub link from published `guides/demo.md` to the repo guide if it remains non-extra. [MEDIUM: inference from codebase + CONTEXT.md]
+1. **RESOLVED — Should `guides/docker_dev_dx.md` be added to ExDoc extras?**
+   - Decision: No. The locked no-new-Hex-surface boundary governs: keep `mix.exs` and its ExDoc extras unchanged. `guides/demo.md` must route to the repository-only guide with the absolute canonical URL `https://github.com/szTheory/relyra/blob/main/guides/docker_dev_dx.md`. [VERIFIED: CONTEXT.md + plan boundary]
 
 ## Environment Availability
 
@@ -374,7 +372,7 @@ All material implementation claims are grounded in the repository, locked contex
 ### Wave 0 Gaps
 
 - [ ] Extend `test/docs/demo_guide_drift_test.exs` with static assertions for new-guide existence/content, canonical commands and origins, optional-path ordering, recovery terms, ownership sentence, and all three router links. [VERIFIED: codebase grep]
-- [ ] Decide and codify whether the new guide belongs in `mix.exs` ExDoc extras; if it does, update the link smoke test’s published-extra list concurrently. [MEDIUM: inference from codebase + CONTEXT.md]
+- [ ] Keep `mix.exs` and its ExDoc extras unchanged under the locked no-new-Hex-surface boundary; assert that `guides/demo.md` uses the absolute canonical repository URL `https://github.com/szTheory/relyra/blob/main/guides/docker_dev_dx.md`. [VERIFIED: CONTEXT.md + resolved Open Question]
 
 ## Security Domain
 
