@@ -41,8 +41,19 @@ make doctor
 ```
 
 If it reports a problem, follow the exact `Next:` remediation printed for that
-problem before continuing. For example, free or override port 4000 when doctor says
-it is occupied; do not guess at an alternate Compose command.
+problem before continuing. Port 4000 is the default Solo listener; do not guess at an
+alternate Compose command. If that listener is occupied, choose one free port and carry
+the same value through diagnosis, URL output, and launch:
+
+```bash
+PORT=4101 make doctor
+PORT=4101 make url
+PORT=4101 make up-build
+```
+
+`make url` prints a `Loopback:` origin. Use the origin it emits with `/login/test` for
+the local IdP sign-in and with `/relyra/admin` for the operator trace; after an override,
+do not substitute the default port 4000.
 
 ### Start the deterministic demo
 
@@ -93,7 +104,7 @@ this checkout's proxy overlay or Keycloak profile.
 
 | Proof or surface | Browser origin | Scope |
 | --- | --- | --- |
-| Solo LedgerLoop | `http://localhost:4000` | Complete deterministic local proof |
+| Solo LedgerLoop | `http://localhost:4000` by default; the `Loopback:` origin from `make url` after an override | Complete deterministic local proof |
 | Fleet LedgerLoop | `http://relyra.localhost` | Follow-on proxy route |
 | Optional Keycloak | `http://keycloak.relyra.localhost` | Follow-on real-IdP proof |
 | Traefik dashboard | `http://localhost:8080/dashboard/` | Local routing diagnostics |
@@ -149,7 +160,11 @@ make up-build    # intentionally rebuild when dependency, Dockerfile, or config 
 Work from the least disruptive correction to the strongest cleanup.
 
 1. **Diagnose first.** Run `make doctor` and follow the exact `Next:` command it
-   prints. This handles port conflicts (including a busy 4000 or 8080) and a missing proxy network (`Next: make proxy`) without guessing.
+   prints. This handles a busy configured Solo port, the shared-proxy listener on 8080,
+   and a missing proxy network (`Next: make proxy`) without guessing. For a Solo override,
+   reuse one chosen value with `PORT=<free-port> make doctor` and `PORT=<free-port> make url`,
+   then launch it with the same value using the sequence shown above and browse to the emitted
+   `Loopback:` origin.
 2. **Normal restart.** Stop the Solo demo while preserving named volumes, then
    relaunch normally:
 
@@ -179,7 +194,7 @@ Work from the least disruptive correction to the strongest cleanup.
 
 | Symptom | Next step |
 | --- | --- |
-| Port conflicts on 4000 or 8080 | Run `make doctor`; free the listener or apply its printed `PORT=<free-port>` / proxy correction. |
+| Configured Solo port conflicts or shared proxy conflict on 8080 | Run `make doctor`; free the listener or apply its printed same-value `PORT=<free-port>` / proxy correction. |
 | Missing proxy network | Run `make proxy`, then repeat the Fleet action. |
 | Browser-only localhost does not work from a container | Keep browser traffic on the public origin and use Docker service DNS for internal traffic. |
 | Keycloak public-host mismatch | Confirm the browser is using `http://keycloak.relyra.localhost`, then run `make doctor` and follow its printed proxy/port correction before restarting. |

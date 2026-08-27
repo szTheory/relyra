@@ -443,14 +443,18 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     {url, 0} = run_make(["url"], env)
     probes = File.read!(lsof_log)
     guide = File.read!("guides/docker_dev_dx.md")
+    doctor_recipe = File.read!(@makefile_path) |> target_body("doctor")
 
+    assert doctor_recipe =~ "check_port \"$${PORT}\" demo"
+    assert doctor_recipe =~ "check_port 5432 postgres"
+    assert doctor_recipe =~ "check_port 8080 proxy"
     assert doctor_status != 0
     assert probes =~ "iTCP:4101"
     refute probes =~ "iTCP:4000"
     assert doctor =~ "WARN port 4101 occupied —"
     assert doctor =~ "Solo demo listener"
-    assert doctor =~ "PORT=4101 make doctor"
-    assert doctor =~ "PORT=4101 make url"
+    assert doctor =~ "PORT=<free-port> make doctor"
+    assert doctor =~ "PORT=<free-port> make url"
     assert url =~ "Loopback: http://localhost:4101"
 
     assert_in_order(guide, [

@@ -175,46 +175,42 @@ doctor:
 	fi; \
 	printf "\n==> Host ports\n"; \
 	check_port() { \
-		port="$$1"; probe=""; probe_output=""; probe_status=127; \
+		port="$$1"; role="$$2"; probe=""; probe_output=""; probe_status=127; \
 		if command -v lsof >/dev/null 2>&1; then \
 			probe="lsof"; probe_output=$$(lsof -nP -iTCP:"$$port" -sTCP:LISTEN 2>&1); probe_status=$$?; \
 		elif command -v nc >/dev/null 2>&1; then \
 			probe="nc"; probe_output=$$(nc -z localhost "$$port" 2>&1); probe_status=$$?; \
 		fi; \
 		if [ -z "$$probe" ]; then \
-			if [ "$$port" = "5432" ]; then \
-				printf "WARN port 5432 probe unavailable — Relyra does not publish Postgres; this listener is diagnostic only. Next: inspect host ports manually or install lsof/netcat\n"; \
-			else \
-				printf "WARN port %s probe unavailable — neither lsof nor nc is installed. Next: inspect host ports manually or install lsof/netcat\n" "$$port"; failures=1; \
-			fi; \
+			case "$$role" in \
+				postgres) printf "WARN port %s probe unavailable — Relyra does not publish Postgres; this listener is diagnostic only. Next: inspect host ports manually or install lsof/netcat\n" "$$port" ;; \
+				demo) printf "WARN port %s probe unavailable — neither lsof nor nc is installed. Solo demo listener. Next: inspect host ports manually or install lsof/netcat\n" "$$port"; failures=1 ;; \
+				proxy) printf "WARN port %s probe unavailable — neither lsof nor nc is installed. Shared Traefik proxy listener. Next: inspect host ports manually or install lsof/netcat\n" "$$port"; failures=1 ;; \
+			esac; \
 		elif [ "$$probe_status" -eq 0 ]; then \
-			if [ "$$port" = "5432" ]; then \
-				if [ "$$probe" = "nc" ]; then probe_output="detected by nc"; fi; \
-				printf "INFO port 5432 occupied — %s. Relyra does not publish Postgres; this listener is diagnostic only.\n" "$$probe_output"; \
-			elif [ "$$port" = "4000" ]; then \
-				if [ "$$probe" = "nc" ]; then probe_output="detected by nc"; fi; \
-				printf "WARN port 4000 occupied — %s. Next: stop the listener or set PORT=<free-port>\n" "$$probe_output"; failures=1; \
-			else \
-				if [ "$$probe" = "nc" ]; then probe_output="detected by nc"; fi; \
-				printf "WARN port 8080 occupied — %s. Next: stop the listener or reconfigure the shared proxy\n" "$$probe_output"; failures=1; \
-			fi; \
+			if [ "$$probe" = "nc" ]; then probe_output="detected by nc"; fi; \
+			case "$$role" in \
+				postgres) printf "INFO port %s occupied — %s. Relyra does not publish Postgres; this listener is diagnostic only.\n" "$$port" "$$probe_output" ;; \
+				demo) printf "WARN port %s occupied — %s. Solo demo listener. Next: stop the listener or choose a free port, then PORT=<free-port> make doctor && PORT=<free-port> make url && PORT=<free-port> make up-build\n" "$$port" "$$probe_output"; failures=1 ;; \
+				proxy) printf "WARN port %s occupied — %s. Shared Traefik proxy listener. Next: stop the listener or reconfigure the shared proxy\n" "$$port" "$$probe_output"; failures=1 ;; \
+			esac; \
 		elif [ "$$probe_status" -eq 1 ]; then \
-			if [ "$$port" = "5432" ]; then \
-				printf "OK port 5432 free — Relyra does not publish Postgres; this listener is diagnostic only.\n"; \
-			else \
-				printf "OK port %s free.\n" "$$port"; \
-			fi; \
+			case "$$role" in \
+				postgres) printf "OK port %s free — Relyra does not publish Postgres; this listener is diagnostic only.\n" "$$port" ;; \
+				demo) printf "OK port %s free — Solo demo listener.\n" "$$port" ;; \
+				proxy) printf "OK port %s free — shared Traefik proxy listener.\n" "$$port" ;; \
+			esac; \
 		else \
-			if [ "$$port" = "5432" ]; then \
-				printf "WARN port 5432 probe failed — %s. Relyra does not publish Postgres; this listener is diagnostic only. Next: inspect port 5432 manually\n" "$$probe_output"; \
-			else \
-				printf "ERROR port %s probe failed — %s. Next: inspect port %s manually\n" "$$port" "$$probe_output" "$$port"; failures=1; \
-			fi; \
+			case "$$role" in \
+				postgres) printf "WARN port %s probe failed — %s. Relyra does not publish Postgres; this listener is diagnostic only. Next: inspect port %s manually\n" "$$port" "$$probe_output" "$$port" ;; \
+				demo) printf "ERROR port %s probe failed — %s. Solo demo listener. Next: inspect port %s manually\n" "$$port" "$$probe_output" "$$port"; failures=1 ;; \
+				proxy) printf "ERROR port %s probe failed — %s. Shared Traefik proxy listener. Next: inspect port %s manually\n" "$$port" "$$probe_output" "$$port"; failures=1 ;; \
+			esac; \
 		fi; \
 	}; \
-	check_port 4000; \
-	check_port 5432; \
-	check_port 8080; \
+	check_port "$${PORT}" demo; \
+	check_port 5432 postgres; \
+	check_port 8080 proxy; \
 	printf "\n==> Shared proxy network\n"; \
 	if docker network inspect "$${DEMO_PROXY_NETWORK}" >/dev/null 2>&1; then \
 		printf "OK proxy network exists — %s.\n" "$${DEMO_PROXY_NETWORK}"; \
