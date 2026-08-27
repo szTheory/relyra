@@ -235,7 +235,7 @@ v1.10 - Docker DX & Fleet Proxy implementation is complete. Phases 68-72 are ver
 **Goal:** Evaluators can configure the mounted connection-scoped SAML endpoints and reach validation traces through documented runtime Basic Auth, with deterministic allow/deny evidence.
 **Requirements**: None mapped — audit closure is tracked by CONTEXT decisions D-01 through D-05.
 **Depends on:** Phase 72
-**Plans:** 4/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 **Wave 1**
