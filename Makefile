@@ -4,6 +4,9 @@
 PORT ?= 4000
 RELYRA_HOST ?= relyra.localhost
 DEMO_PROXY_NETWORK ?= proxy
+export PORT
+export RELYRA_HOST
+export DEMO_PROXY_NETWORK
 
 SOLO_COMPOSE := docker compose
 FLEET_COMPOSE := docker compose -f docker-compose.yml -f docker-compose.proxy.yml
@@ -17,7 +20,7 @@ help:
 
 ## proxy: start the shared Traefik proxy and its external network
 proxy:
-	-docker network create "$(DEMO_PROXY_NETWORK)"
+	docker network inspect "$${DEMO_PROXY_NETWORK}" >/dev/null 2>&1 || docker network create "$${DEMO_PROXY_NETWORK}"
 	$(PROXY_COMPOSE) up -d
 
 ## up: start the loopback solo demo without rebuilding
@@ -51,8 +54,19 @@ reseed: reset
 
 ## nuke: permanently remove Relyra demo volumes after explicit confirmation
 nuke:
-	@echo "NUKE is configured in the launcher safety contract."
-	@exit 1
+	@set -eu; \
+	echo "The next boot is a cold rebuild."; \
+	if [ "$${NUKE:-}" = "1" ]; then \
+		echo "NUKE will permanently delete this Relyra demo's database, build, dependency, Hex, and Mix volumes. Continue? [y/N] y (NUKE=1)"; \
+		answer=y; \
+	else \
+		printf "%s" "NUKE will permanently delete this Relyra demo's database, build, dependency, Hex, and Mix volumes. Continue? [y/N] "; \
+		IFS= read -r answer || answer=""; \
+	fi; \
+	case "$$answer" in \
+		y|Y) $(SOLO_COMPOSE) down -v ;; \
+		*) echo "Nuke cancelled; no volumes or caches were removed." ;; \
+	esac
 
 ## logs: follow the Relyra demo service logs
 logs:
@@ -61,16 +75,16 @@ logs:
 ## url: print browser origins, routes, walkthrough, and topology notes
 url:
 	@echo "==> Browser origins"
-	@echo "  Proxy: http://$(RELYRA_HOST)"
-	@echo "  Loopback: http://localhost:$(PORT)"
+	@echo "  Proxy: http://$${RELYRA_HOST}"
+	@echo "  Loopback: http://localhost:$${PORT}"
 	@echo ""
 	@echo "==> Route map"
-	@echo "  Home: http://$(RELYRA_HOST)/"
-	@echo "  Admin: http://$(RELYRA_HOST)/relyra/admin"
-	@echo "  Login test: http://$(RELYRA_HOST)/login/test"
-	@echo "  Support scenario: http://$(RELYRA_HOST)/support/scenario"
-	@echo "  Health: http://$(RELYRA_HOST)/healthz"
-	@echo "  OPTIONAL — fleet + keycloak profile: http://keycloak.$(RELYRA_HOST)/admin"
+	@echo "  Home: http://$${RELYRA_HOST}/"
+	@echo "  Admin: http://$${RELYRA_HOST}/relyra/admin"
+	@echo "  Login test: http://$${RELYRA_HOST}/login/test"
+	@echo "  Support scenario: http://$${RELYRA_HOST}/support/scenario"
+	@echo "  Health: http://$${RELYRA_HOST}/healthz"
+	@echo "  OPTIONAL — fleet + keycloak profile: http://keycloak.$${RELYRA_HOST}/admin"
 	@echo "  OPTIONAL — shared fleet proxy: http://localhost:8080/dashboard/"
 	@echo ""
 	@echo "==> Walkthrough"
@@ -82,25 +96,116 @@ url:
 	@echo "==> Topology notes"
 	@echo "  *.localhost is browser-facing; Docker health checks and internal probes use service DNS."
 
-## open: open the primary Relyra browser origin on macOS
+## open: open the primary browser origin or print a portable fallback
 open:
-	open "http://$(RELYRA_HOST)"
+	@url="http://$${RELYRA_HOST}"; \
+	if command -v open >/dev/null 2>&1; then \
+		if ! open "$$url"; then \
+			printf "ERROR browser opener failed — %s. Next: open the URL manually\n" "$$url"; exit 1; \
+		fi; \
+	elif command -v xdg-open >/dev/null 2>&1; then \
+		if ! xdg-open "$$url"; then \
+			printf "ERROR browser opener failed — %s. Next: open the URL manually\n" "$$url"; exit 1; \
+		fi; \
+	else \
+		printf "WARN browser opener unavailable — %s. Next: open the URL manually or install xdg-utils\n" "$$url"; \
+	fi
 
 ## fleet: list all Traefik-routed local demo containers
 fleet:
-	@ids=$$(docker ps --filter label=traefik.enable=true -q); \
-	if [ -z "$$ids" ]; then \
-		echo "No Traefik-routed demo containers running."; \
+	@output=$$(docker ps --filter label=traefik.enable=true --format '{{.Label "com.docker.compose.project"}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}' 2>&1); \
+	status=$$?; \
+	if [ "$$status" -ne 0 ]; then \
+		printf "ERROR fleet query — %s. Next: docker info\n" "$$output"; \
+		exit "$$status"; \
+	fi; \
+	if [ -z "$$output" ]; then \
+		printf "%s\n" "No Traefik-routed demo containers running." "Next: make proxy"; \
 	else \
-		echo "Traefik-routed demo containers:"; \
-		docker ps --filter label=traefik.enable=true --format 'table {{.Label "com.docker.compose.project"}}\\t{{.Names}}\\t{{.Status}}\\t{{.Ports}}'; \
+		printf "Project  Name  Status  Ports\n"; \
+		printf "%s\n" "$$output" | \
+			awk -F '\t' 'BEGIN { OFS="\t" } { for (i=1; i<=4; i++) if ($$i == "") $$i="(missing)"; print $$1, $$2, $$3, $$4 }' | \
+			LC_ALL=C sort -t "$$(printf '\t')" -k1,1 -k2,2 | \
+			awk -F '\t' '{ printf "%s  %s  %s  %s\n", $$1, $$2, $$3, $$4 }'; \
 	fi
 
 ## doctor: inspect the Relyra browser route map and shared proxy network
 doctor:
-	@$(MAKE) --no-print-directory url
-	@docker network inspect "$(DEMO_PROXY_NETWORK)" --format 'proxy network exists ({{.Name}})' 2>/dev/null || echo "WARN proxy network missing. Next: make proxy"
-	@$(MAKE) --no-print-directory fleet
+	@failures=0; \
+	printf "==> Dependencies\n"; \
+	if command -v docker >/dev/null 2>&1; then \
+		docker_output=$$(docker version 2>&1); docker_status=$$?; \
+		if [ "$$docker_status" -eq 0 ]; then \
+			printf "OK docker — Docker CLI and daemon are available.\n"; \
+		else \
+			printf "ERROR docker — %s. Next: start Docker and run docker info\n" "$$docker_output"; failures=1; \
+		fi; \
+		compose_output=$$(docker compose version 2>&1); compose_status=$$?; \
+		if [ "$$compose_status" -eq 0 ]; then \
+			printf "OK docker compose — Docker Compose is available.\n"; \
+		else \
+			printf "ERROR docker compose — %s. Next: install the Docker Compose plugin\n" "$$compose_output"; failures=1; \
+		fi; \
+	else \
+		printf "ERROR docker — command not found. Next: install Docker Desktop or Docker Engine\n"; \
+		printf "ERROR docker compose — Docker CLI unavailable. Next: install the Docker Compose plugin\n"; \
+		failures=1; \
+	fi; \
+	printf "\n==> Host ports\n"; \
+	check_port() { \
+		port="$$1"; probe=""; probe_output=""; probe_status=127; \
+		if command -v lsof >/dev/null 2>&1; then \
+			probe="lsof"; probe_output=$$(lsof -nP -iTCP:"$$port" -sTCP:LISTEN 2>&1); probe_status=$$?; \
+		elif command -v nc >/dev/null 2>&1; then \
+			probe="nc"; probe_output=$$(nc -z localhost "$$port" 2>&1); probe_status=$$?; \
+		fi; \
+		if [ -z "$$probe" ]; then \
+			if [ "$$port" = "5432" ]; then \
+				printf "WARN port 5432 probe unavailable — Relyra does not publish Postgres; this listener is diagnostic only. Next: inspect host ports manually or install lsof/netcat\n"; \
+			else \
+				printf "WARN port %s probe unavailable — neither lsof nor nc is installed. Next: inspect host ports manually or install lsof/netcat\n" "$$port"; failures=1; \
+			fi; \
+		elif [ "$$probe_status" -eq 0 ]; then \
+			if [ "$$port" = "5432" ]; then \
+				if [ "$$probe" = "nc" ]; then probe_output="detected by nc"; fi; \
+				printf "INFO port 5432 occupied — %s. Relyra does not publish Postgres; this listener is diagnostic only.\n" "$$probe_output"; \
+			elif [ "$$port" = "4000" ]; then \
+				if [ "$$probe" = "nc" ]; then probe_output="detected by nc"; fi; \
+				printf "WARN port 4000 occupied — %s. Next: stop the listener or set PORT=<free-port>\n" "$$probe_output"; failures=1; \
+			else \
+				if [ "$$probe" = "nc" ]; then probe_output="detected by nc"; fi; \
+				printf "WARN port 8080 occupied — %s. Next: stop the listener or reconfigure the shared proxy\n" "$$probe_output"; failures=1; \
+			fi; \
+		elif [ "$$probe_status" -eq 1 ]; then \
+			if [ "$$port" = "5432" ]; then \
+				printf "OK port 5432 free — Relyra does not publish Postgres; this listener is diagnostic only.\n"; \
+			else \
+				printf "OK port %s free.\n" "$$port"; \
+			fi; \
+		else \
+			if [ "$$port" = "5432" ]; then \
+				printf "WARN port 5432 probe failed — %s. Relyra does not publish Postgres; this listener is diagnostic only. Next: inspect port 5432 manually\n" "$$probe_output"; \
+			else \
+				printf "ERROR port %s probe failed — %s. Next: inspect port %s manually\n" "$$port" "$$probe_output" "$$port"; failures=1; \
+			fi; \
+		fi; \
+	}; \
+	check_port 4000; \
+	check_port 5432; \
+	check_port 8080; \
+	printf "\n==> Shared proxy network\n"; \
+	if docker network inspect "$${DEMO_PROXY_NETWORK}" >/dev/null 2>&1; then \
+		printf "OK proxy network exists — %s.\n" "$${DEMO_PROXY_NETWORK}"; \
+	else \
+		printf "WARN proxy network missing. Next: make proxy\n"; failures=1; \
+	fi; \
+	printf "\n==> Next steps\n"; \
+	if [ "$$failures" -eq 0 ]; then \
+		printf "OK doctor — no blocking launcher issues detected.\n"; \
+	else \
+		printf "Review the exact Next: commands above.\n"; \
+	fi; \
+	exit "$$failures"
 
 demo-test:
 	$(SOLO_COMPOSE) --profile keycloak --profile browser run --rm playwright

@@ -2,60 +2,33 @@
 
 set -euo pipefail
 
-COMMAND="${1:-}"
-
-function check_port() {
-  local port=$1
-  # Using netstat or lsof or nc to check port. Using lsof -i :$port
-  if command -v lsof >/dev/null 2>&1; then
-    if lsof -i :"$port" > /dev/null; then
-      echo "Warning: Port $port is already in use."
-    fi
-  elif command -v nc >/dev/null 2>&1; then
-    if nc -z localhost "$port" >/dev/null 2>&1; then
-      echo "Warning: Port $port is already in use."
-    fi
-  else
-    echo "Warning: Neither lsof nor nc found to check port $port."
-  fi
+usage() {
+  echo "Usage: scripts/demo {doctor|up|reset|test|urls|down}" >&2
+  exit 1
 }
 
-case "$COMMAND" in
+[[ $# -eq 1 ]] || usage
+
+case "$1" in
   doctor)
-    echo "Checking dependencies..."
-    if ! command -v docker >/dev/null 2>&1; then
-      echo "Error: docker is not installed. Please install Docker."
-      exit 1
-    fi
-    if ! command -v mix >/dev/null 2>&1; then
-      echo "Error: mix is not installed. Please install Elixir."
-      exit 1
-    fi
-    echo "Dependencies met."
-    
-    echo "Checking ports..."
-    check_port 4000
-    check_port 8080
-    echo "Doctor check complete."
+    exec make doctor
     ;;
   up)
-    docker compose --profile core up -d
+    exec make up-d
     ;;
   reset)
-    docker compose --profile core exec demo_app mix do ecto.drop, ecto.setup
+    exec make reset
     ;;
   test)
-    docker compose --profile keycloak --profile browser run --rm playwright
+    exec make demo-test
     ;;
   urls)
-    echo "Demo App: http://localhost:4000"
-    echo "Keycloak: http://localhost:8080"
+    exec make url
     ;;
   down)
-    docker compose --profile core --profile keycloak --profile browser down -v
+    exec make down
     ;;
   *)
-    echo "Usage: scripts/demo {doctor|up|reset|test|urls|down}"
-    exit 1
+    usage
     ;;
 esac

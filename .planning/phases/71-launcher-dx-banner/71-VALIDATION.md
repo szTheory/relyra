@@ -56,12 +56,16 @@ The validation architecture is plan-complete: both plans assign every task an ex
 
 ---
 
-## Manual-Only Verifications
+## Automated Environment Verification
 
-| Behavior | Requirement | Why Manual | Test Instructions |
-|----------|-------------|------------|-------------------|
-| OS browser opener behavior | DX-02 | `open`/`xdg-open` availability is host-specific and should not run in CI. | Run `make open` on a supported workstation and confirm it opens the printed application origin or reports a copy-pasteable URL with a corrective message. |
-| Port-owner detail quality | DX-02 | This workstation has neither `lsof` nor `nc`; owner text varies by OS utility. | Occupy one required port, run `make doctor`, and confirm it names the port and prints a concrete corrective command; repeat without optional probe tools to confirm the explicit unavailable-probe branch. |
+Host-specific launcher states are modeled with PATH-isolated executable fixtures in
+`test/docs/demo_guide_drift_test.exs`; CI never opens a real browser, probes live host
+ports, or depends on a local Docker daemon for the focused contract.
+
+- Fake `open` and `xdg-open` commands prove opener precedence and fallback copy.
+- Fake `lsof` and `nc` commands prove busy, free, fallback, and unavailable-probe states.
+- Fake `docker` output proves fleet and network success, empty, partial, and error states.
+- Every fixture retains full values and exact recovery commands, replacing subjective UAT.
 
 ---
 
