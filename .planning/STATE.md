@@ -4,17 +4,17 @@ milestone: v1.10
 milestone_name: Phases
 current_phase: 72
 current_phase_name: documentation
-status: executing
-stopped_at: Completed 72-01-PLAN.md
-last_updated: "2026-08-27T16:50:48.729Z"
+status: verifying
+stopped_at: Completed 72-02-PLAN.md
+last_updated: "2026-08-27T17:07:01.147Z"
 last_activity: 2026-08-27
 last_activity_desc: Phase 72 execution started
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 23
-  completed_plans: 21
-  percent: 80
+  completed_plans: 23
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-19)
 
 Phase: 72 (documentation) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-27 — Phase 72 execution started
 
 ## Performance Metrics
@@ -74,6 +74,7 @@ Last activity: 2026-08-27 — Phase 72 execution started
 | Phase 71 P01 | 25min | 2 tasks | 4 files |
 | Phase 71 P02 | 20min | 2 tasks | 3 files |
 | Phase 72-documentation P01 | 6m | 2 tasks | 2 files |
+| Phase 72-documentation P02 | 14m | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,9 @@ Last activity: 2026-08-27 — Phase 72 execution started
 - [Phase 71]: Environment-derived launcher values are exported and expanded as quoted shell data, never interpolated into Make recipe syntax.
 - [Phase 71]: Host-specific launcher acceptance uses deterministic command fixtures; recurring fleet and Keycloak browser lanes own live topology proof, so no human UAT gate remains.
 - [Phase ?]: Docker DX guide makes Solo FakeIdP the complete first proof; Fleet and Keycloak remain follow-on proofs.
+- [Phase ?]: Solo/FakeIdP remains the complete first evaluator proof; Fleet and Keycloak are optional follow-ons.
+- [Phase ?]: Published demo documentation uses absolute GitHub links for repository-only evaluator material.
+- [Phase ?]: Root README retains its library Day-1 sequence and routes Docker evaluation separately.
 
 ### Blockers/Concerns
 
@@ -138,10 +142,10 @@ Last activity: 2026-08-27 — Phase 72 execution started
 
 ## Session Continuity
 
-**Stopped at:** Completed 72-01-PLAN.md
+**Stopped at:** Completed 72-02-PLAN.md
 **Resume file:** None
 
-Last session: 2026-08-27T16:50:48.722Z
+Last session: 2026-08-27T17:07:01.133Z
 Resume at: `/gsd-execute-phase 72`
 
 ## Operator Next Steps
