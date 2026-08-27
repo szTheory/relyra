@@ -1,43 +1,44 @@
 ---
 phase: 72-documentation
-verified: 2026-08-27T17:15:07Z
+verified: 2026-08-27T18:15:00Z
 status: gaps_found
-score: 9/13 must-haves verified
+score: 19/20 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
+next_action: "Gaps found. Plan the fixes, then re-run execute-phase before shipping."
+next_command: "/gsd:plan-phase 72 --gaps"
+re_verification:
+  previous_status: gaps_found
+  previous_score: 9/13
+  gaps_closed:
+    - "The detailed evaluator README now describes FakeIdP's Sarah subject and persisted LedgerLoop LoginReceipt truthfully."
+    - "Fleet and optional Keycloak now use the executable, fail-closed public make keycloak launcher."
+  gaps_remaining: []
+  regressions:
+    - "PORT override recovery is inaccurate: doctor probes hard-coded 4000 and the guide retains fixed localhost:4000 URLs."
 gaps:
-  - truth: "The detailed LedgerLoop evaluator route accurately describes the deterministic FakeIdP success path and its reproducible receipt."
+  - truth: "The guide provides accurate, executable port-conflict recovery for the configured Solo listener."
     status: failed
-    reason: "The README says FakeIdP emits evaluator@example.com and cannot map a seeded identity, but the controller emits sarah@northstar.example.com and the exercised end-to-end test proves a LoginReceipt is inserted for Sarah."
+    reason: "Compose honors PORT, but doctor always checks and classifies port 4000; the guide tells a reader to use PORT=<free-port> then continues to prescribe localhost:4000."
     artifacts:
-      - path: "demo/ledger_loop/README.md"
-        issue: "Lines 82-103 state a false principal and a false unresolved outcome."
-      - path: "test/docs/demo_guide_drift_test.exs"
-        issue: "The static router test does not compare the prose to FakeIdP's emitted subject or receipt behavior."
-    missing:
-      - "Replace the evaluator@example.com narrative with the Sarah success path and receipt outcome."
-      - "Add deterministic coverage tying the documented success path to the controller/flow contract."
-  - truth: "Fleet and optional Keycloak are accurately documented as runnable follow-on proofs through the public Make-first workflow."
-    status: failed
-    reason: "The guide and README prescribe make proxy plus make up-build, but both recipes use the solo Compose command. The keycloak and keycloak_provisioner services require the keycloak profile and proxy overlay, and no public Make target starts them."
-    artifacts:
-      - path: "guides/docker_dev_dx.md"
-        issue: "Lines 83-121 advertise the Keycloak origin without a command that can make it available."
-      - path: "demo/ledger_loop/README.md"
-        issue: "Lines 196-213 present the same incomplete Keycloak follow-on."
       - path: "Makefile"
-        issue: "up-build invokes docker compose up --build; the only profile invocation is the test-only demo-test target, without the proxy overlay."
+        issue: "doctor calls check_port 4000 at line 215 and only recognizes 4000 as the demo port at lines 194-196, ignoring the exported PORT value."
+      - path: "guides/docker_dev_dx.md"
+        issue: "Lines 44-45 advertise a port override while lines 55, 62, and 96 hard-code localhost:4000 instead of routing the reader through make url for the configured PORT."
+      - path: "test/docs/demo_guide_drift_test.exs"
+        issue: "No fixture exercises PORT=4101 make doctor or verifies that the recovery path emits and uses the overridden loopback URL."
     missing:
-      - "Expose and document a public Make-first Keycloak/Fleet command that uses docker-compose.proxy.yml and --profile keycloak, waits for provisioning, and then validates the public route."
-      - "Add an executable launcher contract for that command; do not rely only on prose-token assertions."
+      - "Make doctor probe the configured PORT and classify the demo listener by role, not literal port 4000."
+      - "Add a deterministic launcher fixture for PORT override recovery."
+      - "Tell overridden-port users to run make url with the same PORT and use its emitted loopback URL."
 ---
 
 # Phase 72: Documentation Verification Report
 
 **Phase Goal:** A new reader can go zero→login using only the guide, and existing demo/README routing points at the new Make targets and Fleet path in house voice.
-**Verified:** 2026-08-27T17:15:07Z
+**Verified:** 2026-08-27T18:15:00Z
 **Status:** gaps_found
-**Re-verification:** No — initial verification
+**Re-verification:** Yes — after gap closure
 
 ## Goal Achievement
 
@@ -45,81 +46,89 @@ gaps:
 
 | # | Truth | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | The canonical guide fully and accurately documents Solo/Fleet, caching, URL map, recovery, Keycloak hostname, and house voice. | ✗ FAILED | The prose is substantive and uses the Canonical Lock Set voice, but its Keycloak follow-on has no runnable command; the advertised public origin is unreachable after its documented commands. |
-| 2 | Demo README, published router, and root README route readers to Make-first Docker/Fleet evaluation while retaining Local Mix and Day-1. | ✗ FAILED | Links, targets, Local Mix, and Day-1 ordering exist, but the detailed README gives a false FakeIdP success principal and repeats the unrunnable Keycloak route. |
-| 3 | A reader following only the new guide can complete Solo/FakeIdP and reproduce the receipt. | ✓ VERIFIED | Guide lines 32-70 provide prerequisites, `make doctor`, `make up-build`, `/login/test`, FakeIdP, trace, and receipt. The actual flow test passed and inserts a `LoginReceipt` for Sarah. |
-| 4 | Fleet and optional Keycloak occur after the Solo receipt and are labelled follow-ons. | ✓ VERIFIED | `guides/docker_dev_dx.md:72-121` orders and labels them correctly; this does not cure the missing Keycloak launcher. |
-| 5 | Guide Make targets and Solo/Fleet/Keycloak/Traefik origins accurately match the launcher. | ✗ FAILED | Solo commands and origins match. `make proxy` plus `make up-build` cannot activate the Fleet overlay or Keycloak profile. |
-| 6 | The guide explains bind mounts, Linux-only named volumes, lock-hash dependency resolution, and BuildKit caches. | ✓ VERIFIED | Guide lines 123-141 match `docker-compose.yml` volumes and the documented cache contract. |
-| 7 | Recovery is graduated and labels reset/reseed/nuke as destructive. | ✓ VERIFIED | Guide lines 143-181 match `Makefile:44-69`; reset/reseed and nuke are explicitly destructive. |
-| 8 | Proof language preserves Relyra verification versus LedgerLoop mapping, session receipt, and authorization ownership. | ✓ VERIFIED | Guide lines 65-70 and `session_adapter.ex:24-36` agree; no Relyra-owned session/authorization claim found. |
-| 9 | The guide uses the required gameplan, persona/JTBD framing, receipt evidence, and calm/exact/operator-friendly house voice. | ✓ VERIFIED | Guide lines 3-28 and 70 use the required structure and evidence language; `adopter_voice_test.exs` passed. |
-| 10 | `demo/ledger_loop/README.md` is an accurate detailed Make-first evaluator entry point retaining Local Mix. | ✗ FAILED | Local Mix and Docker targets exist, but README lines 82-103 contradict the controller and successful flow regarding the emitted principal and receipt. |
-| 11 | `guides/demo.md` remains concise and uses HexDocs-safe absolute links to the repository guide and demo README. | ✓ VERIFIED | Lines 12-24 contain both required absolute GitHub links and correctly mark them source-only. |
-| 12 | Root README adds Docker/Fleet and Day-2 routes without displacing library Day-1. | ✓ VERIFIED | `README.md:37-61` keeps Getting Started before the separately headed Docker evaluator route. |
-| 13 | Local Mix remains supported; Fleet and Keycloak are explicitly presented as Solo follow-ons. | ✓ VERIFIED | `demo/ledger_loop/README.md:56-72,196-213` retains Local Mix and labels follow-ons; Keycloak's runnable wiring is separately failed above. |
+| 1 | The canonical guide accurately covers Solo/Fleet, caching, URL map, recovery, Keycloak hostname, and house voice. | ✗ FAILED | Port-conflict recovery is inaccurate under the documented `PORT` override; this composite DOC-01 contract cannot be met. |
+| 2 | Demo README, published router, and root README route readers to Make-first Docker/Fleet evaluation while retaining Local Mix and Day-1. | ✓ VERIFIED | README, `guides/demo.md`, and root README links/ordering pass the focused router contract. |
+| 3 | A reader following the guide can complete Solo/FakeIdP and reproduce the Sarah receipt. | ✓ VERIFIED | Focused guide contracts and the real FakeIdP flow test pass; the flow persists Sarah's `LoginReceipt`. |
+| 4 | Fleet and optional Keycloak come after the Solo receipt and remain follow-ons. | ✓ VERIFIED | Guide lines 72-125 and README optional-profile section preserve the ordering. |
+| 5 | Documented Solo/Fleet/Keycloak/Traefik origins match the public launcher. | ✓ VERIFIED | `make keycloak` uses base + proxy Compose files, `--profile keycloak`, provisioner wait, loopback-resolved descriptor validation, then `make url`; fixture contracts pass. |
+| 6 | The guide explains bind mounts, Linux-only named volumes, lock-hash dependency resolution, and BuildKit caches. | ✓ VERIFIED | Guide lines 127-145 state all four mechanisms and match the existing Docker path. |
+| 7 | Recovery is graduated and gives a correct supported response to port conflicts, reset/reseed, and nuke. | ✗ FAILED | The destructive labels and ordering are correct, but the first recovery branch fails for a non-default configured port. |
+| 8 | Proof language keeps assertion verification separate from mapping, session receipt, and authorization ownership. | ✓ VERIFIED | Guide lines 65-70 and README ownership table assign mapping, LoginReceipt, and authorization to LedgerLoop. |
+| 9 | The guide uses gameplan, persona/JTBD, receipt evidence, and Canonical Lock Set voice. | ✓ VERIFIED | `adopter_voice_test.exs` passes with the guide's gameplan and receipt structure. |
+| 10 | `demo/ledger_loop/README.md` is an accurate Make-first evaluator entry point retaining Local Mix. | ✓ VERIFIED | It documents `sarah@northstar.example.com`, seeded Sarah mapping, LoginReceipt, Local Mix, and `make keycloak`. |
+| 11 | `guides/demo.md` is a concise, HexDocs-safe router to the repository guide and demo README. | ✓ VERIFIED | Both required absolute GitHub links are present and link smoke tests pass. |
+| 12 | Root README adds Docker/Fleet and Day-2 routes without displacing library Day-1. | ✓ VERIFIED | Docker evaluation follows the complete Start Here sequence. |
+| 13 | Local Mix stays supported and Fleet/Keycloak are explicitly Solo follow-ons. | ✓ VERIFIED | README contains the full Local Mix path and makes both Docker routes follow-ons. |
+| 14 | The bounded gap-closure exception changed only the public launcher and its deterministic coverage, not Compose/provisioning/app/API/security/package surfaces. | ✓ VERIFIED | Phase commits show Plan 03 changed only `Makefile` and its test; Plan 04 only docs/test. |
+| 15 | `make keycloak` starts proxy + profile, waits for provisioning, validates the public descriptor, and only then prints routes. | ✓ VERIFIED | `Makefile:135-152`; the real recipe is exercised by the fixture test at lines 123-162. |
+| 16 | `make keycloak` fails closed for prerequisite and descriptor failures. | ✓ VERIFIED | Fixture test at lines 164-202 proves nonzero provisioning/descriptor failures and no route banner. |
+| 17 | Launcher evidence uses owned fixtures and environment-derived host handling without ambient Docker. | ✓ VERIFIED | `run_make/2` fixtures execute the actual Make recipe; focused suite passed 28 tests. |
+| 18 | The evaluator README uses FakeIdP's actual Sarah NameID and real receipt outcome, with no stale unresolved narrative. | ✓ VERIFIED | Cross-artifact contract reads controller/flow test; focused real flow test at `fake_idp_flow_test.exs:63` passed. |
+| 19 | Both detailed docs route optional Keycloak through `make keycloak`, not proxy + Solo Compose. | ✓ VERIFIED | Focused docs contract passes and both sections describe profile, provisioning, and public descriptor validation. |
+| 20 | Docs preserve Solo as the complete first journey and the host-owned receipt boundary after gap closure. | ✓ VERIFIED | Solo ordering, exact receipt sentence, and ownership language are asserted and present. |
 
-**Score:** 9/13 truths verified (0 present, behavior-unverified)
+**Score:** 19/20 truths verified (0 present, behavior-unverified)
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | --- | --- | --- | --- |
-| `guides/docker_dev_dx.md` | Complete Make-first Docker guide | ⚠️ HOLLOW | Exists (181 lines), is substantive, and is statically tested, but the Keycloak command/data flow is disconnected from the profile required by Compose. |
-| `demo/ledger_loop/README.md` | Detailed Make-first evaluator route with Local Mix | ⚠️ HOLLOW | Exists and links correctly, but its principal/outcome narrative contradicts executable demo behavior. |
-| `guides/demo.md` | Published-doc-safe router | ✓ VERIFIED | Substantive source-only router with both absolute links. |
-| `README.md` | Day-2 Docker/Fleet route preserving Day-1 | ✓ VERIFIED | Substantive and ordered after Getting Started. |
-| `test/docs/demo_guide_drift_test.exs` | Deterministic documentation contract | ⚠️ PARTIAL | Exists (700 lines), substantive, wired, and passes; its assertions only inspect documentation literals and explicitly require no documented Keycloak profile command, so it cannot establish the advertised runtime behavior. |
+| `guides/docker_dev_dx.md` | Complete Make-first Docker guide | ⚠️ HOLLOW | Exists (186 lines), substantive, linked and statically tested; its port-override data flow diverges from the launcher. |
+| `demo/ledger_loop/README.md` | Detailed Make-first evaluator route with Local Mix | ✓ VERIFIED | Substantive, linked to guide, and bound to real Sarah/receipt evidence. |
+| `guides/demo.md` | Published-doc-safe router | ✓ VERIFIED | Substantive, absolute source links verified. |
+| `README.md` | Day-2 Docker/Fleet route preserving Day-1 | ✓ VERIFIED | Substantive and ordered after Start Here. |
+| `Makefile` | Public `keycloak` launcher and recovery semantics | ⚠️ PARTIAL | Keycloak target is substantive, wired, and fixture-proven; `doctor` is not wired to the exported `PORT`. |
+| `test/docs/demo_guide_drift_test.exs` | Deterministic cross-artifact documentation contracts | ⚠️ PARTIAL | Exists (852 lines), substantive, wired, and passes, but ordered-text matching is brittle and PORT recovery lacks a fixture. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
-| --- | --- | --- | --- | --- |
-| `guides/docker_dev_dx.md` | `Makefile` | Public Make commands and origins | PARTIAL | All documented normal targets exist, but `proxy` only starts Traefik and `up-build` is solo Compose. No command enables `--profile keycloak` with the proxy overlay. |
-| `guides/docker_dev_dx.md` | `session_adapter.ex` | Ownership-safe receipt | WIRED | Guide wording agrees with `LoginReceipt` insertion and ownership fields. |
-| `test/docs/demo_guide_drift_test.exs` | `guides/docker_dev_dx.md` | `File.read!/1` ordered assertions | WIRED | Static contract executes and passed; it is not a runtime topology proof. |
-| `demo/ledger_loop/README.md` | `guides/docker_dev_dx.md` | Relative guide link | WIRED | Relative link resolves, but both documents repeat the unavailable Keycloak path. |
-| `guides/demo.md` | Repository guide and demo README | Absolute GitHub links | WIRED | Both required links are present. |
-| `README.md` | `guides/docker_dev_dx.md` | Evaluator/Day-2 routing | WIRED | Link is present outside the Day-1 sequence. |
-| `test/docs/demo_guide_drift_test.exs` | All three routers | Static file reads | WIRED (static only) | Tests pass but do not validate controller identity or Compose profile activation. |
+| --- | --- | --- | --- |
+| `guides/docker_dev_dx.md` | `Makefile` | public targets, URLs, doctor/recovery semantics | PARTIAL | Commands exist, but guide `PORT` recovery and `doctor` do not carry the configured port end-to-end. |
+| `Makefile` | `docker-compose.proxy.yml` | `KEYCLOAK_COMPOSE` plus `--profile keycloak` | WIRED | Lines 12-13 and 135-139 compose the base/proxy graph and profile. The automated pattern probe misses the multi-line variable expansion, not the actual wiring. |
+| `Makefile` | `keycloak_provisioner` | wait before public readiness claim | WIRED | Line 139 waits before descriptor loop and URL banner. |
+| `Makefile` | public Keycloak descriptor | `curl --noproxy` + `--resolve` + exact entityID | WIRED | Lines 141-152 implement bounded validation; success/failure fixtures pass. |
+| Demo README | FakeIdP controller and flow test | Sarah subject and LoginReceipt outcome | WIRED | Test reads all three files and the real focused flow test passes. |
+| Routers | canonical Docker guide | relative/absolute Markdown routes | WIRED | Static router and link suites pass. |
 
 ### Data-Flow Trace (Level 4)
 
-| Artifact | Data Variable / Claim | Source | Produces Real Data | Status |
+| Artifact | Data / claim | Source | Produces real data | Status |
 | --- | --- | --- | --- | --- |
-| Docker guide Solo path | FakeIdP → `LoginReceipt` | `FakeIdPController.conn_fields/0`; `fake_idp_flow_test.exs` | Yes — emits Sarah and inserts receipt | ✓ FLOWING |
-| Docker guide / demo README Keycloak path | Keycloak public origin after documented Make commands | `Makefile` → Compose services | No — solo `up-build` excludes the profile and overlay | ✗ DISCONNECTED |
-| Detailed demo README success narrative | FakeIdP principal | `FakeIdPController.conn_fields/0` | No — docs say evaluator@example.com; code emits Sarah | ✗ HOLLOW |
-| Drift test | Documentation contents | `File.read!/1` | Static literals only | ⚠️ STATIC |
+| Solo guide proof | FakeIdP → Sarah → `LoginReceipt` | Controller + database-backed flow test | Yes | ✓ FLOWING |
+| Keycloak guide proof | `make keycloak` → proxy/profile/provisioner/descriptor | Make recipe + owned fixtures | Yes | ✓ FLOWING |
+| Port-conflict recovery | `PORT` → Compose mapping → doctor → guide URL | `docker-compose.override.yml` honors `${PORT:-4000}`; `doctor` probes literal 4000 | No | ✗ DISCONNECTED |
+| Documentation ordering contracts | ordered prose tokens | `assert_in_order/2` | Incomplete for repeated tokens | ⚠️ BRITTLE |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | --- | --- | --- | --- |
-| Documentation static contracts | `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors` | 19 tests, 0 failures | ✓ PASS — static only |
-| Actual Solo FakeIdP receipt path | `(cd demo/ledger_loop && mix test test/ledger_loop_web/fake_idp_flow_test.exs:63 --warnings-as-errors)` | 1 test, 0 failures; assertion checks `LoginReceipt` for `sarah@northstar.example.com` | ✓ PASS |
-| Brand and Markdown-link contracts | `mix test test/docs/adopter_voice_test.exs test/docs/markdown_link_smoke_test.exs --warnings-as-errors` | 5 tests, 0 failures | ✓ PASS |
+| Documentation, voice, and Markdown contracts | `mix test test/docs/demo_guide_drift_test.exs test/docs/adopter_voice_test.exs test/docs/markdown_link_smoke_test.exs --warnings-as-errors` | 28 tests, 0 failures | ✓ PASS |
+| Actual FakeIdP Sarah receipt path | `(cd demo/ledger_loop && mix test test/ledger_loop_web/fake_idp_flow_test.exs:63 --warnings-as-errors)` | 1 test, 0 failures | ✓ PASS |
+| Formatting | `mix format --check-formatted` | exit 0 | ✓ PASS |
+| Configured port diagnosis | `make -n doctor PORT=4101` | rendered recipe contains `check_port 4000` and no `check_port "$${PORT}"` | ✗ FAIL |
 
 ### Probe Execution
 
-Step 7c: SKIPPED — Phase 72 declares no probe and `scripts/**/tests/probe-*.sh` yielded no project probes.
+Step 7c: SKIPPED — no Phase 72 probe is declared and no `scripts/**/tests/probe-*.sh` probe exists.
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| DOC-01 | `72-01-PLAN.md` | Accurate house-voice Solo/Fleet guide with cache, URLs, troubleshooting, and receipts | ✗ BLOCKED | Core Solo proof is correct, but the guide's documented Keycloak proof is not runnable through its stated Make workflow. |
-| DOC-02 | `72-02-PLAN.md` | Accurate Make/Fleet routing across demo README, published router, and root README with Local Mix retained | ✗ BLOCKED | Router links and Local Mix are present, but the detailed demo README gives a false successful FakeIdP identity/outcome and routes to the unavailable Keycloak proof. |
+| DOC-01 | `72-01`, `72-03`, `72-04` | Accurate house-voice Solo/Fleet guide with cache, URLs, troubleshooting, receipts, and runnable Keycloak follow-on | ✗ BLOCKED | Keycloak, Solo receipt, cache, ownership, and most recovery work pass, but the required port-conflict troubleshooting is false for `PORT` overrides. |
+| DOC-02 | `72-02`, `72-04` | Accurate Make/Fleet routing across demo README, published router, and root README with Local Mix retained | ✓ SATISFIED | Router, Local Mix, Sarah narrative, ownership, and executable Keycloak routing are present and covered by focused tests. |
 
-All requirement IDs declared in Plan frontmatter (`DOC-01`, `DOC-02`) are accounted for. No Phase 72 requirement is orphaned. No later milestone phase specifically addresses either gap, so neither is deferred.
+All declared Phase 72 IDs (`DOC-01`, `DOC-02`) are accounted for. No orphaned Phase 72 requirement was found. Phase 72 is the last milestone phase, so no later phase clearly defers this gap.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 | --- | --- | --- | --- | --- |
-| `demo/ledger_loop/README.md` | 82-103 | Contradictory hard-coded FakeIdP success principal | 🛑 Blocker | Directly misleads the detailed evaluator path and receipt expectation. |
-| `guides/docker_dev_dx.md` | 83-121 | Documented command sequence does not activate advertised Keycloak route | 🛑 Blocker | Follow-on proof cannot be completed from the guide. |
-| `test/docs/demo_guide_drift_test.exs` | 550-552 | Static test enforces absence of a Keycloak profile command | 🛑 Blocker | Passing test preserves the missing wiring instead of detecting it. |
+| `Makefile` | 194-196, 215 | hard-coded demo port in configurable launcher | 🛑 BLOCKER | The documented `PORT=<free-port>` recovery cannot be diagnosed accurately. |
+| `guides/docker_dev_dx.md` | 44-45, 55, 62, 96, 151-152 | override advice followed by fixed default URLs | 🛑 BLOCKER | A reader following the guide after a port conflict can be sent to an unrelated service. |
+| `test/docs/demo_guide_drift_test.exs` | 838-850 | matcher restarts each lookup at byte zero | ⚠️ WARNING | Valid future documentation with a repeated token can falsely fail its ordering contract. |
 
 No `TBD`, `FIXME`, or `XXX` debt markers were found in Phase 72 artifacts.
 
@@ -127,15 +136,16 @@ No `TBD`, `FIXME`, or `XXX` debt markers were found in Phase 72 artifacts.
 
 | Prohibition | Status | Evidence |
 | --- | --- | --- |
-| Relyra must not be presented as owning browser session or downstream authorization. | ✓ VERIFIED | Guide lines 65-68 and README ownership table lines 225-240 expressly assign mapping, session establishment, and authorization to LedgerLoop. |
-| Reset, reseed, and nuke must not be presented as ordinary non-destructive restart. | ✓ VERIFIED | Guide lines 157-168 and README lines 168-184 label refresh/nuke destructive. |
-| Repository demo/guide must not be presented as Hex package surface or displace Day-1. | ✓ VERIFIED | `guides/demo.md:3-5,22-24` and `README.md:55-61` explicitly preserve source-only and Day-1 boundaries. |
+| Do not claim Relyra owns browser session or authorization. | ✓ VERIFIED | Guide and README explicitly assign mapping, LoginReceipt persistence, and authorization to LedgerLoop. |
+| Do not present reset/reseed/nuke as ordinary non-destructive restarts. | ✓ VERIFIED | Guide and README label reset/reseed destructive and nuke confirmed deletion. |
+| Do not present demo/guide as Hex runtime or replace Day-1. | ✓ VERIFIED | `guides/demo.md` and root README preserve source-only and Day-1 boundaries. |
+| Do not make Keycloak a Solo prerequisite or hide failed Keycloak prerequisites. | ✓ VERIFIED | Guide labels it optional; fixture tests prove fail-closed no-banner paths. |
 
 ### Gaps Summary
 
-The phase’s static docs tests pass, but they do not prove the operational claims they freeze. Two material contradictions remain: the detailed evaluator README describes an identity the FakeIdP does not emit, and all documented Keycloak follow-ons omit the Compose profile/overlay necessary to start and provision Keycloak. These are implementation-and-documentation gaps, not deferred future work, so Phase 72 has not achieved its documentation goal.
+The previous blockers are genuinely closed: the new Keycloak launcher is executable and fail-closed, and the Sarah/receipt narrative now agrees with real flow behavior. However, DOC-01 explicitly includes port-conflict troubleshooting. The runner supports `PORT` overrides, while the diagnostic and documentation remain hard-coded to `4000`; therefore a reader cannot reliably recover from the very port conflict the guide claims to solve. This is a blocking, actionable documentation/launcher gap. The ordering-helper finding is a warning to fix with the same targeted closure so the deterministic docs gate remains reliable.
 
 ---
 
-_Verified: 2026-08-27T17:15:07Z_
+_Verified: 2026-08-27T18:15:00Z_
 _Verifier: the agent (gsd-verifier)_
