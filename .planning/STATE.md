@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Phases
-current_phase: 72
+current_phase: 72.1
 status: completed
-stopped_at: Completed 72-05-PLAN.md
-last_updated: "2026-08-27T18:48:56.201Z"
+stopped_at: Phase 72.1 context gathered (assumptions mode)
+last_updated: "2026-08-27T19:46:43.572Z"
 last_activity: 2026-08-27
 last_activity_desc: Phase 72 complete
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
   total_plans: 26
   completed_plans: 26
-  percent: 100
-current_phase_name: documentation
+  percent: 83
+current_phase_name: close-v1-10-evaluator-endpoint-and-trace-auth-gaps
 ---
 
 # Project State
@@ -24,11 +24,11 @@ current_phase_name: documentation
 See: `.planning/PROJECT.md` (updated 2026-08-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 72 — documentation
+**Current focus:** Phase 72.1 — Close v1.10 evaluator endpoint and trace-auth gaps
 
 ## Current Position
 
-Phase: 72
+Phase: 72.1
 Plan: Not started
 Status: All phases complete
 Last activity: 2026-08-27 — Phase 72 complete
@@ -133,6 +133,10 @@ Last activity: 2026-08-27 — Phase 72 complete
 - The milestone-wide invariant (no `lib/`/API/protocol/Hex-whitelist change) is the primary guardrail; every phase plan must keep repo gates (`mix qa`, `mix ci.security`, `mix format --check-formatted`, `mix test --warnings-as-errors`) green by not touching `lib/`.
 - Direct `mix deps.audit` still reports the documented pre-existing Decimal 2.4.1 advisory; Phase 70 remediated Req/Mint without adding a suppression, and `mix ci.security` remains green.
 
+### Roadmap Evolution
+
+- Phase 72.1 inserted after Phase 72: Close v1.10 evaluator endpoint and trace-auth gaps (URGENT)
+
 ## Deferred Items
 
 | Category | Item | Status |
@@ -151,11 +155,11 @@ Last activity: 2026-08-27 — Phase 72 complete
 
 ## Session Continuity
 
-**Stopped at:** Completed 72-05-PLAN.md
-**Resume file:** None
+**Stopped at:** Phase 72.1 context gathered (assumptions mode)
+**Resume file:** .planning/phases/72.1-close-v1-10-evaluator-endpoint-and-trace-auth-gaps/72.1-CONTEXT.md
 
-Last session: 2026-08-27T18:37:52.423Z
-Resume at: `/gsd-execute-phase 72`
+Last session: 2026-08-27T19:46:43.560Z
+Resume at: $gsd-plan-phase 72.1
 
 ## Operator Next Steps
 
