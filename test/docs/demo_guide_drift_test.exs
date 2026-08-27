@@ -415,6 +415,54 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert unavailable =~ "Next: inspect host ports manually or install lsof/netcat"
   end
 
+  test "doctor carries the configured Solo port through diagnosis and URL recovery" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    lsof_log = Path.join(fixture_bin, "lsof.log")
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    case "$*" in
+      "version"|"compose version"|"network inspect proxy") exit 0 ;;
+      *) exit 0 ;;
+    esac
+    """)
+
+    write_executable!(fixture_bin, "lsof", """
+    #!/bin/sh
+    printf '%s\\n' "$*" >> "$STUB_LSOF_LOG"
+    case "$*" in
+      *iTCP:4101*) echo "beam.smp 4101 developer 99u IPv6 demo-listener"; exit 0 ;;
+      *iTCP:5432*) echo "postgres 5432 developer 10u IPv4 database-listener"; exit 0 ;;
+      *iTCP:8080*) exit 1 ;;
+    esac
+    """)
+
+    env = [{"PATH", fixture_bin}, {"PORT", "4101"}, {"STUB_LSOF_LOG", lsof_log}]
+    {doctor, doctor_status} = run_make(["doctor"], env)
+    {url, 0} = run_make(["url"], env)
+    probes = File.read!(lsof_log)
+    guide = File.read!("guides/docker_dev_dx.md")
+
+    assert doctor_status != 0
+    assert probes =~ "iTCP:4101"
+    refute probes =~ "iTCP:4000"
+    assert doctor =~ "WARN port 4101 occupied —"
+    assert doctor =~ "Solo demo listener"
+    assert doctor =~ "PORT=4101 make doctor"
+    assert doctor =~ "PORT=4101 make url"
+    assert url =~ "Loopback: http://localhost:4101"
+
+    assert_in_order(guide, [
+      "PORT=4101 make doctor",
+      "PORT=4101 make url",
+      "PORT=4101 make up-build",
+      "Loopback:",
+      "/login/test",
+      "/relyra/admin"
+    ])
+  end
+
   test "open selects a supported opener and otherwise keeps a copy-pasteable URL" do
     fixture_bin = fixture_bin!()
     on_exit(fn -> File.rm_rf!(fixture_bin) end)
