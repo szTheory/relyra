@@ -433,6 +433,29 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert output =~ hostile_host
   end
 
+  test "Docker DX guide carries the complete Solo FakeIdP journey" do
+    guide = File.read!("guides/docker_dev_dx.md")
+
+    assert_in_order(guide, [
+      "## Solo: prove one local login",
+      "Docker with Compose v2",
+      "make doctor",
+      "make up-build",
+      "http://localhost:4000/login/test",
+      "FakeIdP",
+      "Return to LedgerLoop",
+      "operator validation trace",
+      "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt."
+    ])
+
+    assert guide =~ "configured IdP certificates are the trust source"
+    assert guide =~ "Relyra verifies the cryptographic assertion"
+    assert guide =~ "LedgerLoop owns user mapping"
+    assert guide =~ "owns the persisted session-establishment receipt"
+    assert guide =~ "owns authorization"
+    assert guide =~ "not a claim that Relyra creates a browser cookie"
+  end
+
   test "incomplete phases require automated acceptance instead of human UAT" do
     roadmap = File.read!(".planning/ROADMAP.md")
 
