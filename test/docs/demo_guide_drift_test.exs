@@ -892,16 +892,15 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
   end
 
   defp assert_in_order(text, tokens) do
-    Enum.reduce(tokens, -1, fn token, previous_index ->
-      case :binary.match(text, token) do
-        {index, _length} when index > previous_index ->
-          index
+    Enum.reduce(tokens, 0, fn token, cursor ->
+      suffix = binary_part(text, cursor, byte_size(text) - cursor)
 
-        {index, _length} ->
-          flunk("Expected #{inspect(token)} after byte #{previous_index}, found at #{index}")
+      case :binary.match(suffix, token) do
+        {relative_index, length} ->
+          cursor + relative_index + length
 
         :nomatch ->
-          flunk("Missing banner token: #{inspect(token)}")
+          flunk("Missing banner token: #{inspect(token)} after byte #{cursor}")
       end
     end)
   end
