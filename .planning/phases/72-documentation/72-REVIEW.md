@@ -1,17 +1,18 @@
 ---
 phase: 72-documentation
-reviewed: 2026-08-27T00:00:00Z
+reviewed: 2026-08-27T18:06:14Z
 depth: standard
-files_reviewed: 5
+files_reviewed: 6
 files_reviewed_list:
+  - Makefile
   - README.md
   - demo/ledger_loop/README.md
   - guides/demo.md
   - guides/docker_dev_dx.md
   - test/docs/demo_guide_drift_test.exs
 findings:
-  critical: 2
-  warning: 0
+  critical: 1
+  warning: 1
   info: 0
   total: 2
 status: issues_found
@@ -19,39 +20,48 @@ status: issues_found
 
 # Phase 72: Code Review Report
 
-**Reviewed:** 2026-08-27T00:00:00Z
+**Reviewed:** 2026-08-27T18:06:14Z
 **Depth:** standard
-**Files Reviewed:** 5
+**Files Reviewed:** 6
 **Status:** issues_found
 
 ## Summary
 
-The documentation routes evaluators through two claimed proof paths that do not match the runnable demo: the detailed README describes a FakeIdP principal that the implementation does not emit, and the advertised Keycloak route never starts the Keycloak profile or its provisioner. The static drift test passes because it asserts copy tokens rather than these executable contracts.
+The Docker-evaluation routing and ownership language are broadly consistent, and the focused docs and Markdown-link suites pass. However, the advertised `PORT` recovery path is internally inconsistent: Compose honors the override while `doctor` and the primary instructions continue to inspect and direct readers to port 4000. The test helper also cannot correctly verify ordered repeated text, so its drift checks can produce false failures as the documentation evolves.
+
+## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: The documented FakeIdP principal and default result contradict the demo
+### CR-01: `PORT` override is diagnosed and documented as the wrong port
 
-**Classification:** BLOCKER
+**File:** `/Users/jon/projects/relyra/Makefile:194-215` (also `/Users/jon/projects/relyra/guides/docker_dev_dx.md:44-55` and `/Users/jon/projects/relyra/demo/ledger_loop/README.md:49`)
 
-**File:** `demo/ledger_loop/README.md:82-103`
+**Issue:** The Solo Compose overlay maps `127.0.0.1:${PORT:-4000}:4000`, so `PORT=4101 make up-build` correctly starts the demo at 4101. But `make doctor PORT=4101` still probes literal `4000` (`check_port 4000`) and its recovery message advertises the override that it cannot validate. A busy 4000 therefore leaves `doctor` failing after the documented recovery has been applied; it also reports an overridden busy demo port as port 8080 because its classification is hard-coded. Both guides then instruct readers to open `http://localhost:4000`, not the selected port. This breaks the documented port-conflict recovery and can send a user to an unrelated listener.
 
-**Issue:** The README says the valid FakeIdP response uses `evaluator@example.com`, does not match a seeded identity, and therefore cannot produce the session-establishment receipt it tells the evaluator to expect. The runnable form instead labels its valid action `sarah@northstar.example.com`, and `FakeIdPController.conn_fields/0` emits that same subject. `Fixtures.saml_identities/0` seeds the matching Sarah identity, so the actual default valid flow maps Sarah and can write a `LoginReceipt`. The current text gives evaluators a false expected identity and falsely characterizes the successful proof as an unresolved future exercise.
+**Fix:** Pass the exported `PORT` to the port check and classify the checks by role rather than by a literal. Cover the override in the launcher fixture, then have the guides tell overridden users to run `make url` (with the same `PORT`) and use its emitted loopback URL. For example:
 
-**Fix:** Replace the `evaluator@example.com` narrative and mismatch callout with the actual `sarah@northstar.example.com` successful path, and add a drift assertion that reads the FakeIdP form/controller subject (or, preferably, an end-to-end demo assertion that proves the `LoginReceipt` is created).
+```make
+# doctor recipe
+check_port "$${PORT}" demo
+check_port 5432 postgres
+check_port 8080 proxy
+```
 
-### CR-02: The Keycloak follow-on is documented without any command that starts it
+Have `check_port` print `WARN port %s occupied ... set PORT=<free-port>` for the `demo` role, and keep the proxy-specific remediation only for the `proxy` role. Add a fixture assertion that `PORT=4101 make doctor` probes 4101 and never probes 4000.
 
-**Classification:** BLOCKER
+## Warnings
 
-**File:** `demo/ledger_loop/README.md:196-213`
+### WR-01: Ordered-text assertion always searches from the beginning
 
-**Issue:** The listed commands run `make proxy` and `make up-build`. `make proxy` starts only Traefik; `make up-build` invokes the solo `docker compose` command. Neither enables Compose's `keycloak` profile, so neither the `keycloak` service nor `keycloak_provisioner` runs. The claimed `http://keycloak.relyra.localhost` route and its required connection therefore do not exist after following the guide. The same incomplete route is promoted by `guides/docker_dev_dx.md:109-121` and `guides/demo.md:12-24`.
+**File:** `/Users/jon/projects/relyra/test/docs/demo_guide_drift_test.exs:838-850`
 
-**Fix:** Add a public Make target that invokes the fleet compose configuration with `--profile keycloak` and waits for/provisions the connection, then document that target as the required Keycloak step. Extend `test/docs/demo_guide_drift_test.exs` with an executable Make-command contract for that target rather than only checking that the docs contain Keycloak wording.
+**Issue:** `assert_in_order/2` calls `:binary.match(text, token)` without a search offset for every token. When a later required token appears once before the prior token and again in the intended location, the helper only sees the first occurrence and fails even though the documented order is correct. The new guide assertions rely on this helper for repeated operational words and headings, making the documentation gate brittle as valid prose is expanded.
+
+**Fix:** Search each token within the suffix beginning immediately after the previous match, and carry the end offset forward. For example, call `:binary.match/3` with `scope: {offset, byte_size(text) - offset}`, then set `offset` to `index + matched_length`. Add a unit case with a repeated token before and after the preceding token to prove the helper selects the later valid occurrence.
 
 ---
 
-_Reviewed: 2026-08-27T00:00:00Z_
+_Reviewed: 2026-08-27T18:06:14Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
