@@ -34,21 +34,24 @@ See [Scope & Honesty](#scope--honesty) for the full accounting.
 
 ### Option A — Docker (Recommended)
 
-Requires Docker with Compose v2.
+Requires Docker with Compose v2 and starts with the complete deterministic Solo/FakeIdP
+proof. The repo-root Makefile is the Docker interface; `scripts/demo` remains a
+compatibility entry point, not a second workflow.
 
 ```bash
-scripts/demo doctor
+make doctor
 ```
 
 ```bash
-scripts/demo up
+make up-build
 ```
 
-```bash
-scripts/demo urls
-```
+Open `http://localhost:4000/login/test`, choose the enabled connection, and select
+**Simulate Login via FakeIdP**. The complete Solo journey, receipts, recovery ladder,
+and optional follow-ons live in the [Docker developer guide](../../guides/docker_dev_dx.md).
 
-Visit the URLs printed by `urls`. The demo app loads at `http://localhost:4000`.
+Solo is the first proof. Fleet and optional Keycloak follow only after you have the
+Solo receipt.
 
 ### Option B — Local Mix
 
@@ -80,8 +83,10 @@ directly). You'll see the four Northstar Health connection scenarios. Select the
 a valid SAML response signed with the FakeIdP's RSA-2048 key. The subject is
 `evaluator@example.com` — this is the evaluator test user, separate from the seeded
 Northstar Health users. Relyra verifies the assertion signature, audience, recipient,
-expiry, and replay guard, then calls LedgerLoop's `UserMapper` and `SessionAdapter`.
-The session is established and a `LoginReceipt` row is written.
+expiry, and replay guard before LedgerLoop's `UserMapper` and `SessionAdapter` own the
+host-side mapping and receipt.
+
+**Receipt:** Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt.
 
 **Rejection path:** Select **Invalid Login (Tampered Signature)** on the FakeIdP form.
 Relyra rejects with a typed error atom (`{:error, :invalid_signature}` or similar).
@@ -163,20 +168,20 @@ Visit `/support/scenario` to trigger the support failure scenario directly.
 Reset the database (drops, recreates, reseeds):
 
 ```bash
-scripts/demo reset
+make reset
 ```
 
-Run the Playwright browser tests (requires keycloak and browser profiles; optional):
+`make reseed` is an alias for the same destructive database refresh. For the complete
+Solo/Fleet and optional Keycloak proof lanes, use the [Docker developer guide](../../guides/docker_dev_dx.md).
+
+Tear down the Solo containers while preserving volumes and caches:
 
 ```bash
-scripts/demo test
+make down
 ```
 
-Tear down all containers and volumes:
-
-```bash
-scripts/demo down
-```
+Use `make nuke` only when you intend to delete demo data and build/dependency volumes
+for a cold rebuild; it asks for confirmation.
 
 ### Local Mix
 
@@ -190,24 +195,30 @@ This runs `ecto.drop` + `ecto.setup` (which chains create, migrate, and seed).
 
 ## Optional Keycloak Profile
 
-The Docker Compose file includes a `keycloak` profile for testing against a real IdP:
+Fleet is the follow-on route for running this demo beside sibling Traefik-routed demos.
+After recording the Solo/FakeIdP receipt, start the shared proxy and inspect the route map:
 
 ```bash
-docker compose --profile keycloak up -d
+make proxy
+make up-build
+make url
+make fleet
 ```
 
-Keycloak starts at `http://localhost:8080` (override with `KC_PORT`). It imports the
-`docker/keycloak/realm-demo-app.json` realm on startup. This profile is **optional** — the
-core demo works entirely with the local FakeIdP. Keycloak adds proof that Relyra's
-SAML flow works against a real protocol implementation, not just a test fixture.
+The Fleet browser route is `http://relyra.localhost`. Optional Keycloak is a separate
+real-IdP proof at `http://keycloak.relyra.localhost`, behind that proxy; it never replaces
+the deterministic FakeIdP path. `*.localhost` names are browser-facing, while container
+health checks and bootstrap traffic use Docker service DNS. See the
+[Docker developer guide](../../guides/docker_dev_dx.md) for the exact Keycloak receipt
+and recovery steps.
 
 ### Environment Overrides
 
 | Variable | Default | Controls |
 |---|---|---|
 | `PORT` | `4000` | Demo app port |
-| `PGPORT` | `5432` | PostgreSQL port |
-| `KC_PORT` | `8080` | Keycloak port |
+| `RELYRA_HOST` | `relyra.localhost` | Fleet browser hostname |
+| `DEMO_PROXY_NETWORK` | `proxy` | Shared Traefik network |
 
 ---
 

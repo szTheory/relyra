@@ -527,13 +527,17 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     docker_section =
       readme |> String.split("### Option A — Docker (Recommended)", parts: 2) |> List.last()
 
-    assert_in_order(docker_section, [
+    assert_in_order(readme, [
+      "### Option A — Docker (Recommended)",
       "make doctor",
       "make up-build",
       "../../guides/docker_dev_dx.md",
-      "Solo",
-      "FakeIdP"
+      "## Optional Keycloak Profile",
+      "make proxy",
+      "http://keycloak.relyra.localhost"
     ])
+
+    assert_in_order(readme, ["Simulate Login via FakeIdP", "## Optional Keycloak Profile"])
 
     assert readme =~ "### Option B — Local Mix"
     assert readme =~ "mix setup"
