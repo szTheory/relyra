@@ -86,6 +86,54 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert url_recipe =~ "OPTIONAL — shared fleet proxy"
   end
 
+  test "admin credentials are empty-forwarded and kept out of the route banner" do
+    base_compose = File.read!("docker-compose.yml")
+    proxy_compose = File.read!("docker-compose.proxy.yml")
+    env_example = File.read!(".env.example")
+    url_recipe = target_body(File.read!(@makefile_path), "url")
+
+    Enum.each([base_compose, proxy_compose], fn compose ->
+      assert compose =~ ~S(DEMO_ADMIN_USERNAME: ${DEMO_ADMIN_USERNAME:-})
+      assert compose =~ ~S(DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-})
+
+      refute compose =~
+               ~r/DEMO_ADMIN_(?:USERNAME|PASSWORD):\s*\$\{DEMO_ADMIN_(?:USERNAME|PASSWORD):-[^}]+\}/
+    end)
+
+    assert env_example =~ "operator chooses both values before launch"
+    assert env_example =~ "runtime-only"
+    assert env_example =~ ~r/^# DEMO_ADMIN_USERNAME=$/m
+    assert env_example =~ ~r/^# DEMO_ADMIN_PASSWORD=$/m
+    refute env_example =~ ~r/^DEMO_ADMIN_(?:USERNAME|PASSWORD)=/m
+
+    assert_in_order(url_recipe, [
+      "==> Admin trace prerequisite",
+      "DEMO_ADMIN_USERNAME and DEMO_ADMIN_PASSWORD",
+      "before make up-build, make up-d-build, or make keycloak",
+      "==> Route map",
+      "Admin: http://$${RELYRA_HOST}/relyra/admin",
+      "4. Inspect the operator trace",
+      "401",
+      "set both values, restart the active demo, and authenticate at /login/admin"
+    ])
+
+    username_sentinel = "operator-sentinel-username"
+    password_sentinel = "operator-sentinel-password"
+
+    {banner, 0} =
+      run_make(
+        ["url"],
+        [
+          {"DEMO_ADMIN_USERNAME", username_sentinel},
+          {"DEMO_ADMIN_PASSWORD", password_sentinel}
+        ]
+      )
+
+    assert banner =~ "DEMO_ADMIN_USERNAME and DEMO_ADMIN_PASSWORD"
+    refute banner =~ username_sentinel
+    refute banner =~ password_sentinel
+  end
+
   test "Make CLI renders help, detached launch, and overridden browser origins" do
     {help, 0} = run_make(["help"])
     assert String.starts_with?(help, "Relyra demo launcher\n")
