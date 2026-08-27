@@ -185,7 +185,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   3. A reader following only the new guide reaches a successful FakeIdP login without external context (the "Receipt" proof lines are reproducible).
 
 **Scope note**: Touches `guides/docker_dev_dx.md`, `demo/ledger_loop/README.md`, `guides/demo.md`, and `README.md`. Brand voice per `brandbook/notes/decision-log.md` Canonical Lock Set (newest source, supersedes `prompts/relyra-brand-book.md`). No `lib/` change; no new Hex package surface.
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans executed
 
 **Wave 1**
 
@@ -201,7 +201,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 
 **Wave 4** *(blocked on Plan 72-03)*
 
-- [ ] 72-04-PLAN.md — Correct the Sarah receipt narrative and route Keycloak docs through the executable Make target [DOC-01, DOC-02]
+- [x] 72-04-PLAN.md — Correct the Sarah receipt narrative and route Keycloak docs through the executable Make target [DOC-01, DOC-02]
 
 ## Progress
 
@@ -211,7 +211,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 | 69. Compose split & fleet proxy | 3/3 | Complete | 2026-08-26 |
 | 70. Keycloak behind the proxy | 14/14 | Complete | 2026-08-26 |
 | 71. Launcher DX & banner | 2/2 | Complete | 2026-08-27 |
-| 72. Documentation | 3/4 | In Progress|  |
+| 72. Documentation | 4/4 | In Progress|  |
 
 ## Current Status
 
