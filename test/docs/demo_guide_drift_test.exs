@@ -1,166 +1,124 @@
 defmodule Relyra.Docs.DemoGuideDriftTest do
   @moduledoc """
-  Bidirectional drift gate for `scripts/demo` subcommand parity with
-  `demo/ledger_loop/README.md` (D-10).
+  Static contract for the repository-local demo launcher.
 
-  ## Why this test exists
-
-  `scripts/demo` is the primary operator interface evaluators copy-paste when
-  kicking the tires on Relyra. Its subcommand set is a closed enumerable
-  surface that is uniquely likely to be renamed without a doc update (the
-  script was added fresh in Phase 55). Without a build-time gate, the demo
-  README's command list rots silently the first time a subcommand is added,
-  renamed, or removed.
-
-  This test asserts subcommand parity in both directions:
-
-    * **Missing-in-doc:** every subcommand arm in `scripts/demo`'s
-      `case "$COMMAND"` block MUST appear as `scripts/demo <subcommand>` inside
-      at least one triple-backtick-fenced `bash` block in
-      `demo/ledger_loop/README.md`.
-    * **Stale-in-doc:** every `scripts/demo <token>` usage documented in a
-      bash fence block of the README MUST correspond to a real case arm in the
-      script. Removing an arm without pruning the docs trips this.
-
-  Failure-message vocabulary mirrors `test/docs/troubleshooting_drift_test.exs`
-  (subject — consequence) so the CI experience stays consistent across the
-  project's drift-test collection.
-
-  ## Scope (D-10)
-
-  This gate covers **subcommands only** — the `case "$COMMAND"` arm labels.
-  Routes, seeded credentials, environment overrides, and prose descriptions are
-  intentionally out of scope: they are not a closed enumerable surface, change
-  at different rates, and live in dedicated CI gates (D-02c link-smoke, etc.).
-
-  ## How subcommands are enumerated
-
-  The canonical set is extracted at runtime by reading `scripts/demo` and
-  matching the case arm labels with the pattern `~r/^\\s+(\\w+)\\)\\s*$/m`.
-  The `*)` default arm and any shell function names are excluded — only concrete
-  subcommand labels (the tokens an operator passes as `$1`) are captured. This
-  means the test automatically follows renames: changing an arm in `scripts/demo`
-  changes the canonical set this test sees without any test-file edits required
-  (project convention D-05 — no hardcoded literals).
-
-  The documented set is extracted from `demo/ledger_loop/README.md` by:
-    1. Scanning only triple-backtick-fenced `bash` fenced blocks
-       (prose mentions outside a fence are ignored to avoid brittleness).
-    2. Within those blocks, matching `scripts/demo <token>` patterns and
-       collecting the `<token>` strings.
-
-  If `demo/ledger_loop/README.md` is missing (`{:error, :enoent}`), the doc set
-  is treated as empty, so the test fails with one missing-in-doc entry per
-  script subcommand — the precise signal an author needs when bootstrapping the
-  doc. The `ci.docs` alias also runs a `cmd test -f demo/ledger_loop/README.md`
-  presence guard before this test (D-11), so the missing-file case surfaces as a
-  clean OS-level failure first.
-
-  ## CI lane (D-11 — Phase 30 hollow-gate invariant)
-
-  This test runs under the `ci.docs` Mix alias (NOT `ci.demo_app`). The
-  `ci.demo_app` lane runs every step with `--cd demo/ledger_loop`, which changes
-  the working directory to the demo sub-project and makes the repo-root
-  `scripts/demo` unreachable. The `ci.docs` lane runs from the repo root, so
-  `scripts/demo` and `demo/ledger_loop/README.md` are both reachable via relative
-  paths.
-
-  Per the Phase 30 hollow-gate invariant, this test runs as its own dedicated
-  `cmd mix test` process line in the alias — never bundled into a bare `test`
-  step. Mix deduplicates the `test` task within a single alias run; a bare `test`
-  step after another `test` step is silently skipped.
+  The launcher deliberately keeps its Compose command shapes and banner copy in
+  one Makefile. These assertions read that source at runtime so a target rename,
+  an accidental topology merge, or a second banner implementation fails in the
+  focused documentation lane without needing Docker to be running.
   """
   use ExUnit.Case, async: true
 
-  @script_path "scripts/demo"
-  @readme_path "demo/ledger_loop/README.md"
+  @makefile_path "Makefile"
 
-  # Match concrete case arm labels like `  doctor)` but not `  *)` (default arm).
-  # The pattern anchors on start-of-line whitespace, captures the word token before
-  # `)`, and requires only whitespace after `)` to avoid matching multi-token arms
-  # or shell function calls.
-  @case_arm_pattern ~r/^\s+(\w+)\)\s*$/m
+  @public_targets ~w(
+    proxy up up-build up-d up-d-build down reset reseed nuke logs url open fleet doctor help
+  )
 
-  # Match `scripts/demo <token>` inside bash fence blocks. The token is one or more
-  # word characters immediately following the space.
-  @doc_mention_pattern ~r/scripts\/demo\s+(\w+)/
+  test "Makefile exposes the canonical documented target inventory" do
+    makefile = File.read!(@makefile_path)
 
-  test "scripts/demo subcommands and the demo README bash fences are in bidirectional sync" do
-    script_subcommands = extract_script_subcommands()
-    doc_subcommands = extract_doc_subcommands()
+    assert makefile =~ ".DEFAULT_GOAL := help"
+    assert makefile =~ "Relyra demo launcher"
 
-    missing_in_doc = MapSet.difference(script_subcommands, doc_subcommands)
-    stale_in_doc = MapSet.difference(doc_subcommands, script_subcommands)
+    assert documented_targets(makefile) == MapSet.new(@public_targets),
+           "Make help comments must enumerate exactly the public launcher targets"
 
-    assert MapSet.size(missing_in_doc) == 0, format_missing(missing_in_doc)
-    assert MapSet.size(stale_in_doc) == 0, format_stale(stale_in_doc)
-  end
-
-  # Read scripts/demo at runtime and extract the concrete case arm labels.
-  # The `*)` default arm is excluded by requiring `\w+` (word characters only —
-  # the `*` glob character is not a word character). Helper function names like
-  # `check_port` are excluded because they appear in `function check_port()` lines
-  # (or `function check_port {` lines), not in the `case "$COMMAND"` arm pattern
-  # `  name)`.
-  defp extract_script_subcommands do
-    source = File.read!(@script_path)
-
-    @case_arm_pattern
-    |> Regex.scan(source, capture: :all_but_first)
-    |> Enum.map(fn [name] -> name end)
-    |> MapSet.new()
-  end
-
-  # Read the demo README and scan only bash-fenced blocks for `scripts/demo <token>`
-  # mentions. Prose mentions outside a fence are deliberately ignored. If the README
-  # is absent, return an empty set so the test fails with clear missing-in-doc
-  # messages for every script subcommand.
-  defp extract_doc_subcommands do
-    case File.read(@readme_path) do
-      {:ok, body} ->
-        body
-        |> extract_bash_blocks()
-        |> Enum.flat_map(fn block ->
-          @doc_mention_pattern
-          |> Regex.scan(block, capture: :all_but_first)
-          |> Enum.map(fn [token] -> token end)
-        end)
-        |> MapSet.new()
-
-      {:error, :enoent} ->
-        # Treat a missing README as an empty doc set. The test then fails cleanly
-        # with one missing-in-doc entry per script subcommand — the author can see
-        # exactly which subcommands need to be documented.
-        MapSet.new()
-    end
-  end
-
-  # Extract the bodies of all ```bash ... ``` fenced code blocks in the markdown.
-  # Scoping to bash fences prevents prose mentions of `scripts/demo doctor` outside
-  # a code block from counting toward the documented set (avoiding brittleness when
-  # someone mentions a subcommand in a sentence without quoting it as a command).
-  defp extract_bash_blocks(doc) do
-    ~r/```bash\n(.*?)```/s
-    |> Regex.scan(doc, capture: :all_but_first)
-    |> Enum.map(fn [body] -> body end)
-  end
-
-  defp format_missing(missing) do
-    missing
-    |> Enum.sort()
-    |> Enum.map_join("\n", fn subcommand ->
-      "Missing doc entry for subcommand: #{subcommand} — add `scripts/demo #{subcommand}` " <>
-        "inside a ```bash fence block in #{@readme_path}"
+    Enum.each(@public_targets, fn target ->
+      assert makefile =~ "## #{target}:"
     end)
   end
 
-  defp format_stale(stale) do
-    stale
-    |> Enum.sort()
-    |> Enum.map_join("\n", fn subcommand ->
-      "Stale doc entry for subcommand: #{subcommand} — `scripts/demo #{subcommand}` is " <>
-        "documented in #{@readme_path} bash fences but is not a real case arm in #{@script_path}; " <>
-        "remove the usage from the README or re-introduce the arm in the script"
+  test "Makefile keeps the solo and fleet Compose shapes literal and separate" do
+    makefile = File.read!(@makefile_path)
+
+    assert makefile =~ "SOLO_COMPOSE := docker compose"
+
+    assert makefile =~
+             "FLEET_COMPOSE := docker compose -f docker-compose.yml -f docker-compose.proxy.yml"
+
+    assert makefile =~ "PROXY_COMPOSE := docker compose -f docker/traefik/compose.yml"
+
+    refute makefile =~ "$(shell $(SOLO_COMPOSE)"
+    refute makefile =~ "$(shell $(FLEET_COMPOSE)"
+  end
+
+  test "detached launches render the sole banner only after Compose succeeds" do
+    makefile = File.read!(@makefile_path)
+
+    assert_target_contains(makefile, "up-d", [
+      "$(SOLO_COMPOSE) up --no-build -d",
+      "$(MAKE) --no-print-directory url"
+    ])
+
+    assert_target_contains(makefile, "up-d-build", [
+      "$(SOLO_COMPOSE) up --build -d",
+      "$(MAKE) --no-print-directory url"
+    ])
+  end
+
+  test "url banner has the complete ordered browser contract" do
+    makefile = File.read!(@makefile_path)
+    url_recipe = target_body(makefile, "url")
+
+    assert_in_order(url_recipe, [
+      "==> Browser origins",
+      "http://$(RELYRA_HOST)",
+      "http://localhost:$(PORT)",
+      "==> Route map",
+      "Home: http://$(RELYRA_HOST)/",
+      "Admin: http://$(RELYRA_HOST)/relyra/admin",
+      "Login test: http://$(RELYRA_HOST)/login/test",
+      "Support scenario: http://$(RELYRA_HOST)/support/scenario",
+      "Health: http://$(RELYRA_HOST)/healthz",
+      "http://keycloak.$(RELYRA_HOST)/admin",
+      "http://localhost:8080/dashboard/",
+      "==> Walkthrough",
+      "1. Open Login test",
+      "2. Choose FakeIdP",
+      "3. Complete the sign-in",
+      "4. Inspect the operator trace",
+      "==> Topology notes",
+      "*.localhost is browser-facing; Docker health checks and internal probes use service DNS."
+    ])
+
+    assert url_recipe =~ "OPTIONAL — fleet + keycloak profile"
+    assert url_recipe =~ "OPTIONAL — shared fleet proxy"
+  end
+
+  defp documented_targets(makefile) do
+    ~r/^## ([a-z0-9-]+):/m
+    |> Regex.scan(makefile, capture: :all_but_first)
+    |> Enum.map(fn [target] -> target end)
+    |> MapSet.new()
+  end
+
+  defp assert_target_contains(makefile, target, expected_lines) do
+    body = target_body(makefile, target)
+    Enum.each(expected_lines, &assert(body =~ &1))
+  end
+
+  defp target_body(makefile, target) do
+    pattern = ~r/^#{Regex.escape(target)}:\n((?:\t.*\n?)*)/m
+
+    case Regex.run(pattern, makefile, capture: :all_but_first) do
+      [body] -> body
+      nil -> flunk("Missing Make target: #{target}")
+    end
+  end
+
+  defp assert_in_order(text, tokens) do
+    Enum.reduce(tokens, -1, fn token, previous_index ->
+      case :binary.match(text, token) do
+        {index, _length} when index > previous_index ->
+          index
+
+        {index, _length} ->
+          flunk("Expected #{inspect(token)} after byte #{previous_index}, found at #{index}")
+
+        :nomatch ->
+          flunk("Missing banner token: #{inspect(token)}")
+      end
     end)
   end
 end
