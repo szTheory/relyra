@@ -574,7 +574,7 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert_in_order(root_readme, [
       "## Start Here",
       "mix relyra.install",
-      "[Getting Started](guides/getting_started.md)",
+      "3. Follow [Getting Started](guides/getting_started.md).",
       "## Day-2 And Operator Guides"
     ])
 

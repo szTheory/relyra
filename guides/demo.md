@@ -9,12 +9,19 @@ runs as a path dependency.
 > or a typed rejection. Nothing here relaxes a security invariant; it shows what Relyra does
 > in context — and exactly where the host application takes over.
 
-The full guide — boot instructions, reset procedure, seeded credentials, key routes, and all
-four SAML connection scenarios — lives in the demo README in the repository:
+The Make-first Docker developer guide lives in the source checkout. It is the operational
+route for the complete Solo/FakeIdP proof, followed by optional Fleet and Keycloak work:
+
+**[Docker developer guide](https://github.com/szTheory/relyra/blob/main/guides/docker_dev_dx.md)**
+
+The detailed evaluator guide — boot instructions, reset procedure, seeded credentials, key
+routes, and all four SAML connection scenarios — is also source-only:
 
 **[LedgerLoop Demo App README](https://github.com/szTheory/relyra/blob/main/demo/ledger_loop/README.md)**
 
-That file is the canonical evaluator entry point. Start there.
+These materials are not Hex package runtime surface. Start with the Make-first Docker guide,
+then use the detailed README when you want the full evaluator walkthrough and the Local Mix
+alternative.
 
 ---
 

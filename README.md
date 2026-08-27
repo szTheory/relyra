@@ -52,6 +52,14 @@ If you want the high-level map of what this library is helping you get done,
 read [Jobs To Be Done And User Flows](guides/jtbd_user_flows.md) after Getting
 Started.
 
+## Evaluate The Docker Demo
+
+The LedgerLoop demo is a source-checkout evaluator, not part of the Hex package or the
+library's Day-1 installation path. After completing Getting Started, use the
+[Docker developer guide](guides/docker_dev_dx.md) for the Make-first Solo/FakeIdP proof.
+Fleet and optional Keycloak are follow-on evaluation routes; they do not replace the
+deterministic Solo journey.
+
 ## Batteries Included Support
 
 Relyra ships **4 first-class presets** plus a **generic SAML runbook** covering **7 IdP families**.
@@ -130,6 +138,8 @@ These surfaces matter after Day-1, but they should not compete with onboarding:
 - [Security boundary](docs/security_boundary.md) for reviewer-oriented architecture notes.
 - [LedgerLoop demo app](guides/demo.md) — a runnable reference app, not part of the Hex package,
   showing Relyra embedded in a Phoenix SaaS host with Ecto-backed stores and browser-visible receipts.
+- [Docker developer guide](guides/docker_dev_dx.md) — Make-first Solo evaluation, with Fleet and
+  optional Keycloak follow-ons for local operator proof.
 
 LiveAdmin is optional. Metadata refresh, certificate rollover, audit review,
 telemetry wiring, and diagnostic bundles belong after the first successful
