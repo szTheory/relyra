@@ -4,17 +4,17 @@ milestone: v1.10
 milestone_name: Phases
 current_phase: 72.1
 current_phase_name: close-v1-10-evaluator-endpoint-and-trace-auth-gaps
-status: executing
-stopped_at: Completed 72.1-03-PLAN.md
-last_updated: "2026-08-27T20:53:34.758Z"
+status: verifying
+stopped_at: Completed 72.1-04-PLAN.md
+last_updated: "2026-08-27T21:04:59.488Z"
 last_activity: 2026-08-27
 last_activity_desc: Phase 72.1 execution started
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 30
-  completed_plans: 28
-  percent: 83
+  completed_plans: 30
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: `.planning/PROJECT.md` (updated 2026-08-27)
 
 Phase: 72.1 (close-v1-10-evaluator-endpoint-and-trace-auth-gaps) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-27 — Phase 72.1 execution started
 
 ## Performance Metrics
@@ -81,6 +81,7 @@ Last activity: 2026-08-27 — Phase 72.1 execution started
 | Phase 72.1-close-v1-10-evaluator-endpoint-and-trace-auth-gaps P01 | 5min | 1 tasks | 5 files |
 | Phase 72.1 P02 | 4m | 1 tasks | 4 files |
 | Phase 72.1 P03 | 5m | 1 tasks | 3 files |
+| Phase 72.1-close-v1-10-evaluator-endpoint-and-trace-auth-gaps P04 | 19min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,8 @@ Last activity: 2026-08-27 — Phase 72.1 execution started
 - [Phase ?]: Demo admin credentials forward only from empty-default operator environment values.
 - [Phase ?]: make url names credential keys and 401 recovery without printing or persisting values.
 - [Phase ?]: Evaluator docs require operator-chosen admin credentials before trace access, recover 401 through /login/admin, and publish connection-scoped SAML routes.
+- [Phase ?]: Keycloak trace proof denies unauthenticated access before entering only through /login/admin.
+- [Phase ?]: The Keycloak harness preserves complete operator pairs, generates absent pairs per run, and rejects partial input.
 
 ### Blockers/Concerns
 
@@ -163,10 +166,10 @@ Last activity: 2026-08-27 — Phase 72.1 execution started
 
 ## Session Continuity
 
-**Stopped at:** Completed 72.1-03-PLAN.md
+**Stopped at:** Completed 72.1-04-PLAN.md
 **Resume file:** None
 
-Last session: 2026-08-27T20:53:34.750Z
+Last session: 2026-08-27T21:04:59.478Z
 Resume at: $gsd-plan-phase 72.1
 
 ## Operator Next Steps
