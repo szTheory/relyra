@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Phases
 current_phase: 72.1
-status: completed
-stopped_at: Phase 72.1 context gathered (assumptions mode)
-last_updated: "2026-08-27T19:46:43.572Z"
+current_phase_name: close-v1-10-evaluator-endpoint-and-trace-auth-gaps
+status: executing
+stopped_at: Completed 72.1-01-PLAN.md
+last_updated: "2026-08-27T20:45:07.449Z"
 last_activity: 2026-08-27
-last_activity_desc: Phase 72 complete
+last_activity_desc: Phase 72.1 execution started
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 26
-  completed_plans: 26
+  total_plans: 30
+  completed_plans: 27
   percent: 83
-current_phase_name: close-v1-10-evaluator-endpoint-and-trace-auth-gaps
 ---
 
 # Project State
@@ -24,14 +24,14 @@ current_phase_name: close-v1-10-evaluator-endpoint-and-trace-auth-gaps
 See: `.planning/PROJECT.md` (updated 2026-08-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 72.1 — Close v1.10 evaluator endpoint and trace-auth gaps
+**Current focus:** Phase 72.1 — close-v1-10-evaluator-endpoint-and-trace-auth-gaps
 
 ## Current Position
 
-Phase: 72.1
-Plan: Not started
-Status: All phases complete
-Last activity: 2026-08-27 — Phase 72 complete
+Phase: 72.1 (close-v1-10-evaluator-endpoint-and-trace-auth-gaps) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-08-27 — Phase 72.1 execution started
 
 ## Performance Metrics
 
@@ -78,6 +78,7 @@ Last activity: 2026-08-27 — Phase 72 complete
 | Phase 72 P03 | ~2 minutes | 1 tasks | 2 files |
 | Phase 72-documentation P04 | ~5 minutes | 2 tasks | 3 files |
 | Phase 72 P05 | ~6 minutes | 2 tasks | 3 files |
+| Phase 72.1-close-v1-10-evaluator-endpoint-and-trace-auth-gaps P01 | 5min | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,8 @@ Last activity: 2026-08-27 — Phase 72 complete
 - [Phase ?]: Optional Keycloak documentation invokes only the public make keycloak launcher; make fleet remains discovery-only.
 - [Phase ?]: Doctor classifies demo, PostgreSQL, and Traefik listeners by explicit role instead of inferring role from a port number.
 - [Phase ?]: Override guidance uses the loopback origin emitted by make url; localhost:4000 remains default-only documentation.
+- [Phase ?]: Setup derives all SAML endpoint values from one enabled connection and verified scoped routes.
+- [Phase ?]: Trace tests establish admin scope only through credentialed /login/admin before visiting the exact trace path.
 
 ### Blockers/Concerns
 
@@ -155,10 +158,10 @@ Last activity: 2026-08-27 — Phase 72 complete
 
 ## Session Continuity
 
-**Stopped at:** Phase 72.1 context gathered (assumptions mode)
-**Resume file:** .planning/phases/72.1-close-v1-10-evaluator-endpoint-and-trace-auth-gaps/72.1-CONTEXT.md
+**Stopped at:** Completed 72.1-01-PLAN.md
+**Resume file:** None
 
-Last session: 2026-08-27T19:46:43.560Z
+Last session: 2026-08-27T20:45:07.438Z
 Resume at: $gsd-plan-phase 72.1
 
 ## Operator Next Steps

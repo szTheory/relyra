@@ -23,7 +23,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 - Complete: **v1.9 - Loose Ends & Adoption Honesty** (shipped 2026-06-19, Phases 64-67, 15/15 requirements; audit status `tech_debt` for non-blocking validation metadata). See `.planning/milestones/v1.9-ROADMAP.md`.
 - Active: **v1.10 - Docker DX & Fleet Proxy** (Phases 68-72, 12 requirements). See "v1.10 Phases" below.
 
-## Milestone-Wide Invariant (v1.10)
+## Milestone-Wide Invariant
 
 **Demo + docker + docs ONLY.** Every phase in this milestone is bounded by a single hard constraint: zero changes to `lib/` security seams, public API, behaviour callbacks, protocol surface, or the Hex package whitelist (`mix.exs` `package.files`). Nothing new ships in the published tarball. Every phase's work lives in `demo/ledger_loop/`, repo-root docker/launcher files (`docker-compose*.yml`, `docker/`, `Makefile`, `.dockerignore`, `.env.example`, `scripts/demo`), and `guides/` + `README.md` documentation. Repo gates (`mix qa`, `mix ci.security`, `mix format --check-formatted`, `mix test --warnings-as-errors`) must stay green precisely because no `lib/` code is touched.
 
@@ -39,7 +39,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 - [x] **Phase 71: Launcher DX & banner** - A Makefile primary launcher with a copy-pasteable URL/route map, `make fleet`, and `doctor`. (completed 2026-08-27)
 - [x] **Phase 72: Documentation** - House-voice Docker DX guide plus demo/README routing updates describing the finished surface. (completed 2026-08-27)
 
-## v1.10 Phase Details
+## v1.10 (Phase Details)
 
 ### Phase 68: Build caching & correctness
 
@@ -235,12 +235,12 @@ v1.10 - Docker DX & Fleet Proxy implementation is complete. Phases 68-72 are ver
 **Goal:** Evaluators can configure the mounted connection-scoped SAML endpoints and reach validation traces through documented runtime Basic Auth, with deterministic allow/deny evidence.
 **Requirements**: None mapped — audit closure is tracked by CONTEXT decisions D-01 through D-05.
 **Depends on:** Phase 72
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 72.1-01-PLAN.md — Prove rendered scoped endpoints dispatch and credentialed trace access stays fail-closed.
+- [x] 72.1-01-PLAN.md — Prove rendered scoped endpoints dispatch and credentialed trace access stays fail-closed.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
