@@ -1,9 +1,9 @@
 ---
 phase: 71
 slug: launcher-dx-banner
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-08-27
 ---
 
@@ -29,7 +29,7 @@ created: 2026-08-27
 
 - **After every task commit:** Run `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors` plus the task's non-mutating `make help` or `make -n` check.
 - **After every plan wave:** Run `mix test --warnings-as-errors` and `mix format --check-formatted`.
-- **Before `$gsd-verify-work`:** Run `mix qa` and `mix ci.security`; run the owned Docker integration lanes when Docker is available.
+- **Before phase verification:** Run `mix qa`, `mix ci.security`, and the owned fleet/Keycloak Docker integration lanes.
 - **Max feedback latency:** 10 seconds for the focused static launcher contract.
 
 ---
@@ -38,10 +38,10 @@ created: 2026-08-27
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 71-01-01 | 01 | 1 | DX-01 | T-71-01 | Make recipes preserve quoted variables and do not evaluate environment-provided command fragments. | static contract | `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors` | ✅ extend existing | ⬜ pending |
-| 71-01-02 | 01 | 1 | DX-01, DX-02 | T-71-02 | Destructive targets remain distinct and visibly scoped; compatibility verbs delegate without alternate implementations. | static contract | `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors` | ✅ extend existing | ⬜ pending |
-| 71-02-01 | 02 | 2 | DX-02 | — | Banner data contains no credential values and distinguishes browser origins from service-DNS probes. | static contract | `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors` | ✅ extend existing | ⬜ pending |
-| 71-02-02 | 02 | 2 | DX-02 | — | Existing fleet and Keycloak proxy topology remains reachable without changing router or `lib/` code. | Docker/Chromium integration | `npm run demo:fleet-proxy && npm run demo:keycloak-proxy` | ✅ existing | ⬜ pending |
+| 71-01-01 | 01 | 1 | DX-01 | T-71-01 | Make recipes preserve quoted variables and do not evaluate environment-provided command fragments. | runtime contract | `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors` | ✅ extended | ✅ green |
+| 71-01-02 | 01 | 1 | DX-01, DX-02 | T-71-02 | Destructive targets remain distinct and visibly scoped; compatibility verbs delegate without alternate implementations. | runtime contract | `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors` | ✅ extended | ✅ green |
+| 71-02-01 | 02 | 2 | DX-02 | — | Banner, fleet, doctor, proxy, and opener states are exercised with isolated command fixtures and no credential output. | runtime contract | `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors` | ✅ extended | ✅ green |
+| 71-02-02 | 02 | 2 | DX-02 | — | Existing fleet and Keycloak proxy topology remains reachable without changing router or `lib/` code. | Docker/Chromium integration | `npm run demo:fleet-proxy && npm run demo:keycloak-proxy` | ✅ existing | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -49,10 +49,10 @@ created: 2026-08-27
 
 ## Wave 0 Requirements
 
-- [ ] Extend or replace `test/docs/demo_guide_drift_test.exs` so the Make target inventory is canonical and the six `scripts/demo` compatibility verbs are checked independently.
-- [ ] Add static assertions for the route-banner paths and origins, exact solo/fleet Compose shapes, Traefik-label fleet discovery, and doctor port/network remediation tokens.
+- [x] Extend `test/docs/demo_guide_drift_test.exs` so the Make target inventory is canonical and the six `scripts/demo` compatibility verbs are checked independently.
+- [x] Add runtime assertions for route-banner paths and origins, exact Compose shapes, Traefik-label fleet discovery, doctor port/network remediation, and opener fallbacks.
 
-The validation architecture is plan-complete: both plans assign every task an executable focused or integration verification command, and Plan 71-01 owns the missing static-contract coverage. Execution sign-off remains pending until that plan creates or extends the assertions above and the commands produce evidence; therefore `nyquist_compliant` and `wave_0_complete` remain `false`.
+The validation architecture is complete: every task has deterministic focused or integration evidence, the focused runtime contract is owned by mandatory CI, and no incomplete phase may introduce a human/UAT completion gate.
 
 ---
 
@@ -72,10 +72,10 @@ ports, or depends on a local Docker daemon for the focused contract.
 ## Validation Sign-Off
 
 - [x] All tasks have `<automated>` verify or Wave 0 dependencies — plan evidence: every task in 71-01 and 71-02 contains an `<automated>` command, with 71-01 explicitly extending the focused static contract.
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 10 seconds for the focused contract
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 10 seconds for the focused contract
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** automated — 2026-08-27

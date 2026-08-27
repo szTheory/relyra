@@ -36,7 +36,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 - [x] **Phase 68: Build caching & correctness** - Cached, arch-correct container build so source edits never re-fetch or recompile deps and live edits reload. (completed 2026-06-19)
 - [x] **Phase 69: Compose split & fleet proxy** - Solo-first compose with no published Postgres port plus an opt-in Traefik overlay so sibling lib demos coexist.
 - [x] **Phase 70: Keycloak behind the proxy** - Real-IdP Keycloak round-trip works end-to-end at nice hostnames behind the shared proxy. (completed 2026-08-26)
-- [ ] **Phase 71: Launcher DX & banner** - A Makefile primary launcher with a copy-pasteable URL/route map, `make fleet`, and `doctor`.
+- [x] **Phase 71: Launcher DX & banner** - A Makefile primary launcher with a copy-pasteable URL/route map, `make fleet`, and `doctor`. (completed 2026-08-27)
 - [ ] **Phase 72: Documentation** - House-voice Docker DX guide plus demo/README routing updates describing the finished surface.
 
 ## v1.10 Phase Details
@@ -163,15 +163,15 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   3. `make fleet` lists all running Traefik-routed demos across repos, and `doctor` checks ports `4000`/`5432`/`8080` and whether the `proxy` network exists.
 
 **Scope note**: Touches `Makefile`, `scripts/demo`, and `.env.example`. The banner reads the route map from the demo/admin/SAML routers for display only — no router code changes. No `lib/` change.
-**Plans**: 2 plans
+**Plans**: 2/2 plans executed
 
 **Wave 1**
 
-- [ ] 71-01-PLAN.md — Tracer: canonical Make launcher, self-documenting banner, compatibility adapter, destructive guards, and optional environment surface [DX-01, DX-02]
+- [x] 71-01-PLAN.md — Tracer: canonical Make launcher, self-documenting banner, compatibility adapter, destructive guards, and optional environment surface [DX-01, DX-02]
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 71-02-PLAN.md — Cross-repository fleet discovery, recovery-oriented doctor, shared proxy lifecycle, and browser opener fallback [DX-02]
+- [x] 71-02-PLAN.md — Cross-repository fleet discovery, recovery-oriented doctor, shared proxy lifecycle, and browser opener fallback [DX-02]
 
 ### Phase 72: Documentation
 
@@ -194,12 +194,12 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 | 68. Build caching & correctness | 2/2 | Complete    | 2026-06-19 |
 | 69. Compose split & fleet proxy | 3/3 | Complete | 2026-08-26 |
 | 70. Keycloak behind the proxy | 14/14 | Complete | 2026-08-26 |
-| 71. Launcher DX & banner | 0/? | Not started | - |
+| 71. Launcher DX & banner | 2/2 | Complete | 2026-08-27 |
 | 72. Documentation | 0/? | Not started | - |
 
 ## Current Status
 
-v1.10 - Docker DX & Fleet Proxy is active (Phases 68-72). Phases 68-70 are complete; next: `/gsd-discuss-phase 71`.
+v1.10 - Docker DX & Fleet Proxy is active (Phases 68-72). Phases 68-71 are complete; next: `/gsd-discuss-phase 72`.
 
 ## Demand-Gated Future Candidates
 

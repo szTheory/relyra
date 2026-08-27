@@ -30,8 +30,8 @@
 
 ### Launcher DX & self-documenting launch (DX)
 
-- [ ] **DX-01**: A `Makefile` is the primary launcher (`proxy`, `up`/`up-build`, `up-d`/`up-d-build`, `down`, `reset`/`reseed`, `nuke`, `logs`, `url`, `open`, `fleet`, `doctor`, `help`), and the existing `scripts/demo` verbs keep working by delegating to it.
-- [ ] **DX-02**: Launching the demo prints a copy-pasteable URL/route map (app home, operator UI, login-test, support trace, Keycloak admin, Traefik dashboard, health) plus the click-through walkthrough; `make fleet` lists all running Traefik-routed demos; `doctor` checks ports `4000`/`5432`/`8080` and whether the `proxy` network exists.
+- [x] **DX-01**: A `Makefile` is the primary launcher (`proxy`, `up`/`up-build`, `up-d`/`up-d-build`, `down`, `reset`/`reseed`, `nuke`, `logs`, `url`, `open`, `fleet`, `doctor`, `help`), and the existing `scripts/demo` verbs keep working by delegating to it.
+- [x] **DX-02**: Launching the demo prints a copy-pasteable URL/route map (app home, operator UI, login-test, support trace, Keycloak admin, Traefik dashboard, health) plus the click-through walkthrough; `make fleet` lists all running Traefik-routed demos; `doctor` checks ports `4000`/`5432`/`8080` and whether the `proxy` network exists.
 
 ### Documentation (DOC)
 
@@ -65,7 +65,7 @@
 | FLEET-02 | Phase 69 | Complete |
 | FLEET-03 | Phase 69 | Complete |
 | KC-01 | Phase 70 | Complete |
-| DX-01 | Phase 71 | Pending |
-| DX-02 | Phase 71 | Pending |
+| DX-01 | Phase 71 | Complete |
+| DX-02 | Phase 71 | Complete |
 | DOC-01 | Phase 72 | Pending |
 | DOC-02 | Phase 72 | Pending |

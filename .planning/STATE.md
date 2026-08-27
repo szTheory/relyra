@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.10
 milestone_name: Phases
-current_phase: 71
-current_phase_name: launcher-dx-and-banner
+current_phase: 72
 status: ready
-stopped_at: Phase 71 planned — 2 plans ready
-last_updated: "2026-08-27T14:23:30Z"
+stopped_at: Phase 71 complete — Phase 72 ready for discussion
+last_updated: "2026-08-27T15:23:10.397Z"
 last_activity: 2026-08-27
-last_activity_desc: Phase 71 planning complete — 2 plans ready
+last_activity_desc: Phase 71 complete
 progress:
-  total_phases: 4
-  completed_phases: 3
+  total_phases: 5
+  completed_phases: 4
   total_plans: 21
-  completed_plans: 19
-  percent: 75
+  completed_plans: 21
+  percent: 80
+current_phase_name: documentation
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-19)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Phase 71 — launcher DX & banner
+**Current focus:** Phase 72 — documentation
 
 ## Current Position
 
-Phase: 71 (launcher DX & banner)
-Plan: 0 of 2
-Status: Ready to execute
-Last activity: 2026-08-27 — Phase 71 planning complete
+Phase: 72 (documentation)
+Plan: 0 of TBD
+Status: Ready to discuss
+Last activity: 2026-08-27 — Phase 71 complete
 
 ## Performance Metrics
 
@@ -71,6 +71,8 @@ Last activity: 2026-08-27 — Phase 71 planning complete
 | Phase 70 P12 | 6m | 1 task | 1 file |
 | Phase 70 P13 | — | 1 task | 4 files |
 | Phase 70 P14 | — | 2 tasks | 7 files |
+| Phase 71 P01 | 25min | 2 tasks | 4 files |
+| Phase 71 P02 | 20min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -108,6 +110,8 @@ Last activity: 2026-08-27 — Phase 71 planning complete
 - [Phase ?]: Diagnostic redaction and promotion validation independently track exact protected XML root QNames and fail closed at EOF.
 - [Phase ?]: Keycloak scenario status is limited to public topology, signed ACS, receipt, trace, diagnostics, and cleanup evidence.
 - [Phase ?]: The recurring Keycloak CI workflow is artifact-free and leaves dependency/security ownership to security-gates.yml.
+- [Phase 71]: Environment-derived launcher values are exported and expanded as quoted shell data, never interpolated into Make recipe syntax.
+- [Phase 71]: Host-specific launcher acceptance uses deterministic command fixtures; recurring fleet and Keycloak browser lanes own live topology proof, so no human UAT gate remains.
 
 ### Blockers/Concerns
 
@@ -132,11 +136,11 @@ Last activity: 2026-08-27 — Phase 71 planning complete
 
 ## Session Continuity
 
-**Stopped at:** Phase 71 planned — 2 plans ready
-**Resume file:** .planning/phases/71-launcher-dx-banner/71-01-PLAN.md
+**Stopped at:** Phase 71 complete — Phase 72 ready for discussion
+**Resume file:** None
 
-Last session: 2026-08-27T14:23:30Z
-Resume at: `/gsd-next`
+Last session: 2026-08-27T15:23:10Z
+Resume at: `/gsd-discuss-phase 72`
 
 ## Operator Next Steps
 
