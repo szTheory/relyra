@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: proxy up up-build up-d up-d-build down reset reseed nuke logs url open fleet doctor help demo-test
+.PHONY: proxy up up-build up-d up-d-build down reset reseed nuke logs url open fleet keycloak doctor help demo-test
 
 PORT ?= 4000
 RELYRA_HOST ?= relyra.localhost
@@ -10,7 +10,10 @@ export DEMO_PROXY_NETWORK
 
 SOLO_COMPOSE := docker compose
 FLEET_COMPOSE := docker compose -f docker-compose.yml -f docker-compose.proxy.yml
+KEYCLOAK_COMPOSE := $(FLEET_COMPOSE) --profile keycloak
 PROXY_COMPOSE := docker compose -f docker/traefik/compose.yml
+KEYCLOAK_ROUTE_ATTEMPTS ?= 30
+KEYCLOAK_ROUTE_SLEEP ?= 1
 
 ## help: discover the Relyra demo launcher commands and their topology
 help:
@@ -128,6 +131,25 @@ fleet:
 			LC_ALL=C sort -t "$$(printf '\t')" -k1,1 -k2,2 | \
 			awk -F '\t' '{ printf "%s  %s  %s  %s\n", $$1, $$2, $$3, $$4 }'; \
 	fi
+
+## keycloak: start the optional Fleet Keycloak proof and validate its public descriptor
+keycloak:
+	@$(MAKE) --no-print-directory proxy
+	$(KEYCLOAK_COMPOSE) up --build -d
+	$(KEYCLOAK_COMPOSE) wait keycloak_provisioner
+	@set -eu; \
+		host="$${RELYRA_HOST}"; \
+		descriptor_url="http://keycloak.$$host/realms/demo-app/protocol/saml/descriptor"; \
+		expected_entity_id="entityID=\"http://keycloak.$$host/realms/demo-app\""; \
+		attempt=1; \
+		while [ "$$attempt" -le "$(KEYCLOAK_ROUTE_ATTEMPTS)" ]; do \
+			descriptor="$$(curl --fail --silent --show-error --noproxy "*" --resolve "keycloak.$$host:80:127.0.0.1" "$$descriptor_url")" && \
+				case "$$descriptor" in *"$$expected_entity_id"*) $(MAKE) --no-print-directory url; exit 0 ;; esac; \
+			attempt=$$((attempt + 1)); \
+			if [ "$$attempt" -le "$(KEYCLOAK_ROUTE_ATTEMPTS)" ]; then sleep "$(KEYCLOAK_ROUTE_SLEEP)"; fi; \
+		done; \
+		printf '%s\n' "ERROR Keycloak public descriptor validation failed — expected $$expected_entity_id at $$descriptor_url" >&2; \
+		exit 1
 
 ## doctor: inspect the Relyra browser route map and shared proxy network
 doctor:
