@@ -772,6 +772,68 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     refute success_section =~ "future exercise"
   end
 
+  test "public evaluator guides agree on the credentialed scoped trace journey" do
+    guide = File.read!("guides/docker_dev_dx.md")
+    readme = File.read!("demo/ledger_loop/README.md")
+
+    Enum.each([guide, readme], fn document ->
+      assert document =~ "DEMO_ADMIN_USERNAME"
+      assert document =~ "DEMO_ADMIN_PASSWORD"
+      assert document =~ "/login/admin"
+      assert document =~ "401"
+      assert document =~ "restart"
+      refute document =~ ~r/^DEMO_ADMIN_(?:USERNAME|PASSWORD)=.+$/m
+    end)
+
+    assert_in_order(guide, [
+      "DEMO_ADMIN_USERNAME",
+      "DEMO_ADMIN_PASSWORD",
+      "make up-build",
+      "/login/admin",
+      "401",
+      "restart",
+      "/login/admin",
+      "## Fleet: run beside sibling demos",
+      "DEMO_ADMIN_USERNAME",
+      "## Optional Keycloak: a separate real-IdP proof",
+      "DEMO_ADMIN_USERNAME",
+      "make keycloak"
+    ])
+
+    assert_in_order(readme, [
+      "### Option A — Docker (Recommended)",
+      "DEMO_ADMIN_USERNAME",
+      "DEMO_ADMIN_PASSWORD",
+      "make up-build",
+      "## Trace access prerequisite",
+      "DEMO_ADMIN_USERNAME",
+      "/login/admin",
+      "401",
+      "restart",
+      "## Optional Keycloak Profile",
+      "DEMO_ADMIN_USERNAME",
+      "make keycloak"
+    ])
+
+    Enum.each(
+      [
+        "| `GET /saml/:connection_id/metadata` |",
+        "| `GET /saml/:connection_id/login` |",
+        "| `POST /saml/:connection_id/acs` |"
+      ],
+      &assert(readme =~ &1)
+    )
+
+    refute readme =~ "| `GET /saml/metadata` |"
+    refute readme =~ "| `POST /saml/acs` |"
+
+    assert readme =~
+             "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt."
+
+    assert readme =~ "| Session establishment | LedgerLoop |"
+    assert readme =~ "| Downstream authorization | LedgerLoop |"
+  end
+
   test "Keycloak follow-on documentation uses the executable public Make target" do
     makefile = File.read!(@makefile_path)
     guide = File.read!("guides/docker_dev_dx.md")
