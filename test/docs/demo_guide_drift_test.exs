@@ -799,6 +799,10 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
              Enum.map_join(violations, "\n", &"  - #{&1}")
   end
 
+  test "assert_in_order advances beyond repeated tokens" do
+    assert_in_order("repeat middle repeat", ["repeat", "middle", "repeat"])
+  end
+
   defp documented_targets(makefile) do
     ~r/^## ([a-z0-9-]+):/m
     |> Regex.scan(makefile, capture: :all_but_first)
