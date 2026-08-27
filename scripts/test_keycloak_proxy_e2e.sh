@@ -20,12 +20,21 @@ NETWORK_WAS_PRESENT=false
 CURRENT_LAYER="setup"
 PLAYWRIGHT_TMP_DIR=""
 
-if [[ -z "${DEMO_ADMIN_USERNAME:-}" || -z "${DEMO_ADMIN_PASSWORD:-}" ]]; then
-  DEMO_ADMIN_USERNAME="phase70-admin"
-  DEMO_ADMIN_PASSWORD="$(openssl rand -hex 32)"
-fi
+configure_admin_credentials() {
+  case "${DEMO_ADMIN_USERNAME:+set}:${DEMO_ADMIN_PASSWORD:+set}" in
+    set:set) ;;
+    :)
+      DEMO_ADMIN_USERNAME="relyra-e2e-$(openssl rand -hex 8)"
+      DEMO_ADMIN_PASSWORD="$(openssl rand -hex 32)"
+      ;;
+    *)
+      log "DEMO_ADMIN_USERNAME and DEMO_ADMIN_PASSWORD must be supplied together" >&2
+      return 1
+      ;;
+  esac
 
-export DEMO_ADMIN_USERNAME DEMO_ADMIN_PASSWORD
+  export DEMO_ADMIN_USERNAME DEMO_ADMIN_PASSWORD
+}
 
 log() {
   printf '[keycloak-proxy-e2e] %s\n' "$*"
@@ -93,7 +102,7 @@ redact_diagnostics() {
     /<\?xml/ { print "[REDACTED_XML_OR_PEM]"; next }
     { print }
   ' | sed -E \
-    -e 's/(DEMO_ADMIN_PASSWORD|KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=([^[:space:]&]+)/\1=[REDACTED]/Ig' \
+    -e 's/(DEMO_ADMIN_USERNAME|DEMO_ADMIN_PASSWORD|KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=([^[:space:]&]+)/\1=[REDACTED]/Ig' \
     -e 's/(SAML(Response|Request)=)[^&[:space:]]+/\1[REDACTED]/Ig' \
     -e 's/(Authorization:|Cookie:).*/\1 [REDACTED]/Ig' \
     -e 's#postgres(ql)?://[^[:space:]]+#postgres://[REDACTED]#Ig' \
@@ -188,7 +197,7 @@ validate_diagnostic_tree() {
       }
 
       /SAML(Response|Request)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
-      /(DEMO_ADMIN_PASSWORD|KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
+      /(DEMO_ADMIN_USERNAME|DEMO_ADMIN_PASSWORD|KEYCLOAK_SARAH_PASSWORD|KEYCLOAK_ADMIN_PASSWORD|PGPASSWORD|POSTGRES_PASSWORD|password|username)=/ && $0 !~ /\[REDACTED\]/ { exit 1 }
       /Authorization:|Cookie:/ && $0 !~ /\[REDACTED\]/ { exit 1 }
       /postgres(ql)?:\/\// && $0 !~ /postgres:\/\/\[REDACTED\]/ { exit 1 }
       /<\?xml|-----BEGIN |-----END / { exit 1 }
@@ -247,6 +256,7 @@ diagnostics_self_test() {
   local output
   output="$(printf '%s\n' \
     'KEYCLOAK_SARAH_PASSWORD=sarah-password' \
+    'DEMO_ADMIN_USERNAME=admin-username-sentinel' \
     'DEMO_ADMIN_PASSWORD=admin-password-sentinel' \
     'SAMLResponse=encoded-assertion' \
     'Authorization: Bearer secret' \
@@ -256,15 +266,69 @@ diagnostics_self_test() {
     '-----BEGIN CERTIFICATE-----' | redact_diagnostics)"
 
   [[ "$output" == *'KEYCLOAK_SARAH_PASSWORD=[REDACTED]'* ]] &&
+    [[ "$output" == *'DEMO_ADMIN_USERNAME=[REDACTED]'* ]] &&
     [[ "$output" == *'DEMO_ADMIN_PASSWORD=[REDACTED]'* ]] &&
     [[ "$output" == *'SAMLResponse=[REDACTED]'* ]] &&
     [[ "$output" == *'Authorization: [REDACTED]'* ]] &&
     [[ "$output" == *'Cookie: [REDACTED]'* ]] &&
     [[ "$output" == *'postgres://[REDACTED]'* ]] &&
     [[ "$output" == *'[REDACTED_XML_OR_PEM]'* ]] &&
-    ! grep -Eq 'sarah-password|admin-password-sentinel|encoded-assertion|Bearer secret|session=secret|postgres:postgres|<Response|BEGIN CERTIFICATE' <<<"$output"
+    ! grep -Eq 'sarah-password|admin-username-sentinel|admin-password-sentinel|encoded-assertion|Bearer secret|session=secret|postgres:postgres|<Response|BEGIN CERTIFICATE' <<<"$output"
 
   log "diagnostic redaction self-test passed"
+}
+
+credential_policy_self_test() {
+  local generated_username
+  local generated_password
+  local rendered
+  local output
+
+  output="$(
+    unset DEMO_ADMIN_USERNAME DEMO_ADMIN_PASSWORD
+    configure_admin_credentials
+    printf '%s:%s' "$DEMO_ADMIN_USERNAME" "$DEMO_ADMIN_PASSWORD"
+  )"
+  generated_username="${output%%:*}"
+  generated_password="${output#*:}"
+  [[ "$generated_username" =~ ^relyra-e2e-[a-f0-9]{16}$ ]] || return 1
+  [[ "$generated_password" =~ ^[a-f0-9]{64}$ ]] || return 1
+
+  output="$(
+    DEMO_ADMIN_USERNAME=operator-username-sentinel
+    DEMO_ADMIN_PASSWORD=operator-password-sentinel
+    configure_admin_credentials
+    printf '%s:%s' "$DEMO_ADMIN_USERNAME" "$DEMO_ADMIN_PASSWORD"
+  )"
+  [[ "$output" == "operator-username-sentinel:operator-password-sentinel" ]] || return 1
+
+  ! (
+    DEMO_ADMIN_USERNAME=operator-username-sentinel
+    unset DEMO_ADMIN_PASSWORD
+    configure_admin_credentials
+  ) >/dev/null 2>&1
+  ! (
+    unset DEMO_ADMIN_USERNAME
+    DEMO_ADMIN_PASSWORD=operator-password-sentinel
+    configure_admin_credentials
+  ) >/dev/null 2>&1
+
+  rendered="$(
+    DEMO_ADMIN_USERNAME=operator-username-sentinel \
+      DEMO_ADMIN_PASSWORD=operator-password-sentinel \
+      "${COMPOSE[@]}" config --format json
+  )"
+  jq -e '
+    .services.demo_app.environment.DEMO_ADMIN_USERNAME == "operator-username-sentinel" and
+    .services.demo_app.environment.DEMO_ADMIN_PASSWORD == "operator-password-sentinel"
+  ' <<<"$rendered" >/dev/null || return 1
+
+  rg -q 'DEMO_ADMIN_USERNAME="\$DEMO_ADMIN_USERNAME"' "$0" || return 1
+  rg -q 'DEMO_ADMIN_PASSWORD="\$DEMO_ADMIN_PASSWORD"' "$0" || return 1
+  ! grep -Fq 'operator-username-sentinel' "$ARTIFACT_ROOT" 2>/dev/null
+  ! grep -Fq 'operator-password-sentinel' "$ARTIFACT_ROOT" 2>/dev/null
+
+  log "credential policy self-test passed"
 }
 
 artifact_policy_self_test() {
@@ -325,7 +389,7 @@ diagnostics_policy_self_test() {
   self_test_root="$(mktemp -d "${TMPDIR:-/tmp}/relyra-keycloak-diagnostics-self-test.XXXXXX")"
   retained_dir="$ARTIFACT_DIR"
   unsafe_destination="$self_test_root/keycloak-proxy-diagnostics-unowned"
-  sentinels=$'KEYCLOAK_SARAH_PASSWORD=sarah-password-sentinel\nDEMO_ADMIN_PASSWORD=admin-password-sentinel\nusername=sarah-form-sentinel\nSAMLResponse=saml-response-sentinel\nSAMLRequest=saml-request-sentinel\n<Response>response-xml-sentinel</Response>\n<Assertion>assertion-xml-sentinel</Assertion>\n<EntityDescriptor>descriptor-xml-sentinel</EntityDescriptor>\n-----BEGIN PRIVATE KEY-----\npem-sentinel\nAuthorization: Bearer authorization-sentinel\nCookie: session=cookie-sentinel\npostgres://relyra:database-sentinel@db/relyra'
+  sentinels=$'KEYCLOAK_SARAH_PASSWORD=sarah-password-sentinel\nDEMO_ADMIN_USERNAME=admin-username-sentinel\nDEMO_ADMIN_PASSWORD=admin-password-sentinel\nusername=sarah-form-sentinel\nSAMLResponse=saml-response-sentinel\nSAMLRequest=saml-request-sentinel\n<Response>response-xml-sentinel</Response>\n<Assertion>assertion-xml-sentinel</Assertion>\n<EntityDescriptor>descriptor-xml-sentinel</EntityDescriptor>\n-----BEGIN PRIVATE KEY-----\npem-sentinel\nAuthorization: Bearer authorization-sentinel\nCookie: session=cookie-sentinel\npostgres://relyra:database-sentinel@db/relyra'
   qualified_response=$'phase70-safe-before\n<samlp:Response ID="phase70-response-tag-sentinel">\n  <saml:Assertion ID="phase70-assertion-tag-sentinel">\n    <saml:AttributeValue>phase70-xml-value-sentinel</saml:AttributeValue>\n  </saml:Assertion>\n</samlp:Response>\nphase70-safe-after'
   qualified_entity_descriptor=$'<metadata:EntityDescriptor entityID="phase70-descriptor-tag-sentinel">\n  phase70-descriptor-value-sentinel\n</metadata:EntityDescriptor>'
   same_line_response='<alternate:Response ID="phase70-same-line-tag-sentinel">phase70-same-line-value-sentinel</alternate:Response>'
@@ -343,7 +407,7 @@ diagnostics_policy_self_test() {
     grep -Fx 'phase70-safe-before' "$retained_dir/$filename"
     grep -Fx 'phase70-safe-after' "$retained_dir/$filename"
   done
-  ! grep -R -E 'sarah-password-sentinel|admin-password-sentinel|sarah-form-sentinel|saml-response-sentinel|saml-request-sentinel|response-xml-sentinel|assertion-xml-sentinel|descriptor-xml-sentinel|pem-sentinel|authorization-sentinel|cookie-sentinel|database-sentinel|samlp:Response|saml:Assertion|saml:AttributeValue|phase70-(response|assertion|xml-value)-sentinel' "$retained_dir"
+  ! grep -R -E 'sarah-password-sentinel|admin-username-sentinel|admin-password-sentinel|sarah-form-sentinel|saml-response-sentinel|saml-request-sentinel|response-xml-sentinel|assertion-xml-sentinel|descriptor-xml-sentinel|pem-sentinel|authorization-sentinel|cookie-sentinel|database-sentinel|samlp:Response|saml:Assertion|saml:AttributeValue|phase70-(response|assertion|xml-value)-sentinel' "$retained_dir"
 
   rejected_stage="$(new_diagnostic_staging_dir "$retained_dir")"
   touch "$rejected_stage/unknown.txt" \
@@ -541,6 +605,13 @@ if [[ "${KEYCLOAK_PROXY_ARTIFACT_POLICY_SELF_TEST:-0}" == "1" ]]; then
   artifact_policy_self_test
   exit 0
 fi
+
+if [[ "${KEYCLOAK_PROXY_CREDENTIAL_POLICY_SELF_TEST:-0}" == "1" ]]; then
+  credential_policy_self_test
+  exit 0
+fi
+
+configure_admin_credentials
 
 # This deterministic path exercises a layer classification without acquiring
 # Docker resources, which keeps the diagnostics proof hermetic and fast.
