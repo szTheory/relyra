@@ -672,6 +672,45 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     refute success_section =~ "future exercise"
   end
 
+  test "Keycloak follow-on documentation uses the executable public Make target" do
+    makefile = File.read!(@makefile_path)
+    guide = File.read!("guides/docker_dev_dx.md")
+    readme = File.read!("demo/ledger_loop/README.md")
+
+    guide_keycloak_section =
+      guide
+      |> String.split("## Optional Keycloak: a separate real-IdP proof", parts: 2)
+      |> List.last()
+
+    readme_keycloak_section =
+      readme |> String.split("## Optional Keycloak Profile", parts: 2) |> List.last()
+
+    assert makefile =~
+             "## keycloak: start the optional Fleet Keycloak proof and validate its public descriptor"
+
+    assert_in_order(guide, [
+      "## Solo: prove one local login",
+      "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt.",
+      "## Optional Keycloak: a separate real-IdP proof",
+      "make keycloak"
+    ])
+
+    assert_in_order(readme, [
+      "Simulate Login via FakeIdP",
+      "## Optional Keycloak Profile",
+      "make keycloak"
+    ])
+
+    Enum.each([guide_keycloak_section, readme_keycloak_section], fn section ->
+      assert section =~ "make keycloak"
+      assert section =~ "Traefik"
+      assert section =~ "Keycloak profile"
+      assert section =~ "provisioning"
+      assert section =~ "public descriptor"
+      refute section =~ "make proxy\nmake up-build"
+    end)
+  end
+
   test "demo and repository routers converge on the Make-first guide" do
     demo_router = File.read!("guides/demo.md")
     root_readme = File.read!("README.md")
