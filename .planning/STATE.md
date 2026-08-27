@@ -21,7 +21,7 @@ current_phase_name: documentation
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-06-19)
+See: `.planning/PROJECT.md` (updated 2026-08-27)
 
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
 **Current focus:** Phase 72 — documentation

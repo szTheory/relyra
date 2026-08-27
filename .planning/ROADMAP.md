@@ -37,7 +37,7 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 - [x] **Phase 69: Compose split & fleet proxy** - Solo-first compose with no published Postgres port plus an opt-in Traefik overlay so sibling lib demos coexist.
 - [x] **Phase 70: Keycloak behind the proxy** - Real-IdP Keycloak round-trip works end-to-end at nice hostnames behind the shared proxy. (completed 2026-08-26)
 - [x] **Phase 71: Launcher DX & banner** - A Makefile primary launcher with a copy-pasteable URL/route map, `make fleet`, and `doctor`. (completed 2026-08-27)
-- [ ] **Phase 72: Documentation** - House-voice Docker DX guide plus demo/README routing updates describing the finished surface.
+- [x] **Phase 72: Documentation** - House-voice Docker DX guide plus demo/README routing updates describing the finished surface. (completed 2026-08-27)
 
 ## v1.10 Phase Details
 
@@ -215,11 +215,11 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 | 69. Compose split & fleet proxy | 3/3 | Complete | 2026-08-26 |
 | 70. Keycloak behind the proxy | 14/14 | Complete | 2026-08-26 |
 | 71. Launcher DX & banner | 2/2 | Complete | 2026-08-27 |
-| 72. Documentation | 5/5 | In Progress|  |
+| 72. Documentation | 5/5 | Complete | 2026-08-27 |
 
 ## Current Status
 
-v1.10 - Docker DX & Fleet Proxy is active (Phases 68-72). Phases 68-71 are complete; Phase 72 has four executed plans and one configured-port gap-closure plan across 5 waves. Next: `/gsd-execute-phase 72 --gaps-only`.
+v1.10 - Docker DX & Fleet Proxy implementation is complete. Phases 68-72 are verified; next, run the milestone completion audit before archive.
 
 ## Demand-Gated Future Candidates
 
