@@ -456,6 +456,71 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert guide =~ "not a claim that Relyra creates a browser cookie"
   end
 
+  test "Docker DX guide keeps Fleet Keycloak cache and recovery subordinate and exact" do
+    guide = File.read!("guides/docker_dev_dx.md")
+
+    receipt =
+      "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt."
+
+    fleet_section =
+      guide |> String.split("## Fleet: run beside sibling demos", parts: 2) |> List.last()
+
+    recovery_section = guide |> String.split("## Recovery ladder", parts: 2) |> List.last()
+
+    assert_in_order(guide, [
+      receipt,
+      "## Fleet: run beside sibling demos",
+      "## Optional Keycloak: a separate real-IdP proof",
+      "## Caching and fast edits",
+      "## Recovery ladder"
+    ])
+
+    assert_in_order(fleet_section, [
+      "make proxy",
+      "make up-build",
+      "make url",
+      "make fleet"
+    ])
+
+    Enum.each(
+      [
+        "http://localhost:4000",
+        "http://relyra.localhost",
+        "http://keycloak.relyra.localhost",
+        "http://localhost:8080/dashboard/",
+        "*.localhost is browser-facing",
+        "Docker service DNS",
+        "bind-mounted",
+        "named Linux volumes",
+        "`deps/`",
+        "`_build/`",
+        "mix.lock",
+        "BuildKit",
+        "Hex/rebar",
+        "port conflicts",
+        "missing proxy network",
+        "Browser-only localhost",
+        "Keycloak public-host mismatch"
+      ],
+      &assert(guide =~ &1)
+    )
+
+    assert_in_order(recovery_section, [
+      "make doctor",
+      "make down",
+      "make up-build",
+      "make reset",
+      "make reseed",
+      "make nuke"
+    ])
+
+    assert guide =~ "destructive database refresh"
+    assert recovery_section =~ "confirmation"
+    assert guide =~ "cold rebuild"
+    assert recovery_section =~ "deletes demo data"
+    assert recovery_section =~ "build/dependency volumes"
+  end
+
   test "incomplete phases require automated acceptance instead of human UAT" do
     roadmap = File.read!(".planning/ROADMAP.md")
 

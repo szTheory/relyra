@@ -74,7 +74,108 @@ or makes an authorization decision.
 Only after recording the Solo receipt should you move to Fleet or optional Keycloak.
 They are follow-on proofs, not prerequisites for the deterministic FakeIdP path.
 
-- **Fleet:** the shared proxy route begins with `make proxy` and uses
-  `http://relyra.localhost`.
-- **Optional Keycloak:** a separately configured real-IdP proof; it never replaces
-  FakeIdP as the first journey.
+## Fleet: run beside sibling demos
+
+Fleet is for a machine already running more than one Traefik-routed local demo. It
+does not improve or replace the complete Solo receipt above. Start the shared proxy,
+then use the usual build, route map, and discovery commands:
+
+```bash
+make proxy
+make up-build
+make url
+make fleet
+```
+
+`make proxy` creates or reuses the external `proxy` network and starts the shared
+Traefik instance. `make fleet` lists the currently routed demos; it does not invent a
+second launcher for them. `make up-build` remains the supported first build for this
+checkout, and `make url` prints the public route contract.
+
+### URL and topology map
+
+| Proof or surface | Browser origin | Scope |
+| --- | --- | --- |
+| Solo LedgerLoop | `http://localhost:4000` | Complete deterministic local proof |
+| Fleet LedgerLoop | `http://relyra.localhost` | Follow-on proxy route |
+| Optional Keycloak | `http://keycloak.relyra.localhost` | Follow-on real-IdP proof |
+| Traefik dashboard | `http://localhost:8080/dashboard/` | Local routing diagnostics |
+
+*.localhost is browser-facing. Docker service DNS is for container health checks,
+Keycloak bootstrap traffic, and internal probes; do not put a browser on a container
+service hostname, and do not ask an in-container probe to resolve a browser-only
+localhost name.
+
+## Optional Keycloak: a separate real-IdP proof
+
+Keycloak is an optional Fleet proof after Solo. Its public browser origin is
+`http://keycloak.relyra.localhost`; its private bootstrap and descriptor traffic stays
+on Docker service DNS. Use the Keycloak affordance only after the provisioned optional
+connection is available. Keep the evidence lanes separate:
+
+- FakeIdP is the first deterministic local proof and is the normal way to evaluate
+  the guide.
+- Keycloak is a separate real-IdP proof behind the proxy, never a prerequisite for
+  FakeIdP.
+
+**Receipt:** Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt. This remains host-owned LedgerLoop evidence: Relyra validates the assertion, while LedgerLoop maps the user, records its session-establishment receipt, and owns authorization.
+
+## Caching and fast edits
+
+Source is bind-mounted into the demo container, so ordinary source, template, and
+asset edits move into the running Linux environment without copying host build
+artifacts into it. The nested `deps/` and `_build/` paths use named Linux volumes;
+they keep Linux compilation output separate from macOS or other host artifacts.
+
+The entrypoint compares a `mix.lock` hash before resolving dependencies. It reruns
+dependency resolution only when `mix.lock` changes (or its first-run stamp is absent),
+so a normal source edit does not fetch or compile dependencies again. BuildKit
+Hex/rebar download caches are supporting build-time detail: they make explicit image
+rebuilds faster, but they are not the running container's dependency contract.
+
+Use the Make surface for the expected loop:
+
+```bash
+make up          # start the existing Solo image for ordinary source edits
+make up-build    # intentionally rebuild when dependency, Dockerfile, or config inputs change
+```
+
+## Recovery ladder
+
+Work from the least disruptive correction to the strongest cleanup.
+
+1. **Diagnose first.** Run `make doctor` and follow the exact `Next:` command it
+   prints. This handles port conflicts (including a busy 4000 or 8080) and a missing proxy network (`Next: make proxy`) without guessing.
+2. **Normal restart.** Stop the Solo demo while preserving named volumes, then
+   relaunch normally:
+
+   ```bash
+   make down
+   make up-build
+   ```
+
+3. **Refresh demo data deliberately.** `make reset` and its `make reseed` alias run
+   the same destructive database refresh: they drop and set up the demo database.
+   Use this only when you want the seeded data rebuilt.
+
+   ```bash
+   make reset
+   # or: make reseed
+   ```
+
+4. **Cold rebuild only with confirmation.** `make nuke` asks for explicit
+   confirmation before it deletes demo data and build/dependency volumes (plus the
+   demo Hex and Mix volumes). The next boot is a cold rebuild.
+
+   ```bash
+   make nuke
+   ```
+
+### Symptom → supported next step
+
+| Symptom | Next step |
+| --- | --- |
+| Port conflicts on 4000 or 8080 | Run `make doctor`; free the listener or apply its printed `PORT=<free-port>` / proxy correction. |
+| Missing proxy network | Run `make proxy`, then repeat the Fleet action. |
+| Browser-only localhost does not work from a container | Keep browser traffic on the public origin and use Docker service DNS for internal traffic. |
+| Keycloak public-host mismatch | Confirm the browser is using `http://keycloak.relyra.localhost`, then run `make doctor` and follow its printed proxy/port correction before restarting. |
