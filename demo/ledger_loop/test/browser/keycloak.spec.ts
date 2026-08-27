@@ -29,7 +29,9 @@ test("Keycloak signs Sarah into LedgerLoop through the public scoped ACS", async
 
   expect((await acsResponse).status()).toBe(302);
   await expect(page).toHaveURL("http://relyra.localhost/");
-  await expect(page.locator("#workspace-title")).toHaveText("LedgerLoop Workspace");
+  await expect(page.locator("#workspace-title")).toHaveText(
+    "LedgerLoop Workspace",
+  );
   await expect(page.getByText("Verified sign-in receipt")).toBeVisible();
   await expect(
     page.getByText(
@@ -40,6 +42,15 @@ test("Keycloak signs Sarah into LedgerLoop through the public scoped ACS", async
   if (!adminUsername || !adminPassword) {
     throw new Error("DEMO_ADMIN_USERNAME and DEMO_ADMIN_PASSWORD are required");
   }
+
+  const deniedTrace = await page.goto(
+    `/relyra/admin/connections/${connectionId}/trace`,
+  );
+
+  expect(deniedTrace?.status()).toBe(401);
+  await expect(page.locator('[data-testid^="login-trace-row-"]')).toHaveCount(
+    0,
+  );
 
   const adminAuthorization = `Basic ${Buffer.from(
     `${adminUsername}:${adminPassword}`,
