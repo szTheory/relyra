@@ -81,10 +81,9 @@ directly). You'll see the four Northstar Health connection scenarios. Select the
 
 **Success path:** The local FakeIdP renders a login form. The default radio button submits
 a valid SAML response signed with the FakeIdP's RSA-2048 key. The subject is
-`evaluator@example.com` — this is the evaluator test user, separate from the seeded
-Northstar Health users. Relyra verifies the assertion signature, audience, recipient,
-expiry, and replay guard before LedgerLoop's `UserMapper` and `SessionAdapter` own the
-host-side mapping and receipt.
+`sarah@northstar.example.com`, which maps to the seeded Sarah identity. Relyra verifies
+the assertion signature, audience, recipient, expiry, and replay guard. LedgerLoop then
+maps Sarah and inserts the host-owned `LoginReceipt` as its session-establishment receipt.
 
 **Receipt:** Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt.
 
@@ -96,11 +95,10 @@ no half-authenticated state.
 **Audit trail:** Visit `/relyra/admin` to see the connection list and inspect the
 assertion events and audit rows left by both paths.
 
-> The seeded Northstar Health users (`sarah@northstar.example.com`,
-> `chen@northstar.example.com`) have SAML identity anchors that do not match the
-> FakeIdP's `evaluator@example.com` subject. The walkthrough correctly documents the
-> real default outcome. Reconciling the FakeIdP subject to a seeded identity is a
-> future exercise — see [Scope & Honesty](#scope--honesty).
+> The exercised success path maps the FakeIdP subject to seeded Sarah and persists a
+> LedgerLoop `LoginReceipt` after Relyra verifies the assertion. The receipt is evidence
+> of LedgerLoop's host-owned mapping and session establishment, not a Relyra browser
+> session or authorization decision.
 
 ---
 

@@ -665,7 +665,7 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert success_section =~ "seeded Sarah identity"
     assert success_section =~ "`LoginReceipt`"
     assert success_section =~ "Relyra verifies the assertion"
-    assert success_section =~ "LedgerLoop maps Sarah and inserts the host-owned LoginReceipt"
+    assert success_section =~ "maps Sarah and inserts the host-owned `LoginReceipt`"
 
     refute success_section =~ ~r/evaluator@example\.com/
     refute success_section =~ "cannot map"
