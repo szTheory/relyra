@@ -35,8 +35,8 @@
 
 ### Documentation (DOC)
 
-- [x] **DOC-01**: `guides/docker_dev_dx.md` documents the Solo path vs Fleet path, the caching model (why edits are fast), the URL map, and troubleshooting (port conflicts, missing `proxy` network, `*.localhost` browser-only caveat, Keycloak hostname), in house voice — gameplan summary at top, persona/JTBD framing, "Receipt:" proof lines — per the newest `brandbook/`.
-- [x] **DOC-02**: The demo README Quick Start, `guides/demo.md`, and the top-level README Day-2/operator routing are updated to the new Make targets and the Fleet path (the Local Mix option is retained).
+- [ ] **DOC-01**: `guides/docker_dev_dx.md` documents the Solo path vs Fleet path, the caching model (why edits are fast), the URL map, and troubleshooting (port conflicts, missing `proxy` network, `*.localhost` browser-only caveat, Keycloak hostname), in house voice — gameplan summary at top, persona/JTBD framing, "Receipt:" proof lines — per the newest `brandbook/`.
+- [ ] **DOC-02**: The demo README Quick Start, `guides/demo.md`, and the top-level README Day-2/operator routing are updated to the new Make targets and the Fleet path (the Local Mix option is retained).
 
 ---
 
@@ -67,5 +67,5 @@
 | KC-01 | Phase 70 | Complete |
 | DX-01 | Phase 71 | Complete |
 | DX-02 | Phase 71 | Complete |
-| DOC-01 | Phase 72 | Complete |
-| DOC-02 | Phase 72 | Complete |
+| DOC-01 | Phase 72 | Gaps Found |
+| DOC-02 | Phase 72 | Gaps Found |
