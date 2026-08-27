@@ -52,6 +52,8 @@ created: 2026-08-27
 - [ ] Extend or replace `test/docs/demo_guide_drift_test.exs` so the Make target inventory is canonical and the six `scripts/demo` compatibility verbs are checked independently.
 - [ ] Add static assertions for the route-banner paths and origins, exact solo/fleet Compose shapes, Traefik-label fleet discovery, and doctor port/network remediation tokens.
 
+The validation architecture is plan-complete: both plans assign every task an executable focused or integration verification command, and Plan 71-01 owns the missing static-contract coverage. Execution sign-off remains pending until that plan creates or extends the assertions above and the commands produce evidence; therefore `nyquist_compliant` and `wave_0_complete` remain `false`.
+
 ---
 
 ## Manual-Only Verifications
@@ -65,7 +67,7 @@ created: 2026-08-27
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies — plan evidence: every task in 71-01 and 71-02 contains an `<automated>` command, with 71-01 explicitly extending the focused static contract.
 - [ ] Sampling continuity: no 3 consecutive tasks without automated verify
 - [ ] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags

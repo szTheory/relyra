@@ -311,17 +311,11 @@ check_port() {
 |---|-------|---------|---------------|
 | A1 | macOS `open` is the appropriate default-browser command on this maintainer workstation. | Standard Stack | `make open` needs a fallback/no-op message on non-macOS. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Which topology should the required `up`/`up-d` names select?**
-   - What we know: D-04 defines solo and fleet command shapes, while the target list does not separately name a fleet-up command. [VERIFIED: 71-CONTEXT.md]
-   - What is unclear: Whether `up*` should be fleet-default (with an internal solo helper) or solo-default (with a clearly named fleet helper). 
-   - Recommendation: Preserve solo as the `up*` default because bare Compose is the project’s zero-setup path; introduce a clearly named internal/public fleet helper only if necessary, and ensure `make proxy` remains the fleet prerequisite. [VERIFIED: REQUIREMENTS.md]
+1. **Launcher topology:** `up`, `up-build`, `up-d`, and `up-d-build` use the solo/default bare `docker compose` topology. Shared proxy setup remains `make proxy`; explicit fleet command shapes stay separate where needed so they cannot auto-load the solo port override. This follows D-04 and preserves the zero-configuration solo path. [VERIFIED: 71-CONTEXT.md; 71-01-PLAN.md]
 
-2. **How should `nuke` confirm destruction?**
-   - What we know: It must be visibly stronger than reset and remove Compose volumes/caches. [VERIFIED: D-05]
-   - What is unclear: Whether a noninteractive CI bypass is needed.
-   - Recommendation: Print exact affected volumes and require an explicit environment opt-in only if the plan retains interactivity; otherwise make the destructive wording conspicuous and test command shape, matching sibling convention. [ASSUMED]
+2. **Nuke confirmation:** Interactive `nuke` defaults to no and proceeds only for affirmative `y` or `Y`; noninteractive use requires the exact opt-in `NUKE=1`. This makes the D-05 volume/cache teardown visibly stronger than reset/reseed while remaining fail-closed for unattended execution. [VERIFIED: 71-CONTEXT.md; 71-01-PLAN.md]
 
 ## Environment Availability
 

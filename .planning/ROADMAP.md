@@ -163,7 +163,15 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
   3. `make fleet` lists all running Traefik-routed demos across repos, and `doctor` checks ports `4000`/`5432`/`8080` and whether the `proxy` network exists.
 
 **Scope note**: Touches `Makefile`, `scripts/demo`, and `.env.example`. The banner reads the route map from the demo/admin/SAML routers for display only — no router code changes. No `lib/` change.
-**Plans**: TBD
+**Plans**: 2 plans
+
+**Wave 1**
+
+- [ ] 71-01-PLAN.md — Tracer: canonical Make launcher, self-documenting banner, compatibility adapter, destructive guards, and optional environment surface [DX-01, DX-02]
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 71-02-PLAN.md — Cross-repository fleet discovery, recovery-oriented doctor, shared proxy lifecycle, and browser opener fallback [DX-02]
 
 ### Phase 72: Documentation
 
