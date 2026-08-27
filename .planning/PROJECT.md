@@ -28,7 +28,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 - **v1.7 shipped 2026-06-13** — Adoption Evidence Demo. Phases 51-56 complete (23/23 plans, 30/30 requirements), merged via PR #31. Runnable `demo/ledger_loop` Phoenix host app with Relyra as a path dependency (excluded from Hex): deterministic Northstar Health seed story, production-like Ecto connection/request/replay stores, host-owned customer/admin setup + mounted LiveAdmin, local FakeIdP browser proof + optional Keycloak profile, `scripts/demo` Docker DX, isolated `ci.demo_app` lane, and an evaluator-first demo guide. **No protocol surface, public API, or security-posture change.**
 - **v1.8 shipped 2026-06-14** — Brand System & Identity. Phases 58-63 complete (6/6 plans, 16/16 requirements). Self-contained `brandbook/` package: WCAG-verified Canonical Lock Set + re-runnable `contrast.exs`, a chosen cage-free logo system (direction A — Relying Path monogram, full lockup set), design tokens (`tokens.css` `--rl-*` + Tailwind example), a standalone HTML brand book + examples, and real-world integration (ex_doc logo/favicon, OpenGraph card, README banner, demo reskin). Non-protocol brand/design milestone — **no `lib/`, security, public API, or `@version` change**. (Note: release-please independently cut **Hex 1.8.0** from the v1.7 demo `feat` commits while this milestone was built — the GSD "v1.8" planning label is distinct from that release; the brand `feat(58–63)` commits will feed the next release-please version.) See `.planning/milestones/v1.8-ROADMAP.md`.
 - **v1.9 shipped 2026-06-19** — Loose Ends & Adoption Honesty. Phases 64-67 complete (13/13 plans, 15/15 requirements). Public `Relyra.Testing` fixture helpers now ship in Hex while private `Relyra.TestSupport` stays repo-only; adopter docs point to the public testing story; LedgerLoop FakeIdP is retained as documented demo-local support; SEED-001..003 are historical/resolved; and `CVE-2026-49454` is backfilled. No protocol-surface, parser, crypto, replay, audit, release, or Hex-publish posture change beyond the explicitly approved public test-only API/package surface. See `.planning/milestones/v1.9-ROADMAP.md`.
-- **v1.10 in progress** — Phases 68-70 are complete. The cached demo build and shared fleet proxy now include a fully automated Keycloak real-IdP round trip plus deterministic failed-state, keyboard, narrow-viewport, and long-evidence browser coverage in CI. Phase 71 (launcher DX & banner) is next.
+- **v1.10 implementation complete 2026-08-27** — Phases 68-72 are complete and verified. The cached demo build, shared fleet proxy, automated Keycloak real-IdP round trip, Make-first launcher, configured-port diagnostics, and house-voice evaluator documentation are all backed by deterministic CI evidence. The milestone is ready for its completion audit and archive.
 
 ## Current Milestone: v1.10 Docker DX & Fleet Proxy
 
@@ -51,7 +51,7 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 ## Next Milestone Goals
 
-v1.10 (Docker DX & Fleet Proxy) is active — Phases 68-70 are complete and Phase 71 is next. After v1.10 ships, return to the demand-gated pause default below.
+v1.10 (Docker DX & Fleet Proxy) implementation is complete — Phases 68-72 are verified. Next, run the milestone completion audit and archive; after v1.10 ships, return to the demand-gated pause default below.
 
 **Demand-gated future candidates** (investigation threads in `.planning/threads/`; trigger = real GitHub issue):
 
@@ -180,6 +180,10 @@ The v1.x milestone arc:
 - ✓ **DEMO-01..DEMO-03** — LedgerLoop FakeIdP browser flow retained, verified, documented as demo-local support, and SEED-003 resolved with evidence — v1.9 (Phase 66 verified 2026-06-18)
 - ✓ **MAINT-01..MAINT-03** — JTBD/provider narrative sync, CVE-2026-49454 backfill, CI/release guard status, Phase 29 follow-up dispositions, and seed cleanup reconciled — v1.9 (Phase 67 verified 2026-06-19)
 
+**v1.10:**
+- ✓ **DOC-01** — House-voice Docker DX guide provides an executable Solo zero-to-login path, configured-port recovery, Fleet/Keycloak follow-ons, cache model, URL map, and operator troubleshooting — v1.10 (Phase 72 verified 2026-08-27; 21/21 must-haves)
+- ✓ **DOC-02** — Demo README, HexDocs-safe router, and root README route evaluators through the Make-first Docker/Fleet surface while retaining Local Mix and library Day-1 onboarding — v1.10 (Phase 72 verified 2026-08-27)
+
 ### Active
 
 None. Fresh active requirements should be defined by the next `/gsd-new-milestone` cycle.
@@ -287,4 +291,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-08-26 — Phase 70 complete; Phase 71 next*
+*Last updated: 2026-08-27 — Phase 72 complete and verified; v1.10 ready for milestone audit*
