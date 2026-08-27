@@ -38,6 +38,10 @@ Requires Docker with Compose v2 and starts with the complete deterministic Solo/
 proof. The repo-root Makefile is the Docker interface; `scripts/demo` remains a
 compatibility entry point, not a second workflow.
 
+Before launch, choose and export both `DEMO_ADMIN_USERNAME` and
+`DEMO_ADMIN_PASSWORD` if you will inspect the protected operator trace. They are
+operator-chosen runtime values; the repository supplies no reusable credential values.
+
 ```bash
 make doctor
 ```
@@ -92,8 +96,17 @@ Relyra rejects with a typed error atom (`{:error, :invalid_signature}` or simila
 The host app receives the rejection and renders the error — no silent acceptance,
 no half-authenticated state.
 
-**Audit trail:** Visit `/relyra/admin` to see the connection list and inspect the
-assertion events and audit rows left by both paths.
+## Trace access prerequisite
+
+Before inspecting the trace, choose and export both `DEMO_ADMIN_USERNAME` and
+`DEMO_ADMIN_PASSWORD`, then enter through `/login/admin` at the origin emitted by
+`make url`. Browser Basic Auth establishes the protected admin scope and redirects to
+`/relyra/admin`; there is no public trace shortcut. If `/login/admin` returns a 401
+challenge, set both keys, restart the active topology with the same Make launcher, and
+retry `/login/admin` at that emitted origin.
+
+**Audit trail:** After that authenticated entry, `/relyra/admin` shows the connection
+list plus assertion events and audit rows left by both paths.
 
 > The exercised success path maps the FakeIdP subject to seeded Sarah and persists a
 > LedgerLoop `LoginReceipt` after Relyra verifies the assertion. The receipt is evidence
@@ -138,7 +151,7 @@ Visit `/support/scenario` to trigger the support failure scenario directly.
 |---|---|
 | `GET /` | Home page |
 | `GET /login/test` | FakeIdP login affordance — select a connection scenario |
-| `GET /login/admin` | Admin login affordance |
+| `GET /login/admin` | Authenticated entry for the protected `/relyra/admin` mount |
 | `GET /support/scenario` | Trigger support failure scenario |
 | `GET /setup/sso` | SSO connection setup LiveView (operator-facing) |
 
@@ -146,8 +159,9 @@ Visit `/support/scenario` to trigger the support failure scenario directly.
 
 | Route | What it does |
 |---|---|
-| `GET /saml/metadata` | SP metadata XML for this app |
-| `POST /saml/acs` | Assertion Consumer Service — receives SAML responses |
+| `GET /saml/:connection_id/metadata` | SP metadata XML for one enabled connection |
+| `GET /saml/:connection_id/login` | SP-initiated login for that connection |
+| `POST /saml/:connection_id/acs` | Assertion Consumer Service for that connection |
 | `GET /relyra/admin` | LiveAdmin — connection list, cert lifecycle, audit log |
 
 ### Health Probes
@@ -205,7 +219,9 @@ make fleet
 overlay or Keycloak profile. The Fleet browser route is `http://relyra.localhost`.
 
 Optional Keycloak is a separate real-IdP proof behind that proxy; it never replaces the
-deterministic FakeIdP path. Run its executable follow-on:
+deterministic FakeIdP path. Use the same operator-chosen `DEMO_ADMIN_USERNAME` and
+`DEMO_ADMIN_PASSWORD` prerequisite before its protected trace journey; run its executable
+follow-on:
 
 ```bash
 make keycloak

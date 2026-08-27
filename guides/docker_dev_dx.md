@@ -34,6 +34,11 @@ session-establishment evidence.
 Install Docker with Compose v2, then work from the repository root. You do not need
 to copy `.env.example` for the default Solo route.
 
+To inspect the protected operator trace, choose and export both
+`DEMO_ADMIN_USERNAME` and `DEMO_ADMIN_PASSWORD` in your shell before launch. These
+are operator-chosen, runtime-only values; this repository supplies no reusable
+credential values.
+
 Run the launcher check first:
 
 ```bash
@@ -52,8 +57,9 @@ PORT=4101 make up-build
 ```
 
 `make url` prints a `Loopback:` origin. Use the origin it emits with `/login/test` for
-the local IdP sign-in and with `/relyra/admin` for the operator trace; after an override,
-do not substitute the default port 4000.
+the local IdP sign-in. For the protected operator trace, enter at `/login/admin`; browser
+Basic Auth redirects a successful sign-in to `/relyra/admin`. After an override, do not
+substitute the default port 4000.
 
 ### Start the deterministic demo
 
@@ -70,8 +76,10 @@ deterministic sign-in offered by FakeIdP.
 ### Inspect the proof
 
 Return to LedgerLoop after the assertion consumer service completes. Inspect the
-operator validation trace at [http://localhost:4000/relyra/admin](http://localhost:4000/relyra/admin),
-then inspect the resulting `LoginReceipt` in the workspace evidence.
+operator validation trace through `/login/admin`, then inspect the resulting `LoginReceipt`
+in the workspace evidence. If that entry returns a 401 challenge, set both
+`DEMO_ADMIN_USERNAME` and `DEMO_ADMIN_PASSWORD`, restart the same Solo topology with
+`make up-build`, and retry `/login/admin` at the origin emitted by `make url`.
 
 Relyra verifies the cryptographic assertion and produces the validation trace.
 LedgerLoop owns user mapping, owns the persisted session-establishment receipt, and
@@ -90,6 +98,10 @@ They are follow-on proofs, not prerequisites for the deterministic FakeIdP path.
 Fleet is for a machine already running more than one Traefik-routed local demo. It
 does not improve or replace the complete Solo receipt above. Start or reuse the shared
 proxy, then use Fleet discovery to inspect the routed demos:
+
+The same operator-chosen `DEMO_ADMIN_USERNAME` and `DEMO_ADMIN_PASSWORD` prerequisite
+applies before inspecting this protected trace through `/login/admin`; Fleet does not
+provide a public trace shortcut.
 
 ```bash
 make proxy
@@ -118,7 +130,9 @@ localhost name.
 
 Keycloak is an optional Fleet proof after Solo. Its public browser origin is
 `http://keycloak.relyra.localhost`; its private bootstrap and descriptor traffic stays
-on Docker service DNS. Start the complete optional proof with the public launcher:
+on Docker service DNS. The same operator-chosen `DEMO_ADMIN_USERNAME` and
+`DEMO_ADMIN_PASSWORD` prerequisite applies before its protected trace journey; start the
+complete optional proof with the public launcher:
 
 ```bash
 make keycloak
