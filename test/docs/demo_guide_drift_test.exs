@@ -12,7 +12,7 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
   @makefile_path "Makefile"
 
   @public_targets ~w(
-    proxy up up-build up-d up-d-build down reset reseed nuke logs url open fleet doctor help
+    proxy up up-build up-d up-d-build down reset reseed nuke logs url open fleet keycloak doctor help
   )
 
   test "Makefile exposes the canonical documented target inventory" do
@@ -118,6 +118,87 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert status != 0
     assert output =~ "simulated Docker failure"
     refute output =~ "==> Browser origins"
+  end
+
+  test "public Keycloak target launches provisions and validates the Fleet route" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    docker_log = Path.join(fixture_bin, "docker.log")
+    curl_log = Path.join(fixture_bin, "curl.log")
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    printf '%s\n' "$*" >> "$STUB_DOCKER_LOG"
+    """)
+
+    write_executable!(fixture_bin, "curl", """
+    #!/bin/sh
+    printf '%s\n' "$*" >> "$STUB_CURL_LOG"
+    printf '%s' '<EntityDescriptor entityID="http://keycloak.alt.relyra.localhost/realms/demo-app"/>'
+    """)
+
+    {output, 0} =
+      run_make(
+        ["keycloak"],
+        [
+          {"PATH", fixture_bin},
+          {"RELYRA_HOST", "alt.relyra.localhost"},
+          {"STUB_DOCKER_LOG", docker_log},
+          {"STUB_CURL_LOG", curl_log}
+        ]
+      )
+
+    calls = File.read!(docker_log) <> File.read!(curl_log) <> output
+
+    assert_in_order(calls, [
+      "network inspect proxy",
+      "compose -f docker/traefik/compose.yml up -d",
+      "compose -f docker-compose.yml -f docker-compose.proxy.yml --profile keycloak up --build -d",
+      "compose -f docker-compose.yml -f docker-compose.proxy.yml --profile keycloak wait keycloak_provisioner",
+      "--noproxy * --resolve keycloak.alt.relyra.localhost:80:127.0.0.1",
+      "http://keycloak.alt.relyra.localhost/realms/demo-app/protocol/saml/descriptor",
+      "==> Browser origins"
+    ])
+  end
+
+  test "public Keycloak target fails closed before advertising routes" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    curl_log = Path.join(fixture_bin, "curl.log")
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    case "$*" in
+      *"wait keycloak_provisioner") echo "simulated provisioning failure" >&2; exit 31 ;;
+    esac
+    """)
+
+    write_executable!(fixture_bin, "curl", """
+    #!/bin/sh
+    printf '%s\n' "$*" >> "$STUB_CURL_LOG"
+    printf '%s' '<EntityDescriptor entityID="http://keycloak.wrong.localhost/realms/demo-app"/>'
+    """)
+
+    env = [{"PATH", fixture_bin}, {"STUB_CURL_LOG", curl_log}]
+    {provisioning_output, provisioning_status} = run_make(["keycloak"], env)
+
+    assert provisioning_status != 0
+    assert provisioning_output =~ "simulated provisioning failure"
+    refute File.exists?(curl_log)
+    refute provisioning_output =~ "==> Browser origins"
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    exit 0
+    """)
+
+    {route_output, route_status} =
+      run_make(["keycloak"], [{"KEYCLOAK_ROUTE_ATTEMPTS", "1"} | env])
+
+    assert route_status != 0
+    assert route_output =~ "ERROR Keycloak public descriptor validation failed"
+    assert File.exists?(curl_log)
+    refute route_output =~ "==> Browser origins"
   end
 
   test "legacy demo verbs delegate exclusively to canonical Make targets" do
