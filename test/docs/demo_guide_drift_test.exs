@@ -521,6 +521,39 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert recovery_section =~ "build/dependency volumes"
   end
 
+  test "detailed evaluator README follows the Make-first Docker route and retains Local Mix" do
+    readme = File.read!("demo/ledger_loop/README.md")
+
+    docker_section =
+      readme |> String.split("### Option A — Docker (Recommended)", parts: 2) |> List.last()
+
+    assert_in_order(docker_section, [
+      "make doctor",
+      "make up-build",
+      "../../guides/docker_dev_dx.md",
+      "Solo",
+      "FakeIdP"
+    ])
+
+    assert readme =~ "### Option B — Local Mix"
+    assert readme =~ "mix setup"
+    assert readme =~ "mix phx.server"
+    assert readme =~ "http://localhost:4000"
+
+    assert readme =~ "make proxy"
+    assert readme =~ "http://keycloak.relyra.localhost"
+    assert readme =~ "scripts/demo"
+    refute docker_section =~ "scripts/demo up"
+    refute readme =~ "docker compose --profile keycloak up -d"
+    refute readme =~ "Keycloak starts at `http://localhost:8080`"
+
+    assert readme =~
+             "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt."
+
+    assert readme =~ "| Session establishment | LedgerLoop |"
+    assert readme =~ "| Downstream authorization | LedgerLoop |"
+  end
+
   test "incomplete phases require automated acceptance instead of human UAT" do
     roadmap = File.read!(".planning/ROADMAP.md")
 
