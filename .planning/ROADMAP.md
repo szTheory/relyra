@@ -229,3 +229,17 @@ v1.10 - Docker DX & Fleet Proxy implementation is complete. Phases 68-72 are ver
 
 ---
 *Roadmap updated: 2026-06-19 — v1.10 Docker DX & Fleet Proxy milestone roadmapped (Phases 68-72)*
+
+### Phase 72.1: Close v1.10 evaluator endpoint and trace-auth gaps (INSERTED)
+
+**Goal:** Evaluators can configure the mounted connection-scoped SAML endpoints and reach validation traces through documented runtime Basic Auth, with deterministic allow/deny evidence.
+**Requirements**: None mapped — audit closure is tracked by CONTEXT decisions D-01 through D-05.
+**Depends on:** Phase 72
+**Plans:** 4 plans
+
+Plans:
+
+- [ ] 72.1-01-PLAN.md — Prove rendered scoped endpoints dispatch and credentialed trace access stays fail-closed.
+- [ ] 72.1-02-PLAN.md — Carry operator-chosen admin credentials through Compose and the Make-first preflight.
+- [ ] 72.1-03-PLAN.md — Align Solo/Fleet/Keycloak evaluator documentation with scoped routes and 401 recovery.
+- [ ] 72.1-04-PLAN.md — Prove denied-then-authenticated Keycloak trace access and run full security gates.
