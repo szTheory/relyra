@@ -92,10 +92,12 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     env_example = File.read!(".env.example")
     url_recipe = target_body(File.read!(@makefile_path), "url")
 
-    Enum.each([base_compose, proxy_compose], fn compose ->
-      assert compose =~ ~S(DEMO_ADMIN_USERNAME: ${DEMO_ADMIN_USERNAME:-})
-      assert compose =~ ~S(DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-})
+    assert base_compose =~ ~S(- DEMO_ADMIN_USERNAME=${DEMO_ADMIN_USERNAME:-})
+    assert base_compose =~ ~S(- DEMO_ADMIN_PASSWORD=${DEMO_ADMIN_PASSWORD:-})
+    assert proxy_compose =~ ~S(DEMO_ADMIN_USERNAME: ${DEMO_ADMIN_USERNAME:-})
+    assert proxy_compose =~ ~S(DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-})
 
+    Enum.each([base_compose, proxy_compose], fn compose ->
       refute compose =~
                ~r/DEMO_ADMIN_(?:USERNAME|PASSWORD):\s*\$\{DEMO_ADMIN_(?:USERNAME|PASSWORD):-[^}]+\}/
     end)
