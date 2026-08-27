@@ -60,7 +60,9 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
   end
 
   describe "admin_login" do
-    test "rejects absent and partial runtime credentials before admin scope establishment" do
+    test "rejects absent and partial runtime credentials on admin login and the seeded trace" do
+      trace_path = "/relyra/admin/connections/#{Fixtures.relyra_enabled_scenario_id()}/trace"
+
       configurations = [
         absent: :absent,
         username_only: [username: "test-admin"],
@@ -76,7 +78,7 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
           Application.put_env(:ledger_loop, :demo_admin_auth, configuration)
         end
 
-        for path <- ["/login/admin", "/relyra/admin/connections/new"] do
+        for path <- ["/login/admin", trace_path] do
           response =
             build_conn()
             |> put_req_header(
@@ -99,9 +101,11 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
       )
     end
 
-    test "rejects absent and invalid host credentials before admin scope establishment", %{
+    test "rejects absent and invalid host credentials on admin login and the seeded trace", %{
       conn: conn
     } do
+      trace_path = "/relyra/admin/connections/#{Fixtures.relyra_enabled_scenario_id()}/trace"
+
       for conn <- [
             conn,
             put_req_header(
@@ -110,7 +114,7 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
               Plug.BasicAuth.encode_basic_auth("wrong", "credentials")
             )
           ],
-          path <- ["/login/admin", "/relyra/admin/connections/new"] do
+          path <- ["/login/admin", trace_path] do
         response = get(conn, path)
 
         assert response.status == 401
@@ -134,6 +138,17 @@ defmodule LedgerLoopWeb.RouteAffordanceControllerTest do
       assert get_session(conn, :admin_actor) == "demo_admin"
       assert get_session(conn, :admin_actor_label) == "Demo Administrator"
       assert get_session(conn, :admin_organization_id) == "northstar"
+
+      trace_conn =
+        conn
+        |> recycle()
+        |> put_req_header(
+          "authorization",
+          Plug.BasicAuth.encode_basic_auth("test-admin", "test-password")
+        )
+        |> get("/relyra/admin/connections/#{Fixtures.relyra_enabled_scenario_id()}/trace")
+
+      assert trace_conn.status == 200
     end
   end
 

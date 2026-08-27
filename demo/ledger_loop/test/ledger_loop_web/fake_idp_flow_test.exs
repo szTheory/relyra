@@ -59,8 +59,13 @@ defmodule LedgerLoopWeb.FakeIdPFlowTest do
 
   describe "SUCCESS: SP-initiated full round-trip" do
     test "login → fake IdP → ACS verifies → LoginReceipt inserted + redirect /", %{conn: conn} do
+      saml_urls = %{
+        login: "#{@endpoint.url()}/saml/#{@conn_ulid}/login",
+        acs: "#{@endpoint.url()}/saml/#{@conn_ulid}/acs"
+      }
+
       # 1. Hit /saml/<id>/login — must 302 to idp_sso_url (/fake_idp/login) with SAMLRequest + RelayState
-      conn1 = get(conn, "/saml/#{@conn_ulid}/login")
+      conn1 = get(conn, URI.parse(saml_urls.login).path)
       assert conn1.status == 302
       location = get_resp_header(conn1, "location") |> List.first()
       assert location =~ "/fake_idp/login"
@@ -99,13 +104,13 @@ defmodule LedgerLoopWeb.FakeIdPFlowTest do
       body3 = response(conn3, 200)
       assert body3 =~ "onload=\"document.forms[0].submit()\""
       assert body3 =~ "name=\"SAMLResponse\""
-      assert body3 =~ "action=\"/saml/#{@conn_ulid}/acs\""
+      assert body3 =~ "action=\"#{URI.parse(saml_urls.acs).path}\""
       saml_response = extract_hidden_field(body3, "SAMLResponse")
       assert is_binary(saml_response) and byte_size(saml_response) > 0
 
       # 4. POST /saml/<id>/acs → relyra verifies → redirect to "/"
       conn4 =
-        post(build_conn(), "/saml/#{@conn_ulid}/acs", %{
+        post(build_conn(), URI.parse(saml_urls.acs).path, %{
           "SAMLResponse" => saml_response,
           "RelayState" => relay_state
         })
