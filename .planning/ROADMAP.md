@@ -238,8 +238,15 @@ v1.10 - Docker DX & Fleet Proxy implementation is complete. Phases 68-72 are ver
 **Plans:** 4 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 72.1-01-PLAN.md — Prove rendered scoped endpoints dispatch and credentialed trace access stays fail-closed.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 72.1-02-PLAN.md — Carry operator-chosen admin credentials through Compose and the Make-first preflight.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 72.1-03-PLAN.md — Align Solo/Fleet/Keycloak evaluator documentation with scoped routes and 401 recovery.
 - [ ] 72.1-04-PLAN.md — Prove denied-then-authenticated Keycloak trace access and run full security gates.
