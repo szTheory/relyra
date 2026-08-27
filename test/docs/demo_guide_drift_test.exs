@@ -639,6 +639,39 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert readme =~ "| Downstream authorization | LedgerLoop |"
   end
 
+  test "detailed evaluator README matches the FakeIdP Sarah receipt contract" do
+    readme = File.read!("demo/ledger_loop/README.md")
+
+    controller =
+      File.read!("demo/ledger_loop/lib/ledger_loop_web/controllers/fake_idp_controller.ex")
+
+    flow_test = File.read!("demo/ledger_loop/test/ledger_loop_web/fake_idp_flow_test.exs")
+
+    success_section =
+      readme
+      |> String.split("## What You'll See", parts: 2)
+      |> List.last()
+      |> String.split("## Seeded Data", parts: 2)
+      |> List.first()
+
+    assert controller =~ "name_id: \"sarah@northstar.example.com\""
+
+    assert flow_test =~
+             "sarah_user = Fixtures.users() |> Enum.find(&(&1.email == \"sarah@northstar.example.com\"))"
+
+    assert flow_test =~ "Repo.all(from r in LoginReceipt, where: r.user_id == ^sarah_user.id)"
+
+    assert success_section =~ "`sarah@northstar.example.com`"
+    assert success_section =~ "seeded Sarah identity"
+    assert success_section =~ "`LoginReceipt`"
+    assert success_section =~ "Relyra verifies the assertion"
+    assert success_section =~ "LedgerLoop maps Sarah and inserts the host-owned LoginReceipt"
+
+    refute success_section =~ ~r/evaluator@example\.com/
+    refute success_section =~ "cannot map"
+    refute success_section =~ "future exercise"
+  end
+
   test "demo and repository routers converge on the Make-first guide" do
     demo_router = File.read!("guides/demo.md")
     root_readme = File.read!("README.md")
