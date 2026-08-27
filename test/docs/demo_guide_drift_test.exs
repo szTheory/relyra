@@ -558,6 +558,31 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert readme =~ "| Downstream authorization | LedgerLoop |"
   end
 
+  test "demo and repository routers converge on the Make-first guide" do
+    demo_router = File.read!("guides/demo.md")
+    root_readme = File.read!("README.md")
+
+    assert demo_router =~
+             "https://github.com/szTheory/relyra/blob/main/guides/docker_dev_dx.md"
+
+    assert demo_router =~
+             "https://github.com/szTheory/relyra/blob/main/demo/ledger_loop/README.md"
+
+    assert demo_router =~ "not part of the Hex package"
+    assert demo_router =~ "Make-first"
+
+    assert_in_order(root_readme, [
+      "## Start Here",
+      "mix relyra.install",
+      "[Getting Started](guides/getting_started.md)",
+      "## Day-2 And Operator Guides"
+    ])
+
+    assert root_readme =~ "guides/docker_dev_dx.md"
+    assert root_readme =~ "Fleet"
+    assert root_readme =~ "not part of the Hex package"
+  end
+
   test "incomplete phases require automated acceptance instead of human UAT" do
     roadmap = File.read!(".planning/ROADMAP.md")
 
