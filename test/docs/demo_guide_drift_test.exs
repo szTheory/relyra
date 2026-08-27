@@ -558,8 +558,6 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
 
     assert_in_order(fleet_section, [
       "make proxy",
-      "make up-build",
-      "make url",
       "make fleet"
     ])
 
@@ -614,7 +612,7 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
       "make up-build",
       "../../guides/docker_dev_dx.md",
       "## Optional Keycloak Profile",
-      "make proxy",
+      "make keycloak",
       "http://keycloak.relyra.localhost"
     ])
 

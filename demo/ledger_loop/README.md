@@ -198,17 +198,25 @@ After recording the Solo/FakeIdP receipt, start the shared proxy and inspect the
 
 ```bash
 make proxy
-make up-build
-make url
 make fleet
 ```
 
-The Fleet browser route is `http://relyra.localhost`. Optional Keycloak is a separate
-real-IdP proof at `http://keycloak.relyra.localhost`, behind that proxy; it never replaces
-the deterministic FakeIdP path. `*.localhost` names are browser-facing, while container
-health checks and bootstrap traffic use Docker service DNS. See the
-[Docker developer guide](../../guides/docker_dev_dx.md) for the exact Keycloak receipt
-and recovery steps.
+`make fleet` lists the currently routed demos; it does not activate this checkout's proxy
+overlay or Keycloak profile. The Fleet browser route is `http://relyra.localhost`.
+
+Optional Keycloak is a separate real-IdP proof behind that proxy; it never replaces the
+deterministic FakeIdP path. Run its executable follow-on:
+
+```bash
+make keycloak
+```
+
+`make keycloak` starts or reuses Traefik, launches this checkout's proxy overlay under the
+Keycloak profile, waits for provisioning, and validates the public descriptor before it
+prints routes at `http://keycloak.relyra.localhost`. `*.localhost` names are browser-facing,
+while container health checks and bootstrap traffic use Docker service DNS. See the
+[Docker developer guide](../../guides/docker_dev_dx.md) for the exact Keycloak receipt and
+recovery steps.
 
 ### Environment Overrides
 

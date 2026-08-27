@@ -77,20 +77,17 @@ They are follow-on proofs, not prerequisites for the deterministic FakeIdP path.
 ## Fleet: run beside sibling demos
 
 Fleet is for a machine already running more than one Traefik-routed local demo. It
-does not improve or replace the complete Solo receipt above. Start the shared proxy,
-then use the usual build, route map, and discovery commands:
+does not improve or replace the complete Solo receipt above. Start or reuse the shared
+proxy, then use Fleet discovery to inspect the routed demos:
 
 ```bash
 make proxy
-make up-build
-make url
 make fleet
 ```
 
 `make proxy` creates or reuses the external `proxy` network and starts the shared
-Traefik instance. `make fleet` lists the currently routed demos; it does not invent a
-second launcher for them. `make up-build` remains the supported first build for this
-checkout, and `make url` prints the public route contract.
+Traefik instance. `make fleet` lists the currently routed demos; it does not activate
+this checkout's proxy overlay or Keycloak profile.
 
 ### URL and topology map
 
@@ -110,8 +107,15 @@ localhost name.
 
 Keycloak is an optional Fleet proof after Solo. Its public browser origin is
 `http://keycloak.relyra.localhost`; its private bootstrap and descriptor traffic stays
-on Docker service DNS. Use the Keycloak affordance only after the provisioned optional
-connection is available. Keep the evidence lanes separate:
+on Docker service DNS. Start the complete optional proof with the public launcher:
+
+```bash
+make keycloak
+```
+
+`make keycloak` starts or reuses Traefik, launches this checkout's proxy overlay under
+the Keycloak profile, waits for provisioning, and validates the public descriptor before
+it prints routes. Keep the evidence lanes separate:
 
 - FakeIdP is the first deterministic local proof and is the normal way to evaluate
   the guide.
