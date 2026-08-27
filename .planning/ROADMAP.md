@@ -203,11 +203,11 @@ Relyra is a strict-by-default SAML 2.0 Service Provider library for Elixir/Phoen
 | 69. Compose split & fleet proxy | 3/3 | Complete | 2026-08-26 |
 | 70. Keycloak behind the proxy | 14/14 | Complete | 2026-08-26 |
 | 71. Launcher DX & banner | 2/2 | Complete | 2026-08-27 |
-| 72. Documentation | 0/? | Not started | - |
+| 72. Documentation | 0/2 | Planned | - |
 
 ## Current Status
 
-v1.10 - Docker DX & Fleet Proxy is active (Phases 68-72). Phases 68-71 are complete; next: `/gsd-discuss-phase 72`.
+v1.10 - Docker DX & Fleet Proxy is active (Phases 68-72). Phases 68-71 are complete; Phase 72 is planned in 2 waves. Next: `/gsd-execute-phase 72`.
 
 ## Demand-Gated Future Candidates
 
