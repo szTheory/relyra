@@ -5,8 +5,8 @@ milestone_name: Phases
 current_phase: 72.1
 current_phase_name: close-v1-10-evaluator-endpoint-and-trace-auth-gaps
 status: executing
-stopped_at: Completed 72.1-02-PLAN.md
-last_updated: "2026-08-27T20:49:36.983Z"
+stopped_at: Completed 72.1-03-PLAN.md
+last_updated: "2026-08-27T20:53:34.758Z"
 last_activity: 2026-08-27
 last_activity_desc: Phase 72.1 execution started
 progress:
@@ -29,7 +29,7 @@ See: `.planning/PROJECT.md` (updated 2026-08-27)
 ## Current Position
 
 Phase: 72.1 (close-v1-10-evaluator-endpoint-and-trace-auth-gaps) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-08-27 — Phase 72.1 execution started
 
@@ -80,6 +80,7 @@ Last activity: 2026-08-27 — Phase 72.1 execution started
 | Phase 72 P05 | ~6 minutes | 2 tasks | 3 files |
 | Phase 72.1-close-v1-10-evaluator-endpoint-and-trace-auth-gaps P01 | 5min | 1 tasks | 5 files |
 | Phase 72.1 P02 | 4m | 1 tasks | 4 files |
+| Phase 72.1 P03 | 5m | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,7 @@ Last activity: 2026-08-27 — Phase 72.1 execution started
 - [Phase ?]: Trace tests establish admin scope only through credentialed /login/admin before visiting the exact trace path.
 - [Phase ?]: Demo admin credentials forward only from empty-default operator environment values.
 - [Phase ?]: make url names credential keys and 401 recovery without printing or persisting values.
+- [Phase ?]: Evaluator docs require operator-chosen admin credentials before trace access, recover 401 through /login/admin, and publish connection-scoped SAML routes.
 
 ### Blockers/Concerns
 
@@ -161,10 +163,10 @@ Last activity: 2026-08-27 — Phase 72.1 execution started
 
 ## Session Continuity
 
-**Stopped at:** Completed 72.1-02-PLAN.md
+**Stopped at:** Completed 72.1-03-PLAN.md
 **Resume file:** None
 
-Last session: 2026-08-27T20:49:36.972Z
+Last session: 2026-08-27T20:53:34.750Z
 Resume at: $gsd-plan-phase 72.1
 
 ## Operator Next Steps
