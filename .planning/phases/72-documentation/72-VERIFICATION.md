@@ -1,15 +1,15 @@
 ---
 phase: 72-documentation
-verified: 2026-08-27T18:45:23Z
+verified: 2026-08-28T02:12:12Z
 status: passed
 score: 21/21 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
-  previous_status: gaps_found
-  previous_score: 19/20
+  previous_status: passed
+  previous_score: 21/21
   gaps_closed:
-    - "The configured Solo-port recovery now carries PORT through doctor, url, launch guidance, and loopback navigation."
+    - "DOC-02 completion metadata and traceability were reconciled with the already-passing implementation evidence."
   gaps_remaining: []
   regressions: []
 ---
@@ -17,9 +17,9 @@ re_verification:
 # Phase 72: Documentation Verification Report
 
 **Phase Goal:** A new reader can go zero→login using only the guide, and existing demo/README routing points at the new Make targets and Fleet path in house voice.
-**Verified:** 2026-08-27T18:45:23Z
+**Verified:** 2026-08-28T02:12:12Z
 **Status:** passed
-**Re-verification:** Yes — after gap closure Plan 72-05
+**Re-verification:** Yes — automated closeout refresh after evidence-metadata reconciliation
 
 ## Goal Achievement
 
@@ -49,7 +49,9 @@ re_verification:
 | 20 | The configured Solo-port regression is closed end to end. | ✓ VERIFIED | `PORT=4101` fixture runs actual `make doctor` and `make url`, confirms probe 4101 (not 4000), demo classification, and emitted loopback origin. |
 | 21 | Ordered documentation contracts advance beyond repeated tokens. | ✓ VERIFIED | `assert_in_order/2` searches the remaining suffix and advances by match length; repeated-token regression passes. |
 
-**Score:** 21/21 truths verified (0 present, behavior-unverified)
+**Score:** 21/21 truths verified (0 present, behavior-unverified). The fresh
+closeout run produced 32 tests, 0 failures, and `mix format --check-formatted`
+exited 0.
 
 ### Required Artifacts
 
@@ -124,5 +126,5 @@ None. The former hard-coded-port gap is closed with source wiring and an owned b
 
 ---
 
-_Verified: 2026-08-27T18:45:23Z_
+_Verified: 2026-08-28T02:12:12Z_
 _Verifier: the agent (gsd-verifier)_
