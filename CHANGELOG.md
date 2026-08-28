@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.9.0](https://github.com/szTheory/relyra/compare/v1.8.1...v1.9.0) (2026-08-28)
+
+
+### Features
+
+* **64-01:** add public testing fixture helper plumbing ([8ca3d10](https://github.com/szTheory/relyra/commit/8ca3d109aac171f92c1f7b9d3055d9eb821bb6ce))
+* **64-01:** implement signed success testing fixture ([7463728](https://github.com/szTheory/relyra/commit/7463728a248b40e62da6354d2faebc5e282de01c))
+* **64-02:** implement public negative testing fixtures ([465a6b4](https://github.com/szTheory/relyra/commit/465a6b4bc254ee0b1f29be1e736c56d8cccd3602))
+* **64-03:** add optional Phoenix fixture dispatch helper ([3e48cb2](https://github.com/szTheory/relyra/commit/3e48cb2c4576a1ce0fcb5802f8bbb8aa3624061f))
+* **68-01:** add docker-entrypoint.sh with lock-hash gate and ecto ordering ([60765ad](https://github.com/szTheory/relyra/commit/60765ad247789150bdf4a604938aa08d843f29ab))
+* **68-01:** add Dockerfile.dev with cached dep layer and pinned base ([ba263d0](https://github.com/szTheory/relyra/commit/ba263d0b646af0e77c25c1e11d94a77a886d0f46))
+* **68-01:** add repo-root .dockerignore with build-context exclusions ([d088f34](https://github.com/szTheory/relyra/commit/d088f3490f6231d4b3b2049977108fb219c159b9))
+* **68-02:** add top-level config :phoenix_live_reload :fs_poll block for cross-mount live reload ([b31b3cd](https://github.com/szTheory/relyra/commit/b31b3cd4820ddd2d841246f53d88ca4683961e4c))
+* **68-02:** wire demo_app to Dockerfile.dev with named-volume masking ([eee4f36](https://github.com/szTheory/relyra/commit/eee4f360075215ba3a7684f4a6403d6f06cb4ff9))
+* **69-01:** configure explicit demo origins ([b77c2e1](https://github.com/szTheory/relyra/commit/b77c2e1bfed2b8766aa33208dd16dc86a340d838))
+* **69-01:** split solo Compose ingress ([d1be9bc](https://github.com/szTheory/relyra/commit/d1be9bc5903de64bb1a901c490edf5d28a252996))
+* **69-02:** add neutral shared Traefik project ([ea30f04](https://github.com/szTheory/relyra/commit/ea30f04171a58ca5131ec9c5c9f0d5b167fb22bc))
+* **69-02:** route demo through shared proxy ([4af92f2](https://github.com/szTheory/relyra/commit/4af92f29841f27dfec8317c574df652624697ced))
+* **70-01:** prove Keycloak login through proxy ([600f4c9](https://github.com/szTheory/relyra/commit/600f4c9277a936e42db3eaa1c6be79d2cede2611))
+* **70-02:** reconcile Keycloak provisioning safely ([30625b1](https://github.com/szTheory/relyra/commit/30625b106d93a8c5bd5cf43b2073b9c84ac6ca8c))
+* **70-02:** reconcile Keycloak signing-key rotation ([23a7737](https://github.com/szTheory/relyra/commit/23a77373c1dc65ff3f4bb84773714042397983ef))
+* **70-03:** harden Keycloak proof lifecycle diagnostics\n\n- Recreate only harness-owned realm state for each run\n- Classify redacted lifecycle failures by trust-proof layer\n\nCo-Authored-By: Codex &lt;noreply@tool.example&gt; ([00aa415](https://github.com/szTheory/relyra/commit/00aa415609d6072cea7b1a33b072a64d2a121fbe))
+* **70-03:** verify Keycloak split-horizon renders\n\n- Check default and RELYRA_HOST override proxy contracts\n- Bind every realm browser endpoint to the public host input\n\nCo-Authored-By: Codex &lt;noreply@tool.example&gt; ([959a1b1](https://github.com/szTheory/relyra/commit/959a1b1261e4e5cfd7a8768c167440c5a8449582))
+* **70-04:** gate Keycloak login affordance by trust state ([8ec33dd](https://github.com/szTheory/relyra/commit/8ec33dd770b1b5fac047e914b179d1f9f0773a4b))
+* **70-04:** show durable verified sign-in receipt ([5c2dfa5](https://github.com/szTheory/relyra/commit/5c2dfa585098a751289fdcbdddea7ab89b27a258))
+* **70-05:** prove the public Keycloak trust journey ([643d388](https://github.com/szTheory/relyra/commit/643d388433b93341b301307b76009adea3426e74))
+* **70-06:** apply Keycloak descriptor candidate once ([d933cba](https://github.com/szTheory/relyra/commit/d933cbacdfc25b2de5a5c042eb62e4a5b019695b))
+* **70-08:** authenticate Keycloak trace proof ([fe00a8e](https://github.com/szTheory/relyra/commit/fe00a8eaa4901813e843876b26f1c5e8cdbec81d))
+* **70-08:** protect demo admin routes with Basic auth ([46e0078](https://github.com/szTheory/relyra/commit/46e0078642fe02c4d4f20ec18322cf4a1141d9b0))
+* **70-09:** atomically finalize Keycloak identity mapping ([5d33934](https://github.com/szTheory/relyra/commit/5d339349a4476f53090fbe413d14a51a0a0468dd))
+* **70-13:** add accessible visual login trace fixture ([7f8d6ca](https://github.com/szTheory/relyra/commit/7f8d6ca8979edf7d6982fc51bf8e4f805f81a649))
+* **70-14:** add credential-safe trace visual gate ([87708d6](https://github.com/szTheory/relyra/commit/87708d6d007ed51b233c06588da0c149c9c6b114))
+* **71-01:** add canonical demo launcher ([b768408](https://github.com/szTheory/relyra/commit/b7684086a0eefe6d44ba38364b7d133b64a0f920))
+* **72-02:** converge demo documentation routers ([2d499d5](https://github.com/szTheory/relyra/commit/2d499d58bced17e3d2d57db9b9fe234d5db5b181))
+* **72-02:** refresh LedgerLoop Docker evaluator route ([3b550c8](https://github.com/szTheory/relyra/commit/3b550c8945910cbf257b307b0f49789ee4c690ab))
+* **72-03:** add validated Keycloak Fleet launcher ([e4fe72e](https://github.com/szTheory/relyra/commit/e4fe72e08bc4098752a65958ca64c4fe33678fc3))
+* **72.1-01:** render scoped SAML setup URLs ([7733383](https://github.com/szTheory/relyra/commit/7733383e2eaca219e401f22145ef29323187709d))
+* **72.1-02:** forward demo admin credentials ([3194477](https://github.com/szTheory/relyra/commit/31944770e9c388406613232e2972c4bf42a3424c))
+* **72.1-04:** prove credentialed Keycloak trace access ([0ec49a8](https://github.com/szTheory/relyra/commit/0ec49a8677d77ba0e60178c2e1b374c3263c103b))
+* **launcher:** automate Phase 71 acceptance ([80dc15d](https://github.com/szTheory/relyra/commit/80dc15d80020d918e018414a6d56bc1578443239))
+
+
+### Bug Fixes
+
+* **64-03:** remove Phoenix token from core testing docs ([552b81b](https://github.com/szTheory/relyra/commit/552b81bbf6b245b80791af215ef9b1ee15f380ef))
+* **64:** guard wrong-audience testing fixture ([3b193d7](https://github.com/szTheory/relyra/commit/3b193d7991569f742f3e26bbd188c4999b49a2d5))
+* **64:** revise plans based on checker feedback ([c181481](https://github.com/szTheory/relyra/commit/c1814813f75b632c7ae4a40c4646729534f2fcc2))
+* **67-02:** assert assigned CVE backfill ([fe9437f](https://github.com/szTheory/relyra/commit/fe9437fefa7f8cf3f8e80763b23dcbcc3ca325a0))
+* **67:** address code review warnings ([6cfcb1e](https://github.com/szTheory/relyra/commit/6cfcb1eed23315011874b1a416b17e4192262974))
+* **70-07:** prevent Keycloak browser artifact capture\n\n- disable sensitive Playwright attachments\n- isolate and remove browser output before diagnostics\n\nCo-Authored-By: Codex &lt;noreply@tool.example&gt; ([7862c75](https://github.com/szTheory/relyra/commit/7862c750472049e33d9ccb064f96813e4c92d954))
+* **70-07:** retain only validated Keycloak diagnostics\n\n- redact into private staging before promotion\n- discard all uncertain diagnostic candidates\n\nCo-Authored-By: Codex &lt;noreply@tool.example&gt; ([52255aa](https://github.com/szTheory/relyra/commit/52255aaa43559d2e2ad3615b7fd6cb1bb6e0d4fa))
+* **70-10:** reject qualified diagnostic XML ([b63e8e6](https://github.com/szTheory/relyra/commit/b63e8e64d028c586c957a9b8fa1cadf9781860cd))
+* **70-11:** focus Keycloak proxy acceptance gate ([7956fbb](https://github.com/szTheory/relyra/commit/7956fbb68ea9e2d6ecbcd557f48a4691d49112ba))
+* **70:** CR-01 reject mismatched Sarah identity mapping ([ce82276](https://github.com/szTheory/relyra/commit/ce82276815dfaa7841bf4c52d35b535a886bc530))
+* **70:** CR-02 confine Keycloak diagnostic cleanup ([dc8b39b](https://github.com/szTheory/relyra/commit/dc8b39b4b7ef90e9d70fce0c5808f36dc9060fd7))
+* **72-05:** advance documentation ordering cursor ([1ec503c](https://github.com/szTheory/relyra/commit/1ec503c10ab10c5c224befa5410fa3fab17cced4))
+* **72-05:** carry configured Solo port through recovery ([edc6172](https://github.com/szTheory/relyra/commit/edc6172ba34c01c252cc6a231416c2a6b125e47c))
+* **binding:** retain SAML redirect padding ([89f2220](https://github.com/szTheory/relyra/commit/89f22208603746add012817ce90d6a2c5bca8600))
+* **ci:** isolate admin browser smoke ([0810305](https://github.com/szTheory/relyra/commit/0810305abfa4bf994a3e6c747d5624a1ca81e44c))
+* **demo:** allow cold container startup ([d158d8e](https://github.com/szTheory/relyra/commit/d158d8e01207dba12a2a95d14f6b1ece5d8e3d0c))
+* **deps:** patch Req transport graph advisories ([291396b](https://github.com/szTheory/relyra/commit/291396bb9761360d16ad62140110afac52feb80a))
+
 ## [1.8.1](https://github.com/szTheory/relyra/compare/v1.8.0...v1.8.1) (2026-06-14)
 
 
