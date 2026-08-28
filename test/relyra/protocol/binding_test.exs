@@ -1,12 +1,10 @@
 defmodule Relyra.Protocol.BindingTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Relyra.Protocol.Binding
 
   setup do
     pem = File.read!("test/fixtures/security/authn_request_signing/golden_signing_key.pem")
-    Application.put_env(:relyra, :sp_signing_key_pem, pem)
-    on_exit(fn -> Application.delete_env(:relyra, :sp_signing_key_pem) end)
     {:ok, signing_pem: pem}
   end
 
@@ -14,6 +12,7 @@ defmodule Relyra.Protocol.BindingTest do
     test "encodes SAMLRequest by default" do
       assert {:ok, result} = Binding.encode_redirect("<xml/>", "relay123")
       assert is_binary(result["SAMLRequest"])
+      assert rem(byte_size(result["SAMLRequest"]), 4) == 0
       assert result["RelayState"] == "relay123"
       assert inflate_b64(result["SAMLRequest"]) == "<xml/>"
     end

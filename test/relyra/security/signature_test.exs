@@ -18,7 +18,7 @@ defmodule Relyra.Security.SignatureTest do
   `flow: :sp_initiated` path. This file is the Phase-21-specific home for
   the metadata-root path.
   """
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Relyra.Error
   alias Relyra.Security.Signature

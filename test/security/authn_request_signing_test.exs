@@ -17,9 +17,6 @@ defmodule Relyra.Security.AuthnRequestSigningTest do
   @signature_method "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
 
   setup do
-    pem = File.read!(@golden_key_path)
-    Application.put_env(:relyra, :sp_signing_key_pem, pem)
-    on_exit(fn -> Application.delete_env(:relyra, :sp_signing_key_pem) end)
     Relyra.RequestStore.ETS.ensure_table!()
     :ok
   end

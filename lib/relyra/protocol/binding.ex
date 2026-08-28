@@ -166,7 +166,7 @@ defmodule Relyra.Protocol.Binding do
   defp do_encode_redirect(xml, relay_state, opts) do
     key = if Keyword.get(opts, :type) == :response, do: "SAMLResponse", else: "SAMLRequest"
     deflated = deflate_xml(xml)
-    b64 = Base.encode64(deflated, padding: false)
+    b64 = Base.encode64(deflated)
     sign = Keyword.get(opts, :sign, false)
     encoding = Keyword.get(opts, :encoding, :rfc3986_upper)
 

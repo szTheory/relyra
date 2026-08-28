@@ -155,7 +155,7 @@ defmodule Relyra.TestSupport.KeycloakAdoption do
                 follow_login_redirects(absolutize_redirect_url(url, next_url), hops + 1, cookie)
             end
 
-          {:ok, %{status: status} = response} when status < 200 or status >= 500 ->
+          {:ok, %{status: status} = response} when status < 200 or status >= 400 ->
             body = String.slice(response.body || "", 0, 500)
             {:error, "unexpected Keycloak SSO status #{status} from #{url}: #{body}"}
 
