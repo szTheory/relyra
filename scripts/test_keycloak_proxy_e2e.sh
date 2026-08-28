@@ -555,6 +555,7 @@ assert_rendered_stack() {
     (.services.keycloak.environment | has("KC_HOSTNAME_STRICT") | not) and
     .services.demo_app.environment.DEMO_ADMIN_USERNAME == "" and
     .services.demo_app.environment.DEMO_ADMIN_PASSWORD == "" and
+    .services.demo_app.healthcheck.start_period == "1m0s" and
     (.services.keycloak.healthcheck.test | join(" ") | contains("/dev/tcp/localhost/9000")) and
     .services.keycloak.labels["traefik.http.routers.relyra-keycloak.rule"] == ("Host(`keycloak." + $host + "`)") and
     .services.keycloak.labels["traefik.http.routers.relyra-keycloak.service"] == "relyra-keycloak" and

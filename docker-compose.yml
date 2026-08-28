@@ -41,6 +41,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 60s
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.7
