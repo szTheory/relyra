@@ -1,40 +1,83 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
-test('Keycloak login journey', async ({ page }) => {
-  // First, automate the Setup UI
-  await page.goto('/setup');
-  
-  await page.click('text=IdP Metadata');
-  await page.fill('textarea[name="metadata"]', 'dummy metadata');
-  await page.click('button:has-text("Save Metadata")');
-  await expect(page.locator('text=Metadata saved successfully!')).toBeVisible();
-  
-  await page.click('text=Mapping Preview');
-  await page.click('text=Next');
-  
-  await page.click('text=Test & Enable');
-  
-  // Navigate to root to login
-  await page.goto('/');
-  
-  // Click SAML SSO login. We assume there's a button.
-  // Wait for page to load
-  await page.waitForLoadState('networkidle');
-  
-  // The actual text might be 'Login with SAML' or 'SAML SSO'
-  const samlLoginButton = page.locator('text=Login with SAML').or(page.locator('text=SAML SSO')).or(page.locator('text=SSO Login'));
-  if (await samlLoginButton.count() > 0) {
-    await samlLoginButton.first().click();
-  } else {
-    // Try visiting the auth URL directly if button is missing
-    await page.goto('/auth/saml/login');
+const connectionId = "01H0B4Y1A2B3C4D5E6F7G8H9J4";
+const sarahPassword = process.env.KEYCLOAK_SARAH_PASSWORD || "sarah-password";
+const adminUsername = process.env.DEMO_ADMIN_USERNAME;
+const adminPassword = process.env.DEMO_ADMIN_PASSWORD;
+
+test("Keycloak signs Sarah into LedgerLoop through the public scoped ACS", async ({
+  page,
+}) => {
+  await page.goto("/login/test");
+  await page
+    .getByRole("link", { name: "Test with Keycloak (optional real IdP)" })
+    .click();
+
+  await expect
+    .poll(() => new URL(page.url()).origin)
+    .toBe("http://keycloak.relyra.localhost");
+  await page.locator("#username").fill("sarah@northstar.example.com");
+  await page.locator("#password").fill(sarahPassword);
+
+  const acsResponse = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === `/saml/${connectionId}/acs` &&
+      response.request().method() === "POST",
+  );
+
+  await page.locator("#kc-login").click();
+
+  expect((await acsResponse).status()).toBe(302);
+  await expect(page).toHaveURL("http://relyra.localhost/");
+  await expect(page.locator("#workspace-title")).toHaveText(
+    "LedgerLoop Workspace",
+  );
+  await expect(page.getByText("Verified sign-in receipt")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt.",
+    ),
+  ).toBeVisible();
+
+  if (!adminUsername || !adminPassword) {
+    throw new Error("DEMO_ADMIN_USERNAME and DEMO_ADMIN_PASSWORD are required");
   }
 
-  // Keycloak login
-  await page.fill('input[name="username"], #username', 'admin');
-  await page.fill('input[name="password"], #password', 'admin');
-  await page.click('input[type="submit"], button[type="submit"], #kc-login');
+  const deniedTrace = await page.goto(
+    `/relyra/admin/connections/${connectionId}/trace`,
+  );
 
-  // Verify successful redirect back to the app
-  await expect(page).not.toHaveURL(/keycloak/);
+  expect(deniedTrace?.status()).toBe(401);
+  await expect(page.locator('[data-testid^="login-trace-row-"]')).toHaveCount(
+    0,
+  );
+
+  const adminAuthorization = `Basic ${Buffer.from(
+    `${adminUsername}:${adminPassword}`,
+  ).toString("base64")}`;
+
+  await page.setExtraHTTPHeaders({ authorization: adminAuthorization });
+  await page.goto("/login/admin");
+  await expect(page).toHaveURL("http://relyra.localhost/relyra/admin");
+  await page.goto(`/relyra/admin/connections/${connectionId}/trace`);
+
+  const newestSuccessfulTrace = page
+    .locator('[data-testid^="login-trace-row-"]')
+    .filter({ hasText: "succeeded" })
+    .first();
+
+  await expect(newestSuccessfulTrace).toContainText(/correlation [\w-]+/);
+
+  for (const [step, label] of [
+    ["response.validate", "Validate response"],
+    ["signature.verify", "Verify signature"],
+    ["replay.check", "Replay check"],
+  ]) {
+    const stepRow = newestSuccessfulTrace.locator(
+      `[data-testid="login-trace-step-${step}"]`,
+    );
+
+    await expect(stepRow).toContainText(label);
+    await expect(stepRow).toContainText("ok");
+  }
 });

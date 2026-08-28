@@ -16,10 +16,24 @@ defmodule LedgerLoopWeb.SetupLiveTest do
     assert html =~ "Entity ID (Audience URI)"
     assert html =~ "ACS URL (Assertion Consumer Service)"
 
-    # Gap #4: SP Settings exposes Entity ID + ACS URL as readonly inputs carrying
-    # the real host endpoints (not placeholder text), so they can be copied verbatim.
-    assert has_element?(view, ~s|input[readonly][value$="/auth/saml/metadata"]|)
-    assert has_element?(view, ~s|input[readonly][value$="/auth/saml/acs"]|)
+    connection_id = LedgerLoop.Demo.Fixtures.relyra_enabled_scenario_id()
+
+    saml_urls = %{
+      metadata: "#{@endpoint.url()}/saml/#{connection_id}/metadata",
+      login: "#{@endpoint.url()}/saml/#{connection_id}/login",
+      acs: "#{@endpoint.url()}/saml/#{connection_id}/acs"
+    }
+
+    assert has_element?(view, ~s|input[readonly][value="#{saml_urls.metadata}"]|)
+    assert has_element?(view, ~s|input[readonly][value="#{saml_urls.login}"]|)
+    assert has_element?(view, ~s|input[readonly][value="#{saml_urls.acs}"]|)
+
+    metadata_response = get(build_conn(), URI.parse(saml_urls.metadata).path)
+    assert metadata_response.status == 200
+
+    login_response = get(build_conn(), URI.parse(saml_urls.login).path)
+    assert login_response.status == 302
+    assert get_resp_header(login_response, "location") |> List.first() =~ "/fake_idp/login"
 
     # Click next to IdP Metadata
     view |> element("button", "Next") |> render_click()
@@ -65,11 +79,8 @@ defmodule LedgerLoopWeb.SetupLiveTest do
     assert html =~ "Test &amp; Enable"
 
     # Gap #7: Test Login redirect carries the enabled connection context.
-    conn_id =
-      LedgerLoop.Demo.Fixtures.relyra_connections() |> List.first() |> Map.get(:connection_id)
-
     view |> element("button", "Start Test Login") |> render_click()
-    assert_redirect(view, "/auth/saml/login?connection_id=" <> conn_id)
+    assert_redirect(view, URI.parse(saml_urls.login).path)
   end
 
   test "Setup checklist supports nonlinear navigation via the sidebar", %{conn: conn} do

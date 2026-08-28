@@ -2,7 +2,7 @@
 
 This is the canonical fallback runbook for IdPs that do not have a shipped Relyra
 preset or that need custom operator mapping on top of a vendor admin surface.
-Use it only after the local `FakeIdP` proof in
+Use it only after the local testing fixtures proof in
 [Getting Started](../getting_started.md) is green.
 
 Relyra's first-class batteries-included support covers **Okta, Microsoft Entra ID,
@@ -19,7 +19,7 @@ exact Relyra seams that matter for a safe first login.
 
 The safe Day-1 order stays the same:
 
-1. Prove the local trust path with `Relyra.TestSupport.FakeIdP`.
+1. Prove the local trust path with `Relyra.Testing`.
 2. Publish your SP metadata from Relyra's real runtime fields.
 3. Import or transcribe the IdP metadata Relyra actually consumes.
 4. Verify NameID and claim choices before treating the provider as complete.
@@ -27,7 +27,7 @@ The safe Day-1 order stays the same:
 
 Receipt:
 
-- One successful SP-initiated login after the local `FakeIdP` proof already passed.
+- One successful SP-initiated login after the local testing fixtures proof already passed.
 
 ## Relyra owns / IdP owns / Host owns
 
@@ -129,7 +129,7 @@ table.
 | CyberArk | `Entity ID` or `Audience` | `ACS URL` | `Identity Provider SSO URL` | `Signing certificate` | email, first name, last name, groups | Often email-style | CyberArk app templates can hide claim release defaults behind a separate attribute screen |
 | Oracle Access Manager | `SP Entity ID` | `Assertion Consumer Service URL` | `Single Sign-On URL` | `Signing certificate` | mail, givenname, sn, groups/memberOf | Often unspecified | Oracle deployments often have multiple partner profiles; make sure the runtime partner matches the exported metadata |
 | PingFederate | `Partner's Entity ID` | `Assertion Consumer Service URL` | `SSO Service URL` or `IdP SSO endpoint` | `Signing certificate` | mail, givenName, sn, memberOf | Often persistent or unspecified | Ping lets admins mix profile data and adapter contracts; verify which source actually feeds NameID. README lists this family as **Ping** — same IdP class; admin UI says PingFederate. |
-| CA SiteMinder | `SP Entity ID` | `Assertion Consumer Service URL` | `SSO URL` | `Signing certificate` | mail, givenName, sn, groups | Often unspecified | SiteMinder deployments frequently inherit older policy defaults; reject SHA-1 or lax signing expectations instead of matching them. README lists seven SAML families (Okta, Entra, Google Workspace, ADFS, Ping, CyberArk, Shibboleth); this decoder row documents SiteMinder as an additional admin-UI label — not an eighth README family. |
+| CA SiteMinder | `SP Entity ID` | `Assertion Consumer Service URL` | `SSO URL` | `Signing certificate` | mail, givenName, sn, groups | Often unspecified | SiteMinder deployments frequently inherit older policy defaults; reject SHA-1 or lax signing expectations instead of matching them. README names four first-class presets plus seven generic runbook families; this decoder row documents SiteMinder as an additional admin-UI label, not another README family. |
 | Keycloak | `Client ID` or `Entity ID` | `Client authentication / ACS URL` or `Valid redirect URIs` (map to ACS) | `Sign-in URL` or `Master SAML Processing URL` | `Signing certificate` or realm keys export | email, given_name, family_name, groups | Often persistent or email-style | Keycloak realm vs client SAML settings split — verify ACS URL on the client, not just realm metadata |
 | OneLogin | `Audience (Entity ID)` | `ACS (Consumer) URL` | `SAML 2.0 Endpoint (HTTP)` | `X.509 Certificate` | Email, First Name, Last Name, Member Of | Often email-style | OneLogin connector vs custom SAML app templates use different label sets — match the connector you created |
 
@@ -227,9 +227,9 @@ seams the installer created:
    generator output). For production, persist the connection and switch to
    [ConnectionResolver.Ecto](../production_ecto_path.md#4-wire-connectionresolver-ecto).
 
-2. **Use the production ACS route** — After
-   [Getting Started §3](../getting_started.md#3-prove-local-login-with-testsupport)
-   passes with TestSupport, switch from the stub ACS to the installer's
+3. **Use the production ACS route** — After
+   [Getting Started §3](../getting_started.md#3-prove-local-login-with-relyratesting)
+   passes with `Relyra.Testing`, switch from the stub ACS to the installer's
    `saml_routes()` / `ACSController` path so POSTbacks hit
    `Relyra.consume_response/3`.
 
@@ -259,7 +259,7 @@ completes without a typed rejection.
 
 Use a fixed order so you do not debug three moving parts at once:
 
-1. `FakeIdP` proof: make sure the local trust path already succeeds.
+1. `Relyra.Testing` proof: make sure the local trust path already succeeds.
 2. Metadata values: verify `sp_entity_id`, `acs_url`, `idp_entity_id`, and
    `idp_sso_url` exactly.
 3. Signing certificates: confirm the active IdP signing certs in Relyra match the

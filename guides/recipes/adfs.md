@@ -57,8 +57,8 @@ application seams the installer created:
    [ConnectionResolver.Ecto](../production_ecto_path.md#4-wire-connectionresolver-ecto).
 
 2. **Use the production ACS route** — After
-   [Getting Started §3](../getting_started.md#3-prove-local-login-with-testsupport)
-   passes with TestSupport, switch from the stub ACS to the installer's
+   [Getting Started §3](../getting_started.md#3-prove-local-login-with-relyratesting)
+   passes with `Relyra.Testing`, switch from the stub ACS to the installer's
    `saml_routes()` / `ACSController` path so POSTbacks hit
    `Relyra.consume_response/3`.
 

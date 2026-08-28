@@ -74,7 +74,7 @@ jobs:
             quay.io/keycloak/keycloak:26.0.7 \
             start-dev --import-realm --http-port=8080
 
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl -sf http://localhost:8080/realms/relyra-adoption/.well-known/openid-configuration >/dev/null; then
               exit 0
             fi

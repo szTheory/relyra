@@ -1,5 +1,50 @@
 # Milestones
 
+## v1.10 Docker DX & Fleet Proxy (Shipped: 2026-08-27)
+
+**Phases completed:** 6 phases, 30 plans, 51 tasks
+
+**Key accomplishments:**
+
+- Fast Docker iteration: cached dependency builds, Linux-private nested volumes, lock-content-aware idempotent startup, and browser-proven bind-mount live reload.
+- Collision-free Solo/Fleet topology: zero-setup loopback Compose plus opt-in shared Traefik routing with correct Phoenix public URL and LiveView origin policy.
+- Genuine Keycloak SAML proof behind the proxy, including one-parse descriptor reconciliation, audited trust mutation, signed scoped ACS, durable receipt, redacted diagnostics, and recurring CI ownership.
+- One Make-first operator surface for launch, routes, fleet discovery, doctor, recovery, compatibility verbs, and safe destructive cleanup.
+- House-voice evaluator documentation that walks Solo FakeIdP first, then Fleet/Keycloak, configured-port recovery, connection-scoped endpoints, and runtime-authenticated trace access.
+- Deterministic closeout evidence: 12/12 requirements, 6/6 phase verifications, 10/10 cross-phase integrations, 6/6 E2E flows, and Nyquist-compliant validation for every phase.
+
+**Audit:** `.planning/milestones/v1.10-MILESTONE-AUDIT.md` records `tech_debt` with no blocking gaps. Retained advisories are non-default-host browser coverage, the documented Decimal dependency advisory, and bounded demo setup UX/resilience follow-ups.
+
+**Archived:** `.planning/milestones/v1.10-ROADMAP.md`, `.planning/milestones/v1.10-REQUIREMENTS.md`, and `.planning/milestones/v1.10-phases/`.
+
+---
+
+## v1.9 Loose Ends & Adoption Honesty (Shipped: 2026-06-19)
+
+**Phases completed:** 4 phases, 13 plans, 27 tasks
+
+**Key accomplishments:**
+
+- Public `Relyra.Testing` core fixtures with real XMLDSig success proof through `Relyra.consume_response/3`.
+- Public `Relyra.Testing` negative fixtures that reject with exact typed errors through the real verifier path.
+- Optional Phoenix ACS fixture dispatch with a scoped no-Phoenix compile/load gate for core public testing helpers.
+- Release parity tests now prove public `Relyra.Testing` files ship while private `Relyra.TestSupport` files remain outside package artifacts.
+- Adopter-facing docs and proof artifacts now use the public Relyra.Testing API while private TestSupport and demo FakeIdP internals remain repo-only.
+- LedgerLoop FakeIdP audit mapped the active Phoenix route surface, verified green in-process SAML success/tamper coverage, and found the dedicated browser lane currently blocked by local port-4000 coupling
+- Retain FakeIdP decision routes Phase 66 to the documentation branch, with SEED-003 to be resolved by dedicated FakeIdP documentation
+- Removal branch skipped because the user selected `retain_fakeidp`; the FakeIdP code remains intentionally retained and documented
+- LedgerLoop FakeIdP retention is documented as a demo-local browser proof, and SEED-003 is resolved by explicit documentation evidence
+- Public testing and provider taxonomy copy now matches the shipped `Relyra.Testing` and four-first-class-provider reality.
+- CVE-2026-49454 is now the local advisory truth for RELYRA-2026-001, with CI/release guard status reconciled to live evidence.
+- Phase 29 warning/info follow-ups are now explicit planning dispositions without claiming any Phase 67 security-source fixes.
+- Resolved seed metadata and planning status prevent completed v1.7, public testing, and demo FakeIdP loose ends from resurfacing as future milestone candidates.
+
+**Audit:** `.planning/milestones/v1.9-MILESTONE-AUDIT.md` records `tech_debt` with 15/15 requirements satisfied, 4/4 phases verified, 5/5 integrations wired, and no blocking gaps. The accepted debt is validation metadata hygiene only: Phase 64/67 VALIDATION task rows, Phase 65 frontmatter, and a missing Phase 66 validation artifact.
+
+**Archived:** `.planning/milestones/v1.9-ROADMAP.md` and `.planning/milestones/v1.9-REQUIREMENTS.md`.
+
+---
+
 ## v1.8 Brand System & Identity (Shipped: 2026-06-14)
 
 **Phases completed:** 6 phases (58–63), 6 plans · 39 commits · non-protocol brand/design milestone
@@ -34,7 +79,7 @@
 - Implemented admin session mocking and deep link routing to LiveAdmin trace UI for operator demonstration.
 - Demo orchestrator CLI wrapper for abstracting Docker Compose profiles.
 
-**Known deferred items at close:** Phase 53 has a `human_needed` verification (demo Setup/Operator UX click-through) deferred to `/gsd:verify-work 53`. Two dormant seeds opened: SEED-002 (TestSupport vs Hex-package decision) and SEED-003 (demo FakeIdP login WIP). See STATE.md "Deferred Items".
+**Known deferred items at close:** Phase 53 has a `human_needed` verification (demo Setup/Operator UX click-through) deferred to `/gsd:verify-work 53`. Two seeds opened historically at v1.7 close: SEED-002 (TestSupport vs Hex-package decision) and SEED-003 (demo FakeIdP login WIP). Current Phase 67 status: SEED-001 is resolved by this shipped LedgerLoop adoption-evidence demo milestone, SEED-002 is resolved by public `Relyra.Testing` package/docs truth from Phases 64-65, and SEED-003 is resolved by the Phase 66 `retain_fakeidp` decision plus `guides/fake_idp_demo.md`; none of these seeds are dormant milestone candidates.
 
 **Merged:** PR #31 (squash) to `main` on 2026-06-13; `demo-app` + `security` + `keycloak` CI lanes green.
 

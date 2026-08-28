@@ -3,7 +3,7 @@
 > Tested against: Google Workspace admin console, April 2026
 
 This is the authoritative runbook for the shipped `:google_workspace` preset.
-Use it after the local `FakeIdP` proof so your first hosted-provider exercise is
+Use it after the local testing fixtures proof so your first hosted-provider exercise is
 limited to one Google Workspace path.
 
 ## Tested against
@@ -77,8 +77,8 @@ seams the installer created:
    [ConnectionResolver.Ecto](../production_ecto_path.md#4-wire-connectionresolver-ecto).
 
 2. **Use the production ACS route** — After
-   [Getting Started §3](../getting_started.md#3-prove-local-login-with-testsupport)
-   passes with TestSupport, switch from the stub ACS to the installer's
+   [Getting Started §3](../getting_started.md#3-prove-local-login-with-relyratesting)
+   passes with `Relyra.Testing`, switch from the stub ACS to the installer's
    `saml_routes()` / `ACSController` path so POSTbacks hit
    `Relyra.consume_response/3`.
 
@@ -101,7 +101,7 @@ Use one concrete receipt:
 
 Proof receipt:
 
-- One successful Google Workspace login after the local `FakeIdP` proof already
+- One successful Google Workspace login after the local testing fixtures proof already
   passed.
 
 ## 4. Common failures

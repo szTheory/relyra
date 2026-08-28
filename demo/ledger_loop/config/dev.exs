@@ -20,7 +20,6 @@ config :ledger_loop, LedgerLoopWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}],
-  check_origin: false,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "1E2JSI1+eKgEauIWXniOv9+E05Ses3L8mLv7Ux7YwO22vUILloECAPW73JGQkng5",
@@ -55,12 +54,30 @@ config :ledger_loop, LedgerLoopWeb.Endpoint,
     web_console_logger: true,
     patterns: [
       # Static assets, except user uploads
-      ~r"priv/static/(?!uploads/).*\.(js|css|png|jpeg|jpg|gif|svg)$"E,
+      ~r"priv/static/(?!uploads/).*\.(js|css|png|jpeg|jpg|gif|svg)$",
       # Router, Controllers, LiveViews and LiveComponents
-      ~r"lib/ledger_loop_web/router\.ex$"E,
-      ~r"lib/ledger_loop_web/(controllers|live|components)/.*\.(ex|heex)$"E
+      ~r"lib/ledger_loop_web/router\.ex$",
+      ~r"lib/ledger_loop_web/(controllers|live|components)/.*\.(ex|heex)$"
     ]
   ]
+
+# Use polling backend so file-change events propagate across the macOS→Docker bind mount.
+# This is the application-env key that controls HOW files are watched — it MUST be a
+# separate top-level block here, NOT merged into the Endpoint block above (backend: placed
+# inside the Endpoint keyword is silently ignored; DKR-04, Pitfall 1 from research).
+config :phoenix_live_reload,
+  # Scope fs_poll to the source dirs the reload patterns above reference. Without :dirs it
+  # defaults to watching the whole project tree, including _build/, where Phoenix 1.8's
+  # colocated-hooks `node_modules` symlink (-> assets/node_modules) dangles in this
+  # backend-only demo (no JS asset pipeline). `:fs_poll` does File.stat! on every walked
+  # entry and crashes on the dead symlink, taking the live_reload app down. Scoping fixes
+  # that and avoids polling _build/deps every interval.
+  dirs: [
+    "lib/ledger_loop_web",
+    "priv/static"
+  ],
+  backend: :fs_poll,
+  backend_opts: [interval: 500]
 
 # Enable dev routes for dashboard and mailbox
 config :ledger_loop, dev_routes: true

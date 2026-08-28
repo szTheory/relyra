@@ -2,6 +2,8 @@ defmodule LedgerLoop.Demo.ResetTest do
   use LedgerLoop.DataCase
 
   alias LedgerLoop.Accounts.{Tenant, User, Group, Membership, SAMLIdentity, LoginReceipt}
+  alias Relyra.Ecto.AuditEvent
+  alias Relyra.LoginTrace.Export
 
   describe "Task 1: Demo Migrations and Schemas" do
     test "tables exist with binary IDs and expected natural key unique indexes" do
@@ -97,6 +99,70 @@ defmodule LedgerLoop.Demo.ResetTest do
       assert memberships_1 == memberships_2
       assert identities_1 == identities_2
       assert receipts_1 == receipts_2
+    end
+
+    test "default reset retains the six support trace events without the visual fixture" do
+      for value <- [nil, "true"] do
+        with_demo_trace_visual_fixture(value, fn ->
+          LedgerLoop.Demo.Reset.reset!()
+
+          trace_events =
+            Repo.all(
+              from event in AuditEvent,
+                where: event.domain == :login,
+                order_by: [asc: event.inserted_at]
+            )
+
+          assert length(trace_events) == 6
+
+          refute Enum.any?(
+                   trace_events,
+                   &String.starts_with?(&1.cause, "visual_fixture_long_failure_cause")
+                 )
+        end)
+      end
+    end
+
+    test "exact visual-fixture opt-in adds one safe long failed login trace" do
+      with_demo_trace_visual_fixture("1", fn ->
+        LedgerLoop.Demo.Reset.reset!()
+
+        fixture_event =
+          Repo.all(from event in AuditEvent, where: event.domain == :login)
+          |> Enum.find(&String.starts_with?(&1.cause, "visual_fixture_long_failure_cause"))
+
+        assert fixture_event
+
+        exported = Export.export_login(fixture_event)
+
+        assert fixture_event.action == :failed
+        assert String.length(fixture_event.cause) > 80
+        assert exported.correlation_id =~ ~r/^[0-9a-f]{64}$/
+        assert exported.correlation_id != fixture_event.correlation_id
+        assert [%{"step" => "response.validate", "error_code" => error_code}] = exported.steps
+        assert String.length(error_code) > 80
+
+        rendered = inspect(exported)
+        refute rendered =~ "-----BEGIN"
+        refute rendered =~ "<saml"
+        refute rendered =~ "password"
+      end)
+    end
+  end
+
+  defp with_demo_trace_visual_fixture(value, fun) do
+    previous = System.get_env("DEMO_TRACE_VISUAL_FIXTURE")
+
+    if is_nil(value),
+      do: System.delete_env("DEMO_TRACE_VISUAL_FIXTURE"),
+      else: System.put_env("DEMO_TRACE_VISUAL_FIXTURE", value)
+
+    try do
+      fun.()
+    after
+      if is_nil(previous),
+        do: System.delete_env("DEMO_TRACE_VISUAL_FIXTURE"),
+        else: System.put_env("DEMO_TRACE_VISUAL_FIXTURE", previous)
     end
   end
 end

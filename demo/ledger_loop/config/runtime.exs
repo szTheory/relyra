@@ -23,6 +23,32 @@ end
 config :ledger_loop, LedgerLoopWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+demo_admin_username = System.get_env("DEMO_ADMIN_USERNAME")
+demo_admin_password = System.get_env("DEMO_ADMIN_PASSWORD")
+
+if is_binary(demo_admin_username) and demo_admin_username != "" and
+     is_binary(demo_admin_password) and demo_admin_password != "" do
+  config :ledger_loop, :demo_admin_auth,
+    username: demo_admin_username,
+    password: demo_admin_password
+end
+
+if config_env() != :test do
+  http_port = String.to_integer(System.get_env("PORT", "4000"))
+  host = System.get_env("PHX_HOST", "localhost")
+  scheme = System.get_env("PHX_SCHEME", "http")
+  public_port = String.to_integer(System.get_env("PHX_PORT", Integer.to_string(http_port)))
+
+  check_origin =
+    System.get_env("DEMO_CHECK_ORIGINS", "//localhost,//relyra.localhost,//*.relyra.localhost")
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim/1)
+
+  config :ledger_loop, LedgerLoopWeb.Endpoint,
+    url: [host: host, scheme: scheme, port: public_port],
+    check_origin: check_origin
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

@@ -1,166 +1,1019 @@
 defmodule Relyra.Docs.DemoGuideDriftTest do
   @moduledoc """
-  Bidirectional drift gate for `scripts/demo` subcommand parity with
-  `demo/ledger_loop/README.md` (D-10).
+  Static contract for the repository-local demo launcher.
 
-  ## Why this test exists
-
-  `scripts/demo` is the primary operator interface evaluators copy-paste when
-  kicking the tires on Relyra. Its subcommand set is a closed enumerable
-  surface that is uniquely likely to be renamed without a doc update (the
-  script was added fresh in Phase 55). Without a build-time gate, the demo
-  README's command list rots silently the first time a subcommand is added,
-  renamed, or removed.
-
-  This test asserts subcommand parity in both directions:
-
-    * **Missing-in-doc:** every subcommand arm in `scripts/demo`'s
-      `case "$COMMAND"` block MUST appear as `scripts/demo <subcommand>` inside
-      at least one triple-backtick-fenced `bash` block in
-      `demo/ledger_loop/README.md`.
-    * **Stale-in-doc:** every `scripts/demo <token>` usage documented in a
-      bash fence block of the README MUST correspond to a real case arm in the
-      script. Removing an arm without pruning the docs trips this.
-
-  Failure-message vocabulary mirrors `test/docs/troubleshooting_drift_test.exs`
-  (subject — consequence) so the CI experience stays consistent across the
-  project's drift-test collection.
-
-  ## Scope (D-10)
-
-  This gate covers **subcommands only** — the `case "$COMMAND"` arm labels.
-  Routes, seeded credentials, environment overrides, and prose descriptions are
-  intentionally out of scope: they are not a closed enumerable surface, change
-  at different rates, and live in dedicated CI gates (D-02c link-smoke, etc.).
-
-  ## How subcommands are enumerated
-
-  The canonical set is extracted at runtime by reading `scripts/demo` and
-  matching the case arm labels with the pattern `~r/^\\s+(\\w+)\\)\\s*$/m`.
-  The `*)` default arm and any shell function names are excluded — only concrete
-  subcommand labels (the tokens an operator passes as `$1`) are captured. This
-  means the test automatically follows renames: changing an arm in `scripts/demo`
-  changes the canonical set this test sees without any test-file edits required
-  (project convention D-05 — no hardcoded literals).
-
-  The documented set is extracted from `demo/ledger_loop/README.md` by:
-    1. Scanning only triple-backtick-fenced `bash` fenced blocks
-       (prose mentions outside a fence are ignored to avoid brittleness).
-    2. Within those blocks, matching `scripts/demo <token>` patterns and
-       collecting the `<token>` strings.
-
-  If `demo/ledger_loop/README.md` is missing (`{:error, :enoent}`), the doc set
-  is treated as empty, so the test fails with one missing-in-doc entry per
-  script subcommand — the precise signal an author needs when bootstrapping the
-  doc. The `ci.docs` alias also runs a `cmd test -f demo/ledger_loop/README.md`
-  presence guard before this test (D-11), so the missing-file case surfaces as a
-  clean OS-level failure first.
-
-  ## CI lane (D-11 — Phase 30 hollow-gate invariant)
-
-  This test runs under the `ci.docs` Mix alias (NOT `ci.demo_app`). The
-  `ci.demo_app` lane runs every step with `--cd demo/ledger_loop`, which changes
-  the working directory to the demo sub-project and makes the repo-root
-  `scripts/demo` unreachable. The `ci.docs` lane runs from the repo root, so
-  `scripts/demo` and `demo/ledger_loop/README.md` are both reachable via relative
-  paths.
-
-  Per the Phase 30 hollow-gate invariant, this test runs as its own dedicated
-  `cmd mix test` process line in the alias — never bundled into a bare `test`
-  step. Mix deduplicates the `test` task within a single alias run; a bare `test`
-  step after another `test` step is silently skipped.
+  The launcher deliberately keeps its Compose command shapes and banner copy in
+  one Makefile. These assertions read that source at runtime so a target rename,
+  an accidental topology merge, or a second banner implementation fails in the
+  focused documentation lane without needing Docker to be running.
   """
   use ExUnit.Case, async: true
 
-  @script_path "scripts/demo"
-  @readme_path "demo/ledger_loop/README.md"
+  @makefile_path "Makefile"
 
-  # Match concrete case arm labels like `  doctor)` but not `  *)` (default arm).
-  # The pattern anchors on start-of-line whitespace, captures the word token before
-  # `)`, and requires only whitespace after `)` to avoid matching multi-token arms
-  # or shell function calls.
-  @case_arm_pattern ~r/^\s+(\w+)\)\s*$/m
+  @public_targets ~w(
+    proxy up up-build up-d up-d-build down reset reseed nuke logs url open fleet keycloak doctor help
+  )
 
-  # Match `scripts/demo <token>` inside bash fence blocks. The token is one or more
-  # word characters immediately following the space.
-  @doc_mention_pattern ~r/scripts\/demo\s+(\w+)/
+  test "Makefile exposes the canonical documented target inventory" do
+    makefile = File.read!(@makefile_path)
 
-  test "scripts/demo subcommands and the demo README bash fences are in bidirectional sync" do
-    script_subcommands = extract_script_subcommands()
-    doc_subcommands = extract_doc_subcommands()
+    assert makefile =~ ".DEFAULT_GOAL := help"
+    assert makefile =~ "Relyra demo launcher"
 
-    missing_in_doc = MapSet.difference(script_subcommands, doc_subcommands)
-    stale_in_doc = MapSet.difference(doc_subcommands, script_subcommands)
+    assert documented_targets(makefile) == MapSet.new(@public_targets),
+           "Make help comments must enumerate exactly the public launcher targets"
 
-    assert MapSet.size(missing_in_doc) == 0, format_missing(missing_in_doc)
-    assert MapSet.size(stale_in_doc) == 0, format_stale(stale_in_doc)
-  end
-
-  # Read scripts/demo at runtime and extract the concrete case arm labels.
-  # The `*)` default arm is excluded by requiring `\w+` (word characters only —
-  # the `*` glob character is not a word character). Helper function names like
-  # `check_port` are excluded because they appear in `function check_port()` lines
-  # (or `function check_port {` lines), not in the `case "$COMMAND"` arm pattern
-  # `  name)`.
-  defp extract_script_subcommands do
-    source = File.read!(@script_path)
-
-    @case_arm_pattern
-    |> Regex.scan(source, capture: :all_but_first)
-    |> Enum.map(fn [name] -> name end)
-    |> MapSet.new()
-  end
-
-  # Read the demo README and scan only bash-fenced blocks for `scripts/demo <token>`
-  # mentions. Prose mentions outside a fence are deliberately ignored. If the README
-  # is absent, return an empty set so the test fails with clear missing-in-doc
-  # messages for every script subcommand.
-  defp extract_doc_subcommands do
-    case File.read(@readme_path) do
-      {:ok, body} ->
-        body
-        |> extract_bash_blocks()
-        |> Enum.flat_map(fn block ->
-          @doc_mention_pattern
-          |> Regex.scan(block, capture: :all_but_first)
-          |> Enum.map(fn [token] -> token end)
-        end)
-        |> MapSet.new()
-
-      {:error, :enoent} ->
-        # Treat a missing README as an empty doc set. The test then fails cleanly
-        # with one missing-in-doc entry per script subcommand — the author can see
-        # exactly which subcommands need to be documented.
-        MapSet.new()
-    end
-  end
-
-  # Extract the bodies of all ```bash ... ``` fenced code blocks in the markdown.
-  # Scoping to bash fences prevents prose mentions of `scripts/demo doctor` outside
-  # a code block from counting toward the documented set (avoiding brittleness when
-  # someone mentions a subcommand in a sentence without quoting it as a command).
-  defp extract_bash_blocks(doc) do
-    ~r/```bash\n(.*?)```/s
-    |> Regex.scan(doc, capture: :all_but_first)
-    |> Enum.map(fn [body] -> body end)
-  end
-
-  defp format_missing(missing) do
-    missing
-    |> Enum.sort()
-    |> Enum.map_join("\n", fn subcommand ->
-      "Missing doc entry for subcommand: #{subcommand} — add `scripts/demo #{subcommand}` " <>
-        "inside a ```bash fence block in #{@readme_path}"
+    Enum.each(@public_targets, fn target ->
+      assert makefile =~ "## #{target}:"
     end)
   end
 
-  defp format_stale(stale) do
-    stale
-    |> Enum.sort()
-    |> Enum.map_join("\n", fn subcommand ->
-      "Stale doc entry for subcommand: #{subcommand} — `scripts/demo #{subcommand}` is " <>
-        "documented in #{@readme_path} bash fences but is not a real case arm in #{@script_path}; " <>
-        "remove the usage from the README or re-introduce the arm in the script"
+  test "Makefile keeps the solo and fleet Compose shapes literal and separate" do
+    makefile = File.read!(@makefile_path)
+
+    assert makefile =~ "SOLO_COMPOSE := docker compose"
+
+    assert makefile =~
+             "FLEET_COMPOSE := docker compose -f docker-compose.yml -f docker-compose.proxy.yml"
+
+    assert makefile =~ "PROXY_COMPOSE := docker compose -f docker/traefik/compose.yml"
+
+    refute makefile =~ "$(shell $(SOLO_COMPOSE)"
+    refute makefile =~ "$(shell $(FLEET_COMPOSE)"
+  end
+
+  test "detached launches render the sole banner only after Compose succeeds" do
+    makefile = File.read!(@makefile_path)
+
+    assert_target_contains(makefile, "up-d", [
+      "$(SOLO_COMPOSE) up --no-build -d",
+      "$(MAKE) --no-print-directory url"
+    ])
+
+    assert_target_contains(makefile, "up-d-build", [
+      "$(SOLO_COMPOSE) up --build -d",
+      "$(MAKE) --no-print-directory url"
+    ])
+  end
+
+  test "url banner has the complete ordered browser contract" do
+    makefile = File.read!(@makefile_path)
+    url_recipe = target_body(makefile, "url")
+
+    assert_in_order(url_recipe, [
+      "==> Browser origins",
+      "http://$${RELYRA_HOST}",
+      "http://localhost:$${PORT}",
+      "==> Route map",
+      "Home: http://$${RELYRA_HOST}/",
+      "Admin: http://$${RELYRA_HOST}/relyra/admin",
+      "Login test: http://$${RELYRA_HOST}/login/test",
+      "Support scenario: http://$${RELYRA_HOST}/support/scenario",
+      "Health: http://$${RELYRA_HOST}/healthz",
+      "http://keycloak.$${RELYRA_HOST}/admin",
+      "http://localhost:8080/dashboard/",
+      "==> Walkthrough",
+      "1. Open Login test",
+      "2. Choose FakeIdP",
+      "3. Complete the sign-in",
+      "4. Inspect the operator trace",
+      "==> Topology notes",
+      "*.localhost is browser-facing; Docker health checks and internal probes use service DNS."
+    ])
+
+    assert url_recipe =~ "OPTIONAL — fleet + keycloak profile"
+    assert url_recipe =~ "OPTIONAL — shared fleet proxy"
+  end
+
+  test "admin credentials are empty-forwarded and kept out of the route banner" do
+    base_compose = File.read!("docker-compose.yml")
+    proxy_compose = File.read!("docker-compose.proxy.yml")
+    env_example = File.read!(".env.example")
+    url_recipe = target_body(File.read!(@makefile_path), "url")
+
+    assert base_compose =~ ~S(- DEMO_ADMIN_USERNAME=${DEMO_ADMIN_USERNAME:-})
+    assert base_compose =~ ~S(- DEMO_ADMIN_PASSWORD=${DEMO_ADMIN_PASSWORD:-})
+    assert proxy_compose =~ ~S(DEMO_ADMIN_USERNAME: ${DEMO_ADMIN_USERNAME:-})
+    assert proxy_compose =~ ~S(DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-})
+
+    Enum.each([base_compose, proxy_compose], fn compose ->
+      refute compose =~
+               ~r/DEMO_ADMIN_(?:USERNAME|PASSWORD):\s*\$\{DEMO_ADMIN_(?:USERNAME|PASSWORD):-[^}]+\}/
+    end)
+
+    assert env_example =~ "operator chooses both values before launch"
+    assert env_example =~ "runtime-only"
+    assert env_example =~ ~r/^# DEMO_ADMIN_USERNAME=$/m
+    assert env_example =~ ~r/^# DEMO_ADMIN_PASSWORD=$/m
+    refute env_example =~ ~r/^DEMO_ADMIN_(?:USERNAME|PASSWORD)=/m
+
+    assert_in_order(url_recipe, [
+      "==> Admin trace prerequisite",
+      "DEMO_ADMIN_USERNAME and DEMO_ADMIN_PASSWORD",
+      "before make up-build, make up-d-build, or make keycloak",
+      "==> Route map",
+      "Admin: http://$${RELYRA_HOST}/relyra/admin",
+      "4. Inspect the operator trace",
+      "401",
+      "set both values, restart the active demo, and authenticate at /login/admin"
+    ])
+
+    username_sentinel = "operator-sentinel-username"
+    password_sentinel = "operator-sentinel-password"
+
+    {banner, 0} =
+      run_make(
+        ["url"],
+        [
+          {"DEMO_ADMIN_USERNAME", username_sentinel},
+          {"DEMO_ADMIN_PASSWORD", password_sentinel}
+        ]
+      )
+
+    assert banner =~ "DEMO_ADMIN_USERNAME and DEMO_ADMIN_PASSWORD"
+    refute banner =~ username_sentinel
+    refute banner =~ password_sentinel
+  end
+
+  test "Make CLI renders help, detached launch, and overridden browser origins" do
+    {help, 0} = run_make(["help"])
+    assert String.starts_with?(help, "Relyra demo launcher\n")
+
+    {launch, 0} = run_make(["-n", "up-d"])
+    assert launch =~ "docker compose up --no-build -d"
+    assert launch =~ "make --no-print-directory url"
+
+    {banner, 0} =
+      run_make(["url"], [{"PORT", "4100"}, {"RELYRA_HOST", "alt.relyra.localhost"}])
+
+    assert banner =~ "Proxy: http://alt.relyra.localhost"
+    assert banner =~ "Loopback: http://localhost:4100"
+    assert banner =~ "OPTIONAL — fleet + keycloak profile"
+    assert banner =~ "OPTIONAL — shared fleet proxy"
+  end
+
+  test "failed detached startup preserves the Docker error and suppresses the banner" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    echo "simulated Docker failure" >&2
+    exit 42
+    """)
+
+    {output, status} = run_make(["up-d"], [{"PATH", fixture_bin}])
+
+    assert status != 0
+    assert output =~ "simulated Docker failure"
+    refute output =~ "==> Browser origins"
+  end
+
+  test "public Keycloak target launches provisions and validates the Fleet route" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    docker_log = Path.join(fixture_bin, "docker.log")
+    curl_log = Path.join(fixture_bin, "curl.log")
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    printf '%s\n' "$*" >> "$STUB_DOCKER_LOG"
+    """)
+
+    write_executable!(fixture_bin, "curl", """
+    #!/bin/sh
+    printf '%s\n' "$*" >> "$STUB_CURL_LOG"
+    printf '%s' '<EntityDescriptor entityID="http://keycloak.alt.relyra.localhost/realms/demo-app"/>'
+    """)
+
+    {output, 0} =
+      run_make(
+        ["keycloak"],
+        [
+          {"PATH", fixture_bin},
+          {"RELYRA_HOST", "alt.relyra.localhost"},
+          {"STUB_DOCKER_LOG", docker_log},
+          {"STUB_CURL_LOG", curl_log}
+        ]
+      )
+
+    calls = File.read!(docker_log) <> File.read!(curl_log) <> output
+
+    assert_in_order(calls, [
+      "network inspect proxy",
+      "compose -f docker/traefik/compose.yml up -d",
+      "compose -f docker-compose.yml -f docker-compose.proxy.yml --profile keycloak up --build -d",
+      "compose -f docker-compose.yml -f docker-compose.proxy.yml --profile keycloak wait keycloak_provisioner",
+      "--noproxy * --resolve keycloak.alt.relyra.localhost:80:127.0.0.1",
+      "http://keycloak.alt.relyra.localhost/realms/demo-app/protocol/saml/descriptor",
+      "==> Browser origins"
+    ])
+  end
+
+  test "public Keycloak target fails closed before advertising routes" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    curl_log = Path.join(fixture_bin, "curl.log")
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    case "$*" in
+      *"wait keycloak_provisioner") echo "simulated provisioning failure" >&2; exit 31 ;;
+    esac
+    """)
+
+    write_executable!(fixture_bin, "curl", """
+    #!/bin/sh
+    printf '%s\n' "$*" >> "$STUB_CURL_LOG"
+    printf '%s' '<EntityDescriptor entityID="http://keycloak.wrong.localhost/realms/demo-app"/>'
+    """)
+
+    env = [{"PATH", fixture_bin}, {"STUB_CURL_LOG", curl_log}]
+    {provisioning_output, provisioning_status} = run_make(["keycloak"], env)
+
+    assert provisioning_status != 0
+    assert provisioning_output =~ "simulated provisioning failure"
+    refute File.exists?(curl_log)
+    refute provisioning_output =~ "==> Browser origins"
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    exit 0
+    """)
+
+    {route_output, route_status} =
+      run_make(["keycloak"], [{"KEYCLOAK_ROUTE_ATTEMPTS", "1"} | env])
+
+    assert route_status != 0
+    assert route_output =~ "ERROR Keycloak public descriptor validation failed"
+    assert File.exists?(curl_log)
+    refute route_output =~ "==> Browser origins"
+  end
+
+  test "legacy demo verbs delegate exclusively to canonical Make targets" do
+    script = File.read!("scripts/demo")
+
+    mappings = %{
+      "doctor" => "doctor",
+      "up" => "up-d",
+      "reset" => "reset",
+      "test" => "demo-test",
+      "urls" => "url",
+      "down" => "down"
+    }
+
+    arms =
+      ~r/^  ([a-z]+)\)$/m
+      |> Regex.scan(script, capture: :all_but_first)
+      |> Enum.map(fn [verb] -> verb end)
+      |> MapSet.new()
+
+    assert arms == MapSet.new(Map.keys(mappings))
+
+    Enum.each(mappings, fn {verb, target} ->
+      assert script =~ "  #{verb})\n    exec make #{target}\n"
+    end)
+
+    refute script =~ "docker compose"
+    refute script =~ "http://"
+  end
+
+  test "reset, nuke, and optional environment configuration stay fail-closed" do
+    {reset, 0} = run_make(["-n", "reset"])
+    {reseed, 0} = run_make(["-n", "reseed"])
+
+    assert reset == reseed
+    assert reset =~ "docker compose exec demo_app mix do ecto.drop, ecto.setup"
+
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    docker_log = Path.join(fixture_bin, "docker.log")
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    printf '%s\n' "$*" >> "$STUB_DOCKER_LOG"
+    """)
+
+    env = [{"PATH", fixture_bin}, {"STUB_DOCKER_LOG", docker_log}]
+    {declined, 0} = run_make_with_input(["nuke"], "n", env)
+
+    assert declined =~
+             "NUKE will permanently delete this Relyra demo's database, build, dependency, Hex, and Mix volumes. Continue? [y/N]"
+
+    assert declined =~ "The next boot is a cold rebuild."
+    refute File.exists?(docker_log)
+
+    {approved, 0} = run_make(["nuke"], [{"NUKE", "1"} | env])
+    assert approved =~ "The next boot is a cold rebuild."
+    assert File.read!(docker_log) == "compose down -v\n"
+
+    env_example = File.read!(".env.example")
+
+    Enum.each(
+      ~w(PORT RELYRA_HOST DEMO_PROXY_NETWORK DEMO_ADMIN_USERNAME DEMO_ADMIN_PASSWORD KEYCLOAK_SARAH_PASSWORD),
+      fn key -> assert env_example =~ ~r/^# #{key}=/m end
+    )
+
+    refute env_example =~ ~r/^[A-Z][A-Z0-9_]*=/m
+    assert env_example =~ "demo-only"
+    assert env_example =~ "not suitable for production"
+  end
+
+  test "fleet distinguishes error, empty, partial, and populated Docker states" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    link_tool!(fixture_bin, "awk")
+    link_tool!(fixture_bin, "sort")
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    case "$STUB_DOCKER_MODE" in
+      error)
+        echo "Cannot connect to the Docker daemon" >&2
+        exit 17
+        ;;
+      empty)
+        exit 0
+        ;;
+      rows)
+        printf '%s' "$STUB_DOCKER_OUTPUT"
+        ;;
+    esac
+    """)
+
+    path_env = [{"PATH", fixture_bin}]
+
+    {error, error_status} = run_make(["fleet"], [{"STUB_DOCKER_MODE", "error"} | path_env])
+    assert error_status != 0
+    assert error =~ "ERROR fleet query — Cannot connect to the Docker daemon"
+    assert error =~ "Next: docker info"
+    refute error =~ "No Traefik-routed demo containers running."
+
+    {empty, 0} = run_make(["fleet"], [{"STUB_DOCKER_MODE", "empty"} | path_env])
+    assert empty == "No Traefik-routed demo containers running.\nNext: make proxy\n"
+
+    long_ports = "127.0.0.1:12345678901234567890->4000/tcp"
+
+    rows =
+      "zeta\tcharlie\tUp 1 hour\t#{long_ports}\n" <>
+        "alpha\tbravo\tUp 2 hours\t\n" <>
+        "\talpha\t\t\n"
+
+    {populated, 0} =
+      run_make(
+        ["fleet"],
+        [{"STUB_DOCKER_MODE", "rows"}, {"STUB_DOCKER_OUTPUT", rows} | path_env]
+      )
+
+    assert populated =~ "Project  Name  Status  Ports"
+
+    assert_in_order(populated, [
+      "(missing)  alpha  (missing)  (missing)",
+      "alpha  bravo  Up 2 hours  (missing)",
+      "zeta  charlie  Up 1 hour  #{long_ports}"
+    ])
+
+    makefile = File.read!(@makefile_path)
+    fleet_recipe = target_body(makefile, "fleet")
+    assert fleet_recipe =~ "label=traefik.enable=true"
+    refute fleet_recipe =~ "com.docker.compose.project=relyra"
+  end
+
+  test "doctor reports every dependency, port, and network state without suppression" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    case "$*" in
+      "version") echo "Docker version 99" ;;
+      "compose version") echo "Docker Compose version 99" ;;
+      "network inspect"*) echo "proxy" ;;
+      *) exit 0 ;;
+    esac
+    """)
+
+    write_executable!(fixture_bin, "lsof", """
+    #!/bin/sh
+    case "$*" in
+      *iTCP:4000*) echo "beam.smp 12345 developer 99u IPv6 very-long-owner-detail-for-port-4000"; exit 0 ;;
+      *iTCP:5432*) echo "postgres 5432 developer 10u IPv4 database-listener"; exit 0 ;;
+      *iTCP:8080*) exit 1 ;;
+    esac
+    """)
+
+    {output, status} = run_make(["doctor"], [{"PATH", fixture_bin}])
+
+    assert status != 0
+
+    assert_in_order(output, [
+      "==> Dependencies",
+      "OK docker",
+      "OK docker compose",
+      "==> Host ports",
+      "WARN port 4000 occupied",
+      "very-long-owner-detail-for-port-4000",
+      "INFO port 5432 occupied",
+      "Relyra does not publish Postgres; this listener is diagnostic only.",
+      "OK port 8080 free",
+      "==> Shared proxy network",
+      "OK proxy network exists — proxy.",
+      "==> Next steps",
+      "Review the exact Next: commands above."
+    ])
+  end
+
+  test "doctor uses nc fallback and never calls an unavailable probe free" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    case "$*" in
+      "version"|"compose version") exit 0 ;;
+      "network inspect"*) echo "network missing" >&2; exit 1 ;;
+      *) exit 0 ;;
+    esac
+    """)
+
+    write_executable!(fixture_bin, "nc", """
+    #!/bin/sh
+    case "$*" in
+      *4000) exit 0 ;;
+      *) exit 1 ;;
+    esac
+    """)
+
+    {nc_output, nc_status} = run_make(["doctor"], [{"PATH", fixture_bin}])
+    assert nc_status != 0
+    assert nc_output =~ "WARN port 4000 occupied — detected by nc."
+    assert nc_output =~ "OK port 5432 free — Relyra does not publish Postgres"
+    assert nc_output =~ "OK port 8080 free"
+    assert nc_output =~ "WARN proxy network missing. Next: make proxy"
+
+    File.rm!(Path.join(fixture_bin, "nc"))
+    {unavailable, unavailable_status} = run_make(["doctor"], [{"PATH", fixture_bin}])
+    assert unavailable_status != 0
+
+    Enum.each([4000, 5432, 8080], fn port ->
+      assert unavailable =~ "WARN port #{port} probe unavailable"
+      refute unavailable =~ "OK port #{port} free"
+    end)
+
+    assert unavailable =~ "Relyra does not publish Postgres; this listener is diagnostic only."
+    assert unavailable =~ "Next: inspect host ports manually or install lsof/netcat"
+  end
+
+  test "doctor carries the configured Solo port through diagnosis and URL recovery" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    lsof_log = Path.join(fixture_bin, "lsof.log")
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    case "$*" in
+      "version"|"compose version"|"network inspect proxy") exit 0 ;;
+      *) exit 0 ;;
+    esac
+    """)
+
+    write_executable!(fixture_bin, "lsof", """
+    #!/bin/sh
+    printf '%s\\n' "$*" >> "$STUB_LSOF_LOG"
+    case "$*" in
+      *iTCP:4101*) echo "beam.smp 4101 developer 99u IPv6 demo-listener"; exit 0 ;;
+      *iTCP:5432*) echo "postgres 5432 developer 10u IPv4 database-listener"; exit 0 ;;
+      *iTCP:8080*) exit 1 ;;
+    esac
+    """)
+
+    env = [{"PATH", fixture_bin}, {"PORT", "4101"}, {"STUB_LSOF_LOG", lsof_log}]
+    {doctor, doctor_status} = run_make(["doctor"], env)
+    {url, 0} = run_make(["url"], env)
+    probes = File.read!(lsof_log)
+    guide = File.read!("guides/docker_dev_dx.md")
+    doctor_recipe = File.read!(@makefile_path) |> target_body("doctor")
+
+    assert doctor_recipe =~ "check_port \"$${PORT}\" demo"
+    assert doctor_recipe =~ "check_port 5432 postgres"
+    assert doctor_recipe =~ "check_port 8080 proxy"
+    assert doctor_status != 0
+    assert probes =~ "iTCP:4101"
+    refute probes =~ "iTCP:4000"
+    assert doctor =~ "WARN port 4101 occupied —"
+    assert doctor =~ "Solo demo listener"
+    assert doctor =~ "PORT=<free-port> make doctor"
+    assert doctor =~ "PORT=<free-port> make url"
+    assert url =~ "Loopback: http://localhost:4101"
+
+    assert_in_order(guide, [
+      "PORT=4101 make doctor",
+      "PORT=4101 make url",
+      "PORT=4101 make up-build",
+      "Loopback:",
+      "/login/test",
+      "/relyra/admin"
+    ])
+  end
+
+  test "open selects a supported opener and otherwise keeps a copy-pasteable URL" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    opener_log = Path.join(fixture_bin, "opener.log")
+
+    write_executable!(fixture_bin, "open", """
+    #!/bin/sh
+    printf 'open:%s\n' "$*" >> "$STUB_OPENER_LOG"
+    """)
+
+    env = [
+      {"PATH", fixture_bin},
+      {"RELYRA_HOST", "alt.relyra.localhost"},
+      {"STUB_OPENER_LOG", opener_log}
+    ]
+
+    {_, 0} = run_make(["open"], env)
+    assert File.read!(opener_log) == "open:http://alt.relyra.localhost\n"
+
+    File.rm!(Path.join(fixture_bin, "open"))
+    File.rm!(opener_log)
+
+    write_executable!(fixture_bin, "xdg-open", """
+    #!/bin/sh
+    printf 'xdg-open:%s\n' "$*" >> "$STUB_OPENER_LOG"
+    """)
+
+    {_, 0} = run_make(["open"], env)
+    assert File.read!(opener_log) == "xdg-open:http://alt.relyra.localhost\n"
+
+    File.rm!(Path.join(fixture_bin, "xdg-open"))
+    File.rm!(opener_log)
+    {fallback, 0} = run_make(["open"], env)
+
+    assert fallback =~ "http://alt.relyra.localhost"
+    assert fallback =~ "Next: open the URL manually or install xdg-utils"
+    refute File.exists?(opener_log)
+  end
+
+  test "proxy inspects or creates only the configured shared network before startup" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    docker_log = Path.join(fixture_bin, "docker.log")
+
+    write_executable!(fixture_bin, "docker", """
+    #!/bin/sh
+    printf '%s\n' "$*" >> "$STUB_DOCKER_LOG"
+    if [ "$1 $2" = "network inspect" ] && [ "$STUB_NETWORK" = "missing" ]; then
+      exit 1
+    fi
+    """)
+
+    env = [
+      {"PATH", fixture_bin},
+      {"DEMO_PROXY_NETWORK", "shared-proxy"},
+      {"STUB_DOCKER_LOG", docker_log}
+    ]
+
+    {_, 0} = run_make(["proxy"], [{"STUB_NETWORK", "missing"} | env])
+
+    assert File.read!(docker_log) ==
+             "network inspect shared-proxy\n" <>
+               "network create shared-proxy\n" <>
+               "compose -f docker/traefik/compose.yml up -d\n"
+
+    File.rm!(docker_log)
+    {_, 0} = run_make(["proxy"], [{"STUB_NETWORK", "exists"} | env])
+
+    assert File.read!(docker_log) ==
+             "network inspect shared-proxy\n" <>
+               "compose -f docker/traefik/compose.yml up -d\n"
+  end
+
+  test "launcher treats environment values as data instead of shell fragments" do
+    fixture_bin = fixture_bin!()
+    on_exit(fn -> File.rm_rf!(fixture_bin) end)
+    injection_log = Path.join(fixture_bin, "injection.log")
+
+    write_executable!(fixture_bin, "touch", """
+    #!/bin/sh
+    echo "environment value executed" > "$STUB_INJECTION_LOG"
+    """)
+
+    hostile_host = "safe.localhost\"; touch \"$STUB_INJECTION_LOG\"; echo \""
+
+    {output, 0} =
+      run_make(
+        ["url"],
+        [
+          {"PATH", fixture_bin},
+          {"RELYRA_HOST", hostile_host},
+          {"STUB_INJECTION_LOG", injection_log}
+        ]
+      )
+
+    refute File.exists?(injection_log)
+    assert output =~ hostile_host
+  end
+
+  test "Docker DX guide carries the complete Solo FakeIdP journey" do
+    guide = File.read!("guides/docker_dev_dx.md")
+
+    assert_in_order(guide, [
+      "## Solo: prove one local login",
+      "Docker with Compose v2",
+      "make doctor",
+      "make up-build",
+      "http://localhost:4000/login/test",
+      "FakeIdP",
+      "Return to LedgerLoop",
+      "operator validation trace",
+      "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt."
+    ])
+
+    assert guide =~ "configured IdP certificates are the trust source"
+    assert guide =~ "Relyra verifies the cryptographic assertion"
+    assert guide =~ "LedgerLoop owns user mapping"
+    assert guide =~ "owns the persisted session-establishment receipt"
+    assert guide =~ "owns authorization"
+    assert guide =~ "not a claim that Relyra creates a browser cookie"
+  end
+
+  test "Docker DX guide keeps Fleet Keycloak cache and recovery subordinate and exact" do
+    guide = File.read!("guides/docker_dev_dx.md")
+
+    receipt =
+      "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt."
+
+    fleet_section =
+      guide |> String.split("## Fleet: run beside sibling demos", parts: 2) |> List.last()
+
+    recovery_section = guide |> String.split("## Recovery ladder", parts: 2) |> List.last()
+
+    assert_in_order(guide, [
+      receipt,
+      "## Fleet: run beside sibling demos",
+      "## Optional Keycloak: a separate real-IdP proof",
+      "## Caching and fast edits",
+      "## Recovery ladder"
+    ])
+
+    assert_in_order(fleet_section, [
+      "make proxy",
+      "make fleet"
+    ])
+
+    Enum.each(
+      [
+        "http://localhost:4000",
+        "http://relyra.localhost",
+        "http://keycloak.relyra.localhost",
+        "http://localhost:8080/dashboard/",
+        "*.localhost is browser-facing",
+        "Docker service DNS",
+        "bind-mounted",
+        "named Linux volumes",
+        "`deps/`",
+        "`_build/`",
+        "mix.lock",
+        "BuildKit",
+        "Hex/rebar",
+        "port conflicts",
+        "missing proxy network",
+        "Browser-only localhost",
+        "Keycloak public-host mismatch"
+      ],
+      &assert(guide =~ &1)
+    )
+
+    assert_in_order(recovery_section, [
+      "make doctor",
+      "make down",
+      "make up-build",
+      "make reset",
+      "make reseed",
+      "make nuke"
+    ])
+
+    assert guide =~ "destructive database refresh"
+    assert recovery_section =~ "confirmation"
+    assert guide =~ "cold rebuild"
+    assert recovery_section =~ "deletes demo data"
+    assert recovery_section =~ "build/dependency volumes"
+  end
+
+  test "detailed evaluator README follows the Make-first Docker route and retains Local Mix" do
+    readme = File.read!("demo/ledger_loop/README.md")
+
+    docker_section =
+      readme |> String.split("### Option A — Docker (Recommended)", parts: 2) |> List.last()
+
+    assert_in_order(readme, [
+      "### Option A — Docker (Recommended)",
+      "make doctor",
+      "make up-build",
+      "../../guides/docker_dev_dx.md",
+      "## Optional Keycloak Profile",
+      "make keycloak",
+      "http://keycloak.relyra.localhost"
+    ])
+
+    assert_in_order(readme, ["Simulate Login via FakeIdP", "## Optional Keycloak Profile"])
+
+    assert readme =~ "### Option B — Local Mix"
+    assert readme =~ "mix setup"
+    assert readme =~ "mix phx.server"
+    assert readme =~ "http://localhost:4000"
+
+    assert readme =~ "make proxy"
+    assert readme =~ "http://keycloak.relyra.localhost"
+    assert readme =~ "scripts/demo"
+    refute docker_section =~ "scripts/demo up"
+    refute readme =~ "docker compose --profile keycloak up -d"
+    refute readme =~ "Keycloak starts at `http://localhost:8080`"
+
+    assert readme =~
+             "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt."
+
+    assert readme =~ "| Session establishment | LedgerLoop |"
+    assert readme =~ "| Downstream authorization | LedgerLoop |"
+  end
+
+  test "detailed evaluator README matches the FakeIdP Sarah receipt contract" do
+    readme = File.read!("demo/ledger_loop/README.md")
+
+    controller =
+      File.read!("demo/ledger_loop/lib/ledger_loop_web/controllers/fake_idp_controller.ex")
+
+    flow_test = File.read!("demo/ledger_loop/test/ledger_loop_web/fake_idp_flow_test.exs")
+
+    success_section =
+      readme
+      |> String.split("## What You'll See", parts: 2)
+      |> List.last()
+      |> String.split("## Seeded Data", parts: 2)
+      |> List.first()
+
+    assert controller =~ "name_id: \"sarah@northstar.example.com\""
+
+    assert flow_test =~
+             "sarah_user = Fixtures.users() |> Enum.find(&(&1.email == \"sarah@northstar.example.com\"))"
+
+    assert flow_test =~ "Repo.all(from r in LoginReceipt, where: r.user_id == ^sarah_user.id)"
+
+    assert success_section =~ "`sarah@northstar.example.com`"
+    assert success_section =~ "seeded Sarah identity"
+    assert success_section =~ "`LoginReceipt`"
+    assert success_section =~ "Relyra verifies the assertion"
+    assert success_section =~ "maps Sarah and inserts the host-owned `LoginReceipt`"
+
+    refute success_section =~ ~r/evaluator@example\.com/
+    refute success_section =~ "cannot map"
+    refute success_section =~ "future exercise"
+  end
+
+  test "public evaluator guides agree on the credentialed scoped trace journey" do
+    guide = File.read!("guides/docker_dev_dx.md")
+    readme = File.read!("demo/ledger_loop/README.md")
+
+    Enum.each([guide, readme], fn document ->
+      assert document =~ "DEMO_ADMIN_USERNAME"
+      assert document =~ "DEMO_ADMIN_PASSWORD"
+      assert document =~ "/login/admin"
+      assert document =~ "401"
+      assert document =~ "restart"
+      refute document =~ ~r/^DEMO_ADMIN_(?:USERNAME|PASSWORD)=.+$/m
+    end)
+
+    assert_in_order(guide, [
+      "DEMO_ADMIN_USERNAME",
+      "DEMO_ADMIN_PASSWORD",
+      "make up-build",
+      "/login/admin",
+      "401",
+      "restart",
+      "/login/admin",
+      "## Fleet: run beside sibling demos",
+      "DEMO_ADMIN_USERNAME",
+      "## Optional Keycloak: a separate real-IdP proof",
+      "DEMO_ADMIN_USERNAME",
+      "make keycloak"
+    ])
+
+    assert_in_order(readme, [
+      "### Option A — Docker (Recommended)",
+      "DEMO_ADMIN_USERNAME",
+      "DEMO_ADMIN_PASSWORD",
+      "make up-build",
+      "## Trace access prerequisite",
+      "DEMO_ADMIN_USERNAME",
+      "/login/admin",
+      "401",
+      "restart",
+      "## Optional Keycloak Profile",
+      "DEMO_ADMIN_USERNAME",
+      "make keycloak"
+    ])
+
+    Enum.each(
+      [
+        "| `GET /saml/:connection_id/metadata` |",
+        "| `GET /saml/:connection_id/login` |",
+        "| `POST /saml/:connection_id/acs` |"
+      ],
+      &assert(readme =~ &1)
+    )
+
+    refute readme =~ "| `GET /saml/metadata` |"
+    refute readme =~ "| `POST /saml/acs` |"
+
+    assert readme =~
+             "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt."
+
+    assert readme =~ "| Session establishment | LedgerLoop |"
+    assert readme =~ "| Downstream authorization | LedgerLoop |"
+  end
+
+  test "Keycloak follow-on documentation uses the executable public Make target" do
+    makefile = File.read!(@makefile_path)
+    guide = File.read!("guides/docker_dev_dx.md")
+    readme = File.read!("demo/ledger_loop/README.md")
+
+    guide_keycloak_section =
+      guide
+      |> String.split("## Optional Keycloak: a separate real-IdP proof", parts: 2)
+      |> List.last()
+
+    readme_keycloak_section =
+      readme |> String.split("## Optional Keycloak Profile", parts: 2) |> List.last()
+
+    assert makefile =~
+             "## keycloak: start the optional Fleet Keycloak proof and validate its public descriptor"
+
+    assert_in_order(guide, [
+      "## Solo: prove one local login",
+      "Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt.",
+      "## Optional Keycloak: a separate real-IdP proof",
+      "make keycloak"
+    ])
+
+    assert_in_order(readme, [
+      "Simulate Login via FakeIdP",
+      "## Optional Keycloak Profile",
+      "make keycloak"
+    ])
+
+    Enum.each([guide_keycloak_section, readme_keycloak_section], fn section ->
+      assert section =~ "make keycloak"
+      assert section =~ "Traefik"
+      assert section =~ "Keycloak profile"
+      assert section =~ "provisioning"
+      assert section =~ "public descriptor"
+      refute section =~ "make proxy\nmake up-build"
+    end)
+  end
+
+  test "demo and repository routers converge on the Make-first guide" do
+    demo_router = File.read!("guides/demo.md")
+    root_readme = File.read!("README.md")
+
+    assert demo_router =~
+             "https://github.com/szTheory/relyra/blob/main/guides/docker_dev_dx.md"
+
+    assert demo_router =~
+             "https://github.com/szTheory/relyra/blob/main/demo/ledger_loop/README.md"
+
+    assert demo_router =~ "not part of the Hex package"
+    assert demo_router =~ "Make-first"
+
+    assert_in_order(root_readme, [
+      "## Start Here",
+      "mix relyra.install",
+      "3. Follow [Getting Started](guides/getting_started.md).",
+      "## Day-2 And Operator Guides"
+    ])
+
+    assert root_readme =~ "guides/docker_dev_dx.md"
+    assert root_readme =~ "Fleet"
+    assert root_readme =~ "not part of the Hex package"
+  end
+
+  test "incomplete phases require automated acceptance instead of human UAT" do
+    roadmap = File.read!(".planning/ROADMAP.md")
+
+    violations =
+      roadmap
+      |> incomplete_phase_numbers()
+      |> Enum.flat_map(&automation_policy_violations/1)
+
+    assert violations == [],
+           "Incomplete phases must shift acceptance left into deterministic CI:\n" <>
+             Enum.map_join(violations, "\n", &"  - #{&1}")
+  end
+
+  test "assert_in_order advances beyond repeated tokens" do
+    assert_in_order("repeat middle repeat", ["repeat", "middle", "repeat"])
+  end
+
+  defp documented_targets(makefile) do
+    ~r/^## ([a-z0-9-]+):/m
+    |> Regex.scan(makefile, capture: :all_but_first)
+    |> Enum.map(fn [target] -> target end)
+    |> MapSet.new()
+  end
+
+  defp incomplete_phase_numbers(roadmap) do
+    ~r/^- \[ \] \*\*Phase ([0-9.]+):/m
+    |> Regex.scan(roadmap, capture: :all_but_first)
+    |> Enum.map(fn [phase] -> phase end)
+  end
+
+  defp automation_policy_violations(phase) do
+    phase_dirs = Path.wildcard(".planning/phases/#{phase}-*")
+
+    document_violations =
+      for phase_dir <- phase_dirs,
+          path <- Path.wildcard(Path.join(phase_dir, "*.md")),
+          marker <- ["<human-check>", "## Manual-Only Verifications", "status: human_needed"],
+          String.contains?(File.read!(path), marker),
+          do: "#{path} contains #{inspect(marker)}"
+
+    uat_violations =
+      for phase_dir <- phase_dirs,
+          path <- Path.wildcard(Path.join(phase_dir, "*-UAT.md")),
+          do: "#{path} requires a UAT artifact"
+
+    document_violations ++ uat_violations
+  end
+
+  defp run_make(args, env \\ []) do
+    System.cmd(make_executable!(), args, env: env, stderr_to_stdout: true)
+  end
+
+  defp run_make_with_input(args, input, env) do
+    shell_env =
+      [{"MAKE_BIN", make_executable!()}, {"MAKE_INPUT", input} | env]
+
+    System.cmd(
+      "/bin/sh",
+      ["-c", "printf '%s\\n' \"$MAKE_INPUT\" | exec \"$MAKE_BIN\" \"$@\"", "relyra-make" | args],
+      env: shell_env,
+      stderr_to_stdout: true
+    )
+  end
+
+  defp make_executable! do
+    System.find_executable("make") || flunk("GNU Make is required for the launcher contract")
+  end
+
+  defp fixture_bin! do
+    path =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-launcher-fixture-#{System.unique_integer([:positive, :monotonic])}"
+      )
+
+    File.mkdir_p!(path)
+    path
+  end
+
+  defp write_executable!(directory, name, contents) do
+    path = Path.join(directory, name)
+    File.write!(path, contents)
+    File.chmod!(path, 0o755)
+    path
+  end
+
+  defp link_tool!(directory, name) do
+    source = System.find_executable(name) || flunk("#{name} is required for launcher fixtures")
+    File.ln_s!(source, Path.join(directory, name))
+  end
+
+  defp assert_target_contains(makefile, target, expected_lines) do
+    body = target_body(makefile, target)
+    Enum.each(expected_lines, &assert(body =~ &1))
+  end
+
+  defp target_body(makefile, target) do
+    pattern = ~r/^#{Regex.escape(target)}:\n((?:\t.*\n?)*)/m
+
+    case Regex.run(pattern, makefile, capture: :all_but_first) do
+      [body] -> body
+      nil -> flunk("Missing Make target: #{target}")
+    end
+  end
+
+  defp assert_in_order(text, tokens) do
+    Enum.reduce(tokens, 0, fn token, cursor ->
+      suffix = binary_part(text, cursor, byte_size(text) - cursor)
+
+      case :binary.match(suffix, token) do
+        {relative_index, length} ->
+          cursor + relative_index + length
+
+        :nomatch ->
+          flunk("Missing banner token: #{inspect(token)} after byte #{cursor}")
+      end
     end)
   end
 end

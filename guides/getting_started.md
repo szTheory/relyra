@@ -12,7 +12,7 @@ Follow the sections in order:
 
 1. Install
 2. Scaffold
-3. Prove local login with TestSupport
+3. Prove local login with `Relyra.Testing`
 4. Choose one provider runbook
 5. Production follow-ons
 
@@ -73,11 +73,17 @@ At this stage you should have:
 Receipt: the installer runs cleanly, the generated files exist, and your host app
 still boots after you apply the scaffold instructions.
 
-## 3. Prove local login with TestSupport
+## 3. Prove local login with `Relyra.Testing`
 
 Before touching a real IdP, prove the local trust path with
-`use Relyra.TestSupport, endpoint: …`. FakeIdP signing is internal to the macro
-helpers — you focus on wiring a stub ACS route and asserting the login receipt.
+`Relyra.Testing.signed_success/1` and `Relyra.Testing.Phoenix.post_response/5`.
+The testing module produces explicit fixture data for the real verifier path.
+
+> #### Info
+> Testing fixtures are signed using ephemeral RSA key pairs generated dynamically
+> at runtime. These keys do not exist on disk, are discarded when the Beam process
+> exits, and exist solely to exercise Relyra's cryptographic verification
+> seams locally without checking in static key material.
 
 Prerequisites:
 
@@ -104,25 +110,41 @@ defmodule MyAppWeb.TestAcsController do
 end
 ```
 
-Integration test using the TestSupport macro:
+Integration test using the Testing module:
 
 ```elixir
 defmodule MyAppWeb.SamlLoginTest do
   use ExUnit.Case, async: false
-  use Relyra.TestSupport, endpoint: MyAppWeb.TestRouter
 
-  test "local SAML login round-trip" do
-    conn = Phoenix.ConnTest.build_conn() |> setup_saml_connection(connection_id: "demo")
+  @endpoint MyAppWeb.TestRouter
 
-    response = build_saml_response() |> sign_saml_response()
-    conn = post_saml_response(conn, Base.decode64!(response, padding: false))
+  test "adopters can write a tiny integration test" do
+    conn = Phoenix.ConnTest.build_conn()
+    fixture = Relyra.Testing.signed_success(name_id: "alice@example.com")
 
-    assert_saml_login(conn, %{email: "alice@example.com"})
+    assert {:ok, login_result} =
+             Relyra.consume_response(
+               fixture.response_xml,
+               fixture.request_intent,
+               Relyra.Testing.consume_opts(fixture)
+             )
+
+    assert login_result.principal.name_id == "alice@example.com"
+
+    conn =
+      Relyra.Testing.Phoenix.post_response(
+        conn,
+        @endpoint,
+        "/#{fixture.connection.id}/acs",
+        fixture
+      )
+
+    assert %Plug.Conn{assigns: %{current_user: %{email: "alice@example.com"}}} = conn
   end
 end
 ```
 
-Copy-paste source of truth: `test/test_support_demo_test.exs` in the Relyra repo.
+Copy-paste source of truth: `test/testing_demo_test.exs` in the Relyra repo.
 
 <details>
 <summary>Maintainers: doc CI gate</summary>
@@ -139,8 +161,8 @@ Phase closeout PRs that touch only internal GSD metadata are handled by
 
 Adoption journey evidence lives under `test/adoption/` in the Relyra repository (not shipped on Hex):
 
-- **`mix ci.integration`** — install parity, TestSupport proof, production `saml_routes()` ACS, Ecto resolver path, LiveAdmin smoke (`@tag :integration`).
-- **`mix ci.demo`** — headless FakeIdP round trip via `examples/quickstart.exs`.
+- **`mix ci.integration`** — install parity, local fixture proof, production `saml_routes()` ACS, Ecto resolver path, LiveAdmin smoke (`@tag :integration`).
+- **`mix ci.demo`** — headless local fixtures round trip via `examples/quickstart.exs`.
 - **`mix ci.external_idp`** — Keycloak SAML happy path (`@tag :external_idp`; separate CI job, not part of default `mix qa`).
 
 Golden host fixture: `test/fixtures/demo_host/` (kept in sync with `mix relyra.install` via journey 01).
@@ -156,8 +178,7 @@ for real integration after this proof.
 If this step fails, fix it here. Do not move to a hosted IdP until the local
 proof is stable.
 
-Receipt: a host-side test passes with `assert_saml_login/2` (or `saml_login/1`
-returns `{:ok, …}`) after `post_saml_response/2` dispatches to your stub ACS route.
+Receipt: a host-side test passes with standard Phoenix `conn` assertions after `Relyra.Testing.Phoenix.post_response/5` dispatches to your stub ACS route.
 
 ## 4. Choose one provider runbook
 
@@ -233,22 +254,3 @@ Useful follow-on references:
 
 Receipt: you have one working provider path plus a written production follow-on
 plan for metadata, certificates, audit/telemetry, and any optional admin surface.
-
-## Appendix: Advanced manual response construction
-
-Power users may call FakeIdP builders directly when debugging signing or metadata
-without ConnTest dispatch. This path skips router dispatch — prefer §3 for the
-recommended round-trip.
-
-```elixir
-metadata = Relyra.TestSupport.fake_idp_metadata()
-
-response =
-  []
-  |> Relyra.TestSupport.build_saml_response()
-  |> Relyra.TestSupport.sign_saml_response()
-```
-
-`sign_saml_response/2` returns base64; decode before `post_saml_response/2` in
-macro tests. See [§3. Prove local login with TestSupport](#3-prove-local-login-with-testsupport)
-for the full integration path.

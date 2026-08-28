@@ -213,6 +213,98 @@
 
 ---
 
+## Milestone: v1.9 - Loose Ends & Adoption Honesty
+
+**Shipped:** 2026-06-19
+**Phases:** 4 | **Plans:** 13
+
+### What Was Built
+
+- Public `Relyra.Testing` fixtures: signed success, typed rejection fixtures, explicit consume opts, package-included public modules, and Phoenix-optional ACS dispatch.
+- Documentation truth: README, Getting Started, recipes, overview, generated batteries proof, demo tests, and drift tests now route Hex adopters through public `Relyra.Testing`, not private `Relyra.TestSupport`.
+- LedgerLoop FakeIdP disposition: retained as demo-local browser proof, documented in `guides/fake_idp_demo.md`, with success/tamper behavior and port-4000 caveat explicit.
+- Maintenance sync: `CVE-2026-49454` backfilled, CI/release guard notes refreshed, Phase 29 warning follow-ups given item-level dispositions, and SEED-001..003 moved to resolved/historical status.
+
+### What Worked
+
+- Treating public test helpers as a test-only API kept adopter DX honest without moving private adversarial corpus internals into Hex.
+- Release parity proof stayed artifact-level: local Hex unpack checks proved `lib/relyra/testing*` ships and `lib/relyra/test_support*` does not.
+- Phase 66's explicit retain/remove checkpoint prevented stale FakeIdP work from lingering as ambiguous demo scope.
+- Phase 67 separated planning truth from code fixes: warning dispositions were recorded without implying crypto/parser changes.
+
+### What Was Inefficient
+
+- The milestone audit had to be created during completion because `v1.9-MILESTONE-AUDIT.md` was missing at closeout.
+- Nyquist validation metadata stayed uneven across phases even though phase verification and requirements coverage were complete.
+- `~/.agents/gsd-core/bin/gsd-tools.cjs` was broken locally due to missing package metadata; the PATH `gsd-tools` binary worked and should be preferred in this environment.
+
+### Patterns Established
+
+- Public testing helpers should return explicit fixture/trust material and avoid global resolver or Application env mutation.
+- Package-boundary claims should be proven against an unpacked artifact, not source tree presence alone.
+- Demo-local IdP support can remain when it is named precisely, bounded to local proof, and documented with caveats.
+- Resolved seeds should be marked as historical records so they do not resurface as future milestone candidates.
+
+### Key Lessons
+
+1. A public testing API can improve adoption honesty without weakening the production trust boundary when it reuses verifier primitives and keeps trust material explicit.
+2. Documentation truth needs executable drift tests; otherwise private helper names leak back into adopter-facing paths.
+3. Closeout audits should run before completion, even when phase verification is already green, because audit metadata quality is a separate planning concern.
+
+### Cost Observations
+
+- Model mix: not measured.
+- Timeline: v1.9 started 2026-06-15 and shipped 2026-06-19.
+- Notable: completion used manual in-process integration review because subagent delegation was not explicitly requested in this Codex runtime.
+
+---
+
+## Milestone: v1.10 — Docker DX & Fleet Proxy
+
+**Shipped:** 2026-08-27
+**Phases:** 6 | **Plans:** 30 | **Tasks:** 51
+
+### What Was Built
+
+- Cached, architecture-correct Docker development with lock-content-aware boot and real browser live reload.
+- Solo-first Compose plus opt-in shared Traefik fleet routing that avoids host port collisions.
+- A genuine Keycloak signed-SAML proof with audited descriptor trust, protected traces, and recurring CI.
+- A Make-first launcher, deterministic diagnostics, and a self-contained evaluator documentation journey.
+- Connection-scoped evaluator endpoints and runtime Basic Auth for fail-closed trace access.
+
+### What Worked
+
+- The demo/docker/docs boundary held: no Relyra public API, parser, crypto, replay, or package-surface change was needed.
+- Mandatory CI lanes modeled browser, Docker, credentials, failures, and recovery without adding a new human completion gate.
+- Audit-driven closure fixed real endpoint and trace-auth handoffs in Phase 72.1, then strict three-source reconciliation closed metadata-only gaps.
+- A dedicated disposable Phase 68 harness converted four historical manual receipts into deterministic Docker/Chromium evidence.
+
+### What Was Inefficient
+
+- Phase 68's first automation pass had readiness, log-pipeline, browser-subscription, and origin mismatches; several full Docker cycles were needed before the harness reflected the real contract.
+- Docker's VM disk reached 100% during validation; a constrained prune of unused build cache older than 24 hours was required before evidence could complete.
+- GSD's generated audit filename was duplicated, the archival parser initially excluded inserted Phase 72.1, and legacy summaries caused the generated task count to under-report 51 tasks as 15.
+
+### Patterns Established
+
+- Runtime-only Docker acceptance belongs in an owned disposable harness, including cleanup, live browser behavior, and current-container log assertions.
+- Always dry-run milestone archival and compare its phase/plan counts with `STATE.md`, especially when decimal closure phases exist.
+- Preserve strict origin policy in the app; browser harnesses should use the configured public host instead of weakening `check_origin`.
+
+### Key Lessons
+
+1. Cache correctness is behavioral: prove BuildKit vertices, nested volume masking, lock branches, and live reload, not just configuration shape.
+2. Milestone evidence has its own integrity contract: REQUIREMENTS, VERIFICATION, SUMMARY frontmatter, and authoritative VALIDATION status must agree.
+3. Archive automation needs a scope preview; a successful command with the wrong phase set is still a failed closeout.
+
+### Cost Observations
+
+- Model mix: not measured.
+- Timeline: Phase 68 began in June; the active v1.10 completion push finished 2026-08-27.
+- Notable: deterministic closeout found harness and archive-tool defects without changing product security posture.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -221,6 +313,7 @@
 |-----------|--------|-------|------------|
 | v0.1 | 6 | 19 | Established XML-trust-boundary ADR pattern + behaviour-backed store contracts. |
 | v0.2 | 8 (5+3) | 25 | Established closure-phase pattern; established single-AuditWriter seam; established public-ID/internal-PK separation for persisted aggregates. |
+| v1.10 | 6 (5+1) | 30 | Established disposable Docker/Chromium acceptance and dry-run scope reconciliation for decimal closure phases. |
 
 ### Cumulative Quality
 
@@ -228,6 +321,7 @@
 |-----------|----------------|-----------------------|--------------------|
 | v0.1 | n/a (not recorded) | n/a | XML-ADR, behaviour-stores, opaque-RelayState |
 | v0.2 | 168/168 (serial) | 16,534 | closure-phase, AuditWriter seam, public-ID/internal-PK, stage-then-promote |
+| v1.10 | 32 focused docs tests + Phase 68 Docker/Chromium harness | no library-surface change | disposable runtime acceptance, archive-scope preview |
 
 ### Top Lessons (Verified Across Milestones)
 

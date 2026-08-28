@@ -1,0 +1,1 @@
+No external API integration: Phase 69 configures local Docker Compose, Traefik ingress, and Phoenix endpoint runtime settings; it does not call, wrap, or expose an external service API/SDK capability surface.

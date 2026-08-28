@@ -27,8 +27,6 @@ defmodule RelyraTest do
 
   test "start_login/3 returns :redirect_query for signed AuthnRequests" do
     pem = File.read!("test/fixtures/security/authn_request_signing/golden_signing_key.pem")
-    Application.put_env(:relyra, :sp_signing_key_pem, pem)
-    on_exit(fn -> Application.delete_env(:relyra, :sp_signing_key_pem) end)
 
     connection = %{
       idp_sso_url: "https://idp.example.com/sso",
@@ -38,7 +36,11 @@ defmodule RelyraTest do
       signed_request_encoding: :rfc3986_upper
     }
 
-    opts = [request_store: Relyra.TestSupport.NoopRequestStore, now: ~U[2026-05-26 00:00:00Z]]
+    opts = [
+      request_store: Relyra.TestSupport.NoopRequestStore,
+      signing_key_pem: pem,
+      now: ~U[2026-05-26 00:00:00Z]
+    ]
 
     assert {:ok, %{redirect_query: bytes, request_id: _, relay_state: _}} =
              Relyra.start_login(connection, %{return_to: "/"}, opts)

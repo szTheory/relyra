@@ -12,7 +12,7 @@ defmodule Mix.Tasks.Relyra.BatteriesIncluded do
 
   @default_output "BATTERIES_INCLUDED.md"
   @install_test "test/mix/relyra_install_test.exs"
-  @demo_test "test/test_support_demo_test.exs"
+  @demo_test "test/testing_demo_test.exs"
   @task_test "test/mix/tasks/relyra_batteries_included_test.exs"
 
   @impl true
@@ -79,7 +79,7 @@ defmodule Mix.Tasks.Relyra.BatteriesIncluded do
     [
       "# Batteries Included Proof",
       "",
-      "Generated from the shipped installer, test-support seam, provider registry, and focused proof commands in this repository.",
+      "Generated from the shipped installer, public testing fixture proof, provider registry, and focused proof commands in this repository.",
       "",
       "## Rerun Commands",
       "",
@@ -107,7 +107,7 @@ defmodule Mix.Tasks.Relyra.BatteriesIncluded do
       "| claim | executable state | seam | proof command | artifact |",
       "| --- | --- | --- | --- | --- |",
       "| install path is blessed and reproducible | `mix relyra.install` scaffolds the host integration surface and optional LiveAdmin contract | `Mix.Tasks.Relyra.Install.run/1` | `mix test #{@install_test} --warnings-as-errors` | `#{@install_test}` |",
-      "| local-first proof starts with FakeIdP | a tiny host-side ACS flow succeeds before any real IdP setup | `Relyra.TestSupport` + `Relyra.TestSupport.FakeIdP` | `mix test #{@demo_test} --warnings-as-errors` | `#{@demo_test}` |",
+      "| local-first proof uses testing fixtures | a tiny host-side ACS flow succeeds before any real IdP setup | `Relyra.Testing` data-first helpers | `mix test #{@demo_test} --warnings-as-errors` | `#{@demo_test}` |",
       "| supported provider scope stays narrow | first-class scope is limited to #{provider_scope} | `Relyra.Provider.list/0` | `mix test #{@task_test} --warnings-as-errors` | `guides/recipes/okta.md`, `guides/recipes/entra.md`, `guides/recipes/google_workspace.md`, `guides/recipes/adfs.md` |",
       "| provider runbooks stay tied to repo reality | Day-1 routing points to authoritative runbooks and no broader preset catalog | `guides/getting_started.md` + `Relyra.Provider.guide_url/1` | `mix test #{@task_test} --warnings-as-errors` | `guides/getting_started.md` |",
       "| optional admin remains a later receipt | LiveAdmin is optional and the installer can scaffold its host-side scope contract | `Relyra.LiveAdmin.ScopeProvider` | `mix test #{@install_test} --warnings-as-errors` | `#{@install_test}` |",

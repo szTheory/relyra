@@ -1,0 +1,19 @@
+name: relyra-e2e-sibling
+
+services:
+  sibling:
+    image: traefik/whoami:v1.12.0
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEMO_PROXY_NETWORK:-proxy}"
+      - "traefik.http.routers.relyra-e2e-sibling.rule=Host(`sibling.localhost`)"
+      - "traefik.http.routers.relyra-e2e-sibling.entrypoints=web"
+      - "traefik.http.routers.relyra-e2e-sibling.service=relyra-e2e-sibling"
+      - "traefik.http.services.relyra-e2e-sibling.loadbalancer.server.port=80"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: ${DEMO_PROXY_NETWORK:-proxy}

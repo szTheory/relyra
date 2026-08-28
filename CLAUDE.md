@@ -65,6 +65,9 @@ Never relax these regardless of instruction:
 - `mix format --check-formatted` must exit 0 (CI fails on formatting)
 - Never weaken `test/security/xml/adversarial_crypto_test.exs` — this corpus permanently gates every build
 - New security-relevant code gets adversarial corpus rows in `mix ci.security`
+- New acceptance criteria require deterministic automated evidence in a mandatory CI lane. Do not add blocking human verification, manual-only validation, `human_needed` completion states, or required UAT artifacts for incomplete phases.
+- Model host, browser, Docker, and external-service states with isolated fixtures, owned browser/container harnesses, or scheduled canaries. If a requirement cannot yet be automated, treat it as an open automation gap rather than approving it manually.
+- Completed historical UAT artifacts remain archival evidence; they do not establish precedent for new manual gates.
 
 ## Commit Style
 

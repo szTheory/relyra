@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1.7
+FROM hexpm/elixir:1.19.5-erlang-28.5.0.2-alpine-3.21.7
+
+# Pinned to the project-blessed Elixir 1.19.5 / OTP 28 pair (matches CI; see
+# .github/workflows/release-please.yml). relyra requires `elixir: ~> 1.19` and the
+# corpus gate uses the OTP 27+ `:json` module — an older base image cannot compile it.
+# `postgresql-client` is a virtual provide of `postgresqlNN-client` in Alpine.
+# `apk add postgresql-client` resolves correctly — do not change to `postgresql15-client`.
+# `curl` is included to preserve the existing `demo_app` healthcheck probe
+# (`curl -f http://localhost:4000/`) after Plan 02 removes the inline apk install block.
+RUN apk add --no-cache inotify-tools bash postgresql-client build-base git openssl curl
+
+ENV MIX_ENV=dev
+WORKDIR /app/demo/ledger_loop
+
+# Dep layer: copy ONLY the two mix files first so this layer is reused on any
+# source-only edit (COPY-before-source pattern — DKR-01).
+# Paths are repo-root-relative because the build context is the repo root (path dep at ../..).
+COPY demo/ledger_loop/mix.exs demo/ledger_loop/mix.lock ./
+
+# BuildKit cache mounts keep the Hex + rebar3 download caches across rebuilds.
+# These mounts exist ONLY at build time and do NOT persist into the running container;
+# the named volumes (relyra_hex, relyra_mix) own the runtime package state (D-02).
+# sharing=locked serializes concurrent writers — safe default for a shared package cache.
+RUN --mount=type=cache,id=relyra-hex,target=/root/.hex,sharing=locked \
+    --mount=type=cache,id=relyra-rebar3,target=/root/.cache/rebar3,sharing=locked \
+    mix local.hex --force && mix local.rebar --force && \
+    mix deps.get && mix deps.compile
+
+# NO `COPY . .` — source arrives via the bind mount (D-01).
+# The relyra path dep ({:relyra, path: "../.."}) is absent from mix.lock and
+# compiles at runtime from the bind-mounted parent source via the entrypoint.
+
+COPY demo/ledger_loop/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

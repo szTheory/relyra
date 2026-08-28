@@ -1,10 +1,12 @@
 ---
 id: SEED-002
-status: dormant
+status: resolved
 planted: 2026-06-13
 planted_during: v1.7 closeout (after PR #31 merge)
 trigger_when: next $gsd-new-milestone, or first adopter issue about testing their SP integration
 scope: small-to-medium
+resolved: 2026-06-19
+resolved_by: Phase 64 public Relyra.Testing package path and Phase 65 docs truth
 ---
 
 # SEED-002: Resolve Relyra.TestSupport vs Hex-package contradiction
@@ -29,10 +31,25 @@ the bug). It needs a deliberate decision.
 This is the same defect that made the demo's path-dependency build break in CI
 (a `:prod`-compiled dep has no `test_support`).
 
+## Resolution
+
+**Phase 67 note (2026-06-19):** SEED-002 is resolved and completed by the public
+`Relyra.Testing` package/docs path from Phases 64 and 65. `Relyra.Testing` is the
+Hex-facing, test-only fixture surface; private `Relyra.TestSupport` remains
+repo-only and excluded from production compilation and package files.
+
+This resolution does not reopen public API shape: Phase 64 already chose the
+data-first `Relyra.Testing` surface, and Phase 65 updated adopter-facing docs to
+that public path. Future work should only expand testing helpers if a new
+adopter demand signal appears.
+
 ## When to Surface
 
 **Trigger:** next `$gsd-new-milestone`, or sooner if an adopter files an issue
 about testing their SP integration / can't find `Relyra.TestSupport`.
+
+Resolved by the Phase 64/65 public testing and documentation work. This trigger
+is historical unless a distinct new adopter testing issue appears.
 
 ## Scope Estimate
 

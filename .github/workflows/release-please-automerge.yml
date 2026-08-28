@@ -1,6 +1,6 @@
 name: Release Please Auto Merge
 
-# Merges eligible release-please PRs after security-gates (OTP 27+28) pass.
+# Merges eligible release-please PRs after all required checks pass.
 # Pair with release-please-pr-checks.yml which dispatches checks on bot PRs.
 
 on:
@@ -98,7 +98,7 @@ jobs:
             echo "url=$url"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Wait for required security-gates on release PR
+      - name: Wait for required checks on release PR
         if: ${{ steps.candidate.outputs.found == 'true' }}
         id: wait_checks
         env:
@@ -109,7 +109,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)")
+          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)" "fleet-proxy-e2e")
           deadline=$((SECONDS + 900))
 
           while [[ "$SECONDS" -lt "$deadline" ]]; do
@@ -137,7 +137,7 @@ jobs:
             sleep 30
           done
 
-          echo "Timed out waiting for security-gates on PR #${PR_NUMBER}"
+          echo "Timed out waiting for required checks on PR #${PR_NUMBER}"
           gh pr checks "$PR_NUMBER" || true
           exit 1
 

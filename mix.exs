@@ -219,11 +219,12 @@ defmodule Relyra.MixProject do
         "cmd mix test test/docs/markdown_link_smoke_test.exs --warnings-as-errors",
         "cmd mix test test/docs/adopter_voice_test.exs --warnings-as-errors",
         "cmd mix test test/docs/troubleshooting_drift_test.exs --warnings-as-errors",
+        "cmd mix test test/docs/testing_api_drift_test.exs --warnings-as-errors",
         "cmd mix test test/docs/logout_recipe_drift_test.exs --warnings-as-errors",
         "cmd test -f demo/ledger_loop/README.md",
         "cmd mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors",
         "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
-        "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs --warnings-as-errors",
+        "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs test/testing_demo_test.exs --warnings-as-errors",
         "relyra.batteries_included --check"
       ],
       "ci.conformance": [
@@ -256,6 +257,7 @@ defmodule Relyra.MixProject do
         "cmd mix test test/security/xml_enc_adversarial_test.exs --warnings-as-errors",
         "cmd mix test test/security/metadata_attribute_injection_test.exs --warnings-as-errors",
         "cmd mix test test/security/login_trace_test.exs --warnings-as-errors",
+        "cmd mix test test/security/testing_fixture_crypto_test.exs --warnings-as-errors",
         # decimal advisory GHSA-rhv4-8758-jx7v (Decimal.new exponent DoS) is ignored:
         # decimal is transitive via ecto/postgrex (both pin `decimal ~> 2.0`, so 3.0.0 — the
         # only patched version — is unreachable), and relyra makes no direct Decimal.new/parse

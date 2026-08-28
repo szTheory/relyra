@@ -76,3 +76,8 @@ jobs:
         # The Playwright config self-boots the demo app (mix ecto.setup &&
         # mix phx.server) via its webServer block and tears it down after.
         run: npm run demo:fake-idp
+
+      - name: Trace visual and failed-state browser e2e
+        # The dedicated harness generates its own ephemeral Basic credentials,
+        # disables attachments, and removes its temporary Playwright output.
+        run: npm run demo:trace-visual

@@ -26,12 +26,30 @@ defmodule LedgerLoopWeb.FakeIdPFlowTest do
 
   @endpoint LedgerLoopWeb.Endpoint
   @conn_ulid Fixtures.relyra_enabled_scenario_id()
+  @demo_admin_username "fake-idp-test-admin"
+  @demo_admin_password "fake-idp-test-password"
 
   # Seed the full demo state so the …J0 connection, cert, saml_identities, and
   # users are present.  Reset.reset! mirrors the production reset path and inserts
   # via Repo.insert_all from the Fixtures module.
   setup do
     Reset.reset!()
+
+    previous_config = Application.get_env(:ledger_loop, :demo_admin_auth)
+
+    Application.put_env(:ledger_loop, :demo_admin_auth,
+      username: @demo_admin_username,
+      password: @demo_admin_password
+    )
+
+    on_exit(fn ->
+      if previous_config do
+        Application.put_env(:ledger_loop, :demo_admin_auth, previous_config)
+      else
+        Application.delete_env(:ledger_loop, :demo_admin_auth)
+      end
+    end)
+
     :ok
   end
 
@@ -41,8 +59,13 @@ defmodule LedgerLoopWeb.FakeIdPFlowTest do
 
   describe "SUCCESS: SP-initiated full round-trip" do
     test "login → fake IdP → ACS verifies → LoginReceipt inserted + redirect /", %{conn: conn} do
+      saml_urls = %{
+        login: "#{@endpoint.url()}/saml/#{@conn_ulid}/login",
+        acs: "#{@endpoint.url()}/saml/#{@conn_ulid}/acs"
+      }
+
       # 1. Hit /saml/<id>/login — must 302 to idp_sso_url (/fake_idp/login) with SAMLRequest + RelayState
-      conn1 = get(conn, "/saml/#{@conn_ulid}/login")
+      conn1 = get(conn, URI.parse(saml_urls.login).path)
       assert conn1.status == 302
       location = get_resp_header(conn1, "location") |> List.first()
       assert location =~ "/fake_idp/login"
@@ -81,13 +104,13 @@ defmodule LedgerLoopWeb.FakeIdPFlowTest do
       body3 = response(conn3, 200)
       assert body3 =~ "onload=\"document.forms[0].submit()\""
       assert body3 =~ "name=\"SAMLResponse\""
-      assert body3 =~ "action=\"/saml/#{@conn_ulid}/acs\""
+      assert body3 =~ "action=\"#{URI.parse(saml_urls.acs).path}\""
       saml_response = extract_hidden_field(body3, "SAMLResponse")
       assert is_binary(saml_response) and byte_size(saml_response) > 0
 
       # 4. POST /saml/<id>/acs → relyra verifies → redirect to "/"
       conn4 =
-        post(build_conn(), "/saml/#{@conn_ulid}/acs", %{
+        post(build_conn(), URI.parse(saml_urls.acs).path, %{
           "SAMLResponse" => saml_response,
           "RelayState" => relay_state
         })
@@ -161,8 +184,7 @@ defmodule LedgerLoopWeb.FakeIdPFlowTest do
       audit_events =
         Repo.all(
           from e in AuditEvent,
-            where:
-              e.connection_record_id == ^enabled_conn.id and e.domain == :login,
+            where: e.connection_record_id == ^enabled_conn.id and e.domain == :login,
             order_by: [desc: e.inserted_at]
         )
 
@@ -180,6 +202,7 @@ defmodule LedgerLoopWeb.FakeIdPFlowTest do
 
       # The signature.verify step should have error outcome + digest_mismatch code
       sig_step = Map.get(steps_map, "signature.verify") || %{}
+
       assert Map.get(sig_step, "outcome") == "error",
              "Expected signature.verify step to have outcome=error; steps: #{inspect(steps_map)}"
 
@@ -189,6 +212,10 @@ defmodule LedgerLoopWeb.FakeIdPFlowTest do
       # 6. Mount the ConnectionTraceLive and assert the trace is rendered
       admin_conn =
         build_conn()
+        |> put_req_header(
+          "authorization",
+          Plug.BasicAuth.encode_basic_auth(@demo_admin_username, @demo_admin_password)
+        )
         |> init_test_session(%{
           "admin_actor" => "demo_admin",
           "admin_actor_label" => "Demo Administrator",

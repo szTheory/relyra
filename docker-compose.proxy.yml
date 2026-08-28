@@ -1,0 +1,70 @@
+services:
+  demo_app:
+    environment:
+      PHX_HOST: ${RELYRA_HOST:-relyra.localhost}
+      PHX_SCHEME: http
+      PHX_PORT: "80"
+      DEMO_CHECK_ORIGINS: ${DEMO_CHECK_ORIGINS:-//localhost,//relyra.localhost,//*.relyra.localhost}
+      DEMO_ADMIN_USERNAME: ${DEMO_ADMIN_USERNAME:-}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEMO_PROXY_NETWORK:-proxy}"
+      - "traefik.http.routers.relyra-local-demo.rule=Host(`${RELYRA_HOST:-relyra.localhost}`)"
+      - "traefik.http.routers.relyra-local-demo.entrypoints=web"
+      - "traefik.http.routers.relyra-local-demo.service=relyra-local-demo"
+      - "traefik.http.services.relyra-local-demo.loadbalancer.server.port=4000"
+    networks:
+      - default
+      - proxy
+
+  keycloak:
+    environment:
+      RELYRA_HOST: ${RELYRA_HOST:-relyra.localhost}
+      KEYCLOAK_SARAH_PASSWORD: ${KEYCLOAK_SARAH_PASSWORD:-sarah-password}
+      KC_HOSTNAME: http://keycloak.${RELYRA_HOST:-relyra.localhost}
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEMO_PROXY_NETWORK:-proxy}"
+      - "traefik.http.routers.relyra-keycloak.rule=Host(`keycloak.${RELYRA_HOST:-relyra.localhost}`)"
+      - "traefik.http.routers.relyra-keycloak.entrypoints=web"
+      - "traefik.http.routers.relyra-keycloak.service=relyra-keycloak"
+      - "traefik.http.services.relyra-keycloak.loadbalancer.server.port=8080"
+    networks:
+      - default
+      - proxy
+
+  keycloak_provisioner:
+    build:
+      context: .
+      dockerfile: demo/ledger_loop/Dockerfile.dev
+    profiles: ["keycloak"]
+    command: mix ledger_loop.provision_keycloak
+    working_dir: /app/demo/ledger_loop
+    volumes:
+      - .:/app
+      - relyra_deps:/app/demo/ledger_loop/deps
+      - relyra_build:/app/demo/ledger_loop/_build
+      - relyra_hex:/root/.hex
+      - relyra_mix:/root/.mix
+    environment:
+      MIX_ENV: dev
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      RELYRA_HOST: ${RELYRA_HOST:-relyra.localhost}
+      KEYCLOAK_DESCRIPTOR_URL: http://keycloak:8080/realms/demo-app/protocol/saml/descriptor
+    depends_on:
+      demo_app:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - default
+
+networks:
+  proxy:
+    external: true
+    name: ${DEMO_PROXY_NETWORK:-proxy}

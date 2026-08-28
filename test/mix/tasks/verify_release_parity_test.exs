@@ -3,6 +3,14 @@ defmodule Mix.Tasks.VerifyReleaseParityTest do
 
   alias Mix.Tasks.Verify.ReleaseParity
 
+  @public_testing_paths ~w(
+    lib/relyra/testing.ex
+    lib/relyra/testing/fixture.ex
+    lib/relyra/testing/signer.ex
+    lib/relyra/testing/adapters.ex
+    lib/relyra/testing/phoenix.ex
+  )
+
   describe "compute/2" do
     test "returns :parity when git paths and hex paths match" do
       git = MapSet.new(["lib/a.ex", "guides/x.md", "priv/repo/migrations/1.exs"])
@@ -130,6 +138,45 @@ defmodule Mix.Tasks.VerifyReleaseParityTest do
 
       assert ReleaseParity.filter_package_paths(paths) == ["lib/relyra/foo.ex"]
     end
+
+    test "keeps public testing paths and excludes private test support paths" do
+      paths =
+        @public_testing_paths ++
+          [
+            "lib/relyra/test_support.ex",
+            "lib/relyra/test_support/fake_idp.ex"
+          ]
+
+      assert ReleaseParity.filter_package_paths(paths) == Enum.sort(@public_testing_paths)
+    end
+  end
+
+  describe "package files" do
+    test "include public testing files and exclude private test support files" do
+      package_files = Mix.Project.config()[:package][:files]
+
+      assert Enum.all?(@public_testing_paths, &(&1 in package_files))
+      refute Enum.any?(package_files, &String.contains?(&1, "test_support"))
+    end
+  end
+
+  describe "local package artifact" do
+    @tag :tmp_dir
+    @tag timeout: 120_000
+    test "ships public testing files and excludes private test support files", %{tmp_dir: tmp} do
+      {output, exit_status} =
+        System.cmd("mix", ["hex.build", "--unpack", "-o", tmp], stderr_to_stdout: true)
+
+      assert exit_status == 0, output
+
+      unpacked_paths =
+        tmp
+        |> list_regular_files_recursive()
+        |> Enum.map(&Path.relative_to(&1, tmp))
+
+      assert Enum.all?(@public_testing_paths, &(&1 in unpacked_paths))
+      refute Enum.any?(unpacked_paths, &String.contains?(&1, "lib/relyra/test_support"))
+    end
   end
 
   describe "paths_contain_test_support?/1" do
@@ -162,5 +209,19 @@ defmodule Mix.Tasks.VerifyReleaseParityTest do
       assert exit_status == 0,
              "Expected exit 0 for known-good 1.4.0, got #{exit_status}"
     end
+  end
+
+  defp list_regular_files_recursive(root) do
+    root
+    |> File.ls!()
+    |> Enum.flat_map(fn entry ->
+      path = Path.join(root, entry)
+
+      cond do
+        File.regular?(path) -> [path]
+        File.dir?(path) -> list_regular_files_recursive(path)
+        true -> []
+      end
+    end)
   end
 end

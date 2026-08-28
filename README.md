@@ -41,7 +41,7 @@ Use one Day-1 route:
 1. Browse the [documentation overview](guides/overview.md) — Day-1, Day-2, and Reference sections.
 2. Install the library and scaffold the host app with `mix relyra.install`.
 3. Follow [Getting Started](guides/getting_started.md).
-4. Prove a local sign-in with the `Relyra.TestSupport` macro (`setup_saml_connection/2`, `post_saml_response/2`) — see [Getting Started §3](guides/getting_started.md#3-prove-local-login-with-testsupport).
+4. Prove a local sign-in with `Relyra.Testing.signed_success/1` and `Relyra.Testing.Phoenix.post_response/5` — see [Getting Started §3](guides/getting_started.md#3-prove-local-login-with-relyratesting).
 5. Choose exactly one first-class provider runbook.
 6. Return to the production follow-ons after the first provider is working.
 
@@ -51,6 +51,14 @@ The README is the router. The full onboarding narrative lives in
 If you want the high-level map of what this library is helping you get done,
 read [Jobs To Be Done And User Flows](guides/jtbd_user_flows.md) after Getting
 Started.
+
+## Evaluate The Docker Demo
+
+The LedgerLoop demo is a source-checkout evaluator, not part of the Hex package or the
+library's Day-1 installation path. After completing Getting Started, use the
+[Docker developer guide](guides/docker_dev_dx.md) for the Make-first Solo/FakeIdP proof.
+Fleet and optional Keycloak are follow-on evaluation routes; they do not replace the
+deterministic Solo journey.
 
 ## Batteries Included Support
 
@@ -67,7 +75,7 @@ In this repo, "batteries included" means the provider has a shipped preset modul
 a repo-native runbook, provider-specific field vocabulary, and Day-1 guidance that
 ends in a concrete receipt.
 
-Use these runbooks only after you complete the local TestSupport proof in Getting Started:
+Use these runbooks only after you complete the local testing proof in Getting Started:
 
 - [Okta runbook](guides/recipes/okta.md)
 - [Microsoft Entra ID runbook](guides/recipes/entra.md)
@@ -80,7 +88,7 @@ Use these runbooks only after you complete the local TestSupport proof in Gettin
   The operator runbook at [guides/recipes/generic_saml.md](guides/recipes/generic_saml.md)
   covers **Ping, OneLogin, Shibboleth, Keycloak, IBM Security Verify, CyberArk, and
   Oracle Access Manager** with vendor decoder tables and field-mapping guidance. Use it
-  after the local TestSupport proof and before you start translating your provider's
+  after the local `Relyra.Testing` proof and before you start translating your provider's
   admin vocabulary.
 - **Custom SAML:** Supported when you bring your own IdP-specific field mapping and
   operator verification beyond the generic runbook tables.
@@ -96,7 +104,7 @@ and the generic SAML runbook families named above.
 - Hardened XML, signature, and protocol checks.
 - Provider presets for Okta, Microsoft Entra ID, Google Workspace, and ADFS, plus a
   generic SAML runbook for seven additional IdP families.
-- `Relyra.TestSupport` and `Relyra.TestSupport.FakeIdP` for local proof.
+- `Relyra.Testing` and `Relyra.Testing.Phoenix` for local proof.
 - `mix relyra.install` for minimal host-app scaffolding.
 - Optional LiveAdmin, metadata lifecycle, certificate lifecycle, telemetry,
   audit seams, scheduled refresh, and diagnostic surfaces for later-stage
@@ -130,6 +138,8 @@ These surfaces matter after Day-1, but they should not compete with onboarding:
 - [Security boundary](docs/security_boundary.md) for reviewer-oriented architecture notes.
 - [LedgerLoop demo app](guides/demo.md) — a runnable reference app, not part of the Hex package,
   showing Relyra embedded in a Phoenix SaaS host with Ecto-backed stores and browser-visible receipts.
+- [Docker developer guide](guides/docker_dev_dx.md) — Make-first Solo evaluation, with Fleet and
+  optional Keycloak follow-ons for local operator proof.
 
 LiveAdmin is optional. Metadata refresh, certificate rollover, audit review,
 telemetry wiring, and diagnostic bundles belong after the first successful

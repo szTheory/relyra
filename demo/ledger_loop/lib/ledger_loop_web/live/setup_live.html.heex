@@ -1,4 +1,7 @@
-<div class="setup-container" style="max-width: 800px; margin: 0 auto; padding: 24px; font-family: Helvetica, Arial, sans-serif;">
+<div
+  class="setup-container"
+  style="max-width: 800px; margin: 0 auto; padding: 24px; font-family: Helvetica, Arial, sans-serif;"
+>
   <h1 style="font-size: 28px; font-weight: 600; margin-bottom: 24px;">SSO Setup</h1>
 
   <div class="setup-layout" style="display: flex; gap: 32px;">
@@ -6,106 +9,227 @@
     <div class="setup-sidebar" style="width: 250px; flex-shrink: 0;">
       <ul style="list-style: none; padding: 0; margin: 0;">
         <li style={"padding: 8px; margin-bottom: 8px; border-radius: 4px; #{if @active_step == :sp_settings, do: "background-color: #f0f4f8; font-weight: 600;", else: ""}"}>
-          <a href="#" phx-click="set_step" phx-value-step="sp_settings" style="text-decoration: none; color: #333333;">SP Settings</a>
+          <a
+            href="#"
+            phx-click="set_step"
+            phx-value-step="sp_settings"
+            style="text-decoration: none; color: #333333;"
+          >
+            SP Settings
+          </a>
         </li>
         <li style={"padding: 8px; margin-bottom: 8px; border-radius: 4px; #{if @active_step == :idp_metadata, do: "background-color: #f0f4f8; font-weight: 600;", else: ""}"}>
-          <a href="#" phx-click="set_step" phx-value-step="idp_metadata" style="text-decoration: none; color: #333333;">IdP Metadata</a>
+          <a
+            href="#"
+            phx-click="set_step"
+            phx-value-step="idp_metadata"
+            style="text-decoration: none; color: #333333;"
+          >
+            IdP Metadata
+          </a>
         </li>
         <li style={"padding: 8px; margin-bottom: 8px; border-radius: 4px; #{if @active_step == :mapping_preview, do: "background-color: #f0f4f8; font-weight: 600;", else: ""}"}>
-          <a href="#" phx-click="set_step" phx-value-step="mapping_preview" style="text-decoration: none; color: #333333;">Mapping Preview</a>
+          <a
+            href="#"
+            phx-click="set_step"
+            phx-value-step="mapping_preview"
+            style="text-decoration: none; color: #333333;"
+          >
+            Mapping Preview
+          </a>
         </li>
         <li style={"padding: 8px; margin-bottom: 8px; border-radius: 4px; #{if @active_step == :test_enable, do: "background-color: #f0f4f8; font-weight: 600;", else: ""}"}>
-          <a href="#" phx-click="set_step" phx-value-step="test_enable" style="text-decoration: none; color: #333333;">Test &amp; Enable</a>
+          <a
+            href="#"
+            phx-click="set_step"
+            phx-value-step="test_enable"
+            style="text-decoration: none; color: #333333;"
+          >
+            Test &amp; Enable
+          </a>
         </li>
       </ul>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="setup-content" style="flex-grow: 1; border: 1px solid #d1d9e1; padding: 24px; border-radius: 4px; background-color: #ffffff;">
+<!-- Main Content Area -->
+    <div
+      class="setup-content"
+      style="flex-grow: 1; border: 1px solid #d1d9e1; padding: 24px; border-radius: 4px; background-color: #ffffff;"
+    >
       <%= if @active_step == :sp_settings do %>
         <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">SP Settings</h2>
-        <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">Copy Relyra configuration to your IdP</p>
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; font-weight: 600; margin-bottom: 8px;">Entity ID (Audience URI)</label>
-          <input type="text" readonly value={LedgerLoopWeb.Endpoint.url() <> "/auth/saml/metadata"} style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; background-color: #f9f9f9; color: #333;" />
-        </div>
-        <div style="margin-bottom: 24px;">
-          <label style="display: block; font-weight: 600; margin-bottom: 8px;">ACS URL (Assertion Consumer Service)</label>
-          <input type="text" readonly value={LedgerLoopWeb.Endpoint.url() <> "/auth/saml/acs"} style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; background-color: #f9f9f9; color: #333;" />
-        </div>
-        <button phx-click="next_step" style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Next</button>
+        <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">
+          Copy Relyra configuration to your IdP
+        </p>
+        <%= if @saml_urls do %>
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+              Entity ID (Audience URI)
+            </label>
+            <input
+              type="text"
+              readonly
+              value={@saml_urls.metadata}
+              style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; background-color: #f9f9f9; color: #333;"
+            />
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+              Test Login URL
+            </label>
+            <input
+              type="text"
+              readonly
+              value={@saml_urls.login}
+              style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; background-color: #f9f9f9; color: #333;"
+            />
+          </div>
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+              ACS URL (Assertion Consumer Service)
+            </label>
+            <input
+              type="text"
+              readonly
+              value={@saml_urls.acs}
+              style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; background-color: #f9f9f9; color: #333;"
+            />
+          </div>
+        <% else %>
+          <p style="font-size: 16px; margin-bottom: 24px; color: #555555;">
+            Enable a connection before copying SAML endpoints or starting a test login.
+          </p>
+        <% end %>
+        <button
+          phx-click="next_step"
+          style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;"
+        >
+          Next
+        </button>
       <% end %>
 
       <%= if @active_step == :idp_metadata do %>
         <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">IdP Metadata</h2>
-        <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">Provide XML or URLs from your IdP</p>
+        <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">
+          Provide XML or URLs from your IdP
+        </p>
         <%= if @metadata_saved do %>
           <div style="margin-bottom: 16px;">
-             <p style="color: #2e7d32; background-color: #e8f5e9; padding: 8px; border-radius: 4px;">Metadata saved successfully!</p>
+            <p style="color: #2e7d32; background-color: #e8f5e9; padding: 8px; border-radius: 4px;">
+              Metadata saved successfully!
+            </p>
           </div>
         <% else %>
           <form phx-submit="save_metadata" style="margin-bottom: 24px;">
             <div style="margin-bottom: 16px;">
-              <label style="display: block; font-weight: 600; margin-bottom: 8px;">Metadata XML</label>
-              <textarea name="metadata" rows="6" style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; font-family: monospace;" placeholder="Paste your IdP metadata XML here..."></textarea>
+              <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                Metadata XML
+              </label>
+              <textarea
+                name="metadata"
+                rows="6"
+                style="width: 100%; padding: 8px; border: 1px solid #d1d9e1; border-radius: 4px; font-family: monospace;"
+                placeholder="Paste your IdP metadata XML here..."
+              ></textarea>
             </div>
-            <button type="submit" style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Save Metadata</button>
+            <button
+              type="submit"
+              style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;"
+            >
+              Save Metadata
+            </button>
           </form>
         <% end %>
-        <button phx-click="next_step" style="background-color: #f0f4f8; color: #333333; border: 1px solid #d1d9e1; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Next</button>
+        <button
+          phx-click="next_step"
+          style="background-color: #f0f4f8; color: #333333; border: 1px solid #d1d9e1; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;"
+        >
+          Next
+        </button>
       <% end %>
 
       <%= if @active_step == :mapping_preview do %>
         <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">Mapping Preview</h2>
-        <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">Preview how SAML attributes map to LedgerLoop users</p>
-        
+        <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">
+          Preview how SAML attributes map to LedgerLoop users
+        </p>
+
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
           <thead>
             <tr>
-              <th style="text-align: left; padding: 12px 8px; border-bottom: 2px solid #d1d9e1; background-color: #f0f4f8; font-weight: 600;">SAML Attribute (OID or Name)</th>
-              <th style="text-align: left; padding: 12px 8px; border-bottom: 2px solid #d1d9e1; background-color: #f0f4f8; font-weight: 600;">LedgerLoop Field</th>
+              <th style="text-align: left; padding: 12px 8px; border-bottom: 2px solid #d1d9e1; background-color: #f0f4f8; font-weight: 600;">
+                SAML Attribute (OID or Name)
+              </th>
+              <th style="text-align: left; padding: 12px 8px; border-bottom: 2px solid #d1d9e1; background-color: #f0f4f8; font-weight: 600;">
+                LedgerLoop Field
+              </th>
             </tr>
           </thead>
           <tbody>
             <%= for mapping <- @mappings do %>
               <tr>
-                <td style="padding: 12px 8px; border-bottom: 1px solid #e1e5eb; font-family: monospace; color: #555;"><%= mapping.saml %></td>
-                <td style="padding: 12px 8px; border-bottom: 1px solid #e1e5eb; font-weight: 600;"><%= mapping.local %></td>
+                <td style="padding: 12px 8px; border-bottom: 1px solid #e1e5eb; font-family: monospace; color: #555;">
+                  {mapping.saml}
+                </td>
+                <td style="padding: 12px 8px; border-bottom: 1px solid #e1e5eb; font-weight: 600;">
+                  {mapping.local}
+                </td>
               </tr>
             <% end %>
           </tbody>
         </table>
 
-        <button phx-click="next_step" style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Next</button>
+        <button
+          phx-click="next_step"
+          style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;"
+        >
+          Next
+        </button>
       <% end %>
 
       <%= if @active_step == :test_enable do %>
         <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">Test &amp; Enable</h2>
-        <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">Perform a test login to verify the trust path</p>
-        
+        <p style="font-size: 16px; margin-bottom: 16px; color: #555555;">
+          Perform a test login to verify the trust path
+        </p>
+
         <div style="margin-bottom: 24px;">
-           <button phx-click="test_login" style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; margin-right: 8px;">Start Test Login</button>
-           <button style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">Enable Connection</button>
+          <button
+            phx-click="test_login"
+            style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; margin-right: 8px;"
+          >
+            Start Test Login
+          </button>
+          <button style="background-color: #0066cc; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;">
+            Enable Connection
+          </button>
         </div>
 
         <%= if @connection do %>
-          <div class="receipt-panel" style="border: 1px solid #d1d9e1; padding: 16px; border-radius: 4px; background-color: #ffffff;">
-            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Enablement Receipt</h3>
-            
+          <div
+            class="receipt-panel"
+            style="border: 1px solid #d1d9e1; padding: 16px; border-radius: 4px; background-color: #ffffff;"
+          >
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">
+              Enablement Receipt
+            </h3>
+
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <div style="display: flex;">
                 <span style="width: 150px; color: #555555; font-size: 14px;">Status</span>
-                <span style="font-size: 14px; color: #2e7d32; font-weight: 600;">Verified (<%= @connection.status %>)</span>
+                <span style="font-size: 14px; color: #2e7d32; font-weight: 600;">
+                  Verified ({@connection.status})
+                </span>
               </div>
-              
+
               <div style="display: flex;">
                 <span style="width: 150px; color: #555555; font-size: 14px;">Connection ID</span>
-                <span style="font-size: 14px; color: #333333;"><%= @connection.connection_id %></span>
+                <span style="font-size: 14px; color: #333333;">{@connection.connection_id}</span>
               </div>
-              
+
               <div style="display: flex;">
                 <span style="width: 150px; color: #555555; font-size: 14px;">Display Name</span>
-                <span style="font-size: 14px; color: #333333;"><%= @connection.display_name %></span>
+                <span style="font-size: 14px; color: #333333;">{@connection.display_name}</span>
               </div>
 
               <div style="display: flex;">
@@ -115,12 +239,16 @@
 
               <div style="display: flex;">
                 <span style="width: 150px; color: #555555; font-size: 14px;">Mapping</span>
-                <span style="font-size: 14px; color: #333333;">SAML Identity mapped to LedgerLoop User</span>
+                <span style="font-size: 14px; color: #333333;">
+                  SAML Identity mapped to LedgerLoop User
+                </span>
               </div>
-              
+
               <div style="display: flex;">
                 <span style="width: 150px; color: #555555; font-size: 14px;">Session</span>
-                <span style="font-size: 14px; color: #333333;">LedgerLoop established session</span>
+                <span style="font-size: 14px; color: #333333;">
+                  LedgerLoop established session
+                </span>
               </div>
             </div>
           </div>

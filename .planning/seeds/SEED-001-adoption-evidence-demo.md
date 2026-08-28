@@ -1,10 +1,12 @@
 ---
 id: SEED-001
-status: dormant
+status: resolved
 planted: 2026-06-12
 planted_during: between-milestones after Phase 50
 trigger_when: next $gsd-new-milestone after private adoption-evidence signal
 scope: large
+resolved: 2026-06-19
+resolved_by: v1.7 Adoption Evidence Demo milestone
 ---
 
 # SEED-001: v1.7 Adoption Evidence Demo
@@ -18,12 +20,22 @@ adoption journey tests, and a Keycloak ConnTest lane. A demo app would let
 maintainers and evaluators run, click, seed, stress, and inspect the main Relyra
 journey before real adopters arrive.
 
+## Resolution
+
+**Phase 67 note (2026-06-19):** SEED-001 is resolved and completed. It shipped
+through the v1.7 Adoption Evidence Demo milestone: the LedgerLoop demo app now
+provides the realistic Phoenix SaaS adoption-evidence path this seed requested,
+including deterministic seeds, production-like Ecto stores, mounted LiveAdmin,
+local FakeIdP proof, optional Keycloak proof, Docker DX, and evaluator docs.
+
+Do not surface this seed as a new milestone candidate. Preserve it as the
+historical trigger for v1.7.
+
 ## When to Surface
 
 **Trigger:** next `$gsd-new-milestone` after private adoption-evidence signal.
 
-Use this seed to start v1.7 / Phase 51 unless a higher-priority security or
-maintenance incident appears first.
+Resolved by v1.7 / Phase 51-56. This trigger is historical only.
 
 ## Scope Estimate
 

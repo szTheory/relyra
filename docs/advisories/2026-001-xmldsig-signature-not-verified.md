@@ -1,6 +1,6 @@
 # RELYRA-2026-001: Relyra SAML `SignatureValue` not cryptographically verified -> authentication bypass
 
-Status: PUBLISHED 2026-05-25 as [`GHSA-jv46-xfwm-36j7`](https://github.com/szTheory/relyra/security/advisories/GHSA-jv46-xfwm-36j7), shipped with `relyra 1.2.0`. CVE requested via GitHub's CNA flow on 2026-05-25 — identifier pending assignment (will replace the `pending` note below). Internal tracking id: `RELYRA-2026-001`.
+Status: PUBLISHED 2026-05-25 as [`GHSA-jv46-xfwm-36j7`](https://github.com/szTheory/relyra/security/advisories/GHSA-jv46-xfwm-36j7), assigned `CVE-2026-49454`, shipped with `relyra 1.2.0`. CVE requested via GitHub's CNA flow on 2026-05-25 and backfilled locally after live verification on 2026-06-19. CVE Services reports `PUBLISHED`; NVD has received the record with `vulnStatus: Received` and no configuration data yet. Internal tracking id: `RELYRA-2026-001`.
 
 Affected product: hex ecosystem `Erlang` [ASSUMED GitHub label], package `relyra`
 Affected versions: `>= 1.0.0, < 1.2.0`
@@ -60,11 +60,13 @@ Primary severity is `Critical` with CVSS 3.1 `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C
 
 Maintainers (finder and reporter).
 
-## CVE request
+## CVE assignment
 
-CVE requested 2026-05-25 via GitHub's "Request CVE" flow on `GHSA-jv46-xfwm-36j7`; the identifier is pending assignment by GitHub (CNA) and will be backfilled here and on the GHSA when issued.
+CVE requested 2026-05-25 via GitHub's "Request CVE" flow on `GHSA-jv46-xfwm-36j7`; GitHub's CNA assigned `CVE-2026-49454` and the local advisory was backfilled after live checks on 2026-06-19.
 
 - Internal tracking id: `RELYRA-2026-001`
+- CVE: `CVE-2026-49454`
+- External status checked 2026-06-19: CVE Services `PUBLISHED`; NVD `Received` with no configurations
 - Title: `Relyra SAML SignatureValue not cryptographically verified -> authentication bypass`
 - Ecosystem / package: `Erlang` / `relyra`
 - Affected versions: `>= 1.0.0, < 1.2.0`

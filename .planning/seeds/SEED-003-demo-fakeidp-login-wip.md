@@ -1,10 +1,12 @@
 ---
 id: SEED-003
-status: dormant
+status: resolved
 planted: 2026-06-13
 planted_during: v1.7 closeout (after PR #31 merge)
 trigger_when: next demo/adoption milestone, or before the next demo release
 scope: small
+resolved: 2026-06-19
+resolved_by: Phase 66 retain_fakeidp decision and guides/fake_idp_demo.md
 ---
 
 # SEED-003: Finish-or-remove the demo FakeIdP login WIP
@@ -29,10 +31,24 @@ The demo's documented login currently works via `RouteAffordanceController`
 (`/login/test`, `/login/admin`) — so this FakeIdP controller is an unwired
 *alternative*, not a regression.
 
+## Resolution
+
+**Phase 67 note (2026-06-19):** SEED-003 is resolved and completed by the Phase
+66 `retain_fakeidp` decision. The LedgerLoop FakeIdP browser flow is retained as
+demo-local, test-only support and documented in `guides/fake_idp_demo.md` with
+its purpose, access path, success behavior, tamper behavior, limits, and the
+port-4000 browser-lane caveat.
+
+Do not surface this seed as a new milestone candidate and do not move FakeIdP
+into adopter-facing Hex docs. Preserve this file as the historical record of the
+finish-or-remove decision that Phase 66 resolved.
+
 ## When to Surface
 
 **Trigger:** next demo/adoption milestone, or before the next demo release if the
 in-app FakeIdP login is wanted as the documented browser flow.
+
+Resolved by Phase 66. This trigger is historical only.
 
 ## Decision Needed
 

@@ -1,12 +1,12 @@
 # Batteries Included Proof
 
-Generated from the shipped installer, test-support seam, provider registry, and focused proof commands in this repository.
+Generated from the shipped installer, public testing fixture proof, provider registry, and focused proof commands in this repository.
 
 ## Rerun Commands
 
 - `mix ci.docs`
 - `mix relyra.batteries_included --check`
-- `mix test test/mix/relyra_install_test.exs test/test_support_demo_test.exs --warnings-as-errors`
+- `mix test test/mix/relyra_install_test.exs test/testing_demo_test.exs --warnings-as-errors`
 
 ## Supported Provider Scope
 
@@ -18,7 +18,7 @@ Generated from the shipped installer, test-support seam, provider registry, and 
 | claim | executable state | seam | proof command | artifact |
 | --- | --- | --- | --- | --- |
 | install path is blessed and reproducible | `mix relyra.install` scaffolds the host integration surface and optional LiveAdmin contract | `Mix.Tasks.Relyra.Install.run/1` | `mix test test/mix/relyra_install_test.exs --warnings-as-errors` | `test/mix/relyra_install_test.exs` |
-| local-first proof starts with FakeIdP | a tiny host-side ACS flow succeeds before any real IdP setup | `Relyra.TestSupport` + `Relyra.TestSupport.FakeIdP` | `mix test test/test_support_demo_test.exs --warnings-as-errors` | `test/test_support_demo_test.exs` |
+| local-first proof uses testing fixtures | a tiny host-side ACS flow succeeds before any real IdP setup | `Relyra.Testing` data-first helpers | `mix test test/testing_demo_test.exs --warnings-as-errors` | `test/testing_demo_test.exs` |
 | supported provider scope stays narrow | first-class scope is limited to Okta, Microsoft Entra ID, Google Workspace, Active Directory Federation Services | `Relyra.Provider.list/0` | `mix test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors` | `guides/recipes/okta.md`, `guides/recipes/entra.md`, `guides/recipes/google_workspace.md`, `guides/recipes/adfs.md` |
 | provider runbooks stay tied to repo reality | Day-1 routing points to authoritative runbooks and no broader preset catalog | `guides/getting_started.md` + `Relyra.Provider.guide_url/1` | `mix test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors` | `guides/getting_started.md` |
 | optional admin remains a later receipt | LiveAdmin is optional and the installer can scaffold its host-side scope contract | `Relyra.LiveAdmin.ScopeProvider` | `mix test test/mix/relyra_install_test.exs --warnings-as-errors` | `test/mix/relyra_install_test.exs` |

@@ -34,21 +34,28 @@ See [Scope & Honesty](#scope--honesty) for the full accounting.
 
 ### Option A — Docker (Recommended)
 
-Requires Docker with Compose v2.
+Requires Docker with Compose v2 and starts with the complete deterministic Solo/FakeIdP
+proof. The repo-root Makefile is the Docker interface; `scripts/demo` remains a
+compatibility entry point, not a second workflow.
+
+Before launch, choose and export both `DEMO_ADMIN_USERNAME` and
+`DEMO_ADMIN_PASSWORD` if you will inspect the protected operator trace. They are
+operator-chosen runtime values; the repository supplies no reusable credential values.
 
 ```bash
-scripts/demo doctor
+make doctor
 ```
 
 ```bash
-scripts/demo up
+make up-build
 ```
 
-```bash
-scripts/demo urls
-```
+Open `http://localhost:4000/login/test`, choose the enabled connection, and select
+**Simulate Login via FakeIdP**. The complete Solo journey, receipts, recovery ladder,
+and optional follow-ons live in the [Docker developer guide](../../guides/docker_dev_dx.md).
 
-Visit the URLs printed by `urls`. The demo app loads at `http://localhost:4000`.
+Solo is the first proof. Fleet and optional Keycloak follow only after you have the
+Solo receipt.
 
 ### Option B — Local Mix
 
@@ -78,24 +85,33 @@ directly). You'll see the four Northstar Health connection scenarios. Select the
 
 **Success path:** The local FakeIdP renders a login form. The default radio button submits
 a valid SAML response signed with the FakeIdP's RSA-2048 key. The subject is
-`evaluator@example.com` — this is the evaluator test user, separate from the seeded
-Northstar Health users. Relyra verifies the assertion signature, audience, recipient,
-expiry, and replay guard, then calls LedgerLoop's `UserMapper` and `SessionAdapter`.
-The session is established and a `LoginReceipt` row is written.
+`sarah@northstar.example.com`, which maps to the seeded Sarah identity. Relyra verifies
+the assertion signature, audience, recipient, expiry, and replay guard. LedgerLoop then
+maps Sarah and inserts the host-owned `LoginReceipt` as its session-establishment receipt.
+
+**Receipt:** Relyra verified the assertion; LedgerLoop mapped the user and recorded the session-establishment receipt.
 
 **Rejection path:** Select **Invalid Login (Tampered Signature)** on the FakeIdP form.
 Relyra rejects with a typed error atom (`{:error, :invalid_signature}` or similar).
 The host app receives the rejection and renders the error — no silent acceptance,
 no half-authenticated state.
 
-**Audit trail:** Visit `/relyra/admin` to see the connection list and inspect the
-assertion events and audit rows left by both paths.
+## Trace access prerequisite
 
-> The seeded Northstar Health users (`sarah@northstar.example.com`,
-> `chen@northstar.example.com`) have SAML identity anchors that do not match the
-> FakeIdP's `evaluator@example.com` subject. The walkthrough correctly documents the
-> real default outcome. Reconciling the FakeIdP subject to a seeded identity is a
-> future exercise — see [Scope & Honesty](#scope--honesty).
+Before inspecting the trace, choose and export both `DEMO_ADMIN_USERNAME` and
+`DEMO_ADMIN_PASSWORD`, then enter through `/login/admin` at the origin emitted by
+`make url`. Browser Basic Auth establishes the protected admin scope and redirects to
+`/relyra/admin`; there is no public trace shortcut. If `/login/admin` returns a 401
+challenge, set both keys, restart the active topology with the same Make launcher, and
+retry `/login/admin` at that emitted origin.
+
+**Audit trail:** After that authenticated entry, `/relyra/admin` shows the connection
+list plus assertion events and audit rows left by both paths.
+
+> The exercised success path maps the FakeIdP subject to seeded Sarah and persists a
+> LedgerLoop `LoginReceipt` after Relyra verifies the assertion. The receipt is evidence
+> of LedgerLoop's host-owned mapping and session establishment, not a Relyra browser
+> session or authorization decision.
 
 ---
 
@@ -135,7 +151,7 @@ Visit `/support/scenario` to trigger the support failure scenario directly.
 |---|---|
 | `GET /` | Home page |
 | `GET /login/test` | FakeIdP login affordance — select a connection scenario |
-| `GET /login/admin` | Admin login affordance |
+| `GET /login/admin` | Authenticated entry for the protected `/relyra/admin` mount |
 | `GET /support/scenario` | Trigger support failure scenario |
 | `GET /setup/sso` | SSO connection setup LiveView (operator-facing) |
 
@@ -143,8 +159,9 @@ Visit `/support/scenario` to trigger the support failure scenario directly.
 
 | Route | What it does |
 |---|---|
-| `GET /saml/metadata` | SP metadata XML for this app |
-| `POST /saml/acs` | Assertion Consumer Service — receives SAML responses |
+| `GET /saml/:connection_id/metadata` | SP metadata XML for one enabled connection |
+| `GET /saml/:connection_id/login` | SP-initiated login for that connection |
+| `POST /saml/:connection_id/acs` | Assertion Consumer Service for that connection |
 | `GET /relyra/admin` | LiveAdmin — connection list, cert lifecycle, audit log |
 
 ### Health Probes
@@ -163,20 +180,20 @@ Visit `/support/scenario` to trigger the support failure scenario directly.
 Reset the database (drops, recreates, reseeds):
 
 ```bash
-scripts/demo reset
+make reset
 ```
 
-Run the Playwright browser tests (requires keycloak and browser profiles; optional):
+`make reseed` is an alias for the same destructive database refresh. For the complete
+Solo/Fleet and optional Keycloak proof lanes, use the [Docker developer guide](../../guides/docker_dev_dx.md).
+
+Tear down the Solo containers while preserving volumes and caches:
 
 ```bash
-scripts/demo test
+make down
 ```
 
-Tear down all containers and volumes:
-
-```bash
-scripts/demo down
-```
+Use `make nuke` only when you intend to delete demo data and build/dependency volumes
+for a cold rebuild; it asks for confirmation.
 
 ### Local Mix
 
@@ -190,24 +207,40 @@ This runs `ecto.drop` + `ecto.setup` (which chains create, migrate, and seed).
 
 ## Optional Keycloak Profile
 
-The Docker Compose file includes a `keycloak` profile for testing against a real IdP:
+Fleet is the follow-on route for running this demo beside sibling Traefik-routed demos.
+After recording the Solo/FakeIdP receipt, start the shared proxy and inspect the route map:
 
 ```bash
-docker compose --profile keycloak up -d
+make proxy
+make fleet
 ```
 
-Keycloak starts at `http://localhost:8080` (override with `KC_PORT`). It imports the
-`docker/keycloak/realm-demo-app.json` realm on startup. This profile is **optional** — the
-core demo works entirely with the local FakeIdP. Keycloak adds proof that Relyra's
-SAML flow works against a real protocol implementation, not just a test fixture.
+`make fleet` lists the currently routed demos; it does not activate this checkout's proxy
+overlay or Keycloak profile. The Fleet browser route is `http://relyra.localhost`.
+
+Optional Keycloak is a separate real-IdP proof behind that proxy; it never replaces the
+deterministic FakeIdP path. Use the same operator-chosen `DEMO_ADMIN_USERNAME` and
+`DEMO_ADMIN_PASSWORD` prerequisite before its protected trace journey; run its executable
+follow-on:
+
+```bash
+make keycloak
+```
+
+`make keycloak` starts or reuses Traefik, launches this checkout's proxy overlay under the
+Keycloak profile, waits for provisioning, and validates the public descriptor before it
+prints routes at `http://keycloak.relyra.localhost`. `*.localhost` names are browser-facing,
+while container health checks and bootstrap traffic use Docker service DNS. See the
+[Docker developer guide](../../guides/docker_dev_dx.md) for the exact Keycloak receipt and
+recovery steps.
 
 ### Environment Overrides
 
 | Variable | Default | Controls |
 |---|---|---|
 | `PORT` | `4000` | Demo app port |
-| `PGPORT` | `5432` | PostgreSQL port |
-| `KC_PORT` | `8080` | Keycloak port |
+| `RELYRA_HOST` | `relyra.localhost` | Fleet browser hostname |
+| `DEMO_PROXY_NETWORK` | `proxy` | Shared Traefik network |
 
 ---
 

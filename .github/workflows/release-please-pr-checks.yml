@@ -1,8 +1,9 @@
 name: Release Please PR Checks
 
 # Bot-opened release-please PRs do not receive pull_request workflows from
-# GITHUB_TOKEN. Dispatch security-gates on the release branch and, if needed,
-# push a human-style empty commit with BRANCH_PROTECTION_PAT.
+# GITHUB_TOKEN. Dispatch security-gates on the release branch and, if any
+# required check is still missing, push a PAT-authored nudge that triggers all
+# pull_request workflows including fleet-proxy-e2e.
 
 on:
   workflow_run:
@@ -79,7 +80,7 @@ jobs:
             echo "url=$url"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Check required security-gates on release PR
+      - name: Check required checks on release PR
         id: checks
         if: ${{ steps.candidate.outputs.found == 'true' }}
         env:
@@ -90,7 +91,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)")
+          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)" "fleet-proxy-e2e")
 
           all_success=true
           any_missing=false
@@ -135,7 +136,7 @@ jobs:
         if: ${{ steps.candidate.outputs.found == 'true' && steps.checks.outputs.all_success != 'true' }}
         run: sleep 30
 
-      - name: Re-check security-gates after dispatch
+      - name: Re-check required checks after dispatch
         id: recheck
         if: ${{ steps.candidate.outputs.found == 'true' && steps.checks.outputs.all_success != 'true' }}
         env:
@@ -146,7 +147,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)")
+          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)" "fleet-proxy-e2e")
           all_success=true
 
           for check in "${required_checks[@]}"; do
@@ -182,5 +183,5 @@ jobs:
           git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
           cd repo
           git checkout release-please--branches--main
-          git commit --allow-empty -m "ci: trigger security-gates for release merge"
+          git commit --allow-empty -m "ci: trigger required checks for release merge"
           git push origin release-please--branches--main
