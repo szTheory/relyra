@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.10 Docker DX & Fleet Proxy (Shipped: 2026-08-27)
+
+**Phases completed:** 6 phases, 30 plans, 51 tasks
+
+**Key accomplishments:**
+
+- Fast Docker iteration: cached dependency builds, Linux-private nested volumes, lock-content-aware idempotent startup, and browser-proven bind-mount live reload.
+- Collision-free Solo/Fleet topology: zero-setup loopback Compose plus opt-in shared Traefik routing with correct Phoenix public URL and LiveView origin policy.
+- Genuine Keycloak SAML proof behind the proxy, including one-parse descriptor reconciliation, audited trust mutation, signed scoped ACS, durable receipt, redacted diagnostics, and recurring CI ownership.
+- One Make-first operator surface for launch, routes, fleet discovery, doctor, recovery, compatibility verbs, and safe destructive cleanup.
+- House-voice evaluator documentation that walks Solo FakeIdP first, then Fleet/Keycloak, configured-port recovery, connection-scoped endpoints, and runtime-authenticated trace access.
+- Deterministic closeout evidence: 12/12 requirements, 6/6 phase verifications, 10/10 cross-phase integrations, 6/6 E2E flows, and Nyquist-compliant validation for every phase.
+
+**Audit:** `.planning/milestones/v1.10-MILESTONE-AUDIT.md` records `tech_debt` with no blocking gaps. Retained advisories are non-default-host browser coverage, the documented Decimal dependency advisory, and bounded demo setup UX/resilience follow-ups.
+
+**Archived:** `.planning/milestones/v1.10-ROADMAP.md`, `.planning/milestones/v1.10-REQUIREMENTS.md`, and `.planning/milestones/v1.10-phases/`.
+
+---
+
 ## v1.9 Loose Ends & Adoption Honesty (Shipped: 2026-06-19)
 
 **Phases completed:** 4 phases, 13 plans, 27 tasks

@@ -259,6 +259,52 @@
 
 ---
 
+## Milestone: v1.10 — Docker DX & Fleet Proxy
+
+**Shipped:** 2026-08-27
+**Phases:** 6 | **Plans:** 30 | **Tasks:** 51
+
+### What Was Built
+
+- Cached, architecture-correct Docker development with lock-content-aware boot and real browser live reload.
+- Solo-first Compose plus opt-in shared Traefik fleet routing that avoids host port collisions.
+- A genuine Keycloak signed-SAML proof with audited descriptor trust, protected traces, and recurring CI.
+- A Make-first launcher, deterministic diagnostics, and a self-contained evaluator documentation journey.
+- Connection-scoped evaluator endpoints and runtime Basic Auth for fail-closed trace access.
+
+### What Worked
+
+- The demo/docker/docs boundary held: no Relyra public API, parser, crypto, replay, or package-surface change was needed.
+- Mandatory CI lanes modeled browser, Docker, credentials, failures, and recovery without adding a new human completion gate.
+- Audit-driven closure fixed real endpoint and trace-auth handoffs in Phase 72.1, then strict three-source reconciliation closed metadata-only gaps.
+- A dedicated disposable Phase 68 harness converted four historical manual receipts into deterministic Docker/Chromium evidence.
+
+### What Was Inefficient
+
+- Phase 68's first automation pass had readiness, log-pipeline, browser-subscription, and origin mismatches; several full Docker cycles were needed before the harness reflected the real contract.
+- Docker's VM disk reached 100% during validation; a constrained prune of unused build cache older than 24 hours was required before evidence could complete.
+- GSD's generated audit filename was duplicated, the archival parser initially excluded inserted Phase 72.1, and legacy summaries caused the generated task count to under-report 51 tasks as 15.
+
+### Patterns Established
+
+- Runtime-only Docker acceptance belongs in an owned disposable harness, including cleanup, live browser behavior, and current-container log assertions.
+- Always dry-run milestone archival and compare its phase/plan counts with `STATE.md`, especially when decimal closure phases exist.
+- Preserve strict origin policy in the app; browser harnesses should use the configured public host instead of weakening `check_origin`.
+
+### Key Lessons
+
+1. Cache correctness is behavioral: prove BuildKit vertices, nested volume masking, lock branches, and live reload, not just configuration shape.
+2. Milestone evidence has its own integrity contract: REQUIREMENTS, VERIFICATION, SUMMARY frontmatter, and authoritative VALIDATION status must agree.
+3. Archive automation needs a scope preview; a successful command with the wrong phase set is still a failed closeout.
+
+### Cost Observations
+
+- Model mix: not measured.
+- Timeline: Phase 68 began in June; the active v1.10 completion push finished 2026-08-27.
+- Notable: deterministic closeout found harness and archive-tool defects without changing product security posture.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -267,6 +313,7 @@
 |-----------|--------|-------|------------|
 | v0.1 | 6 | 19 | Established XML-trust-boundary ADR pattern + behaviour-backed store contracts. |
 | v0.2 | 8 (5+3) | 25 | Established closure-phase pattern; established single-AuditWriter seam; established public-ID/internal-PK separation for persisted aggregates. |
+| v1.10 | 6 (5+1) | 30 | Established disposable Docker/Chromium acceptance and dry-run scope reconciliation for decimal closure phases. |
 
 ### Cumulative Quality
 
@@ -274,6 +321,7 @@
 |-----------|----------------|-----------------------|--------------------|
 | v0.1 | n/a (not recorded) | n/a | XML-ADR, behaviour-stores, opaque-RelayState |
 | v0.2 | 168/168 (serial) | 16,534 | closure-phase, AuditWriter seam, public-ID/internal-PK, stage-then-promote |
+| v1.10 | 32 focused docs tests + Phase 68 Docker/Chromium harness | no library-surface change | disposable runtime acceptance, archive-scope preview |
 
 ### Top Lessons (Verified Across Milestones)
 
