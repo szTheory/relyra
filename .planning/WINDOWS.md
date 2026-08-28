@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 4
-waived_count: 0
-fixed_count: 0
+open_count: 0
+waived_count: 1
+fixed_count: 3
 total_count: 4
-last_updated: 2026-08-26T22:16:16.898Z
+last_updated: 2026-08-28T02:33:34.161Z
 ---
 
 # Broken Windows Ledger
@@ -15,10 +15,10 @@ last_updated: 2026-08-26T22:16:16.898Z
 
 | id | phase | kind | file | line | description | status | reason | recorded_at | resolved_at |
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
-| 1 | 70 | lint-warning | demo/ledger_loop/lib/ledger_loop_web/live/setup_live.html.heex |  | Repository-wide mix format --check-formatted is blocked by pre-existing unrelated formatting drift. | open |  | 2026-08-26T17:06:05.568Z |  |
-| 2 | 70 | unrun-verify | scripts/test_keycloak_proxy_e2e.sh |  | mix ci.security and final standalone format check were interrupted by the executor command window; rerun before release. | open |  | 2026-08-26T19:35:20.719Z |  |
-| 3 | 70 | deviation | .github/workflows/keycloak-proxy-e2e.yml |  | Ruby and ci_monitor workflow validators unavailable; installed PyYAML plus existing workflow version comparison used. | open |  | 2026-08-26T22:08:47.457Z |  |
-| 4 | 70 | unmet-truth | mix.lock |  | mix deps.audit remains non-zero for pre-existing Decimal 2.4.1 GHSA-rhv4-8758-jx7v outside Plan 70-12 Req/Finch/Mint scope | open |  | 2026-08-26T22:16:16.898Z |  |
+| 1 | 70 | lint-warning | demo/ledger_loop/lib/ledger_loop_web/live/setup_live.html.heex |  | Repository-wide mix format --check-formatted is blocked by pre-existing unrelated formatting drift. | fixed |  | 2026-08-26T17:06:05.568Z | 2026-08-28T02:33:27.780Z |
+| 2 | 70 | unrun-verify | scripts/test_keycloak_proxy_e2e.sh |  | mix ci.security and final standalone format check were interrupted by the executor command window; rerun before release. | fixed |  | 2026-08-26T19:35:20.719Z | 2026-08-28T02:33:34.021Z |
+| 3 | 70 | deviation | .github/workflows/keycloak-proxy-e2e.yml |  | Ruby and ci_monitor workflow validators unavailable; installed PyYAML plus existing workflow version comparison used. | fixed |  | 2026-08-26T22:08:47.457Z | 2026-08-28T02:33:34.093Z |
+| 4 | 70 | unmet-truth | mix.lock |  | mix deps.audit remains non-zero for pre-existing Decimal 2.4.1 GHSA-rhv4-8758-jx7v outside Plan 70-12 Req/Finch/Mint scope | waived | Accepted transitive Decimal 2.4.1 advisory exception: Ecto/Postgrex constrain Decimal to ~> 2.0, Relyra has no direct Decimal.new/parse exposure, and mix ci.security explicitly audits with only GHSA-rhv4-8758-jx7v ignored until upstream permits Decimal 3.x. | 2026-08-26T22:16:16.898Z | 2026-08-28T02:33:34.161Z |
 
 ````json
 [
@@ -29,10 +29,10 @@ last_updated: 2026-08-26T22:16:16.898Z
     "file": "demo/ledger_loop/lib/ledger_loop_web/live/setup_live.html.heex",
     "line": null,
     "description": "Repository-wide mix format --check-formatted is blocked by pre-existing unrelated formatting drift.",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-08-26T17:06:05.568Z",
-    "resolved_at": null
+    "resolved_at": "2026-08-28T02:33:27.780Z"
   },
   {
     "id": 2,
@@ -41,10 +41,10 @@ last_updated: 2026-08-26T22:16:16.898Z
     "file": "scripts/test_keycloak_proxy_e2e.sh",
     "line": null,
     "description": "mix ci.security and final standalone format check were interrupted by the executor command window; rerun before release.",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-08-26T19:35:20.719Z",
-    "resolved_at": null
+    "resolved_at": "2026-08-28T02:33:34.021Z"
   },
   {
     "id": 3,
@@ -53,10 +53,10 @@ last_updated: 2026-08-26T22:16:16.898Z
     "file": ".github/workflows/keycloak-proxy-e2e.yml",
     "line": null,
     "description": "Ruby and ci_monitor workflow validators unavailable; installed PyYAML plus existing workflow version comparison used.",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-08-26T22:08:47.457Z",
-    "resolved_at": null
+    "resolved_at": "2026-08-28T02:33:34.093Z"
   },
   {
     "id": 4,
@@ -65,10 +65,10 @@ last_updated: 2026-08-26T22:16:16.898Z
     "file": "mix.lock",
     "line": null,
     "description": "mix deps.audit remains non-zero for pre-existing Decimal 2.4.1 GHSA-rhv4-8758-jx7v outside Plan 70-12 Req/Finch/Mint scope",
-    "status": "open",
-    "reason": "",
+    "status": "waived",
+    "reason": "Accepted transitive Decimal 2.4.1 advisory exception: Ecto/Postgrex constrain Decimal to ~> 2.0, Relyra has no direct Decimal.new/parse exposure, and mix ci.security explicitly audits with only GHSA-rhv4-8758-jx7v ignored until upstream permits Decimal 3.x.",
     "recorded_at": "2026-08-26T22:16:16.898Z",
-    "resolved_at": null
+    "resolved_at": "2026-08-28T02:33:34.161Z"
   }
 ]
 ````
