@@ -6,6 +6,7 @@ const baseURL = process.env.RELYRA_ADMIN_UI_BASE_URL || "http://127.0.0.1:4101";
 
 export default defineConfig({
   testDir: "./test/browser",
+  testMatch: /admin_ui_smoke\.spec\.mjs/,
   timeout: 60_000,
   outputDir: path.join(os.tmpdir(), "relyra-playwright-output"),
   fullyParallel: false,
