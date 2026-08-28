@@ -24,19 +24,32 @@ test("setup LiveView stays connected and exposes usable public URLs", async ({
   await page.goto("/setup/sso");
 
   await expect(page.getByRole("heading", { name: "SSO Setup" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "SP Settings" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "SP Settings" }),
+  ).toBeVisible();
   await expect.poll(() => liveSockets.length).toBeGreaterThan(0);
 
   const readonlyUrls = page.locator('input[type="text"][readonly]');
-  await expect(readonlyUrls).toHaveCount(2);
-  await expect(readonlyUrls.nth(0)).toHaveValue(
-    `${expectedOrigin}/auth/saml/metadata`,
-  );
-  await expect(readonlyUrls.nth(1)).toHaveValue(
-    `${expectedOrigin}/auth/saml/acs`,
-  );
+  await expect(readonlyUrls).toHaveCount(3);
 
-  for (const input of [readonlyUrls.nth(0), readonlyUrls.nth(1)]) {
+  const endpointNames = ["metadata", "login", "acs"];
+  const connectionIds = [];
+
+  for (const [index, endpointName] of endpointNames.entries()) {
+    const value = await readonlyUrls.nth(index).inputValue();
+    const url = new URL(value);
+    const pathMatch = url.pathname.match(
+      new RegExp(`^/saml/([^/]+)/${endpointName}$`),
+    );
+
+    expect(url.origin).toBe(new URL(expectedOrigin).origin);
+    expect(pathMatch).not.toBeNull();
+    connectionIds.push(pathMatch[1]);
+  }
+
+  expect(new Set(connectionIds).size).toBe(1);
+
+  for (const input of await readonlyUrls.all()) {
     const usability = await input.evaluate((element) => {
       element.focus();
       element.setSelectionRange(0, element.value.length);
@@ -60,8 +73,12 @@ test("setup LiveView stays connected and exposes usable public URLs", async ({
   }
 
   await page.getByRole("link", { name: "IdP Metadata" }).click();
-  await expect(page.getByRole("heading", { name: "IdP Metadata" })).toBeVisible();
-  await expect(page.getByPlaceholder("Paste your IdP metadata XML here...")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "IdP Metadata" }),
+  ).toBeVisible();
+  await expect(
+    page.getByPlaceholder("Paste your IdP metadata XML here..."),
+  ).toBeVisible();
 
   expect(pageErrors).toEqual([]);
   expect(
