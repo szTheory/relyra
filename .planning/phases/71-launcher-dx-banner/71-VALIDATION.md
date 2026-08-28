@@ -1,10 +1,11 @@
 ---
 phase: 71
 slug: launcher-dx-banner
-status: complete
+status: validated
 nyquist_compliant: true
 wave_0_complete: true
 created: 2026-08-27
+updated: 2026-08-27
 ---
 
 # Phase 71 — Validation Strategy
@@ -79,3 +80,18 @@ ports, or depends on a local Docker daemon for the focused contract.
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** automated — 2026-08-27
+
+## Validation Audit — 2026-08-27
+
+| Result | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+Fresh focused evidence passed:
+
+- `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors` — 27 tests, 0 failures.
+- `bash -n scripts/demo` — launcher syntax is valid.
+- `make help`, `make -n up-d`, `make -n doctor`, `make -n proxy`, and `make -n open` — public recipes resolve without execution errors.
+- `PORT=4100 RELYRA_HOST=alt.relyra.localhost make url` — loopback output remains `http://localhost:4100`.

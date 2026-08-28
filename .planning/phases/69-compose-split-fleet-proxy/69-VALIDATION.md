@@ -1,11 +1,11 @@
 ---
 phase: 69
 slug: compose-split-fleet-proxy
-status: complete
+status: validated
 nyquist_compliant: true
 wave_0_complete: true
 created: 2026-08-16
-updated: 2026-08-26
+updated: 2026-08-27
 ---
 
 # Phase 69 — Validation Strategy
@@ -52,3 +52,17 @@ None for Phase 69. Visual identity is unchanged, and every relevant interaction/
 - [x] Required-check consumers are protected by a static drift test.
 - [x] Diagnostics are retained for CI failures.
 - [x] Human UAT is not required for Phase 69 completion.
+
+## Validation Audit 2026-08-27
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+Focused evidence rerun during this audit:
+
+- `mix test test/release/fleet_proxy_ci_integrity_test.exs --warnings-as-errors` — 3 tests, 0 failures.
+- Solo and proxy Compose graphs rendered successfully and passed their port/network shape assertions.
+- Both fleet lifecycle scripts passed `bash -n`; `actionlint` passed for the required workflow.

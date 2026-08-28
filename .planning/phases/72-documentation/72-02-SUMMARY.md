@@ -25,6 +25,7 @@ key-decisions:
   - "Solo/FakeIdP remains the complete first evaluator proof; Fleet and Keycloak are optional follow-ons."
   - "Published demo documentation uses absolute GitHub links for repository-only operational material."
   - "Root README retains its library Day-1 sequence and routes Docker evaluation separately."
+requirements-completed: [DOC-02]
 metrics:
   duration: 14m
   completed_date: 2026-08-27

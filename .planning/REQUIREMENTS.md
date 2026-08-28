@@ -67,5 +67,5 @@
 | KC-01 | Phase 70 | Complete |
 | DX-01 | Phase 71 | Complete |
 | DX-02 | Phase 71 | Complete |
-| DOC-01 | Phase 72 | Gaps Found |
-| DOC-02 | Phase 72 | Gaps Found |
+| DOC-01 | Phase 72 | Complete |
+| DOC-02 | Phase 72 | Complete |

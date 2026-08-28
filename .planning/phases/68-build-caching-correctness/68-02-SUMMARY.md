@@ -21,6 +21,7 @@ decisions:
     summary: "Named volumes attach at nested demo paths (/app/demo/ledger_loop/deps and /app/demo/ledger_loop/_build) — NOT generic /app/deps or /app/_build — so macOS-compiled artifacts never enter the Linux container"
   - id: D-10-CORRECTED-APPLIED
     summary: "config :phoenix_live_reload backend: :fs_poll added as a SEPARATE top-level block in dev.exs, NOT inside the Endpoint live_reload: keyword (which silently ignores backend:)"
+requirements-completed: [DKR-02, DKR-03, DKR-04]
 metrics:
   duration: "2m 26s"
   completed_date: "2026-06-19"

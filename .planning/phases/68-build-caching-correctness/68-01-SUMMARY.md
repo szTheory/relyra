@@ -20,6 +20,7 @@ key_files:
 decisions:
   - id: D-CURL-APK
     summary: "Added `curl` to the D-03 apk list (not in original spec) to preserve the existing demo_app healthcheck probe after removing the inline install block"
+requirements-completed: [DKR-01, DKR-03]
 metrics:
   duration: "2m 8s"
   completed_date: "2026-06-19"
