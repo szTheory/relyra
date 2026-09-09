@@ -75,7 +75,12 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 73-01-PLAN.md — Trace adopter evidence from a literal ledger through deterministic ownership into mandatory CI.
+- [ ] 73-02-PLAN.md — Capture and machine-check the severity-ranked repository and CI baseline.
+- [ ] 73-03-PLAN.md — Enforce approval checkpoints, feature-neutral scope, and deterministic completion policy.
 
 ### Phase 74: Clean-Room Package Consumer
 
