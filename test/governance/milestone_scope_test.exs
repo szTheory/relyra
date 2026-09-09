@@ -44,6 +44,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       |> Enum.flat_map(fn phase ->
         ".planning/phases/#{phase}-*/*-PLAN.md"
         |> Path.wildcard()
+        |> Enum.reject(&executed_plan?/1)
         |> Enum.flat_map(fn path ->
           path
           |> File.read!()
@@ -132,21 +133,20 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert plan_scope_violations(clean) == []
 
     controls = [
-      {Regex.replace(~r/^\s*public_api: unchanged\n/m, clean, "", global: false), "public_api",
-       "risk_metadata"},
-      {String.replace(
+      {replace_risk_field(clean, "public_api: unchanged\n", ""), "public_api", "risk_metadata"},
+      {replace_risk_field(
          clean,
          "public_api: unchanged",
-         "public_api: unchanged\n      public_api: unchanged",
-         global: false
+         "public_api: unchanged\n    public_api: unchanged"
        ), "public_api", "exactly once"},
-      {String.replace(clean, "public_api: unchanged", "public_api: safe", global: false),
+      {replace_risk_field(clean, "public_api: unchanged", "public_api: safe"), "public_api",
+       "unsupported"},
+      {replace_risk_field(clean, "public_api: unchanged", "public_api: unchanged mutation"),
        "public_api", "unsupported"},
-      {String.replace(clean, "public_api: unchanged", "public_api: unchanged mutation",
-         global: false
-       ), "public_api", "unsupported"},
-      {String.replace(clean, "public_api: unchanged", "public_api: unchanged; mutation required",
-         global: false
+      {replace_risk_field(
+         clean,
+         "public_api: unchanged",
+         "public_api: unchanged; mutation required"
        ), "public_api", "unsupported"}
     ]
 
@@ -741,6 +741,15 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     )
   end
 
+  defp replace_risk_field(plan, old, new) do
+    Regex.replace(
+      ~r/(<risk_metadata>.*?)(#{Regex.escape(old)})/s,
+      plan,
+      fn _match, prefix, _field -> prefix <> new end,
+      global: false
+    )
+  end
+
   defp assert_requirement_violation(plan, ownership, requirement, expected_owner) do
     violations = requirement_membership_violations(plan, ownership)
 
@@ -764,7 +773,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         _other -> ["scope_assertions must appear exactly once"]
       end
 
-    scope_violations ++
+    task_risk_metadata_violations(tasks) ++
+      scope_violations ++
       deterministic_verification_violations(tasks) ++
       forbidden_capability_violations(tasks) ++
       manual_acceptance_violations(markdown) ++
@@ -788,6 +798,46 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         true ->
           []
       end
+    end)
+  end
+
+  defp task_risk_metadata_violations(tasks) do
+    tasks
+    |> Enum.reject(&String.starts_with?(&1.type, "checkpoint"))
+    |> Enum.flat_map(fn task ->
+      identity = nonempty(task.name, "unnamed task")
+
+      shape_violations =
+        case task.risk_metadata_sections do
+          [_section] ->
+            []
+
+          sections ->
+            ["#{identity} risk_metadata must appear exactly once, found #{length(sections)}"]
+        end
+
+      field_violations =
+        Enum.flat_map(@approval_classes, fn risk_class ->
+          values = Map.get(task.risk_metadata, risk_class, [])
+
+          cond do
+            length(values) != 1 ->
+              ["#{identity} #{risk_class} risk_metadata must appear exactly once"]
+
+            hd(values) not in @risk_values ->
+              ["#{identity} #{risk_class} risk_metadata value is unsupported: #{hd(values)}"]
+
+            true ->
+              []
+          end
+        end)
+
+      mismatch_violations =
+        for risk_class <- governed_task_classes(task),
+            Map.get(task.risk_metadata, risk_class) != ["mutation"],
+            do: "#{identity} #{risk_class} risk_metadata contradicts governed surface"
+
+      shape_violations ++ field_violations ++ mismatch_violations
     end)
   end
 
@@ -857,8 +907,106 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp mutation_task_index(tasks, approval_class) do
     Enum.find_index(tasks, fn task ->
       not String.starts_with?(task.type, "checkpoint") and
-        String.contains?(task.action, "approval_class: #{approval_class}")
+        (Map.get(task.risk_metadata, approval_class) == ["mutation"] or
+           approval_class in governed_task_classes(task) or
+           String.contains?(task.action, "approval_class: #{approval_class}"))
     end)
+  end
+
+  defp governed_task_classes(task) do
+    files =
+      task.files
+      |> String.split(~r/[\n,]/, trim: true)
+      |> Enum.map(&String.trim/1)
+
+    content = "#{task.name}\n#{task.action}"
+
+    []
+    |> maybe_add_class(
+      "public_api",
+      "lib/relyra.ex" in files or
+        Enum.any?(files, &published_behaviour_path?/1) or
+        Regex.match?(
+          ~r/\b(?:change|modify|rename|remove|replace)\b.{0,100}\bRelyra\.(?:start_login|consume_response)\/3\b/is,
+          content
+        )
+    )
+    |> maybe_add_class(
+      "default_tightening",
+      Regex.match?(~r/\b(?:tighten|stricter|change)\b.{0,80}\bdefault\b/is, content)
+    )
+    |> maybe_add_class(
+      "security_posture",
+      Enum.any?(files, &security_seam_path?/1) or
+        Regex.match?(
+          ~r/\b(?:change|weaken|replace)\b.{0,100}\b(?:trust|algorithm|key material)\b/is,
+          content
+        )
+    )
+    |> maybe_add_class(
+      "semver_major",
+      Regex.match?(
+        ~r/\b(?:bump|publish)\b.{0,80}\b(?:semver\s+)?major\b|\brelease\s+(?:a\s+)?(?:real\s+)?(?:semver\s+)?major\s+version\b/is,
+        content
+      )
+    )
+    |> maybe_add_class(
+      "remote_github",
+      Enum.any?(files, &remote_state_path?/1) and
+        Regex.match?(~r/\b(?:mutate|apply|enable|disable|change|update)\b/i, content)
+    )
+    |> Enum.reverse()
+  end
+
+  defp maybe_add_class(classes, class, true), do: [class | classes]
+  defp maybe_add_class(classes, _class, false), do: classes
+
+  defp published_behaviour_path?(path) do
+    path in [
+      "lib/relyra/connection_resolver.ex",
+      "lib/relyra/session_adapter.ex",
+      "lib/relyra/user_mapper.ex",
+      "lib/relyra/request_store.ex",
+      "lib/relyra/replay_store.ex"
+    ]
+  end
+
+  defp security_seam_path?(path) do
+    path in [
+      "lib/relyra/security/signature.ex",
+      "lib/relyra/security/xml/pure_beam.ex",
+      "lib/relyra/security/xml/c14n.ex",
+      "lib/relyra/security/algorithm_policy.ex",
+      "lib/relyra/ecto/audit_writer.ex"
+    ]
+  end
+
+  defp remote_state_path?(path) do
+    String.starts_with?(path, ".github/") or path == "scripts/setup_branch_protection.sh"
+  end
+
+  defp changed_surface_classes(_path, before_content, after_content)
+       when before_content == after_content,
+       do: []
+
+  defp changed_surface_classes("lib/relyra.ex", before_content, after_content) do
+    published_signatures =
+      ~r/^\s*def\s+(?:start_login|consume_response)\s*\([^\n]*\)/m
+
+    if Regex.scan(published_signatures, before_content) ==
+         Regex.scan(published_signatures, after_content),
+       do: [],
+       else: ["public_api"]
+  end
+
+  defp changed_surface_classes(path, _before_content, _after_content) do
+    cond do
+      published_behaviour_path?(path) -> ["public_api"]
+      security_seam_path?(path) -> ["security_posture"]
+      path == "mix.exs" -> ["semver_major"]
+      remote_state_path?(path) -> ["remote_github"]
+      true -> []
+    end
   end
 
   defp remote_checkpoint_violations(checkpoint) do
@@ -1110,6 +1258,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     ~r/<task\s+(?<attributes>[^>]*)>(?<body>.*?)<\/task>/s
     |> Regex.scan(markdown, capture: ["attributes", "body"])
     |> Enum.map(fn [attributes, body] ->
+      risk_metadata_sections = tag_sections(body, "risk_metadata")
+
       %{
         type: attribute_value(attributes, "type"),
         gate: attribute_value(attributes, "gate"),
@@ -1119,9 +1269,32 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         files: tag_content(body, "files"),
         verify: tag_content(body, "verify"),
         acceptance_criteria: tag_content(body, "acceptance_criteria"),
-        resume_signal: tag_content(body, "resume-signal")
+        resume_signal: tag_content(body, "resume-signal"),
+        risk_metadata_sections: risk_metadata_sections,
+        risk_metadata:
+          risk_metadata_sections
+          |> Enum.flat_map(&parse_key_values/1)
+          |> Enum.reduce(%{}, fn {key, value}, fields ->
+            Map.update(fields, key, [value], &[value | &1])
+          end)
       }
     end)
+  end
+
+  defp parse_key_values(section) do
+    section
+    |> String.split("\n")
+    |> Enum.flat_map(fn line ->
+      case String.split(line, ":", parts: 2) do
+        [key, value] -> [{String.trim(key), String.trim(value)}]
+        _other -> []
+      end
+    end)
+  end
+
+  defp executed_plan?(path) do
+    String.ends_with?(path, "-PLAN.md") and
+      File.exists?(String.replace_suffix(path, "-PLAN.md", "-SUMMARY.md"))
   end
 
   defp attribute_value(attributes, name) do
