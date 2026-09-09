@@ -33,6 +33,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @categories ~w(Correctness Security Integration Readability Documentation Artifacts CI)
   @severities ~w(Critical High Medium Low Informational)
   @approval_classes ~w(public_api default_tightening security_posture semver_major remote_github)
+  @risk_values ~w(unchanged mutation)
 
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     roadmap = File.read!(".planning/ROADMAP.md")
@@ -124,6 +125,73 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       missing = Regex.replace(~r/^#{approval_class}:.*\n/m, clean, "")
       assert_plan_violation(missing, approval_class, "scope assertion")
     end
+  end
+
+  test "unexecuted implementation tasks require one exact closed risk value per class" do
+    clean = no_risk_plan_fixture()
+    assert plan_scope_violations(clean) == []
+
+    controls = [
+      {Regex.replace(~r/^\s*public_api: unchanged\n/m, clean, "", global: false), "public_api",
+       "risk_metadata"},
+      {String.replace(
+         clean,
+         "public_api: unchanged",
+         "public_api: unchanged\n      public_api: unchanged",
+         global: false
+       ), "public_api", "exactly once"},
+      {String.replace(clean, "public_api: unchanged", "public_api: safe", global: false),
+       "public_api", "unsupported"},
+      {String.replace(clean, "public_api: unchanged", "public_api: unchanged mutation",
+         global: false
+       ), "public_api", "unsupported"},
+      {String.replace(clean, "public_api: unchanged", "public_api: unchanged; mutation required",
+         global: false
+       ), "public_api", "unsupported"}
+    ]
+
+    for {plan, risk_class, diagnostic} <- controls do
+      assert_plan_violation(plan, risk_class, diagnostic)
+    end
+  end
+
+  test "governed task surfaces override optimistic risk metadata" do
+    public_api =
+      no_risk_plan_fixture()
+      |> String.replace(
+        "Extend deterministic policy tests only.",
+        "Change the published Relyra.start_login/3 entry point."
+      )
+
+    assert_plan_violation(public_api, "public_api", "contradicts governed surface")
+    assert_plan_violation(public_api, "public_api", "checkpoint")
+
+    protected_path =
+      no_risk_plan_fixture()
+      |> String.replace(
+        "test/governance/milestone_scope_test.exs",
+        "lib/relyra/security/signature.ex",
+        global: false
+      )
+
+    assert_plan_violation(protected_path, "security_posture", "contradicts governed surface")
+    assert_plan_violation(protected_path, "security_posture", "checkpoint")
+  end
+
+  test "changed-surface classifier detects published signatures and protected seams" do
+    before_api = "def start_login(connection, relay_context, opts \\\\ [])"
+    after_api = "def start_login(connection, relay_context, policy, opts \\\\ [])"
+
+    assert "public_api" in changed_surface_classes("lib/relyra.ex", before_api, after_api)
+
+    assert "security_posture" in changed_surface_classes(
+             "lib/relyra/security/signature.ex",
+             "defp do_verify(parsed, connection, certs, opts)",
+             "defp do_verify(parsed, connection, certs, policy, opts)"
+           )
+
+    assert changed_surface_classes("lib/relyra.ex", before_api, before_api) == []
+    assert changed_surface_classes("test/governance/milestone_scope_test.exs", "a", "b") == []
   end
 
   test "decision checkpoints authorize mutations but never satisfy acceptance" do
@@ -576,6 +644,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     <task type="auto">
       <name>Run the governance contract</name>
       <files>test/governance/milestone_scope_test.exs</files>
+      <risk_metadata>
+      public_api: unchanged
+      default_tightening: unchanged
+      security_posture: unchanged
+      semver_major: unchanged
+      remote_github: unchanged
+      </risk_metadata>
       <action>Extend deterministic policy tests only.</action>
       <verify><automated>mix test test/governance/milestone_scope_test.exs --warnings-as-errors</automated></verify>
       <acceptance_criteria><criterion>The governance contract passes.</criterion></acceptance_criteria>
@@ -629,6 +704,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     <task type="auto">
       <name>Apply #{approval_class} mutation</name>
       <files>governed/file.ex</files>
+      <risk_metadata>
+      public_api: #{if approval_class == "public_api", do: "mutation", else: "unchanged"}
+      default_tightening: #{if approval_class == "default_tightening", do: "mutation", else: "unchanged"}
+      security_posture: #{if approval_class == "security_posture", do: "mutation", else: "unchanged"}
+      semver_major: #{if approval_class == "semver_major", do: "mutation", else: "unchanged"}
+      remote_github: #{if approval_class == "remote_github", do: "mutation", else: "unchanged"}
+      </risk_metadata>
       <action>approval_class: #{approval_class}. #{impact}</action>
       <verify><automated>mix test test/governance/milestone_scope_test.exs --warnings-as-errors</automated></verify>
       <acceptance_criteria><criterion>The governed mutation is proven.</criterion></acceptance_criteria>
