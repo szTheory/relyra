@@ -34,6 +34,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @severities ~w(Critical High Medium Low Informational)
   @approval_classes ~w(public_api default_tightening security_posture semver_major remote_github)
   @risk_values ~w(unchanged mutation)
+  @demand_gated_exclusions ~w(AUTHN-POST-01 KMS-01 SIGNED-META-01)
 
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     roadmap = File.read!(".planning/ROADMAP.md")
@@ -656,27 +657,25 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   test "every baseline row requires one complete allowed verification marker" do
     baseline = File.read!(@baseline_path)
     assert baseline_violations(baseline) == []
+    marker = "[VERIFIED: `.planning/STATE.md` Baseline Findings, inspected 2026-09-09]"
 
     controls = [
-      {String.replace(baseline, ~r/ \[VERIFIED:.*\]$/m, "", global: false), "QUAL-73-001",
+      {String.replace(baseline, " #{marker}", "", global: false), "QUAL-73-001",
        "verification marker"},
-      {String.replace(baseline, ~r/\[VERIFIED:.*\]$/m, "[VERIFIED: ]", global: false),
+      {String.replace(baseline, marker, "[VERIFIED: ]", global: false), "QUAL-73-001",
+       "verification marker"},
+      {String.replace(baseline, marker, "[VERIFIED: `mix ci.evidence`", global: false),
        "QUAL-73-001", "verification marker"},
-      {String.replace(baseline, ~r/\[VERIFIED:.*\]$/m, "[VERIFIED: `mix ci.evidence`",
-         global: false
-       ), "QUAL-73-001", "verification marker"},
       {String.replace(
          baseline,
-         ~r/(\[VERIFIED:.*\])$/m,
-         "\\1 [VERIFIED: `mix ci.evidence`]",
+         marker,
+         "#{marker} [VERIFIED: `mix ci.evidence`]",
          global: false
        ), "QUAL-73-001", "exactly one"},
-      {String.replace(baseline, ~r/\[VERIFIED:.*\]$/m, "[VERIFIED: source says good]",
-         global: false
-       ), "QUAL-73-001", "allowed reference"},
-      {String.replace(baseline, ~r/\[VERIFIED:.*\]$/m, "[VERIFIED: `curl example.test`]",
-         global: false
-       ), "QUAL-73-001", "allowed reference"}
+      {String.replace(baseline, marker, "[VERIFIED: source says good]", global: false),
+       "QUAL-73-001", "allowed reference"},
+      {String.replace(baseline, marker, "[VERIFIED: `curl example.test`]", global: false),
+       "QUAL-73-001", "allowed reference"}
     ]
 
     for {markdown, id, detail} <- controls do
@@ -940,6 +939,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp plan_scope_violations(markdown) do
     scope_sections = tag_sections(markdown, "scope_assertions")
+    exclusion_sections = tag_sections(markdown, "demand_gated_exclusions")
     tasks = plan_tasks(markdown)
 
     scope_violations =
@@ -948,12 +948,38 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         _other -> ["scope_assertions must appear exactly once"]
       end
 
+    exclusion_violations = demand_gated_exclusion_violations(exclusion_sections)
+
     task_risk_metadata_violations(tasks) ++
       scope_violations ++
+      exclusion_violations ++
       deterministic_verification_violations(tasks) ++
       forbidden_capability_violations(tasks) ++
       manual_acceptance_violations(markdown) ++
       orphan_checkpoint_violations(tasks)
+  end
+
+  defp demand_gated_exclusion_violations([section]) do
+    exclusions =
+      section
+      |> String.split(~r/[\s,]+/, trim: true)
+
+    cond do
+      length(exclusions) != length(Enum.uniq(exclusions)) ->
+        ["demand_gated_exclusions must contain each identifier exactly once"]
+
+      MapSet.new(exclusions) != MapSet.new(@demand_gated_exclusions) ->
+        [
+          "demand_gated_exclusions must equal the exact set #{Enum.join(@demand_gated_exclusions, ", ")}"
+        ]
+
+      true ->
+        []
+    end
+  end
+
+  defp demand_gated_exclusion_violations(sections) do
+    ["demand_gated_exclusions must appear exactly once, found #{length(sections)}"]
   end
 
   defp approval_scope_violations(scope, tasks) do
@@ -1410,50 +1436,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp forbidden_capability_violations(tasks) do
-    capabilities = ~w(AUTHN-POST-01 KMS-01 SIGNED-META-01)
-
     Enum.flat_map(tasks, fn task ->
       if String.starts_with?(task.type, "checkpoint") do
         []
       else
         [
-          {"name", task.name, false},
-          {"files", task.files, false},
-          {"action", task.action, governance_policy_action?(task)}
+          {"name", task.name},
+          {"files", task.files},
+          {"action", task.action}
         ]
-        |> Enum.flat_map(fn {region, content, governance_policy?} ->
-          for capability <- capabilities,
+        |> Enum.flat_map(fn {region, content} ->
+          for capability <- @demand_gated_exclusions,
               String.contains?(content, capability),
-              not governance_policy?,
-              not negative_capability_reference?(content, capability),
               do: "#{capability} implementation scope appears in task #{region}"
         end)
       end
-    end)
-  end
-
-  defp governance_policy_action?(task) do
-    files = String.split(task.files, ",", trim: true) |> Enum.map(&String.trim/1)
-    action = String.downcase(task.action)
-
-    files != [] and Enum.all?(files, &String.starts_with?(&1, "test/governance/")) and
-      Enum.any?(
-        ["scope validation", "scope validator", "policy test", "reject implementation"],
-        &String.contains?(action, &1)
-      )
-  end
-
-  defp negative_capability_reference?(content, capability) do
-    content
-    |> String.split(~r/(?<=[.!?])\s+|\n/)
-    |> Enum.filter(&String.contains?(&1, capability))
-    |> Enum.all?(fn sentence ->
-      normalized = String.downcase(sentence)
-
-      Enum.any?(
-        ["remain excluded", "remains excluded", "do not", "must not", "forbid", "reject"],
-        &String.contains?(normalized, &1)
-      )
     end)
   end
 
@@ -1803,11 +1800,66 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp evidence_violations(rows) do
-    for row <- rows,
-        [prefix | _rest] = String.split(row["Reproducible Evidence"], "[VERIFIED:", parts: 2),
-        String.trim(prefix) == "",
-        do: "#{row["Finding ID"]} Reproducible Evidence lacks a named command or source"
+    Enum.flat_map(rows, fn row ->
+      evidence = String.trim(row["Reproducible Evidence"] || "")
+      id = row["Finding ID"]
+      marker_count = length(Regex.scan(~r/\[VERIFIED:/, evidence))
+
+      cond do
+        marker_count != 1 ->
+          ["#{id} Reproducible Evidence must contain exactly one verification marker"]
+
+        not String.ends_with?(evidence, "]") ->
+          ["#{id} Reproducible Evidence verification marker is incomplete"]
+
+        true ->
+          [description, marker_body] = String.split(evidence, "[VERIFIED:", parts: 2)
+          reference = marker_body |> String.trim_trailing("]") |> String.trim()
+
+          []
+          |> maybe_evidence_violation(
+            String.trim(description) == "",
+            "#{id} Reproducible Evidence lacks descriptive text before verification marker"
+          )
+          |> maybe_evidence_violation(
+            reference == "",
+            "#{id} Reproducible Evidence verification marker is empty"
+          )
+          |> maybe_evidence_violation(
+            reference != "" and not allowed_verification_reference?(reference),
+            "#{id} Reproducible Evidence verification marker lacks an allowed reference"
+          )
+      end
+    end)
   end
+
+  defp allowed_verification_reference?(reference) do
+    tokens =
+      ~r/`([^`]+)`/
+      |> Regex.scan(reference, capture: :all_but_first)
+      |> List.flatten()
+
+    Enum.any?(tokens, &allowed_verification_token?/1)
+  end
+
+  defp allowed_verification_token?(token) do
+    repository_path? =
+      Enum.any?(
+        [".planning/", ".github/", "docs/", "guides/", "lib/", "scripts/", "test/"],
+        &String.starts_with?(token, &1)
+      )
+
+    executable_command? =
+      Regex.match?(
+        ~r/^(?:mix\s+(?:test\b|qa\b|format\b|ci\.[\w.-]+\b)|rg(?:\s|$)|git\s+(?:ls-files|status|diff)\b|\.\/scripts\/)/,
+        token
+      )
+
+    repository_path? or executable_command?
+  end
+
+  defp maybe_evidence_violation(violations, true, message), do: violations ++ [message]
+  defp maybe_evidence_violation(violations, false, _message), do: violations
 
   defp severity_policy_violations(rows) do
     Enum.flat_map(rows, fn row ->
