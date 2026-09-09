@@ -49,11 +49,15 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 **Brand source of truth (post-v1.8):** `brandbook/notes/decision-log.md` → "Canonical Lock Set" (palette/type/voice); `brandbook/tokens/tokens.css` (`--rl-*`); `brandbook/README.md` (artifact index). The original `prompts/relyra-brand-book.md` remains the narrative brand book; where they differ, the Canonical Lock Set governs (it is the WCAG-remediated, contradiction-resolved set).
 
-## Next Milestone Goals
+## Current Milestone: v1.11 First-Adopter Twin
 
-No milestone is active. v1.10 is archived, and the project returns to the
-demand-gated pause default. Start a new milestone only when adopter evidence or
-a deliberate maintenance objective justifies one.
+**Goal:** Make Relyra as adopter-ready as practical before a real adopter arrives by maintaining a realistic digital first adopter, testing the complete public integration boundary, and closing high-value quality gaps until returns diminish.
+
+**Target features:**
+- Deepen LedgerLoop/Northstar into a realistic multi-tenant SaaS adopter with credible organizations, users, roles, IdPs, trust history, incidents, and operator workflows.
+- Add a clean-room downstream consumer that installs only Relyra's publishable artifact and proves installation, configuration, migrations, runtime integration, representative SAML lifecycles, diagnosis, recovery, and upgrades.
+- Ratchet fixture realism, end-to-end and smoke coverage, code clarity, repository structure, standalone documentation, CI efficiency, and local/GitHub hygiene while preserving every security invariant.
+- Fix adopter-significant findings within the milestone; require explicit approval for public API, stricter-default, security-posture, and shared GitHub state changes.
 
 **Demand-gated future candidates** (investigation threads in `.planning/threads/`; trigger = real GitHub issue):
 
@@ -192,7 +196,10 @@ The v1.x milestone arc:
 
 ### Active
 
-None. Fresh active requirements should be defined by the next `/gsd-new-milestone` cycle.
+- [ ] Maintain a realistic LedgerLoop/Northstar first-adopter twin that exercises complete evaluator, implementer, tenant-admin, security-reviewer, SRE, and end-user journeys.
+- [ ] Prove Relyra's public package boundary through a clean-room downstream consumer and deterministic lifecycle evidence.
+- [ ] Close high-value integration, implementation, fixture, documentation, CI, repository, and project-hygiene gaps exposed by the twin and a repository-wide craftsmanship review.
+- [ ] Finish with CI-green `main`, intentional tracked artifacts, clean worktrees, standalone public documentation, and explicitly dispositioned residual findings.
 
 ### Out of Scope
 
@@ -298,4 +305,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-08-27 after v1.10 milestone archive*
+*Last updated: 2026-09-09 after starting v1.11 First-Adopter Twin*
