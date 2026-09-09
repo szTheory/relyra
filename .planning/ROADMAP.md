@@ -78,8 +78,16 @@ runs, what the current quality/CI baseline is, and which changes require approva
 **Plans:** 3 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 73-01-PLAN.md — Trace adopter evidence from a literal ledger through deterministic ownership into mandatory CI.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 73-02-PLAN.md — Capture and machine-check the severity-ranked repository and CI baseline.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 73-03-PLAN.md — Enforce approval checkpoints, feature-neutral scope, and deterministic completion policy.
 
 ### Phase 74: Clean-Room Package Consumer
