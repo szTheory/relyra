@@ -140,6 +140,110 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_plan_violation(manual_verify, "verification", "deterministic")
   end
 
+  test "active plans use only requirements owned by their roadmap phase" do
+    roadmap = File.read!(".planning/ROADMAP.md")
+    ownership = roadmap_requirement_ownership(roadmap)
+
+    violations =
+      roadmap
+      |> incomplete_phase_numbers()
+      |> Enum.flat_map(fn phase ->
+        ".planning/phases/#{phase}-*/*-PLAN.md"
+        |> Path.wildcard()
+        |> Enum.flat_map(fn path ->
+          path
+          |> File.read!()
+          |> requirement_membership_violations(ownership)
+          |> Enum.map(&"#{path}: #{&1}")
+        end)
+      end)
+
+    assert violations == [],
+           "Active plans contain requirements owned by another phase:\n" <>
+             Enum.map_join(violations, "\n", &"  - #{&1}")
+
+    mismapped = String.replace(no_risk_plan_fixture(), "[GOV-01]", "[PKG-01]")
+    assert_requirement_violation(mismapped, ownership, "PKG-01", "Phase 74")
+  end
+
+  test "demand-gated capabilities are legal only in explicit negative policy regions" do
+    clean = no_risk_plan_fixture()
+    assert plan_scope_violations(clean) == []
+
+    policy_only =
+      clean <>
+        """
+        <must_haves><prohibitions>
+        AUTHN-POST-01, KMS-01, and SIGNED-META-01 remain excluded.
+        </prohibitions></must_haves>
+        """
+
+    assert plan_scope_violations(policy_only) == []
+
+    for capability <- ~w(AUTHN-POST-01 KMS-01 SIGNED-META-01) do
+      implementation =
+        String.replace(
+          clean,
+          "Extend deterministic policy tests only.",
+          "Implement #{capability} in the library."
+        )
+
+      assert_plan_violation(implementation, capability, "implementation scope")
+    end
+  end
+
+  test "renaming forbidden product expansion as cleanup does not bypass scope" do
+    disguised =
+      String.replace(
+        no_risk_plan_fixture(),
+        "<name>Run the governance contract</name>",
+        "<name>Cleanup signed metadata helpers for SIGNED-META-01</name>"
+      )
+
+    assert_plan_violation(disguised, "SIGNED-META-01", "implementation scope")
+  end
+
+  test "incomplete phases reject manual completion markers and required UAT artifacts" do
+    for marker <- ["<human-check>", "## Manual-Only Verifications", "status: human_needed"] do
+      assert_plan_violation(
+        no_risk_plan_fixture() <> "\n#{marker}\n",
+        marker,
+        "manual acceptance"
+      )
+    end
+
+    orphan_checkpoint =
+      String.replace(
+        no_risk_plan_fixture(),
+        "<task type=\"auto\">",
+        """
+        <task type="checkpoint:decision" gate="blocking">
+          <decision>Approve completion.</decision>
+          <resume-signal>Say approved.</resume-signal>
+        </task>
+        <task type="auto">
+        """,
+        global: false
+      )
+
+    assert_plan_violation(orphan_checkpoint, "checkpoint:decision", "named risky mutation")
+
+    fixture_dir =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-automation-policy-#{System.unique_integer([:positive])}"
+      )
+
+    File.mkdir_p!(fixture_dir)
+    on_exit(fn -> File.rm_rf!(fixture_dir) end)
+    File.write!(Path.join(fixture_dir, "99-01-UAT.md"), "required manual evidence")
+
+    assert Enum.any?(
+             automation_policy_violations(fixture_dir),
+             &String.contains?(&1, "UAT artifact")
+           )
+  end
+
   test "dated baseline publishes the complete severity-ranked findings contract" do
     baseline = File.read!(@baseline_path)
     sections = baseline_sections(baseline)
@@ -471,6 +575,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert Enum.any?(violations, &(&1 =~ identity and &1 =~ detail)),
            "expected plan violation containing #{inspect(identity)} and #{inspect(detail)}, got: #{inspect(violations)}"
+  end
+
+  defp assert_requirement_violation(plan, ownership, requirement, expected_owner) do
+    violations = requirement_membership_violations(plan, ownership)
+
+    assert Enum.any?(violations, &(&1 =~ requirement and &1 =~ expected_owner)),
+           "expected requirement violation containing #{inspect(requirement)} and #{inspect(expected_owner)}, got: #{inspect(violations)}"
   end
 
   defp incomplete_phase_numbers(roadmap) do
