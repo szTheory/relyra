@@ -133,11 +133,60 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     manual_verify =
       String.replace(
         clean,
-        "<automated>mix test test/governance/milestone_scope_test.exs</automated>",
+        "<automated>mix test test/governance/milestone_scope_test.exs --warnings-as-errors</automated>",
         "<automated>checkpoint:decision approval</automated>"
       )
 
     assert_plan_violation(manual_verify, "verification", "deterministic")
+  end
+
+  test "every acceptance-bearing task requires its own executable non-zero owner" do
+    clean = no_risk_plan_fixture()
+    assert plan_scope_violations(clean) == []
+
+    for command <- ["mix help", "mix deps.get", "echo mix test --warnings-as-errors"] do
+      invalid = replace_fixture_command(clean, command)
+      assert_plan_violation(invalid, "Run the governance contract", "executable ownership")
+    end
+
+    zero_selector =
+      replace_fixture_command(
+        clean,
+        "mix test test/governance/milestone_scope_test.exs --only no_such_selector --warnings-as-errors"
+      )
+
+    assert_plan_violation(zero_selector, "Run the governance contract", "zero selected tests")
+
+    missing_warnings =
+      replace_fixture_command(clean, "mix test test/governance/milestone_scope_test.exs")
+
+    assert_plan_violation(missing_warnings, "Run the governance contract", "warnings-as-errors")
+
+    uncovered_sibling =
+      String.replace(
+        clean,
+        "</tasks>",
+        """
+        <task type="auto">
+          <name>Task 2: Uncovered sibling</name>
+          <files>test/governance/milestone_scope_test.exs</files>
+          <action>Exercise a second acceptance branch.</action>
+          <verify></verify>
+          <acceptance_criteria><criterion>Second branch is proven.</criterion></acceptance_criteria>
+        </task>
+        </tasks>
+        """
+      )
+
+    assert_plan_violation(uncovered_sibling, "Task 2: Uncovered sibling", "executable ownership")
+
+    named_alias =
+      replace_fixture_command(
+        clean,
+        "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence"
+      )
+
+    assert plan_scope_violations(named_alias) == []
   end
 
   test "active plans use only requirements owned by their roadmap phase" do
@@ -528,7 +577,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       <name>Run the governance contract</name>
       <files>test/governance/milestone_scope_test.exs</files>
       <action>Extend deterministic policy tests only.</action>
-      <verify><automated>mix test test/governance/milestone_scope_test.exs</automated></verify>
+      <verify><automated>mix test test/governance/milestone_scope_test.exs --warnings-as-errors</automated></verify>
+      <acceptance_criteria><criterion>The governance contract passes.</criterion></acceptance_criteria>
     </task>
     </tasks>
     """
@@ -580,7 +630,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       <name>Apply #{approval_class} mutation</name>
       <files>governed/file.ex</files>
       <action>approval_class: #{approval_class}. #{impact}</action>
-      <verify><automated>mix test test/governance/milestone_scope_test.exs</automated></verify>
+      <verify><automated>mix test test/governance/milestone_scope_test.exs --warnings-as-errors</automated></verify>
+      <acceptance_criteria><criterion>The governed mutation is proven.</criterion></acceptance_criteria>
     </task>
     </tasks>
     """
@@ -600,6 +651,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert Enum.any?(violations, &(&1 =~ identity and &1 =~ detail)),
            "expected plan violation containing #{inspect(identity)} and #{inspect(detail)}, got: #{inspect(violations)}"
+  end
+
+  defp replace_fixture_command(plan, command) do
+    Regex.replace(~r/<automated>.*?<\/automated>/s, plan, "<automated>#{command}</automated>",
+      global: false
+    )
   end
 
   defp assert_requirement_violation(plan, ownership, requirement, expected_owner) do
