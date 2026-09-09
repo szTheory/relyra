@@ -244,6 +244,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
            )
   end
 
+  test "active incomplete phases keep completion evidence automated" do
+    violations =
+      ".planning/ROADMAP.md"
+      |> File.read!()
+      |> incomplete_phase_numbers()
+      |> Enum.flat_map(&automation_policy_violations/1)
+
+    assert violations == [],
+           "Incomplete phases must use deterministic completion evidence:\n" <>
+             Enum.map_join(violations, "\n", &"  - #{&1}")
+  end
+
   test "dated baseline publishes the complete severity-ranked findings contract" do
     baseline = File.read!(@baseline_path)
     sections = baseline_sections(baseline)
@@ -600,7 +612,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         _other -> ["scope_assertions must appear exactly once"]
       end
 
-    scope_violations ++ deterministic_verification_violations(tasks)
+    scope_violations ++
+      deterministic_verification_violations(tasks) ++
+      forbidden_capability_violations(tasks) ++
+      manual_acceptance_violations(markdown) ++
+      orphan_checkpoint_violations(tasks)
   end
 
   defp approval_scope_violations(scope, tasks) do
@@ -738,6 +754,167 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  defp forbidden_capability_violations(tasks) do
+    capabilities = ~w(AUTHN-POST-01 KMS-01 SIGNED-META-01)
+
+    Enum.flat_map(tasks, fn task ->
+      if String.starts_with?(task.type, "checkpoint") do
+        []
+      else
+        [
+          {"name", task.name, false},
+          {"files", task.files, false},
+          {"action", task.action, governance_policy_action?(task)}
+        ]
+        |> Enum.flat_map(fn {region, content, governance_policy?} ->
+          for capability <- capabilities,
+              String.contains?(content, capability),
+              not governance_policy?,
+              not negative_capability_reference?(content, capability),
+              do: "#{capability} implementation scope appears in task #{region}"
+        end)
+      end
+    end)
+  end
+
+  defp governance_policy_action?(task) do
+    files = String.split(task.files, ",", trim: true) |> Enum.map(&String.trim/1)
+    action = String.downcase(task.action)
+
+    files != [] and Enum.all?(files, &String.starts_with?(&1, "test/governance/")) and
+      Enum.any?(
+        ["scope validation", "scope validator", "policy test", "reject implementation"],
+        &String.contains?(action, &1)
+      )
+  end
+
+  defp negative_capability_reference?(content, capability) do
+    content
+    |> String.split(~r/(?<=[.!?])\s+|\n/)
+    |> Enum.filter(&String.contains?(&1, capability))
+    |> Enum.all?(fn sentence ->
+      normalized = String.downcase(sentence)
+
+      Enum.any?(
+        ["remain excluded", "remains excluded", "do not", "must not", "forbid", "reject"],
+        &String.contains?(normalized, &1)
+      )
+    end)
+  end
+
+  defp manual_acceptance_violations(markdown) do
+    for marker <- ["<human-check>", "## Manual-Only Verifications", "status: human_needed"],
+        String.contains?(markdown, marker),
+        do: "#{marker} manual acceptance is prohibited"
+  end
+
+  defp orphan_checkpoint_violations(tasks) do
+    tasks
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {task, checkpoint_index} ->
+      if task.type == "checkpoint:decision" do
+        case Regex.run(~r/approval_class:\s*([a-z_]+)/, task.body, capture: :all_but_first) do
+          [approval_class] when approval_class in @approval_classes ->
+            mutation_index = mutation_task_index(tasks, approval_class)
+
+            if mutation_index != nil and checkpoint_index < mutation_index,
+              do: [],
+              else: ["checkpoint:decision must precede a named risky mutation"]
+
+          _other ->
+            ["checkpoint:decision must precede a named risky mutation"]
+        end
+      else
+        []
+      end
+    end)
+  end
+
+  defp roadmap_requirement_ownership(roadmap) do
+    ~r/^### Phase ([0-9.]+):.*?^\*\*Requirements:\*\*\s*([^\n]+)$/ms
+    |> Regex.scan(roadmap, capture: :all_but_first)
+    |> Enum.reduce(%{}, fn [phase, requirements], ownership ->
+      requirements
+      |> String.split(",", trim: true)
+      |> Enum.reduce(ownership, fn requirement, acc ->
+        Map.put(acc, String.trim(requirement), "Phase #{phase}")
+      end)
+    end)
+  end
+
+  defp requirement_membership_violations(markdown, ownership) do
+    phase = plan_phase(markdown)
+
+    for requirement <- plan_requirements(markdown),
+        Map.get(ownership, requirement) != phase do
+      case Map.get(ownership, requirement) do
+        nil -> "#{requirement} is not assigned to any roadmap phase"
+        owner -> "#{requirement} belongs to #{owner}, not #{phase}"
+      end
+    end
+  end
+
+  defp plan_phase(markdown) do
+    frontmatter = plan_frontmatter(markdown)
+
+    case Regex.run(~r/^phase:\s*([0-9.]+)/m, frontmatter, capture: :all_but_first) do
+      [phase] -> "Phase #{phase}"
+      nil -> "Phase unknown"
+    end
+  end
+
+  defp plan_requirements(markdown) do
+    frontmatter = plan_frontmatter(markdown)
+
+    case Regex.run(~r/^requirements:\s*\[([^\]]*)\]/m, frontmatter, capture: :all_but_first) do
+      [inline] ->
+        inline |> String.split(",", trim: true) |> Enum.map(&String.trim/1)
+
+      nil ->
+        case Regex.run(~r/^requirements:\s*\n((?:\s+-\s+[^\n]+\n?)+)/m, frontmatter,
+               capture: :all_but_first
+             ) do
+          [lines] ->
+            ~r/^\s+-\s+([^\n]+)$/m
+            |> Regex.scan(lines, capture: :all_but_first)
+            |> Enum.map(fn [requirement] -> String.trim(requirement) end)
+
+          nil ->
+            []
+        end
+    end
+  end
+
+  defp plan_frontmatter(markdown) do
+    case Regex.run(~r/\A---\s*\n(.*?)\n---/s, markdown, capture: :all_but_first) do
+      [frontmatter] -> frontmatter
+      nil -> ""
+    end
+  end
+
+  defp automation_policy_violations(phase_or_directory) do
+    directories =
+      if File.dir?(phase_or_directory) do
+        [phase_or_directory]
+      else
+        Path.wildcard(".planning/phases/#{phase_or_directory}-*")
+      end
+
+    document_violations =
+      for directory <- directories,
+          path <- Path.wildcard(Path.join(directory, "*-PLAN.md")),
+          marker <- ["<human-check>", "## Manual-Only Verifications", "status: human_needed"],
+          String.contains?(File.read!(path), marker),
+          do: "#{path} contains #{inspect(marker)}"
+
+    uat_violations =
+      for directory <- directories,
+          path <- Path.wildcard(Path.join(directory, "*-UAT.md")),
+          do: "#{path} requires a UAT artifact"
+
+    document_violations ++ uat_violations
+  end
+
   defp parse_scope_assertions(section) do
     section
     |> String.split("\n")
@@ -766,6 +943,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         type: attribute_value(attributes, "type"),
         gate: attribute_value(attributes, "gate"),
         body: body,
+        name: tag_content(body, "name"),
         action: tag_content(body, "action"),
         files: tag_content(body, "files"),
         verify: tag_content(body, "verify"),
