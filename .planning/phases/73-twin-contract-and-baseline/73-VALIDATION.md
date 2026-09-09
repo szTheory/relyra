@@ -2,7 +2,7 @@
 phase: "73"
 slug: "twin-contract-and-baseline"
 status: validated
-nyquist_compliant: true
+nyquist_compliant: false
 wave_0_complete: true
 created: "2026-09-09"
 ---
@@ -44,6 +44,11 @@ created: "2026-09-09"
 | 73-02-02 | 02 | 2 | PIPE-01 | CI baseline records ownership, timing, duplication, cache, and failure evidence | document contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ✅ | ✅ green |
 | 73-03-01 | 03 | 3 | GOV-01 | Risky changes require a named blocking checkpoint before mutation | plan policy contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ✅ | ✅ green |
 | 73-03-02 | 03 | 3 | GOV-02 | Plans cannot introduce `AUTHN-POST-01`, `KMS-01`, or `SIGNED-META-01` | plan scope contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ✅ | ✅ green |
+| 73-04-01 | 04 | 4 | EVID-02 | Commands, selectors, and required workflow steps fail closed under adversarial syntax and scope | structural integration | `mix test test/adoption/evidence_contract_test.exs --warnings-as-errors` | ✅ | ❌ red — 5 failures |
+| 73-04-02 | 04 | 4 | EVID-02 | Every acceptance-bearing task has an executable non-zero owner | plan policy contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ✅ | ❌ red — implementation gaps |
+| 73-05-01 | 05 | 5 | GOV-01/GOV-02 | Closed task types, positive decisions, and actual governed surfaces cannot be bypassed | plan policy contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ✅ | ❌ red |
+| 73-05-02 | 05 | 5 | GOV-01 | Remote approval accepts only one exact reversible command batch | plan policy contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ✅ | ❌ red |
+| 73-05-03 | 05 | 5 | QUAL-01/GOV-02 | Provenance paths exist and demand-gated implementation regions remain excluded | document contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ✅ | ❌ red |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -62,22 +67,23 @@ created: "2026-09-09"
 
 ## Manual-Only Verifications
 
-All phase behaviors have automated verification. Approval checkpoints authorize risky decisions or remote mutations; they do not count as acceptance evidence.
+No manual-only substitution is permitted. The nine escalated gaps have deterministic RED tests and require implementation fixes before Phase 73 can close.
 
 ---
 
 ## Validation Sign-Off
 
-- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [ ] All tasks have passing `<automated>` verification or Wave 0 dependencies
 - [x] Sampling continuity: no 3 consecutive tasks without automated verify
 - [x] Wave 0 covers all MISSING references
 - [x] No watch-mode flags
 - [x] Feedback latency < 30 seconds for focused checks
-- [x] `nyquist_compliant: true` set in frontmatter
+- [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** validated — `mix ci.evidence` passed 29 tests on 2026-09-09. The
-repository-wide documentation vocabulary failure and Phoenix dependency advisories
-remain separately owned blockers; neither is a missing Phase 73 test owner.
+**Approval:** blocked — Nyquist adversarial probes added on 2026-09-09 expose nine
+implementation gaps across EVID-02, QUAL-01, GOV-01, and GOV-02. Focused results are
+18 adoption-evidence tests with 5 failures and 34 governance tests with 6 failures.
+The separate repository-wide documentation vocabulary failure remains owned by Phase 77.
 
 ## Validation Audit 2026-09-09
 
@@ -86,3 +92,14 @@ remain separately owned blockers; neither is a missing Phase 73 test owner.
 | Gaps found | 0 |
 | Resolved | 0 |
 | Escalated | 0 |
+
+## Validation Audit 2026-09-09 — Gap Closure Recheck
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 9 |
+| Resolved | 0 |
+| Escalated | 9 |
+
+The RED coverage is committed in `69aa4dd`. See `73-REVIEW.md` for CR-01 through
+CR-09 and the exact implementation fixes required before re-running validation.
