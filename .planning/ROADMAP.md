@@ -75,7 +75,7 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans executed
 
 Plans:
 **Wave 1**
@@ -88,7 +88,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 73-03-PLAN.md — Enforce approval checkpoints, feature-neutral scope, and deterministic completion policy.
+- [x] 73-03-PLAN.md — Enforce approval checkpoints, feature-neutral scope, and deterministic completion policy.
 
 ### Phase 74: Clean-Room Package Consumer
 
@@ -238,7 +238,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
-| 73. Twin Contract and Baseline | v1.11 | 2/3 | In Progress|  |
+| 73. Twin Contract and Baseline | v1.11 | 3/3 | In Progress|  |
 | 74. Clean-Room Package Consumer | v1.11 | 0/TBD | Not started | — |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |

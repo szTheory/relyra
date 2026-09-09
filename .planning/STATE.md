@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
-status: executing
-stopped_at: Completed 73-02-PLAN.md
-last_updated: "2026-09-09T18:06:39.901Z"
+status: verifying
+stopped_at: Completed 73-03-PLAN.md
+last_updated: "2026-09-09T18:34:10.066Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 73 execution started
-state_head: 6437b0ea7b9e18c96518ce45fe1ec21e89a21a03
+state_head: 9611488119e8fc840f004f16f611825b19f8dac1
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -31,11 +31,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — EXECUTING
+Phase: 73 (Twin Contract and Baseline) — VERIFYING
 
 Plan: 3 of 3
 
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 Last activity: 2026-09-09 — Phase 73 execution started
 
@@ -70,6 +70,9 @@ Last activity: 2026-09-09 — Phase 73 execution started
 - [Phase 73]: Treat the quality/CI baseline as inventory only; one-run timings are samples and remediation stays routed to Phases 74, 77, 78, or 79.
 - [Phase 73]: Keep live required-check repair behind remote_github approval in Phase 79 and preserve the exact desired/current context drift as a release blocker.
 - [Phase 73]: Accept baseline rows only through anchored tables, closed enums, severity rules, ownership fields, and redaction-safe evidence.
+- [Phase 73]: Require each risky mutation to have a matching plan-local blocking approval_class checkpoint before the first mutation task.
+- [Phase 73]: Require remote GitHub approval to describe one exact reversible batch with preflight, rollback, read-back, and resume signal.
+- [Phase 73]: Keep authorization separate from completion; only deterministic automated evidence can close acceptance criteria.
 
 ### Baseline Findings
 
@@ -107,15 +110,15 @@ Last activity: 2026-09-09 — Phase 73 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T18:06:39.890Z
+**Last session:** 2026-09-09T18:34:10.054Z
 
-**Stopped at:** Completed 73-02-PLAN.md
+**Stopped at:** Completed 73-03-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute `73-03-PLAN.md` to establish the milestone governance contract.
+Run Phase 73 verification, retaining the documented QA and Phoenix advisory blockers for their owners.
 
 ## Performance Metrics
 
@@ -123,3 +126,8 @@ Execute `73-03-PLAN.md` to establish the milestone governance contract.
 |------|----------|-------|-------|
 | Phase 73 P01 | 9min | 2 tasks | 4 files |
 | Phase 73 P02 | 20min | 2 tasks | 5 files |
+| Phase 73 P03 | 17min | 2 tasks | 4 files |
+
+### Blockers
+
+- Phoenix 1.8.7 is affected by GHSA-63mc-hw7g-86rr and high-severity GHSA-6983-jfq8-485w; mix ci.security remains non-zero until an owned dependency upgrade reaches 1.8.9+.
