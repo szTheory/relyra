@@ -302,7 +302,158 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp baseline_violations(_markdown), do: []
+  defp baseline_violations(markdown) do
+    duplicate_heading_violations(markdown) ++
+      finding_violations(markdown) ++ ci_violations(markdown)
+  end
+
+  defp duplicate_heading_violations(markdown) do
+    ["Findings Ledger", "CI Baseline Snapshot"]
+    |> Enum.flat_map(fn heading ->
+      count = Regex.scan(~r/^## #{Regex.escape(heading)}$/m, markdown) |> length()
+
+      if count == 1,
+        do: [],
+        else: ["document #{heading} duplicate heading or missing heading: found #{count}"]
+    end)
+  end
+
+  defp finding_violations(markdown) do
+    case parsed_table(markdown, "Findings Ledger", @finding_columns) do
+      {:ok, rows} ->
+        required_field_violations(rows, @finding_columns, "Finding ID") ++
+          enum_violations(rows, "Severity", @severities, "Finding ID") ++
+          enum_violations(rows, "Category", @categories, "Finding ID") ++
+          enum_violations(
+            rows,
+            "Blocker State",
+            ~w(release-blocker disposition-required deferred resolved),
+            "Finding ID"
+          ) ++
+          duplicate_id_violations(rows) ++
+          evidence_violations(rows) ++
+          severity_policy_violations(rows)
+
+      {:error, reason} ->
+        ["Findings Ledger non-vacuous table #{reason}"]
+    end
+  end
+
+  defp ci_violations(markdown) do
+    case parsed_table(markdown, "CI Baseline Snapshot", @ci_columns) do
+      {:ok, rows} ->
+        required_field_violations(rows, @ci_columns, "Surface") ++
+          sensitive_payload_violations(rows)
+
+      {:error, reason} ->
+        ["CI Baseline Snapshot non-vacuous table #{reason}"]
+    end
+  end
+
+  defp parsed_table(markdown, heading, expected_columns) do
+    with [section] <- exact_sections(markdown, heading),
+         [header, separator | data] <-
+           section
+           |> String.split("\n")
+           |> Enum.filter(&String.starts_with?(String.trim(&1), "|")),
+         columns <- table_cells(header),
+         true <- columns == expected_columns,
+         true <- Enum.all?(table_cells(separator), &Regex.match?(~r/^:?-{3,}:?$/, &1)),
+         true <- data != [],
+         parsed <- Enum.map(data, &table_cells/1),
+         true <- Enum.all?(parsed, &(length(&1) == length(columns))) do
+      {:ok, Enum.map(parsed, &Map.new(Enum.zip(columns, &1)))}
+    else
+      _other -> {:error, "is missing, malformed, or empty"}
+    end
+  end
+
+  defp exact_sections(markdown, heading) do
+    pattern =
+      ~r/^## #{Regex.escape(heading)}\n(?<content>.*?)(?=^## |\z)/ms
+
+    Regex.scan(pattern, markdown, capture: ["content"])
+    |> List.flatten()
+  end
+
+  defp required_field_violations(rows, columns, identity_column) do
+    Enum.flat_map(rows, fn row ->
+      identity = nonempty(row[identity_column], identity_column)
+
+      for column <- columns,
+          String.trim(row[column] || "") == "",
+          do: "#{identity} #{column} is empty"
+    end)
+  end
+
+  defp enum_violations(rows, column, allowed, identity_column) do
+    for row <- rows,
+        value = row[column],
+        value not in allowed,
+        do:
+          "#{nonempty(row[identity_column], identity_column)} #{column} is unsupported: #{value}"
+  end
+
+  defp duplicate_id_violations(rows) do
+    rows
+    |> Enum.group_by(& &1["Finding ID"])
+    |> Enum.flat_map(fn
+      {id, duplicates} when length(duplicates) > 1 -> ["#{id} Finding ID duplicate"]
+      {_id, _single} -> []
+    end)
+  end
+
+  defp evidence_violations(rows) do
+    for row <- rows,
+        [prefix | _rest] = String.split(row["Reproducible Evidence"], "[VERIFIED:", parts: 2),
+        String.trim(prefix) == "",
+        do: "#{row["Finding ID"]} Reproducible Evidence lacks a named command or source"
+  end
+
+  defp severity_policy_violations(rows) do
+    Enum.flat_map(rows, fn row ->
+      id = row["Finding ID"]
+      severity = row["Severity"]
+      blocker_state = row["Blocker State"]
+      disposition = String.downcase(String.trim(row["Disposition"]))
+
+      cond do
+        severity in ["Critical", "High"] and blocker_state not in ["release-blocker", "resolved"] ->
+          ["#{id} Blocker State must be release-blocker until resolved"]
+
+        severity == "Medium" and disposition in ["", "none", "n/a", "not applicable"] ->
+          ["#{id} Disposition must be explicit for Medium severity"]
+
+        severity in ["Low", "Informational"] and blocker_state == "deferred" and
+            String.trim(row["Owner"]) == "" ->
+          ["#{id} Owner is required for deferred #{severity} severity"]
+
+        severity in ["Low", "Informational"] and blocker_state == "deferred" and
+            String.trim(row["Revisit Date"]) == "" ->
+          ["#{id} Revisit Date is required for deferred #{severity} severity"]
+
+        true ->
+          []
+      end
+    end)
+  end
+
+  defp sensitive_payload_violations(rows) do
+    sensitive =
+      ~r/<(?:saml\w*:)?Assertion\b|BEGIN (?:RSA )?(?:PRIVATE KEY|CERTIFICATE)|Cookie:|Authorization:|(?:GH_TOKEN|PASSWORD)=/i
+
+    for row <- rows,
+        field <- ["Current Observation", "Failure Evidence", "Provenance"],
+        Regex.match?(sensitive, row[field]),
+        do: "#{row["Surface"]} #{field} sensitive payload"
+  end
+
+  defp nonempty(value, fallback) do
+    case String.trim(value || "") do
+      "" -> fallback
+      identity -> identity
+    end
+  end
 
   defp assert_violation(markdown, id, field) do
     path = write_baseline_fixture!(markdown)
