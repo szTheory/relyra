@@ -40,7 +40,7 @@
 
 ### Code and Documentation Craftsmanship
 
-- [ ] **QUAL-01**: Maintainer can inspect a repository-wide, severity-ranked quality inventory covering correctness, security, integration, readability, documentation, and artifacts.
+- [x] **QUAL-01**: Maintainer can inspect a repository-wide, severity-ranked quality inventory covering correctness, security, integration, readability, documentation, and artifacts.
 - [ ] **QUAL-02**: Production code and tests use clear names and justified abstractions, with redundant comments removed and non-obvious invariants preserved.
 - [ ] **QUAL-03**: Security-sensitive cleanup is protected by characterization and adversarial tests and preserves every existing security invariant.
 - [ ] **QUAL-04**: Standalone source and product documentation contain timeless rationale rather than internal phase, plan, decision-code, or GSD references.
@@ -49,7 +49,7 @@
 
 ### CI Quality
 
-- [ ] **PIPE-01**: Maintainer can inspect current CI duration, duplication, ownership, cache behavior, and failure-mode evidence before optimization.
+- [x] **PIPE-01**: Maintainer can inspect current CI duration, duplication, ownership, cache behavior, and failure-mode evidence before optimization.
 - [ ] **PIPE-02**: Every mandatory acceptance criterion has one clearly named owning lane without hollow or silently skipped gates.
 - [ ] **PIPE-03**: CI uses safe parallelism and caching where measurements show value while preserving independent security defenses.
 - [ ] **PIPE-04**: Workflows use consistent naming, least-privilege permissions, non-colliding concurrency, and redaction-safe artifacts.
@@ -110,13 +110,13 @@
 | JOUR-04 | Phase 76 | Pending |
 | JOUR-05 | Phase 76 | Pending |
 | JOUR-06 | Phase 76 | Pending |
-| QUAL-01 | Phase 73 | Pending |
+| QUAL-01 | Phase 73 | Complete |
 | QUAL-02 | Phase 77 | Pending |
 | QUAL-03 | Phase 77 | Pending |
 | QUAL-04 | Phase 77 | Pending |
 | QUAL-05 | Phase 77 | Pending |
 | QUAL-06 | Phase 77 | Pending |
-| PIPE-01 | Phase 73 | Pending |
+| PIPE-01 | Phase 73 | Complete |
 | PIPE-02 | Phase 78 | Pending |
 | PIPE-03 | Phase 78 | Pending |
 | PIPE-04 | Phase 78 | Pending |

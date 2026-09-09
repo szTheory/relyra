@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-01-PLAN.md
-last_updated: "2026-09-09T17:44:03.576Z"
+stopped_at: Completed 73-02-PLAN.md
+last_updated: "2026-09-09T18:06:39.901Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 73 execution started
-state_head: bfd8a4a102a2d849361993c75a5ca46dad29e13a
+state_head: 6437b0ea7b9e18c96518ce45fe1ec21e89a21a03
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 33
+  completed_plans: 2
+  percent: 67
 ---
 
 # Project State
@@ -33,9 +33,9 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 2 of 3
+Plan: 3 of 3
 
-Status: Executing Phase 73
+Status: Ready to execute
 
 Last activity: 2026-09-09 — Phase 73 execution started
 
@@ -67,6 +67,9 @@ Last activity: 2026-09-09 — Phase 73 execution started
   pursuing aesthetic purity.
 - [Phase 73]: Use a closed, test-only Elixir ledger whose planned rows remain visible but cannot satisfy deterministic closure.
 - [Phase 73]: Treat only existing non-canary rows with a real tagged test, fresh-process alias, and executable workflow command as closure evidence.
+- [Phase 73]: Treat the quality/CI baseline as inventory only; one-run timings are samples and remediation stays routed to Phases 74, 77, 78, or 79.
+- [Phase 73]: Keep live required-check repair behind remote_github approval in Phase 79 and preserve the exact desired/current context drift as a release blocker.
+- [Phase 73]: Accept baseline rows only through anchored tables, closed enums, severity rules, ownership fields, and redaction-safe evidence.
 
 ### Baseline Findings
 
@@ -74,8 +77,8 @@ Last activity: 2026-09-09 — Phase 73 execution started
   prove the Hex package as a clean-room consumer.
 - LedgerLoop already has strong narrative and real-IdP foundations worth expanding.
 - Standalone source/docs contain temporary phase, plan, decision-code, and UAT references.
-- Root QA is green but reports Mix test-pattern and local telemetry-handler warnings worth
-  classifying during the quality sweep.
+- Root QA has one known incomplete-phase vocabulary-policy failure and reports Mix
+  test-pattern warnings; both are inventoried for Phase 77.
 - Recent main and recurring Fleet/Keycloak canaries are green; CI topology still needs
   measured duration and ownership analysis.
 - Live GitHub inventory currently shows no open issues or pull requests and several old
@@ -104,18 +107,19 @@ Last activity: 2026-09-09 — Phase 73 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T17:44:03.564Z
+**Last session:** 2026-09-09T18:06:39.890Z
 
-**Stopped at:** Completed 73-01-PLAN.md
+**Stopped at:** Completed 73-02-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute `73-02-PLAN.md` to capture the repository quality and CI baseline.
+Execute `73-03-PLAN.md` to establish the milestone governance contract.
 
 ## Performance Metrics
 
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 73 P01 | 9min | 2 tasks | 4 files |
+| Phase 73 P02 | 20min | 2 tasks | 5 files |
