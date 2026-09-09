@@ -739,6 +739,96 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_violation(leaked, "Main security gate", "Failure Evidence sensitive payload")
   end
 
+  test "unknown checkpoint-prefixed task types cannot bypass governance" do
+    bypass =
+      no_risk_plan_fixture()
+      |> String.replace(~s(<task type="auto">), ~s(<task type="checkpoint-bypass">),
+        global: false
+      )
+      |> String.replace(
+        "Extend deterministic policy tests only.",
+        "Implement KMS-01 and change the published Relyra.start_login/3 entry point."
+      )
+
+    assert_plan_violation(bypass, "checkpoint-bypass", "task type")
+  end
+
+  test "negated approval text cannot authorize a governed mutation" do
+    negated =
+      String.replace(
+        risky_plan_fixture("public_api"),
+        "<decision>approval_class: public_api</decision>",
+        "<decision>not approval_class: public_api</decision>"
+      )
+
+    assert_plan_violation(negated, "public_api", "decision")
+  end
+
+  test "contradictory plan-level scope cannot suppress a mutation checkpoint" do
+    contradictory =
+      String.replace(
+        no_risk_plan_fixture(),
+        "public_api: unchanged",
+        "public_api: unchanged; mutation required",
+        global: false
+      )
+
+    assert_plan_violation(contradictory, "public_api", "scope assertion")
+  end
+
+  test "a summary file cannot exempt an invalid plan from governance validation" do
+    tmp_dir =
+      Path.join(System.tmp_dir!(), "relyra-executed-plan-#{System.unique_integer([:positive])}")
+
+    File.mkdir_p!(tmp_dir)
+    on_exit(fn -> File.rm_rf!(tmp_dir) end)
+
+    plan_path = Path.join(tmp_dir, "99-01-PLAN.md")
+    summary_path = Path.join(tmp_dir, "99-01-SUMMARY.md")
+
+    invalid_plan =
+      no_risk_plan_fixture()
+      |> String.replace(
+        "Extend deterministic policy tests only.",
+        "Change the published Relyra.start_login/3 entry point."
+      )
+
+    File.write!(plan_path, invalid_plan)
+    File.write!(summary_path, "status: complete\n")
+
+    violations =
+      [plan_path]
+      |> Enum.reject(&executed_plan?/1)
+      |> Enum.flat_map(&(File.read!(&1) |> plan_scope_violations()))
+
+    assert violations != [], "summary presence silently exempted an invalid governed mutation"
+  end
+
+  test "remote approval rejects appended commands outside the exact batch" do
+    appended =
+      String.replace(
+        risky_plan_fixture("remote_github"),
+        "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+        "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main && gh api -X DELETE repos/szTheory/relyra"
+      )
+
+    assert_plan_violation(appended, "remote_github", "mutation_commands")
+  end
+
+  test "baseline verification provenance must resolve to an existing repository path" do
+    baseline = File.read!(@baseline_path)
+
+    nonexistent =
+      String.replace(
+        baseline,
+        "`.planning/STATE.md` Baseline Findings",
+        "`.planning/no-such-evidence.md` Baseline Findings",
+        global: false
+      )
+
+    assert_violation(nonexistent, "QUAL-73-001", "allowed reference")
+  end
+
   defp baseline_sections(markdown) do
     headings =
       Regex.scan(~r/^## ([^\n]+)$/m, markdown, return: :index)

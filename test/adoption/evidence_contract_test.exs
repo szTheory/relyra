@@ -284,6 +284,109 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  test "automated commands reject shell substitution hidden in environment assignments" do
+    assert_raise ArgumentError, ~r/shell-shaped/, fn ->
+      AdoptionEvidence.validate_automated_command!(
+        "EVIL=$(id) mix ci.evidence",
+        File.cwd!()
+      )
+    end
+  end
+
+  test "automated commands reject filters whose effective test selection is empty" do
+    commands = [
+      "mix test test/governance/milestone_scope_test.exs --only=no_such_selector --warnings-as-errors",
+      "mix test test/governance/milestone_scope_test.exs --exclude evidence_contract --warnings-as-errors"
+    ]
+
+    for command <- commands do
+      assert_raise ArgumentError, ~r/zero selected tests/, fn ->
+        AdoptionEvidence.validate_automated_command!(command, File.cwd!())
+      end
+    end
+  end
+
+  test "selector ownership does not cross ExUnit module boundaries" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+    owner_path = Path.join(root, "test/adoption/evidence_contract_test.exs")
+
+    File.write!(
+      owner_path,
+      """
+      defmodule EmptySelectedModule do
+        use ExUnit.Case
+        @moduletag :evidence_contract
+      end
+
+      defmodule UnselectedModule do
+        use ExUnit.Case
+        test "not selected" do
+          assert true
+        end
+      end
+      """
+    )
+
+    assert_raise ArgumentError, ~r/selector evidence_contract matches zero tests/, fn ->
+      AdoptionEvidence.validate_repository!(entries, root)
+    end
+  end
+
+  test "selector ownership recognizes tag keys rather than incidental atom values" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+    owner_path = Path.join(root, "test/adoption/evidence_contract_test.exs")
+
+    File.write!(
+      owner_path,
+      """
+      defmodule ValueTaggedModule do
+        use ExUnit.Case
+        @moduletag other: :evidence_contract
+        test "tag value is not the selector" do
+          assert true
+        end
+      end
+      """
+    )
+
+    assert_raise ArgumentError, ~r/selector evidence_contract matches zero tests/, fn ->
+      AdoptionEvidence.validate_repository!(entries, root)
+    end
+  end
+
+  test "mandatory workflow ownership rejects event-conditional and fallible steps" do
+    entries = AdoptionEvidence.entries()
+
+    mutations = [
+      fn workflow ->
+        String.replace(
+          workflow,
+          "      - name: Evidence contract\n        run: mix ci.evidence",
+          "      - name: Evidence contract\n        if: ${{ github.event_name == 'workflow_dispatch' }}\n        run: mix ci.evidence"
+        )
+      end,
+      fn workflow ->
+        String.replace(
+          workflow,
+          "      - name: Evidence contract\n        run: mix ci.evidence",
+          "      - name: Evidence contract\n        continue-on-error: ${{ github.ref != '' }}\n        run: mix ci.evidence"
+        )
+      end
+    ]
+
+    for mutate <- mutations do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+      File.write!(workflow_path, mutate.(File.read!(workflow_path)))
+
+      assert_raise ArgumentError, ~r/enabled blocking.*jobs\.security/s, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
+    end
+  end
+
   defp active_requirements do
     @requirements_path
     |> File.read!()
