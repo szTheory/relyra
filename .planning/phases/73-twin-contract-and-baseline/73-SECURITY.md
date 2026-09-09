@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: blocked
-threats_open: 1
+status: verified
+threats_open: 0
 asvs_level: 1
 block_on: high
 created: "2026-09-09"
@@ -42,10 +42,10 @@ created: "2026-09-09"
 | T-73-10 | Repudiation | remote mutation authorization | high | mitigate | Exact reversible batch fields and missing-detail fixtures (`test/governance/milestone_scope_test.exs:84`, `test/governance/milestone_scope_test.exs:725`). | closed |
 | T-73-11 | Tampering | deferred capability scope | high | mitigate | Roadmap ownership and disguised-capability fixtures plus implementation-region validation (`test/governance/milestone_scope_test.exs:143`, `test/governance/milestone_scope_test.exs:770`). | closed |
 | T-73-12 | Denial of Service | governance parser false positives | medium | mitigate | Anchored parsing and legal-negative controls exist, but explicit repeated-plan-token and archived-plan passing fixtures were not found. | open — below high threshold (non-blocking) |
-| DEP-73-01 | Tampering | Phoenix request handling dependency | high | mitigate | Upgrade from locked Phoenix 1.8.7 to a patched compatible release; first patched 1.8.x reported by the audit is 1.8.9. Follow-up: `.planning/WINDOWS.md` and Phase 77/79 ownership. | open |
-| DEP-73-02 | Tampering | Phoenix request handling dependency | medium | mitigate | Resolve `GHSA-63mc-hw7g-86rr` with the same reviewed Phoenix upgrade and rerun `mix deps.audit`. | open — below high threshold (non-blocking) |
+| DEP-73-01 | Tampering | Phoenix request handling dependency | high | mitigate | Upgraded Phoenix from 1.8.7 to 1.8.13 with its coupled transport dependencies in `ae1f0aa`; `mix ci.security` and `mix deps.audit` pass. | closed |
+| DEP-73-02 | Tampering | Phoenix request handling dependency | medium | mitigate | The Phoenix 1.8.13 upgrade resolves `GHSA-63mc-hw7g-86rr`; the post-upgrade dependency audit passes. | closed |
 
-Only `DEP-73-01` is open at or above the configured `high` threshold, so `threats_open: 1`.
+No threat is open at or above the configured `high` threshold, so `threats_open: 0`. `T-73-12` remains an owned, non-blocking medium follow-up.
 
 ---
 
@@ -61,8 +61,8 @@ Only `DEP-73-01` is open at or above the configured `high` threshold, so `threat
 
 | Advisory | Locked Version | Severity | Status | Follow-up |
 |----------|----------------|----------|--------|-----------|
-| `GHSA-6983-jfq8-485w` | Phoenix 1.8.7 | high | blocking open | Upgrade and rerun `mix deps.audit`; tracked in `.planning/WINDOWS.md` and `deferred-items.md`. |
-| `GHSA-63mc-hw7g-86rr` | Phoenix 1.8.7 | medium | open below threshold | Resolve with the same reviewed Phoenix upgrade. |
+| `GHSA-6983-jfq8-485w` | Phoenix 1.8.13 | high | closed | Resolved by `ae1f0aa`; full `mix ci.security` passed on 2026-09-09. |
+| `GHSA-63mc-hw7g-86rr` | Phoenix 1.8.13 | medium | closed | Resolved by the same reviewed upgrade; `mix deps.audit` reports no unignored vulnerabilities. |
 
 These dependency findings are not reclassified as accepted risks and are not conflated with the plan-authored `T-73-01`–`T-73-12` register.
 
@@ -73,6 +73,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-09-09 | 14 | 11 | 3 | GSD security auditor |
+| 2026-09-09 | 14 | 13 | 1 non-blocking | OpenAI Codex after dependency remediation |
 
 ---
 
@@ -80,7 +81,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 
 - [x] All threats have a disposition (mitigate / accept / transfer)
 - [x] Accepted risks documented in Accepted Risks Log
-- [ ] `threats_open: 0` confirmed
-- [ ] `status: verified` set in frontmatter
+- [x] `threats_open: 0` confirmed
+- [x] `status: verified` set in frontmatter
 
-**Approval:** blocked — resolve the high Phoenix advisory, then rerun `$gsd-secure-phase 73`.
+**Approval:** verified — the high-severity dependency advisory is remediated and the mandatory security lane passes. `T-73-12` remains below the blocking threshold for later fixture hardening.

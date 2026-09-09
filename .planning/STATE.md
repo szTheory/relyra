@@ -130,4 +130,4 @@ Run Phase 73 verification, retaining the documented QA and Phoenix advisory bloc
 
 ### Blockers
 
-- Phoenix 1.8.7 is affected by GHSA-63mc-hw7g-86rr and high-severity GHSA-6983-jfq8-485w; mix ci.security remains non-zero until an owned dependency upgrade reaches 1.8.9+.
+- Phoenix was upgraded from 1.8.7 to 1.8.13 in `ae1f0aa`, resolving GHSA-63mc-hw7g-86rr and high-severity GHSA-6983-jfq8-485w; `mix ci.security` now passes.
