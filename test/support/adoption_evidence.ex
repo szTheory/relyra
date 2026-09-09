@@ -337,6 +337,38 @@ defmodule Relyra.AdoptionEvidence do
     :ok
   end
 
+  def validate_automated_command!(command, root) when is_binary(command) do
+    normalized =
+      command
+      |> String.trim()
+      |> String.replace(~r/\A(?:[A-Z_][A-Z0-9_]*=\S+\s+)*/, "")
+
+    if normalized == "" or String.contains?(normalized, "\n") or
+         Regex.match?(~r/[;&|`]|\$\(/, normalized) do
+      raise ArgumentError, "verification command is shell-shaped rather than one executable owner"
+    end
+
+    tokens = String.split(normalized)
+
+    case tokens do
+      ["mix", "test" | arguments] ->
+        validate_direct_test_command!(arguments, root)
+
+      ["mix", alias_name] ->
+        validate_check_alias!(alias_name, root)
+
+      _other ->
+        raise ArgumentError,
+              "verification command must be a direct mix test or named repository check alias"
+    end
+
+    :ok
+  end
+
+  def validate_automated_command!(_command, _root) do
+    raise ArgumentError, "verification command must be non-empty text"
+  end
+
   defp validate_owner_chain!(entry, root, aliases, workflow) do
     owner_path = Path.join(root, entry.owner)
 
@@ -419,6 +451,91 @@ defmodule Relyra.AdoptionEvidence do
     error in [SyntaxError, TokenMissingError] ->
       raise ArgumentError,
             "cannot inspect executable tests in #{path}: #{Exception.message(error)}"
+  end
+
+  defp test_count!(path) do
+    path
+    |> File.read!()
+    |> Code.string_to_quoted!()
+    |> Macro.prewalk(0, fn
+      {:test, _meta, _arguments} = node, count -> {node, count + 1}
+      node, count -> {node, count}
+    end)
+    |> elem(1)
+  rescue
+    error in [SyntaxError, TokenMissingError] ->
+      raise ArgumentError,
+            "cannot inspect executable tests in #{path}: #{Exception.message(error)}"
+  end
+
+  defp validate_direct_test_command!(arguments, root) do
+    unless "--warnings-as-errors" in arguments do
+      raise ArgumentError, "direct test command is missing --warnings-as-errors"
+    end
+
+    owner_paths =
+      arguments
+      |> Enum.filter(&(String.ends_with?(&1, ".exs") and not String.starts_with?(&1, "-")))
+
+    if owner_paths == [] do
+      raise ArgumentError, "direct test command names no executable test owner path"
+    end
+
+    selector = option_value(arguments, "--only")
+
+    selected =
+      Enum.reduce(owner_paths, 0, fn owner, count ->
+        owner_path = repository_path!(root, owner)
+
+        count +
+          if selector do
+            selected_test_count!(owner_path, selector)
+          else
+            test_count!(owner_path)
+          end
+      end)
+
+    if selected == 0 do
+      suffix = if selector, do: " for selector #{selector}", else: ""
+      raise ArgumentError, "direct test command has zero selected tests#{suffix}"
+    end
+  end
+
+  defp validate_check_alias!(alias_name, root) do
+    steps = root |> Path.join("mix.exs") |> mix_aliases!() |> Map.get(alias_name)
+
+    case steps do
+      ["cmd mix test " <> arguments] ->
+        validate_direct_test_command!(String.split(arguments), root)
+
+      nil ->
+        raise ArgumentError, "named repository check alias #{alias_name} does not exist"
+
+      _other ->
+        raise ArgumentError,
+              "named repository check alias #{alias_name} must be one fresh-process test command"
+    end
+  end
+
+  defp option_value(arguments, option) do
+    arguments
+    |> Enum.with_index()
+    |> Enum.find_value(fn
+      {^option, index} -> Enum.at(arguments, index + 1)
+      _other -> nil
+    end)
+  end
+
+  defp repository_path!(root, owner) do
+    expanded_root = Path.expand(root)
+    expanded_owner = Path.expand(owner, expanded_root)
+
+    unless String.starts_with?(expanded_owner, expanded_root <> "/") and
+             File.regular?(expanded_owner) do
+      raise ArgumentError, "test owner path #{owner} is missing or outside the repository"
+    end
+
+    expanded_owner
   end
 
   defp selector_in_tag?(arguments, selector) do

@@ -806,22 +806,41 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp deterministic_verification_violations(tasks) do
-    automated =
-      tasks
-      |> Enum.reject(&String.starts_with?(&1.type, "checkpoint"))
-      |> Enum.flat_map(fn task -> tag_sections(task.verify, "automated") end)
+    tasks
+    |> Enum.reject(&String.starts_with?(&1.type, "checkpoint"))
+    |> Enum.flat_map(fn task ->
+      if String.trim(task.acceptance_criteria) == "" do
+        []
+      else
+        commands = tag_sections(task.verify, "automated")
 
-    if Enum.any?(automated, fn command ->
-         normalized = String.downcase(command)
+        results =
+          Enum.map(commands, fn command ->
+            try do
+              AdoptionEvidence.validate_automated_command!(command, File.cwd!())
+              :ok
+            rescue
+              error in ArgumentError -> {:error, Exception.message(error)}
+            end
+          end)
 
-         String.contains?(normalized, "mix ") and
-           not String.contains?(normalized, "checkpoint") and
-           not String.contains?(normalized, "human")
-       end) do
-      []
-    else
-      ["verification requires deterministic automated evidence"]
-    end
+        if :ok in results do
+          []
+        else
+          reasons =
+            case results do
+              [] -> "no immediately associated <automated> command"
+              failures -> Enum.map_join(failures, "; ", fn {:error, reason} -> reason end)
+            end
+
+          identity = nonempty(task.name, "unnamed task")
+
+          [
+            "verification for task #{identity} requires deterministic executable ownership: #{reasons}"
+          ]
+        end
+      end
+    end)
   end
 
   defp forbidden_capability_violations(tasks) do
@@ -1017,6 +1036,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         action: tag_content(body, "action"),
         files: tag_content(body, "files"),
         verify: tag_content(body, "verify"),
+        acceptance_criteria: tag_content(body, "acceptance_criteria"),
         resume_signal: tag_content(body, "resume-signal")
       }
     end)
