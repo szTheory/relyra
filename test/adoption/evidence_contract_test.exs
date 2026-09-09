@@ -1,6 +1,8 @@
 defmodule Relyra.Adoption.EvidenceContractTest do
   use ExUnit.Case, async: true
 
+  @moduletag :evidence_contract
+
   alias Relyra.AdoptionEvidence
 
   @requirements_path ".planning/REQUIREMENTS.md"
@@ -21,7 +23,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     [owner | _] = AdoptionEvidence.deterministic_owners(entries, "EVID-01")
     assert owner.owner == __ENV__.file |> Path.relative_to_cwd()
-    assert owner.selector == "tracer resolves EVID-01"
+    assert owner.selector == "evidence_contract"
     assert owner.lane == "ci.evidence"
 
     assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
@@ -126,7 +128,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       expected_outcome: "ownership is executable",
       evidence_kind: evidence_kind,
       owner: "test/adoption/evidence_contract_test.exs",
-      selector: "tracer resolves EVID-01",
+      selector: "evidence_contract",
       lane: "ci.evidence",
       state: state,
       fixture_owner: "repository",

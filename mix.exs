@@ -31,6 +31,7 @@ defmodule Relyra.MixProject do
         "ci.fast": :test,
         "ci.docs": :test,
         "ci.conformance": :test,
+        "ci.evidence": :test,
         "ci.security": :test,
         "ci.verify": :test,
         "ci.integration": :test,
@@ -230,6 +231,9 @@ defmodule Relyra.MixProject do
       "ci.conformance": [
         "test test/conformance/sp_conformance_test.exs test/mix/tasks/relyra_conformance_test.exs --only conformance --warnings-as-errors",
         "relyra.conformance --check"
+      ],
+      "ci.evidence": [
+        "cmd mix test test/adoption/evidence_contract_test.exs --only evidence_contract --warnings-as-errors"
       ],
       "ci.security": [
         "compile --warnings-as-errors",
