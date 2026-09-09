@@ -3,6 +3,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   @moduletag :evidence_contract
 
+  alias Relyra.AdoptionEvidence
+
   @baseline_path ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
   @finding_columns [
     "Finding ID",
@@ -127,6 +129,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert step =~ "test/adoption/evidence_contract_test.exs"
     assert step =~ "test/governance/milestone_scope_test.exs"
     assert step =~ "--warnings-as-errors"
+  end
+
+  test "completed baseline requirements have deterministic mandatory evidence owners" do
+    entries = AdoptionEvidence.entries()
+
+    for requirement <- ["QUAL-01", "PIPE-01"] do
+      assert [owner] = AdoptionEvidence.deterministic_owners(entries, requirement)
+      assert owner.owner == "test/governance/milestone_scope_test.exs"
+      assert owner.selector == "evidence_contract"
+      assert owner.lane == "ci.evidence"
+    end
+
+    assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
   end
 
   test "baseline parser is anchored, non-vacuous, and rejects duplicate exact headings" do
