@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 5
-total_count: 7
-last_updated: 2026-09-09T21:02:46.933Z
+fixed_count: 7
+total_count: 9
+last_updated: 2026-09-09T21:30:40.645Z
 ---
 
 # Broken Windows Ledger
@@ -22,6 +22,8 @@ last_updated: 2026-09-09T21:02:46.933Z
 | 5 | 73 | deviation | test/docs/demo_guide_drift_test.exs | 901 | Incomplete-phase vocabulary scan rejects archival Phase 73 policy examples; routed to Phase 77 without weakening deterministic acceptance | open |  | 2026-09-09T18:04:18.120Z |  |
 | 6 | 73 | unmet-truth | mix.lock |  | mix ci.security reports Phoenix 1.8.7 vulnerable to GHSA-63mc-hw7g-86rr and GHSA-6983-jfq8-485w; upgrade ownership is outside Plan 73-03 | fixed |  | 2026-09-09T18:31:28.476Z | 2026-09-09T19:02:10.197Z |
 | 7 | 73 | deviation | .planning/STATE.md |  | Corrected stale Plan 2 and 0 percent SDK output to disk-backed Plan 4 of 5 and 80 percent progress | fixed |  | 2026-09-09T21:02:11.734Z | 2026-09-09T21:02:46.933Z |
+| 8 | 73 | deviation | lib/relyra/connection_resolver.ex |  | Plan 73-05 mandatory read list used stale lib/relyra/behaviours/connection_resolver.ex path; executor resolved the real published behavior path read-only | fixed |  | 2026-09-09T21:29:21.133Z | 2026-09-09T21:30:40.463Z |
+| 9 | 73 | deviation | .planning/STATE.md |  | Corrected state.update-progress reset from 5/5 to 0 percent and stale Plan 04 execution prose after Plan 73-05 closeout | fixed |  | 2026-09-09T21:30:40.548Z | 2026-09-09T21:30:40.645Z |
 
 ````json
 [
@@ -108,6 +110,30 @@ last_updated: 2026-09-09T21:02:46.933Z
     "reason": "",
     "recorded_at": "2026-09-09T21:02:11.734Z",
     "resolved_at": "2026-09-09T21:02:46.933Z"
+  },
+  {
+    "id": 8,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "lib/relyra/connection_resolver.ex",
+    "line": null,
+    "description": "Plan 73-05 mandatory read list used stale lib/relyra/behaviours/connection_resolver.ex path; executor resolved the real published behavior path read-only",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-09T21:29:21.133Z",
+    "resolved_at": "2026-09-09T21:30:40.463Z"
+  },
+  {
+    "id": 9,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "Corrected state.update-progress reset from 5/5 to 0 percent and stale Plan 04 execution prose after Plan 73-05 closeout",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-09T21:30:40.548Z",
+    "resolved_at": "2026-09-09T21:30:40.645Z"
   }
 ]
 ````

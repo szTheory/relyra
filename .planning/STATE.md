@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
-status: executing
-stopped_at: Completed 73-04-PLAN.md
-last_updated: "2026-09-09T21:01:15.426Z"
+status: verifying
+stopped_at: Completed 73-05-PLAN.md
+last_updated: "2026-09-09T21:29:22.118Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 73 Plan 04 completed
-state_head: 093262cf05616a82c8ade89965c75ddbf279f853
+state_head: 3f6548b3ca3434af6072e3bc1cc44d47a2cbb70a
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — EXECUTING
+Phase: 73 (Twin Contract and Baseline) — VERIFYING
 
-Plan: 4 of 5
+Plan: 5 of 5
 
-Status: Ready to execute
+Status: Ready to re-verify
 
-Last activity: 2026-09-09 — Phase 73 Plan 04 completed
+Last activity: 2026-09-09 — Phase 73 Plan 05 completed
 
 ## Milestone Metrics
 
@@ -76,6 +76,10 @@ Last activity: 2026-09-09 — Phase 73 Plan 04 completed
 - [Phase 73]: Count evidence selectors only when parsed ExUnit source associates them with real test definitions.
 - [Phase 73]: Recognize evidence workflow ownership only in the enabled blocking Evidence contract step under jobs.security.
 - [Phase 73]: Require every acceptance-bearing non-checkpoint task to own executable non-zero proof independently.
+- [Phase 73]: Task risk metadata is mandatory but governed files, entry points, and diffs independently determine approval. — Optimistic declarations cannot suppress a matching plan-local checkpoint.
+- [Phase 73]: Remote approval is one parsed reversible batch bound to the same repository, branch, checks, and captured state. — Keyword prose cannot authorize an ambiguous or non-reversible remote mutation.
+- [Phase 73]: Demand-gated identifiers are allowed only in the exact plan-level exclusion and fixture-data regions. — Task names, files, and actions have no negation or policy-prose exemption.
+- [Phase 73]: Each baseline finding requires one complete allowed repository or executable verification reference. — Arbitrary non-empty provenance prose cannot satisfy the baseline contract.
 
 ### Baseline Findings
 
@@ -113,16 +117,16 @@ Last activity: 2026-09-09 — Phase 73 Plan 04 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T21:01:15.412Z
+**Last session:** 2026-09-09T21:29:22.105Z
 
-**Stopped at:** Completed 73-04-PLAN.md
+**Stopped at:** Completed 73-05-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute `73-05-PLAN.md` to close the remaining approval, scope, and baseline-validation
-gaps from `73-VERIFICATION.md`.
+Re-run Phase 73 verification against the five completed plan summaries and the hardened
+governance contract.
 
 ## Performance Metrics
 
@@ -132,6 +136,7 @@ gaps from `73-VERIFICATION.md`.
 | Phase 73 P02 | 20min | 2 tasks | 5 files |
 | Phase 73 P03 | 17min | 2 tasks | 4 files |
 | Phase 73 P04 | 12min | 2 tasks | 3 files |
+| Phase 73 P05 | 24min | 3 tasks | 1 files |
 
 ### Blockers
 
