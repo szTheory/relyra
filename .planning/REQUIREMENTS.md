@@ -88,19 +88,54 @@
 
 ## Traceability
 
-Populated during roadmap creation. Each v1.11 requirement maps to exactly one phase.
-
 | Requirement | Phase | Status |
 |---|---|---|
+| EVID-01 | Phase 73 | Pending |
+| EVID-02 | Phase 73 | Pending |
+| EVID-03 | Phase 76 | Pending |
+| PKG-01 | Phase 74 | Pending |
+| PKG-02 | Phase 74 | Pending |
+| PKG-03 | Phase 74 | Pending |
+| PKG-04 | Phase 74 | Pending |
+| PKG-05 | Phase 74 | Pending |
+| PKG-06 | Phase 74 | Pending |
+| TWIN-01 | Phase 75 | Pending |
+| TWIN-02 | Phase 75 | Pending |
+| TWIN-03 | Phase 75 | Pending |
+| TWIN-04 | Phase 75 | Pending |
+| TWIN-05 | Phase 75 | Pending |
+| JOUR-01 | Phase 76 | Pending |
+| JOUR-02 | Phase 76 | Pending |
+| JOUR-03 | Phase 76 | Pending |
+| JOUR-04 | Phase 76 | Pending |
+| JOUR-05 | Phase 76 | Pending |
+| JOUR-06 | Phase 76 | Pending |
+| QUAL-01 | Phase 73 | Pending |
+| QUAL-02 | Phase 77 | Pending |
+| QUAL-03 | Phase 77 | Pending |
+| QUAL-04 | Phase 77 | Pending |
+| QUAL-05 | Phase 77 | Pending |
+| QUAL-06 | Phase 77 | Pending |
+| PIPE-01 | Phase 73 | Pending |
+| PIPE-02 | Phase 78 | Pending |
+| PIPE-03 | Phase 78 | Pending |
+| PIPE-04 | Phase 78 | Pending |
+| PIPE-05 | Phase 78 | Pending |
+| REPO-01 | Phase 79 | Pending |
+| REPO-02 | Phase 79 | Pending |
+| REPO-03 | Phase 79 | Pending |
+| GOV-01 | Phase 73 | Pending |
+| GOV-02 | Phase 73 | Pending |
+| EXIT-01 | Phase 79 | Pending |
 
 **Coverage:**
 
 - v1.11 requirements: 37 total
-- Mapped to phases: 0
-- Unmapped: 37
+- Mapped to phases: 37
+- Unmapped: 0 ✓
 
 ---
 
 *Requirements defined: 2026-09-09*
 
-*Last updated: 2026-09-09 after initial definition*
+*Last updated: 2026-09-09 after roadmap creation*
