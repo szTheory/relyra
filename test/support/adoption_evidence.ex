@@ -108,6 +108,34 @@ defmodule Relyra.AdoptionEvidence do
                       }
                     end)
 
+  @governance_entries [
+                        {"gov-01-approval-boundary", "GOV-01", [:security_reviewer],
+                         "require approval before risky mutations"},
+                        {"gov-02-feature-neutral-scope", "GOV-02", [:evaluator, :developer],
+                         "exclude speculative protocol expansion"}
+                      ]
+                      |> Enum.map(fn {id, requirement, personas, job} ->
+                        %{
+                          id: id,
+                          requirement: requirement,
+                          personas: personas,
+                          job: job,
+                          expected_outcome:
+                            "#{job} is enforced by the active-plan governance contract",
+                          evidence_kind: :security_corpus,
+                          owner: "test/governance/milestone_scope_test.exs",
+                          selector: "evidence_contract",
+                          lane: "ci.evidence",
+                          state: :existing,
+                          fixture_owner:
+                            ".planning/phases/73-twin-contract-and-baseline/*-PLAN.md",
+                          reset_boundary:
+                            "fresh test process and isolated temporary plan fixtures",
+                          failure_diagnostics:
+                            "#{requirement} reports the plan, approval class, or forbidden scope"
+                        }
+                      end)
+
   @planned_rows [
     {"EVID-03", [:sre, :security_reviewer], "inspect external canary evidence", :external_canary,
      "test/adoption/external_canary_contract_test.exs", "ci.external_idp"},
@@ -169,10 +197,6 @@ defmodule Relyra.AdoptionEvidence do
      "test/repository/github_inventory_test.exs", "ci.repository"},
     {"REPO-03", [:security_reviewer], "approve an exact remote mutation batch", :package_contract,
      "test/repository/remote_mutation_policy_test.exs", "ci.repository"},
-    {"GOV-01", [:security_reviewer], "require approval for high-impact changes", :security_corpus,
-     "test/governance/milestone_scope_test.exs", "ci.governance"},
-    {"GOV-02", [:evaluator, :developer], "exclude speculative protocol expansion",
-     :security_corpus, "test/governance/milestone_scope_test.exs", "ci.governance"},
     {"EXIT-01", [:evaluator, :security_reviewer], "inspect final residual risk",
      :package_contract, "test/repository/residual_risk_test.exs", "ci.repository"}
   ]
@@ -199,7 +223,8 @@ defmodule Relyra.AdoptionEvidence do
                      }
                    end)
 
-  @entries @existing_entries ++ [@evid_02_entry] ++ @baseline_entries ++ @planned_entries
+  @entries @existing_entries ++
+             [@evid_02_entry] ++ @baseline_entries ++ @governance_entries ++ @planned_entries
 
   def entries, do: @entries
 
