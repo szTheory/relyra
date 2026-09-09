@@ -117,6 +117,45 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  test "closure validates every supplied row before considering deterministic ownership" do
+    [row | _] = AdoptionEvidence.entries()
+
+    partial = %{
+      requirement: "EVID-01",
+      state: :existing,
+      evidence_kind: :security_corpus
+    }
+
+    assert_raise ArgumentError, ~r/evidence row.*invalid fields.*id/s, fn ->
+      AdoptionEvidence.validate_closure!([partial], ["EVID-01"])
+    end
+
+    assert_raise ArgumentError, ~r/#{row.id}.*unknown evidence_kind.*invented/s, fn ->
+      AdoptionEvidence.validate_closure!([%{row | evidence_kind: :invented}], ["EVID-01"])
+    end
+  end
+
+  test "all textual row fields reject whitespace-only values with field diagnostics" do
+    [row | _] = AdoptionEvidence.entries()
+
+    for field <- [
+          :id,
+          :requirement,
+          :job,
+          :expected_outcome,
+          :owner,
+          :selector,
+          :lane,
+          :fixture_owner,
+          :reset_boundary,
+          :failure_diagnostics
+        ] do
+      assert_raise ArgumentError, ~r/evidence row.*empty #{field}/s, fn ->
+        AdoptionEvidence.validate_entry!(Map.put(row, field, " \t\n"))
+      end
+    end
+  end
+
   test "deterministic owner reporting preserves declaration order and closure ignores permutation" do
     [first, second | _] =
       AdoptionEvidence.deterministic_owners(AdoptionEvidence.entries(), "EVID-01")
@@ -177,6 +216,69 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     assert_raise ArgumentError, ~r/EVID-01.*workflow has no executable mix ci\.evidence/s, fn ->
       AdoptionEvidence.validate_repository!(entries, root)
+    end
+  end
+
+  test "comments, strings, and tagged modules without tests cannot own a selector" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+    owner_path = Path.join(root, "test/adoption/evidence_contract_test.exs")
+
+    inert_sources = [
+      "defmodule CommentOnly do\n  # @moduletag :evidence_contract\nend\n",
+      ~S'''
+      defmodule StringOnly do
+        @text "@moduletag :evidence_contract"
+      end
+      ''',
+      "defmodule EmptyTaggedModule do\n  @moduletag :evidence_contract\nend\n"
+    ]
+
+    for source <- inert_sources do
+      File.write!(owner_path, source)
+
+      assert_raise ArgumentError,
+                   ~r/EVID-01.*selector evidence_contract matches zero tests/s,
+                   fn ->
+                     AdoptionEvidence.validate_repository!(entries, root)
+                   end
+    end
+  end
+
+  test "workflow ownership requires the enabled blocking Evidence contract step in security" do
+    entries = AdoptionEvidence.entries()
+
+    mutations = [
+      fn workflow ->
+        String.replace(workflow, "  security:\n", "  optional:\n", global: false)
+      end,
+      fn workflow ->
+        String.replace(workflow, "  security:\n", "  security:\n    if: false\n", global: false)
+      end,
+      fn workflow ->
+        String.replace(
+          workflow,
+          "      - name: Evidence contract\n        run: mix ci.evidence",
+          "      - name: Evidence contract\n        if: false\n        run: mix ci.evidence"
+        )
+      end,
+      fn workflow ->
+        String.replace(
+          workflow,
+          "      - name: Evidence contract\n        run: mix ci.evidence",
+          "      - name: Evidence contract\n        continue-on-error: true\n        run: mix ci.evidence"
+        )
+      end
+    ]
+
+    for mutate <- mutations do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+      File.write!(workflow_path, mutate.(File.read!(workflow_path)))
+
+      assert_raise ArgumentError, ~r/EVID-01.*enabled blocking.*jobs\.security/s, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
     end
   end
 
