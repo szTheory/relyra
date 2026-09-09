@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 4
-total_count: 6
-last_updated: 2026-09-09T19:02:10.197Z
+fixed_count: 5
+total_count: 7
+last_updated: 2026-09-09T21:02:46.933Z
 ---
 
 # Broken Windows Ledger
@@ -21,6 +21,7 @@ last_updated: 2026-09-09T19:02:10.197Z
 | 4 | 70 | unmet-truth | mix.lock |  | mix deps.audit remains non-zero for pre-existing Decimal 2.4.1 GHSA-rhv4-8758-jx7v outside Plan 70-12 Req/Finch/Mint scope | waived | Accepted transitive Decimal 2.4.1 advisory exception: Ecto/Postgrex constrain Decimal to ~> 2.0, Relyra has no direct Decimal.new/parse exposure, and mix ci.security explicitly audits with only GHSA-rhv4-8758-jx7v ignored until upstream permits Decimal 3.x. | 2026-08-26T22:16:16.898Z | 2026-08-28T02:33:34.161Z |
 | 5 | 73 | deviation | test/docs/demo_guide_drift_test.exs | 901 | Incomplete-phase vocabulary scan rejects archival Phase 73 policy examples; routed to Phase 77 without weakening deterministic acceptance | open |  | 2026-09-09T18:04:18.120Z |  |
 | 6 | 73 | unmet-truth | mix.lock |  | mix ci.security reports Phoenix 1.8.7 vulnerable to GHSA-63mc-hw7g-86rr and GHSA-6983-jfq8-485w; upgrade ownership is outside Plan 73-03 | fixed |  | 2026-09-09T18:31:28.476Z | 2026-09-09T19:02:10.197Z |
+| 7 | 73 | deviation | .planning/STATE.md |  | Corrected stale Plan 2 and 0 percent SDK output to disk-backed Plan 4 of 5 and 80 percent progress | fixed |  | 2026-09-09T21:02:11.734Z | 2026-09-09T21:02:46.933Z |
 
 ````json
 [
@@ -95,6 +96,18 @@ last_updated: 2026-09-09T19:02:10.197Z
     "reason": "",
     "recorded_at": "2026-09-09T18:31:28.476Z",
     "resolved_at": "2026-09-09T19:02:10.197Z"
+  },
+  {
+    "id": 7,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "Corrected stale Plan 2 and 0 percent SDK output to disk-backed Plan 4 of 5 and 80 percent progress",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-09T21:02:11.734Z",
+    "resolved_at": "2026-09-09T21:02:46.933Z"
   }
 ]
 ````

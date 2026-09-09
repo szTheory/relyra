@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Phase 73 gap-closure plans 04-05 ready to execute
-last_updated: "2026-09-09T20:37:34.517Z"
+stopped_at: Completed 73-04-PLAN.md
+last_updated: "2026-09-09T21:01:15.426Z"
 last_activity: 2026-09-09
-last_activity_desc: Phase 73 gap-closure planning completed
-state_head: 5fdc516ee1e7763b03d8acafb92f38af11868e99
+last_activity_desc: Phase 73 Plan 04 completed
+state_head: 093262cf05616a82c8ade89965c75ddbf279f853
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE
+Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 3 of 5
+Plan: 4 of 5
 
 Status: Ready to execute
 
-Last activity: 2026-09-09 — Phase 73 gap-closure planning completed
+Last activity: 2026-09-09 — Phase 73 Plan 04 completed
 
 ## Milestone Metrics
 
@@ -73,6 +73,9 @@ Last activity: 2026-09-09 — Phase 73 gap-closure planning completed
 - [Phase 73]: Require each risky mutation to have a matching plan-local blocking approval_class checkpoint before the first mutation task.
 - [Phase 73]: Require remote GitHub approval to describe one exact reversible batch with preflight, rollback, read-back, and resume signal.
 - [Phase 73]: Keep authorization separate from completion; only deterministic automated evidence can close acceptance criteria.
+- [Phase 73]: Count evidence selectors only when parsed ExUnit source associates them with real test definitions.
+- [Phase 73]: Recognize evidence workflow ownership only in the enabled blocking Evidence contract step under jobs.security.
+- [Phase 73]: Require every acceptance-bearing non-checkpoint task to own executable non-zero proof independently.
 
 ### Baseline Findings
 
@@ -110,16 +113,16 @@ Last activity: 2026-09-09 — Phase 73 gap-closure planning completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T20:12:18.558Z
+**Last session:** 2026-09-09T21:01:15.412Z
 
-**Stopped at:** Phase 73 context gathered (assumptions mode)
+**Stopped at:** Completed 73-04-PLAN.md
 
-**Resume file:** .planning/phases/73-twin-contract-and-baseline/73-CONTEXT.md
+**Resume file:** None
 
 ## Operator Next Step
 
-Replan Phase 73 from `73-CONTEXT.md` and the fail-open gaps in `73-VERIFICATION.md`,
-retaining the documented QA and Phoenix advisory blockers for their downstream owners.
+Execute `73-05-PLAN.md` to close the remaining approval, scope, and baseline-validation
+gaps from `73-VERIFICATION.md`.
 
 ## Performance Metrics
 
@@ -128,6 +131,7 @@ retaining the documented QA and Phoenix advisory blockers for their downstream o
 | Phase 73 P01 | 9min | 2 tasks | 4 files |
 | Phase 73 P02 | 20min | 2 tasks | 5 files |
 | Phase 73 P03 | 17min | 2 tasks | 4 files |
+| Phase 73 P04 | 12min | 2 tasks | 3 files |
 
 ### Blockers
 
