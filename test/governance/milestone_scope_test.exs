@@ -128,6 +128,112 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert step =~ "--warnings-as-errors"
   end
 
+  test "baseline parser is anchored, non-vacuous, and rejects duplicate exact headings" do
+    baseline = File.read!(@baseline_path)
+
+    incidental =
+      String.replace(
+        baseline,
+        "## Findings Ledger",
+        "The phrase Findings Ledger is incidental here.\n\n### Findings Ledger\n\n## Findings Ledger",
+        global: false
+      )
+
+    assert baseline_rows(incidental) == baseline_rows(baseline)
+
+    duplicated = baseline <> "\n## Findings Ledger\n\n| decoy |\n| --- |\n| row |\n"
+    assert_violation(duplicated, "document", "Findings Ledger duplicate heading")
+
+    empty = String.replace(baseline, "| QUAL-73-001 |", "|", global: false)
+    assert_violation(empty, "Findings Ledger", "non-vacuous table")
+  end
+
+  test "malformed finding rows fail with the finding ID and field" do
+    baseline = File.read!(@baseline_path)
+
+    controls = [
+      {String.replace(baseline, "| High | Integration |", "| Urgent | Integration |",
+         global: false
+       ), "QUAL-73-001", "Severity"},
+      {String.replace(baseline, "| High | Integration |", "| High | Governance |", global: false),
+       "QUAL-73-001", "Category"},
+      {String.replace(baseline, "| PIPE-73-001 |", "| QUAL-73-001 |", global: false),
+       "QUAL-73-001", "Finding ID duplicate"},
+      {String.replace(baseline, "| Phase 74 implementer |", "|  |", global: false), "QUAL-73-001",
+       "Owner"},
+      {String.replace(baseline, "| Phase 74 |", "|  |", global: false), "QUAL-73-001",
+       "Target Phase"},
+      {String.replace(baseline, "| release-blocker |", "| watching |", global: false),
+       "QUAL-73-001", "Blocker State"},
+      {String.replace(
+         baseline,
+         "Root adoption journeys execute inside Relyra and use private fixtures. [VERIFIED:",
+         " [VERIFIED:",
+         global: false
+       ), "QUAL-73-001", "Reproducible Evidence"}
+    ]
+
+    for {markdown, id, field} <- controls do
+      assert_violation(markdown, id, field)
+    end
+  end
+
+  test "severity-specific disposition and blocker rules fail closed" do
+    baseline = File.read!(@baseline_path)
+
+    high_deferred =
+      String.replace(
+        baseline,
+        "| release-blocker | Phase 74 completion |",
+        "| deferred | Phase 74 completion |",
+        global: false
+      )
+
+    assert_violation(high_deferred, "QUAL-73-001", "Blocker State")
+
+    critical_unresolved =
+      String.replace(
+        baseline,
+        "| resolved | At v1.11 security review |",
+        "| disposition-required | At v1.11 security review |",
+        global: false
+      )
+
+    assert_violation(critical_unresolved, "RELYRA-2026-001", "Blocker State")
+
+    medium_without_disposition =
+      String.replace(
+        baseline,
+        "| Baseline only; Phase 78 must measure multiple runs before optimizing and must preserve fresh security suites plus standalone GATE-02. |",
+        "| none |",
+        global: false
+      )
+
+    assert_violation(medium_without_disposition, "PIPE-73-002", "Disposition")
+
+    low_without_revisit =
+      String.replace(baseline, "| deferred | Phase 77 completion |", "| deferred |  |",
+        global: false
+      )
+
+    assert_violation(low_without_revisit, "QUAL-73-004", "Revisit Date")
+  end
+
+  test "redaction-sensitive CI evidence rejects copied payloads and clean baseline passes" do
+    baseline = File.read!(@baseline_path)
+    assert baseline_violations(baseline) == []
+
+    leaked =
+      String.replace(
+        baseline,
+        "Redaction-safe step logs identify the failed lane",
+        "Cookie: relyra_session=secret identifies the failed lane",
+        global: false
+      )
+
+    assert_violation(leaked, "Main security gate", "Failure Evidence sensitive payload")
+  end
+
   defp baseline_sections(markdown) do
     headings =
       Regex.scan(~r/^## ([^\n]+)$/m, markdown, return: :index)
@@ -194,5 +300,27 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       _other ->
         nil
     end)
+  end
+
+  defp baseline_violations(_markdown), do: []
+
+  defp assert_violation(markdown, id, field) do
+    path = write_baseline_fixture!(markdown)
+    violations = path |> File.read!() |> baseline_violations()
+
+    assert Enum.any?(violations, &(&1 =~ id and &1 =~ field)),
+           "expected violation containing #{inspect(id)} and #{inspect(field)}, got: #{inspect(violations)}"
+  end
+
+  defp write_baseline_fixture!(markdown) do
+    tmp_dir =
+      Path.join(System.tmp_dir!(), "relyra-baseline-#{System.unique_integer([:positive])}")
+
+    File.mkdir_p!(tmp_dir)
+    on_exit(fn -> File.rm_rf!(tmp_dir) end)
+
+    path = Path.join(tmp_dir, "73-BASELINE.md")
+    File.write!(path, markdown)
+    path
   end
 end
