@@ -32,6 +32,113 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   ]
   @categories ~w(Correctness Security Integration Readability Documentation Artifacts CI)
   @severities ~w(Critical High Medium Low Informational)
+  @approval_classes ~w(public_api default_tightening security_posture semver_major remote_github)
+
+  test "active v1.11 plans declare scope and stop before every risky mutation" do
+    roadmap = File.read!(".planning/ROADMAP.md")
+
+    violations =
+      roadmap
+      |> incomplete_phase_numbers()
+      |> Enum.flat_map(fn phase ->
+        ".planning/phases/#{phase}-*/*-PLAN.md"
+        |> Path.wildcard()
+        |> Enum.flat_map(fn path ->
+          path
+          |> File.read!()
+          |> plan_scope_violations()
+          |> Enum.map(&"#{path}: #{&1}")
+        end)
+      end)
+
+    assert violations == [],
+           "Active milestone plans violate approval policy:\n" <>
+             Enum.map_join(violations, "\n", &"  - #{&1}")
+  end
+
+  test "all approval classes require a matching plan-local blocking decision before mutation" do
+    for approval_class <- @approval_classes -- ["remote_github"] do
+      clean = risky_plan_fixture(approval_class)
+      assert plan_scope_violations(clean) == []
+
+      missing = remove_checkpoint(clean)
+      assert_plan_violation(missing, approval_class, "checkpoint")
+
+      late = move_checkpoint_after_mutation(clean)
+      assert_plan_violation(late, approval_class, "before mutation")
+
+      non_blocking = String.replace(clean, ~s(gate="blocking"), ~s(gate="advisory"))
+      assert_plan_violation(non_blocking, approval_class, "blocking")
+
+      wrong_class =
+        String.replace(
+          clean,
+          "approval_class: #{approval_class}",
+          "approval_class: remote_github"
+        )
+
+      assert_plan_violation(wrong_class, approval_class, "matching")
+    end
+  end
+
+  test "remote GitHub approval owns an exact reversible batch and read-back" do
+    clean = risky_plan_fixture("remote_github")
+    assert plan_scope_violations(clean) == []
+
+    for {token, diagnostic} <- [
+          {"current state", "current state"},
+          {"desired state", "desired state"},
+          {"exact commands", "exact commands"},
+          {"affected checks", "affected checks"},
+          {"automated preflight", "automated preflight"},
+          {"rollback", "rollback"},
+          {"postcondition read-back", "postcondition read-back"}
+        ] do
+      incomplete = String.replace(clean, token, "omitted detail", global: false)
+      assert_plan_violation(incomplete, "remote_github", diagnostic)
+    end
+
+    without_resume = Regex.replace(~r/\s*<resume-signal>.*?<\/resume-signal>/s, clean, "")
+    assert_plan_violation(without_resume, "remote_github", "resume signal")
+  end
+
+  test "approval cannot be borrowed across plans or concurrent branches" do
+    approving_plan = risky_plan_fixture("public_api")
+    mutation_only = remove_checkpoint(approving_plan)
+
+    assert plan_scope_violations(approving_plan) == []
+    assert_plan_violation(mutation_only, "public_api", "checkpoint")
+
+    concurrent_branch =
+      mutation_only <>
+        "\n<!-- concurrent branch checkpoint lives outside this plan and cannot authorize it -->\n"
+
+    assert_plan_violation(concurrent_branch, "public_api", "checkpoint")
+  end
+
+  test "no-risk plans must explicitly negate every approval class" do
+    clean = no_risk_plan_fixture()
+    assert plan_scope_violations(clean) == []
+
+    for approval_class <- @approval_classes do
+      missing = Regex.replace(~r/^#{approval_class}:.*\n/m, clean, "")
+      assert_plan_violation(missing, approval_class, "scope assertion")
+    end
+  end
+
+  test "decision checkpoints authorize mutations but never satisfy acceptance" do
+    clean = risky_plan_fixture("public_api")
+    assert plan_scope_violations(clean) == []
+
+    manual_verify =
+      String.replace(
+        clean,
+        "<automated>mix test test/governance/milestone_scope_test.exs</automated>",
+        "<automated>checkpoint:decision approval</automated>"
+      )
+
+    assert_plan_violation(manual_verify, "verification", "deterministic")
+  end
 
   test "dated baseline publishes the complete severity-ranked findings contract" do
     baseline = File.read!(@baseline_path)
@@ -270,6 +377,100 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       {name, binary_part(markdown, content_start, content_end - content_start)}
     end)
+  end
+
+  defp no_risk_plan_fixture do
+    """
+    ---
+    phase: 73-twin-contract-and-baseline
+    plan: 99
+    requirements: [GOV-01]
+    ---
+    <scope_assertions>
+    public_api: unchanged
+    default_tightening: none
+    security_posture: unchanged
+    semver_major: none
+    remote_github: no mutation
+    protocol_scope: AUTHN-POST-01, KMS-01, and SIGNED-META-01 remain excluded
+    </scope_assertions>
+    <tasks>
+    <task type="auto">
+      <name>Run the governance contract</name>
+      <files>test/governance/milestone_scope_test.exs</files>
+      <action>Extend deterministic policy tests only.</action>
+      <verify><automated>mix test test/governance/milestone_scope_test.exs</automated></verify>
+    </task>
+    </tasks>
+    """
+  end
+
+  defp risky_plan_fixture(approval_class) do
+    impact =
+      case approval_class do
+        "public_api" -> "Change the published Relyra.start_login/3 API."
+        "default_tightening" -> "Tighten the default validation mode."
+        "security_posture" -> "Change the assertion trust policy."
+        "semver_major" -> "Release a real SemVer major version."
+        "remote_github" -> "Mutate remote GitHub branch protection."
+      end
+
+    remote_details =
+      if approval_class == "remote_github" do
+        """
+        Record current state and desired state, exact commands, affected checks,
+        automated preflight, rollback, and postcondition read-back.
+        """
+      else
+        "Record the proposed mutation, impact, and automated preflight."
+      end
+
+    """
+    ---
+    phase: 73-twin-contract-and-baseline
+    plan: 99
+    requirements: [GOV-01]
+    ---
+    <scope_assertions>
+    public_api: unchanged
+    default_tightening: none
+    security_posture: unchanged
+    semver_major: none
+    remote_github: no mutation
+    protocol_scope: feature-neutral; demand-gated capabilities remain excluded
+    #{approval_class}: mutation proposed
+    </scope_assertions>
+    <tasks>
+    <task type="checkpoint:decision" gate="blocking">
+      <name>Approve #{approval_class} mutation</name>
+      <decision>approval_class: #{approval_class}</decision>
+      <action>#{remote_details}</action>
+      <resume-signal>Explicitly approve this exact #{approval_class} batch.</resume-signal>
+    </task>
+    <task type="auto">
+      <name>Apply #{approval_class} mutation</name>
+      <files>governed/file.ex</files>
+      <action>approval_class: #{approval_class}. #{impact}</action>
+      <verify><automated>mix test test/governance/milestone_scope_test.exs</automated></verify>
+    </task>
+    </tasks>
+    """
+  end
+
+  defp remove_checkpoint(plan) do
+    Regex.replace(~r/\s*<task type="checkpoint:decision".*?<\/task>/s, plan, "")
+  end
+
+  defp move_checkpoint_after_mutation(plan) do
+    [checkpoint] = Regex.run(~r/<task type="checkpoint:decision".*?<\/task>/s, plan)
+    plan |> remove_checkpoint() |> String.replace("</tasks>", "#{checkpoint}\n</tasks>")
+  end
+
+  defp assert_plan_violation(plan, identity, detail) do
+    violations = plan_scope_violations(plan)
+
+    assert Enum.any?(violations, &(&1 =~ identity and &1 =~ detail)),
+           "expected plan violation containing #{inspect(identity)} and #{inspect(detail)}, got: #{inspect(violations)}"
   end
 
   defp baseline_rows(markdown), do: table_rows(markdown, "Findings Ledger")
