@@ -712,9 +712,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       if approval_class == "remote_github" do
         """
         <remote_batch>
-        current_state: repository=szTheory/relyra; branch=main; checks=security (27, 1.19.5), security (28, 1.19.5)
-        desired_state: repository=szTheory/relyra; branch=main; checks=security (27, 1.19.5), security (28, 1.19.5), fleet-proxy-e2e
-        affected_checks: security (27, 1.19.5), security (28, 1.19.5), fleet-proxy-e2e
+        current_state: repository=szTheory/relyra; branch=main; checks=security (27, 1.19.5) | security (28, 1.19.5)
+        desired_state: repository=szTheory/relyra; branch=main; checks=security (27, 1.19.5) | security (28, 1.19.5) | fleet-proxy-e2e
+        affected_checks: security (27, 1.19.5) | security (28, 1.19.5) | fleet-proxy-e2e
         mutation_commands:
           - GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main
         preflight_command: ./scripts/setup_branch_protection.sh --print-expected && gh api repos/szTheory/relyra/branches/main/protection
@@ -1077,30 +1077,191 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp remote_checkpoint_violations(checkpoint) do
-    required = [
-      "current state",
-      "desired state",
-      "exact commands",
-      "affected checks",
-      "automated preflight",
-      "rollback",
-      "postcondition read-back"
-    ]
+    batch_violations =
+      case tag_sections(checkpoint.body, "remote_batch") do
+        [section] ->
+          validate_remote_batch(parse_remote_batch(section))
 
-    content = String.downcase(checkpoint.body)
+        sections ->
+          [
+            "remote_github checkpoint requires exactly one remote_batch, found #{length(sections)}"
+          ]
+      end
 
-    missing =
-      for detail <- required,
-          not String.contains?(content, detail),
-          do: "remote_github checkpoint is missing #{detail}"
-
-    resume =
-      if String.trim(checkpoint.resume_signal) == "",
+    outer_resume =
+      if placeholder_value?(checkpoint.resume_signal),
         do: ["remote_github checkpoint is missing resume signal"],
         else: []
 
-    missing ++ resume
+    batch_violations ++ outer_resume
   end
+
+  defp parse_remote_batch(section) do
+    scalar_fields =
+      for field <-
+            ~w(current_state desired_state affected_checks preflight_command read_back_command resume_signal),
+          into: %{} do
+        value =
+          case Regex.run(
+                 ~r/^\s*#{Regex.escape(field)}:\s*(.*?)\s*$/m,
+                 section,
+                 capture: :all_but_first
+               ) do
+            [captured] -> captured
+            nil -> nil
+          end
+
+        {field, value}
+      end
+
+    list_fields =
+      for field <- ~w(mutation_commands rollback_commands), into: %{} do
+        values =
+          case Regex.run(
+                 ~r/^\s*#{Regex.escape(field)}:\s*\n((?:\s+-[^\n]*\n?)+)/m,
+                 section,
+                 capture: :all_but_first
+               ) do
+            [lines] ->
+              ~r/^\s+-\s*(.*)$/m
+              |> Regex.scan(lines, capture: :all_but_first)
+              |> List.flatten()
+
+            nil ->
+              []
+          end
+
+        {field, values}
+      end
+
+    Map.merge(scalar_fields, list_fields)
+  end
+
+  defp validate_remote_batch(batch) do
+    required =
+      ~w(current_state desired_state affected_checks mutation_commands preflight_command rollback_commands read_back_command resume_signal)
+
+    presence =
+      for field <- required,
+          remote_field_missing?(Map.get(batch, field)),
+          do: "remote_github remote_batch #{field} is missing or placeholder"
+
+    if presence == [] do
+      validate_complete_remote_batch(batch)
+    else
+      presence
+    end
+  end
+
+  defp validate_complete_remote_batch(batch) do
+    current = parse_remote_state(batch["current_state"])
+    desired = parse_remote_state(batch["desired_state"])
+    affected = parse_check_set(batch["affected_checks"])
+
+    state_shape =
+      []
+      |> maybe_remote_violation(current == :error, "current_state is malformed")
+      |> maybe_remote_violation(desired == :error, "desired_state is malformed")
+
+    if state_shape == [] do
+      same_target = current.repository == desired.repository and current.branch == desired.branch
+      target = {desired.repository, desired.branch}
+
+      state_shape
+      |> maybe_remote_violation(
+        not same_target,
+        "current_state and desired_state target mismatch"
+      )
+      |> maybe_remote_violation(
+        current.checks == desired.checks,
+        "desired_state must change captured current_state"
+      )
+      |> maybe_remote_violation(
+        affected != desired.checks,
+        "affected_checks must equal desired_state checks"
+      )
+      |> maybe_remote_violation(
+        not Enum.all?(batch["mutation_commands"], &command_targets?(&1, target)),
+        "mutation_commands target mismatch"
+      )
+      |> maybe_remote_violation(
+        not (String.contains?(batch["preflight_command"], "--print-expected") and
+               command_targets?(batch["preflight_command"], target)),
+        "preflight_command target mismatch"
+      )
+      |> maybe_remote_violation(
+        not (Enum.all?(batch["rollback_commands"], &command_targets?(&1, target)) and
+               Enum.any?(
+                 batch["rollback_commands"],
+                 &String.contains?(&1, "captured-current.json")
+               )),
+        "rollback_commands target or captured state mismatch"
+      )
+      |> maybe_remote_violation(
+        not (command_targets?(batch["read_back_command"], target) and
+               Enum.all?(affected, &String.contains?(batch["read_back_command"], &1))),
+        "read_back_command target or affected checks mismatch"
+      )
+      |> maybe_remote_violation(
+        not (String.contains?(batch["resume_signal"], desired.repository) and
+               String.contains?(batch["resume_signal"], desired.branch)),
+        "resume_signal target mismatch"
+      )
+    else
+      state_shape
+    end
+  end
+
+  defp remote_field_missing?(values) when is_list(values),
+    do: values == [] or Enum.any?(values, &placeholder_value?/1)
+
+  defp remote_field_missing?(value), do: placeholder_value?(value)
+
+  defp placeholder_value?(value) when not is_binary(value), do: true
+
+  defp placeholder_value?(value) do
+    normalized = value |> String.trim() |> String.downcase()
+    normalized == "" or normalized in ["tbd", "placeholder", "exact commands omitted"]
+  end
+
+  defp parse_remote_state(value) do
+    case Regex.run(
+           ~r/^repository=([^;]+);\s*branch=([^;]+);\s*checks=(.+)$/,
+           value,
+           capture: :all_but_first
+         ) do
+      [repository, branch, checks] ->
+        %{
+          repository: String.trim(repository),
+          branch: String.trim(branch),
+          checks: parse_check_set(checks)
+        }
+
+      nil ->
+        :error
+    end
+  end
+
+  defp parse_check_set(value) do
+    value
+    |> String.split("|", trim: true)
+    |> Enum.map(&String.trim/1)
+    |> MapSet.new()
+  end
+
+  defp command_targets?(command, {repository, branch}) do
+    api_target = "repos/#{repository}/branches/#{branch}/protection"
+
+    script_target =
+      "GITHUB_REPOSITORY=#{repository} ./scripts/setup_branch_protection.sh #{branch}"
+
+    String.contains?(command, api_target) or String.contains?(command, script_target)
+  end
+
+  defp maybe_remote_violation(violations, true, detail),
+    do: violations ++ ["remote_github remote_batch #{detail}"]
+
+  defp maybe_remote_violation(violations, false, _detail), do: violations
 
   defp deterministic_verification_violations(tasks) do
     tasks
