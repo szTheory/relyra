@@ -367,6 +367,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
   end
 
+  test "completed governance requirements have deterministic mandatory evidence owners" do
+    entries = AdoptionEvidence.entries()
+
+    for requirement <- ["GOV-01", "GOV-02"] do
+      assert [owner] = AdoptionEvidence.deterministic_owners(entries, requirement)
+      assert owner.owner == "test/governance/milestone_scope_test.exs"
+      assert owner.selector == "evidence_contract"
+      assert owner.lane == "ci.evidence"
+    end
+
+    assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
+  end
+
   test "baseline parser is anchored, non-vacuous, and rejects duplicate exact headings" do
     baseline = File.read!(@baseline_path)
 
