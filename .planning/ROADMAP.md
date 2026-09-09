@@ -75,7 +75,7 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 3/3 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 **Wave 1**
@@ -89,6 +89,14 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 73-03-PLAN.md — Enforce approval checkpoints, feature-neutral scope, and deterministic completion policy.
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 73-04-PLAN.md — Close deterministic evidence-owner bypasses from ledger rows through mandatory CI.
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 73-05-PLAN.md — Make approval, exclusion, remote-batch, and baseline provenance checks fail closed.
 
 ### Phase 74: Clean-Room Package Consumer
 
