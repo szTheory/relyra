@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
-status: verifying
-stopped_at: Completed 73-05-PLAN.md
-last_updated: "2026-09-09T21:29:22.118Z"
+status: ready_to_execute
+stopped_at: Planned Phase 73 gap closure through 73-08-PLAN.md
+last_updated: "2026-09-09T22:46:13.000Z"
 last_activity: 2026-09-09
-last_activity_desc: Phase 73 Plan 04 completed
+last_activity_desc: Phase 73 gap-closure Plans 06-08 created
 state_head: 3f6548b3ca3434af6072e3bc1cc44d47a2cbb70a
 progress:
   total_phases: 7
   completed_phases: 0
-  total_plans: 5
+  total_plans: 8
   completed_plans: 5
-  percent: 100
+  percent: 63
 ---
 
 # Project State
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — VERIFYING
+Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE GAP CLOSURE
 
-Plan: 5 of 5
+Plan: 5 of 8
 
-Status: Ready to re-verify
+Status: Gap-closure Plans 73-06 through 73-08 are ready to execute
 
-Last activity: 2026-09-09 — Phase 73 Plan 05 completed
+Last activity: 2026-09-09 — Phase 73 gap-closure Plans 06-08 created
 
 ## Milestone Metrics
 
@@ -125,8 +125,8 @@ Last activity: 2026-09-09 — Phase 73 Plan 05 completed
 
 ## Operator Next Step
 
-Re-run Phase 73 verification against the five completed plan summaries and the hardened
-governance contract.
+Execute Phase 73 gap-closure Plans 73-06 through 73-08, then re-run verification against
+the eight completed plan summaries and mandatory evidence contract.
 
 ## Performance Metrics
 
