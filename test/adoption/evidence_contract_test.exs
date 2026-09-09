@@ -253,9 +253,16 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       Path.join(System.tmp_dir!(), "relyra-evidence-#{System.unique_integer([:positive])}")
 
     File.mkdir_p!(Path.join(root, "test/adoption"))
+    File.mkdir_p!(Path.join(root, "test/governance"))
     File.mkdir_p!(Path.join(root, ".github/workflows"))
     File.cp!("mix.exs", Path.join(root, "mix.exs"))
     File.cp!(__ENV__.file, Path.join(root, "test/adoption/evidence_contract_test.exs"))
+
+    File.cp!(
+      "test/governance/milestone_scope_test.exs",
+      Path.join(root, "test/governance/milestone_scope_test.exs")
+    )
+
     File.cp!(@workflow_path, Path.join(root, @workflow_path))
     on_exit(fn -> File.rm_rf!(root) end)
     root

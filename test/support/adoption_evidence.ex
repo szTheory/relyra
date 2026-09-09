@@ -81,6 +81,33 @@ defmodule Relyra.AdoptionEvidence do
     failure_diagnostics: "EVID-02 reports the requirement and missing deterministic seam"
   }
 
+  @baseline_entries [
+                      {"qual-01-repository-baseline", "QUAL-01", [:security_reviewer],
+                       "inspect a severity-ranked quality inventory"},
+                      {"pipe-01-ci-baseline", "PIPE-01", [:sre],
+                       "inspect measured CI ownership and duration"}
+                    ]
+                    |> Enum.map(fn {id, requirement, personas, job} ->
+                      %{
+                        id: id,
+                        requirement: requirement,
+                        personas: personas,
+                        job: job,
+                        expected_outcome: "#{job} has a dated, fail-closed governance contract",
+                        evidence_kind: :package_contract,
+                        owner: "test/governance/milestone_scope_test.exs",
+                        selector: "evidence_contract",
+                        lane: "ci.evidence",
+                        state: :existing,
+                        fixture_owner:
+                          ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md",
+                        reset_boundary:
+                          "fresh test process and isolated temporary Markdown controls",
+                        failure_diagnostics:
+                          "#{requirement} reports the missing baseline field, owner, or lane"
+                      }
+                    end)
+
   @planned_rows [
     {"EVID-03", [:sre, :security_reviewer], "inspect external canary evidence", :external_canary,
      "test/adoption/external_canary_contract_test.exs", "ci.external_idp"},
@@ -118,8 +145,6 @@ defmodule Relyra.AdoptionEvidence do
      "test/adoption/journeys/tenant_admin_test.exs", "ci.journeys"},
     {"JOUR-06", [:sre], "diagnose and recover with redacted evidence", :browser,
      "test/adoption/journeys/incident_recovery_test.exs", "ci.journeys"},
-    {"QUAL-01", [:security_reviewer], "inspect a severity-ranked quality inventory",
-     :package_contract, "test/governance/milestone_scope_test.exs", "ci.governance"},
     {"QUAL-02", [:developer], "inspect clear production and test abstractions", :package_contract,
      "test/quality/readability_contract_test.exs", "ci.quality"},
     {"QUAL-03", [:security_reviewer], "prove security cleanup preserves invariants",
@@ -130,8 +155,6 @@ defmodule Relyra.AdoptionEvidence do
      "test/quality/tracked_tree_test.exs", "ci.quality"},
     {"QUAL-06", [:security_reviewer], "inspect dispositions for high-value findings",
      :package_contract, "test/quality/finding_disposition_test.exs", "ci.quality"},
-    {"PIPE-01", [:sre], "inspect measured CI ownership and duration", :package_contract,
-     "test/governance/milestone_scope_test.exs", "ci.governance"},
     {"PIPE-02", [:sre, :security_reviewer], "prove every mandatory criterion has one owner",
      :security_corpus, "test/ci/ownership_contract_test.exs", "ci.quality"},
     {"PIPE-03", [:sre], "verify measured safe CI parallelism", :package_contract,
@@ -176,7 +199,7 @@ defmodule Relyra.AdoptionEvidence do
                      }
                    end)
 
-  @entries @existing_entries ++ [@evid_02_entry] ++ @planned_entries
+  @entries @existing_entries ++ [@evid_02_entry] ++ @baseline_entries ++ @planned_entries
 
   def entries, do: @entries
 
