@@ -73,8 +73,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       wrong_class =
         String.replace(
           clean,
-          "approval_class: #{approval_class}",
-          "approval_class: remote_github"
+          "<decision>approval_class: #{approval_class}</decision>",
+          "<decision>approval_class: remote_github</decision>"
         )
 
       assert_plan_violation(wrong_class, approval_class, "matching")
@@ -471,6 +471,218 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert Enum.any?(violations, &(&1 =~ identity and &1 =~ detail)),
            "expected plan violation containing #{inspect(identity)} and #{inspect(detail)}, got: #{inspect(violations)}"
+  end
+
+  defp incomplete_phase_numbers(roadmap) do
+    ~r/^- \[ \] \*\*Phase ([0-9.]+):/m
+    |> Regex.scan(roadmap, capture: :all_but_first)
+    |> Enum.map(fn [phase] -> phase end)
+  end
+
+  defp plan_scope_violations(markdown) do
+    scope_sections = tag_sections(markdown, "scope_assertions")
+    tasks = plan_tasks(markdown)
+
+    scope_violations =
+      case scope_sections do
+        [scope] -> approval_scope_violations(parse_scope_assertions(scope), tasks)
+        _other -> ["scope_assertions must appear exactly once"]
+      end
+
+    scope_violations ++ deterministic_verification_violations(tasks)
+  end
+
+  defp approval_scope_violations(scope, tasks) do
+    Enum.flat_map(@approval_classes, fn approval_class ->
+      values = Map.get(scope, approval_class, [])
+
+      cond do
+        values == [] ->
+          ["#{approval_class} scope assertion is required"]
+
+        risky_scope?(approval_class, values, tasks) ->
+          mutation_index = mutation_task_index(tasks, approval_class)
+          checkpoint_index = matching_checkpoint_index(tasks, approval_class)
+
+          checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks)
+
+        true ->
+          []
+      end
+    end)
+  end
+
+  defp risky_scope?(approval_class, values, tasks) do
+    Enum.any?(values, &(not negative_scope_value?(approval_class, &1))) or
+      mutation_task_index(tasks, approval_class) != nil
+  end
+
+  defp negative_scope_value?(approval_class, value) do
+    normalized = String.downcase(value)
+
+    case approval_class do
+      "remote_github" ->
+        Enum.any?(
+          ["no mutation", "read-only", "unchanged", "none"],
+          &String.contains?(normalized, &1)
+        )
+
+      _other ->
+        Enum.any?(
+          ["unchanged", "none", "no change", "no mutation"],
+          &String.contains?(normalized, &1)
+        )
+    end
+  end
+
+  defp checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks) do
+    cond do
+      mutation_index == nil ->
+        ["#{approval_class} mutation task is missing"]
+
+      checkpoint_index == nil ->
+        ["#{approval_class} matching checkpoint is missing"]
+
+      not checkpoint_precedes_mutation?({checkpoint_index, mutation_index}, tasks) ->
+        ["#{approval_class} checkpoint must be before mutation"]
+
+      true ->
+        checkpoint = Enum.at(tasks, checkpoint_index)
+
+        blocking =
+          if checkpoint.gate == "blocking",
+            do: [],
+            else: ["#{approval_class} checkpoint must be blocking"]
+
+        exact_batch =
+          if approval_class == "remote_github",
+            do: remote_checkpoint_violations(checkpoint),
+            else: []
+
+        blocking ++ exact_batch
+    end
+  end
+
+  defp checkpoint_precedes_mutation?({checkpoint_index, mutation_index}, tasks) do
+    checkpoint_index < mutation_index and
+      Enum.at(tasks, checkpoint_index).type == "checkpoint:decision"
+  end
+
+  defp matching_checkpoint_index(tasks, approval_class) do
+    Enum.find_index(tasks, fn task ->
+      task.type == "checkpoint:decision" and
+        String.contains?(task.body, "approval_class: #{approval_class}")
+    end)
+  end
+
+  defp mutation_task_index(tasks, approval_class) do
+    Enum.find_index(tasks, fn task ->
+      not String.starts_with?(task.type, "checkpoint") and
+        String.contains?(task.action, "approval_class: #{approval_class}")
+    end)
+  end
+
+  defp remote_checkpoint_violations(checkpoint) do
+    required = [
+      "current state",
+      "desired state",
+      "exact commands",
+      "affected checks",
+      "automated preflight",
+      "rollback",
+      "postcondition read-back"
+    ]
+
+    content = String.downcase(checkpoint.body)
+
+    missing =
+      for detail <- required,
+          not String.contains?(content, detail),
+          do: "remote_github checkpoint is missing #{detail}"
+
+    resume =
+      if String.trim(checkpoint.resume_signal) == "",
+        do: ["remote_github checkpoint is missing resume signal"],
+        else: []
+
+    missing ++ resume
+  end
+
+  defp deterministic_verification_violations(tasks) do
+    automated =
+      tasks
+      |> Enum.reject(&String.starts_with?(&1.type, "checkpoint"))
+      |> Enum.flat_map(fn task -> tag_sections(task.verify, "automated") end)
+
+    if Enum.any?(automated, fn command ->
+         normalized = String.downcase(command)
+
+         String.contains?(normalized, "mix ") and
+           not String.contains?(normalized, "checkpoint") and
+           not String.contains?(normalized, "human")
+       end) do
+      []
+    else
+      ["verification requires deterministic automated evidence"]
+    end
+  end
+
+  defp parse_scope_assertions(section) do
+    section
+    |> String.split("\n")
+    |> Enum.reduce(%{}, fn line, scope ->
+      case String.split(line, ":", parts: 2) do
+        [key, value] ->
+          key = String.trim(key)
+
+          if key in @approval_classes do
+            Map.update(scope, key, [String.trim(value)], &[String.trim(value) | &1])
+          else
+            scope
+          end
+
+        _other ->
+          scope
+      end
+    end)
+  end
+
+  defp plan_tasks(markdown) do
+    ~r/<task\s+(?<attributes>[^>]*)>(?<body>.*?)<\/task>/s
+    |> Regex.scan(markdown, capture: ["attributes", "body"])
+    |> Enum.map(fn [attributes, body] ->
+      %{
+        type: attribute_value(attributes, "type"),
+        gate: attribute_value(attributes, "gate"),
+        body: body,
+        action: tag_content(body, "action"),
+        files: tag_content(body, "files"),
+        verify: tag_content(body, "verify"),
+        resume_signal: tag_content(body, "resume-signal")
+      }
+    end)
+  end
+
+  defp attribute_value(attributes, name) do
+    case Regex.run(~r/(?:^|\s)#{Regex.escape(name)}="([^"]*)"/, attributes,
+           capture: :all_but_first
+         ) do
+      [value] -> value
+      nil -> ""
+    end
+  end
+
+  defp tag_sections(markdown, tag) do
+    ~r/<#{Regex.escape(tag)}>(.*?)<\/#{Regex.escape(tag)}>/s
+    |> Regex.scan(markdown, capture: :all_but_first)
+    |> Enum.map(fn [content] -> content end)
+  end
+
+  defp tag_content(markdown, tag) do
+    case tag_sections(markdown, tag) do
+      [content] -> String.trim(content)
+      _other -> ""
+    end
   end
 
   defp baseline_rows(markdown), do: table_rows(markdown, "Findings Ledger")
