@@ -413,17 +413,15 @@ end
 | A10 | The focused contract files and `ci.evidence` alias fit a sub-30-second per-task loop and the listed Wave 0 file split. | Validation Architecture | Low; planner can merge files if runtime remains focused and ownership stays clear. |
 | A11 | Structural negative fixtures, unique status names, and postcondition read-back are the appropriate mitigations for evidence spoofing/tampering risks. | Security Domain | Medium; tests must demonstrate these mitigations rather than merely documenting them. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should the new evidence lane itself become a distinct live required status in Phase 73?**
    - What we know: EVID-02 requires a mandatory owner; live main currently requires two security matrix statuses, and the desired third Fleet status is already missing. [VERIFIED: .planning/REQUIREMENTS.md:9-13; GitHub branch-protection API, 2026-09-09]
-   - What's unclear: Whether invoking `mix ci.evidence` inside both already-required security matrix jobs is sufficient ownership, or whether maintainers want a separate required job/status.
-   - Recommendation: In Phase 73, make `ci.evidence` a clearly named step within the already-required security jobs and structurally test that wiring. Treat any change to live required contexts as a later exact remote batch behind the `remote_github` checkpoint. [ASSUMED]
+   - **RESOLVED:** In Phase 73, `ci.evidence` is a clearly named step within the already-required security jobs, and structural tests prove that wiring. It does not become a separate required status. Any later change to live required contexts remains an exact remote batch behind the `remote_github` checkpoint.
 
 2. **When should the existing branch-protection drift be repaired?**
    - What we know: repository intent includes `fleet-proxy-e2e`; live protection omits it; the apply workflow is disabled for inactivity. [VERIFIED: scripts/setup_branch_protection.sh:18-23; GitHub APIs, 2026-09-09]
-   - What's unclear: Whether the owner wants that remote repair during Phase 73 or the mapped Phase 79 GitHub hygiene work.
-   - Recommendation: Record it now as HIGH, prepare an exact proposed batch, and default execution to Phase 79 unless the maintainer explicitly approves earlier repair.
+   - **RESOLVED:** Record the drift as a HIGH baseline item and target its exact proposed repair batch to Phase 79. Phase 73 performs no remote GitHub mutation.
 
 ## Environment Availability
 

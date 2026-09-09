@@ -42,8 +42,8 @@ created: "2026-09-09"
 | 73-01-02 | 01 | 1 | EVID-02 | Canary-only or hollow owners cannot close acceptance criteria | structural integration | `mix ci.evidence` | ❌ W0 | ⬜ pending |
 | 73-02-01 | 02 | 2 | QUAL-01 | Baseline findings retain severity, evidence, disposition, and target ownership | document contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
 | 73-02-02 | 02 | 2 | PIPE-01 | CI baseline records ownership, timing, duplication, cache, and failure evidence | document contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
-| 73-03-01 | 03 | 2 | GOV-01 | Risky changes require a named blocking checkpoint before mutation | plan policy contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
-| 73-03-02 | 03 | 2 | GOV-02 | Plans cannot introduce `AUTHN-POST-01`, `KMS-01`, or `SIGNED-META-01` | plan scope contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
+| 73-03-01 | 03 | 3 | GOV-01 | Risky changes require a named blocking checkpoint before mutation | plan policy contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
+| 73-03-02 | 03 | 3 | GOV-02 | Plans cannot introduce `AUTHN-POST-01`, `KMS-01`, or `SIGNED-META-01` | plan scope contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
