@@ -87,21 +87,60 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     clean = risky_plan_fixture("remote_github")
     assert plan_scope_violations(clean) == []
 
-    for {token, diagnostic} <- [
-          {"current state", "current state"},
-          {"desired state", "desired state"},
-          {"exact commands", "exact commands"},
-          {"affected checks", "affected checks"},
-          {"automated preflight", "automated preflight"},
-          {"rollback", "rollback"},
-          {"postcondition read-back", "postcondition read-back"}
+    for {field, diagnostic} <- [
+          {"current_state", "current_state"},
+          {"desired_state", "desired_state"},
+          {"mutation_commands", "mutation_commands"},
+          {"affected_checks", "affected_checks"},
+          {"preflight_command", "preflight_command"},
+          {"rollback_commands", "rollback_commands"},
+          {"read_back_command", "read_back_command"},
+          {"resume_signal", "resume_signal"}
         ] do
-      incomplete = String.replace(clean, token, "omitted detail", global: false)
+      incomplete = remove_remote_field(clean, field)
       assert_plan_violation(incomplete, "remote_github", diagnostic)
     end
 
     without_resume = Regex.replace(~r/\s*<resume-signal>.*?<\/resume-signal>/s, clean, "")
     assert_plan_violation(without_resume, "remote_github", "resume signal")
+  end
+
+  test "remote batch rejects placeholders and mismatched reversible targets" do
+    clean = risky_plan_fixture("remote_github")
+    assert plan_scope_violations(clean) == []
+
+    for placeholder <- ["", "   ", "TBD", "placeholder", "exact commands omitted"] do
+      invalid = replace_remote_scalar(clean, "preflight_command", placeholder)
+      assert_plan_violation(invalid, "remote_github", "preflight_command")
+    end
+
+    mismatched_branch =
+      replace_remote_scalar(
+        clean,
+        "read_back_command",
+        "gh api repos/szTheory/relyra/branches/develop/protection"
+      )
+
+    assert_plan_violation(mismatched_branch, "remote_github", "read_back_command target")
+
+    mismatched_checks =
+      replace_remote_scalar(
+        clean,
+        "affected_checks",
+        "security (27, 1.19.5), security (28, 1.19.5)"
+      )
+
+    assert_plan_violation(mismatched_checks, "remote_github", "affected_checks")
+
+    wrong_rollback =
+      String.replace(
+        clean,
+        "repos/szTheory/relyra/branches/main/protection --input captured-current.json",
+        "repos/szTheory/relyra/branches/develop/protection --input desired.json",
+        global: false
+      )
+
+    assert_plan_violation(wrong_rollback, "remote_github", "rollback_commands target")
   end
 
   test "approval cannot be borrowed across plans or concurrent branches" do
@@ -672,8 +711,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     remote_details =
       if approval_class == "remote_github" do
         """
-        Record current state and desired state, exact commands, affected checks,
-        automated preflight, rollback, and postcondition read-back.
+        <remote_batch>
+        current_state: repository=szTheory/relyra; branch=main; checks=security (27, 1.19.5), security (28, 1.19.5)
+        desired_state: repository=szTheory/relyra; branch=main; checks=security (27, 1.19.5), security (28, 1.19.5), fleet-proxy-e2e
+        affected_checks: security (27, 1.19.5), security (28, 1.19.5), fleet-proxy-e2e
+        mutation_commands:
+          - GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main
+        preflight_command: ./scripts/setup_branch_protection.sh --print-expected && gh api repos/szTheory/relyra/branches/main/protection
+        rollback_commands:
+          - gh api -X PUT repos/szTheory/relyra/branches/main/protection --input captured-current.json
+        read_back_command: gh api repos/szTheory/relyra/branches/main/protection | jq -e '.["required_status_checks"]["contexts"] == ["security (27, 1.19.5)", "security (28, 1.19.5)", "fleet-proxy-e2e"]'
+        resume_signal: approve remote_github szTheory/relyra main exact batch
+        </remote_batch>
         """
       else
         "Record the proposed mutation, impact, and automated preflight."
@@ -746,6 +795,24 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       ~r/(<risk_metadata>.*?)(#{Regex.escape(old)})/s,
       plan,
       fn _match, prefix, _field -> prefix <> new end,
+      global: false
+    )
+  end
+
+  defp remove_remote_field(plan, field) do
+    Regex.replace(
+      ~r/^\s*#{Regex.escape(field)}:.*?(?=^\s*[a-z_]+:|\s*<\/remote_batch>)/ms,
+      plan,
+      "",
+      global: false
+    )
+  end
+
+  defp replace_remote_scalar(plan, field, value) do
+    Regex.replace(
+      ~r/^(\s*#{Regex.escape(field)}:)\s*.*$/m,
+      plan,
+      fn _match, prefix -> "#{prefix} #{value}" end,
       global: false
     )
   end
