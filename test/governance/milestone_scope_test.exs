@@ -336,6 +336,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert plan_scope_violations(policy_only) == []
 
+    fixture_data =
+      clean <>
+        """
+        <fixture_data>
+        AUTHN-POST-01
+        KMS-01
+        SIGNED-META-01
+        </fixture_data>
+        """
+
+    assert plan_scope_violations(fixture_data) == []
+
     for capability <- ~w(AUTHN-POST-01 KMS-01 SIGNED-META-01) do
       implementation =
         String.replace(
@@ -346,6 +358,61 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       assert_plan_violation(implementation, capability, "implementation scope")
     end
+  end
+
+  test "task-region demand-gated smuggling fails regardless of nearby prose" do
+    controls = [
+      "Do not delay; implement KMS-01 in the library.",
+      "KMS-01 must not remain excluded; implement it now.",
+      "Policy tests reject implementation. Then implement AUTHN-POST-01.",
+      "Forbid unrelated scope while implementing SIGNED-META-01.",
+      "Cleanup helpers and ship KMS-01."
+    ]
+
+    for action <- controls do
+      plan =
+        String.replace(no_risk_plan_fixture(), "Extend deterministic policy tests only.", action)
+
+      capability =
+        Enum.find(~w(AUTHN-POST-01 KMS-01 SIGNED-META-01), &String.contains?(action, &1))
+
+      assert_plan_violation(plan, capability, "implementation scope appears in task action")
+    end
+
+    file_smuggling =
+      String.replace(
+        no_risk_plan_fixture(),
+        "test/governance/milestone_scope_test.exs",
+        "lib/KMS-01/cleanup.ex",
+        global: false
+      )
+
+    assert_plan_violation(file_smuggling, "KMS-01", "implementation scope appears in task files")
+  end
+
+  test "plan-level demand-gated exclusions are exact and singular" do
+    clean = no_risk_plan_fixture()
+    assert plan_scope_violations(clean) == []
+
+    missing =
+      Regex.replace(~r/<demand_gated_exclusions>.*?<\/demand_gated_exclusions>/s, clean, "")
+
+    assert_plan_violation(missing, "demand_gated_exclusions", "exactly once")
+
+    duplicate =
+      clean <>
+        """
+        <demand_gated_exclusions>
+        AUTHN-POST-01
+        KMS-01
+        SIGNED-META-01
+        </demand_gated_exclusions>
+        """
+
+    assert_plan_violation(duplicate, "demand_gated_exclusions", "exactly once")
+
+    incomplete = String.replace(clean, "KMS-01\n", "", global: false)
+    assert_plan_violation(incomplete, "demand_gated_exclusions", "exact set")
   end
 
   test "renaming forbidden product expansion as cleanup does not bypass scope" do
@@ -586,6 +653,37 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  test "every baseline row requires one complete allowed verification marker" do
+    baseline = File.read!(@baseline_path)
+    assert baseline_violations(baseline) == []
+
+    controls = [
+      {String.replace(baseline, ~r/ \[VERIFIED:.*\]$/m, "", global: false), "QUAL-73-001",
+       "verification marker"},
+      {String.replace(baseline, ~r/\[VERIFIED:.*\]$/m, "[VERIFIED: ]", global: false),
+       "QUAL-73-001", "verification marker"},
+      {String.replace(baseline, ~r/\[VERIFIED:.*\]$/m, "[VERIFIED: `mix ci.evidence`",
+         global: false
+       ), "QUAL-73-001", "verification marker"},
+      {String.replace(
+         baseline,
+         ~r/(\[VERIFIED:.*\])$/m,
+         "\\1 [VERIFIED: `mix ci.evidence`]",
+         global: false
+       ), "QUAL-73-001", "exactly one"},
+      {String.replace(baseline, ~r/\[VERIFIED:.*\]$/m, "[VERIFIED: source says good]",
+         global: false
+       ), "QUAL-73-001", "allowed reference"},
+      {String.replace(baseline, ~r/\[VERIFIED:.*\]$/m, "[VERIFIED: `curl example.test`]",
+         global: false
+       ), "QUAL-73-001", "allowed reference"}
+    ]
+
+    for {markdown, id, detail} <- controls do
+      assert_violation(markdown, id, detail)
+    end
+  end
+
   test "severity-specific disposition and blocker rules fail closed" do
     baseline = File.read!(@baseline_path)
 
@@ -679,6 +777,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     remote_github: no mutation
     protocol_scope: AUTHN-POST-01, KMS-01, and SIGNED-META-01 remain excluded
     </scope_assertions>
+    <demand_gated_exclusions>
+    AUTHN-POST-01
+    KMS-01
+    SIGNED-META-01
+    </demand_gated_exclusions>
     <tasks>
     <task type="auto">
       <name>Run the governance contract</name>
@@ -743,6 +846,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     protocol_scope: feature-neutral; demand-gated capabilities remain excluded
     #{approval_class}: mutation proposed
     </scope_assertions>
+    <demand_gated_exclusions>
+    AUTHN-POST-01
+    KMS-01
+    SIGNED-META-01
+    </demand_gated_exclusions>
     <tasks>
     <task type="checkpoint:decision" gate="blocking">
       <name>Approve #{approval_class} mutation</name>
