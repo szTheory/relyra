@@ -1,6 +1,8 @@
 defmodule Relyra.Governance.MilestoneScopeTest do
   use ExUnit.Case, async: true
 
+  @moduletag :evidence_contract
+
   @baseline_path ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
   @finding_columns [
     "Finding ID",
@@ -33,14 +35,15 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     baseline = File.read!(@baseline_path)
     sections = baseline_sections(baseline)
 
-    assert Map.keys(sections) == [
-             "Summary",
-             "Severity and Disposition Policy",
-             "Findings Ledger",
-             "CI Baseline Snapshot",
-             "Remote Mutation Boundary",
-             "Security/Compliance Breadcrumbs"
-           ]
+    assert Map.keys(sections) |> MapSet.new() ==
+             MapSet.new([
+               "Summary",
+               "Severity and Disposition Policy",
+               "Findings Ledger",
+               "CI Baseline Snapshot",
+               "Remote Mutation Boundary",
+               "Security/Compliance Breadcrumbs"
+             ])
 
     assert sections["Summary"] =~ "2026-09-09"
 

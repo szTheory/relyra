@@ -233,7 +233,7 @@ defmodule Relyra.MixProject do
         "relyra.conformance --check"
       ],
       "ci.evidence": [
-        "cmd mix test test/adoption/evidence_contract_test.exs --only evidence_contract --warnings-as-errors"
+        "cmd mix test test/adoption/evidence_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --warnings-as-errors"
       ],
       "ci.security": [
         "compile --warnings-as-errors",
