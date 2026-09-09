@@ -254,29 +254,33 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   def validate_entry!(entry) when is_map(entry) do
-    id = Map.get(entry, :id, "<missing-id>")
     keys = entry |> Map.keys() |> MapSet.new()
     expected_keys = MapSet.new(@fields)
+    raw_id = Map.get(entry, :id)
+    id = if is_binary(raw_id) and String.trim(raw_id) != "", do: raw_id, else: "<missing-id>"
 
     unless keys == expected_keys do
       raise ArgumentError,
             "evidence row #{id} has invalid fields; missing=#{inspect(MapSet.difference(expected_keys, keys) |> MapSet.to_list())} unknown=#{inspect(MapSet.difference(keys, expected_keys) |> MapSet.to_list())}"
     end
 
+    for field <- @fields -- [:personas, :evidence_kind, :state] do
+      value = Map.get(entry, field)
+
+      unless is_binary(value) and String.trim(value) != "" do
+        raise ArgumentError, "evidence row #{id} has empty #{field}; expected non-empty text"
+      end
+    end
+
     validate_member!(id, :requirement, entry.requirement, @requirements)
     validate_member!(id, :evidence_kind, entry.evidence_kind, @evidence_kinds)
     validate_member!(id, :state, entry.state, @states)
 
-    if entry.personas == [] do
+    unless is_list(entry.personas) and entry.personas != [] do
       raise ArgumentError, "evidence row #{id} has no personas"
     end
 
     Enum.each(entry.personas, &validate_member!(id, :persona, &1, @personas))
-
-    for field <- @fields -- [:personas, :evidence_kind, :state],
-        Map.get(entry, field) in [nil, ""] do
-      raise ArgumentError, "evidence row #{id} has empty #{field}"
-    end
 
     :ok
   end
@@ -292,7 +296,10 @@ defmodule Relyra.AdoptionEvidence do
     end)
   end
 
-  def validate_closure!(entries, completed_requirements) when is_list(completed_requirements) do
+  def validate_closure!(entries, completed_requirements)
+      when is_list(entries) and entries != [] and is_list(completed_requirements) do
+    Enum.each(entries, &validate_entry!/1)
+
     completed_requirements
     |> Enum.uniq()
     |> Enum.each(fn requirement ->
@@ -305,6 +312,11 @@ defmodule Relyra.AdoptionEvidence do
     end)
 
     :ok
+  end
+
+  def validate_closure!(entries, completed_requirements) do
+    raise ArgumentError,
+          "closure evidence must be a non-empty list and completed requirements must be a list, got: #{inspect(entries)}, #{inspect(completed_requirements)}"
   end
 
   def validate_repository!(entries, root) do
@@ -333,9 +345,7 @@ defmodule Relyra.AdoptionEvidence do
             "#{entry.requirement} row #{entry.id}: missing owner file #{entry.owner}"
     end
 
-    source = File.read!(owner_path)
-
-    unless Regex.match?(~r/@(module)?tag\s+:#{Regex.escape(entry.selector)}\b/, source) do
+    unless selected_test_count!(owner_path, entry.selector) > 0 do
       raise ArgumentError,
             "#{entry.requirement} row #{entry.id}: selector #{entry.selector} matches zero tests in #{entry.owner}"
     end
@@ -355,10 +365,68 @@ defmodule Relyra.AdoptionEvidence do
             "#{entry.requirement} row #{entry.id}: alias #{entry.lane} is not wired to owner #{entry.owner} with selector #{entry.selector}"
     end
 
-    unless workflow_command?(workflow, "mix #{entry.lane}") do
+    unless mandatory_security_step?(workflow, "Evidence contract", "mix #{entry.lane}") do
       raise ArgumentError,
-            "#{entry.requirement} row #{entry.id}: workflow has no executable mix #{entry.lane} command"
+            "#{entry.requirement} row #{entry.id}: workflow has no enabled blocking Evidence contract step for mix #{entry.lane} under jobs.security"
     end
+  end
+
+  defp selected_test_count!(path, selector) do
+    ast = path |> File.read!() |> Code.string_to_quoted!()
+
+    {module_tags, test_lines, test_tag_lines} =
+      Macro.prewalk(ast, {MapSet.new(), [], []}, fn
+        {:@, meta, [{name, _attribute_meta, arguments}]} = node,
+        {module_tags, test_lines, test_tag_lines}
+        when name in [:moduletag, :tag] ->
+          if selector_in_tag?(arguments, selector) do
+            case name do
+              :moduletag ->
+                {node, {MapSet.put(module_tags, meta[:line]), test_lines, test_tag_lines}}
+
+              :tag ->
+                {node, {module_tags, test_lines, [meta[:line] | test_tag_lines]}}
+            end
+          else
+            {node, {module_tags, test_lines, test_tag_lines}}
+          end
+
+        {:test, meta, _arguments} = node, {module_tags, test_lines, test_tag_lines} ->
+          {node, {module_tags, [meta[:line] | test_lines], test_tag_lines}}
+
+        node, accumulator ->
+          {node, accumulator}
+      end)
+      |> elem(1)
+
+    cond do
+      MapSet.size(module_tags) > 0 ->
+        length(test_lines)
+
+      true ->
+        sorted_tests = Enum.sort(test_lines)
+
+        Enum.count(sorted_tests, fn test_line ->
+          previous_test_line =
+            sorted_tests
+            |> Enum.take_while(&(&1 < test_line))
+            |> List.last(0)
+
+          Enum.any?(test_tag_lines, &(&1 > previous_test_line and &1 < test_line))
+        end)
+    end
+  rescue
+    error in [SyntaxError, TokenMissingError] ->
+      raise ArgumentError,
+            "cannot inspect executable tests in #{path}: #{Exception.message(error)}"
+  end
+
+  defp selector_in_tag?(arguments, selector) do
+    Macro.prewalk(arguments, false, fn
+      atom, found when is_atom(atom) -> {atom, found or Atom.to_string(atom) == selector}
+      node, found -> {node, found}
+    end)
+    |> elem(1)
   end
 
   defp mix_aliases!(path) do
@@ -377,15 +445,99 @@ defmodule Relyra.AdoptionEvidence do
     end)
   end
 
-  defp workflow_command?(workflow, command) do
-    workflow
-    |> String.split("\n")
-    |> Enum.any?(fn line ->
-      case Regex.run(~r/^\s+run:\s*([^#]+?)\s*$/, line, capture: :all_but_first) do
-        [run] -> String.trim(run) == command
-        nil -> false
+  defp mandatory_security_step?(workflow, step_name, command) do
+    lines = String.split(workflow, "\n")
+
+    with {:ok, jobs_index} <- find_line(lines, ~r/^jobs:\s*$/),
+         jobs <- indented_block(lines, jobs_index, 0),
+         {:ok, security_index} <- find_line(jobs, ~r/^  security:\s*$/),
+         security <- indented_block(jobs, security_index, 2),
+         false <- false_condition_in_scope?(security, 4),
+         {:ok, steps_index} <- find_line(security, ~r/^    steps:\s*$/),
+         steps <- indented_block(security, steps_index, 4),
+         [step] <- named_steps(steps, step_name),
+         ^command <- property(step, "run"),
+         false <- false_condition_in_scope?(step, 8),
+         false <- truthy?(property(step, "continue-on-error")),
+         true <- required_planning_triggers?(lines) do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  defp find_line(lines, pattern) do
+    case Enum.find_index(lines, &Regex.match?(pattern, &1)) do
+      nil -> :error
+      index -> {:ok, index}
+    end
+  end
+
+  defp indented_block(lines, header_index, header_indent) do
+    lines
+    |> Enum.drop(header_index + 1)
+    |> Enum.take_while(fn line ->
+      String.trim(line) == "" or indentation(line) > header_indent
+    end)
+  end
+
+  defp named_steps(lines, name) do
+    lines
+    |> Enum.with_index()
+    |> Enum.filter(fn {line, _index} ->
+      Regex.match?(~r/^      - name:\s*#{Regex.escape(name)}\s*$/, line)
+    end)
+    |> Enum.map(fn {_line, index} -> indented_block(lines, index, 6) end)
+  end
+
+  defp property(lines, key) do
+    Enum.find_value(lines, fn line ->
+      case Regex.run(~r/^\s+#{Regex.escape(key)}:\s*([^#]*?)\s*$/, line, capture: :all_but_first) do
+        [value] -> String.trim(value)
+        nil -> nil
       end
     end)
+  end
+
+  defp false_condition_in_scope?(lines, indent) do
+    lines
+    |> Enum.filter(&(indentation(&1) == indent))
+    |> property("if")
+    |> false_condition?()
+  end
+
+  defp false_condition?(value) do
+    normalize_expression(value) in ["false", "0", "${{false}}", "${{0}}"]
+  end
+
+  defp truthy?(value) do
+    normalize_expression(value) in ["true", "1", "${{true}}", "${{1}}"]
+  end
+
+  defp normalize_expression(nil), do: nil
+
+  defp normalize_expression(value) do
+    value
+    |> String.downcase()
+    |> String.replace(~r/[\s"']+/, "")
+  end
+
+  defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
+
+  defp required_planning_triggers?(lines) do
+    pull_request? = Enum.any?(lines, &Regex.match?(~r/^  pull_request:\s*$/, &1))
+    push_index = Enum.find_index(lines, &Regex.match?(~r/^  push:\s*$/, &1))
+
+    main_push? =
+      if push_index do
+        lines
+        |> indented_block(push_index, 2)
+        |> Enum.any?(&Regex.match?(~r/^      - main\s*$/, &1))
+      else
+        false
+      end
+
+    pull_request? and main_push?
   end
 
   defp validate_member!(id, field, value, vocabulary) do

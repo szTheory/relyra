@@ -214,9 +214,11 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       String.replace(original_workflow, "run: mix ci.evidence", "run: mix qa")
     )
 
-    assert_raise ArgumentError, ~r/EVID-01.*workflow has no executable mix ci\.evidence/s, fn ->
-      AdoptionEvidence.validate_repository!(entries, root)
-    end
+    assert_raise ArgumentError,
+                 ~r/EVID-01.*enabled blocking.*mix ci\.evidence.*jobs\.security/s,
+                 fn ->
+                   AdoptionEvidence.validate_repository!(entries, root)
+                 end
   end
 
   test "comments, strings, and tagged modules without tests cannot own a selector" do
