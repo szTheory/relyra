@@ -244,6 +244,21 @@ defmodule Relyra.AdoptionEvidence do
     end)
   end
 
+  def validate_closure!(entries, completed_requirements) when is_list(completed_requirements) do
+    completed_requirements
+    |> Enum.uniq()
+    |> Enum.each(fn requirement ->
+      validate_member!("closure", :requirement, requirement, @requirements)
+
+      if deterministic_owners(entries, requirement) == [] do
+        raise ArgumentError,
+              "#{requirement} is completed but has no existing deterministic owner; planned and external-canary evidence cannot close it"
+      end
+    end)
+
+    :ok
+  end
+
   def validate_repository!(entries, root) do
     validate_entries!(entries)
 
