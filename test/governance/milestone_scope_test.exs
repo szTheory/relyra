@@ -71,6 +71,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           "repeated QA/fast CI work",
           "internal narration in production/tests",
           "planning narration in adopter docs",
+          "incomplete-phase vocabulary scan failure",
           "four golden-fixture test-pattern warnings",
           "historical signature bypass",
           "clean tracked-artifact scan"
