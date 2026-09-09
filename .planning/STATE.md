@@ -5,11 +5,11 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: verifying
-stopped_at: Completed 73-03-PLAN.md
-last_updated: "2026-09-09T18:34:10.066Z"
+stopped_at: Phase 73 context gathered (assumptions mode)
+last_updated: "2026-09-09T20:12:18.577Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 73 execution started
-state_head: 9611488119e8fc840f004f16f611825b19f8dac1
+state_head: 00f59b0bcebc81351d869ccf0af6135d4db4b3fb
 progress:
   total_phases: 7
   completed_phases: 0
@@ -110,15 +110,16 @@ Last activity: 2026-09-09 — Phase 73 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T18:34:10.054Z
+**Last session:** 2026-09-09T20:12:18.558Z
 
-**Stopped at:** Completed 73-03-PLAN.md
+**Stopped at:** Phase 73 context gathered (assumptions mode)
 
-**Resume file:** None
+**Resume file:** .planning/phases/73-twin-contract-and-baseline/73-CONTEXT.md
 
 ## Operator Next Step
 
-Run Phase 73 verification, retaining the documented QA and Phoenix advisory blockers for their owners.
+Replan Phase 73 from `73-CONTEXT.md` and the fail-open gaps in `73-VERIFICATION.md`,
+retaining the documented QA and Phoenix advisory blockers for their downstream owners.
 
 ## Performance Metrics
 
