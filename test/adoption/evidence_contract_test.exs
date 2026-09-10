@@ -567,7 +567,15 @@ defmodule Relyra.Adoption.EvidenceContractTest do
   test "alternate paths-ignore patterns cannot suppress planning evidence" do
     entries = AdoptionEvidence.entries()
 
-    for pattern <- [".planning/*", ".planning/**", ".planning/**/*", ".planning/**/**", "**"] do
+    for pattern <- [
+          ".planning/*",
+          ".planning/**",
+          ".planning/**/*",
+          ".planning/**/**",
+          ".planning/STAT?.md",
+          ".planning/[R]OADMAP.md",
+          "**"
+        ] do
       root = repository_fixture!()
       workflow_path = Path.join(root, @workflow_path)
 
@@ -613,6 +621,62 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     )
 
     assert :ok = AdoptionEvidence.validate_repository!(entries, included_root)
+
+    push_root = repository_fixture!()
+    push_workflow_path = Path.join(push_root, @workflow_path)
+
+    File.write!(
+      push_workflow_path,
+      replace_push_filter(File.read!(push_workflow_path), "paths", [
+        "**",
+        "!.planning/**"
+      ])
+    )
+
+    assert_raise ArgumentError, ~r/push.*\.planning\//s, fn ->
+      AdoptionEvidence.validate_repository!(entries, push_root)
+    end
+  end
+
+  @tag :plan_73_09_task_2
+  test "path filters reject empty and unsupported grammars while character classes re-include" do
+    entries = AdoptionEvidence.entries()
+
+    for replacement <- [
+          "  pull_request:\n    paths: []",
+          "  pull_request:\n    paths:\n      - \"[\""
+        ] do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+
+      File.write!(
+        workflow_path,
+        String.replace(
+          File.read!(workflow_path),
+          "  pull_request:\n    paths-ignore:\n      - \"prompts/**\"",
+          replacement,
+          global: false
+        )
+      )
+
+      assert_raise ArgumentError, ~r/(non-empty block list|unclosed.*character class)/, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
+    end
+
+    root = repository_fixture!()
+    workflow_path = Path.join(root, @workflow_path)
+
+    File.write!(
+      workflow_path,
+      replace_pull_request_filter(File.read!(workflow_path), "paths", [
+        "**",
+        "!.planning/ROADMAP.md",
+        ".planning/[R]OADMAP.md"
+      ])
+    )
+
+    assert :ok = AdoptionEvidence.validate_repository!(entries, root)
   end
 
   defp active_requirements do
@@ -695,6 +759,19 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     String.replace(
       workflow,
       "  pull_request:\n    paths-ignore:\n      - \"prompts/**\"",
+      Enum.join(replacement, "\n"),
+      global: false
+    )
+  end
+
+  defp replace_push_filter(workflow, key, patterns) do
+    replacement =
+      ["  push:", "    branches:", "      - main", "    #{key}:"] ++
+        Enum.map(patterns, &"      - \"#{&1}\"")
+
+    String.replace(
+      workflow,
+      "  push:\n    branches:\n      - main\n    paths-ignore:\n      - \"prompts/**\"",
       Enum.join(replacement, "\n"),
       global: false
     )

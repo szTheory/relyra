@@ -329,11 +329,6 @@ defmodule Relyra.AdoptionEvidence do
     |> Enum.filter(&(&1.state == :existing and &1.evidence_kind != :external_canary))
     |> Enum.each(&validate_owner_chain!(&1, root, aliases, workflow))
 
-    if Regex.match?(~r/^\s*-\s+["']?\.planning\/\*\*/m, workflow) do
-      raise ArgumentError,
-            "workflow ignores .planning/**, so evidence status changes bypass closure"
-    end
-
     :ok
   end
 
@@ -721,13 +716,14 @@ defmodule Relyra.AdoptionEvidence do
          {:ok, security_index} <- find_line(jobs, ~r/^  security:\s*$/),
          security <- indented_block(jobs, security_index, 2),
          nil <- property_at_indent(security, "if", 4),
+         :ok <- blocking_fallibility!(security, 4, "jobs.security"),
          {:ok, steps_index} <- find_line(security, ~r/^    steps:\s*$/),
          steps <- indented_block(security, steps_index, 4),
          [step] <- named_steps(steps, step_name),
          ^command <- property_at_indent(step, "run", 8),
          nil <- property_at_indent(step, "if", 8),
-         true <- blocking_step?(property_at_indent(step, "continue-on-error", 8)),
-         true <- required_planning_triggers?(lines) do
+         :ok <- blocking_fallibility!(step, 8, "Evidence contract step"),
+         true <- required_planning_triggers!(lines) do
       true
     else
       _ -> false
@@ -773,54 +769,224 @@ defmodule Relyra.AdoptionEvidence do
     |> property(key)
   end
 
-  defp blocking_step?(nil), do: true
-  defp blocking_step?("false"), do: true
-  defp blocking_step?(_value), do: false
+  defp blocking_fallibility!(lines, indent, scope) do
+    values =
+      lines
+      |> Enum.filter(&(indentation(&1) == indent))
+      |> Enum.flat_map(fn line ->
+        case Regex.run(~r/^\s+continue-on-error:\s*([^#]*?)\s*$/, line, capture: :all_but_first) do
+          [value] -> [String.trim(value)]
+          nil -> []
+        end
+      end)
 
-  defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
-
-  defp required_planning_triggers?(lines) do
-    pull_request_index = Enum.find_index(lines, &Regex.match?(~r/^  pull_request:\s*$/, &1))
-    push_index = Enum.find_index(lines, &Regex.match?(~r/^  push:\s*$/, &1))
-
-    pull_request? =
-      is_integer(pull_request_index) and
-        planning_changes_allowed?(indented_block(lines, pull_request_index, 2))
-
-    main_push? =
-      if push_index do
-        push = indented_block(lines, push_index, 2)
-
-        Enum.any?(push, &Regex.match?(~r/^      - main\s*$/, &1)) and
-          planning_changes_allowed?(push)
-      else
-        false
-      end
-
-    pull_request? and main_push?
-  end
-
-  defp planning_changes_allowed?(trigger) do
-    paths_index = Enum.find_index(trigger, &Regex.match?(~r/^    paths:\s*$/, &1))
-
-    cond do
-      paths_index ->
-        trigger
-        |> indented_block(paths_index, 4)
-        |> Enum.any?(&planning_path_pattern?/1)
-
-      true ->
-        not Enum.any?(trigger, &ignored_planning_path_pattern?/1)
+    if values in [[], ["false"]] do
+      :ok
+    else
+      raise ArgumentError,
+            "#{scope} continue-on-error must be absent or the literal boolean false"
     end
   end
 
-  defp planning_path_pattern?(line) do
-    Regex.match?(~r/^      - ["']?(?:\.planning\/\*\*|\*\*)["']?\s*$/, line)
+  defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
+
+  defp required_planning_triggers!(lines) do
+    pull_request_index = Enum.find_index(lines, &Regex.match?(~r/^  pull_request:\s*$/, &1))
+    push_index = Enum.find_index(lines, &Regex.match?(~r/^  push:\s*$/, &1))
+
+    unless is_integer(pull_request_index) do
+      raise ArgumentError, "workflow is missing the required pull_request event"
+    end
+
+    unless is_integer(push_index) do
+      raise ArgumentError, "workflow is missing the required main push event"
+    end
+
+    pull_request = indented_block(lines, pull_request_index, 2)
+    push = indented_block(lines, push_index, 2)
+
+    branch_patterns = path_filter_values!(push, "branches", allow_missing?: true)
+
+    if is_list(branch_patterns) and "main" not in branch_patterns do
+      raise ArgumentError, "workflow push event does not include the main branch"
+    end
+
+    validate_required_paths!("pull_request", pull_request)
+    validate_required_paths!("push", push)
+    true
   end
 
-  defp ignored_planning_path_pattern?(line) do
-    Regex.match?(~r/^      - ["']?\.planning\/\*\*["']?\s*$/, line)
+  defp validate_required_paths!(event, trigger) do
+    paths = path_filter_values!(trigger, "paths", allow_missing?: true)
+    paths_ignore = path_filter_values!(trigger, "paths-ignore", allow_missing?: true)
+
+    if is_list(paths) and is_list(paths_ignore) do
+      raise ArgumentError, "workflow #{event} cannot combine paths and paths-ignore"
+    end
+
+    if is_list(paths_ignore) and Enum.any?(paths_ignore, &String.starts_with?(&1, "!")) do
+      raise ArgumentError, "workflow paths-ignore does not support negative patterns"
+    end
+
+    Enum.each(paths_ignore || [], &glob_regex!/1)
+
+    required_planning_paths()
+    |> Enum.each(fn path ->
+      included? =
+        cond do
+          is_list(paths) -> ordered_path_match?(paths, path)
+          is_list(paths_ignore) -> not Enum.any?(paths_ignore, &glob_match?(&1, path))
+          true -> true
+        end
+
+      unless included? do
+        raise ArgumentError,
+              "workflow #{event} path filter skips required planning path #{path}"
+      end
+    end)
   end
+
+  defp required_planning_paths do
+    [
+      ".planning/ROADMAP.md",
+      ".planning/REQUIREMENTS.md",
+      ".planning/STATE.md",
+      ".planning/phases/73-twin-contract-and-baseline/73-09-PLAN.md",
+      ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
+    ]
+  end
+
+  defp path_filter_values!(lines, key, options) do
+    matching_headers =
+      lines
+      |> Enum.with_index()
+      |> Enum.filter(fn {line, _index} ->
+        indentation(line) == 4 and Regex.match?(~r/^    #{Regex.escape(key)}:/, line)
+      end)
+
+    case matching_headers do
+      [] ->
+        if Keyword.fetch!(options, :allow_missing?), do: nil, else: []
+
+      [{header, index}] ->
+        unless Regex.match?(~r/^    #{Regex.escape(key)}:\s*$/, header) do
+          raise ArgumentError, "workflow #{key} must use a non-empty block list"
+        end
+
+        values =
+          lines
+          |> indented_block(index, 4)
+          |> Enum.filter(&(indentation(&1) == 6 and String.trim(&1) != ""))
+          |> Enum.map(&path_list_scalar!(&1, key))
+
+        if values == [] do
+          raise ArgumentError, "workflow #{key} must contain at least one pattern"
+        end
+
+        values
+
+      _many ->
+        raise ArgumentError, "workflow #{key} must be declared at most once"
+    end
+  end
+
+  defp path_list_scalar!(line, key) do
+    case Regex.run(~r/^      -\s+(.+?)\s*$/, line, capture: :all_but_first) do
+      [value] -> normalize_quoted_scalar!(value, key)
+      nil -> raise ArgumentError, "workflow #{key} contains an unsupported list item"
+    end
+  end
+
+  defp normalize_quoted_scalar!(value, key) do
+    normalized =
+      case value do
+        <<quote, rest::binary>> when quote in [?", ?'] ->
+          if String.ends_with?(rest, <<quote>>) do
+            binary_part(rest, 0, byte_size(rest) - 1)
+          else
+            raise ArgumentError, "workflow #{key} contains an unclosed quoted pattern"
+          end
+
+        _other ->
+          value
+      end
+
+    if normalized == "" or String.contains?(normalized, ["\n", "\r", "\\", "{", "}"]) do
+      raise ArgumentError, "workflow #{key} contains an unsupported pattern #{inspect(value)}"
+    end
+
+    normalized
+  end
+
+  defp ordered_path_match?(patterns, path) do
+    unless Enum.any?(patterns, &(not String.starts_with?(&1, "!"))) do
+      raise ArgumentError, "workflow paths requires at least one positive pattern"
+    end
+
+    Enum.reduce(patterns, false, fn pattern, included? ->
+      {negative?, glob} =
+        if String.starts_with?(pattern, "!") do
+          {true, String.trim_leading(pattern, "!")}
+        else
+          {false, pattern}
+        end
+
+      if glob == "" do
+        raise ArgumentError, "workflow paths contains an empty negative pattern"
+      end
+
+      if glob_match?(glob, path), do: not negative?, else: included?
+    end)
+  end
+
+  defp glob_match?(pattern, path) do
+    pattern
+    |> glob_regex!()
+    |> Regex.match?(path)
+  end
+
+  defp glob_regex!(pattern) do
+    unless String.match?(pattern, ~r/\A[\x20-\x7E]+\z/) do
+      raise ArgumentError, "workflow path pattern must contain printable ASCII only"
+    end
+
+    case Regex.compile("\\A" <> glob_source!(pattern) <> "\\z") do
+      {:ok, regex} -> regex
+      {:error, reason} -> raise ArgumentError, "unsupported workflow path pattern: #{reason}"
+    end
+  end
+
+  defp glob_source!(<<>>), do: ""
+
+  defp glob_source!(<<"**/", rest::binary>>),
+    do: "(?:.*/)?" <> glob_source!(rest)
+
+  defp glob_source!(<<"**", rest::binary>>), do: ".*" <> glob_source!(rest)
+  defp glob_source!(<<"*", rest::binary>>), do: "[^/]*" <> glob_source!(rest)
+  defp glob_source!(<<"?", rest::binary>>), do: "[^/]" <> glob_source!(rest)
+
+  defp glob_source!(<<"[", rest::binary>>) do
+    case :binary.split(rest, "]") do
+      [class, remaining] when class != "" ->
+        normalized_class =
+          case class do
+            <<"!", negated::binary>> when negated != "" -> "^" <> negated
+            _other -> class
+          end
+
+        if String.contains?(normalized_class, ["[", "\\", "/"]) do
+          raise ArgumentError, "unsupported workflow path character class"
+        end
+
+        "[" <> normalized_class <> "]" <> glob_source!(remaining)
+
+      _other ->
+        raise ArgumentError, "unclosed workflow path character class"
+    end
+  end
+
+  defp glob_source!(<<character, rest::binary>>),
+    do: Regex.escape(<<character>>) <> glob_source!(rest)
 
   defp validate_member!(id, field, value, vocabulary) do
     unless value in vocabulary do
