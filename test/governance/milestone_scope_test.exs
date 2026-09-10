@@ -227,6 +227,53 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  @tag :plan_73_13_task_3
+  test "an incomplete manifest cannot hide a Git-derived governed commit" do
+    fixture = completed_plan_git_fixture(:manifest_omitted)
+
+    assert {:error, violations, commits} =
+             trusted_plan_commits(fixture.root, "73-99", fixture.completion_commit)
+
+    assert Enum.any?(violations, &String.contains?(&1, "omitted"))
+    assert commits == fixture.implementation_commits
+    assert {:ok, changes} = commit_changed_surfaces(fixture.root, commits)
+
+    assert "public_api" in Enum.flat_map(
+             changes,
+             &changed_surface_classes(&1.path, &1.before, &1.after)
+           )
+  end
+
+  @tag :plan_73_13_task_3
+  test "manifest is an optional exact ordered audit of Git-derived commits" do
+    for variant <- [
+          :manifest_extra,
+          :manifest_reordered,
+          :manifest_duplicate,
+          :manifest_ambiguous,
+          :unreachable_manifest,
+          :manifest_boundary
+        ] do
+      fixture = completed_plan_git_fixture(variant)
+
+      assert {:error, violations, commits} =
+               trusted_plan_commits(fixture.root, "73-99", fixture.completion_commit)
+
+      assert violations != [], "expected manifest violation for #{variant}"
+      assert commits == fixture.implementation_commits
+    end
+
+    full = completed_plan_git_fixture(:manifest_clean)
+
+    assert {:ok, full.implementation_commits} ==
+             trusted_plan_commits(full.root, "73-99", full.completion_commit)
+
+    absent = completed_plan_git_fixture()
+
+    assert {:ok, absent.implementation_commits} ==
+             trusted_plan_commits(absent.root, "73-99", absent.completion_commit)
+  end
+
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     violations =
       case validated_governance_identity(File.cwd!()) do
@@ -1798,6 +1845,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     claimed =
       case {variant, implementation_commits} do
         {:omitted, [harmless, _risky]} -> [harmless]
+        {:manifest_omitted, [harmless, _risky]} -> [harmless]
         {:duplicate, [harmless, risky]} -> [harmless, risky, risky]
         {:foreign, commits} -> commits ++ [foreign]
         {:unresolved, commits} -> commits ++ ["deadbeef"]
@@ -1836,20 +1884,29 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         File.write!(Path.join(root, ".planning/.phase-manifest.json"), "{not-json")
 
       :unreachable_manifest ->
-        File.mkdir_p!(Path.join(root, ".planning"))
+        write_phase_manifest!(root, [String.duplicate("a", 40)])
 
-        File.write!(
-          Path.join(root, ".planning/.phase-manifest.json"),
-          Jason.encode!(%{
-            "phases" => %{
-              "73" => %{
-                "plans" => %{
-                  "73-99" => %{"commits" => [String.duplicate("a", 40), completion_commit]}
-                }
-              }
-            }
-          })
-        )
+      :manifest_clean ->
+        write_phase_manifest!(root, implementation_commits)
+
+      :manifest_omitted ->
+        write_phase_manifest!(root, Enum.take(implementation_commits, 1))
+
+      :manifest_extra ->
+        write_phase_manifest!(root, implementation_commits ++ [foreign])
+
+      :manifest_reordered ->
+        write_phase_manifest!(root, Enum.reverse(implementation_commits))
+
+      :manifest_duplicate ->
+        write_phase_manifest!(root, implementation_commits ++ [List.last(implementation_commits)])
+
+      :manifest_boundary ->
+        write_phase_manifest!(root, implementation_commits ++ [completion_commit])
+
+      :manifest_ambiguous ->
+        prefix = ambiguous_commit_prefix!(root)
+        write_phase_manifest!(root, [prefix | tl(implementation_commits)])
 
       _other ->
         :ok
@@ -1881,6 +1938,41 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     ## Complete
     """
+  end
+
+  defp write_phase_manifest!(root, commits) do
+    File.mkdir_p!(Path.join(root, ".planning"))
+
+    File.write!(
+      Path.join(root, ".planning/.phase-manifest.json"),
+      Jason.encode!(%{
+        "phases" => %{"73" => %{"plans" => %{"73-99" => %{"commits" => commits}}}}
+      })
+    )
+  end
+
+  defp ambiguous_commit_prefix!(root) do
+    existing = root |> git_fixture!(["rev-list", "--all"]) |> String.split("\n", trim: true)
+
+    Enum.reduce_while(1..64, existing, fn index, commits ->
+      File.write!(Path.join(root, "collision-#{index}.txt"), "#{index}\n")
+
+      commit =
+        fixture_commit!(root, ["collision-#{index}.txt"], "chore(other): collision #{index}")
+
+      all = [commit | commits]
+
+      case all
+           |> Enum.group_by(&String.first/1)
+           |> Enum.find(fn {_prefix, hashes} -> length(hashes) > 1 end) do
+        {prefix, _hashes} -> {:halt, prefix}
+        nil -> {:cont, all}
+      end
+    end)
+    |> case do
+      prefix when is_binary(prefix) -> prefix
+      _commits -> flunk("could not create ambiguous fixture commit prefix")
+    end
   end
 
   defp fixture_commit!(root, paths, subject) do
