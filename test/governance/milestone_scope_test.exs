@@ -828,15 +828,53 @@ defmodule Relyra.Governance.MilestoneScopeTest do
            "completed-plan diff did not reach plan-local checkpoint enforcement: #{inspect(violations)}"
   end
 
+  @tag :plan_73_08_task_1
   test "remote approval rejects appended commands outside the exact batch" do
-    appended =
-      String.replace(
-        risky_plan_fixture("remote_github"),
-        "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
-        "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main && gh api -X DELETE repos/szTheory/relyra"
-      )
+    clean = risky_plan_fixture("remote_github")
+    assert plan_scope_violations(clean) == []
 
-    assert_plan_violation(appended, "remote_github", "mutation_commands")
+    controls = [
+      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main && gh api -X DELETE repos/szTheory/relyra",
+       "mutation_commands"},
+      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main\ngh api repos/szTheory/relyra/branches/main/protection",
+       "mutation_commands"},
+      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main; true",
+       "mutation_commands"},
+      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main | tee result.txt",
+       "mutation_commands"},
+      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main `whoami`",
+       "mutation_commands"},
+      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main $(whoami)",
+       "mutation_commands"},
+      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main extra",
+       "mutation_commands"},
+      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+       "GITHUB_REPOSITORY=szTheory/other ./scripts/setup_branch_protection.sh main",
+       "mutation_commands"},
+      {"gh api repos/szTheory/relyra/branches/main/protection",
+       "gh api -X DELETE repos/szTheory/relyra/branches/main/protection", "preflight_command"},
+      {"gh api repos/szTheory/relyra/branches/main/protection",
+       "gh api repos/szTheory/relyra/branches/main/protection gh api repos/szTheory/relyra/branches/main/protection",
+       "preflight_command"},
+      {"gh api -X PUT repos/szTheory/relyra/branches/main/protection --input captured-current.json",
+       "gh api -X POST repos/szTheory/relyra/branches/main/protection --input captured-current.json",
+       "rollback_commands"},
+      {"gh api repos/szTheory/relyra/branches/main/protection --jq '.required_status_checks.contexts == [\"security (27, 1.19.5)\",\"security (28, 1.19.5)\",\"fleet-proxy-e2e\"]'",
+       "gh api repos/szTheory/relyra/branches/develop/protection --jq '.required_status_checks.contexts == [\"security (27, 1.19.5)\",\"security (28, 1.19.5)\",\"fleet-proxy-e2e\"]'",
+       "read_back_command"}
+    ]
+
+    for {original, replacement, field} <- controls do
+      invalid = String.replace(clean, original, replacement, global: false)
+      assert_plan_violation(invalid, "remote_github", field)
+    end
   end
 
   test "baseline verification provenance must resolve to an existing repository path" do
@@ -933,10 +971,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         affected_checks: security (27, 1.19.5) | security (28, 1.19.5) | fleet-proxy-e2e
         mutation_commands:
           - GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main
-        preflight_command: ./scripts/setup_branch_protection.sh --print-expected && gh api repos/szTheory/relyra/branches/main/protection
+        preflight_command: gh api repos/szTheory/relyra/branches/main/protection
         rollback_commands:
           - gh api -X PUT repos/szTheory/relyra/branches/main/protection --input captured-current.json
-        read_back_command: gh api repos/szTheory/relyra/branches/main/protection | jq -e '.["required_status_checks"]["contexts"] == ["security (27, 1.19.5)", "security (28, 1.19.5)", "fleet-proxy-e2e"]'
+        read_back_command: gh api repos/szTheory/relyra/branches/main/protection --jq '.required_status_checks.contexts == ["security (27, 1.19.5)","security (28, 1.19.5)","fleet-proxy-e2e"]'
         resume_signal: approve remote_github szTheory/relyra main exact batch
         </remote_batch>
         """
