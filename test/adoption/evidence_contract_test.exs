@@ -782,6 +782,91 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert :ok = AdoptionEvidence.validate_repository!(entries, root)
   end
 
+  @tag :plan_73_12_task_2
+  test "mandatory pull request and main push events reject every positive paths filter" do
+    entries = AdoptionEvidence.entries()
+
+    former_sample = [
+      ".planning/ROADMAP.md",
+      ".planning/REQUIREMENTS.md",
+      ".planning/STATE.md",
+      ".planning/phases/73-twin-contract-and-baseline/73-09-PLAN.md",
+      ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
+    ]
+
+    for replace <- [&replace_pull_request_filter/3, &replace_push_filter/3] do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+      File.write!(workflow_path, replace.(File.read!(workflow_path), "paths", former_sample))
+
+      assert_raise ArgumentError,
+                   ~r/workflow (pull_request|push) must not use positive paths/,
+                   fn ->
+                     AdoptionEvidence.validate_repository!(entries, root)
+                   end
+    end
+  end
+
+  @tag :plan_73_12_task_2
+  test "paths-ignore cannot suppress any governed source or planning class" do
+    entries = AdoptionEvidence.entries()
+
+    governed_examples = [
+      "test/support/adoption_evidence.ex",
+      "test/adoption/evidence_contract_test.exs",
+      "test/governance/milestone_scope_test.exs",
+      "mix.exs",
+      @workflow_path,
+      ".planning/PROJECT.md",
+      ".planning/ROADMAP.md",
+      ".planning/REQUIREMENTS.md",
+      ".planning/STATE.md",
+      ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md",
+      ".planning/phases/73-twin-contract-and-baseline/73-12-PLAN.md",
+      ".planning/phases/73-twin-contract-and-baseline/73-11-SUMMARY.md"
+    ]
+
+    for event <- [:pull_request, :push], path <- governed_examples do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+
+      replace =
+        if event == :pull_request,
+          do: &replace_pull_request_filter/3,
+          else: &replace_push_filter/3
+
+      File.write!(workflow_path, replace.(File.read!(workflow_path), "paths-ignore", [path]))
+
+      assert_raise ArgumentError,
+                   ~r/workflow #{event} path filter skips governed input #{Regex.escape(path)}/,
+                   fn -> AdoptionEvidence.validate_repository!(entries, root) end
+    end
+  end
+
+  @tag :plan_73_12_task_2
+  test "checked-in prompts ignore and unfiltered required events remain mandatory" do
+    entries = AdoptionEvidence.entries()
+    assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
+
+    root = repository_fixture!()
+    workflow_path = Path.join(root, @workflow_path)
+
+    workflow =
+      workflow_path
+      |> File.read!()
+      |> String.replace(
+        "  pull_request:\n    paths-ignore:\n      - \"prompts/**\"",
+        "  pull_request:"
+      )
+      |> String.replace(
+        "  push:\n    branches:\n      - main\n    paths-ignore:\n      - \"prompts/**\"",
+        "  push:\n    branches:\n      - main"
+      )
+
+    File.write!(workflow_path, workflow)
+    assert :ok = AdoptionEvidence.validate_repository!(entries, root)
+  end
+
   defp active_requirements do
     @requirements_path
     |> File.read!()
@@ -907,9 +992,16 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     File.mkdir_p!(Path.join(root, "test/adoption"))
     File.mkdir_p!(Path.join(root, "test/governance"))
+    File.mkdir_p!(Path.join(root, "test/support"))
     File.mkdir_p!(Path.join(root, ".github/workflows"))
+    File.mkdir_p!(Path.join(root, ".planning/phases/73-twin-contract-and-baseline"))
     File.write!(Path.join(root, "mix.exs"), fixture_mix_project([fixture_evidence_step()]))
     File.cp!(__ENV__.file, Path.join(root, "test/adoption/evidence_contract_test.exs"))
+
+    File.cp!(
+      "test/support/adoption_evidence.ex",
+      Path.join(root, "test/support/adoption_evidence.ex")
+    )
 
     File.cp!(
       "test/governance/milestone_scope_test.exs",
@@ -917,6 +1009,34 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     )
 
     File.cp!(@workflow_path, Path.join(root, @workflow_path))
+
+    planning_paths =
+      [
+        ".planning/PROJECT.md",
+        ".planning/ROADMAP.md",
+        ".planning/REQUIREMENTS.md",
+        ".planning/STATE.md",
+        ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
+      ] ++
+        Path.wildcard(".planning/phases/73-twin-contract-and-baseline/73-{*-PLAN,*-SUMMARY}.md")
+
+    for path <- planning_paths do
+      File.cp!(path, Path.join(root, path))
+    end
+
+    {_, 0} = System.cmd("git", ["init", "--quiet"], cd: root, stderr_to_stdout: true)
+
+    tracked_paths =
+      [
+        "mix.exs",
+        @workflow_path,
+        "test/support/adoption_evidence.ex",
+        "test/adoption/evidence_contract_test.exs",
+        "test/governance/milestone_scope_test.exs"
+      ] ++ planning_paths
+
+    {_, 0} = System.cmd("git", ["add", "--" | tracked_paths], cd: root, stderr_to_stdout: true)
+
     on_exit(fn -> File.rm_rf!(root) end)
     root
   end
