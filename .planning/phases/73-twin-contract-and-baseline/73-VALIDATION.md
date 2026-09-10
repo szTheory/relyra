@@ -35,7 +35,7 @@ revised: "2026-09-09"
 - **After Plan 73-07 Task 2:** run only `--only plan_73_07_task_2`; fail on non-zero exit, zero selected tests, or selection of a CR-08/CR-09 case.
 - **Wave 6 merge:** the four commands above are the merge evidence. Do not run the complete governance selection or `mix ci.evidence` as a Wave 6 completion condition because Plan 73-08 still owns CR-08 and CR-09.
 - **After Plan 73-08 Task 1:** run only `--only plan_73_08_task_1`; fail on non-zero exit, zero selected tests, or selection of a CR-09 provenance case.
-- **After Plan 73-08 Task 2:** first run `--only plan_73_08_task_2`; then run the full `mix ci.evidence` integration gate. The first command fails on non-zero exit, zero selected tests, or selection of a CR-08 case. The integration command fails on non-zero exit, a count other than 52 committed contract tests, or any remaining CR-01 through CR-09 failure.
+- **After Plan 73-08 Task 2:** first run `--only plan_73_08_task_2`; then run the full `mix ci.evidence` integration gate. The first command fails on non-zero exit, zero selected tests, omission of the isolated CR-09 control that replaces a tracked intermediate directory with a symlink to an external regular-file tree, or selection of a CR-08 case. The control extends an existing tagged test so the integration command still fails on non-zero exit, a count other than 52 committed contract tests, or any remaining CR-01 through CR-09 failure.
 - **Before phase re-verification:** run the repository closeout commands. Any non-zero exit or invalid workflow syntax is reported truthfully; the already inventoried Phase 77 archival-vocabulary issue is not represented as closed by this planning strategy.
 
 ---
@@ -60,7 +60,7 @@ revised: "2026-09-09"
 | 73-07-01 | 07 | 6 | GOV-01/GOV-02 | T-73-28..29 | Closed task, scope, and decision vocabulary governs prior authorization | `mix test test/governance/milestone_scope_test.exs --only plan_73_07_task_1 --warnings-as-errors` | Non-zero exit, zero selected tests, selection outside three owned CR-04/CR-05 cases, or an owned bypass remains accepted | Pending; parallel with Plan 73-06 |
 | 73-07-02 | 07 | 6 | GOV-01/GOV-02 | T-73-30..31 | Completed-plan diffs and all implementation tasks remain governed | `mix test test/governance/milestone_scope_test.exs --only plan_73_07_task_2 --warnings-as-errors` | Non-zero exit, zero selected tests, any CR-08/CR-09 selection, or summary/diff/exclusion bypass accepted | Pending; parallel with Plan 73-06 |
 | 73-08-01 | 08 | 7 | GOV-01 | T-73-32 | CR-08 remote commands are exactly one parsed operation | `mix test test/governance/milestone_scope_test.exs --only plan_73_08_task_1 --warnings-as-errors` | Non-zero exit, zero selected tests, any CR-09 selection, or appended/composed operation accepted | Pending; depends on both Wave 6 plans |
-| 73-08-02 | 08 | 7 | QUAL-01/PIPE-01/GOV-01 | T-73-33..35 | CR-09 provenance rejects symlinks before regular-file/index checks and shares executable ownership semantics | `mix test test/governance/milestone_scope_test.exs --only plan_73_08_task_2 --warnings-as-errors` | Non-zero exit, zero selected tests, any CR-08 selection, or nonexistent/symlink provenance accepted | Pending focused proof |
+| 73-08-02 | 08 | 7 | QUAL-01/PIPE-01/GOV-01 | T-73-33..35 | CR-09 provenance walks every root-relative component and rejects final or intermediate symlinks before regular-file/index checks, including an indexed directory replaced by a symlink to an external regular-file tree, while sharing executable ownership semantics | `mix test test/governance/milestone_scope_test.exs --only plan_73_08_task_2 --warnings-as-errors` | Non-zero exit, zero selected tests, omission of the isolated intermediate-symlink control, any CR-08 selection, or nonexistent/final-symlink/intermediate-symlink provenance accepted | Pending focused proof |
 | 73-08-02-integration | 08 | 7 | EVID-01/EVID-02/QUAL-01/PIPE-01/GOV-01/GOV-02 | T-73-24..35 | All gap repairs compose in the mandatory owner lane | `mix ci.evidence` | Non-zero exit, a count other than 52 committed contract tests, or any CR-01 through CR-09 case remains red | Pending final integration proof after Task 2 |
 
 Every Mix command in this table is executed with the explicit ASDF environment shown under Test Infrastructure.
@@ -88,7 +88,7 @@ No human action, visual review, required UAT artifact, or approval state can sat
 
 - [x] Every Plan 73-06 through 73-08 task has a dedicated non-zero automated selector and an immediate observable failure direction.
 - [x] Wave 6 uses four independent selectors and contains no premature complete governance or `ci.evidence` condition.
-- [x] Wave 7 Task 1 uses only the CR-08 selector; Task 2 owns CR-09 plus the complete 52-test `mix ci.evidence` gate.
+- [x] Wave 7 Task 1 uses only the CR-08 selector; Task 2 owns CR-09, including the isolated tracked-intermediate-directory-to-external-symlink control within an existing tagged test, plus the complete 52-test `mix ci.evidence` gate.
 - [x] Plans 73-06 through 73-08 appear in the per-task verification map.
 - [x] Sampling continuity has no three consecutive tasks without deterministic automated feedback.
 - [x] No watch-mode, network-dependent, manual, or human-needed completion gate exists.
