@@ -1532,7 +1532,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp write_branch_protection_control!(root, field, value) do
     path = Path.join(root, "desired-protection.json")
-    decoded = path |> File.read!() |> Jason.decode!()
+    decoded = true |> branch_protection_json(desired_checks()) |> Jason.decode!()
     File.write!(path, decoded |> Map.put(field, value) |> Jason.encode!())
     git_fixture!(root, ["add", "desired-protection.json"])
   end
@@ -2767,7 +2767,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp operation_matches_state?(%{state: state}, declared) do
-    state.strict == declared.strict and state.checks == declared.checks
+    state == branch_protection_state(declared.strict, declared.checks)
   end
 
   defp operation_matches_state?(_operation, _declared), do: false
@@ -2820,6 +2820,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     expected_top =
       ~w(required_status_checks enforce_admins required_pull_request_reviews restrictions allow_force_pushes allow_deletions block_creations required_conversation_resolution lock_branch allow_fork_syncing)
 
+    invariants = %{
+      "enforce_admins" => true,
+      "required_pull_request_reviews" => nil,
+      "restrictions" => nil,
+      "allow_force_pushes" => false,
+      "allow_deletions" => false,
+      "block_creations" => false,
+      "required_conversation_resolution" => false,
+      "lock_branch" => false,
+      "allow_fork_syncing" => false
+    }
+
     if duplicated?(keys) do
       {:error, :duplicate_json_key}
     else
@@ -2831,10 +2843,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
                strict when is_boolean(strict) <- status["strict"],
                contexts when is_list(contexts) and contexts != [] <- status["contexts"],
                true <- Enum.all?(contexts, &is_binary/1),
-               false <- duplicated?(contexts) do
-            {:ok, %{strict: strict, checks: contexts}}
+               false <- duplicated?(contexts),
+               :ok <- validate_branch_protection_invariants(decoded, invariants) do
+            {:ok, branch_protection_state(strict, contexts)}
           else
-            _invalid -> {:error, :unsupported_branch_protection_state}
+            {:error, reason} -> {:error, reason}
+            _invalid -> {:error, {:branch_protection_field, "required_status_checks"}}
           end
 
         {:ok, _decoded} ->
@@ -2844,6 +2858,30 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           {:error, :malformed_json}
       end
     end
+  end
+
+  defp validate_branch_protection_invariants(decoded, invariants) do
+    Enum.reduce_while(invariants, :ok, fn {field, expected}, :ok ->
+      if Map.fetch!(decoded, field) === expected,
+        do: {:cont, :ok},
+        else: {:halt, {:error, {:branch_protection_field, field}}}
+    end)
+  end
+
+  defp branch_protection_state(strict, contexts) do
+    %{
+      strict: strict,
+      checks: contexts,
+      enforce_admins: true,
+      required_pull_request_reviews: nil,
+      restrictions: nil,
+      allow_force_pushes: false,
+      allow_deletions: false,
+      block_creations: false,
+      required_conversation_resolution: false,
+      lock_branch: false,
+      allow_fork_syncing: false
+    }
   end
 
   defp parse_script_operation(root, script, repository, branch) do
