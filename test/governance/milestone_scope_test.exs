@@ -34,6 +34,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @severities ~w(Critical High Medium Low Informational)
   @approval_classes ~w(public_api default_tightening security_posture semver_major remote_github)
   @risk_values ~w(unchanged mutation)
+  @task_types ~w(tracer auto checkpoint:decision checkpoint:human-verify checkpoint:human-action)
   @demand_gated_exclusions ~w(AUTHN-POST-01 KMS-01 SIGNED-META-01)
 
   test "active v1.11 plans declare scope and stop before every risky mutation" do
@@ -863,10 +864,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     ---
     <scope_assertions>
     public_api: unchanged
-    default_tightening: none
+    default_tightening: unchanged
     security_posture: unchanged
-    semver_major: none
-    remote_github: no mutation
+    semver_major: unchanged
+    remote_github: unchanged
     protocol_scope: AUTHN-POST-01, KMS-01, and SIGNED-META-01 remain excluded
     </scope_assertions>
     <demand_gated_exclusions>
@@ -930,13 +931,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     requirements: [GOV-01]
     ---
     <scope_assertions>
-    public_api: unchanged
-    default_tightening: none
-    security_posture: unchanged
-    semver_major: none
-    remote_github: no mutation
+    public_api: #{if approval_class == "public_api", do: "mutation", else: "unchanged"}
+    default_tightening: #{if approval_class == "default_tightening", do: "mutation", else: "unchanged"}
+    security_posture: #{if approval_class == "security_posture", do: "mutation", else: "unchanged"}
+    semver_major: #{if approval_class == "semver_major", do: "mutation", else: "unchanged"}
+    remote_github: #{if approval_class == "remote_github", do: "mutation", else: "unchanged"}
     protocol_scope: feature-neutral; demand-gated capabilities remain excluded
-    #{approval_class}: mutation proposed
     </scope_assertions>
     <demand_gated_exclusions>
     AUTHN-POST-01
@@ -1030,27 +1030,56 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     |> Enum.map(fn [phase] -> phase end)
   end
 
-  defp plan_scope_violations(markdown) do
+  defp plan_scope_violations(markdown, changed_classes \\ []) do
     scope_sections = tag_sections(markdown, "scope_assertions")
     exclusion_sections = tag_sections(markdown, "demand_gated_exclusions")
     tasks = plan_tasks(markdown)
+    type_violations = task_type_violations(tasks)
+    validated_tasks = Enum.filter(tasks, &valid_task_type?/1)
 
     scope_violations =
       case scope_sections do
-        [scope] -> approval_scope_violations(parse_scope_assertions(scope), tasks)
-        _other -> ["scope_assertions must appear exactly once"]
+        [scope] ->
+          approval_scope_violations(
+            parse_scope_assertions(scope),
+            validated_tasks,
+            changed_classes
+          )
+
+        _other ->
+          ["scope_assertions must appear exactly once"]
       end
 
     exclusion_violations = demand_gated_exclusion_violations(exclusion_sections)
 
-    task_risk_metadata_violations(tasks) ++
+    type_violations ++
+      task_risk_metadata_violations(validated_tasks) ++
       scope_violations ++
       exclusion_violations ++
-      deterministic_verification_violations(tasks) ++
-      forbidden_capability_violations(tasks) ++
+      deterministic_verification_violations(validated_tasks) ++
+      forbidden_capability_violations(validated_tasks) ++
       manual_acceptance_violations(markdown) ++
-      orphan_checkpoint_violations(tasks)
+      orphan_checkpoint_violations(validated_tasks)
   end
+
+  defp task_type_violations(tasks) do
+    tasks
+    |> Enum.with_index(1)
+    |> Enum.flat_map(fn {task, index} ->
+      if valid_task_type?(task) do
+        []
+      else
+        identity = nonempty(task.name, "task #{index}")
+        ["#{identity} has unsupported task type #{inspect(task.type)}"]
+      end
+    end)
+  end
+
+  defp valid_task_type?(task), do: task.type in @task_types
+  defp authorization_checkpoint?(task), do: task.type == "checkpoint:decision"
+
+  defp implementation_bearing_task?(task),
+    do: valid_task_type?(task) and not authorization_checkpoint?(task)
 
   defp demand_gated_exclusion_violations([section]) do
     exclusions =
@@ -1075,29 +1104,39 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     ["demand_gated_exclusions must appear exactly once, found #{length(sections)}"]
   end
 
-  defp approval_scope_violations(scope, tasks) do
+  defp approval_scope_violations(scope, tasks, changed_classes) do
     Enum.flat_map(@approval_classes, fn approval_class ->
       values = Map.get(scope, approval_class, [])
 
-      cond do
-        values == [] ->
-          ["#{approval_class} scope assertion is required"]
+      shape_violations =
+        cond do
+          length(values) != 1 ->
+            ["#{approval_class} scope assertion must appear exactly once"]
 
-        risky_scope?(approval_class, values, tasks) ->
-          mutation_index = mutation_task_index(tasks, approval_class)
+          hd(values) not in @risk_values ->
+            ["#{approval_class} scope assertion value is unsupported: #{hd(values)}"]
+
+          true ->
+            []
+        end
+
+      checkpoint_violations =
+        if risky_scope?(approval_class, values, tasks, changed_classes) do
+          mutation_index = mutation_task_index(tasks, approval_class, changed_classes)
           checkpoint_index = matching_checkpoint_index(tasks, approval_class)
 
           checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks)
-
-        true ->
+        else
           []
-      end
+        end
+
+      shape_violations ++ checkpoint_violations
     end)
   end
 
   defp task_risk_metadata_violations(tasks) do
     tasks
-    |> Enum.reject(&String.starts_with?(&1.type, "checkpoint"))
+    |> Enum.filter(&implementation_bearing_task?/1)
     |> Enum.flat_map(fn task ->
       identity = nonempty(task.name, "unnamed task")
 
@@ -1135,27 +1174,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp risky_scope?(approval_class, values, tasks) do
-    Enum.any?(values, &(not negative_scope_value?(approval_class, &1))) or
-      mutation_task_index(tasks, approval_class) != nil
-  end
-
-  defp negative_scope_value?(approval_class, value) do
-    normalized = String.downcase(value)
-
-    case approval_class do
-      "remote_github" ->
-        Enum.any?(
-          ["no mutation", "read-only", "unchanged", "none"],
-          &String.contains?(normalized, &1)
-        )
-
-      _other ->
-        Enum.any?(
-          ["unchanged", "none", "no change", "no mutation"],
-          &String.contains?(normalized, &1)
-        )
-    end
+  defp risky_scope?(approval_class, values, tasks, changed_classes) do
+    values != ["unchanged"] or
+      mutation_task_index(tasks, approval_class, changed_classes) != nil
   end
 
   defp checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks) do
@@ -1164,7 +1185,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         ["#{approval_class} mutation task is missing"]
 
       checkpoint_index == nil ->
-        ["#{approval_class} matching checkpoint is missing"]
+        ["#{approval_class} matching decision checkpoint is missing"]
 
       not checkpoint_precedes_mutation?({checkpoint_index, mutation_index}, tasks) ->
         ["#{approval_class} checkpoint must be before mutation"]
@@ -1193,18 +1214,40 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp matching_checkpoint_index(tasks, approval_class) do
     Enum.find_index(tasks, fn task ->
-      task.type == "checkpoint:decision" and
-        String.contains?(task.body, "approval_class: #{approval_class}")
+      authorization_checkpoint?(task) and decision_approval_class(task) == approval_class
     end)
   end
 
-  defp mutation_task_index(tasks, approval_class) do
+  defp decision_approval_class(task) do
+    case tag_sections(task.body, "decision") do
+      [decision] ->
+        case Regex.run(
+               ~r/^approval_class:\s*(#{Enum.join(@approval_classes, "|")})$/,
+               String.trim(decision),
+               capture: :all_but_first
+             ) do
+          [approval_class] -> approval_class
+          nil -> nil
+        end
+
+      _other ->
+        nil
+    end
+  end
+
+  defp mutation_task_index(tasks, approval_class, changed_classes \\ []) do
     Enum.find_index(tasks, fn task ->
-      not String.starts_with?(task.type, "checkpoint") and
+      implementation_bearing_task?(task) and
         (Map.get(task.risk_metadata, approval_class) == ["mutation"] or
            approval_class in governed_task_classes(task) or
            String.contains?(task.action, "approval_class: #{approval_class}"))
-    end)
+    end) || changed_surface_mutation_index(tasks, approval_class, changed_classes)
+  end
+
+  defp changed_surface_mutation_index(tasks, approval_class, changed_classes) do
+    if approval_class in changed_classes do
+      Enum.find_index(tasks, &implementation_bearing_task?/1)
+    end
   end
 
   defp governed_task_classes(task) do
@@ -1492,7 +1535,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp deterministic_verification_violations(tasks) do
     tasks
-    |> Enum.reject(&String.starts_with?(&1.type, "checkpoint"))
+    |> Enum.filter(&implementation_bearing_task?/1)
     |> Enum.flat_map(fn task ->
       if String.trim(task.acceptance_criteria) == "" do
         []
@@ -1529,21 +1572,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp forbidden_capability_violations(tasks) do
-    Enum.flat_map(tasks, fn task ->
-      if String.starts_with?(task.type, "checkpoint") do
-        []
-      else
-        [
-          {"name", task.name},
-          {"files", task.files},
-          {"action", task.action}
-        ]
-        |> Enum.flat_map(fn {region, content} ->
-          for capability <- @demand_gated_exclusions,
-              String.contains?(content, capability),
-              do: "#{capability} implementation scope appears in task #{region}"
-        end)
-      end
+    tasks
+    |> Enum.filter(&implementation_bearing_task?/1)
+    |> Enum.flat_map(fn task ->
+      [
+        {"name", task.name},
+        {"files", task.files},
+        {"action", task.action}
+      ]
+      |> Enum.flat_map(fn {region, content} ->
+        for capability <- @demand_gated_exclusions,
+            String.contains?(content, capability),
+            do: "#{capability} implementation scope appears in task #{region}"
+      end)
     end)
   end
 
@@ -1557,9 +1598,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     tasks
     |> Enum.with_index()
     |> Enum.flat_map(fn {task, checkpoint_index} ->
-      if task.type == "checkpoint:decision" do
-        case Regex.run(~r/approval_class:\s*([a-z_]+)/, task.body, capture: :all_but_first) do
-          [approval_class] when approval_class in @approval_classes ->
+      if authorization_checkpoint?(task) do
+        case decision_approval_class(task) do
+          approval_class when approval_class in @approval_classes ->
             mutation_index = mutation_task_index(tasks, approval_class)
 
             if mutation_index != nil and checkpoint_index < mutation_index,
