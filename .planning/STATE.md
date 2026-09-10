@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-07-PLAN.md
-last_updated: "2026-09-10T01:24:37.126Z"
+stopped_at: Completed 73-08-PLAN.md
+last_updated: "2026-09-10T01:46:51.101Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 73 Plan 06 completed
-state_head: 4247fe261192e2c1903c8b0d3ebae33656f30651
+state_head: 49548cdbfa4239a251e5af6477f1d3dd8405b936
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 7
-  percent: 88
+  completed_plans: 8
+  percent: 100
 ---
 
 # Project State
@@ -33,11 +33,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 7 of 8
+Plan: 8 of 8
 
-Status: Executing Phase 73 gap closure
+Status: Phase plans complete — verification pending
 
-Last activity: 2026-09-09 — Phase 73 Plan 07 completed
+Last activity: 2026-09-09 — Phase 73 Plan 08 completed
 
 ## Milestone Metrics
 
@@ -85,6 +85,9 @@ Last activity: 2026-09-09 — Phase 73 Plan 07 completed
 - [Phase 73]: Validate task type before authorization, risk, verification, and feature-neutrality branches; only exact decision checkpoints are authorization-only.
 - [Phase 73]: Treat completed-plan task commits or explicit before/after inputs as additive changed-surface evidence, never as a PLAN exemption.
 - [Phase 73]: Retain deterministic legacy-schema checks for Plans 73-01 through 73-03 while applying the exact current contract to later plans.
+- [Phase 73]: Authorize remote batches only after each field is fully consumed by one closed operation grammar and parsed targets agree.
+- [Phase 73]: Accept baseline paths only when every root-relative component is non-symlink, the leaf is regular, and git tracks the lexical repository path.
+- [Phase 73]: Delegate baseline command evidence to the same executable non-zero owner validator used by adoption evidence.
 
 ### Baseline Findings
 
@@ -122,16 +125,16 @@ Last activity: 2026-09-09 — Phase 73 Plan 07 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-10T01:24:37.111Z
+**Last session:** 2026-09-10T01:46:51.085Z
 
-**Stopped at:** Completed 73-07-PLAN.md
+**Stopped at:** Completed 73-08-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Phase 73 gap-closure Plan 73-08, then re-run verification against
-the eight completed plan summaries and mandatory evidence contract.
+Verify Phase 73 against the eight completed plan summaries and mandatory evidence
+contract, retaining the known Phase 77 documentation-vocabulary deferral.
 
 ## Performance Metrics
 
@@ -144,6 +147,7 @@ the eight completed plan summaries and mandatory evidence contract.
 | Phase 73 P05 | 24min | 3 tasks | 1 files |
 | Phase 73 P06 | 9min | 2 tasks | 2 files |
 | Phase 73 P07 | 11min | 2 tasks | 1 files |
+| Phase 73 P08 | 15min | 2 tasks | 2 files |
 
 ### Blockers
 
