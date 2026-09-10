@@ -871,6 +871,104 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert :ok = AdoptionEvidence.validate_repository!(entries, root)
   end
 
+  @tag :plan_73_14_task_1
+  test "push requires exactly one positive main branch selector" do
+    entries = AdoptionEvidence.entries()
+
+    invalid_branches = [
+      ["main", "!main"],
+      ["!main", "main"],
+      ["main", "release"],
+      ["!main"]
+    ]
+
+    for branches <- invalid_branches do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+
+      push =
+        ["  push:", "    branches:"] ++
+          Enum.map(branches, &"      - \"#{&1}\"") ++
+          ["    paths-ignore:", "      - \"prompts/**\""]
+
+      File.write!(workflow_path, replace_push_event(File.read!(workflow_path), push))
+
+      assert_raise ArgumentError, ~r/workflow push.*exactly one positive main branch/, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
+    end
+
+    root = repository_fixture!()
+    workflow_path = Path.join(root, @workflow_path)
+
+    File.write!(
+      workflow_path,
+      replace_push_event(File.read!(workflow_path), [
+        "  push:",
+        "    branches:",
+        "      - main",
+        "    branches-ignore:",
+        "      - release"
+      ])
+    )
+
+    assert_raise ArgumentError, ~r/workflow push.*branches-ignore/, fn ->
+      AdoptionEvidence.validate_repository!(entries, root)
+    end
+  end
+
+  @tag :plan_73_14_task_1
+  test "push rejects duplicate events, repeated keys, and unknown direct keys" do
+    entries = AdoptionEvidence.entries()
+
+    fixtures = [
+      {"duplicate event",
+       fn workflow -> workflow <> "\n  push:\n    branches:\n      - main\n" end,
+       ~r/workflow push.*exactly once/},
+      {"duplicate branches",
+       &replace_push_event(&1, [
+         "  push:",
+         "    branches:",
+         "      - main",
+         "    branches:",
+         "      - main"
+       ]), ~r/workflow push.*duplicate.*branches/},
+      {"duplicate paths-ignore",
+       &replace_push_event(&1, [
+         "  push:",
+         "    branches:",
+         "      - main",
+         "    paths-ignore:",
+         "      - prompts/**",
+         "    paths-ignore:",
+         "      - docs/**"
+       ]), ~r/workflow push.*duplicate.*paths-ignore/},
+      {"unknown key",
+       &replace_push_event(&1, [
+         "  push:",
+         "    branches:",
+         "      - main",
+         "    tags-ignore:",
+         "      - preview"
+       ]), ~r/workflow push.*unsupported key tags-ignore/}
+    ]
+
+    for {_name, mutate, diagnostic} <- fixtures do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+      File.write!(workflow_path, mutate.(File.read!(workflow_path)))
+
+      assert_raise ArgumentError, diagnostic, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
+    end
+  end
+
+  @tag :plan_73_14_task_1
+  test "checked-in push event reaches the real evidence owner chain" do
+    assert :ok = AdoptionEvidence.validate_repository!(AdoptionEvidence.entries(), File.cwd!())
+  end
+
   defp active_requirements do
     @requirements_path
     |> File.read!()
@@ -965,6 +1063,15 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       workflow,
       "  push:\n    branches:\n      - main\n    paths-ignore:\n      - \"prompts/**\"",
       Enum.join(replacement, "\n"),
+      global: false
+    )
+  end
+
+  defp replace_push_event(workflow, replacement_lines) do
+    String.replace(
+      workflow,
+      "  push:\n    branches:\n      - main\n    paths-ignore:\n      - \"prompts/**\"",
+      Enum.join(replacement_lines, "\n"),
       global: false
     )
   end
