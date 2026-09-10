@@ -739,6 +739,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_violation(leaked, "Main security gate", "Failure Evidence sensitive payload")
   end
 
+  @tag :plan_73_07_task_1
   test "unknown checkpoint-prefixed task types cannot bypass governance" do
     bypass =
       no_risk_plan_fixture()
@@ -753,6 +754,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_plan_violation(bypass, "checkpoint-bypass", "task type")
   end
 
+  @tag :plan_73_07_task_1
   test "negated approval text cannot authorize a governed mutation" do
     negated =
       String.replace(
@@ -764,6 +766,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_plan_violation(negated, "public_api", "decision")
   end
 
+  @tag :plan_73_07_task_1
   test "contradictory plan-level scope cannot suppress a mutation checkpoint" do
     contradictory =
       String.replace(
