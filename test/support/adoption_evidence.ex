@@ -894,12 +894,7 @@ defmodule Relyra.AdoptionEvidence do
     keys =
       event_lines
       |> Enum.filter(&(indentation(&1) == 4 and String.trim(&1) != ""))
-      |> Enum.map(fn line ->
-        case Regex.run(~r/^    ([A-Za-z0-9_-]+):/, line, capture: :all_but_first) do
-          [key] -> key
-          nil -> raise ArgumentError, "workflow #{event} contains an unsupported direct entry"
-        end
-      end)
+      |> Enum.map(&direct_event_key!(&1, event))
 
     duplicates =
       keys
@@ -919,6 +914,20 @@ defmodule Relyra.AdoptionEvidence do
     end
 
     event_lines
+  end
+
+  defp direct_event_key!(line, event) do
+    captures =
+      Regex.run(
+        ~r/^    (?:"([^"]+)"|'([^']+)'|([A-Za-z0-9_-]+)):/,
+        line,
+        capture: :all_but_first
+      )
+
+    case captures && Enum.find(captures, &(&1 != "")) do
+      key when is_binary(key) -> key
+      _other -> raise ArgumentError, "workflow #{event} contains an unsupported direct entry"
+    end
   end
 
   defp validate_required_paths!(event, trigger, governed_inputs) do
@@ -1037,7 +1046,7 @@ defmodule Relyra.AdoptionEvidence do
       lines
       |> Enum.with_index()
       |> Enum.filter(fn {line, _index} ->
-        indentation(line) == 4 and Regex.match?(~r/^    #{Regex.escape(key)}:/, line)
+        indentation(line) == 4 and direct_event_key!(line, "filter") == key
       end)
 
     case matching_headers do
@@ -1045,7 +1054,12 @@ defmodule Relyra.AdoptionEvidence do
         if Keyword.fetch!(options, :allow_missing?), do: nil, else: []
 
       [{header, index}] ->
-        unless Regex.match?(~r/^    #{Regex.escape(key)}:\s*$/, header) do
+        key_pattern = Regex.escape(key)
+
+        unless Regex.match?(
+                 ~r/^    (?:#{key_pattern}|"#{key_pattern}"|'#{key_pattern}'):\s*$/,
+                 header
+               ) do
           raise ArgumentError, "workflow #{key} must use a non-empty block list"
         end
 
