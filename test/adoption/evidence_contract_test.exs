@@ -560,6 +560,73 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_12_task_1
+  test "repository ownership rejects an alias with an empty effective selection" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+    mix_path = Path.join(root, "mix.exs")
+
+    hollow_step =
+      fixture_evidence_step() <>
+        " --exclude evidence_contract"
+
+    File.write!(mix_path, fixture_mix_project([hollow_step]))
+
+    assert_raise ArgumentError,
+                 ~r/EVID-01.*row.*ci\.evidence.*test\/adoption\/evidence_contract_test\.exs.*zero effective selected tests/s,
+                 fn -> AdoptionEvidence.validate_repository!(entries, root) end
+  end
+
+  @tag :plan_73_12_task_1
+  test "every alias owner must retain an effective selected test" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+    mix_path = Path.join(root, "mix.exs")
+    empty_owner = "test/adoption/empty_owner_test.exs"
+
+    File.write!(
+      Path.join(root, empty_owner),
+      """
+      defmodule EmptyAliasOwnerTest do
+        use ExUnit.Case
+        test "not evidence" do
+          assert true
+        end
+      end
+      """
+    )
+
+    step =
+      "cmd mix test test/adoption/evidence_contract_test.exs #{empty_owner} " <>
+        "--only evidence_contract --warnings-as-errors"
+
+    File.write!(mix_path, fixture_mix_project([step]))
+
+    assert_raise ArgumentError,
+                 ~r/alias ci\.evidence.*#{Regex.escape(empty_owner)}.*zero effective selected tests/s,
+                 fn -> AdoptionEvidence.validate_repository!(entries, root) end
+  end
+
+  @tag :plan_73_12_task_1
+  test "repository alias uses the shared filter parser and the checked-in alias remains valid" do
+    entries = AdoptionEvidence.entries()
+
+    for step <- [
+          fixture_evidence_step() <> " --only evidence_contract",
+          fixture_evidence_step() <> " --only",
+          fixture_evidence_step() <> " --only="
+        ] do
+      root = repository_fixture!()
+      File.write!(Path.join(root, "mix.exs"), fixture_mix_project([step]))
+
+      assert_raise ArgumentError, ~r/(duplicate filter values|missing its filter value)/, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
+    end
+
+    assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
+  end
+
   @tag :plan_73_09_task_2
   test "security job ownership is absent-or-literal-false fallible" do
     entries = AdoptionEvidence.entries()
