@@ -476,6 +476,44 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  @tag :plan_73_13_task_2
+  test "script authorization never executes plan-selected code" do
+    for behavior <- [:write, :credential, :network] do
+      %{plan: plan, root: root, sentinel: sentinel} = remote_nonexecution_fixture(behavior)
+
+      assert plan_scope_violations(plan, [], root) == []
+      refute File.exists?(sentinel)
+    end
+  end
+
+  @tag :plan_73_13_task_2
+  test "script authorization requires one tracked static result equal to desired state" do
+    for {variant, diagnostic} <- [
+          {:missing, "mutation_result_source"},
+          {:duplicate, "mutation_result_source"},
+          {:untracked, "untracked-result.json"},
+          {:symlink, "result-link.json"},
+          {:malformed, "malformed"},
+          {:extra_field, "unsupported"},
+          {:state_mismatch, "desired_state"}
+        ] do
+      %{plan: invalid, root: root} = remote_static_result_control_fixture(variant)
+      assert_plan_violation(invalid, "remote_github", diagnostic, root)
+    end
+
+    %{plan: api_plan, root: api_root} = remote_plan_fixture()
+
+    invalid_api =
+      String.replace(
+        api_plan,
+        "affected_checks:",
+        "mutation_result_source: desired-protection.json\naffected_checks:",
+        global: false
+      )
+
+    assert_plan_violation(invalid_api, "remote_github", "mutation_result_source", api_root)
+  end
+
   test "approval cannot be borrowed across plans or concurrent branches" do
     approving_plan = risky_plan_fixture("public_api")
     mutation_only = remove_checkpoint(approving_plan)
@@ -1461,6 +1499,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       branch_protection_json(true, current_checks())
     )
 
+    File.write!(
+      Path.join(root, "predicted-protection.json"),
+      branch_protection_json(true, desired_checks())
+    )
+
     File.cp!(
       "scripts/setup_branch_protection.sh",
       Path.join(root, "scripts/setup_branch_protection.sh")
@@ -1474,6 +1517,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       "add",
       "desired-protection.json",
       "captured-current.json",
+      "predicted-protection.json",
       "scripts/setup_branch_protection.sh"
     ])
 
@@ -1501,7 +1545,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           )
 
         :script ->
-          plan
+          String.replace(
+            plan,
+            "affected_checks:",
+            "mutation_result_source: predicted-protection.json\naffected_checks:",
+            global: false
+          )
       end
 
     %{root: root, plan: plan}
@@ -1535,6 +1584,76 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     decoded = true |> branch_protection_json(desired_checks()) |> Jason.decode!()
     File.write!(path, decoded |> Map.put(field, value) |> Jason.encode!())
     git_fixture!(root, ["add", "desired-protection.json"])
+  end
+
+  defp remote_nonexecution_fixture(behavior) do
+    %{plan: plan, root: root} = remote_plan_fixture(:script)
+    sentinel = Path.join(root, "sentinel-#{behavior}")
+    script = Path.join(root, "scripts/setup_branch_protection.sh")
+
+    attempted_action =
+      case behavior do
+        :write -> "touch #{sentinel}"
+        :credential -> "[ -n \"$GITHUB_TOKEN\" ] && touch #{sentinel}; touch #{sentinel}"
+        :network -> "curl https://example.invalid >/dev/null 2>&1; touch #{sentinel}"
+      end
+
+    File.write!(script, "#!/bin/sh\n#{attempted_action}\n")
+    File.chmod!(script, 0o755)
+    git_fixture!(root, ["add", "scripts/setup_branch_protection.sh"])
+    %{plan: plan, root: root, sentinel: sentinel}
+  end
+
+  defp remote_static_result_control_fixture(variant) do
+    %{plan: plan, root: root} = remote_plan_fixture(:script)
+    result = Path.join(root, "predicted-protection.json")
+
+    plan =
+      case variant do
+        :missing ->
+          remove_remote_field(plan, "mutation_result_source")
+
+        :duplicate ->
+          String.replace(
+            plan,
+            "mutation_result_source: predicted-protection.json",
+            "mutation_result_source: predicted-protection.json\nmutation_result_source: predicted-protection.json",
+            global: false
+          )
+
+        :untracked ->
+          File.write!(Path.join(root, "untracked-result.json"), File.read!(result))
+
+          String.replace(plan, "predicted-protection.json", "untracked-result.json",
+            global: false
+          )
+
+        :symlink ->
+          File.ln_s!("predicted-protection.json", Path.join(root, "result-link.json"))
+          git_fixture!(root, ["add", "result-link.json"])
+          String.replace(plan, "predicted-protection.json", "result-link.json", global: false)
+
+        :malformed ->
+          File.write!(result, "{malformed")
+          git_fixture!(root, ["add", "predicted-protection.json"])
+          plan
+
+        :extra_field ->
+          File.write!(
+            result,
+            branch_protection_json(true, desired_checks(), %{"unexpected" => true})
+          )
+
+          git_fixture!(root, ["add", "predicted-protection.json"])
+          plan
+
+        :state_mismatch ->
+          File.write!(result, branch_protection_json(true, current_checks()))
+          git_fixture!(root, ["add", "predicted-protection.json"])
+          plan
+      end
+
+    %{plan: plan, root: root}
   end
 
   defp remote_script_control_fixture(variant) do
