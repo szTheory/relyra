@@ -1,102 +1,102 @@
 ---
 phase: 73-twin-contract-and-baseline
-reviewed: 2026-09-09T21:43:18Z
+reviewed: 2026-09-10T02:04:49Z
 depth: standard
-files_reviewed: 6
+files_reviewed: 5
 files_reviewed_list:
   - .github/workflows/security-gates.yml
   - mix.exs
-  - mix.lock
+  - test/support/adoption_evidence.ex
   - test/adoption/evidence_contract_test.exs
   - test/governance/milestone_scope_test.exs
-  - test/support/adoption_evidence.ex
 findings:
   critical: 9
-  warning: 1
+  warning: 0
   info: 0
-  total: 10
+  total: 9
 status: issues_found
 ---
 
 # Phase 73: Code Review Report
 
-**Reviewed:** 2026-09-09T21:43:18Z
+**Reviewed:** 2026-09-10T02:04:49Z
 **Depth:** standard
-**Files Reviewed:** 6
+**Files Reviewed:** 5
 **Status:** issues_found
 
 ## Summary
 
-The Phase 73 gap-closure work fixes the initially reported literal bypasses, and the current `mix ci.evidence` lane passes 41 tests. The replacement parsers still fail open at several adjacent boundaries, however. Direct probes confirmed that shell command substitution, zero-test filters, non-executable selector owners, conditional workflow steps, checkpoint-shaped task types, negated approvals, contradictory scope values, unapproved remote commands, and nonexistent provenance paths are all accepted. These are requirement-contract failures in EVID-02, GOV-01, GOV-02, and QUAL-01 rather than style concerns.
+The evidence lane is wired and its 53 scoped tests pass, but the governance implementation is not fail-closed. Nine blocker-class defects allow shell semantics, decoy Mix aliases, non-ExUnit syntax, alternate workflow configuration, incomplete phase discovery, legacy parsing, untrusted summary commit lists, or unverified remote payloads to satisfy or bypass the contracts. These are correctness and security-governance failures, not style concerns.
 
 ## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01 [BLOCKER]: Automated-command validation accepts shell execution and zero-test commands
+### CR-01: Shell comments and redirections bypass automated-command validation
 
-**File:** `/Users/jon/projects/relyra/test/support/adoption_evidence.ex:340-365`
-**Issue:** Environment assignments are stripped before shell metacharacters are checked, so `EVIL=$(id) mix ci.evidence` returns `:ok`. Direct test parsing also recognizes only the separated `--only value` form and ignores exclusion filters: both `mix test test/governance/milestone_scope_test.exs --only=no_such_selector --warnings-as-errors` and `mix test test/governance/milestone_scope_test.exs --exclude evidence_contract --warnings-as-errors` return `:ok`, even though they select zero evidence-contract tests. An acceptance-bearing task can therefore close with a command that executes unreviewed shell content or no proof at all.
-**Fix:** Reject shell metacharacters before removing environment assignments, or parse assignments with a closed value grammar that excludes `$`, backticks, substitutions, and quoting. Parse Mix options in both `--option value` and `--option=value` forms, account for `--exclude`, and determine the effective selected test set rather than counting tests in named files independently of filters.
+**Classification:** BLOCKER
+**File:** `test/support/adoption_evidence.ex:340-355`
+**Issue:** The validator rejects only `[;&|`]` and `$(`, then interprets the command with `String.split/1`. It accepts shell operators that change the effective command. Both `mix test test/adoption/evidence_contract_test.exs --warnings-as-errors > /tmp/out` and `mix test test/adoption/evidence_contract_test.exs # --warnings-as-errors` return `:ok`; in the second case the shell discards the supposedly mandatory flag. Variable expansion, globbing, `<`, `>`, `#`, quoting, and escapes likewise are not represented by this tokenization. A plan can therefore obtain deterministic-evidence credit for a materially different command from the one the validator analyzed.
+**Fix:** Do not validate shell text with a partial denylist. Represent verification as an executable plus an argument array and invoke it without a shell. If the Markdown format must remain textual, accept a deliberately narrow anchored grammar whose arguments contain only approved path/filter characters and reject every shell metacharacter, quote, escape, expansion, comment, and redirection. Add adversarial tests for `#`, `<`, `>`, `${...}`, `*`, quotes, and backslashes.
 
-### CR-02 [BLOCKER]: Selector ownership crosses module boundaries and mistakes tag values for selectors
+### CR-02: Removing one optional-looking tag downgrades active plans to the permissive legacy validator
 
-**File:** `/Users/jon/projects/relyra/test/support/adoption_evidence.ex:406-447`
-**Issue:** `selected_test_count!/2` scans one file-wide AST accumulator. Once it sees any matching `@moduletag`, it counts every `test` node anywhere in the file, including tests in other untagged modules; `selector_in_tag?/2` also treats any atom in the tag arguments as the selector, so `@moduletag other: :evidence_contract` is considered an `evidence_contract` tag. A probe containing an empty value-tagged module plus an untagged, non-ExUnit module with a `test` call returned a selected count of 1 even though it is not an executable selected test.
-**Fix:** Track module boundaries and ExUnit modules while walking the AST, interpret tag keys and key/value selectors using ExUnit semantics, and associate test-level tags only with their actual next test. Prefer executing the isolated owner with the exact filter and asserting a parsed non-zero run count if faithful static interpretation cannot be guaranteed.
+**Classification:** BLOCKER
+**File:** `test/governance/milestone_scope_test.exs:2062-2077`
+**Issue:** `repository_plan_scope_violations/2` chooses the legacy validator solely when `<demand_gated_exclusions>` is absent. The legacy path omits approval-scope validation, per-task risk metadata, governed-surface classification, demand-gated exclusions, and forbidden-capability checks. Deleting that tag from an active plan therefore disables the new GOV-01/GOV-02 controls instead of producing a missing-contract violation. The repository-level test uses this dispatcher, so direct unit tests of `plan_scope_violations/2` do not protect the real gate.
+**Fix:** Select the schema from trusted milestone/version metadata, not from the presence of an attacker-controlled tag. For every active v1.11 plan, always call `plan_scope_violations/2`; absence of `<demand_gated_exclusions>` must fail. Restrict legacy validation to an explicit, immutable set of historical completed plan paths if backward compatibility is required.
 
-### CR-03 [BLOCKER]: Conditional evidence steps are certified as mandatory
+### CR-03: Active-plan discovery can become empty and pass vacuously
 
-**File:** `/Users/jon/projects/relyra/test/support/adoption_evidence.ex:565-583`
-**Issue:** The workflow validator rejects only a tiny set of literal false values and accepts every other `if:` expression as enabled. Replacing the Evidence contract step condition with `${{ github.event_name == "workflow_dispatch" }}` still made `mandatory_security_step?/3` return `true`, although the step would be skipped for pull requests and main pushes. Expression forms of truthy `continue-on-error` are similarly outside the closed checks. EVID-02 can regress to optional evidence while its contract remains green.
-**Fix:** Require the security job and Evidence contract step to have no `if:` condition (or prove a deliberately supported condition is true on every required event), and reject any non-literal `continue-on-error` value rather than assuming unknown expressions are false. Validate required event/path behavior per trigger, not only the presence of `pull_request` and a `main` token.
+**Classification:** BLOCKER
+**File:** `test/governance/milestone_scope_test.exs:40-53`
+**Issue:** The repository gate derives all active plans from `incomplete_phase_numbers/1`, whose only accepted form is the exact regex `- [ ] **Phase N:` (`test/governance/milestone_scope_test.exs:1150-1154`). A formatting change, deletion, or alternate checkbox syntax in `ROADMAP.md` yields an empty list, after which `violations == []` passes without reviewing any plan. The companion automation-policy check uses the same discovery function, so it fails open at the same boundary.
+**Fix:** Parse and validate the roadmap structure, assert that the set of active milestone phases equals the expected state from a trusted project-state source, and fail when discovery is empty while the milestone is active. Add controls that mutate/remove the active phase line and assert a diagnostic rather than a green zero-plan result.
 
-### CR-04 [BLOCKER]: Any checkpoint-prefixed task bypasses risk, scope, and acceptance enforcement
+### CR-04: Job-level `continue-on-error` makes the required evidence gate optional
 
-**File:** `/Users/jon/projects/relyra/test/governance/milestone_scope_test.exs:1005-1008`
-**Issue:** Multiple validators exempt tasks with `String.starts_with?(task.type, "checkpoint")`, but the parser never enforces a closed task-type vocabulary. A probe changed the normal task to `type="checkpoint-bypass"` and directed it to implement `KMS-01` and change `Relyra.start_login/3`; `plan_scope_violations/1` returned `[]`. The task skipped risk metadata, deterministic verification, and forbidden-capability checks, while orphan-checkpoint validation also ignored it because that path recognizes only the exact `checkpoint:decision` type.
-**Fix:** Validate task types against an explicit allowed set. Exempt only exact authorization types such as `checkpoint:decision`, and make unknown checkpoint-like types a violation before any other analysis. Use the same exact predicate in risk, mutation, verification, forbidden-capability, and orphan-checkpoint logic.
+**Classification:** BLOCKER
+**File:** `test/support/adoption_evidence.ex:641-655`
+**Issue:** `mandatory_security_step?/3` checks job-level `if` and step-level `if`/`continue-on-error`, but never checks `jobs.security.continue-on-error`. GitHub Actions supports `continue-on-error` at the job level; setting it to `true` allows a failing security matrix job to be treated as non-blocking while this validator still returns true. The adversarial workflow tests mutate only the step-level property, so their stated blocking-owner guarantee does not cover the job-level bypass.
+**Fix:** Parse the workflow as YAML and require both the job and the evidence step to have no conditional and no truthy/dynamic `continue-on-error`. Add a fixture with `jobs.security.continue-on-error: true` and an expression-valued variant, and require both to fail validation.
 
-### CR-05 [BLOCKER]: Negated text is accepted as a matching approval decision
+### CR-05: Alternate planning ignore patterns bypass workflow-ownership validation
 
-**File:** `/Users/jon/projects/relyra/test/governance/milestone_scope_test.exs:1101-1105`
-**Issue:** `matching_checkpoint_index/2` searches the entire task body with `String.contains?/2`. Changing `<decision>approval_class: public_api</decision>` to `<decision>not approval_class: public_api</decision>` still produced no violations. Incidental or explicitly negated prose can therefore masquerade as the named decision that is supposed to authorize a governed mutation.
-**Fix:** Parse exactly one `<decision>` element into closed structured fields, require an exact positive `approval_class` value plus an explicit approval action/decision identifier, and reject duplicate, surrounding, or negated free-form values. Add negative and incidental-text fixtures.
+**Classification:** BLOCKER
+**File:** `test/support/adoption_evidence.ex:728-747`
+**Issue:** Planning-trigger validation recognizes only the literal ignore entry `.planning/**`. Equivalent GitHub path filters such as `.planning/*`, `.planning/**/**`, or broader patterns that exclude the planning tree are not detected. Conversely, when `paths:` is present it treats a literal `**` as sufficient without evaluating later negative patterns. Because this is a hand-written indentation/regex parser rather than GitHub workflow/path-filter semantics, the evidence validator can certify a workflow that does not run for the planning changes it is meant to govern.
+**Fix:** Parse YAML, then evaluate the ordered GitHub glob patterns against representative required paths (for example the active plan, baseline, requirements, roadmap, and state files). Fail unless both pull-request and main-push triggers include every required path. Add adversarial fixtures for alternate ignores, broad ignores, and ordered negative `paths` patterns.
 
-### CR-06 [BLOCKER]: Scope assertions remain substring-based and accept contradictory mutation intent
+### CR-06: Mix alias ownership can be forged by unrelated AST tuples
 
-**File:** `/Users/jon/projects/relyra/test/governance/milestone_scope_test.exs:1050-1064`
-**Issue:** Although per-task risk metadata now uses a closed enum, plan-level scope still treats a value as negative whenever it merely contains `unchanged`, `none`, `no change`, or `no mutation`. A probe using `public_api: unchanged; mutation required` returned no violations. This leaves the original contradictory-scope bypass open and allows ambiguous assertions to suppress the required mutation/checkpoint path.
-**Fix:** Give each approval class a closed set of exact normalized scope values, reject multi-token or contradictory values, and require a mutation assertion to correspond to a mutation task and matching checkpoint. Do not use substring membership for authorization state.
+**Classification:** BLOCKER
+**File:** `test/support/adoption_evidence.ex:625-639`
+**Issue:** `mix_aliases!/1` walks every tuple in `mix.exs` and treats any atom-key/list-value tuple as an alias entry. It does not locate the list returned by `aliases/0`. Unrelated public functions or literals placed before and after the real alias can make both `Enum.find_value`-based tests and the reducer see a valid `ci.evidence` tuple while the actual `aliases/0` entry is hollow (for example `cmd true`). The workflow then runs the hollow real alias and still passes.
+**Fix:** Extract exactly the `defp aliases do ... end` AST and require a single literal definition for the target key, or load the Mix project and inspect the resolved project aliases. Reject duplicate target keys/definitions. Add a control containing valid decoy tuples around an invalid real alias.
 
-### CR-07 [BLOCKER]: Governed-source inference is disconnected from active-plan enforcement
+### CR-07: Any macro named `test` is counted as executable ExUnit evidence
 
-**File:** `/Users/jon/projects/relyra/test/governance/milestone_scope_test.exs:1189-1210`
-**Issue:** `changed_surface_classes/3` is called only by its self-test; `plan_scope_violations/1` never receives or inspects actual before/after content or the git diff. Active-plan validation trusts task-declared files/actions, and it skips a plan entirely as soon as a same-name SUMMARY exists (`executed_plan?/1`). A plan can omit or misstate a changed published API/security seam—or add a premature summary—and no independent surface check triggers approval, contrary to the Phase 73 decision and summary claiming before/after governed-surface inference.
-**Fix:** Feed the actual scoped diff into governance validation, map changed published signatures/protected seams to required approval classes, and reconcile those classes with each plan's exact risk metadata and prior checkpoint. Do not treat SUMMARY existence alone as proof that pre-mutation approval was enforced; validate completed plan artifacts or a durable approval record too.
+**Classification:** BLOCKER
+**File:** `test/support/adoption_evidence.ex:424-455`
+**Issue:** Selector ownership counts every top-level AST node shaped as `{:test, ...}` inside any module. It never establishes `use ExUnit.Case`, never expands the macro, and never checks the tests registered by ExUnit. A module can define its own no-op `test` macro, add `@moduletag :evidence_contract`, and contain zero executable ExUnit tests; this parser still counts it. The existing inert-source controls omit precisely this adversary. Because the lane also runs the governance file, the process can still exit successfully while the declared owner contributes no test.
+**Fix:** Discover tests from ExUnit after compiling the owner in an isolated process, or require and validate an actual `use ExUnit.Case` module and reject local/imported shadowing of `test`. The stronger proof is to run the exact command with ExUnit trace/manifest output and require at least one selected test from each declared owner. Add a no-op custom `test` macro fixture that compiles to zero ExUnit tests.
 
-### CR-08 [BLOCKER]: Remote batches permit additional unapproved commands
+### CR-08: Completed-plan change provenance trusts an arbitrary, incomplete commit list
 
-**File:** `/Users/jon/projects/relyra/test/governance/milestone_scope_test.exs:1317-1392`
-**Issue:** Remote mutation, rollback, preflight, and read-back commands are approved when they merely contain the expected repository/branch substring. Appending `&& gh api -X DELETE repos/szTheory/relyra` to the otherwise valid mutation command still produced no violations. The purported exact reversible batch can therefore contain arbitrary additional remote mutations or shell operations beyond what the checkpoint describes.
-**Fix:** Parse each command with a closed command/argument grammar, reject shell control operators and multiple commands, and compare the complete operation, method, endpoint, input, repository, branch, and affected checks against the approved batch. Validate rollback and read-back as exact structured operations rather than substring-bearing text.
+**Classification:** BLOCKER
+**File:** `test/governance/milestone_scope_test.exs:2112-2149`
+**Issue:** For a completed plan, changed surfaces come only from hashes written under `## Task Commits` in its summary. The code verifies that each listed hash resolves, but never proves that the list contains the plan's actual commits, is contiguous, belongs to the phase, or covers all changed files. A summary can cite one harmless repository commit and omit the commit that changed a public API or security seam; `repository_plan_violations/2` then sees no risky class and does not require prior approval.
+**Fix:** Derive the reviewed range from trusted execution metadata/manifest maintained by the orchestrator, and verify every phase commit is present exactly once and belongs to the expected ancestry/range. Treat any mismatch or uncovered commit as a provenance error. Add a test with a valid harmless hash plus an omitted risky phase commit.
 
-### CR-09 [BLOCKER]: Baseline provenance accepts nonexistent or unrelated repository paths
+### CR-09: Remote approval does not bind file-backed mutations to the approved desired/current state
 
-**File:** `/Users/jon/projects/relyra/test/governance/milestone_scope_test.exs:1836-1858`
-**Issue:** A verification reference is accepted whenever one backticked token starts with an allowed directory prefix. Replacing the first finding's source with `.planning/no-such-evidence.md` left `baseline_violations/1` equal to `[]`. The validator neither proves the path exists nor that a command is an executable non-zero owner, so fabricated provenance satisfies QUAL-01's fail-closed evidence contract.
-**Fix:** Resolve repository references under the repository root, require them to exist as regular tracked files, and validate command references through the same closed automated-command/owner semantics used for acceptance evidence. Reject references that contain only an allowed-looking prefix without a real source or runnable check.
-
-## Warnings
-
-### WR-01 [WARNING]: The advisory remediation widened four additional dependency locks
-
-**File:** `/Users/jon/projects/relyra/mix.lock:2`
-**Issue:** The Phoenix 1.8.7 to 1.8.13 security upgrade also moves Bandit 1.11.1 to 1.12.5, Phoenix PubSub 2.2.0 to 2.3.0, Thousand Island 1.4.3 to 1.5.0, and WebSock Adapter 0.5.9 to 0.6.0. The security context documents the Phoenix remediation, but this broader batch increases compatibility and regression surface beyond the named dependency without per-package intent or focused evidence.
-**Fix:** Either re-resolve with only Phoenix unlocked while retaining compatible child versions, or explicitly document the coupled upgrade batch and add focused transport/pubsub compatibility evidence for the four additional version changes.
+**Classification:** BLOCKER
+**File:** `test/governance/milestone_scope_test.exs:1569-1635`
+**Issue:** Remote validation compares textual state/check sets with command targets, but the accepted mutation and rollback commands use `desired-protection.json` and `captured-current.json` without validating either file's existence, provenance, or contents. The setup-script variant is likewise accepted solely from repository/branch arguments. Those files/scripts can apply checks different from `desired_state`, and a read-back failure happens only after the unapproved mutation. Duplicate scalar fields are also silently reduced to the first match by `parse_remote_batch/1`, leaving an ambiguous approval document.
+**Fix:** Require one occurrence of every remote-batch field. Resolve file-backed payloads as tracked, non-symlink repository files; parse their JSON and prove the mutation payload equals `desired_state` and the rollback payload equals the captured `current_state` contract. Bind script-backed mutations to a reviewed immutable script revision and its exact resulting check set. Add controls with mismatched payload contents, missing/untracked/symlink payloads, and duplicate scalar fields.
 
 ---
 
-_Reviewed: 2026-09-09T21:43:18Z_
+_Reviewed: 2026-09-10T02:04:49Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
