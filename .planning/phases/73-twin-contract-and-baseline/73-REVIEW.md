@@ -1,102 +1,74 @@
 ---
 phase: 73-twin-contract-and-baseline
-reviewed: 2026-09-10T02:04:49Z
+reviewed: 2026-09-10T19:54:32Z
 depth: standard
 files_reviewed: 5
 files_reviewed_list:
   - .github/workflows/security-gates.yml
   - mix.exs
-  - test/support/adoption_evidence.ex
   - test/adoption/evidence_contract_test.exs
   - test/governance/milestone_scope_test.exs
+  - test/support/adoption_evidence.ex
 findings:
-  critical: 9
+  critical: 5
   warning: 0
   info: 0
-  total: 9
+  total: 5
 status: issues_found
 ---
 
 # Phase 73: Code Review Report
 
-**Reviewed:** 2026-09-10T02:04:49Z
+**Reviewed:** 2026-09-10T19:54:32Z
 **Depth:** standard
 **Files Reviewed:** 5
 **Status:** issues_found
 
 ## Summary
 
-The evidence lane is wired and its 53 scoped tests pass, but the governance implementation is not fail-closed. Nine blocker-class defects allow shell semantics, decoy Mix aliases, non-ExUnit syntax, alternate workflow configuration, incomplete phase discovery, legacy parsing, untrusted summary commit lists, or unverified remote payloads to satisfy or bypass the contracts. These are correctness and security-governance failures, not style concerns.
+The Phase 73 contracts contain five fail-open defects in the evidence-owner, workflow-trigger, completed-plan provenance, and remote-authorization boundaries. The post-merge cwd-race correction in `b1dfbf1` is present and its regression test passes, but it does not affect these findings. A fresh `mix ci.evidence` run passed 70 tests in 156.3 seconds; two bypasses below were also reproduced independently and returned `:ok` despite hollow evidence ownership.
 
 ## Narrative Findings (AI reviewer)
 
-## Critical Issues
+### Critical Issues
 
-### CR-01: Shell comments and redirections bypass automated-command validation
-
-**Classification:** BLOCKER
-**File:** `test/support/adoption_evidence.ex:340-355`
-**Issue:** The validator rejects only `[;&|`]` and `$(`, then interprets the command with `String.split/1`. It accepts shell operators that change the effective command. Both `mix test test/adoption/evidence_contract_test.exs --warnings-as-errors > /tmp/out` and `mix test test/adoption/evidence_contract_test.exs # --warnings-as-errors` return `:ok`; in the second case the shell discards the supposedly mandatory flag. Variable expansion, globbing, `<`, `>`, `#`, quoting, and escapes likewise are not represented by this tokenization. A plan can therefore obtain deterministic-evidence credit for a materially different command from the one the validator analyzed.
-**Fix:** Do not validate shell text with a partial denylist. Represent verification as an executable plus an argument array and invoke it without a shell. If the Markdown format must remain textual, accept a deliberately narrow anchored grammar whose arguments contain only approved path/filter characters and reject every shell metacharacter, quote, escape, expansion, comment, and redirection. Add adversarial tests for `#`, `<`, `>`, `${...}`, `*`, quotes, and backslashes.
-
-### CR-02: Removing one optional-looking tag downgrades active plans to the permissive legacy validator
+#### CR-01: Alias ownership accepts a command whose effective selection is empty
 
 **Classification:** BLOCKER
-**File:** `test/governance/milestone_scope_test.exs:2062-2077`
-**Issue:** `repository_plan_scope_violations/2` chooses the legacy validator solely when `<demand_gated_exclusions>` is absent. The legacy path omits approval-scope validation, per-task risk metadata, governed-surface classification, demand-gated exclusions, and forbidden-capability checks. Deleting that tag from an active plan therefore disables the new GOV-01/GOV-02 controls instead of producing a missing-contract violation. The repository-level test uses this dispatcher, so direct unit tests of `plan_scope_violations/2` do not protect the real gate.
-**Fix:** Select the schema from trusted milestone/version metadata, not from the presence of an attacker-controlled tag. For every active v1.11 plan, always call `plan_scope_violations/2`; absence of `<demand_gated_exclusions>` must fail. Restrict legacy validation to an explicit, immutable set of historical completed plan paths if backward compatibility is required.
+**File:** `test/support/adoption_evidence.ex:374-377`
+**Issue:** Repository validation checks the lane command with substring predicates instead of the already-implemented command parser. An alias such as `cmd mix test test/adoption/evidence_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --exclude evidence_contract --warnings-as-errors` contains every required substring but selects zero tests. `validate_repository!/2` accepted this fixture and returned `:ok`, while ExUnit can exit successfully with zero selected tests. The mandatory evidence chain can therefore become hollow without detection.
+**Fix:** Parse and validate the exact alias command once with `validate_check_alias!/2` (or a shared parser returning the normalized owner paths and effective filters), require exactly one alias step, and verify that each row's exact owner path contributes at least one test after all include/exclude filters. Remove the substring-based authority check.
 
-### CR-03: Active-plan discovery can become empty and pass vacuously
-
-**Classification:** BLOCKER
-**File:** `test/governance/milestone_scope_test.exs:40-53`
-**Issue:** The repository gate derives all active plans from `incomplete_phase_numbers/1`, whose only accepted form is the exact regex `- [ ] **Phase N:` (`test/governance/milestone_scope_test.exs:1150-1154`). A formatting change, deletion, or alternate checkbox syntax in `ROADMAP.md` yields an empty list, after which `violations == []` passes without reviewing any plan. The companion automation-policy check uses the same discovery function, so it fails open at the same boundary.
-**Fix:** Parse and validate the roadmap structure, assert that the set of active milestone phases equals the expected state from a trusted project-state source, and fail when discovery is empty while the milestone is active. Add controls that mutate/remove the active phase line and assert a diagnostic rather than a green zero-plan result.
-
-### CR-04: Job-level `continue-on-error` makes the required evidence gate optional
+#### CR-02: Restrictive workflow `paths` filters can exclude all source changes while passing validation
 
 **Classification:** BLOCKER
-**File:** `test/support/adoption_evidence.ex:641-655`
-**Issue:** `mandatory_security_step?/3` checks job-level `if` and step-level `if`/`continue-on-error`, but never checks `jobs.security.continue-on-error`. GitHub Actions supports `continue-on-error` at the job level; setting it to `true` allows a failing security matrix job to be treated as non-blocking while this validator still returns true. The adversarial workflow tests mutate only the step-level property, so their stated blocking-owner guarantee does not cover the job-level bypass.
-**Fix:** Parse the workflow as YAML and require both the job and the evidence step to have no conditional and no truthy/dynamic `continue-on-error`. Add a fixture with `jobs.security.continue-on-error: true` and an expression-valued variant, and require both to fail validation.
+**File:** `test/support/adoption_evidence.ex:855-868`
+**Issue:** The trigger validator tests only five hard-coded planning paths. A workflow whose `pull_request.paths` and `push.paths` contain exactly those five files passes `validate_repository!/2`, even though changes to `test/support/adoption_evidence.ex`, either owner test, `mix.exs`, and the workflow itself do not start the security job. This bypass was reproduced and returned `:ok`, contradicting the contract that evidence is mandatory for both source and planning changes.
+**Fix:** Fail closed on any positive `paths` filter for this mandatory workflow, or compute and require coverage for every governed input (ledger, owner tests, `mix.exs`, workflow, baseline, identity documents, and every governed PLAN/SUMMARY). Prefer allowing only `paths-ignore` entries that are proven disjoint from all governed source and planning surfaces.
 
-### CR-05: Alternate planning ignore patterns bypass workflow-ownership validation
-
-**Classification:** BLOCKER
-**File:** `test/support/adoption_evidence.ex:728-747`
-**Issue:** Planning-trigger validation recognizes only the literal ignore entry `.planning/**`. Equivalent GitHub path filters such as `.planning/*`, `.planning/**/**`, or broader patterns that exclude the planning tree are not detected. Conversely, when `paths:` is present it treats a literal `**` as sufficient without evaluating later negative patterns. Because this is a hand-written indentation/regex parser rather than GitHub workflow/path-filter semantics, the evidence validator can certify a workflow that does not run for the planning changes it is meant to govern.
-**Fix:** Parse YAML, then evaluate the ordered GitHub glob patterns against representative required paths (for example the active plan, baseline, requirements, roadmap, and state files). Fail unless both pull-request and main-push triggers include every required path. Add adversarial fixtures for alternate ignores, broad ignores, and ordered negative `paths` patterns.
-
-### CR-06: Mix alias ownership can be forged by unrelated AST tuples
+#### CR-03: Branch-protection payload validation ignores nine security-relevant field values
 
 **Classification:** BLOCKER
-**File:** `test/support/adoption_evidence.ex:625-639`
-**Issue:** `mix_aliases!/1` walks every tuple in `mix.exs` and treats any atom-key/list-value tuple as an alias entry. It does not locate the list returned by `aliases/0`. Unrelated public functions or literals placed before and after the real alias can make both `Enum.find_value`-based tests and the reducer see a valid `ci.evidence` tuple while the actual `aliases/0` entry is hollow (for example `cmd true`). The workflow then runs the hollow real alias and still passes.
-**Fix:** Extract exactly the `defp aliases do ... end` AST and require a single literal definition for the target key, or load the Mix project and inspect the resolved project aliases. Reject duplicate target keys/definitions. Add a control containing valid decoy tuples around an invalid real alias.
+**File:** `test/governance/milestone_scope_test.exs:2769-2784`
+**Issue:** The normalizer requires ten top-level key names but validates and returns only `required_status_checks.strict` and `contexts`. Values for `enforce_admins`, pull-request reviews, restrictions, force pushes, deletions, branch creation, conversation resolution, branch locking, and fork syncing are discarded. A payload can match the declared desired checks while silently setting `enforce_admins` to `false`, enabling force pushes/deletions, or otherwise weakening protection, and `operation_matches_state?/2` will still authorize it.
+**Fix:** Define a closed normalized branch-protection struct containing every accepted field, validate each field's type and allowed value, include the complete normalized state in both `current_state` and `desired_state`, and compare the full payload. If Phase 73 intends those fields to be invariant constants, enforce their exact expected values instead of discarding them.
 
-### CR-07: Any macro named `test` is counted as executable ExUnit evidence
-
-**Classification:** BLOCKER
-**File:** `test/support/adoption_evidence.ex:424-455`
-**Issue:** Selector ownership counts every top-level AST node shaped as `{:test, ...}` inside any module. It never establishes `use ExUnit.Case`, never expands the macro, and never checks the tests registered by ExUnit. A module can define its own no-op `test` macro, add `@moduletag :evidence_contract`, and contain zero executable ExUnit tests; this parser still counts it. The existing inert-source controls omit precisely this adversary. Because the lane also runs the governance file, the process can still exit successfully while the declared owner contributes no test.
-**Fix:** Discover tests from ExUnit after compiling the owner in an isolated process, or require and validate an actual `use ExUnit.Case` module and reject local/imported shadowing of `test`. The stronger proof is to run the exact command with ExUnit trace/manifest output and require at least one selected test from each declared owner. Add a no-op custom `test` macro fixture that compiles to zero ExUnit tests.
-
-### CR-08: Completed-plan change provenance trusts an arbitrary, incomplete commit list
+#### CR-04: Validation executes a plan-selected script with normal CI process authority
 
 **Classification:** BLOCKER
-**File:** `test/governance/milestone_scope_test.exs:2112-2149`
-**Issue:** For a completed plan, changed surfaces come only from hashes written under `## Task Commits` in its summary. The code verifies that each listed hash resolves, but never proves that the list contains the plan's actual commits, is contiguous, belongs to the phase, or covers all changed files. A summary can cite one harmless repository commit and omit the commit that changed a public API or security seam; `repository_plan_violations/2` then sees no risky class and does not require prior approval.
-**Fix:** Derive the reviewed range from trusted execution metadata/manifest maintained by the orchestrator, and verify every phase commit is present exactly once and belongs to the expected ancestry/range. Treat any mismatch or uncovered commit as a provenance error. Add a test with a valid harmless hash plus an omitted risky phase commit.
+**File:** `test/governance/milestone_scope_test.exs:2798-2803,2846-2855`
+**Issue:** A remote-approval PLAN may point at any tracked executable whose index hash matches the working tree. The validator then executes that script directly to obtain `--print-expected-json`. Nothing constrains what the script does before printing JSON, so a malicious or compromised tracked script can write files, access available credentials, contact the network, or perform the remote mutation during what is supposed to be a non-mutating authorization check. Fixed argv and hash equality establish identity, not safety.
+**Fix:** Do not execute the mutation script during validation. Bind authorization to a static tracked JSON artifact and the script's committed object ID, or inspect a declarative manifest generated outside the mandatory gate. If execution is unavoidable, run a separately trusted interpreter/harness in a sandbox with no network, no credentials, and a read-only filesystem; the plan-selected executable itself must not receive ambient CI authority.
 
-### CR-09: Remote approval does not bind file-backed mutations to the approved desired/current state
+#### CR-05: A phase manifest can omit scoped commits and hide governed changes
 
 **Classification:** BLOCKER
-**File:** `test/governance/milestone_scope_test.exs:1569-1635`
-**Issue:** Remote validation compares textual state/check sets with command targets, but the accepted mutation and rollback commands use `desired-protection.json` and `captured-current.json` without validating either file's existence, provenance, or contents. The setup-script variant is likewise accepted solely from repository/branch arguments. Those files/scripts can apply checks different from `desired_state`, and a read-back failure happens only after the unapproved mutation. Duplicate scalar fields are also silently reduced to the first match by `parse_remote_batch/1`, leaving an ambiguous approval document.
-**Fix:** Require one occurrence of every remote-batch field. Resolve file-backed payloads as tracked, non-symlink repository files; parse their JSON and prove the mutation payload equals `desired_state` and the rollback payload equals the captured `current_state` contract. Bind script-backed mutations to a reviewed immutable script revision and its exact resulting check set. Add controls with mismatched payload contents, missing/untracked/symlink payloads, and duplicate scalar fields.
+**File:** `test/governance/milestone_scope_test.exs:3269-3297`
+**Issue:** When `.planning/.phase-manifest.json` exists, its commit list replaces Git-derived discovery. Validation checks only that listed commits are reachable, ancestral, and correctly scoped; it never proves that all scoped commits before the completion boundary are listed. An edited manifest and matching SUMMARY can omit a risky plan-scoped commit, so its changed surfaces never reach approval classification.
+**Fix:** Always derive the complete ordered set of exact-scope commits from Git history up to the unique completion boundary. Treat the manifest as an independent equality cross-check: resolve every manifest hash, reject duplicates, and require its ordered set to equal the Git-derived set exactly. Never let manifest contents select the reviewed commits.
 
 ---
 
-_Reviewed: 2026-09-10T02:04:49Z_
+_Reviewed: 2026-09-10T19:54:32Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
