@@ -362,6 +362,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  @tag :plan_73_07_task_2
   test "task-region demand-gated smuggling fails regardless of nearby prose" do
     controls = [
       "Do not delay; implement KMS-01 in the library.",
@@ -780,6 +781,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_plan_violation(contradictory, "public_api", "scope assertion")
   end
 
+  @tag :plan_73_07_task_2
   test "a summary file cannot exempt an invalid plan from governance validation" do
     tmp_dir =
       Path.join(System.tmp_dir!(), "relyra-executed-plan-#{System.unique_integer([:positive])}")
@@ -800,12 +802,36 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     File.write!(plan_path, invalid_plan)
     File.write!(summary_path, "status: complete\n")
 
-    violations =
-      [plan_path]
-      |> Enum.reject(&executed_plan?/1)
-      |> Enum.flat_map(&(File.read!(&1) |> plan_scope_violations()))
+    violations = repository_plan_violations([plan_path])
 
     assert violations != [], "summary presence silently exempted an invalid governed mutation"
+  end
+
+  @tag :plan_73_07_task_2
+  test "completed-plan changed surfaces require the same prior checkpoint as task intent" do
+    tmp_dir =
+      Path.join(System.tmp_dir!(), "relyra-completed-diff-#{System.unique_integer([:positive])}")
+
+    File.mkdir_p!(tmp_dir)
+    on_exit(fn -> File.rm_rf!(tmp_dir) end)
+
+    plan_path = Path.join(tmp_dir, "99-02-PLAN.md")
+    summary_path = Path.join(tmp_dir, "99-02-SUMMARY.md")
+    File.write!(plan_path, no_risk_plan_fixture())
+    File.write!(summary_path, "status: complete\n")
+
+    changes = [
+      %{
+        path: "lib/relyra.ex",
+        before: "def start_login(connection, relay_context, opts \\\\ [])",
+        after: "def start_login(connection, relay_context, policy, opts \\\\ [])"
+      }
+    ]
+
+    violations = repository_plan_violations([plan_path], %{plan_path => changes})
+
+    assert Enum.any?(violations, &(&1 =~ "public_api" and &1 =~ "checkpoint")),
+           "completed-plan diff did not reach plan-local checkpoint enforcement: #{inspect(violations)}"
   end
 
   test "remote approval rejects appended commands outside the exact batch" do
@@ -1762,6 +1788,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp executed_plan?(path) do
     String.ends_with?(path, "-PLAN.md") and
       File.exists?(String.replace_suffix(path, "-PLAN.md", "-SUMMARY.md"))
+  end
+
+  defp repository_plan_violations(plan_paths, _changed_surfaces_by_plan \\ %{}) do
+    plan_paths
+    |> Enum.reject(&executed_plan?/1)
+    |> Enum.flat_map(&(File.read!(&1) |> plan_scope_violations()))
   end
 
   defp attribute_value(attributes, name) do
