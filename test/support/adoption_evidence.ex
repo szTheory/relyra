@@ -325,9 +325,17 @@ defmodule Relyra.AdoptionEvidence do
     aliases = mix_aliases!(root)
     workflow = File.read!(Path.join(root, ".github/workflows/security-gates.yml"))
 
-    entries
-    |> Enum.filter(&(&1.state == :existing and &1.evidence_kind != :external_canary))
-    |> Enum.each(&validate_owner_chain!(&1, root, aliases, workflow))
+    owners =
+      Enum.filter(entries, &(&1.state == :existing and &1.evidence_kind != :external_canary))
+
+    lane_commands =
+      Enum.reduce(owners, %{}, fn entry, commands ->
+        Map.put_new_lazy(commands, entry.lane, fn ->
+          validate_owner_alias!(entry, root, aliases)
+        end)
+      end)
+
+    Enum.each(owners, &validate_owner_chain!(&1, root, lane_commands, workflow))
 
     :ok
   end
@@ -352,7 +360,15 @@ defmodule Relyra.AdoptionEvidence do
     raise ArgumentError, "verification command must be non-empty text"
   end
 
-  defp validate_owner_chain!(entry, root, aliases, workflow) do
+  defp validate_owner_alias!(entry, root, aliases) do
+    validate_check_alias!(entry.lane, root, aliases)
+  rescue
+    error in ArgumentError ->
+      raise ArgumentError,
+            "#{entry.requirement} row #{entry.id}: alias #{entry.lane} is not executable evidence: #{Exception.message(error)}"
+  end
+
+  defp validate_owner_chain!(entry, root, lane_commands, workflow) do
     owner_path = Path.join(root, entry.owner)
 
     unless File.regular?(owner_path) do
@@ -365,19 +381,19 @@ defmodule Relyra.AdoptionEvidence do
             "#{entry.requirement} row #{entry.id}: selector #{entry.selector} matches zero tests in #{entry.owner}"
     end
 
-    steps = Map.get(aliases, entry.lane)
+    command = Map.fetch!(lane_commands, entry.lane)
 
-    unless is_list(steps) do
-      raise ArgumentError, "#{entry.requirement} row #{entry.id}: missing alias #{entry.lane}"
-    end
+    owner = Enum.find(command.owners, &(&1.path == entry.owner))
+    selector_filter = {entry.selector, :enabled}
 
-    unless Enum.any?(steps, fn step ->
-             String.starts_with?(String.trim_leading(step), "cmd mix test ") and
-               String.contains?(step, entry.owner) and
-               String.contains?(step, "--only #{entry.selector}")
-           end) do
+    unless owner && selector_filter in command.includes do
       raise ArgumentError,
             "#{entry.requirement} row #{entry.id}: alias #{entry.lane} is not wired to owner #{entry.owner} with selector #{entry.selector}"
+    end
+
+    unless owner.effective_count > 0 do
+      raise ArgumentError,
+            "#{entry.requirement} row #{entry.id}: alias #{entry.lane} owner #{entry.owner} has zero effective selected tests for selector #{entry.selector}"
     end
 
     unless mandatory_security_step?(workflow, "Evidence contract", "mix #{entry.lane}") do
@@ -478,8 +494,8 @@ defmodule Relyra.AdoptionEvidence do
 
     {includes, exclusions} = parse_test_filters!(arguments)
 
-    selected =
-      Enum.reduce(owner_paths, 0, fn owner, count ->
+    owners =
+      Enum.map(owner_paths, fn owner ->
         owner_path = repository_path!(root, owner)
 
         effective_count =
@@ -490,17 +506,23 @@ defmodule Relyra.AdoptionEvidence do
               not Enum.any?(exclusions, &filter_matches?(tags, &1))
           end)
 
-        count + effective_count
+        if effective_count == 0 do
+          raise ArgumentError,
+                "test owner #{owner} has zero effective selected tests after include/exclusion filters"
+        end
+
+        %{path: owner, effective_count: effective_count}
       end)
 
-    if selected == 0 do
-      raise ArgumentError,
-            "direct test command has zero selected tests after include/exclusion filters"
-    end
+    %{owners: owners, includes: includes, exclusions: exclusions}
   end
 
   defp validate_check_alias!(alias_name, root) do
-    steps = root |> mix_aliases!() |> Map.get(alias_name)
+    validate_check_alias!(alias_name, root, mix_aliases!(root))
+  end
+
+  defp validate_check_alias!(alias_name, root, aliases) do
+    steps = Map.get(aliases, alias_name)
 
     case steps do
       ["cmd " <> command] ->
