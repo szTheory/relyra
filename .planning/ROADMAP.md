@@ -75,7 +75,7 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 13/13 plans executed; 1 gap-closure plan ready
+**Plans:** 13/16 plans executed; 3 gap-closure plans ready
 
 Plans:
 **Wave 1**
@@ -120,6 +120,15 @@ Plans:
 
 - [x] 73-12-PLAN.md — Close empty-effective alias ownership and restrictive mandatory-workflow trigger gaps.
 - [x] 73-13-PLAN.md — Close incomplete branch-protection state, ambient script execution, and manifest-selected provenance gaps.
+
+**Wave 11** *(gap closure; blocked on Wave 10 completion; Plans 14 and 15 may execute in parallel)*
+
+- [ ] 73-14-PLAN.md — Close mandatory workflow branch, activity, duplicate, and unsupported event-grammar gaps.
+- [ ] 73-15-PLAN.md — Remove script-backed authorization and govern every post-SUMMARY exact-scope descendant.
+
+**Wave 12** *(gap closure; blocked on Wave 11 completion)*
+
+- [ ] 73-16-PLAN.md — Reconcile CR-06 through CR-08 evidence with the Phase 73 security verdict.
 
 ### Phase 74: Clean-Room Package Consumer
 
