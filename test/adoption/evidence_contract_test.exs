@@ -694,7 +694,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
   end
 
   @tag :plan_73_09_task_2
-  test "ordered paths exclusions fail and later positive patterns re-include" do
+  test "positive paths are rejected regardless of ordered exclusions or re-inclusions" do
     entries = AdoptionEvidence.entries()
     excluded_root = repository_fixture!()
     excluded_workflow_path = Path.join(excluded_root, @workflow_path)
@@ -707,7 +707,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       ])
     )
 
-    assert_raise ArgumentError, ~r/pull_request.*\.planning\//s, fn ->
+    assert_raise ArgumentError, ~r/pull_request.*must not use positive paths/s, fn ->
       AdoptionEvidence.validate_repository!(entries, excluded_root)
     end
 
@@ -723,7 +723,9 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       ])
     )
 
-    assert :ok = AdoptionEvidence.validate_repository!(entries, included_root)
+    assert_raise ArgumentError, ~r/pull_request.*must not use positive paths/s, fn ->
+      AdoptionEvidence.validate_repository!(entries, included_root)
+    end
 
     push_root = repository_fixture!()
     push_workflow_path = Path.join(push_root, @workflow_path)
@@ -736,13 +738,13 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       ])
     )
 
-    assert_raise ArgumentError, ~r/push.*\.planning\//s, fn ->
+    assert_raise ArgumentError, ~r/push.*must not use positive paths/s, fn ->
       AdoptionEvidence.validate_repository!(entries, push_root)
     end
   end
 
   @tag :plan_73_09_task_2
-  test "path filters reject empty and unsupported grammars while character classes re-include" do
+  test "path filters reject empty and unsupported grammars before positive policy" do
     entries = AdoptionEvidence.entries()
 
     for replacement <- [
@@ -779,7 +781,9 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       ])
     )
 
-    assert :ok = AdoptionEvidence.validate_repository!(entries, root)
+    assert_raise ArgumentError, ~r/pull_request.*must not use positive paths/s, fn ->
+      AdoptionEvidence.validate_repository!(entries, root)
+    end
   end
 
   @tag :plan_73_12_task_2

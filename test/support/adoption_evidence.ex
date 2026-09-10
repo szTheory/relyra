@@ -322,8 +322,9 @@ defmodule Relyra.AdoptionEvidence do
   def validate_repository!(entries, root) do
     validate_entries!(entries)
 
-    aliases = mix_aliases!(root)
     workflow = File.read!(Path.join(root, ".github/workflows/security-gates.yml"))
+    required_planning_triggers!(String.split(workflow, "\n"), root)
+    aliases = mix_aliases!(root)
 
     owners =
       Enum.filter(entries, &(&1.state == :existing and &1.evidence_kind != :external_canary))
@@ -762,8 +763,7 @@ defmodule Relyra.AdoptionEvidence do
          [step] <- named_steps(steps, step_name),
          ^command <- property_at_indent(step, "run", 8),
          nil <- property_at_indent(step, "if", 8),
-         true <- blocking_fallibility?(step, 8),
-         true <- required_planning_triggers!(lines) do
+         true <- blocking_fallibility?(step, 8) do
       true
     else
       _ -> false
@@ -834,7 +834,7 @@ defmodule Relyra.AdoptionEvidence do
 
   defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
 
-  defp required_planning_triggers!(lines) do
+  defp required_planning_triggers!(lines, root) do
     pull_request_index = Enum.find_index(lines, &Regex.match?(~r/^  pull_request:\s*$/, &1))
     push_index = Enum.find_index(lines, &Regex.match?(~r/^  push:\s*$/, &1))
 
@@ -855,17 +855,36 @@ defmodule Relyra.AdoptionEvidence do
       raise ArgumentError, "workflow push event does not include the main branch"
     end
 
-    validate_required_paths!("pull_request", pull_request)
-    validate_required_paths!("push", push)
+    governed_inputs = governed_inputs!(root)
+    validate_required_paths!("pull_request", pull_request, governed_inputs)
+    validate_required_paths!("push", push, governed_inputs)
     true
   end
 
-  defp validate_required_paths!(event, trigger) do
+  defp validate_required_paths!(event, trigger, governed_inputs) do
     paths = path_filter_values!(trigger, "paths", allow_missing?: true)
     paths_ignore = path_filter_values!(trigger, "paths-ignore", allow_missing?: true)
 
     if is_list(paths) and is_list(paths_ignore) do
       raise ArgumentError, "workflow #{event} cannot combine paths and paths-ignore"
+    end
+
+    if is_list(paths) do
+      Enum.each(paths, fn pattern ->
+        glob =
+          if String.starts_with?(pattern, "!"),
+            do: String.trim_leading(pattern, "!"),
+            else: pattern
+
+        if glob == "" do
+          raise ArgumentError, "workflow paths contains an empty negative pattern"
+        end
+
+        glob_regex!(glob)
+      end)
+
+      raise ArgumentError,
+            "workflow #{event} must not use positive paths on the mandatory evidence lane"
     end
 
     if is_list(paths_ignore) and Enum.any?(paths_ignore, &String.starts_with?(&1, "!")) do
@@ -874,30 +893,83 @@ defmodule Relyra.AdoptionEvidence do
 
     Enum.each(paths_ignore || [], &glob_regex!/1)
 
-    required_planning_paths()
+    governed_inputs
     |> Enum.each(fn path ->
-      included? =
-        cond do
-          is_list(paths) -> ordered_path_match?(paths, path)
-          is_list(paths_ignore) -> not Enum.any?(paths_ignore, &glob_match?(&1, path))
-          true -> true
-        end
+      included? = not (is_list(paths_ignore) and Enum.any?(paths_ignore, &glob_match?(&1, path)))
 
       unless included? do
         raise ArgumentError,
-              "workflow #{event} path filter skips required planning path #{path}"
+              "workflow #{event} path filter skips governed input #{path}"
       end
     end)
   end
 
-  defp required_planning_paths do
-    [
-      ".planning/ROADMAP.md",
-      ".planning/REQUIREMENTS.md",
-      ".planning/STATE.md",
-      ".planning/phases/73-twin-contract-and-baseline/73-09-PLAN.md",
-      ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
-    ]
+  defp governed_inputs!(root) do
+    fixed =
+      [
+        "test/support/adoption_evidence.ex",
+        "test/adoption/evidence_contract_test.exs",
+        "test/governance/milestone_scope_test.exs",
+        "mix.exs",
+        ".github/workflows/security-gates.yml",
+        ".planning/PROJECT.md",
+        ".planning/ROADMAP.md",
+        ".planning/REQUIREMENTS.md",
+        ".planning/STATE.md",
+        ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
+      ]
+
+    discovered =
+      tracked_phase_inputs!(root, "73-*-PLAN.md") ++
+        tracked_phase_inputs!(root, "73-*-SUMMARY.md")
+
+    if discovered == [] do
+      raise ArgumentError, "tracked Phase 73 plan and summary input set must not be empty"
+    end
+
+    (fixed ++ discovered)
+    |> Enum.uniq()
+    |> Enum.each(&validate_governed_input!(root, &1))
+
+    Enum.uniq(fixed ++ discovered)
+  end
+
+  defp tracked_phase_inputs!(root, basename) do
+    pattern = ".planning/phases/73-twin-contract-and-baseline/#{basename}"
+
+    case System.cmd("git", ["ls-files", "--", pattern],
+           cd: root,
+           stderr_to_stdout: true
+         ) do
+      {output, 0} ->
+        paths = String.split(output, "\n", trim: true)
+
+        if paths == [] do
+          raise ArgumentError, "governed input discovery found no tracked #{pattern} files"
+        end
+
+        paths
+
+      {output, status} ->
+        raise ArgumentError,
+              "cannot discover governed inputs for #{pattern}; git exited #{status}: #{String.trim(output)}"
+    end
+  end
+
+  defp validate_governed_input!(root, path) do
+    repository_path!(root, path)
+
+    case System.cmd("git", ["ls-files", "--error-unmatch", "--", path],
+           cd: root,
+           stderr_to_stdout: true
+         ) do
+      {_output, 0} ->
+        :ok
+
+      {output, status} ->
+        raise ArgumentError,
+              "governed input #{path} is not tracked; git exited #{status}: #{String.trim(output)}"
+    end
   end
 
   defp path_filter_values!(lines, key, options) do
@@ -960,27 +1032,6 @@ defmodule Relyra.AdoptionEvidence do
     end
 
     normalized
-  end
-
-  defp ordered_path_match?(patterns, path) do
-    unless Enum.any?(patterns, &(not String.starts_with?(&1, "!"))) do
-      raise ArgumentError, "workflow paths requires at least one positive pattern"
-    end
-
-    Enum.reduce(patterns, false, fn pattern, included? ->
-      {negative?, glob} =
-        if String.starts_with?(pattern, "!") do
-          {true, String.trim_leading(pattern, "!")}
-        else
-          {false, pattern}
-        end
-
-      if glob == "" do
-        raise ArgumentError, "workflow paths contains an empty negative pattern"
-      end
-
-      if glob_match?(glob, path), do: not negative?, else: included?
-    end)
   end
 
   defp glob_match?(pattern, path) do
