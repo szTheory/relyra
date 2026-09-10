@@ -412,9 +412,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       {:changed_after_index, "indexed"},
       {:unsupported_print_mode, "print"},
       {:nonzero, "status"},
-      {:malformed, "malformed"},
+      {:malformed, "output"},
       {:extra_output, "output"},
-      {:stderr, "stderr"},
+      {:stderr, "output"},
       {:state_mismatch, "desired_state"}
     ]
 
@@ -1123,7 +1123,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   @tag :plan_73_08_task_1
   test "remote approval rejects appended commands outside the exact batch" do
-    %{plan: clean, root: root} = remote_plan_fixture()
+    %{plan: clean, root: root} = remote_plan_fixture(:script)
     assert plan_scope_violations(clean, [], root) == []
 
     controls = [
@@ -2403,7 +2403,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             end
 
           true ->
-            %{state | list_field: nil, errors: ["unparsed line #{trimmed}" | state.errors]}
+            owner = state.list_field || "field"
+
+            %{
+              state
+              | list_field: nil,
+                errors: ["#{owner} contains unparsed line #{trimmed}" | state.errors]
+            }
         end
       end)
 
@@ -2789,8 +2795,76 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp parse_script_operation(_root, _script, _repository, _branch),
-    do: {:error, :script_validation_not_implemented}
+  defp parse_script_operation(root, script, repository, branch) do
+    with :ok <- validate_remote_input(root, script),
+         {:ok, indexed_oid} <- executable_indexed_script(root, script),
+         :ok <- working_tree_matches_index(root, script, indexed_oid),
+         {:ok, output} <- run_script_print_mode(root, script, repository),
+         {:ok, state} <- normalize_branch_protection_json(output) do
+      {:ok,
+       %{
+         kind: :script_write,
+         repository: repository,
+         branch: branch,
+         script: script,
+         state: state
+       }}
+    else
+      {:error, reason} -> {:error, {script, reason}}
+    end
+  end
+
+  defp executable_indexed_script(root, script) do
+    case System.cmd(
+           "git",
+           ["-C", root, "ls-files", "--stage", "--error-unmatch", "--", script],
+           stderr_to_stdout: true
+         ) do
+      {output, 0} ->
+        case Regex.run(~r/^100755 ([0-9a-f]{40,64}) 0\t/, output, capture: :all_but_first) do
+          [oid] -> {:ok, oid}
+          nil -> {:error, :script_must_have_executable_git_mode}
+        end
+
+      {_output, _status} ->
+        {:error, :script_is_not_tracked}
+    end
+  end
+
+  defp working_tree_matches_index(root, script, indexed_oid) do
+    case System.cmd("git", ["-C", root, "hash-object", "--", script], stderr_to_stdout: true) do
+      {output, 0} ->
+        if String.trim(output) == indexed_oid,
+          do: :ok,
+          else: {:error, :script_working_tree_differs_from_indexed_revision}
+
+      {_output, _status} ->
+        {:error, :script_working_tree_is_unreadable}
+    end
+  end
+
+  defp run_script_print_mode(root, script, repository) do
+    executable = Path.join(root, script)
+
+    case System.cmd(
+           executable,
+           ["--print-expected-json"],
+           cd: root,
+           env: [{"GITHUB_REPOSITORY", repository}],
+           stderr_to_stdout: true
+         ) do
+      {output, 0} ->
+        case Jason.decode(output) do
+          {:ok, _decoded} -> {:ok, output}
+          {:error, _reason} -> {:error, :script_print_output_is_not_one_json_document}
+        end
+
+      {_output, status} ->
+        {:error, {:script_print_mode_status, status}}
+    end
+  rescue
+    error in ErlangError -> {:error, {:script_print_mode_failed, Exception.message(error)}}
+  end
 
   defp resume_targets?(resume_signal, {repository, branch}) do
     resume_signal == "approve remote_github #{repository} #{branch} exact batch"
