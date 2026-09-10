@@ -63,8 +63,8 @@
 
 ### Governance and Exit
 
-- [ ] **GOV-01**: Public API, default-tightening, security-posture, and real SemVer-major changes stop at an explicit approval checkpoint.
-- [ ] **GOV-02**: The milestone introduces no speculative SAML protocol capability or unrelated product expansion.
+- [x] **GOV-01**: Public API, default-tightening, security-posture, and real SemVer-major changes stop at an explicit approval checkpoint.
+- [x] **GOV-02**: The milestone introduces no speculative SAML protocol capability or unrelated product expansion.
 - [ ] **EXIT-01**: Maintainer can inspect a final residual-risk assessment showing that remaining improvements are low-value, demand-gated, or costlier to maintain than the risk they retire.
 
 ## Future Requirements
@@ -124,8 +124,8 @@
 | REPO-01 | Phase 79 | Pending |
 | REPO-02 | Phase 79 | Pending |
 | REPO-03 | Phase 79 | Pending |
-| GOV-01 | Phase 73 | Gaps Found |
-| GOV-02 | Phase 73 | Gaps Found |
+| GOV-01 | Phase 73 | Complete |
+| GOV-02 | Phase 73 | Complete |
 | EXIT-01 | Phase 79 | Pending |
 
 **Coverage:**

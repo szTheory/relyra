@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-09-PLAN.md
-last_updated: "2026-09-10T14:29:09.222Z"
+stopped_at: Completed 73-10-PLAN.md
+last_updated: "2026-09-10T15:12:26.039Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 73 Plan 09 completed
-state_head: ad65e6b388f7be75862642dc5c8d3b76273ca6d0
+state_head: 65e85cc755142fc1a059bd9d62d39c2210e6e30d
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 11
-  completed_plans: 9
-  percent: 82
+  completed_plans: 10
+  percent: 91
 ---
 
 # Project State
@@ -33,11 +33,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 9 of 11
+Plan: 10 of 11
 
 Status: Ready to execute
 
-Last activity: 2026-09-10 — Phase 73 Plan 09 completed
+Last activity: 2026-09-10 — Phase 73 Plan 10 completed
 
 ## Milestone Metrics
 
@@ -91,6 +91,9 @@ Last activity: 2026-09-10 — Phase 73 Plan 09 completed
 - [Phase 73]: Accept verification text only when one anchored ASCII grammar fully consumes uppercase environment assignments and one supported Mix argv.
 - [Phase 73]: Treat actual Mix project configuration and fresh-process ExUnit registration, rather than source-shaped tuples or macros, as ownership authority.
 - [Phase 73]: Evaluate workflow fallibility and ordered path filters independently for pull requests and main pushes across every acceptance-bearing planning artifact.
+- [Phase 73]: Governance begins only after PROJECT, ROADMAP, REQUIREMENTS, and STATE establish one agreeing active v1.11 identity with a real current-phase directory and plan frontier.
+- [Phase 73]: Only exact completed paths 73-01 through 73-03 use the legacy schema; every other plan receives the current contract regardless of removable document content.
+- [Phase 73]: Completed-plan changes come from reachable exact-scope Git commits before the unique SUMMARY-add boundary; SUMMARY hashes are equality-checked but never authoritative.
 
 ### Baseline Findings
 
@@ -128,16 +131,16 @@ Last activity: 2026-09-10 — Phase 73 Plan 09 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-10T14:29:09.207Z
+**Last session:** 2026-09-10T15:12:26.021Z
 
-**Stopped at:** Completed 73-09-PLAN.md
+**Stopped at:** Completed 73-10-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Plan 73-10 to close active-plan discovery, schema selection, and completed-plan
-provenance gaps using the hardened deterministic evidence validator.
+Execute Plan 73-11 to bind singular tracked remote inputs to declared desired/current
+state and run the complete mandatory evidence lane.
 
 ## Performance Metrics
 
@@ -152,6 +155,7 @@ provenance gaps using the hardened deterministic evidence validator.
 | Phase 73 P07 | 11min | 2 tasks | 1 files |
 | Phase 73 P08 | 15min | 2 tasks | 2 files |
 | Phase 73 P09 | 39min | 2 tasks | 2 files |
+| Phase 73 P10 | 18min | 2 tasks | 1 files |
 
 ### Blockers
 
