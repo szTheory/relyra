@@ -5,16 +5,16 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-13-PLAN.md
-last_updated: "2026-09-10T22:36:20.395Z"
+stopped_at: Completed 73-14-PLAN.md
+last_updated: "2026-09-10T23:55:53.091Z"
 last_activity: 2026-09-10
-last_activity_desc: Phase 73 Plan 12 completed
-state_head: a1021055a1eeb45965d72ec294b1c013824fd125
+last_activity_desc: Phase 73 Plan 14 completed
+state_head: c93723d660932a20c2e8aad2e621491f60dddf71
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 16
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE
+Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 13 of 13
+Plan: 15 of 16
 
-Status: 1 gap-closure plan ready — execute Plan 73-13
+Status: 2 gap-closure plans ready — execute Plan 73-15
 
-Last activity: 2026-09-10 — Phase 73 Plan 12 completed
+Last activity: 2026-09-10 — Phase 73 Plan 14 completed
 
 ## Milestone Metrics
 
@@ -101,6 +101,8 @@ Last activity: 2026-09-10 — Phase 73 Plan 12 completed
 - [Phase 73]: Normalize and retain every accepted branch-protection control, treating non-declared controls as exact safe invariants shared by mutation and rollback authorization.
 - [Phase 73]: Authorize script batches from indexed executable identity plus a separately tracked static JSON result, never by launching plan-selected code.
 - [Phase 73]: Always derive completed-plan commits from ordered exact-scope Git history; manifests and SUMMARY hashes may only audit that derived set for exact equality.
+- [Phase 73]: Validate each required workflow event and every direct child-key occurrence before reducing branch or path semantics.
+- [Phase 73]: Require push branches to equal the single literal main selector and forbid pull-request activity filters entirely.
 
 ### Baseline Findings
 
@@ -138,15 +140,15 @@ Last activity: 2026-09-10 — Phase 73 Plan 12 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-10T21:25:30.098Z
+**Last session:** 2026-09-10T23:55:53.072Z
 
-**Stopped at:** Completed 73-13-PLAN.md
+**Stopped at:** Completed 73-14-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Phase 73 gap-closure Plan 13, then re-verify the phase before beginning Phase 74
+Execute Phase 73 gap-closure Plan 15, then re-verify the phase before beginning Phase 74
 clean-room package-consumer planning.
 
 ## Performance Metrics
@@ -166,6 +168,7 @@ clean-room package-consumer planning.
 | Phase 73 P11 | 18min | 2 tasks | 1 files |
 | Phase 73 P12 | 16min | 2 tasks | 2 files |
 | Phase 73 P13 | 19min | 3 tasks | 1 files |
+| Phase 73 P14 | 10min | 2 tasks | 2 files |
 
 ### Blockers
 
