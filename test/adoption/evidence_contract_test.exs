@@ -286,6 +286,12 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
   @tag :plan_73_06_task_1
   test "automated commands reject shell substitution hidden in environment assignments" do
+    assert :ok =
+             AdoptionEvidence.validate_automated_command!(
+               "ASDF_ELIXIR_VERSION=1.19.5-otp-28 mix test test/adoption/evidence_contract_test.exs --only plan_73_06_task_1 --warnings-as-errors",
+               File.cwd!()
+             )
+
     assert_raise ArgumentError, ~r/shell-shaped/, fn ->
       AdoptionEvidence.validate_automated_command!(
         "EVIL=$(id) mix ci.evidence",
@@ -296,13 +302,32 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
   @tag :plan_73_06_task_1
   test "automated commands reject filters whose effective test selection is empty" do
+    for command <- [
+          "mix test test/adoption/evidence_contract_test.exs --only plan_73_06_task_1 --exclude no_such_selector --warnings-as-errors",
+          "mix test test/adoption/evidence_contract_test.exs --only=plan_73_06_task_1 --exclude=no_such_selector --warnings-as-errors"
+        ] do
+      assert :ok = AdoptionEvidence.validate_automated_command!(command, File.cwd!())
+    end
+
     commands = [
+      "mix test test/governance/milestone_scope_test.exs --only no_such_selector --warnings-as-errors",
       "mix test test/governance/milestone_scope_test.exs --only=no_such_selector --warnings-as-errors",
-      "mix test test/governance/milestone_scope_test.exs --exclude evidence_contract --warnings-as-errors"
+      "mix test test/governance/milestone_scope_test.exs --exclude evidence_contract --warnings-as-errors",
+      "mix test test/governance/milestone_scope_test.exs --exclude=evidence_contract --warnings-as-errors"
     ]
 
     for command <- commands do
       assert_raise ArgumentError, ~r/zero selected tests/, fn ->
+        AdoptionEvidence.validate_automated_command!(command, File.cwd!())
+      end
+    end
+
+    for command <- [
+          "mix test test/adoption/evidence_contract_test.exs --only --warnings-as-errors",
+          "mix test test/adoption/evidence_contract_test.exs --only= --warnings-as-errors",
+          "mix test test/adoption/evidence_contract_test.exs --only evidence_contract --only evidence_contract --warnings-as-errors"
+        ] do
+      assert_raise ArgumentError, ~r/(missing its filter value|duplicate filter values)/, fn ->
         AdoptionEvidence.validate_automated_command!(command, File.cwd!())
       end
     end

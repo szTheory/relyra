@@ -338,15 +338,15 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   def validate_automated_command!(command, root) when is_binary(command) do
-    normalized =
-      command
-      |> String.trim()
-      |> String.replace(~r/\A(?:[A-Z_][A-Z0-9_]*=\S+\s+)*/, "")
+    raw_command = String.trim(command)
 
-    if normalized == "" or String.contains?(normalized, "\n") or
-         Regex.match?(~r/[;&|`]|\$\(/, normalized) do
+    if raw_command == "" or String.contains?(raw_command, "\n") or
+         Regex.match?(~r/[;&|`]|\$\(/, raw_command) do
       raise ArgumentError, "verification command is shell-shaped rather than one executable owner"
     end
+
+    normalized =
+      String.replace(raw_command, ~r/\A(?:[A-Z_][A-Z0-9_]*=\S+\s+)*/, "")
 
     tokens = String.split(normalized)
 
@@ -404,69 +404,78 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   defp selected_test_count!(path, selector) do
+    path
+    |> executable_test_tags!()
+    |> Enum.count(&enabled_tag?(&1, selector))
+  end
+
+  defp executable_test_tags!(path) do
     ast = path |> File.read!() |> Code.string_to_quoted!()
 
-    {module_tags, test_lines, test_tag_lines} =
-      Macro.prewalk(ast, {MapSet.new(), [], []}, fn
-        {:@, meta, [{name, _attribute_meta, arguments}]} = node,
-        {module_tags, test_lines, test_tag_lines}
-        when name in [:moduletag, :tag] ->
-          if selector_in_tag?(arguments, selector) do
-            case name do
-              :moduletag ->
-                {node, {MapSet.put(module_tags, meta[:line]), test_lines, test_tag_lines}}
-
-              :tag ->
-                {node, {module_tags, test_lines, [meta[:line] | test_tag_lines]}}
-            end
-          else
-            {node, {module_tags, test_lines, test_tag_lines}}
-          end
-
-        {:test, meta, _arguments} = node, {module_tags, test_lines, test_tag_lines} ->
-          {node, {module_tags, [meta[:line] | test_lines], test_tag_lines}}
-
-        node, accumulator ->
-          {node, accumulator}
-      end)
-      |> elem(1)
-
-    cond do
-      MapSet.size(module_tags) > 0 ->
-        length(test_lines)
-
-      true ->
-        sorted_tests = Enum.sort(test_lines)
-
-        Enum.count(sorted_tests, fn test_line ->
-          previous_test_line =
-            sorted_tests
-            |> Enum.take_while(&(&1 < test_line))
-            |> List.last(0)
-
-          Enum.any?(test_tag_lines, &(&1 > previous_test_line and &1 < test_line))
-        end)
-    end
+    ast
+    |> module_bodies()
+    |> Enum.flat_map(&module_test_tags/1)
   rescue
     error in [SyntaxError, TokenMissingError] ->
       raise ArgumentError,
             "cannot inspect executable tests in #{path}: #{Exception.message(error)}"
   end
 
-  defp test_count!(path) do
-    path
-    |> File.read!()
-    |> Code.string_to_quoted!()
-    |> Macro.prewalk(0, fn
-      {:test, _meta, _arguments} = node, count -> {node, count + 1}
-      node, count -> {node, count}
+  defp module_bodies(ast) do
+    ast
+    |> Macro.prewalker()
+    |> Enum.flat_map(fn
+      {:defmodule, _meta, [_name, [do: body]]} -> [body]
+      _node -> []
     end)
-    |> elem(1)
-  rescue
-    error in [SyntaxError, TokenMissingError] ->
-      raise ArgumentError,
-            "cannot inspect executable tests in #{path}: #{Exception.message(error)}"
   end
+
+  defp module_test_tags(body) do
+    expressions = if match?({:__block__, _, _}, body), do: elem(body, 2), else: [body]
+
+    module_tags =
+      Enum.reduce(expressions, %{}, fn
+        {:@, _meta, [{:moduletag, _attribute_meta, arguments}]}, tags ->
+          Map.merge(tags, literal_tags(arguments))
+
+        _expression, tags ->
+          tags
+      end)
+
+    {_pending_tags, tests} =
+      Enum.reduce(expressions, {%{}, []}, fn
+        {:@, _meta, [{:tag, _attribute_meta, arguments}]}, {pending_tags, tests} ->
+          {Map.merge(pending_tags, literal_tags(arguments)), tests}
+
+        {:test, _meta, _arguments}, {pending_tags, tests} ->
+          {%{}, [Map.merge(module_tags, pending_tags) | tests]}
+
+        _expression, accumulator ->
+          accumulator
+      end)
+
+    Enum.reverse(tests)
+  end
+
+  defp literal_tags([tag]) when is_atom(tag), do: %{Atom.to_string(tag) => true}
+
+  defp literal_tags([tags]) when is_list(tags) do
+    Enum.reduce(tags, %{}, fn
+      {key, value}, parsed when is_atom(key) and is_atom(value) ->
+        Map.put(parsed, Atom.to_string(key), value)
+
+      {key, value}, parsed when is_atom(key) and is_binary(value) ->
+        Map.put(parsed, Atom.to_string(key), value)
+
+      {key, value}, parsed when is_atom(key) and is_number(value) ->
+        Map.put(parsed, Atom.to_string(key), value)
+
+      _unsupported, parsed ->
+        parsed
+    end)
+  end
+
+  defp literal_tags(_arguments), do: %{}
 
   defp validate_direct_test_command!(arguments, root) do
     unless "--warnings-as-errors" in arguments do
@@ -481,23 +490,26 @@ defmodule Relyra.AdoptionEvidence do
       raise ArgumentError, "direct test command names no executable test owner path"
     end
 
-    selector = option_value(arguments, "--only")
+    {includes, exclusions} = parse_test_filters!(arguments)
 
     selected =
       Enum.reduce(owner_paths, 0, fn owner, count ->
         owner_path = repository_path!(root, owner)
 
-        count +
-          if selector do
-            selected_test_count!(owner_path, selector)
-          else
-            test_count!(owner_path)
-          end
+        effective_count =
+          owner_path
+          |> executable_test_tags!()
+          |> Enum.count(fn tags ->
+            Enum.all?(includes, &filter_matches?(tags, &1)) and
+              not Enum.any?(exclusions, &filter_matches?(tags, &1))
+          end)
+
+        count + effective_count
       end)
 
     if selected == 0 do
-      suffix = if selector, do: " for selector #{selector}", else: ""
-      raise ArgumentError, "direct test command has zero selected tests#{suffix}"
+      raise ArgumentError,
+            "direct test command has zero selected tests after include/exclusion filters"
     end
   end
 
@@ -517,14 +529,86 @@ defmodule Relyra.AdoptionEvidence do
     end
   end
 
-  defp option_value(arguments, option) do
-    arguments
-    |> Enum.with_index()
-    |> Enum.find_value(fn
-      {^option, index} -> Enum.at(arguments, index + 1)
-      _other -> nil
-    end)
+  defp parse_test_filters!(arguments) do
+    {includes, exclusions} = collect_test_filters!(arguments, [], [])
+    reject_duplicate_filters!(includes, "--only")
+    reject_duplicate_filters!(exclusions, "--exclude")
+    {Enum.reverse(includes), Enum.reverse(exclusions)}
   end
+
+  defp collect_test_filters!([], includes, exclusions), do: {includes, exclusions}
+
+  defp collect_test_filters!([option | rest], includes, exclusions)
+       when option in ["--only", "--exclude"] do
+    case rest do
+      [value | remaining] when value != "" ->
+        if String.starts_with?(value, "-") do
+          raise ArgumentError, "#{option} is missing its filter value"
+        end
+
+        filter = parse_filter!(option, value)
+
+        if option == "--only" do
+          collect_test_filters!(remaining, [filter | includes], exclusions)
+        else
+          collect_test_filters!(remaining, includes, [filter | exclusions])
+        end
+
+      _other ->
+        raise ArgumentError, "#{option} is missing its filter value"
+    end
+  end
+
+  defp collect_test_filters!([argument | rest], includes, exclusions) do
+    cond do
+      String.starts_with?(argument, "--only=") ->
+        value = String.replace_prefix(argument, "--only=", "")
+        collect_test_filters!(rest, [parse_filter!("--only", value) | includes], exclusions)
+
+      String.starts_with?(argument, "--exclude=") ->
+        value = String.replace_prefix(argument, "--exclude=", "")
+        collect_test_filters!(rest, includes, [parse_filter!("--exclude", value) | exclusions])
+
+      true ->
+        collect_test_filters!(rest, includes, exclusions)
+    end
+  end
+
+  defp parse_filter!(option, ""),
+    do: raise(ArgumentError, "#{option} is missing its filter value")
+
+  defp parse_filter!(option, value) do
+    case String.split(value, ":", parts: 2) do
+      [key] when key != "" -> {key, :enabled}
+      [key, expected] when key != "" and expected != "" -> {key, expected}
+      _other -> raise ArgumentError, "#{option} has invalid filter value #{inspect(value)}"
+    end
+  end
+
+  defp reject_duplicate_filters!(filters, option) do
+    if length(filters) != length(Enum.uniq(filters)) do
+      raise ArgumentError, "#{option} has duplicate filter values"
+    end
+  end
+
+  defp filter_matches?(tags, {key, :enabled}), do: enabled_tag?(tags, key)
+
+  defp filter_matches?(tags, {key, expected}) do
+    case Map.fetch(tags, key) do
+      {:ok, value} -> tag_value_string(value) == expected
+      :error -> false
+    end
+  end
+
+  defp enabled_tag?(tags, key) do
+    case Map.fetch(tags, key) do
+      {:ok, value} -> value not in [false, nil]
+      :error -> false
+    end
+  end
+
+  defp tag_value_string(value) when is_atom(value), do: Atom.to_string(value)
+  defp tag_value_string(value), do: to_string(value)
 
   defp repository_path!(root, owner) do
     expanded_root = Path.expand(root)
@@ -536,14 +620,6 @@ defmodule Relyra.AdoptionEvidence do
     end
 
     expanded_owner
-  end
-
-  defp selector_in_tag?(arguments, selector) do
-    Macro.prewalk(arguments, false, fn
-      atom, found when is_atom(atom) -> {atom, found or Atom.to_string(atom) == selector}
-      node, found -> {node, found}
-    end)
-    |> elem(1)
   end
 
   defp mix_aliases!(path) do
