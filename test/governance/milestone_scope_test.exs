@@ -46,13 +46,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       |> Enum.flat_map(fn phase ->
         ".planning/phases/#{phase}-*/*-PLAN.md"
         |> Path.wildcard()
-        |> Enum.reject(&executed_plan?/1)
-        |> Enum.flat_map(fn path ->
-          path
-          |> File.read!()
-          |> plan_scope_violations()
-          |> Enum.map(&"#{path}: #{&1}")
-        end)
+        |> repository_plan_violations()
       end)
 
     assert violations == [],
@@ -1792,6 +1786,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp repository_plan_violations(plan_paths, changed_surfaces_by_plan \\ %{}) do
     Enum.flat_map(plan_paths, fn plan_path ->
+      markdown = File.read!(plan_path)
+
       case repository_changed_surfaces(plan_path, changed_surfaces_by_plan) do
         {:ok, changes} ->
           changed_classes =
@@ -1801,15 +1797,37 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             end)
             |> Enum.uniq()
 
-          plan_path
-          |> File.read!()
-          |> plan_scope_violations(changed_classes)
+          markdown
+          |> repository_plan_scope_violations(changed_classes)
+          |> Enum.map(&"#{plan_path}: #{&1}")
 
         {:error, reason} ->
-          plan_violations = plan_path |> File.read!() |> plan_scope_violations()
+          plan_violations =
+            markdown
+            |> repository_plan_scope_violations([])
+            |> Enum.map(&"#{plan_path}: #{&1}")
+
           plan_violations ++ ["#{plan_path} completed-plan diff provenance #{reason}"]
       end
     end)
+  end
+
+  defp repository_plan_scope_violations(markdown, changed_classes) do
+    if tag_sections(markdown, "demand_gated_exclusions") == [] do
+      legacy_plan_scope_violations(markdown)
+    else
+      plan_scope_violations(markdown, changed_classes)
+    end
+  end
+
+  defp legacy_plan_scope_violations(markdown) do
+    tasks = plan_tasks(markdown)
+    validated_tasks = Enum.filter(tasks, &valid_task_type?/1)
+
+    task_type_violations(tasks) ++
+      deterministic_verification_violations(validated_tasks) ++
+      manual_acceptance_violations(markdown) ++
+      orphan_checkpoint_violations(validated_tasks)
   end
 
   defp repository_changed_surfaces(plan_path, changed_surfaces_by_plan) do
