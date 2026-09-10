@@ -75,6 +75,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 | 2026-09-09 | 14 | 11 | 3 | GSD security auditor |
 | 2026-09-09 | 14 | 13 | 1 non-blocking | OpenAI Codex after dependency remediation |
 | 2026-09-09 | 14 | 13 | 1 non-blocking | ASVS L1 gap-closure recheck (registry short-circuit) |
+| 2026-09-09 | 14 | 13 | 1 non-blocking | ASVS L1 post-execution recheck; no new summary threat flags |
 
 ---
 
@@ -85,4 +86,4 @@ These dependency findings are not reclassified as accepted risks and are not con
 - [x] `threats_open: 0` confirmed
 - [x] `status: verified` set in frontmatter
 
-**Approval:** verified at the configured ASVS L1 threshold — the high-severity dependency advisory is remediated and the mandatory security lane passes. `T-73-12` remains below the blocking threshold for later fixture hardening. The separate Nyquist/code-review implementation gaps remain phase-completion blockers and are not reclassified as accepted security risks here.
+**Approval:** verified at the configured ASVS L1 threshold — the high-severity dependency advisory is remediated and the mandatory security lane passes. `T-73-12` remains below the blocking threshold for later fixture hardening. Gap-closure execution introduced no new threat flags, and the Nyquist coverage gaps are closed.
