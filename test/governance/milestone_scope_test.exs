@@ -1352,6 +1352,149 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     root
   end
 
+  defp completed_plan_git_fixture(variant \\ :clean) do
+    root = Path.join(System.tmp_dir!(), "relyra-plan-git-#{System.unique_integer([:positive])}")
+    phase_dir = Path.join(root, ".planning/phases/73-twin-contract-and-baseline")
+    plan_path = Path.join(phase_dir, "73-99-PLAN.md")
+    summary_path = Path.join(phase_dir, "73-99-SUMMARY.md")
+    File.mkdir_p!(Path.join(root, "lib"))
+    File.mkdir_p!(phase_dir)
+    on_exit(fn -> File.rm_rf!(root) end)
+
+    git_fixture!(root, ["init", "-q"])
+    git_fixture!(root, ["config", "user.email", "governance@example.invalid"])
+    git_fixture!(root, ["config", "user.name", "Governance Fixture"])
+    File.write!(plan_path, no_risk_plan_fixture())
+    File.write!(Path.join(root, "README.md"), "baseline\n")
+
+    File.write!(
+      Path.join(root, "lib/relyra.ex"),
+      "def start_login(connection, relay_context, opts \\\\ [])\n"
+    )
+
+    fixture_commit!(root, ["."], "chore: initialize provenance fixture")
+
+    implementation_commits =
+      if variant == :empty_implementation do
+        []
+      else
+        File.write!(Path.join(root, "README.md"), "baseline\nharmless task\n")
+        harmless = fixture_commit!(root, ["README.md"], "test(73-99): harmless task")
+
+        File.write!(
+          Path.join(root, "lib/relyra.ex"),
+          "def start_login(connection, relay_context, policy, opts \\\\ [])\n"
+        )
+
+        scope = if variant == :foreign_scope, do: "73-98", else: "73-99"
+        risky = fixture_commit!(root, ["lib/relyra.ex"], "fix(#{scope}): risky task")
+        [harmless, risky]
+      end
+
+    File.write!(Path.join(root, "foreign.txt"), "foreign\n")
+    foreign = fixture_commit!(root, ["foreign.txt"], "chore(other): unrelated task")
+
+    claimed =
+      case {variant, implementation_commits} do
+        {:omitted, [harmless, _risky]} -> [harmless]
+        {:duplicate, [harmless, risky]} -> [harmless, risky, risky]
+        {:foreign, commits} -> commits ++ [foreign]
+        {:unresolved, commits} -> commits ++ ["deadbeef"]
+        {_other, commits} -> commits
+      end
+
+    File.write!(summary_path, fixture_summary(claimed))
+
+    completion_commit =
+      if variant == :missing_boundary do
+        nil
+      else
+        fixture_commit!(
+          root,
+          [Path.relative_to(summary_path, root)],
+          "docs(73-99): complete fixture plan"
+        )
+      end
+
+    if variant == :duplicate_boundary do
+      git_fixture!(root, ["rm", Path.relative_to(summary_path, root)])
+      git_fixture!(root, ["commit", "-q", "-m", "docs(73-99): remove fixture summary"])
+
+      File.write!(summary_path, fixture_summary(claimed))
+
+      fixture_commit!(
+        root,
+        [Path.relative_to(summary_path, root)],
+        "docs(73-99): re-add fixture summary"
+      )
+    end
+
+    case variant do
+      :malformed_manifest ->
+        File.mkdir_p!(Path.join(root, ".planning"))
+        File.write!(Path.join(root, ".planning/.phase-manifest.json"), "{not-json")
+
+      :unreachable_manifest ->
+        File.mkdir_p!(Path.join(root, ".planning"))
+
+        File.write!(
+          Path.join(root, ".planning/.phase-manifest.json"),
+          Jason.encode!(%{
+            "phases" => %{
+              "73" => %{
+                "plans" => %{
+                  "73-99" => %{"commits" => [String.duplicate("a", 40), completion_commit]}
+                }
+              }
+            }
+          })
+        )
+
+      _other ->
+        :ok
+    end
+
+    %{
+      root: root,
+      plan_path: plan_path,
+      implementation_commits: implementation_commits,
+      completion_commit: completion_commit
+    }
+  end
+
+  defp fixture_summary(commits) do
+    entries =
+      commits
+      |> Enum.with_index(1)
+      |> Enum.map_join("\n", fn {commit, index} -> "#{index}. **Task** — `#{commit}` (fix)" end)
+
+    """
+    ---
+    status: complete
+    ---
+    # Fixture Summary
+
+    ## Task Commits
+
+    #{entries}
+
+    ## Complete
+    """
+  end
+
+  defp fixture_commit!(root, paths, subject) do
+    git_fixture!(root, ["add" | paths])
+    git_fixture!(root, ["commit", "-q", "-m", subject])
+    root |> git_fixture!(["rev-parse", "HEAD"]) |> String.trim()
+  end
+
+  defp git_fixture!(root, args) do
+    case System.cmd("git", ["-C", root | args], stderr_to_stdout: true) do
+      {output, 0} -> output
+      {output, status} -> flunk("git fixture command failed (#{status}): #{output}")
+    end
+  end
+
   defp mutate_file(root, relative, mutation) do
     path = Path.join(root, relative)
     File.write!(path, mutation.(File.read!(path)))
@@ -2483,7 +2626,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     Enum.flat_map(plan_paths, fn plan_path ->
       markdown = File.read!(plan_path)
 
-      case repository_changed_surfaces(plan_path, changed_surfaces_by_plan) do
+      case repository_changed_surfaces(identity.root, plan_path, changed_surfaces_by_plan) do
         {:ok, changes} ->
           changed_classes =
             changes
@@ -2537,15 +2680,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       orphan_checkpoint_violations(validated_tasks)
   end
 
-  defp repository_changed_surfaces(plan_path, changed_surfaces_by_plan) do
+  defp repository_changed_surfaces(root, plan_path, changed_surfaces_by_plan) do
     cond do
       Map.has_key?(changed_surfaces_by_plan, plan_path) ->
         validate_changed_surfaces(Map.fetch!(changed_surfaces_by_plan, plan_path))
 
       executed_plan?(plan_path) ->
-        plan_path
-        |> String.replace_suffix("-PLAN.md", "-SUMMARY.md")
-        |> summary_changed_surfaces()
+        case completed_plan_provenance(root, plan_path) do
+          {:ok, provenance} -> {:ok, provenance.changes}
+          {:error, reasons, _provenance} -> {:error, Enum.join(reasons, "; ")}
+          {:error, reasons} -> {:error, Enum.join(reasons, "; ")}
+        end
 
       true ->
         {:ok, []}
@@ -2569,40 +2714,189 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp validate_changed_surfaces(_changes), do: {:error, "is malformed"}
 
-  defp summary_changed_surfaces(summary_path) do
-    with {:ok, summary} <- File.read(summary_path),
-         commits when commits != [] <- summary_task_commits(summary),
-         {:ok, changes} <- commit_changed_surfaces(commits) do
-      {:ok, changes}
-    else
-      [] -> {:error, "is absent"}
-      {:error, _reason} -> {:error, "is malformed"}
-    end
-  end
-
   defp summary_task_commits(summary) do
     case Regex.run(~r/^## Task Commits\s*(.*?)(?=^## |\z)/ms, summary, capture: :all_but_first) do
       [section] ->
         ~r/`([0-9a-f]{7,40})`/
         |> Regex.scan(section, capture: :all_but_first)
         |> Enum.map(fn [commit] -> commit end)
-        |> Enum.uniq()
 
       nil ->
         []
     end
   end
 
-  defp commit_changed_surfaces(commits) do
+  defp completed_plan_provenance(root, plan_path) do
+    plan_id = plan_path |> Path.basename() |> String.replace_suffix("-PLAN.md", "")
+    summary_path = String.replace_suffix(plan_path, "-PLAN.md", "-SUMMARY.md")
+    summary_relative = Path.relative_to(summary_path, root)
+
+    with {:ok, [boundary]} <- completion_boundaries(root, summary_relative, plan_id),
+         {:ok, trusted_commits} <- trusted_plan_commits(root, plan_id, boundary),
+         :ok <- validate_trusted_commits(root, trusted_commits, boundary, plan_id),
+         {:ok, changes} <- commit_changed_surfaces(root, trusted_commits) do
+      provenance = %{commits: trusted_commits, changes: changes, completion_boundary: boundary}
+
+      case summary_commit_cross_check(root, summary_path, trusted_commits) do
+        {:ok, summary_commits} ->
+          {:ok, Map.put(provenance, :summary_commits, summary_commits)}
+
+        {:error, violations, summary_commits} ->
+          {:error, violations, Map.put(provenance, :summary_commits, summary_commits)}
+      end
+    else
+      {:ok, boundaries} ->
+        {:error, ["completion boundary must be unique; found #{length(boundaries)}"]}
+
+      {:error, reasons} ->
+        {:error, List.wrap(reasons)}
+    end
+  end
+
+  defp completion_boundaries(root, summary_relative, plan_id) do
+    with {:ok, rows} <-
+           git_lines(root, ["log", "--format=%H%x09%s", "--diff-filter=A", "--", summary_relative]) do
+      boundaries =
+        Enum.flat_map(rows, fn row ->
+          case String.split(row, "\t", parts: 2) do
+            [commit, subject] -> if conventional_scope(subject) == plan_id, do: [commit], else: []
+            _other -> []
+          end
+        end)
+
+      {:ok, boundaries}
+    end
+  end
+
+  defp trusted_plan_commits(root, plan_id, boundary) do
+    manifest_path = Path.join(root, ".planning/.phase-manifest.json")
+
+    if File.exists?(manifest_path) do
+      with {:ok, json} <- File.read(manifest_path),
+           {:ok, manifest} <- Jason.decode(json),
+           commits when is_list(commits) <-
+             get_in(manifest, ["phases", "73", "plans", plan_id, "commits"]),
+           true <- Enum.all?(commits, &is_binary/1) do
+        {:ok, Enum.reject(commits, &(&1 == boundary))}
+      else
+        _other -> {:error, ["phase manifest is malformed for #{plan_id}"]}
+      end
+    else
+      with {:ok, rows} <- git_lines(root, ["log", "--reverse", "--format=%H%x09%s", boundary]) do
+        commits =
+          Enum.flat_map(rows, fn row ->
+            case String.split(row, "\t", parts: 2) do
+              [commit, subject] when commit != boundary ->
+                if conventional_scope(subject) == plan_id, do: [commit], else: []
+
+              _other ->
+                []
+            end
+          end)
+
+        {:ok, commits}
+      end
+    end
+  end
+
+  defp validate_trusted_commits(root, commits, boundary, plan_id) do
+    violations =
+      []
+      |> add_if(commits == [], "trusted implementation set is empty for #{plan_id}")
+      |> add_if(duplicated?(commits), "trusted implementation set contains duplicate commits")
+
+    violations =
+      Enum.reduce(commits, violations, fn commit, found ->
+        found
+        |> add_unless(
+          git_success?(root, ["merge-base", "--is-ancestor", commit, "HEAD"]),
+          "commit #{commit} is not reachable from HEAD"
+        )
+        |> add_unless(
+          git_success?(root, ["merge-base", "--is-ancestor", commit, boundary]),
+          "commit #{commit} is not on completion boundary ancestry"
+        )
+        |> add_unless(
+          commit_scope(root, commit) == plan_id,
+          "commit #{commit} has foreign plan scope"
+        )
+      end)
+
+    if violations == [], do: :ok, else: {:error, violations}
+  end
+
+  defp summary_commit_cross_check(root, summary_path, trusted_commits) do
+    claimed =
+      case File.read(summary_path) do
+        {:ok, summary} -> summary_task_commits(summary)
+        {:error, _reason} -> []
+      end
+
+    {resolved, resolution_violations} =
+      Enum.map_reduce(claimed, [], fn claim, violations ->
+        case resolve_commit(root, claim) do
+          {:ok, commit} -> {commit, violations}
+          {:error, reason} -> {claim, violations ++ [reason]}
+        end
+      end)
+
+    omitted = trusted_commits -- resolved
+    foreign = resolved -- trusted_commits
+
+    violations =
+      resolution_violations
+      |> add_if(duplicated?(resolved), "SUMMARY Task Commits contains duplicate hashes")
+      |> add_if(omitted != [], "SUMMARY Task Commits omitted #{Enum.join(omitted, ", ")}")
+      |> add_if(
+        foreign != [],
+        "SUMMARY Task Commits contains foreign hashes #{Enum.join(foreign, ", ")}"
+      )
+      |> add_if(
+        resolved != trusted_commits and omitted == [] and foreign == [],
+        "SUMMARY Task Commits ordering is ambiguous"
+      )
+
+    if violations == [], do: {:ok, resolved}, else: {:error, violations, resolved}
+  end
+
+  defp resolve_commit(root, claim) do
+    with {:ok, candidates} <- git_lines(root, ["rev-parse", "--disambiguate=#{claim}"]),
+         [candidate] <- candidates,
+         true <- git_success?(root, ["cat-file", "-e", "#{candidate}^{commit}"]) do
+      {:ok, candidate}
+    else
+      [] -> {:error, "SUMMARY Task Commits contains unresolved hash #{claim}"}
+      [_ | _] -> {:error, "SUMMARY Task Commits contains ambiguous hash #{claim}"}
+      _other -> {:error, "SUMMARY Task Commits contains unresolved hash #{claim}"}
+    end
+  end
+
+  defp conventional_scope(subject) do
+    case Regex.run(~r/^[a-z]+\(([^)]+)\)!?: /, subject, capture: :all_but_first) do
+      [scope] -> scope
+      nil -> nil
+    end
+  end
+
+  defp commit_scope(root, commit) do
+    case System.cmd("git", ["-C", root, "show", "-s", "--format=%s", commit],
+           stderr_to_stdout: true
+         ) do
+      {subject, 0} -> subject |> String.trim() |> conventional_scope()
+      _other -> nil
+    end
+  end
+
+  defp commit_changed_surfaces(root, commits) do
     Enum.reduce_while(commits, {:ok, []}, fn commit, {:ok, changes} ->
-      case commit_paths(commit) do
+      case commit_paths(root, commit) do
         {:ok, paths} ->
           commit_changes =
             Enum.map(paths, fn path ->
               %{
                 path: path,
-                before: git_file_at("#{commit}^", path),
-                after: git_file_at(commit, path)
+                before: git_file_at(root, "#{commit}^", path),
+                after: git_file_at(root, commit, path)
               }
             end)
 
@@ -2614,8 +2908,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp commit_paths(commit) do
-    case System.cmd("git", ["diff-tree", "--no-commit-id", "--name-only", "-r", commit],
+  defp commit_paths(root, commit) do
+    case System.cmd(
+           "git",
+           ["-C", root, "diff-tree", "--no-commit-id", "--name-only", "-r", commit],
            stderr_to_stdout: true
          ) do
       {output, 0} -> {:ok, String.split(output, "\n", trim: true)}
@@ -2623,12 +2919,26 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp git_file_at(revision, path) do
-    case System.cmd("git", ["show", "#{revision}:#{path}"], stderr_to_stdout: true) do
+  defp git_file_at(root, revision, path) do
+    case System.cmd("git", ["-C", root, "show", "#{revision}:#{path}"], stderr_to_stdout: true) do
       {content, 0} -> content
       {_output, _status} -> ""
     end
   end
+
+  defp git_lines(root, args) do
+    case System.cmd("git", ["-C", root | args], stderr_to_stdout: true) do
+      {output, 0} -> {:ok, String.split(output, "\n", trim: true)}
+      {output, _status} -> {:error, ["git provenance command failed: #{String.trim(output)}"]}
+    end
+  end
+
+  defp git_success?(root, args) do
+    match?({_output, 0}, System.cmd("git", ["-C", root | args], stderr_to_stdout: true))
+  end
+
+  defp add_if(violations, true, diagnostic), do: violations ++ [diagnostic]
+  defp add_if(violations, false, _diagnostic), do: violations
 
   defp attribute_value(attributes, name) do
     case Regex.run(~r/(?:^|\s)#{Regex.escape(name)}="([^"]*)"/, attributes,
