@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: gaps_found
-nyquist_compliant: false
+status: validated
+nyquist_compliant: true
 wave_0_complete: true
 created: "2026-09-09"
 revised: "2026-09-10"
@@ -10,7 +10,7 @@ revised: "2026-09-10"
 
 # Phase 73 — Validation Strategy
 
-> Final deterministic evidence map after Plans 73-01 through 73-11 and the post-merge working-directory isolation repair.
+> Final deterministic evidence map after Plans 73-01 through 73-13 and the post-merge working-directory isolation repair.
 
 ## Test Infrastructure
 
@@ -20,8 +20,8 @@ revised: "2026-09-10"
 | **Config file** | `config/test.exs` |
 | **Mandatory owner** | `mix ci.evidence` runs both Phase 73 contract modules in one fresh process with `--only evidence_contract --warnings-as-errors` |
 | **Required workflow** | `.github/workflows/security-gates.yml`, `jobs.security` → `Evidence contract` → `mix ci.evidence` |
-| **Focused ownership** | Plan/task tags from `plan_73_06_task_1` through `plan_73_11_task_2`, plus `cwd_isolation` for the post-merge race regression |
-| **Environment** | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1` prefixes Mix verification commands |
+| **Focused ownership** | Plan/task tags from `plan_73_06_task_1` through `plan_73_13_task_3`, plus `cwd_isolation` for the post-merge race regression |
+| **Environment** | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1` prefixes Mix verification commands |
 | **Workflow syntax** | `actionlint .github/workflows/security-gates.yml` |
 | **Repository closeout context** | Exact full-suite seed `778220`: 864 tests; the sole failure is the explicitly deferred Phase 77 documentation-vocabulary assertion and is not a Phase 73 Nyquist gap |
 
@@ -64,28 +64,33 @@ Every command is deterministic, non-watch, network-independent, and selected by 
 | 73-10-01 | GOV-01, GOV-02 | Cross-source identity and immutable path-based schema dispatch | `mix test test/governance/milestone_scope_test.exs --only plan_73_10_task_1 --warnings-as-errors` | green (2) |
 | 73-10-02 | GOV-01 | Git-derived ancestry, completion boundary, diffs, and SUMMARY cross-check | `mix test test/governance/milestone_scope_test.exs --only plan_73_10_task_2 --warnings-as-errors` | green (3) |
 | 73-11-01 | GOV-01 | Singular fields and tracked JSON normalized to desired/current state | `mix test test/governance/milestone_scope_test.exs --only plan_73_11_task_1 --warnings-as-errors` | green (2) |
-| 73-11-02 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Indexed script print-state equality and complete integration | `mix test test/governance/milestone_scope_test.exs --only plan_73_11_task_2 --warnings-as-errors && mix ci.evidence` | green (2 focused; 70 integration) |
+| 73-11-02 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Indexed script provenance and complete integration | `mix test test/governance/milestone_scope_test.exs --only plan_73_11_task_2 --warnings-as-errors && mix ci.evidence` | green (2 focused; 82 integration) |
+| 73-12-01 | EVID-01, EVID-02 | Actual `ci.evidence` alias parsing and positive effective selection for every owner after include/exclude filters | `mix test test/adoption/evidence_contract_test.exs --only plan_73_12_task_1 --warnings-as-errors` | green (3) |
+| 73-12-02 | EVID-02 | Pull-request and main-push triggers reject positive paths and cannot ignore any tracked governed input | `mix test test/adoption/evidence_contract_test.exs --only plan_73_12_task_2 --warnings-as-errors` | green (3) |
+| 73-13-01 | QUAL-01, PIPE-01, GOV-01 | Complete branch-protection state retains and validates every accepted control | `mix test test/governance/milestone_scope_test.exs --only plan_73_13_task_1 --warnings-as-errors` | green (2) |
+| 73-13-02 | GOV-01 | Indexed script identity binds to tracked static result evidence without executing plan-selected code | `mix test test/governance/milestone_scope_test.exs --only plan_73_13_task_2 --warnings-as-errors` | green (2) |
+| 73-13-03 | GOV-01, GOV-02 | Git derives the complete ordered exact-scope commit set; manifest and SUMMARY are equality audits only | `mix test test/governance/milestone_scope_test.exs --only plan_73_13_task_3 --warnings-as-errors` | green (2) |
 | post-merge-cwd | EVID-02 | Fixture alias inspection never mutates VM-global cwd | `mix test test/adoption/evidence_contract_test.exs --only cwd_isolation --warnings-as-errors` | green (1) |
 
 ## Automation and Safety Boundaries
 
 - `mix ci.evidence` is mandatory in `jobs.security` for pull requests, pushes to `main`, and planning-only changes; its owner is unconditional and non-fallible.
 - External canaries remain visible but cannot close deterministic acceptance.
-- Remote fixtures perform local parsing, git/filesystem inspection, and allowlisted print-only execution; they never query or mutate GitHub.
+- Remote fixtures perform only local parsing, git/filesystem inspection, and tracked static-result validation; they never execute plan-selected mutation code or query or mutate GitHub.
 - Approval checkpoints authorize mutations only and never count as completion evidence.
 - No manual-only, watch-mode, network-dependent, or human-needed gate closes a Phase 73 criterion.
 
 ## Validation Sign-Off
 
-- [ ] All 6 Phase 73 requirements map to complete deterministic behavioral tests in a mandatory CI lane.
-- [x] All 23 acceptance-bearing tasks across 11 completed plans map to executable commands.
-- [x] Every dedicated Plan 73-06 through 73-11 selector has a non-zero selected set.
-- [x] The complete owner lane passes 70 tests across both contract modules.
+- [x] All 6 Phase 73 requirements map to complete deterministic behavioral tests in a mandatory CI lane.
+- [x] All 28 acceptance-bearing tasks across 13 completed plans map to executable commands.
+- [x] Every dedicated Plan 73-06 through 73-13 selector has a non-zero selected set.
+- [x] The complete owner lane passes 82 tests across both contract modules.
 - [x] The post-merge cwd-race regression passes independently.
 - [x] Workflow syntax passes `actionlint`.
 - [x] The sole exact-seed full-suite failure is owned by Phase 77 and is not a Phase 73 gap.
 
-**Approval:** Phase 73 is not Nyquist-compliant. All planned tasks have executable commands, but code review and goal verification confirmed five uncovered fail-open behaviors affecting EVID-02, GOV-01, and GOV-02.
+**Approval:** Phase 73 is Nyquist-compliant. Plans 73-12 and 73-13 close the five previously confirmed fail-open behaviors with focused adversarial tests, and the complete 82-test mandatory owner lane passes.
 
 ## Validation Audit 2026-09-10 — Final 11-Plan Coverage
 
@@ -116,3 +121,29 @@ Audit commands executed on 2026-09-10:
 | Nyquist compliant | no |
 
 The green 70-test lane does not cover empty-effective alias selection, complete governed workflow paths, complete branch-protection state comparison, non-executing script validation, or equality between manifest and Git-derived commit provenance. See `73-REVIEW.md` and `73-VERIFICATION.md`.
+
+## Validation Audit 2026-09-10 — Gap Closure Refresh
+
+| Metric | Count |
+|--------|-------|
+| Phase requirements mapped | 6/6 |
+| Completed plans mapped | 13/13 |
+| Acceptance-bearing tasks mapped | 28/28 |
+| Previously confirmed behavioral gaps | 5 |
+| Gaps resolved | 5 |
+| Escalated | 0 |
+| Mandatory evidence tests | 82 passing |
+| Workflow syntax errors | 0 |
+| Nyquist compliant | yes |
+
+Audit commands executed on 2026-09-10 with Elixir 1.19.5 / OTP 28.1:
+
+- `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1 mix test test/adoption/evidence_contract_test.exs --only plan_73_12_task_1 --warnings-as-errors` — 3 tests, 0 failures.
+- `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1 mix test test/adoption/evidence_contract_test.exs --only plan_73_12_task_2 --warnings-as-errors` — 3 tests, 0 failures.
+- `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1 mix test test/governance/milestone_scope_test.exs --only plan_73_13_task_1 --warnings-as-errors` — 2 tests, 0 failures.
+- `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1 mix test test/governance/milestone_scope_test.exs --only plan_73_13_task_2 --warnings-as-errors` — 2 tests, 0 failures.
+- `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1 mix test test/governance/milestone_scope_test.exs --only plan_73_13_task_3 --warnings-as-errors` — 2 tests, 0 failures.
+- `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1 mix ci.evidence` — 82 tests, 0 failures.
+- `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1 mix format --check-formatted` — exit 0.
+- `actionlint .github/workflows/security-gates.yml` — exit 0.
+- `git diff --check` — exit 0.
