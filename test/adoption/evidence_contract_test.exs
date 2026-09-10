@@ -524,6 +524,97 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_09_task_2
+  test "security job ownership is absent-or-literal-false fallible" do
+    entries = AdoptionEvidence.entries()
+
+    root = repository_fixture!()
+    workflow_path = Path.join(root, @workflow_path)
+
+    File.write!(
+      workflow_path,
+      String.replace(
+        File.read!(workflow_path),
+        "  security:\n",
+        "  security:\n    continue-on-error: false\n",
+        global: false
+      )
+    )
+
+    assert :ok = AdoptionEvidence.validate_repository!(entries, root)
+
+    for value <- ["true", "${{ github.ref != '' }}", ~s("false")] do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+
+      File.write!(
+        workflow_path,
+        String.replace(
+          File.read!(workflow_path),
+          "  security:\n",
+          "  security:\n    continue-on-error: #{value}\n",
+          global: false
+        )
+      )
+
+      assert_raise ArgumentError, ~r/jobs\.security.*continue-on-error/s, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
+    end
+  end
+
+  @tag :plan_73_09_task_2
+  test "alternate paths-ignore patterns cannot suppress planning evidence" do
+    entries = AdoptionEvidence.entries()
+
+    for pattern <- [".planning/*", ".planning/**", ".planning/**/*", ".planning/**/**", "**"] do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+
+      File.write!(
+        workflow_path,
+        replace_pull_request_filter(File.read!(workflow_path), "paths-ignore", [pattern])
+      )
+
+      assert_raise ArgumentError, ~r/pull_request.*\.planning\//s, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
+    end
+  end
+
+  @tag :plan_73_09_task_2
+  test "ordered paths exclusions fail and later positive patterns re-include" do
+    entries = AdoptionEvidence.entries()
+    excluded_root = repository_fixture!()
+    excluded_workflow_path = Path.join(excluded_root, @workflow_path)
+
+    File.write!(
+      excluded_workflow_path,
+      replace_pull_request_filter(File.read!(excluded_workflow_path), "paths", [
+        "**",
+        "!.planning/**"
+      ])
+    )
+
+    assert_raise ArgumentError, ~r/pull_request.*\.planning\//s, fn ->
+      AdoptionEvidence.validate_repository!(entries, excluded_root)
+    end
+
+    included_root = repository_fixture!()
+    included_workflow_path = Path.join(included_root, @workflow_path)
+
+    File.write!(
+      included_workflow_path,
+      replace_pull_request_filter(File.read!(included_workflow_path), "paths", [
+        "**",
+        "!.planning/**",
+        ".planning/**"
+      ])
+    )
+
+    assert :ok = AdoptionEvidence.validate_repository!(entries, included_root)
+  end
+
   defp active_requirements do
     @requirements_path
     |> File.read!()
@@ -593,7 +684,20 @@ defmodule Relyra.Adoption.EvidenceContractTest do
   end
 
   defp fixture_evidence_step do
-    "cmd mix test test/adoption/evidence_contract_test.exs --only evidence_contract --warnings-as-errors"
+    "cmd mix test test/adoption/evidence_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --warnings-as-errors"
+  end
+
+  defp replace_pull_request_filter(workflow, key, patterns) do
+    replacement =
+      ["  pull_request:", "    #{key}:"] ++
+        Enum.map(patterns, &"      - \"#{&1}\"")
+
+    String.replace(
+      workflow,
+      "  pull_request:\n    paths-ignore:\n      - \"prompts/**\"",
+      Enum.join(replacement, "\n"),
+      global: false
+    )
   end
 
   defp fixture_mix_project(actual_steps) do
