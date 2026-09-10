@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: validated
-nyquist_compliant: true
+status: gaps_found
+nyquist_compliant: false
 wave_0_complete: true
 created: "2026-09-09"
 revised: "2026-09-10"
@@ -77,7 +77,7 @@ Every command is deterministic, non-watch, network-independent, and selected by 
 
 ## Validation Sign-Off
 
-- [x] All 6 Phase 73 requirements map to deterministic behavioral tests in a mandatory CI lane.
+- [ ] All 6 Phase 73 requirements map to complete deterministic behavioral tests in a mandatory CI lane.
 - [x] All 23 acceptance-bearing tasks across 11 completed plans map to executable commands.
 - [x] Every dedicated Plan 73-06 through 73-11 selector has a non-zero selected set.
 - [x] The complete owner lane passes 70 tests across both contract modules.
@@ -85,7 +85,7 @@ Every command is deterministic, non-watch, network-independent, and selected by 
 - [x] Workflow syntax passes `actionlint`.
 - [x] The sole exact-seed full-suite failure is owned by Phase 77 and is not a Phase 73 gap.
 
-**Approval:** Phase 73 is Nyquist-compliant. No genuine validation gap remains.
+**Approval:** Phase 73 is not Nyquist-compliant. All planned tasks have executable commands, but code review and goal verification confirmed five uncovered fail-open behaviors affecting EVID-02, GOV-01, and GOV-02.
 
 ## Validation Audit 2026-09-10 — Final 11-Plan Coverage
 
@@ -105,3 +105,14 @@ Audit commands executed on 2026-09-10:
 - `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence` — 70 tests, 0 failures.
 - `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix test test/adoption/evidence_contract_test.exs --only cwd_isolation --warnings-as-errors` — 1 test, 0 failures.
 - `actionlint .github/workflows/security-gates.yml` — exit 0.
+
+## Validation Audit 2026-09-10 — Post-Review Correction
+
+| Metric | Count |
+|--------|-------|
+| Planned tasks with executable commands | 23/23 |
+| Critical behavioral gaps confirmed | 5 |
+| Requirements blocked | 3 |
+| Nyquist compliant | no |
+
+The green 70-test lane does not cover empty-effective alias selection, complete governed workflow paths, complete branch-protection state comparison, non-executing script validation, or equality between manifest and Git-derived commit provenance. See `73-REVIEW.md` and `73-VERIFICATION.md`.
