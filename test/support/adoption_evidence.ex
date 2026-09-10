@@ -848,30 +848,77 @@ defmodule Relyra.AdoptionEvidence do
   defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
 
   defp required_planning_triggers!(lines, root) do
-    pull_request_index = Enum.find_index(lines, &Regex.match?(~r/^  pull_request:\s*$/, &1))
-    push_index = Enum.find_index(lines, &Regex.match?(~r/^  push:\s*$/, &1))
+    pull_request = required_event_contract!(lines, "pull_request", ~w(paths paths-ignore))
+    push = required_event_contract!(lines, "push", ~w(branches paths paths-ignore))
 
-    unless is_integer(pull_request_index) do
-      raise ArgumentError, "workflow is missing the required pull_request event"
-    end
+    branch_patterns = path_filter_values!(push, "branches", allow_missing?: false)
 
-    unless is_integer(push_index) do
-      raise ArgumentError, "workflow is missing the required main push event"
-    end
-
-    pull_request = indented_block(lines, pull_request_index, 2)
-    push = indented_block(lines, push_index, 2)
-
-    branch_patterns = path_filter_values!(push, "branches", allow_missing?: true)
-
-    if is_list(branch_patterns) and "main" not in branch_patterns do
-      raise ArgumentError, "workflow push event does not include the main branch"
+    unless branch_patterns == ["main"] do
+      raise ArgumentError,
+            "workflow push must select exactly one positive main branch; got: #{inspect(branch_patterns)}"
     end
 
     governed_inputs = governed_inputs!(root)
     validate_required_paths!("pull_request", pull_request, governed_inputs)
     validate_required_paths!("push", push, governed_inputs)
     true
+  end
+
+  defp required_event_contract!(lines, event, allowed_keys) do
+    occurrences =
+      lines
+      |> Enum.with_index()
+      |> Enum.filter(fn {line, _index} ->
+        indentation(line) == 2 and
+          Regex.match?(~r/^  #{Regex.escape(event)}:/, line)
+      end)
+
+    {header, event_index} =
+      case occurrences do
+        [] ->
+          raise ArgumentError, "workflow is missing the required #{event} event"
+
+        [occurrence] ->
+          occurrence
+
+        _many ->
+          raise ArgumentError, "workflow #{event} event must be declared exactly once"
+      end
+
+    unless Regex.match?(~r/^  #{Regex.escape(event)}:\s*$/, header) do
+      raise ArgumentError, "workflow #{event} event must use a mapping block"
+    end
+
+    event_lines = indented_block(lines, event_index, 2)
+
+    keys =
+      event_lines
+      |> Enum.filter(&(indentation(&1) == 4 and String.trim(&1) != ""))
+      |> Enum.map(fn line ->
+        case Regex.run(~r/^    ([A-Za-z0-9_-]+):/, line, capture: :all_but_first) do
+          [key] -> key
+          nil -> raise ArgumentError, "workflow #{event} contains an unsupported direct entry"
+        end
+      end)
+
+    duplicates =
+      keys
+      |> Enum.frequencies()
+      |> Enum.filter(fn {_key, count} -> count > 1 end)
+      |> Enum.map(&elem(&1, 0))
+      |> Enum.sort()
+
+    if duplicates != [] do
+      raise ArgumentError,
+            "workflow #{event} has duplicate direct key(s): #{Enum.join(duplicates, ", ")}"
+    end
+
+    case Enum.find(keys, &(&1 not in allowed_keys)) do
+      nil -> :ok
+      key -> raise ArgumentError, "workflow #{event} has unsupported key #{key}"
+    end
+
+    event_lines
   end
 
   defp validate_required_paths!(event, trigger, governed_inputs) do
