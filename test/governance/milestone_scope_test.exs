@@ -1790,10 +1790,119 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       File.exists?(String.replace_suffix(path, "-PLAN.md", "-SUMMARY.md"))
   end
 
-  defp repository_plan_violations(plan_paths, _changed_surfaces_by_plan \\ %{}) do
-    plan_paths
-    |> Enum.reject(&executed_plan?/1)
-    |> Enum.flat_map(&(File.read!(&1) |> plan_scope_violations()))
+  defp repository_plan_violations(plan_paths, changed_surfaces_by_plan \\ %{}) do
+    Enum.flat_map(plan_paths, fn plan_path ->
+      case repository_changed_surfaces(plan_path, changed_surfaces_by_plan) do
+        {:ok, changes} ->
+          changed_classes =
+            changes
+            |> Enum.flat_map(fn change ->
+              changed_surface_classes(change.path, change.before, change.after)
+            end)
+            |> Enum.uniq()
+
+          plan_path
+          |> File.read!()
+          |> plan_scope_violations(changed_classes)
+
+        {:error, reason} ->
+          plan_violations = plan_path |> File.read!() |> plan_scope_violations()
+          plan_violations ++ ["#{plan_path} completed-plan diff provenance #{reason}"]
+      end
+    end)
+  end
+
+  defp repository_changed_surfaces(plan_path, changed_surfaces_by_plan) do
+    cond do
+      Map.has_key?(changed_surfaces_by_plan, plan_path) ->
+        validate_changed_surfaces(Map.fetch!(changed_surfaces_by_plan, plan_path))
+
+      executed_plan?(plan_path) ->
+        plan_path
+        |> String.replace_suffix("-PLAN.md", "-SUMMARY.md")
+        |> summary_changed_surfaces()
+
+      true ->
+        {:ok, []}
+    end
+  end
+
+  defp validate_changed_surfaces(changes) when is_list(changes) do
+    if Enum.all?(changes, fn
+         %{path: path, before: before_content, after: after_content}
+         when is_binary(path) and is_binary(before_content) and is_binary(after_content) ->
+           true
+
+         _other ->
+           false
+       end) do
+      {:ok, changes}
+    else
+      {:error, "is malformed"}
+    end
+  end
+
+  defp validate_changed_surfaces(_changes), do: {:error, "is malformed"}
+
+  defp summary_changed_surfaces(summary_path) do
+    with {:ok, summary} <- File.read(summary_path),
+         commits when commits != [] <- summary_task_commits(summary),
+         {:ok, changes} <- commit_changed_surfaces(commits) do
+      {:ok, changes}
+    else
+      [] -> {:error, "is absent"}
+      {:error, _reason} -> {:error, "is malformed"}
+    end
+  end
+
+  defp summary_task_commits(summary) do
+    case Regex.run(~r/^## Task Commits\s*(.*?)(?=^## |\z)/ms, summary, capture: :all_but_first) do
+      [section] ->
+        ~r/`([0-9a-f]{7,40})`/
+        |> Regex.scan(section, capture: :all_but_first)
+        |> Enum.map(fn [commit] -> commit end)
+        |> Enum.uniq()
+
+      nil ->
+        []
+    end
+  end
+
+  defp commit_changed_surfaces(commits) do
+    Enum.reduce_while(commits, {:ok, []}, fn commit, {:ok, changes} ->
+      case commit_paths(commit) do
+        {:ok, paths} ->
+          commit_changes =
+            Enum.map(paths, fn path ->
+              %{
+                path: path,
+                before: git_file_at("#{commit}^", path),
+                after: git_file_at(commit, path)
+              }
+            end)
+
+          {:cont, {:ok, changes ++ commit_changes}}
+
+        {:error, reason} ->
+          {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp commit_paths(commit) do
+    case System.cmd("git", ["diff-tree", "--no-commit-id", "--name-only", "-r", commit],
+           stderr_to_stdout: true
+         ) do
+      {output, 0} -> {:ok, String.split(output, "\n", trim: true)}
+      {_output, _status} -> {:error, "cannot resolve task commit #{commit}"}
+    end
+  end
+
+  defp git_file_at(revision, path) do
+    case System.cmd("git", ["show", "#{revision}:#{path}"], stderr_to_stdout: true) do
+      {content, 0} -> content
+      {_output, _status} -> ""
+    end
   end
 
   defp attribute_value(attributes, name) do
