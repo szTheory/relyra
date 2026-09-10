@@ -407,7 +407,24 @@ defmodule Relyra.AdoptionEvidence do
       |> Code.compile_file()
       |> Enum.flat_map(fn {module, _binary} ->
         if function_exported?(module, :__ex_unit__, 0) do
-          module.__ex_unit__().tests |> Enum.map(& &1.tags)
+          module.__ex_unit__().tests
+          |> Enum.map(fn test ->
+            Map.new(test.tags, fn {key, value} ->
+              normalized_value =
+                cond do
+                  is_boolean(value) or is_nil(value) or is_binary(value) or is_number(value) ->
+                    value
+
+                  is_atom(value) ->
+                    Atom.to_string(value)
+
+                  true ->
+                    inspect(value, limit: :infinity)
+                end
+
+              {Atom.to_string(key), normalized_value}
+            end)
+          end)
         else
           []
         end
@@ -443,7 +460,7 @@ defmodule Relyra.AdoptionEvidence do
            ),
          {:ok, binary} <- Base.decode64(encoded),
          tags when is_list(tags) <- :erlang.binary_to_term(binary, [:safe]) do
-      Enum.map(tags, fn tags -> Map.new(tags, fn {key, value} -> {to_string(key), value} end) end)
+      tags
     else
       _other ->
         raise ArgumentError,
