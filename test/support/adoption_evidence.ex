@@ -722,7 +722,7 @@ defmodule Relyra.AdoptionEvidence do
          [step] <- named_steps(steps, step_name),
          ^command <- property_at_indent(step, "run", 8),
          nil <- property_at_indent(step, "if", 8),
-         :ok <- blocking_fallibility!(step, 8, "Evidence contract step"),
+         true <- blocking_fallibility?(step, 8),
          true <- required_planning_triggers!(lines) do
       true
     else
@@ -770,6 +770,15 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   defp blocking_fallibility!(lines, indent, scope) do
+    if blocking_fallibility?(lines, indent) do
+      :ok
+    else
+      raise ArgumentError,
+            "#{scope} continue-on-error must be absent or the literal boolean false"
+    end
+  end
+
+  defp blocking_fallibility?(lines, indent) do
     values =
       lines
       |> Enum.filter(&(indentation(&1) == indent))
@@ -780,12 +789,7 @@ defmodule Relyra.AdoptionEvidence do
         end
       end)
 
-    if values in [[], ["false"]] do
-      :ok
-    else
-      raise ArgumentError,
-            "#{scope} continue-on-error must be absent or the literal boolean false"
-    end
+    values in [[], ["false"]]
   end
 
   defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
