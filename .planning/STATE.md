@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
-status: ready_to_execute
-stopped_at: Planned Phase 73 gap closure through 73-08-PLAN.md
-last_updated: "2026-09-10T00:40:43.462Z"
+status: executing
+stopped_at: Completed 73-06-PLAN.md
+last_updated: "2026-09-10T01:07:52.391Z"
 last_activity: 2026-09-09
-last_activity_desc: Phase 73 gap-closure Plans 06-08 created
-state_head: 8d99b3aea9051ae8fe19caebfba1a52ddd85dda3
+last_activity_desc: Phase 73 Plan 06 completed
+state_head: 39ad76c292f39919b469c5a5703804d9a5bff563
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 5
-  percent: 63
+  completed_plans: 6
+  percent: 75
 ---
 
 # Project State
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE GAP CLOSURE
+Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 5 of 8
+Plan: 6 of 8
 
-Status: Gap-closure Plans 73-06 through 73-08 are ready to execute
+Status: Executing Phase 73 gap closure
 
-Last activity: 2026-09-09 — Phase 73 gap-closure Plans 06-08 created
+Last activity: 2026-09-09 — Phase 73 Plan 06 completed
 
 ## Milestone Metrics
 
@@ -80,6 +80,8 @@ Last activity: 2026-09-09 — Phase 73 gap-closure Plans 06-08 created
 - [Phase 73]: Remote approval is one parsed reversible batch bound to the same repository, branch, checks, and captured state. — Keyword prose cannot authorize an ambiguous or non-reversible remote mutation.
 - [Phase 73]: Demand-gated identifiers are allowed only in the exact plan-level exclusion and fixture-data regions. — Task names, files, and actions have no negation or policy-prose exemption.
 - [Phase 73]: Each baseline finding requires one complete allowed repository or executable verification reference. — Arbitrary non-empty provenance prose cannot satisfy the baseline contract.
+- [Phase 73]: Model direct-test ownership as enabled include-tag intersection minus matching exclusions, rejecting an empty effective set.
+- [Phase 73]: Treat the Evidence contract as mandatory only when jobs.security has one exact unconditional step with absent or literal-false fallibility.
 
 ### Baseline Findings
 
@@ -117,15 +119,15 @@ Last activity: 2026-09-09 — Phase 73 gap-closure Plans 06-08 created
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T21:29:22.105Z
+**Last session:** 2026-09-10T01:07:52.373Z
 
-**Stopped at:** Completed 73-05-PLAN.md
+**Stopped at:** Completed 73-06-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Phase 73 gap-closure Plans 73-06 through 73-08, then re-run verification against
+Execute Phase 73 gap-closure Plans 73-07 and 73-08, then re-run verification against
 the eight completed plan summaries and mandatory evidence contract.
 
 ## Performance Metrics
@@ -137,6 +139,7 @@ the eight completed plan summaries and mandatory evidence contract.
 | Phase 73 P03 | 17min | 2 tasks | 4 files |
 | Phase 73 P04 | 12min | 2 tasks | 3 files |
 | Phase 73 P05 | 24min | 3 tasks | 1 files |
+| Phase 73 P06 | 9min | 2 tasks | 2 files |
 
 ### Blockers
 
