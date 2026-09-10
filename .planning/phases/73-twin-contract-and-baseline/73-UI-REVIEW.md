@@ -6,22 +6,23 @@
 
 **Baseline:** abstract 6-pillar standards; no Phase 73 UI-SPEC exists
 
-**Screenshots:** not captured; no HTTP 200 dev server was detected on ports 3000, 5173, or 8080
+**Screenshots:** not captured; no HTTP 200 dev server was detected on ports 3000,
+5173, or 8080 (port 8080 returned a redirect, not an auditable Phase 73 UI)
 
 ---
 
 ## Scope Determination
 
-Phase 73 is a governance, evidence-contract, CI-wiring, and planning-baseline phase. The
-complete implementation commit span (`fd93f59^..0bfdcbc`) contains no `.tsx`, `.jsx`,
-`.css`, `.scss`, or `.heex` changes. Its changed implementation surfaces are Elixir test
-support, ExUnit contracts, `mix.exs`, and the security workflow; the remaining changes
-are planning artifacts. The plans and summaries likewise declare no frontend artifact,
-user interface behavior, design system change, or UI acceptance criterion.
+Phase 73 implements an internal evidence ledger, ExUnit governance contracts, Mix/CI
+wiring, and planning baseline artifacts. All eight plans and summaries constrain their
+changed implementation surfaces to Elixir test support, ExUnit tests, `mix.exs`, the
+security workflow, and planning documents. The complete phase diff contains no `.tsx`,
+`.jsx`, `.css`, `.scss`, `.heex`, `.leex`, `.eex`, `.html`, `.vue`, or `.svelte` change.
 
-Because no implemented frontend was submitted by this phase, assigning numeric scores
-would misrepresent untested UI quality. All six pillars are therefore explicitly not
-applicable rather than scored upward by default.
+The repository does contain pre-existing LedgerLoop HEEx/CSS and brandbook HTML/CSS,
+but none was modified by Phase 73. Auditing those surfaces would assess unrelated work,
+not what this phase built. Numeric scores, BLOCKERs, WARNINGs, and priority UI fixes
+would therefore be fabricated; all six pillars are explicitly not applicable.
 
 ---
 
@@ -29,22 +30,22 @@ applicable rather than scored upward by default.
 
 | Pillar | Score | Evidence |
 |--------|-------|----------|
-| 1. Copywriting | N/A | No user-visible copy was added or changed in the Phase 73 commit span. |
-| 2. Visuals | N/A | No template, component, stylesheet, or visual asset was added or changed. |
-| 3. Color | N/A | No color token, CSS rule, or frontend class usage was added or changed. |
-| 4. Typography | N/A | No typography token, CSS rule, or rendered text style was added or changed. |
-| 5. Spacing | N/A | No layout markup or spacing rule was added or changed. |
-| 6. Experience Design | N/A | No interactive user flow, UI state, or control was added or changed. |
+| 1. Copywriting | N/A | No user-visible copy, frontend template, or UI copy contract was added or changed. |
+| 2. Visuals | N/A | No component, template, image, or other rendered visual surface was added or changed. |
+| 3. Color | N/A | No stylesheet, color token, CSS rule, or frontend color class was added or changed. |
+| 4. Typography | N/A | No typography token, font declaration, or rendered text style was added or changed. |
+| 5. Spacing | N/A | No layout markup, spacing token, or frontend spacing rule was added or changed. |
+| 6. Experience Design | N/A | No interactive control, user journey, or loading/error/empty UI state was added or changed. |
 
-**Overall: N/A (no UI implementation in scope)**
+**Overall: N/A (no UI implementation in Phase 73 scope)**
 
 ---
 
 ## Top 3 Priority Fixes
 
-None. There are no Phase 73 UI defects to classify as BLOCKER or WARNING. UI findings
-against pre-existing LedgerLoop or LiveView surfaces would be outside this phase's plan
-and would not describe what Phase 73 built.
+None. There are no Phase 73 UI defects to classify. UI recommendations for the
+pre-existing LedgerLoop demo or brandbook belong to a phase that changes those
+surfaces.
 
 ---
 
@@ -52,48 +53,49 @@ and would not describe what Phase 73 built.
 
 ### Pillar 1: Copywriting (N/A)
 
-No finding. Plan 73-01 defines a test-only evidence ledger and CI owner
-(`73-01-PLAN.md:123-125`), Plan 73-02 defines a quality/CI baseline
-(`73-02-PLAN.md:98-117`), and Plan 73-03 modifies the governance contract only
-(`73-03-PLAN.md:8-9`). None declares user-visible copy.
+No finding. Plan 73-01 creates a test-only evidence ledger and CI contract
+(`73-01-PLAN.md:7-11`, `73-01-SUMMARY.md:22-23`). Plans 73-02 through 73-08 continue
+with governance tests and planning artifacts; none declares user-visible copy.
 
 ### Pillar 2: Visuals (N/A)
 
-No finding. The phase diff contains no frontend template, component, stylesheet, or
-image change. The summaries enumerate test, CI, Mix, and planning files only
-(`73-01-SUMMARY.md:82-87`, `73-02-SUMMARY.md:85-91`,
-`73-03-SUMMARY.md:90-94`).
+No finding. The phase changed-file scan returned zero frontend/template/style files.
+The last three implementation summaries enumerate only adoption/governance tests and
+the Markdown baseline (`73-06-SUMMARY.md:24`, `73-07-SUMMARY.md:24`,
+`73-08-SUMMARY.md:23`).
 
 ### Pillar 3: Color (N/A)
 
-No finding. There are no Phase 73 CSS or frontend-class changes to compare with a color
-contract, and no Phase 73 UI-SPEC exists.
+No finding. There is no Phase 73 UI-SPEC, color contract, CSS change, or frontend class
+usage to measure. Existing brandbook and LedgerLoop styles are outside the phase diff.
 
 ### Pillar 4: Typography (N/A)
 
-No finding. There are no Phase 73 typography declarations or rendered UI text styles to
-audit.
+No finding. No Phase 73 artifact defines or renders typography.
 
 ### Pillar 5: Spacing (N/A)
 
-No finding. There are no Phase 73 layout templates or spacing declarations to audit.
+No finding. No Phase 73 artifact defines frontend layout or spacing.
 
 ### Pillar 6: Experience Design (N/A)
 
-No finding. Phase 73 implements deterministic repository evidence and governance rather
-than an interactive user journey. Plan 73-03 explicitly characterizes its scope as
-test/config/planning only (`73-03-PLAN.md:189`), and its summary describes plan parsing
-and fixtures as test-only (`73-03-SUMMARY.md:144`).
+No finding. The context defines the phase boundary as evidence, baseline, and
+governance enforcement (`73-CONTEXT.md:8-12`). Plans 73-06 through 73-08 explicitly
+produce no runtime/UI surface (`73-06-PLAN.md:232`, `73-07-PLAN.md:235`,
+`73-08-PLAN.md:284`).
 
 ---
 
 ## Files Audited
 
-- `73-01-PLAN.md`, `73-02-PLAN.md`, and `73-03-PLAN.md`
-- `73-01-SUMMARY.md`, `73-02-SUMMARY.md`, and `73-03-SUMMARY.md`
-- `.planning/ROADMAP.md` Phase 73 scope and success criteria
-- Complete Phase 73 changed-file list from `git diff --name-only fd93f59^..0bfdcbc`
-- Repository frontend footprint for `.tsx`, `.jsx`, `.css`, `.scss`, and `.heex` files
+- `73-01-PLAN.md` through `73-08-PLAN.md`
+- `73-01-SUMMARY.md` through `73-08-SUMMARY.md`
+- `73-CONTEXT.md`
+- Existing `73-UI-REVIEW.md`
+- Complete Phase 73 changed-file list from `git diff --name-only fd93f59^..b167512`
+- Repository frontend footprint for `.tsx`, `.jsx`, `.css`, `.scss`, `.heex`, `.leex`,
+  `.eex`, `.html`, `.vue`, and `.svelte` files, checked only to distinguish pre-existing
+  UI from Phase 73 changes
 
-Registry safety audit was not applicable: `components.json` is absent and there is no
-Phase 73 UI-SPEC declaring third-party registries.
+Registry safety audit was not applicable: `components.json` is absent and no Phase 73
+UI-SPEC declares third-party registries.
