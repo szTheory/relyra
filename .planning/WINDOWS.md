@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 9
-total_count: 11
-last_updated: 2026-09-10T01:49:00.025Z
+fixed_count: 11
+total_count: 13
+last_updated: 2026-09-10T19:13:17.194Z
 ---
 
 # Broken Windows Ledger
@@ -26,6 +26,8 @@ last_updated: 2026-09-10T01:49:00.025Z
 | 9 | 73 | deviation | .planning/STATE.md |  | Corrected state.update-progress reset from 5/5 to 0 percent and stale Plan 04 execution prose after Plan 73-05 closeout | fixed |  | 2026-09-09T21:30:40.548Z | 2026-09-09T21:30:40.645Z |
 | 10 | 73 | deviation | test/governance/milestone_scope_test.exs |  | Existing target-mismatch controls required valid closed-grammar operations before target comparison | fixed |  | 2026-09-10T01:48:36.141Z | 2026-09-10T01:48:59.891Z |
 | 11 | 73 | deviation | .planning/STATE.md |  | SDK closeout reset YAML progress and duplicated decision phase prefixes | fixed |  | 2026-09-10T01:48:36.283Z | 2026-09-10T01:49:00.025Z |
+| 12 | 73 | deviation | test/governance/milestone_scope_test.exs |  | Kept the inherited appended-command regression on a script-backed fixture | fixed |  | 2026-09-10T19:12:23.779Z | 2026-09-10T19:13:17.107Z |
+| 13 | 73 | deviation | .planning/STATE.md |  | Reconciled final-plan SDK progress reset and stale next-step prose | fixed |  | 2026-09-10T19:13:03.017Z | 2026-09-10T19:13:17.194Z |
 
 ````json
 [
@@ -160,6 +162,30 @@ last_updated: 2026-09-10T01:49:00.025Z
     "reason": "",
     "recorded_at": "2026-09-10T01:48:36.283Z",
     "resolved_at": "2026-09-10T01:49:00.025Z"
+  },
+  {
+    "id": 12,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "test/governance/milestone_scope_test.exs",
+    "line": null,
+    "description": "Kept the inherited appended-command regression on a script-backed fixture",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-10T19:12:23.779Z",
+    "resolved_at": "2026-09-10T19:13:17.107Z"
+  },
+  {
+    "id": 13,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "Reconciled final-plan SDK progress reset and stale next-step prose",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-10T19:13:03.017Z",
+    "resolved_at": "2026-09-10T19:13:17.194Z"
   }
 ]
 ````
