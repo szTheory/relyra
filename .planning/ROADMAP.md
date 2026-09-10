@@ -75,7 +75,7 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 8/8 plans executed
+**Plans:** 8/11 plans executed
 
 Plans:
 **Wave 1**
@@ -106,6 +106,15 @@ Plans:
 **Wave 7** *(blocked on Wave 6 completion)*
 
 - [x] 73-08-PLAN.md — Close single-operation remote authorization and tracked/executable baseline provenance gaps.
+
+**Wave 8** *(gap closure; blocked on Wave 7 completion; Plans 09 and 10 may execute in parallel)*
+
+- [ ] 73-09-PLAN.md — Close non-shell command, real Mix/ExUnit owner, job fallibility, and GitHub path-filter gaps.
+- [ ] 73-10-PLAN.md — Bind active governance and completed-plan changed surfaces to trusted project and git execution identity.
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
+- [ ] 73-11-PLAN.md — Bind singular tracked remote inputs to declared desired/current state and run the complete mandatory evidence lane.
 
 ### Phase 74: Clean-Room Package Consumer
 
@@ -255,7 +264,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
-| 73. Twin Contract and Baseline | v1.11 | 8/8 | In Progress|  |
+| 73. Twin Contract and Baseline | v1.11 | 8/11 | In Progress|  |
 | 74. Clean-Room Package Consumer | v1.11 | 0/TBD | Not started | — |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |
