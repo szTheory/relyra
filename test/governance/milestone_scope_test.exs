@@ -399,6 +399,39 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  @tag :plan_73_11_task_2
+  test "script-backed mutation is bound to one indexed executable print result" do
+    %{plan: clean, root: root} = remote_plan_fixture(:script)
+    assert plan_scope_violations(clean, [], root) == []
+
+    controls = [
+      {:untracked, "untracked-script.sh"},
+      {:symlink, "script-link.sh"},
+      {:directory, "script-dir"},
+      {:non_executable, "executable"},
+      {:changed_after_index, "indexed"},
+      {:unsupported_print_mode, "print"},
+      {:nonzero, "status"},
+      {:malformed, "malformed"},
+      {:extra_output, "output"},
+      {:stderr, "stderr"},
+      {:state_mismatch, "desired_state"}
+    ]
+
+    for {variant, diagnostic} <- controls do
+      %{plan: invalid, root: invalid_root} = remote_script_control_fixture(variant)
+      assert_plan_violation(invalid, "remote_github", diagnostic, invalid_root)
+    end
+  end
+
+  @tag :plan_73_11_task_2
+  test "real branch protection script exposes the declared desired state without mutation" do
+    %{plan: plan, root: root} = remote_plan_fixture(:script)
+
+    assert plan_scope_violations(plan, [], root) == []
+    refute File.exists?(Path.join(root, "remote-mutation-ran"))
+  end
+
   test "approval cannot be borrowed across plans or concurrent branches" do
     approving_plan = risky_plan_fixture("public_api")
     mutation_only = remove_checkpoint(approving_plan)
@@ -1451,6 +1484,98 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     }
     |> Map.merge(extras)
     |> Jason.encode!()
+  end
+
+  defp remote_script_control_fixture(variant) do
+    %{plan: plan, root: root} = remote_plan_fixture(:script)
+    script = Path.join(root, "scripts/setup_branch_protection.sh")
+    valid = local_print_script(branch_protection_json(true, desired_checks()))
+
+    {plan, tracked_paths} =
+      case variant do
+        :untracked ->
+          relative = "scripts/untracked-script.sh"
+          File.write!(Path.join(root, relative), valid)
+          File.chmod!(Path.join(root, relative), 0o755)
+          {String.replace(plan, "scripts/setup_branch_protection.sh", relative), []}
+
+        :symlink ->
+          relative = "scripts/script-link.sh"
+          File.ln_s!("setup_branch_protection.sh", Path.join(root, relative))
+          git_fixture!(root, ["add", relative])
+          {String.replace(plan, "scripts/setup_branch_protection.sh", relative), []}
+
+        :directory ->
+          relative = "scripts/script-dir"
+          File.mkdir_p!(Path.join(root, relative))
+          {String.replace(plan, "scripts/setup_branch_protection.sh", relative), []}
+
+        :non_executable ->
+          File.chmod!(script, 0o644)
+          {plan, ["scripts/setup_branch_protection.sh"]}
+
+        :changed_after_index ->
+          File.write!(script, valid)
+          git_fixture!(root, ["add", "scripts/setup_branch_protection.sh"])
+          File.write!(script, valid <> "\necho changed\n")
+          {plan, []}
+
+        :unsupported_print_mode ->
+          {write_control_script(
+             script,
+             "#!/bin/sh\n[ \"$1\" = \"--different-mode\" ] || exit 91\n"
+           ), ["scripts/setup_branch_protection.sh"]}
+          |> then(fn {_ignored, paths} -> {plan, paths} end)
+
+        :nonzero ->
+          File.write!(script, "#!/bin/sh\nexit 19\n")
+          {plan, ["scripts/setup_branch_protection.sh"]}
+
+        :malformed ->
+          File.write!(script, local_print_script("{malformed"))
+          {plan, ["scripts/setup_branch_protection.sh"]}
+
+        :extra_output ->
+          File.write!(
+            script,
+            local_print_script(branch_protection_json(true, desired_checks())) <> "echo extra\n"
+          )
+
+          {plan, ["scripts/setup_branch_protection.sh"]}
+
+        :stderr ->
+          File.write!(
+            script,
+            local_print_script(branch_protection_json(true, desired_checks())) <>
+              "echo warning >&2\n"
+          )
+
+          {plan, ["scripts/setup_branch_protection.sh"]}
+
+        :state_mismatch ->
+          File.write!(script, local_print_script(branch_protection_json(true, current_checks())))
+          {plan, ["scripts/setup_branch_protection.sh"]}
+      end
+
+    if tracked_paths != [] do
+      File.chmod!(script, if(variant == :non_executable, do: 0o644, else: 0o755))
+      git_fixture!(root, ["add" | tracked_paths])
+    end
+
+    %{plan: plan, root: root}
+  end
+
+  defp write_control_script(path, contents) do
+    File.write!(path, contents)
+    path
+  end
+
+  defp local_print_script(json) do
+    """
+    #!/bin/sh
+    [ "$1" = "--print-expected-json" ] || exit 90
+    printf '%s\\n' '#{json}'
+    """
   end
 
   defp replace_fixture_command(plan, command) do
