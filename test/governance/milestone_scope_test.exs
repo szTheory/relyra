@@ -36,6 +36,133 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @risk_values ~w(unchanged mutation)
   @task_types ~w(tracer auto checkpoint:decision checkpoint:human-verify checkpoint:human-action)
   @demand_gated_exclusions ~w(AUTHN-POST-01 KMS-01 SIGNED-META-01)
+  @phase_73_requirements ~w(EVID-01 EVID-02 QUAL-01 PIPE-01 GOV-01 GOV-02)
+
+  @tag :plan_73_10_task_1
+  test "active v1.11 discovery is closed, non-vacuous, and cross-source consistent" do
+    root = governance_repository_fixture()
+
+    assert {:ok, identity} = validated_governance_identity(root)
+    assert identity.milestone_version == "v1.11"
+    assert identity.milestone_name == "First-Adopter Twin"
+    assert identity.current_phase == "73"
+    assert identity.phase_requirements["73"] == MapSet.new(@phase_73_requirements)
+    assert identity.plan_paths != []
+
+    controls = [
+      {"missing active milestone",
+       fn root ->
+         mutate_file(root, ".planning/ROADMAP.md", &String.replace(&1, "- Active:", "- Current:"))
+       end},
+      {"active phase set is empty",
+       fn root ->
+         mutate_file(
+           root,
+           ".planning/ROADMAP.md",
+           &Regex.replace(~r/^- \[ \] \*\*Phase 7[3-9]:.*\n/m, &1, "")
+         )
+       end},
+      {"STATE milestone",
+       fn root ->
+         mutate_file(
+           root,
+           ".planning/STATE.md",
+           &String.replace(&1, "milestone: v1.11", "milestone: v9.9")
+         )
+       end},
+      {"STATE current phase",
+       fn root ->
+         mutate_file(
+           root,
+           ".planning/STATE.md",
+           &String.replace(&1, "current_phase: 73", "current_phase: 74")
+         )
+       end},
+      {"PROJECT current milestone",
+       fn root ->
+         mutate_file(
+           root,
+           ".planning/PROJECT.md",
+           &String.replace(&1, "## Current Milestone: v1.11", "## Current Milestone: v9.9")
+         )
+       end},
+      {"Phase 73 requirement set",
+       fn root ->
+         mutate_file(
+           root,
+           ".planning/ROADMAP.md",
+           &String.replace(&1, "GOV-01, GOV-02", "GOV-01", global: false)
+         )
+       end},
+      {"malformed phase checkbox",
+       fn root ->
+         mutate_file(
+           root,
+           ".planning/ROADMAP.md",
+           &String.replace(&1, "- [ ] **Phase 73:", "- [-] **Phase 73:")
+         )
+       end},
+      {"duplicate phase identity",
+       fn root ->
+         mutate_file(root, ".planning/ROADMAP.md", fn roadmap ->
+           roadmap <> "\n- [ ] **Phase 73: Duplicate** — invalid duplicate.\n"
+         end)
+       end},
+      {"tracked phase directory",
+       fn root ->
+         File.rename!(
+           Path.join(root, ".planning/phases/73-twin-contract-and-baseline"),
+           Path.join(root, ".planning/phases/73-renamed")
+         )
+       end},
+      {"current phase PLAN",
+       fn root ->
+         root
+         |> Path.join(".planning/phases/73-twin-contract-and-baseline/73-10-PLAN.md")
+         |> File.rm!()
+       end}
+    ]
+
+    for {diagnostic, mutation} <- controls do
+      fixture = governance_repository_fixture()
+      mutation.(fixture)
+      assert {:error, violations} = validated_governance_identity(fixture)
+
+      assert Enum.any?(violations, &String.contains?(&1, diagnostic)),
+             "expected #{diagnostic}, got: #{inspect(violations)}"
+    end
+  end
+
+  @tag :plan_73_10_task_1
+  test "trusted plan identity selects only the three immutable legacy paths" do
+    root = governance_repository_fixture()
+    assert {:ok, identity} = validated_governance_identity(root)
+
+    for plan <- ~w(01 02 03) do
+      path = Path.join(root, ".planning/phases/73-twin-contract-and-baseline/73-#{plan}-PLAN.md")
+      File.write!(path, "<tasks></tasks>\n")
+      File.write!(String.replace_suffix(path, "-PLAN.md", "-SUMMARY.md"), "status: complete\n")
+      assert repository_plan_schema(identity, path) == :legacy
+    end
+
+    current_path = hd(identity.plan_paths)
+    current = File.read!(current_path)
+
+    without_exclusions =
+      Regex.replace(~r/<demand_gated_exclusions>.*?<\/demand_gated_exclusions>/s, current, "")
+
+    assert repository_plan_schema(identity, current_path) == :current
+
+    assert Enum.any?(
+             repository_plan_scope_violations(identity, current_path, without_exclusions, []),
+             &(&1 =~ "demand_gated_exclusions")
+           )
+
+    renamed = Path.join(root, ".planning/phases/73-twin-contract-and-baseline/73-03-copy-PLAN.md")
+    File.write!(renamed, "<tasks></tasks>\n")
+    File.write!(String.replace_suffix(renamed, "-PLAN.md", "-SUMMARY.md"), "status: complete\n")
+    assert repository_plan_schema(identity, renamed) == :current
+  end
 
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     roadmap = File.read!(".planning/ROADMAP.md")
