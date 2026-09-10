@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-12-PLAN.md
-last_updated: "2026-09-10T21:03:24.574Z"
+stopped_at: Completed 73-13-PLAN.md
+last_updated: "2026-09-10T21:25:30.117Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 73 Plan 12 completed
-state_head: d407b5ff9d8b2686c60613136d3f8c8160351fcf
+state_head: 48d99a1c5d9dde65148025c3e0557426b814db62
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 13
-  completed_plans: 12
-  percent: 92
+  completed_plans: 13
+  percent: 0
 ---
 
 # Project State
@@ -33,7 +33,7 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 12 of 13
+Plan: 13 of 13
 
 Status: 1 gap-closure plan ready — execute Plan 73-13
 
@@ -98,6 +98,9 @@ Last activity: 2026-09-10 — Phase 73 Plan 12 completed
 - [Phase 73]: File-backed and script-backed operations share repository provenance; scripts additionally require executable index mode, working-tree blob equality, and a fixed local print-mode result.
 - [Phase 73]: Resolve each evidence lane once from actual Mix project configuration and require every command owner to retain a positive effective ExUnit selection.
 - [Phase 73]: Reject positive paths on the mandatory Evidence contract workflow and allow ignore patterns only when disjoint from all fixed and tracked Phase 73 inputs.
+- [Phase 73]: Normalize and retain every accepted branch-protection control, treating non-declared controls as exact safe invariants shared by mutation and rollback authorization.
+- [Phase 73]: Authorize script batches from indexed executable identity plus a separately tracked static JSON result, never by launching plan-selected code.
+- [Phase 73]: Always derive completed-plan commits from ordered exact-scope Git history; manifests and SUMMARY hashes may only audit that derived set for exact equality.
 
 ### Baseline Findings
 
@@ -135,9 +138,9 @@ Last activity: 2026-09-10 — Phase 73 Plan 12 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-10T21:03:24.557Z
+**Last session:** 2026-09-10T21:25:30.098Z
 
-**Stopped at:** Completed 73-12-PLAN.md
+**Stopped at:** Completed 73-13-PLAN.md
 
 **Resume file:** None
 
@@ -162,6 +165,7 @@ clean-room package-consumer planning.
 | Phase 73 P10 | 18min | 2 tasks | 1 files |
 | Phase 73 P11 | 18min | 2 tasks | 1 files |
 | Phase 73 P12 | 16min | 2 tasks | 2 files |
+| Phase 73 P13 | 19min | 3 tasks | 1 files |
 
 ### Blockers
 
