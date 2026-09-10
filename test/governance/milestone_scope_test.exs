@@ -78,7 +78,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
            &String.replace(&1, "current_phase: 73", "current_phase: 74")
          )
        end},
-      {"PROJECT current milestone",
+      {"milestone identity",
        fn root ->
          mutate_file(
            root,
@@ -165,16 +165,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   test "active v1.11 plans declare scope and stop before every risky mutation" do
-    roadmap = File.read!(".planning/ROADMAP.md")
-
     violations =
-      roadmap
-      |> incomplete_phase_numbers()
-      |> Enum.flat_map(fn phase ->
-        ".planning/phases/#{phase}-*/*-PLAN.md"
-        |> Path.wildcard()
-        |> repository_plan_violations()
-      end)
+      case validated_governance_identity(File.cwd!()) do
+        {:ok, identity} -> repository_plan_violations(identity.plan_paths, %{}, identity)
+        {:error, identity_violations} -> identity_violations
+      end
 
     assert violations == [],
            "Active milestone plans violate approval policy:\n" <>
@@ -424,18 +419,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     ownership = roadmap_requirement_ownership(roadmap)
 
     violations =
-      roadmap
-      |> incomplete_phase_numbers()
-      |> Enum.flat_map(fn phase ->
-        ".planning/phases/#{phase}-*/*-PLAN.md"
-        |> Path.wildcard()
-        |> Enum.flat_map(fn path ->
-          path
-          |> File.read!()
-          |> requirement_membership_violations(ownership)
-          |> Enum.map(&"#{path}: #{&1}")
-        end)
-      end)
+      case validated_governance_identity(File.cwd!()) do
+        {:ok, identity} ->
+          Enum.flat_map(identity.plan_paths, fn path ->
+            path
+            |> File.read!()
+            |> requirement_membership_violations(ownership)
+            |> Enum.map(&"#{path}: #{&1}")
+          end)
+
+        {:error, identity_violations} ->
+          identity_violations
+      end
 
     assert violations == [],
            "Active plans contain requirements owned by another phase:\n" <>
@@ -593,10 +588,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   test "active incomplete phases keep completion evidence automated" do
     violations =
-      ".planning/ROADMAP.md"
-      |> File.read!()
-      |> incomplete_phase_numbers()
-      |> Enum.flat_map(&automation_policy_violations/1)
+      case validated_governance_identity(File.cwd!()) do
+        {:ok, identity} -> Enum.flat_map(identity.active_phases, &automation_policy_violations/1)
+        {:error, identity_violations} -> identity_violations
+      end
 
     assert violations == [],
            "Incomplete phases must use deterministic completion evidence:\n" <>
@@ -1274,11 +1269,260 @@ defmodule Relyra.Governance.MilestoneScopeTest do
            "expected requirement violation containing #{inspect(requirement)} and #{inspect(expected_owner)}, got: #{inspect(violations)}"
   end
 
-  defp incomplete_phase_numbers(roadmap) do
-    ~r/^- \[ \] \*\*Phase ([0-9.]+):/m
-    |> Regex.scan(roadmap, capture: :all_but_first)
-    |> Enum.map(fn [phase] -> phase end)
+  defp governance_repository_fixture do
+    root =
+      Path.join(System.tmp_dir!(), "relyra-governance-#{System.unique_integer([:positive])}")
+
+    phase_dir = Path.join(root, ".planning/phases/73-twin-contract-and-baseline")
+    File.mkdir_p!(phase_dir)
+    on_exit(fn -> File.rm_rf!(root) end)
+
+    for file <- ~w(PROJECT.md ROADMAP.md REQUIREMENTS.md STATE.md) do
+      File.cp!(Path.join(".planning", file), Path.join(root, ".planning/#{file}"))
+    end
+
+    File.cp!(
+      ".planning/phases/73-twin-contract-and-baseline/73-10-PLAN.md",
+      Path.join(phase_dir, "73-10-PLAN.md")
+    )
+
+    root
   end
+
+  defp mutate_file(root, relative, mutation) do
+    path = Path.join(root, relative)
+    File.write!(path, mutation.(File.read!(path)))
+  end
+
+  defp validated_governance_identity(root) do
+    sources = %{
+      project: File.read(Path.join(root, ".planning/PROJECT.md")),
+      roadmap: File.read(Path.join(root, ".planning/ROADMAP.md")),
+      requirements: File.read(Path.join(root, ".planning/REQUIREMENTS.md")),
+      state: File.read(Path.join(root, ".planning/STATE.md"))
+    }
+
+    with {:ok, project} <- parse_project_identity(sources.project),
+         {:ok, roadmap} <- parse_roadmap_identity(sources.roadmap),
+         {:ok, requirements} <- parse_requirements_identity(sources.requirements),
+         {:ok, state} <- parse_state_identity(sources.state) do
+      identity_violations = governance_identity_violations(project, roadmap, requirements, state)
+
+      case identity_violations do
+        [] -> validate_governance_paths(root, project, roadmap, state)
+        violations -> {:error, violations}
+      end
+    else
+      {:error, violations} -> {:error, List.wrap(violations)}
+    end
+  end
+
+  defp parse_project_identity({:ok, project}) do
+    case Regex.scan(~r/^## Current Milestone: (v\d+\.\d+) (.+)$/m, project,
+           capture: :all_but_first
+         ) do
+      [[version, name]] -> {:ok, %{milestone_version: version, milestone_name: name}}
+      _other -> {:error, "PROJECT current milestone must appear exactly once"}
+    end
+  end
+
+  defp parse_project_identity(_error), do: {:error, "PROJECT current milestone is unreadable"}
+
+  defp parse_roadmap_identity({:ok, roadmap}) do
+    active =
+      Regex.scan(
+        ~r/^- Active: \*\*(v\d+\.\d+) — (.+?)\*\* \(Phases ([0-9.]+)–([0-9.]+), \d+ requirements\)\.$/m,
+        roadmap,
+        capture: :all_but_first
+      )
+
+    phase_entries =
+      Regex.scan(~r/^- \[([ x])\] \*\*Phase ([0-9.]+): ([^*]+)\*\*/m, roadmap,
+        capture: :all_but_first
+      )
+
+    malformed_phase_lines =
+      roadmap
+      |> String.split("\n")
+      |> Enum.filter(&Regex.match?(~r/^- \[.*Phase [0-9.]+:/, &1))
+      |> length()
+
+    phase_details =
+      ~r/^### Phase ([0-9.]+):[^\n]*\n(.*?)(?=^### Phase |\z)/ms
+      |> Regex.scan(roadmap, capture: :all_but_first)
+      |> Enum.flat_map(fn [phase, body] ->
+        case Regex.run(~r/^\*\*Requirements:\*\* (.+)$/m, body, capture: :all_but_first) do
+          [requirements] -> [[phase, requirements]]
+          nil -> []
+        end
+      end)
+
+    cond do
+      length(active) != 1 ->
+        {:error, "ROADMAP missing active milestone or active milestone is not singular"}
+
+      phase_entries == [] ->
+        {:error, "ROADMAP active phase set is empty"}
+
+      malformed_phase_lines != length(phase_entries) ->
+        {:error, "ROADMAP malformed phase checkbox syntax"}
+
+      duplicated?(Enum.map(phase_entries, &Enum.at(&1, 1))) ->
+        {:error, "ROADMAP duplicate phase identity"}
+
+      true ->
+        [[version, name, first_phase, last_phase]] = active
+
+        requirements_by_phase =
+          Map.new(phase_details, fn [phase, ids] ->
+            {phase,
+             ids |> String.split(",", trim: true) |> Enum.map(&String.trim/1) |> MapSet.new()}
+          end)
+
+        {:ok,
+         %{
+           milestone_version: version,
+           milestone_name: name,
+           phase_range: {first_phase, last_phase},
+           phase_entries: phase_entries,
+           phase_requirements: requirements_by_phase
+         }}
+    end
+  end
+
+  defp parse_roadmap_identity(_error), do: {:error, "ROADMAP active milestone is unreadable"}
+
+  defp parse_requirements_identity({:ok, requirements}) do
+    malformed =
+      requirements
+      |> String.split("\n")
+      |> Enum.filter(&Regex.match?(~r/^- \[.*\] \*\*[A-Z]+-[0-9]+\*\*:/, &1))
+      |> Enum.reject(&Regex.match?(~r/^- \[[ x]\] \*\*[A-Z]+-[0-9]+\*\*:/, &1))
+
+    rows =
+      Regex.scan(~r/^\| ([A-Z]+-[0-9]+) \| Phase ([0-9.]+) \| [^|]+ \|$/m, requirements,
+        capture: :all_but_first
+      )
+
+    cond do
+      malformed != [] ->
+        {:error, "REQUIREMENTS malformed checkbox syntax"}
+
+      rows == [] ->
+        {:error, "REQUIREMENTS traceability is empty"}
+
+      duplicated?(Enum.map(rows, &hd/1)) ->
+        {:error, "REQUIREMENTS duplicate requirement identity"}
+
+      true ->
+        by_phase =
+          rows
+          |> Enum.group_by(&Enum.at(&1, 1), &hd/1)
+          |> Map.new(fn {phase, ids} -> {phase, MapSet.new(ids)} end)
+
+        {:ok, %{phase_requirements: by_phase}}
+    end
+  end
+
+  defp parse_requirements_identity(_error),
+    do: {:error, "REQUIREMENTS traceability is unreadable"}
+
+  defp parse_state_identity({:ok, state}) do
+    frontmatter =
+      case String.split(state, "---", parts: 3) do
+        ["", yaml, _body] -> yaml
+        _other -> ""
+      end
+
+    fields =
+      ~r/^(milestone|current_phase|status):\s*([^\n]+)$/m
+      |> Regex.scan(frontmatter, capture: :all_but_first)
+      |> Enum.group_by(&hd/1, &(&1 |> Enum.at(1) |> String.trim()))
+
+    case fields do
+      %{"milestone" => [milestone], "current_phase" => [phase], "status" => [status]}
+      when status in ["executing", "in_progress"] ->
+        {:ok, %{milestone_version: milestone, current_phase: phase, status: status}}
+
+      _other ->
+        {:error, "STATE milestone/current phase/status must be singular and active"}
+    end
+  end
+
+  defp parse_state_identity(_error),
+    do: {:error, "STATE milestone/current phase/status is unreadable"}
+
+  defp governance_identity_violations(project, roadmap, requirements, state) do
+    []
+    |> add_unless(
+      project.milestone_version == roadmap.milestone_version and
+        roadmap.milestone_version == state.milestone_version,
+      "PROJECT/ROADMAP/STATE milestone identity disagrees"
+    )
+    |> add_unless(
+      project.milestone_name == roadmap.milestone_name,
+      "PROJECT/ROADMAP milestone name disagrees"
+    )
+    |> add_unless(
+      match?(
+        [[_mark, phase, _name] | _] when phase == state.current_phase,
+        roadmap.phase_entries
+      ),
+      "STATE current phase disagrees with ROADMAP active phases"
+    )
+    |> add_unless(
+      Map.get(roadmap.phase_requirements, state.current_phase) ==
+        Map.get(requirements.phase_requirements, state.current_phase),
+      "Phase #{state.current_phase} requirement set disagrees between ROADMAP and REQUIREMENTS"
+    )
+  end
+
+  defp validate_governance_paths(root, project, roadmap, state) do
+    [_mark, _phase, phase_name] = hd(roadmap.phase_entries)
+
+    expected_dir =
+      Path.join(
+        root,
+        ".planning/phases/#{state.current_phase}-#{slugify_phase_name(phase_name)}"
+      )
+
+    phase_dirs = if File.dir?(expected_dir), do: [expected_dir], else: []
+
+    case phase_dirs do
+      [phase_dir] ->
+        plan_paths = Path.wildcard(Path.join(phase_dir, "#{state.current_phase}-*-PLAN.md"))
+
+        if plan_paths == [] do
+          {:error, ["current phase PLAN set is empty"]}
+        else
+          {:ok,
+           %{
+             root: Path.expand(root),
+             milestone_version: project.milestone_version,
+             milestone_name: project.milestone_name,
+             current_phase: state.current_phase,
+             active_phases: [state.current_phase],
+             phase_requirements: roadmap.phase_requirements,
+             plan_paths: plan_paths
+           }}
+        end
+
+      _other ->
+        {:error, ["current phase must have exactly one tracked phase directory"]}
+    end
+  end
+
+  defp duplicated?(values), do: length(values) != length(Enum.uniq(values))
+
+  defp slugify_phase_name(name) do
+    name
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9]+/, "-")
+    |> String.trim("-")
+  end
+
+  defp add_unless(violations, true, _diagnostic), do: violations
+  defp add_unless(violations, false, diagnostic), do: violations ++ [diagnostic]
 
   defp plan_scope_violations(markdown, changed_classes \\ []) do
     scope_sections = tag_sections(markdown, "scope_assertions")
@@ -2158,7 +2402,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       File.exists?(String.replace_suffix(path, "-PLAN.md", "-SUMMARY.md"))
   end
 
-  defp repository_plan_violations(plan_paths, changed_surfaces_by_plan \\ %{}) do
+  defp repository_plan_violations(
+         plan_paths,
+         changed_surfaces_by_plan \\ %{},
+         identity \\ nil
+       ) do
+    identity =
+      identity ||
+        case validated_governance_identity(File.cwd!()) do
+          {:ok, validated} ->
+            validated
+
+          {:error, _violations} ->
+            %{root: File.cwd!(), milestone_version: "v1.11", current_phase: "73"}
+        end
+
     Enum.flat_map(plan_paths, fn plan_path ->
       markdown = File.read!(plan_path)
 
@@ -2171,14 +2429,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             end)
             |> Enum.uniq()
 
-          markdown
-          |> repository_plan_scope_violations(changed_classes)
+          repository_plan_scope_violations(identity, plan_path, markdown, changed_classes)
           |> Enum.map(&"#{plan_path}: #{&1}")
 
         {:error, reason} ->
           plan_violations =
-            markdown
-            |> repository_plan_scope_violations([])
+            repository_plan_scope_violations(identity, plan_path, markdown, [])
             |> Enum.map(&"#{plan_path}: #{&1}")
 
           plan_violations ++ ["#{plan_path} completed-plan diff provenance #{reason}"]
@@ -2186,11 +2442,25 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp repository_plan_scope_violations(markdown, changed_classes) do
-    if tag_sections(markdown, "demand_gated_exclusions") == [] do
-      legacy_plan_scope_violations(markdown)
+  defp repository_plan_scope_violations(identity, plan_path, markdown, changed_classes) do
+    case repository_plan_schema(identity, plan_path) do
+      :legacy -> legacy_plan_scope_violations(markdown)
+      :current -> plan_scope_violations(markdown, changed_classes)
+    end
+  end
+
+  defp repository_plan_schema(identity, plan_path) do
+    relative = Path.relative_to(Path.expand(plan_path), identity.root)
+
+    legacy_paths =
+      for plan <- ~w(01 02 03),
+          do: ".planning/phases/73-twin-contract-and-baseline/73-#{plan}-PLAN.md"
+
+    if identity.milestone_version == "v1.11" and identity.current_phase == "73" and
+         relative in legacy_paths and executed_plan?(plan_path) do
+      :legacy
     else
-      plan_scope_violations(markdown, changed_classes)
+      :current
     end
   end
 
