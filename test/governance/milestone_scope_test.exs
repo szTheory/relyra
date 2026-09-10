@@ -432,6 +432,50 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     refute File.exists?(Path.join(root, "remote-mutation-ran"))
   end
 
+  @tag :plan_73_13_task_1
+  test "remote authorization rejects every changed branch protection invariant by field" do
+    %{plan: clean, root: root} = remote_plan_fixture()
+    assert plan_scope_violations(clean, [], root) == []
+
+    controls = [
+      {"enforce_admins", false},
+      {"required_pull_request_reviews", %{}},
+      {"restrictions", %{"users" => []}},
+      {"allow_force_pushes", true},
+      {"allow_deletions", true},
+      {"block_creations", true},
+      {"required_conversation_resolution", true},
+      {"lock_branch", true},
+      {"allow_fork_syncing", true}
+    ]
+
+    for {field, changed_value} <- controls do
+      write_branch_protection_control!(root, field, changed_value)
+      assert_plan_violation(clean, "remote_github", field, root)
+    end
+  end
+
+  @tag :plan_73_13_task_1
+  test "complete branch protection state rejects wrong field containers and accepts clean states" do
+    %{plan: clean, root: root} = remote_plan_fixture()
+    assert plan_scope_violations(clean, [], root) == []
+
+    for {field, changed_value} <- [
+          {"enforce_admins", "true"},
+          {"required_pull_request_reviews", []},
+          {"restrictions", false},
+          {"allow_force_pushes", %{}},
+          {"allow_deletions", nil},
+          {"block_creations", 0},
+          {"required_conversation_resolution", "false"},
+          {"lock_branch", []},
+          {"allow_fork_syncing", nil}
+        ] do
+      write_branch_protection_control!(root, field, changed_value)
+      assert_plan_violation(clean, "remote_github", field, root)
+    end
+  end
+
   test "approval cannot be borrowed across plans or concurrent branches" do
     approving_plan = risky_plan_fixture("public_api")
     mutation_only = remove_checkpoint(approving_plan)
@@ -1484,6 +1528,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     }
     |> Map.merge(extras)
     |> Jason.encode!()
+  end
+
+  defp write_branch_protection_control!(root, field, value) do
+    path = Path.join(root, "desired-protection.json")
+    decoded = path |> File.read!() |> Jason.decode!()
+    File.write!(path, decoded |> Map.put(field, value) |> Jason.encode!())
+    git_fixture!(root, ["add", "desired-protection.json"])
   end
 
   defp remote_script_control_fixture(variant) do
