@@ -1696,9 +1696,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     case phase_dirs do
       [phase_dir] ->
-        plan_paths = Path.wildcard(Path.join(phase_dir, "#{state.current_phase}-*-PLAN.md"))
+        all_plan_paths =
+          phase_dir
+          |> Path.join("#{state.current_phase}-*-PLAN.md")
+          |> Path.wildcard()
+          |> Enum.sort()
 
-        if plan_paths == [] do
+        {completed, incomplete} = Enum.split_with(all_plan_paths, &executed_plan?/1)
+        plan_paths = completed ++ Enum.take(incomplete, 1)
+
+        if all_plan_paths == [] or plan_paths == [] do
           {:error, ["current phase PLAN set is empty"]}
         else
           {:ok,
