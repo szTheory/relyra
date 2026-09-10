@@ -246,20 +246,22 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   @tag :plan_73_13_task_3
   test "manifest is an optional exact ordered audit of Git-derived commits" do
-    for variant <- [
-          :manifest_extra,
-          :manifest_reordered,
-          :manifest_duplicate,
-          :manifest_ambiguous,
-          :unreachable_manifest,
-          :manifest_boundary
+    for {variant, diagnostic} <- [
+          {:manifest_extra, "foreign"},
+          {:manifest_reordered, "reorders"},
+          {:manifest_duplicate, "duplicate"},
+          {:manifest_ambiguous, "ambiguous"},
+          {:unreachable_manifest, "unreachable"},
+          {:manifest_boundary, "completion boundary"}
         ] do
       fixture = completed_plan_git_fixture(variant)
 
       assert {:error, violations, commits} =
                trusted_plan_commits(fixture.root, "73-99", fixture.completion_commit)
 
-      assert violations != [], "expected manifest violation for #{variant}"
+      assert Enum.any?(violations, &String.contains?(&1, diagnostic)),
+             "expected #{diagnostic} manifest violation for #{variant}, got: #{inspect(violations)}"
+
       assert commits == fixture.implementation_commits
     end
 
@@ -1952,27 +1954,28 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp ambiguous_commit_prefix!(root) do
-    existing = root |> git_fixture!(["rev-list", "--all"]) |> String.split("\n", trim: true)
+    {prefix, first, second} =
+      Enum.reduce_while(1..2_000, %{}, fn index, seen ->
+        contents = "manifest collision #{index}\n"
 
-    Enum.reduce_while(1..64, existing, fn index, commits ->
-      File.write!(Path.join(root, "collision-#{index}.txt"), "#{index}\n")
+        oid =
+          :crypto.hash(:sha, "blob #{byte_size(contents)}\0#{contents}")
+          |> Base.encode16(case: :lower)
 
-      commit =
-        fixture_commit!(root, ["collision-#{index}.txt"], "chore(other): collision #{index}")
+        prefix = String.slice(oid, 0, 4)
 
-      all = [commit | commits]
+        case Map.fetch(seen, prefix) do
+          {:ok, first} -> {:halt, {prefix, first, contents}}
+          :error -> {:cont, Map.put(seen, prefix, contents)}
+        end
+      end)
 
-      case all
-           |> Enum.group_by(&String.first/1)
-           |> Enum.find(fn {_prefix, hashes} -> length(hashes) > 1 end) do
-        {prefix, _hashes} -> {:halt, prefix}
-        nil -> {:cont, all}
-      end
-    end)
-    |> case do
-      prefix when is_binary(prefix) -> prefix
-      _commits -> flunk("could not create ambiguous fixture commit prefix")
+    for {name, contents} <- [{"collision-a", first}, {"collision-b", second}] do
+      File.write!(Path.join(root, name), contents)
+      git_fixture!(root, ["hash-object", "-w", "--", name])
     end
+
+    prefix
   end
 
   defp fixture_commit!(root, paths, subject) do
@@ -3523,6 +3526,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       {:ok, boundaries} ->
         {:error, ["completion boundary must be unique; found #{length(boundaries)}"]}
 
+      {:error, reasons, _trusted_commits} ->
+        {:error, List.wrap(reasons)}
+
       {:error, reasons} ->
         {:error, List.wrap(reasons)}
     end
@@ -3546,31 +3552,81 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp trusted_plan_commits(root, plan_id, boundary) do
     manifest_path = Path.join(root, ".planning/.phase-manifest.json")
 
+    with {:ok, rows} <- git_lines(root, ["log", "--reverse", "--format=%H%x09%s", boundary]) do
+      derived =
+        Enum.flat_map(rows, fn row ->
+          case String.split(row, "\t", parts: 2) do
+            [commit, subject] when commit != boundary ->
+              if conventional_scope(subject) == plan_id, do: [commit], else: []
+
+            _other ->
+              []
+          end
+        end)
+
+      case manifest_commit_cross_check(root, manifest_path, plan_id, boundary, derived) do
+        :ok -> {:ok, derived}
+        {:error, violations} -> {:error, violations, derived}
+      end
+    end
+  end
+
+  defp manifest_commit_cross_check(root, manifest_path, plan_id, boundary, derived) do
     if File.exists?(manifest_path) do
+      phase_id = plan_id |> String.split("-", parts: 2) |> hd()
+
       with {:ok, json} <- File.read(manifest_path),
            {:ok, manifest} <- Jason.decode(json),
            commits when is_list(commits) <-
-             get_in(manifest, ["phases", "73", "plans", plan_id, "commits"]),
-           true <- Enum.all?(commits, &is_binary/1) do
-        {:ok, Enum.reject(commits, &(&1 == boundary))}
+             get_in(manifest, ["phases", phase_id, "plans", plan_id, "commits"]),
+           true <-
+             commits != [] and Enum.all?(commits, &(is_binary(&1) and String.trim(&1) != "")) do
+        {resolved, resolution_violations} =
+          Enum.map_reduce(commits, [], fn claim, violations ->
+            case resolve_commit(root, claim) do
+              {:ok, commit} ->
+                {commit, violations}
+
+              {:error, reason} ->
+                diagnostic =
+                  String.replace(reason, "SUMMARY Task Commits", "phase manifest for #{plan_id}")
+
+                {claim, violations ++ [diagnostic]}
+            end
+          end)
+
+        omitted = derived -- resolved
+        foreign = resolved -- derived
+
+        violations =
+          resolution_violations
+          |> add_if(
+            duplicated?(commits),
+            "phase manifest for #{plan_id} contains duplicate hashes"
+          )
+          |> add_if(
+            boundary in resolved,
+            "phase manifest for #{plan_id} includes completion boundary"
+          )
+          |> add_if(
+            omitted != [],
+            "phase manifest for #{plan_id} omitted #{Enum.join(omitted, ", ")}"
+          )
+          |> add_if(
+            foreign != [],
+            "phase manifest for #{plan_id} contains foreign or unreachable hashes #{Enum.join(foreign, ", ")}"
+          )
+          |> add_if(
+            resolved != derived and omitted == [] and foreign == [],
+            "phase manifest for #{plan_id} reorders the Git-derived commits"
+          )
+
+        if violations == [], do: :ok, else: {:error, violations}
       else
         _other -> {:error, ["phase manifest is malformed for #{plan_id}"]}
       end
     else
-      with {:ok, rows} <- git_lines(root, ["log", "--reverse", "--format=%H%x09%s", boundary]) do
-        commits =
-          Enum.flat_map(rows, fn row ->
-            case String.split(row, "\t", parts: 2) do
-              [commit, subject] when commit != boundary ->
-                if conventional_scope(subject) == plan_id, do: [commit], else: []
-
-              _other ->
-                []
-            end
-          end)
-
-        {:ok, commits}
-      end
+      :ok
     end
   end
 
