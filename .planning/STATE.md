@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-11-PLAN.md
-last_updated: "2026-09-10T20:41:19.568Z"
+stopped_at: Completed 73-12-PLAN.md
+last_updated: "2026-09-10T21:03:24.574Z"
 last_activity: 2026-09-10
-last_activity_desc: Phase 73 Plan 09 completed
-state_head: d96715fc9c0e592197d19c344c08d86cb6e9a81d
+last_activity_desc: Phase 73 Plan 12 completed
+state_head: d407b5ff9d8b2686c60613136d3f8c8160351fcf
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 13
-  completed_plans: 11
-  percent: 0
+  completed_plans: 12
+  percent: 92
 ---
 
 # Project State
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE
+Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 11 of 13
+Plan: 12 of 13
 
-Status: 2 gap-closure plans ready — execute Wave 10
+Status: 1 gap-closure plan ready — execute Plan 73-13
 
-Last activity: 2026-09-10 — Phase 73 Plan 11 completed
+Last activity: 2026-09-10 — Phase 73 Plan 12 completed
 
 ## Milestone Metrics
 
@@ -96,6 +96,8 @@ Last activity: 2026-09-10 — Phase 73 Plan 11 completed
 - [Phase 73]: Completed-plan changes come from reachable exact-scope Git commits before the unique SUMMARY-add boundary; SUMMARY hashes are equality-checked but never authoritative.
 - [Phase 73]: Remote authorization reduces fields only after exact scalar/list cardinality, closed syntax, non-empty values, and list uniqueness are established.
 - [Phase 73]: File-backed and script-backed operations share repository provenance; scripts additionally require executable index mode, working-tree blob equality, and a fixed local print-mode result.
+- [Phase 73]: Resolve each evidence lane once from actual Mix project configuration and require every command owner to retain a positive effective ExUnit selection.
+- [Phase 73]: Reject positive paths on the mandatory Evidence contract workflow and allow ignore patterns only when disjoint from all fixed and tracked Phase 73 inputs.
 
 ### Baseline Findings
 
@@ -133,16 +135,16 @@ Last activity: 2026-09-10 — Phase 73 Plan 11 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-10T19:12:24.555Z
+**Last session:** 2026-09-10T21:03:24.557Z
 
-**Stopped at:** Completed 73-11-PLAN.md
+**Stopped at:** Completed 73-12-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Phase 73 gap-closure Plans 12 and 13, then re-verify the phase before beginning
-Phase 74 clean-room package-consumer planning.
+Execute Phase 73 gap-closure Plan 13, then re-verify the phase before beginning Phase 74
+clean-room package-consumer planning.
 
 ## Performance Metrics
 
@@ -159,6 +161,7 @@ Phase 74 clean-room package-consumer planning.
 | Phase 73 P09 | 39min | 2 tasks | 2 files |
 | Phase 73 P10 | 18min | 2 tasks | 1 files |
 | Phase 73 P11 | 18min | 2 tasks | 1 files |
+| Phase 73 P12 | 16min | 2 tasks | 2 files |
 
 ### Blockers
 

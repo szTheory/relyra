@@ -75,7 +75,7 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 11/13 plans executed; 2 gap-closure plans ready
+**Plans:** 12/13 plans executed; 1 gap-closure plan ready
 
 Plans:
 **Wave 1**
@@ -118,7 +118,7 @@ Plans:
 
 **Wave 10** *(gap closure; blocked on Wave 9 completion; Plans 12 and 13 may execute in parallel)*
 
-- [ ] 73-12-PLAN.md — Close empty-effective alias ownership and restrictive mandatory-workflow trigger gaps.
+- [x] 73-12-PLAN.md — Close empty-effective alias ownership and restrictive mandatory-workflow trigger gaps.
 - [ ] 73-13-PLAN.md — Close incomplete branch-protection state, ambient script execution, and manifest-selected provenance gaps.
 
 ### Phase 74: Clean-Room Package Consumer
@@ -269,7 +269,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
-| 73. Twin Contract and Baseline | v1.11 | 11/11 | In Progress|  |
+| 73. Twin Contract and Baseline | v1.11 | 12/13 | In Progress|  |
 | 74. Clean-Room Package Consumer | v1.11 | 0/TBD | Not started | — |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |
