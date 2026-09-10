@@ -385,6 +385,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_06_task_2
   test "mandatory workflow ownership rejects event-conditional and fallible steps" do
     entries = AdoptionEvidence.entries()
 
