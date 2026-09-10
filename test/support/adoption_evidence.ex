@@ -645,13 +645,13 @@ defmodule Relyra.AdoptionEvidence do
          jobs <- indented_block(lines, jobs_index, 0),
          {:ok, security_index} <- find_line(jobs, ~r/^  security:\s*$/),
          security <- indented_block(jobs, security_index, 2),
-         false <- false_condition_in_scope?(security, 4),
+         nil <- property_at_indent(security, "if", 4),
          {:ok, steps_index} <- find_line(security, ~r/^    steps:\s*$/),
          steps <- indented_block(security, steps_index, 4),
          [step] <- named_steps(steps, step_name),
-         ^command <- property(step, "run"),
-         false <- false_condition_in_scope?(step, 8),
-         false <- truthy?(property(step, "continue-on-error")),
+         ^command <- property_at_indent(step, "run", 8),
+         nil <- property_at_indent(step, "if", 8),
+         true <- blocking_step?(property_at_indent(step, "continue-on-error", 8)),
          true <- required_planning_triggers?(lines) do
       true
     else
@@ -692,45 +692,59 @@ defmodule Relyra.AdoptionEvidence do
     end)
   end
 
-  defp false_condition_in_scope?(lines, indent) do
+  defp property_at_indent(lines, key, indent) do
     lines
     |> Enum.filter(&(indentation(&1) == indent))
-    |> property("if")
-    |> false_condition?()
+    |> property(key)
   end
 
-  defp false_condition?(value) do
-    normalize_expression(value) in ["false", "0", "${{false}}", "${{0}}"]
-  end
-
-  defp truthy?(value) do
-    normalize_expression(value) in ["true", "1", "${{true}}", "${{1}}"]
-  end
-
-  defp normalize_expression(nil), do: nil
-
-  defp normalize_expression(value) do
-    value
-    |> String.downcase()
-    |> String.replace(~r/[\s"']+/, "")
-  end
+  defp blocking_step?(nil), do: true
+  defp blocking_step?("false"), do: true
+  defp blocking_step?(_value), do: false
 
   defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
 
   defp required_planning_triggers?(lines) do
-    pull_request? = Enum.any?(lines, &Regex.match?(~r/^  pull_request:\s*$/, &1))
+    pull_request_index = Enum.find_index(lines, &Regex.match?(~r/^  pull_request:\s*$/, &1))
     push_index = Enum.find_index(lines, &Regex.match?(~r/^  push:\s*$/, &1))
+
+    pull_request? =
+      is_integer(pull_request_index) and
+        planning_changes_allowed?(indented_block(lines, pull_request_index, 2))
 
     main_push? =
       if push_index do
-        lines
-        |> indented_block(push_index, 2)
-        |> Enum.any?(&Regex.match?(~r/^      - main\s*$/, &1))
+        push = indented_block(lines, push_index, 2)
+
+        Enum.any?(push, &Regex.match?(~r/^      - main\s*$/, &1)) and
+          planning_changes_allowed?(push)
       else
         false
       end
 
     pull_request? and main_push?
+  end
+
+  defp planning_changes_allowed?(trigger) do
+    paths_index = Enum.find_index(trigger, &Regex.match?(~r/^    paths:\s*$/, &1))
+
+    cond do
+      paths_index ->
+        trigger
+        |> indented_block(paths_index, 4)
+        |> Enum.any?(&planning_path_pattern?/1)
+
+      true ->
+        not Enum.any?(trigger, &ignored_planning_path_pattern?/1)
+    end
+  end
+
+  defp planning_path_pattern?(line) do
+    Regex.match?(~r/^      - ["']?(?:\.planning\/\*\*|\*\*)["']?\s*$/, line)
+  end
+
+  defp ignored_planning_path_pattern?(line) do
+    Regex.match?(~r/^      - ["']?\.planning\/\*\*["']?\s*$/, line)
   end
 
   defp validate_member!(id, field, value, vocabulary) do

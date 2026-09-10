@@ -388,8 +388,32 @@ defmodule Relyra.Adoption.EvidenceContractTest do
   @tag :plan_73_06_task_2
   test "mandatory workflow ownership rejects event-conditional and fallible steps" do
     entries = AdoptionEvidence.entries()
+    clean_root = repository_fixture!()
+
+    assert :ok = AdoptionEvidence.validate_repository!(entries, clean_root)
+
+    clean_workflow_path = Path.join(clean_root, @workflow_path)
+
+    File.write!(
+      clean_workflow_path,
+      String.replace(
+        File.read!(clean_workflow_path),
+        "      - name: Evidence contract\n        run: mix ci.evidence",
+        "      - name: Evidence contract\n        continue-on-error: false\n        run: mix ci.evidence"
+      )
+    )
+
+    assert :ok = AdoptionEvidence.validate_repository!(entries, clean_root)
 
     mutations = [
+      fn workflow ->
+        String.replace(
+          workflow,
+          "  security:\n",
+          "  security:\n    if: ${{ github.event_name != 'schedule' }}\n",
+          global: false
+        )
+      end,
       fn workflow ->
         String.replace(
           workflow,
@@ -402,6 +426,20 @@ defmodule Relyra.Adoption.EvidenceContractTest do
           workflow,
           "      - name: Evidence contract\n        run: mix ci.evidence",
           "      - name: Evidence contract\n        continue-on-error: ${{ github.ref != '' }}\n        run: mix ci.evidence"
+        )
+      end,
+      fn workflow ->
+        String.replace(
+          workflow,
+          "      - name: Evidence contract\n        run: mix ci.evidence",
+          "      - name: Evidence contract\n        if: true\n        run: mix ci.evidence"
+        )
+      end,
+      fn workflow ->
+        String.replace(
+          workflow,
+          "      - name: Evidence contract\n        run: mix ci.evidence",
+          "      - name: Evidence contract\n        continue-on-error: \"false\"\n        run: mix ci.evidence"
         )
       end
     ]
