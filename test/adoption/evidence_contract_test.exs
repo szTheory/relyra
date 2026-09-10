@@ -455,6 +455,72 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_09_task_1
+  test "automated commands have one fully consumed non-shell argv meaning" do
+    assert :ok =
+             AdoptionEvidence.validate_automated_command!(
+               "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix test test/adoption/evidence_contract_test.exs --only plan_73_09_task_1 --warnings-as-errors",
+               File.cwd!()
+             )
+
+    for command <- [
+          "mix test test/adoption/evidence_contract_test.exs --warnings-as-errors # ignored",
+          "mix test test/adoption/evidence_contract_test.exs --warnings-as-errors > proof.txt",
+          "mix test test/adoption/evidence_contract_test.exs --warnings-as-errors < input.txt",
+          "TOKEN=$VALUE mix ci.evidence",
+          "mix test test/adoption/*_test.exs --warnings-as-errors",
+          "mix test test/adoption/{evidence,other}_test.exs --warnings-as-errors",
+          "mix test 'test/adoption/evidence_contract_test.exs' --warnings-as-errors",
+          ~S(mix test "test/adoption/evidence_contract_test.exs" --warnings-as-errors),
+          ~S(mix test test/adoption/evidence\_contract_test.exs --warnings-as-errors)
+        ] do
+      assert_raise ArgumentError, ~r/shell-shaped/, fn ->
+        AdoptionEvidence.validate_automated_command!(command, File.cwd!())
+      end
+    end
+  end
+
+  @tag :plan_73_09_task_1
+  test "named owners resolve the actual Mix project alias rather than decoy tuples" do
+    root = repository_fixture!()
+    mix_path = Path.join(root, "mix.exs")
+
+    File.write!(mix_path, fixture_mix_project([]))
+
+    assert_raise ArgumentError, ~r/alias ci\.evidence.*fresh-process/, fn ->
+      AdoptionEvidence.validate_automated_command!("mix ci.evidence", root)
+    end
+
+    File.write!(mix_path, fixture_mix_project([fixture_evidence_step()]))
+    assert :ok = AdoptionEvidence.validate_automated_command!("mix ci.evidence", root)
+  end
+
+  @tag :plan_73_09_task_1
+  test "selector ownership requires genuinely registered ExUnit tests" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+    owner_path = Path.join(root, "test/adoption/evidence_contract_test.exs")
+
+    File.write!(
+      owner_path,
+      """
+      defmodule ShadowTestMacroOwner do
+        @moduletag :evidence_contract
+
+        defmacro test(_name, do: _body), do: quote(do: :ok)
+
+        test "looks executable but is not registered" do
+          raise "must never execute"
+        end
+      end
+      """
+    )
+
+    assert_raise ArgumentError, ~r/selector evidence_contract matches zero tests/, fn ->
+      AdoptionEvidence.validate_repository!(entries, root)
+    end
+  end
+
   defp active_requirements do
     @requirements_path
     |> File.read!()
@@ -521,6 +587,30 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     Enum.map(entries, fn entry ->
       if entry.id == target.id, do: Map.merge(entry, updates), else: entry
     end)
+  end
+
+  defp fixture_evidence_step do
+    "cmd mix test test/adoption/evidence_contract_test.exs --only evidence_contract --warnings-as-errors"
+  end
+
+  defp fixture_mix_project(actual_steps) do
+    decoy_step = fixture_evidence_step()
+
+    """
+    defmodule EvidenceFixture.MixProject do
+      use Mix.Project
+
+      def project do
+        [app: :evidence_fixture, version: "0.1.0", aliases: aliases()]
+      end
+
+      defp aliases, do: [{:"ci.evidence", #{inspect(actual_steps)}}]
+
+      def unrelated_decoy do
+        [{:"ci.evidence", [#{inspect(decoy_step)}]}]
+      end
+    end
+    """
   end
 
   defp repository_fixture! do
