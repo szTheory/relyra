@@ -633,27 +633,15 @@ defmodule Relyra.AdoptionEvidence do
 
   defp mix_aliases!(root) do
     expanded_root = Path.expand(root)
-    previous_project = Mix.Project.get()
 
-    try do
-      aliases =
-        if current_project_root() == expanded_root do
-          Mix.Project.config()[:aliases]
-        else
-          validation_app =
-            String.to_atom(
-              "relyra_evidence_validation_#{System.unique_integer([:positive, :monotonic])}"
-            )
+    aliases =
+      if current_project_root() == expanded_root do
+        Mix.Project.config()[:aliases]
+      else
+        mix_aliases_in_fresh_process!(expanded_root)
+      end
 
-          Mix.Project.in_project(validation_app, expanded_root, [], fn _module ->
-            Mix.Project.config()[:aliases]
-          end)
-        end
-
-      normalize_aliases!(aliases)
-    after
-      restore_project_stack(previous_project)
-    end
+    normalize_aliases!(aliases)
   end
 
   defp current_project_root do
@@ -663,20 +651,50 @@ defmodule Relyra.AdoptionEvidence do
     end
   end
 
-  defp restore_project_stack(previous_project) do
-    case Mix.Project.get() do
-      ^previous_project ->
-        :ok
+  defp mix_aliases_in_fresh_process!(root) do
+    probe = """
+    aliases =
+      Mix.Project.config()
+      |> Keyword.get(:aliases, [])
+      |> Enum.map(fn {name, steps} ->
+        normalized_steps =
+          cond do
+            is_binary(steps) -> [steps]
+            is_atom(steps) -> [Atom.to_string(steps)]
+            is_list(steps) and Enum.all?(steps, &(is_binary(&1) or is_atom(&1))) ->
+              Enum.map(steps, fn step -> if is_atom(step), do: Atom.to_string(step), else: step end)
+            true -> %{"unsupported" => true}
+          end
 
-      nil when is_nil(previous_project) ->
-        :ok
+        {to_string(name), normalized_steps}
+      end)
 
-      nil ->
-        :ok
+    IO.puts("RELYRA_MIX_ALIASES:" <> Base.encode64(:erlang.term_to_binary(aliases)))
+    """
 
+    mix = System.find_executable("mix") || raise ArgumentError, "cannot locate Mix executable"
+
+    {output, status} =
+      System.cmd(
+        mix,
+        ["run", "--no-start", "--no-compile", "--no-deps-check", "-e", probe],
+        cd: root,
+        env: [{"MIX_ENV", "test"}],
+        stderr_to_stdout: true
+      )
+
+    with 0 <- status,
+         [encoded] <-
+           Regex.run(~r/^RELYRA_MIX_ALIASES:([A-Za-z0-9+\/=]+)$/m, output,
+             capture: :all_but_first
+           ),
+         {:ok, binary} <- Base.decode64(encoded),
+         aliases when is_list(aliases) <- :erlang.binary_to_term(binary, [:safe]) do
+      aliases
+    else
       _other ->
-        Mix.Project.pop()
-        restore_project_stack(previous_project)
+        raise ArgumentError,
+              "cannot inspect Mix aliases in #{root}; probe exited #{status}: #{String.trim(output)}"
     end
   end
 

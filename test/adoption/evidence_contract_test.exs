@@ -495,6 +495,42 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert :ok = AdoptionEvidence.validate_automated_command!("mix ci.evidence", root)
   end
 
+  @tag :cwd_isolation
+  test "fixture Mix inspection never changes the VM working directory" do
+    root = repository_fixture!()
+    mix_path = Path.join(root, "mix.exs")
+    original_cwd = File.cwd!()
+
+    File.write!(
+      mix_path,
+      "Process.sleep(150)\n" <> fixture_mix_project([fixture_evidence_step()])
+    )
+
+    parent = self()
+
+    validation =
+      Task.async(fn ->
+        result = AdoptionEvidence.validate_automated_command!("mix ci.evidence", root)
+        send(parent, {:validation_done, self()})
+        result
+      end)
+
+    observed_cwds =
+      Enum.reduce_while(1..1_000, [], fn _, observed ->
+        cwd = File.cwd!()
+
+        receive do
+          {:validation_done, pid} when pid == validation.pid -> {:halt, [cwd | observed]}
+        after
+          1 -> {:cont, [cwd | observed]}
+        end
+      end)
+
+    assert observed_cwds != []
+    assert Enum.all?(observed_cwds, &(&1 == original_cwd))
+    assert Task.await(validation) == :ok
+  end
+
   @tag :plan_73_09_task_1
   test "selector ownership requires genuinely registered ExUnit tests" do
     entries = AdoptionEvidence.entries()
