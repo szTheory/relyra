@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-08-PLAN.md
-last_updated: "2026-09-10T03:30:58.415Z"
-last_activity: 2026-09-09
-last_activity_desc: Phase 73 Plan 06 completed
-state_head: 81a6907f007c8d258bb4d6b02212a91b7fe71487
+stopped_at: Completed 73-09-PLAN.md
+last_updated: "2026-09-10T14:29:09.222Z"
+last_activity: 2026-09-10
+last_activity_desc: Phase 73 Plan 09 completed
+state_head: ad65e6b388f7be75862642dc5c8d3b76273ca6d0
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 11
-  completed_plans: 8
-  percent: 0
+  completed_plans: 9
+  percent: 82
 ---
 
 # Project State
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE
+Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 8 of 11
+Plan: 9 of 11
 
-Status: Phase plans complete — verification pending
+Status: Ready to execute
 
-Last activity: 2026-09-09 — Phase 73 Plan 08 completed
+Last activity: 2026-09-10 — Phase 73 Plan 09 completed
 
 ## Milestone Metrics
 
@@ -88,6 +88,9 @@ Last activity: 2026-09-09 — Phase 73 Plan 08 completed
 - [Phase 73]: Authorize remote batches only after each field is fully consumed by one closed operation grammar and parsed targets agree.
 - [Phase 73]: Accept baseline paths only when every root-relative component is non-symlink, the leaf is regular, and git tracks the lexical repository path.
 - [Phase 73]: Delegate baseline command evidence to the same executable non-zero owner validator used by adoption evidence.
+- [Phase 73]: Accept verification text only when one anchored ASCII grammar fully consumes uppercase environment assignments and one supported Mix argv.
+- [Phase 73]: Treat actual Mix project configuration and fresh-process ExUnit registration, rather than source-shaped tuples or macros, as ownership authority.
+- [Phase 73]: Evaluate workflow fallibility and ordered path filters independently for pull requests and main pushes across every acceptance-bearing planning artifact.
 
 ### Baseline Findings
 
@@ -125,16 +128,16 @@ Last activity: 2026-09-09 — Phase 73 Plan 08 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-10T01:46:51.085Z
+**Last session:** 2026-09-10T14:29:09.207Z
 
-**Stopped at:** Completed 73-08-PLAN.md
+**Stopped at:** Completed 73-09-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Verify Phase 73 against the eight completed plan summaries and mandatory evidence
-contract, retaining the known Phase 77 documentation-vocabulary deferral.
+Execute Plan 73-10 to close active-plan discovery, schema selection, and completed-plan
+provenance gaps using the hardened deterministic evidence validator.
 
 ## Performance Metrics
 
@@ -148,6 +151,7 @@ contract, retaining the known Phase 77 documentation-vocabulary deferral.
 | Phase 73 P06 | 9min | 2 tasks | 2 files |
 | Phase 73 P07 | 11min | 2 tasks | 1 files |
 | Phase 73 P08 | 15min | 2 tasks | 2 files |
+| Phase 73 P09 | 39min | 2 tasks | 2 files |
 
 ### Blockers
 
