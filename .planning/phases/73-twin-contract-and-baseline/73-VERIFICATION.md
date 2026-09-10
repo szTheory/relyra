@@ -1,19 +1,19 @@
 ---
 phase: 73-twin-contract-and-baseline
-verified: 2026-09-09T22:17:45Z
+verified: 2026-09-10T20:02:04Z
 status: gaps_found
-score: 5/9 must-haves verified
+score: 6/9 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
   previous_status: gaps_found
-  previous_score: 5/9
-  gaps_closed: []
+  previous_score: 6/9
+  gaps_closed:
+    - "Earlier shell-shape, selector-registration, schema-dispatch, path-provenance, and state-binding reproductions named in Plans 73-09 through 73-11 now pass their committed tests."
   gaps_remaining:
-    - "Automated policy checks prevent new acceptance criteria from being closed without a mandatory deterministic owner."
-    - "Plans and execution stop at named checkpoints for public API, default, security, SemVer-major, or remote GitHub changes."
-    - "Active v1.11 plans exclude AUTHN-POST-01, KMS-01, SIGNED-META-01, and unrelated speculative product work."
-    - "The baseline shape and each finding's reproducible evidence are fail-closed and machine-checked by ci.evidence."
+    - "Deterministic evidence ownership is hollowable through an alias with an empty effective selection and restrictive positive workflow paths."
+    - "Remote authorization discards nine security-relevant branch-protection values and executes a plan-selected script with ambient CI authority."
+    - "Completed-plan provenance trusts a phase manifest that may omit exact-scope commits."
   regressions: []
 decision_coverage:
   honored: 13
@@ -22,56 +22,46 @@ decision_coverage:
 gaps:
   - truth: "Automated policy checks prevent new acceptance criteria from being closed without a mandatory deterministic owner."
     status: failed
-    reason: "Committed RED tests prove that command substitution, empty effective test filters, cross-module/tag-value selector matches, and event-conditional or expression-fallible workflow steps are accepted."
+    reason: "Independent fixtures returned :ok for an alias whose --only/--exclude combination selects zero tests and for a workflow whose positive paths list includes only five planning files while excluding the ledger, owner tests, Mix alias, and workflow itself."
     artifacts:
       - path: "test/support/adoption_evidence.ex"
-        issue: "Command, selector, and mandatory-workflow validation remains fail-open at CR-01 through CR-03 boundaries."
+        issue: "validate_owner_chain!/4 uses substring checks for alias ownership, and required_planning_paths/0 samples only five planning paths."
       - path: "test/adoption/evidence_contract_test.exs"
-        issue: "Five active adversarial contract tests fail against the implementation."
+        issue: "The 26 active tests do not cover these adjacent hollow-owner mutations."
     missing:
-      - "Reject shell substitution before environment-prefix normalization and calculate the effective selected ExUnit set, including equals-form and exclusion filters."
-      - "Associate selector tags with executable tests inside the correct ExUnit module using ExUnit tag semantics."
-      - "Require the Evidence contract step to execute and block on every required event; reject unsupported conditions and continue-on-error expressions."
-  - truth: "Plans and execution stop at named checkpoints for public API, default, security, SemVer-major, or remote GitHub changes."
+      - "Parse the actual alias command through the shared command validator and require each owner to remain selected after all include/exclude filters."
+      - "Reject restrictive positive paths or prove coverage of every governed source and planning input."
+  - truth: "Plans and execution stop at named checkpoints for governed changes and exclude speculative protocol work."
     status: failed
-    reason: "Committed RED tests prove that checkpoint-shaped unknown task types, negated approval text, contradictory scope assertions, summary-file exemptions, disconnected governed-diff inference, and appended remote commands bypass governance."
+    reason: "Branch-protection authorization validates only strict/status contexts, executes a plan-selected tracked script during validation, and lets a phase manifest replace the Git-derived complete commit set. These seams can authorize broader protection changes, perform mutation during validation, or hide a governed commit."
     artifacts:
       - path: "test/governance/milestone_scope_test.exs"
-        issue: "CR-04 through CR-08 remain observable fail-open authorization paths."
+        issue: "normalize_branch_protection_json/1 discards nine accepted values; run_script_print_mode/3 executes plan-selected code; trusted_plan_commits/3 trusts manifest membership without equality to Git discovery."
     missing:
-      - "Validate a closed task-type vocabulary and exempt only exact authorization checkpoint types."
-      - "Parse exact positive decisions and exact scope values rather than substring-bearing prose."
-      - "Wire actual scoped-diff classification into active and completed-plan enforcement instead of treating SUMMARY existence as authorization evidence."
-      - "Parse remote commands with a closed single-operation grammar and reject appended shell or remote operations."
-  - truth: "Active v1.11 plans exclude AUTHN-POST-01, KMS-01, SIGNED-META-01, and unrelated speculative product work."
+      - "Normalize and compare every accepted branch-protection field, or enforce invariant constants for fields outside the declared state."
+      - "Do not execute plan-selected mutation scripts with ambient CI authority; bind approval to static tracked data or a separately trusted sandboxed harness."
+      - "Always derive the complete ordered exact-scope commit set from Git and require manifest equality as a cross-check."
+  - truth: "Remote GitHub approval requires one exact reversible batch whose operations implement the complete approved current and desired state."
     status: failed
-    reason: "An unknown checkpoint-prefixed implementation task bypasses the forbidden-capability validator, so the structural exclusion contract is not universal across implementation-bearing task types."
+    reason: "The state comparator covers only required_status_checks.strict and contexts, so payloads may alter enforce_admins, reviews, restrictions, force pushes, deletions, branch creation, conversation resolution, locking, or fork syncing without affecting authorization. Script validation also executes the plan-selected executable rather than proving it is non-mutating."
     artifacts:
       - path: "test/governance/milestone_scope_test.exs"
-        issue: "The shared checkpoint-prefix exemption permits checkpoint-bypass tasks to implement excluded capability IDs."
+        issue: "The remote state model is incomplete and the print probe crosses the non-mutating authorization boundary."
     missing:
-      - "Apply demand-gated task-region rejection to every implementation-bearing task and reject unknown checkpoint-like types before exemptions."
-  - truth: "The baseline shape and each finding's reproducible evidence are fail-closed and machine-checked by ci.evidence."
-    status: failed
-    reason: "A backticked allowed-prefix path is accepted without proving the referenced repository file exists; `.planning/no-such-evidence.md` satisfies the current validator."
-    artifacts:
-      - path: "test/governance/milestone_scope_test.exs"
-        issue: "CR-09 leaves QUAL-01 provenance fabricable; the active nonexistent-path test fails."
-    missing:
-      - "Resolve source references beneath the repository root and require existing regular tracked files."
-      - "Validate command references through the same executable, non-zero owner contract as acceptance evidence."
+      - "Represent and compare the complete branch-protection state."
+      - "Replace ambient script execution with static provenance/result binding or a no-network, no-credentials, read-only sandbox."
 deferred:
-  - truth: "The repository-wide warnings-as-errors suite is green despite archival planning vocabulary."
+  - truth: "The repository-wide warnings-as-errors suite is green despite legacy human-verification vocabulary in Phase 73 planning artifacts."
     addressed_in: "Phase 77"
-    evidence: "Phase 77 owns removal of stale phase/plan/UAT/GSD narration while retaining archived planning history; baseline finding QUAL-73-006 records the current one-test failure."
+    evidence: "Phase 77 success criterion 2 owns stale phase/plan/UAT/GSD narration cleanup while preserving archived planning history; baseline finding QUAL-73-006 records the known assertion."
 ---
 
 # Phase 73: Twin Contract and Baseline Verification Report
 
 **Phase Goal:** A maintainer can see exactly which adopter jobs v1.11 proves, where each proof runs, what the current quality/CI baseline is, and which changes require approval.
-**Verified:** 2026-09-09T22:17:45Z
+**Verified:** 2026-09-10T20:02:04Z
 **Status:** gaps_found
-**Re-verification:** Yes — after gap-closure Plans 73-04 and 73-05
+**Re-verification:** Yes — after all 11 plans and the final independent code review
 
 ## Goal Achievement
 
@@ -79,129 +69,128 @@ deferred:
 
 | # | Truth | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | A machine-checked ledger maps every in-scope persona and lifecycle outcome to a named job, outcome, evidence class, owner, selector, lane, and planned/existing state. | ✓ VERIFIED | Quick regression check: `Relyra.AdoptionEvidence.entries/0` still contains the 37 active requirement IDs and all six required personas; corresponding positive coverage passes. |
-| 2 | The repository has a dated severity-ranked baseline for correctness, security, integration, readability, documentation, artifacts, and CI cost/duplication. | ✓ VERIFIED | Quick regression check: `73-BASELINE.md` retains all seven quality categories, the five-level severity policy, ten findings, and the nine-surface dated CI snapshot. |
-| 3 | Automated policy checks prevent new acceptance criteria from closing without a mandatory deterministic owner. | ✗ FAILED | `mix ci.evidence` fails on command substitution, zero-effective-test filters, selector module/tag semantics, and conditional/fallible workflow placement. |
-| 4 | Plans and execution stop at named checkpoints before public API, default, security, SemVer-major, or remote GitHub mutation and exclude speculative protocol work. | ✗ FAILED | Active RED tests show unknown checkpoint-shaped tasks, negated decisions, contradictory scope, summary exemptions, and appended remote commands are accepted. |
-| 5 | Planned and external-canary rows remain visible but cannot themselves close a completed requirement. | ✓ VERIFIED | `deterministic_owners/2` still excludes non-existing and external-canary rows; the focused planned/canary regression tests pass. |
-| 6 | Planning-only changes run the evidence contract through the required security workflow. | ✓ VERIFIED | `.planning/**` is not ignored, `prompts/**` remains ignored, and the current enabled `jobs.security` step invokes `mix ci.evidence`; `actionlint` exits 0. |
-| 7 | Every current baseline finding names evidence, disposition, owner, target phase, approval class, blocker state, and revisit date. | ✓ VERIFIED | The current findings ledger retains every required non-empty column and severity-specific lifecycle field. |
-| 8 | The baseline shape and each finding's reproducible evidence are fail-closed and machine-checked by `ci.evidence`. | ✗ FAILED | The nonexistent-path adversarial test fails because `.planning/no-such-evidence.md` is accepted as provenance. |
-| 9 | Remote GitHub approval requires one exact reversible batch rather than keyword- or substring-only authorization. | ✗ FAILED | Appending `&& gh api -X DELETE repos/szTheory/relyra` to an otherwise accepted mutation command produces no violation. |
+| 1 | A machine-checked ledger maps every in-scope persona and lifecycle outcome to a named job, outcome, evidence class, owner, selector, lane, and planned/existing state. | ✓ VERIFIED | `entries/0` contains exactly the 37 active v1.11 requirement IDs and all six required personas; its schema/coverage tests run in `ci.evidence`. |
+| 2 | The repository has a dated severity-ranked baseline for correctness, security, integration, readability, documentation, artifacts, and CI cost/duplication. | ✓ VERIFIED | `73-BASELINE.md` contains ten findings across all seven categories, the five-level severity policy, and nine dated CI snapshot surfaces. |
+| 3 | Automated policy checks prevent new acceptance criteria from closing without a mandatory deterministic owner. | ✗ FAILED — BLOCKER | Isolated fixtures returned `:ok` for an alias with `--only evidence_contract --exclude evidence_contract` and for a workflow restricted to five planning files. The lane can be green while selecting no proof or not running for owner changes. |
+| 4 | Plans and execution stop at named checkpoints before public API, default, security, SemVer-major, or remote GitHub mutation and exclude speculative protocol work. | ✗ FAILED — BLOCKER | The validator executes a plan-selected script, ignores most branch-protection values, and permits a manifest to omit governed phase commits. |
+| 5 | Planned and external-canary rows remain visible but cannot themselves close a completed requirement. | ✓ VERIFIED | `deterministic_owners/2` excludes planned and external-canary rows; active closure tests cover both cases. |
+| 6 | Planning-only changes run the evidence contract through the current required security workflow. | ✓ VERIFIED | The checked-in workflow currently ignores only `prompts/**`; PR and main-push events reach the enabled Evidence contract step, and `actionlint` exits 0. |
+| 7 | Every current baseline finding names evidence, disposition, owner, target phase, approval class, blocker state, and revisit date. | ✓ VERIFIED | All ten rows retain the complete lifecycle schema and severity-specific states. |
+| 8 | The baseline shape and each finding's reproducible evidence are machine-checked by `ci.evidence`. | ✓ VERIFIED | The governance contract validates anchored rows, tracked non-symlink paths, and shared executable-command provenance; its active tests pass. |
+| 9 | Remote GitHub approval requires one exact reversible batch whose operations implement the complete approved state. | ✗ FAILED — BLOCKER | Only strict/status contexts survive normalization; nine accepted protection fields are discarded, and script validation executes plan-selected code with ambient authority. |
 
-**Score:** 5/9 truths verified (0 present, behavior-unverified)
+**Score:** 6/9 truths verified (0 present, behavior-unverified)
 
 ### Roadmap Success Criteria
 
 | # | Roadmap Contract | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | Ledger maps every in-scope persona and lifecycle outcome to deterministic evidence or a scheduled canary. | ✓ VERIFIED | Literal ledger coverage and planned/existing/canary state remain present and tested. |
-| 2 | Severity-ranked quality and CI baseline covers all required dimensions. | ✓ VERIFIED | The dated findings ledger and CI snapshot exist with the required scope. |
-| 3 | Policy prevents acceptance closure without a mandatory deterministic owner. | ✗ FAILED — BLOCKER | Five adoption-contract tests expose hollow or optional ownership. |
-| 4 | Plans stop for governed changes and exclude speculative protocol work. | ✗ FAILED — BLOCKER | Governance tests expose multiple approval and task-type bypasses. |
+| 1 | Ledger maps every in-scope persona and lifecycle outcome to deterministic evidence or a scheduled canary. | ✓ VERIFIED | Literal ledger coverage and planned/existing/canary separation are present and tested. |
+| 2 | Severity-ranked quality and CI baseline covers all required dimensions. | ✓ VERIFIED | The dated findings ledger and CI snapshot contain the required categories and fields. |
+| 3 | Policy prevents acceptance closure without a mandatory deterministic owner. | ✗ FAILED — BLOCKER | Empty-effective aliases and source-excluding positive workflow filters are accepted. |
+| 4 | Plans stop for governed changes and exclude speculative protocol work. | ✗ FAILED — BLOCKER | Incomplete state comparison, ambient script execution, and manifest-selected provenance leave governed changes bypassable. |
 
-### Deferred Items
+### Deferred Item
 
-| # | Item | Addressed In | Evidence |
-| --- | --- | --- | --- |
-| 1 | Repository-wide archival-vocabulary failure | Phase 77 | Phase 77 explicitly owns cleanup of stale planning narration; `QUAL-73-006` records the current failure. |
+| Item | Addressed In | Evidence |
+| --- | --- | --- |
+| Legacy human-verification vocabulary assertion | Phase 77 | Phase 77 owns standalone vocabulary cleanup; `QUAL-73-006` records the failure. This is not a Phase 73 implementation gap. |
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | --- | --- | --- | --- |
-| `test/support/adoption_evidence.ex` | Closed literal ledger and executable deterministic-owner chain | ✗ PARTIAL / BLOCKER | Exists (676 lines), substantive, exported functions are present, and consumers call it. The generic artifact query misreads Elixir `def name` exports, but direct inspection confirms them. CR-01 through CR-03 prove enforcement is not fail-closed. |
-| `test/adoption/evidence_contract_test.exs` | Adversarial schema, closure, selector, alias, and workflow contract | ✓ VERIFIED TEST ARTIFACT | Exists (477 lines), wired through `ci.evidence`, has 18 active tests, and contains strong RED coverage. Five tests correctly expose missing implementation. |
-| `.planning/phases/73-twin-contract-and-baseline/73-BASELINE.md` | Dated severity-ranked quality and CI inventory | ✓ VERIFIED CURRENT ARTIFACT | Exists (53 substantive lines) with ten findings and a nine-surface snapshot. Its future provenance integrity is not protected. |
-| `test/governance/milestone_scope_test.exs` | Baseline, approval, scope, and automated-completion policy | ✗ PARTIAL / BLOCKER | Exists (2,018 lines), substantive, and selected by `ci.evidence`; six of 34 active tests fail on CR-04 through CR-09. |
-| `mix.exs` | Focused fresh-process `ci.evidence` alias | ✓ VERIFIED | Alias at line 235 invokes both contract files with `--only evidence_contract --warnings-as-errors`. |
-| `.github/workflows/security-gates.yml` | Mandatory, planning-aware Evidence contract step | ✓ VERIFIED CURRENT ARTIFACT | Current `jobs.security` step invokes the alias and workflow syntax passes. The validator would certify conditional/fallible variants. |
+| `test/support/adoption_evidence.ex` | Literal ledger and fail-closed deterministic-owner chain | ✗ PARTIAL / BLOCKER | Exists (1,029 lines), substantive, exports are present and used. Alias and trigger validation remain hollowable. |
+| `test/adoption/evidence_contract_test.exs` | Adversarial ledger/owner/workflow contract | ⚠ PARTIAL | Exists (856 lines), substantive, 26 active and 0 skipped tests, and wired into `ci.evidence`; it omits the two reproduced bypasses. |
+| `.planning/phases/73-twin-contract-and-baseline/73-BASELINE.md` | Dated quality and CI inventory | ✓ VERIFIED | Exists, substantive, ten findings, seven categories, five severities, and nine CI surfaces. |
+| `test/governance/milestone_scope_test.exs` | Baseline, approval, scope, provenance, and remote policy | ✗ PARTIAL / BLOCKER | Exists (3,776 lines), substantive, 44 active and 0 skipped tests; three authority boundaries remain fail-open. |
+| `mix.exs` | Focused fresh-process `ci.evidence` alias | ✓ VERIFIED CURRENT ARTIFACT | The checked-in alias names both contract files, the evidence selector, and warnings-as-errors. Its validator accepts an empty effective selection. |
+| `.github/workflows/security-gates.yml` | Mandatory planning-aware Evidence contract step | ✓ VERIFIED CURRENT ARTIFACT | Current wiring is enabled and blocking and passes `actionlint`; its guard accepts restrictive source-excluding `paths`. |
+
+The generic artifact query falsely reports Elixir `def` exports as missing and cannot interpret conceptual key-link labels. Direct source inspection above is authoritative for those rows.
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 | --- | --- | --- | --- | --- |
-| Evidence contract tests | Adoption ledger | Closed-row and owner-chain calls | ✗ PARTIAL | Calls are wired, but semantic selection and workflow-mandatory invariants fail active tests. |
-| Adoption ledger | ExUnit owner source | Selector-to-executable-test inspection | ✗ NOT RELIABLY WIRED | File-wide AST accumulation crosses module boundaries and treats incidental tag values as selectors. |
-| `mix.exs` | Both Phase 73 contracts | One fresh-process `ci.evidence` command | ✓ WIRED | Direct inspection confirms both paths, selector, and warnings-as-errors. |
-| `mix.exs` | Security workflow | `mix ci.evidence` | ✓ WIRED CURRENTLY | Current lane is enabled and blocking, though its enforcing validator is fail-open. |
-| Governance contract | Active/completed plans and governed surfaces | Parsed risk, checkpoint, and diff classification | ✗ PARTIAL | `changed_surface_classes/3` is exercised only by self-test and not fed into active-plan enforcement; SUMMARY existence suppresses validation. |
-| Governance contract | Baseline | Anchored parsing and row-local provenance | ✗ PARTIAL | Table/marker parsing is wired; referenced path existence is not. |
+| Evidence contract tests | Adoption ledger | Public validation functions | ✓ WIRED | Tests call ledger, closure, repository, and command validators. |
+| Adoption ledger | Mix alias and selected ExUnit owners | Actual alias resolution plus owner selection | ✗ PARTIAL | Owner files select tests, but `validate_owner_chain!/4` authorizes alias steps by substring and ignores effective exclusions. |
+| Mix alias | Required security workflow | Exact Evidence contract step and triggers | ✗ PARTIAL | Current link works, but enforcement samples only five planning paths and can omit all owner/source inputs. |
+| Governance contract | Completed-plan changes | Git/manifest provenance to changed-surface classification | ✗ PARTIAL | Git derivation exists only when no manifest exists; a present manifest becomes the selectable commit set. |
+| Remote batch | Approved protection state | Payload/script normalization and comparison | ✗ PARTIAL | Only strict and contexts flow into comparison; nine security-relevant values are dropped. |
+| Governance contract | Baseline | Anchored table and provenance checks | ✓ WIRED | Baseline rows flow into structural and tracked/executable evidence checks. |
 
 ### Data-Flow Trace (Level 4)
 
-Not applicable. Phase 73 produces test-only registries, Markdown planning evidence, and CI configuration; it has no rendered dynamic data path.
+Not applicable. This phase produces test-only registries, Markdown inventories, and CI/governance policy rather than rendered dynamic data.
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | --- | --- | --- | --- |
-| Adoption evidence contract | `mix test test/adoption/evidence_contract_test.exs --warnings-as-errors` with required ASDF versions | 18 tests, 5 failures, exit 2 | ✗ FAIL |
-| Governance contract | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` with required ASDF versions | 34 tests, 6 failures, exit 2 | ✗ FAIL |
-| Mandatory owning lane | `mix ci.evidence` with required ASDF versions | 52 tests, 11 failures, exit 1 | ✗ FAIL |
-| Workflow syntax | `actionlint .github/workflows/security-gates.yml` | exit 0 | ✓ PASS |
-| Patch hygiene | `git diff --check` | exit 0 | ✓ PASS |
+| Nominal mandatory evidence lane | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence` | 70 tests, 0 failures, exit 0 in 159.4s | ✓ PASS, but not sufficient |
+| Empty-effective alias rejection | Isolated repo with alias adding `--exclude evidence_contract`, then `validate_repository!/2` | Returned `empty-effective-alias: :ok`, exit 0 | ✗ FAIL |
+| Restrictive workflow paths rejection | Isolated repo with PR/push `paths` containing only five sampled planning files | Returned `restrictive-paths: :ok`, exit 0 | ✗ FAIL |
+| Workflow syntax | `actionlint .github/workflows/security-gates.yml` | Exit 0 | ✓ PASS |
+| Patch hygiene | `git diff --check` | Exit 0 | ✓ PASS |
 
 ### Probe Execution
 
-No phase-declared or conventional `scripts/**/tests/probe-*.sh` probe exists. The phase-declared executable owner, `mix ci.evidence`, was run independently and failed as recorded above.
+No phase-declared or conventional `scripts/**/tests/probe-*.sh` probe exists. The declared executable owner, `mix ci.evidence`, was run independently as recorded above.
 
 ### Requirements Coverage
 
 | Requirement | Source Plans | Description | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| EVID-01 | 73-01 | Inspectable six-persona evidence ledger | ✓ SATISFIED | Literal all-requirement ledger and six-persona coverage remain present; focused positive coverage passes. |
-| EVID-02 | 73-01, 73-04 | Every criterion has deterministic automation in a mandatory lane | ✗ BLOCKED | CR-01 through CR-03 and five active RED tests prove hollow/optional evidence can still be accepted. |
-| QUAL-01 | 73-02, 73-05 | Severity-ranked repository quality inventory | ⚠️ PARTIAL / BLOCKED PLAN CONTRACT | The current inventory is inspectable, but Plan 73-05's required fail-closed provenance contract accepts nonexistent sources (CR-09). |
-| PIPE-01 | 73-02 | Inspectable current CI duration, duplication, ownership, cache, and failure evidence | ✓ SATISFIED | The dated nine-surface snapshot contains every required dimension and labels measurements as samples. |
-| GOV-01 | 73-03, 73-05 | Approval checkpoint before governed mutations | ✗ BLOCKED | CR-04 through CR-08 expose task-type, decision, scope, completed-plan, diff-wiring, and remote-command bypasses. |
-| GOV-02 | 73-03, 73-05 | No speculative protocol capability or unrelated expansion | ✗ BLOCKED | A `checkpoint-bypass` task can carry forbidden implementation while skipping the structural exclusion check. |
+| EVID-01 | 73-01, 73-06, 73-09, 73-11 | Inspectable six-persona evidence ledger | ✓ SATISFIED | Exactly 37 active IDs and all six personas remain inspectable with named jobs and truthful states. |
+| EVID-02 | 73-01, 73-04, 73-06, 73-09, 73-11 | Every criterion has deterministic automation in a mandatory lane | ✗ BLOCKED | Empty-effective aliases and source-excluding workflow paths are accepted. |
+| QUAL-01 | 73-02, 73-05, 73-08, 73-11 | Severity-ranked repository quality inventory | ✓ SATISFIED | Ten-row, seven-category, five-severity inventory with owned evidence. |
+| PIPE-01 | 73-02, 73-08, 73-11 | Inspectable CI duration, duplication, ownership, cache, and failure evidence | ✓ SATISFIED | Nine-surface dated before-snapshot explicitly labels measurements as samples. |
+| GOV-01 | 73-03, 73-05, 73-07, 73-08, 73-10, 73-11 | Approval checkpoint before governed mutations | ✗ BLOCKED | Remote state is incomplete, validation executes plan-selected code, and manifests can hide changed surfaces. |
+| GOV-02 | 73-03, 73-05, 73-07, 73-10, 73-11 | No speculative protocol capability or unrelated expansion | ✗ BLOCKED | Manifest-selected provenance can omit a commit containing governed or speculative changes from classification. |
 
-All six Phase 73 requirements appear in plan frontmatter and the roadmap mapping; no requirement is orphaned.
+All six requirement IDs declared across the eleven plans exist in `REQUIREMENTS.md`, map to Phase 73, and are accounted for above. No Phase 73 requirement is orphaned.
 
 ### Decision Coverage
 
-All 13 trackable decisions in `73-CONTEXT.md` are referenced by shipped artifacts according to `check.decision-coverage-verify`. This warning-only heuristic does not override the failing behavioral contracts.
+The non-blocking decision-coverage query reports 13/13 trackable `73-CONTEXT.md` decisions referenced by shipped artifacts. This does not override the reproduced authority failures.
 
 ### Test Quality Audit
 
-| Test File | Linked Reqs | Active | Skipped | Circular | Assertion Level | Verdict |
+| Test File | Linked Requirements | Active | Skipped | Circular | Assertion Level | Verdict |
 | --- | --- | ---: | ---: | --- | --- | --- |
-| `test/adoption/evidence_contract_test.exs` | EVID-01, EVID-02 | 18 | 0 | No | Behavioral isolated-repository mutations | BLOCKER — 5 tests fail and expose CR-01 through CR-03. |
-| `test/governance/milestone_scope_test.exs` | QUAL-01, PIPE-01, GOV-01, GOV-02 | 34 | 0 | No; writes are isolated fixture mutations | Behavioral plan/baseline mutations | BLOCKER — 6 tests fail and expose CR-04 through CR-09. |
+| `test/adoption/evidence_contract_test.exs` | EVID-01, EVID-02 | 26 | 0 | No | Behavioral isolated-repository mutations | BLOCKER — adjacent alias and path-filter bypasses are untested and reproduced. |
+| `test/governance/milestone_scope_test.exs` | QUAL-01, PIPE-01, GOV-01, GOV-02 | 44 | 0 | No | Behavioral plan/git/filesystem mutations | BLOCKER — assertions omit full protection-state semantics, script non-mutation, and manifest completeness. |
 
-**Disabled requirement tests:** 0. **Circular expected-value generation:** 0. **Insufficient assertions:** 0 in the new RED coverage; the implementation fails the asserted behavior.
+**Disabled requirement tests:** 0. **Circular patterns:** 0. **Insufficient/missing adversarial assertions:** 5 critical authority cases.
 
-### Anti-Patterns Found
+### Anti-Patterns and Confirmed Review Findings
 
-| File | Line | Pattern | Severity | Impact |
-| --- | ---: | --- | --- | --- |
-| `test/support/adoption_evidence.ex` | 340 | Environment prefixes stripped before shell metacharacter rejection; filters do not model effective selection | 🛑 Blocker | Shell execution or zero-test commands can close acceptance. |
-| `test/support/adoption_evidence.ex` | 406 | File-wide selector AST state crosses modules and accepts incidental atom values | 🛑 Blocker | Non-executable ownership appears real. |
-| `test/support/adoption_evidence.ex` | 565 | Unknown workflow conditions/fallibility are treated as mandatory | 🛑 Blocker | Evidence can be skipped on required events. |
-| `test/governance/milestone_scope_test.exs` | 1005 | Prefix-based checkpoint exemption without closed task types | 🛑 Blocker | Risk, evidence, and excluded-capability checks are bypassed together. |
-| `test/governance/milestone_scope_test.exs` | 1101 | Free-form substring search accepts negated approval text | 🛑 Blocker | A non-approval authorizes governed mutation. |
-| `test/governance/milestone_scope_test.exs` | 1050 | Plan scope remains substring-based | 🛑 Blocker | Contradictory mutation intent suppresses checkpoints. |
-| `test/governance/milestone_scope_test.exs` | 1189 | Governed before/after classifier is disconnected from repository enforcement | 🛑 Blocker | Misstated changes and premature summaries bypass approval. |
-| `test/governance/milestone_scope_test.exs` | 1408 | Remote command target comparison accepts appended commands | 🛑 Blocker | Approval can include unreviewed remote mutations. |
-| `test/governance/milestone_scope_test.exs` | 1839 | Allowed path prefixes are not resolved to real tracked files | 🛑 Blocker | Fabricated evidence satisfies baseline provenance. |
-| `mix.lock` | 2 | Phoenix remediation widened four coupled transport/pubsub dependency locks | ⚠️ Warning | Compatibility surface is broader than the named advisory fix; not a Phase 73 goal blocker. |
+| ID | File / Line | Pattern | Severity | Impact |
+| --- | --- | --- | --- | --- |
+| CR-01 | `test/support/adoption_evidence.ex:374` | Alias ownership by substring | 🛑 BLOCKER | An include/exclude combination with zero selected tests is accepted. |
+| CR-02 | `test/support/adoption_evidence.ex:855` | Five-path trigger sampling | 🛑 BLOCKER | The workflow can exclude all source/owner changes and still be certified mandatory. |
+| CR-03 | `test/governance/milestone_scope_test.exs:2769` | Decode ten protection keys, compare two values | 🛑 BLOCKER | Nine protection controls may change without authorization detecting it. |
+| CR-04 | `test/governance/milestone_scope_test.exs:2846` | Execute a plan-selected script during validation | 🛑 BLOCKER | A tracked malicious script receives ambient CI filesystem, credential, and network authority. |
+| CR-05 | `test/governance/milestone_scope_test.exs:3269` | Manifest replaces Git-derived commit discovery | 🛑 BLOCKER | A scoped governed commit may be omitted from review and checkpoint classification. |
 
-No unreferenced `TBD`, `FIXME`, or `XXX` debt marker exists in phase-owned implementation files. Placeholder strings in governance tests are deliberate negative fixtures, not incomplete implementation markers.
+No unreferenced `TBD`, `FIXME`, or `XXX` marker exists in phase-owned implementation files. Placeholder text is confined to deliberate negative fixtures.
 
 ### Prohibition Review
 
-The eleven plan prohibitions are not silently passed. Deterministic failures directly contradict the prohibitions against hollow selectors, optional workflow evidence, ambiguous approval, demand-gated task smuggling, and fabricated baseline references. Those contradictions are represented by the four blocking gaps above. The inventory-only/single-sample prohibition remains supported by the baseline text. No separate manual disposition is created because project policy requires automated evidence and the failures are observable.
+The eleven plans declare 26 prohibitions. Their `judgment` or non-canonical `unverified` dispositions are not silently treated as green. The five confirmed defects directly violate prohibitions against hollow ownership, skippable mandatory CI, self-selected historical evidence, incomplete state authorization, and mutation during validation. Because project policy forbids manual completion gates, these are retained as deterministic automation gaps rather than routed to `human_needed`.
 
 ### Human Verification Required
 
-N/A — infrastructure/governance phase with no user-facing elements. All acceptance criteria are deterministically checkable, and project policy forbids substituting manual UAT for failed automated evidence.
+N/A — infrastructure/governance phase with no user-facing behavior. Project policy requires deterministic automated evidence and forbids manual UAT as completion evidence.
 
 ### Gaps Summary
 
-Plans 73-04 and 73-05 closed the literal bypass examples from the first verification, but they did not close the underlying four failed truths. The committed Nyquist corpus in `69aa4dd` proves nine adjacent fail-open implementation defects: five adoption tests and six governance tests fail, and the mandatory `ci.evidence` lane fails with all 11 failures. EVID-02, GOV-01, GOV-02, and Plan 73-05's fail-closed QUAL-01 provenance contract remain blocking. These failures are Phase 73 contract work and are not deferred by later milestone phases.
+The nominal 70-test `ci.evidence` lane is green, but it does not prove the phase goal. Two hollow-gate bypasses reproduce independently, and direct source inspection confirms three additional critical authorization/provenance defects. These failures invalidate roadmap criteria 3 and 4 and block EVID-02, GOV-01, and GOV-02. The `73-VALIDATION.md` and `73-SECURITY.md` green sign-offs are contradicted by current code and cannot establish completion.
+
+The known documentation-vocabulary assertion remains explicitly deferred to Phase 77 and is not counted as a Phase 73 gap.
 
 ---
 
-_Verified: 2026-09-09T22:17:45Z_
-_Verifier: the agent (gsd-verifier)_
+_Verified: 2026-09-10T20:02:04Z_
+_Verifier: OpenAI Codex (gsd-verifier)_
