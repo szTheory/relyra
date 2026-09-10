@@ -322,7 +322,7 @@ defmodule Relyra.AdoptionEvidence do
   def validate_repository!(entries, root) do
     validate_entries!(entries)
 
-    aliases = mix_aliases!(Path.join(root, "mix.exs"))
+    aliases = mix_aliases!(root)
     workflow = File.read!(Path.join(root, ".github/workflows/security-gates.yml"))
 
     entries
@@ -338,23 +338,11 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   def validate_automated_command!(command, root) when is_binary(command) do
-    raw_command = String.trim(command)
-
-    if raw_command == "" or String.contains?(raw_command, "\n") or
-         Regex.match?(~r/[;&|`]|\$\(/, raw_command) do
-      raise ArgumentError, "verification command is shell-shaped rather than one executable owner"
-    end
-
-    normalized =
-      String.replace(raw_command, ~r/\A(?:[A-Z_][A-Z0-9_]*=\S+\s+)*/, "")
-
-    tokens = String.split(normalized)
-
-    case tokens do
-      ["mix", "test" | arguments] ->
+    case command_argv!(command) do
+      {"mix", ["test" | arguments]} ->
         validate_direct_test_command!(arguments, root)
 
-      ["mix", alias_name] ->
+      {"mix", [alias_name]} ->
         validate_check_alias!(alias_name, root)
 
       _other ->
@@ -377,7 +365,7 @@ defmodule Relyra.AdoptionEvidence do
             "#{entry.requirement} row #{entry.id}: missing owner file #{entry.owner}"
     end
 
-    unless selected_test_count!(owner_path, entry.selector) > 0 do
+    unless selected_test_count!(owner_path, entry.selector, root) > 0 do
       raise ArgumentError,
             "#{entry.requirement} row #{entry.id}: selector #{entry.selector} matches zero tests in #{entry.owner}"
     end
@@ -403,79 +391,65 @@ defmodule Relyra.AdoptionEvidence do
     end
   end
 
-  defp selected_test_count!(path, selector) do
+  defp selected_test_count!(path, selector, root) do
     path
-    |> executable_test_tags!()
+    |> registered_test_tags!(root)
     |> Enum.count(&enabled_tag?(&1, selector))
   end
 
-  defp executable_test_tags!(path) do
-    ast = path |> File.read!() |> Code.string_to_quoted!()
+  defp registered_test_tags!(path, root) do
+    probe = """
+    ExUnit.start(autorun: false)
+    [owner] = System.argv()
 
-    ast
-    |> module_bodies()
-    |> Enum.flat_map(&module_test_tags/1)
-  rescue
-    error in [SyntaxError, TokenMissingError] ->
-      raise ArgumentError,
-            "cannot inspect executable tests in #{path}: #{Exception.message(error)}"
-  end
-
-  defp module_bodies(ast) do
-    ast
-    |> Macro.prewalker()
-    |> Enum.flat_map(fn
-      {:defmodule, _meta, [_name, [do: body]]} -> [body]
-      _node -> []
-    end)
-  end
-
-  defp module_test_tags(body) do
-    expressions = if match?({:__block__, _, _}, body), do: elem(body, 2), else: [body]
-
-    module_tags =
-      Enum.reduce(expressions, %{}, fn
-        {:@, _meta, [{:moduletag, _attribute_meta, arguments}]}, tags ->
-          Map.merge(tags, literal_tags(arguments))
-
-        _expression, tags ->
-          tags
+    tags =
+      owner
+      |> Code.compile_file()
+      |> Enum.flat_map(fn {module, _binary} ->
+        if function_exported?(module, :__ex_unit__, 0) do
+          module.__ex_unit__().tests |> Enum.map(& &1.tags)
+        else
+          []
+        end
       end)
 
-    {_pending_tags, tests} =
-      Enum.reduce(expressions, {%{}, []}, fn
-        {:@, _meta, [{:tag, _attribute_meta, arguments}]}, {pending_tags, tests} ->
-          {Map.merge(pending_tags, literal_tags(arguments)), tests}
+    IO.puts("RELYRA_EXUNIT_PROBE:" <> Base.encode64(:erlang.term_to_binary(tags)))
+    """
 
-        {:test, _meta, _arguments}, {pending_tags, tests} ->
-          {%{}, [Map.merge(module_tags, pending_tags) | tests]}
+    mix = System.find_executable("mix") || raise ArgumentError, "cannot locate Mix executable"
 
-        _expression, accumulator ->
-          accumulator
-      end)
+    {output, status} =
+      System.cmd(
+        mix,
+        [
+          "run",
+          "--no-start",
+          "--no-compile",
+          "--no-deps-check",
+          "-e",
+          probe,
+          "--",
+          path
+        ],
+        cd: root,
+        env: [{"MIX_ENV", "test"}],
+        stderr_to_stdout: true
+      )
 
-    Enum.reverse(tests)
+    with 0 <- status,
+         [encoded] <-
+           Regex.run(~r/^RELYRA_EXUNIT_PROBE:([A-Za-z0-9+\/=]+)$/m, output,
+             capture: :all_but_first
+           ),
+         {:ok, binary} <- Base.decode64(encoded),
+         tags when is_list(tags) <- :erlang.binary_to_term(binary, [:safe]) do
+      Enum.map(tags, fn tags -> Map.new(tags, fn {key, value} -> {to_string(key), value} end) end)
+    else
+      _other ->
+        raise ArgumentError,
+              "cannot inspect registered ExUnit tests in #{path}; probe exited #{status}: #{String.trim(output)}"
+    end
   end
-
-  defp literal_tags([tag]) when is_atom(tag), do: %{Atom.to_string(tag) => true}
-
-  defp literal_tags([tags]) when is_list(tags) do
-    Enum.reduce(tags, %{}, fn
-      {key, value}, parsed when is_atom(key) and is_atom(value) ->
-        Map.put(parsed, Atom.to_string(key), value)
-
-      {key, value}, parsed when is_atom(key) and is_binary(value) ->
-        Map.put(parsed, Atom.to_string(key), value)
-
-      {key, value}, parsed when is_atom(key) and is_number(value) ->
-        Map.put(parsed, Atom.to_string(key), value)
-
-      _unsupported, parsed ->
-        parsed
-    end)
-  end
-
-  defp literal_tags(_arguments), do: %{}
 
   defp validate_direct_test_command!(arguments, root) do
     unless "--warnings-as-errors" in arguments do
@@ -498,7 +472,7 @@ defmodule Relyra.AdoptionEvidence do
 
         effective_count =
           owner_path
-          |> executable_test_tags!()
+          |> registered_test_tags!(root)
           |> Enum.count(fn tags ->
             Enum.all?(includes, &filter_matches?(tags, &1)) and
               not Enum.any?(exclusions, &filter_matches?(tags, &1))
@@ -514,11 +488,18 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   defp validate_check_alias!(alias_name, root) do
-    steps = root |> Path.join("mix.exs") |> mix_aliases!() |> Map.get(alias_name)
+    steps = root |> mix_aliases!() |> Map.get(alias_name)
 
     case steps do
-      ["cmd mix test " <> arguments] ->
-        validate_direct_test_command!(String.split(arguments), root)
+      ["cmd " <> command] ->
+        case command_argv!(command) do
+          {"mix", ["test" | arguments]} ->
+            validate_direct_test_command!(arguments, root)
+
+          _other ->
+            raise ArgumentError,
+                  "named repository check alias #{alias_name} must be one fresh-process test command"
+        end
 
       nil ->
         raise ArgumentError, "named repository check alias #{alias_name} does not exist"
@@ -622,21 +603,98 @@ defmodule Relyra.AdoptionEvidence do
     expanded_owner
   end
 
-  defp mix_aliases!(path) do
-    path
-    |> File.read!()
-    |> Code.string_to_quoted!()
-    |> Macro.prewalker()
-    |> Enum.reduce(%{}, fn
-      {key, steps}, aliases when is_atom(key) and is_list(steps) ->
-        if Enum.all?(steps, &is_binary/1),
-          do: Map.put(aliases, Atom.to_string(key), steps),
-          else: aliases
+  defp command_argv!(command) do
+    grammar =
+      ~r/\A(?:(?:[A-Z_][A-Z0-9_]*=[A-Za-z0-9._:\/+\-]+) +)*mix(?: +[A-Za-z0-9._\/=:+\-]+)+\z/
 
-      _node, aliases ->
-        aliases
+    unless Regex.match?(grammar, command) do
+      raise ArgumentError, "verification command is shell-shaped rather than one executable owner"
+    end
+
+    tokens = String.split(command, " ", trim: true)
+
+    {_environment, [executable | arguments]} =
+      Enum.split_while(tokens, &Regex.match?(~r/^[A-Z_][A-Z0-9_]*=/, &1))
+
+    {executable, arguments}
+  end
+
+  defp mix_aliases!(root) do
+    expanded_root = Path.expand(root)
+    previous_project = Mix.Project.get()
+
+    try do
+      aliases =
+        if current_project_root() == expanded_root do
+          Mix.Project.config()[:aliases]
+        else
+          validation_app =
+            String.to_atom(
+              "relyra_evidence_validation_#{System.unique_integer([:positive, :monotonic])}"
+            )
+
+          Mix.Project.in_project(validation_app, expanded_root, [], fn _module ->
+            Mix.Project.config()[:aliases]
+          end)
+        end
+
+      normalize_aliases!(aliases)
+    after
+      restore_project_stack(previous_project)
+    end
+  end
+
+  defp current_project_root do
+    case Mix.Project.project_file() do
+      nil -> nil
+      path -> path |> Path.dirname() |> Path.expand()
+    end
+  end
+
+  defp restore_project_stack(previous_project) do
+    case Mix.Project.get() do
+      ^previous_project ->
+        :ok
+
+      nil when is_nil(previous_project) ->
+        :ok
+
+      nil ->
+        :ok
+
+      _other ->
+        Mix.Project.pop()
+        restore_project_stack(previous_project)
+    end
+  end
+
+  defp normalize_aliases!(aliases) when is_list(aliases) do
+    Enum.reduce(aliases, %{}, fn {name, steps}, normalized ->
+      key = if is_atom(name), do: Atom.to_string(name), else: name
+
+      if not is_binary(key) or Map.has_key?(normalized, key) do
+        raise ArgumentError, "Mix aliases must have one unique literal name per target"
+      end
+
+      Map.put(normalized, key, normalize_alias_steps(steps))
     end)
   end
+
+  defp normalize_aliases!(_aliases),
+    do: raise(ArgumentError, "Mix project aliases must be a list")
+
+  defp normalize_alias_steps(step) when is_binary(step), do: [step]
+  defp normalize_alias_steps(step) when is_atom(step), do: [Atom.to_string(step)]
+
+  defp normalize_alias_steps(steps) when is_list(steps) do
+    if Enum.all?(steps, &(is_binary(&1) or is_atom(&1))) do
+      Enum.map(steps, fn step -> if is_atom(step), do: Atom.to_string(step), else: step end)
+    else
+      :unsupported
+    end
+  end
+
+  defp normalize_alias_steps(_steps), do: :unsupported
 
   defp mandatory_security_step?(workflow, step_name, command) do
     lines = String.split(workflow, "\n")

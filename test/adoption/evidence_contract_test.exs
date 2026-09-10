@@ -504,10 +504,13 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     File.write!(
       owner_path,
       """
-      defmodule ShadowTestMacroOwner do
-        @moduletag :evidence_contract
-
+      defmodule NoopTestMacro do
         defmacro test(_name, do: _body), do: quote(do: :ok)
+      end
+
+      defmodule ShadowTestMacroOwner do
+        import NoopTestMacro
+        @moduletag :evidence_contract
 
         test "looks executable but is not registered" do
           raise "must never execute"
@@ -595,9 +598,10 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
   defp fixture_mix_project(actual_steps) do
     decoy_step = fixture_evidence_step()
+    suffix = System.unique_integer([:positive, :monotonic])
 
     """
-    defmodule EvidenceFixture.MixProject do
+    defmodule EvidenceFixture#{suffix}.MixProject do
       use Mix.Project
 
       def project do
@@ -620,7 +624,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     File.mkdir_p!(Path.join(root, "test/adoption"))
     File.mkdir_p!(Path.join(root, "test/governance"))
     File.mkdir_p!(Path.join(root, ".github/workflows"))
-    File.cp!("mix.exs", Path.join(root, "mix.exs"))
+    File.write!(Path.join(root, "mix.exs"), fixture_mix_project([fixture_evidence_step()]))
     File.cp!(__ENV__.file, Path.join(root, "test/adoption/evidence_contract_test.exs"))
 
     File.cp!(
