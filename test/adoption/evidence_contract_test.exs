@@ -687,7 +687,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         replace_pull_request_filter(File.read!(workflow_path), "paths-ignore", [pattern])
       )
 
-      assert_raise ArgumentError, ~r/pull_request.*\.planning\//s, fn ->
+      assert_raise ArgumentError, ~r/pull_request.*governed input/s, fn ->
         AdoptionEvidence.validate_repository!(entries, root)
       end
     end

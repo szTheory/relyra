@@ -329,6 +329,17 @@ defmodule Relyra.AdoptionEvidence do
     owners =
       Enum.filter(entries, &(&1.state == :existing and &1.evidence_kind != :external_canary))
 
+    Enum.reduce(owners, MapSet.new(), fn entry, checked ->
+      key = {entry.owner, entry.selector}
+
+      if MapSet.member?(checked, key) do
+        checked
+      else
+        validate_owner_source!(entry, root)
+        MapSet.put(checked, key)
+      end
+    end)
+
     lane_commands =
       Enum.reduce(owners, %{}, fn entry, commands ->
         Map.put_new_lazy(commands, entry.lane, fn ->
@@ -366,10 +377,10 @@ defmodule Relyra.AdoptionEvidence do
   rescue
     error in ArgumentError ->
       raise ArgumentError,
-            "#{entry.requirement} row #{entry.id}: alias #{entry.lane} is not executable evidence: #{Exception.message(error)}"
+            "#{entry.requirement} row #{entry.id}: alias #{entry.lane} is not wired to an executable owner command: #{Exception.message(error)}"
   end
 
-  defp validate_owner_chain!(entry, root, lane_commands, workflow) do
+  defp validate_owner_source!(entry, root) do
     owner_path = Path.join(root, entry.owner)
 
     unless File.regular?(owner_path) do
@@ -381,7 +392,9 @@ defmodule Relyra.AdoptionEvidence do
       raise ArgumentError,
             "#{entry.requirement} row #{entry.id}: selector #{entry.selector} matches zero tests in #{entry.owner}"
     end
+  end
 
+  defp validate_owner_chain!(entry, _root, lane_commands, workflow) do
     command = Map.fetch!(lane_commands, entry.lane)
 
     owner = Enum.find(command.owners, &(&1.path == entry.owner))
@@ -509,7 +522,7 @@ defmodule Relyra.AdoptionEvidence do
 
         if effective_count == 0 do
           raise ArgumentError,
-                "test owner #{owner} has zero effective selected tests after include/exclusion filters"
+                "test owner #{owner} has zero selected tests: zero effective selected tests after include/exclusion filters"
         end
 
         %{path: owner, effective_count: effective_count}
