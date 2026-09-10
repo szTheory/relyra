@@ -880,18 +880,80 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  @tag :plan_73_08_task_2
   test "baseline verification provenance must resolve to an existing repository path" do
     baseline = File.read!(@baseline_path)
+    marker = "`.planning/STATE.md` Baseline Findings"
 
-    nonexistent =
+    controls = [
+      "`.planning/no-such-evidence.md` Baseline Findings",
+      "`.planning/phases/73-twin-contract-and-baseline` directory",
+      "`test/../../etc/passwd` outside root",
+      "`rg source says good` command-shaped prose"
+    ]
+
+    for replacement <- controls do
+      invalid = String.replace(baseline, marker, replacement, global: false)
+      assert_violation(invalid, "QUAL-73-001", "allowed reference")
+    end
+
+    unique = System.unique_integer([:positive])
+    untracked_relative = ".planning/phases/73-twin-contract-and-baseline/untracked-#{unique}.md"
+    symlink_relative = ".planning/phases/73-twin-contract-and-baseline/symlink-#{unique}.md"
+    File.write!(untracked_relative, "not indexed")
+    File.ln_s!("73-BASELINE.md", symlink_relative)
+
+    on_exit(fn ->
+      File.rm(untracked_relative)
+      File.rm(symlink_relative)
+    end)
+
+    for relative <- [untracked_relative, symlink_relative] do
+      invalid = String.replace(baseline, marker, "`#{relative}` provenance", global: false)
+      assert_violation(invalid, "QUAL-73-001", "allowed reference")
+    end
+
+    tracked =
       String.replace(
         baseline,
-        "`.planning/STATE.md` Baseline Findings",
-        "`.planning/no-such-evidence.md` Baseline Findings",
+        marker,
+        "`test/governance/milestone_scope_test.exs` policy",
         global: false
       )
 
-    assert_violation(nonexistent, "QUAL-73-001", "allowed reference")
+    assert baseline_violations(tracked) == []
+
+    executable =
+      String.replace(baseline, marker, "`mix ci.evidence` owner", global: false)
+
+    assert baseline_violations(executable) == []
+
+    repo = Path.join(System.tmp_dir!(), "relyra-provenance-repo-#{unique}")
+    external = Path.join(System.tmp_dir!(), "relyra-provenance-external-#{unique}")
+    File.mkdir_p!(Path.join(repo, "test"))
+    File.mkdir_p!(external)
+    File.write!(Path.join(repo, "test/proof.md"), "indexed source")
+    File.write!(Path.join(external, "proof.md"), "external source")
+    assert {_, 0} = System.cmd("git", ["init", "--quiet", repo])
+    assert {_, 0} = System.cmd("git", ["-C", repo, "add", "test/proof.md"])
+    File.rm_rf!(Path.join(repo, "test"))
+    File.ln_s!(external, Path.join(repo, "test"))
+
+    on_exit(fn ->
+      File.rm_rf!(repo)
+      File.rm_rf!(external)
+    end)
+
+    assert {"test/proof.md\n", 0} =
+             System.cmd("git", ["-C", repo, "ls-files", "--error-unmatch", "--", "test/proof.md"])
+
+    intermediate_symlink =
+      String.replace(baseline, marker, "`test/proof.md` indexed source", global: false)
+
+    assert Enum.any?(
+             baseline_violations(intermediate_symlink, repo),
+             &(&1 =~ "QUAL-73-001" and &1 =~ "allowed reference")
+           )
   end
 
   defp baseline_sections(markdown) do
@@ -2176,9 +2238,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp baseline_violations(markdown) do
+  defp baseline_violations(markdown, root \\ File.cwd!()) do
     duplicate_heading_violations(markdown) ++
-      finding_violations(markdown) ++ ci_violations(markdown)
+      finding_violations(markdown, root) ++ ci_violations(markdown)
   end
 
   defp duplicate_heading_violations(markdown) do
@@ -2192,7 +2254,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp finding_violations(markdown) do
+  defp finding_violations(markdown, root) do
     case parsed_table(markdown, "Findings Ledger", @finding_columns) do
       {:ok, rows} ->
         required_field_violations(rows, @finding_columns, "Finding ID") ++
@@ -2205,7 +2267,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             "Finding ID"
           ) ++
           duplicate_id_violations(rows) ++
-          evidence_violations(rows) ++
+          evidence_violations(rows, root) ++
           severity_policy_violations(rows)
 
       {:error, reason} ->
@@ -2277,7 +2339,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp evidence_violations(rows) do
+  defp evidence_violations(rows, root) do
     Enum.flat_map(rows, fn row ->
       evidence = String.trim(row["Reproducible Evidence"] || "")
       id = row["Finding ID"]
@@ -2304,23 +2366,23 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             "#{id} Reproducible Evidence verification marker is empty"
           )
           |> maybe_evidence_violation(
-            reference != "" and not allowed_verification_reference?(reference),
+            reference != "" and not allowed_verification_reference?(reference, root),
             "#{id} Reproducible Evidence verification marker lacks an allowed reference"
           )
       end
     end)
   end
 
-  defp allowed_verification_reference?(reference) do
+  defp allowed_verification_reference?(reference, root) do
     tokens =
       ~r/`([^`]+)`/
       |> Regex.scan(reference, capture: :all_but_first)
       |> List.flatten()
 
-    Enum.any?(tokens, &allowed_verification_token?/1)
+    Enum.any?(tokens, &allowed_verification_token?(&1, root))
   end
 
-  defp allowed_verification_token?(token) do
+  defp allowed_verification_token?(token, _root) do
     repository_path? =
       Enum.any?(
         [".planning/", ".github/", "docs/", "guides/", "lib/", "scripts/", "test/"],
