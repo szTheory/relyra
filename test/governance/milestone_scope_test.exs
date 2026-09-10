@@ -114,7 +114,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       replace_remote_scalar(
         clean,
         "read_back_command",
-        "gh api repos/szTheory/relyra/branches/develop/protection"
+        "gh api repos/szTheory/relyra/branches/develop/protection --jq '.required_status_checks.contexts == [\"security (27, 1.19.5)\",\"security (28, 1.19.5)\",\"fleet-proxy-e2e\"]'"
       )
 
     assert_plan_violation(mismatched_branch, "remote_github", "read_back_command target")
@@ -132,7 +132,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       String.replace(
         clean,
         "repos/szTheory/relyra/branches/main/protection --input captured-current.json",
-        "repos/szTheory/relyra/branches/develop/protection --input desired.json",
+        "repos/szTheory/relyra/branches/develop/protection --input captured-current.json",
         global: false
       )
 
@@ -2382,20 +2382,60 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     Enum.any?(tokens, &allowed_verification_token?(&1, root))
   end
 
-  defp allowed_verification_token?(token, _root) do
-    repository_path? =
+  defp allowed_verification_token?(token, root) do
+    allowed_repository_path?(token, root) or allowed_evidence_command?(token, root)
+  end
+
+  defp allowed_repository_path?(token, root) do
+    allowed_prefix? =
       Enum.any?(
         [".planning/", ".github/", "docs/", "guides/", "lib/", "scripts/", "test/"],
         &String.starts_with?(token, &1)
       )
 
-    executable_command? =
-      Regex.match?(
-        ~r/^(?:mix\s+(?:test\b|qa\b|format\b|ci\.[\w.-]+\b)|rg(?:\s|$)|git\s+(?:ls-files|status|diff)\b|\.\/scripts\/)/,
-        token
-      )
+    expanded_root = Path.expand(root)
+    components = Path.split(token)
+    candidate = Path.expand(token, expanded_root)
 
-    repository_path? or executable_command?
+    allowed_prefix? and Path.type(token) == :relative and
+      not Enum.any?(components, &(&1 in [".", ".."] or &1 == "")) and
+      String.starts_with?(candidate, expanded_root <> "/") and
+      non_symlink_regular_path?(expanded_root, components) and
+      tracked_repository_path?(expanded_root, Path.relative_to(candidate, expanded_root))
+  end
+
+  defp non_symlink_regular_path?(root, components) do
+    components
+    |> Enum.reduce_while(root, fn component, parent ->
+      candidate = Path.join(parent, component)
+
+      case File.lstat(candidate) do
+        {:ok, %File.Stat{type: :symlink}} -> {:halt, false}
+        {:ok, _stat} -> {:cont, candidate}
+        {:error, _reason} -> {:halt, false}
+      end
+    end)
+    |> case do
+      false -> false
+      candidate -> File.regular?(candidate)
+    end
+  end
+
+  defp tracked_repository_path?(root, relative_path) do
+    case System.cmd(
+           "git",
+           ["-C", root, "ls-files", "--error-unmatch", "--", relative_path],
+           stderr_to_stdout: true
+         ) do
+      {_output, 0} -> true
+      {_output, _status} -> false
+    end
+  end
+
+  defp allowed_evidence_command?(token, root) do
+    AdoptionEvidence.validate_automated_command!(token, root) == :ok
+  rescue
+    _error in [ArgumentError, File.Error] -> false
   end
 
   defp maybe_evidence_violation(violations, true, message), do: violations ++ [message]
