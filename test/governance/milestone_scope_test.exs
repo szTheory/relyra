@@ -873,7 +873,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     for {original, replacement, field} <- controls do
       invalid = String.replace(clean, original, replacement, global: false)
-      assert_plan_violation(invalid, "remote_github", field)
+      violations = plan_scope_violations(invalid)
+
+      assert Enum.any?(violations, &(&1 =~ "remote_github" and &1 =~ field)),
+             "#{field} control was accepted: #{replacement}"
     end
   end
 
@@ -1463,6 +1466,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       end
 
     Map.merge(scalar_fields, list_fields)
+    |> Map.put("syntax_valid", remote_batch_syntax_valid?(section))
   end
 
   defp validate_remote_batch(batch) do
@@ -1474,11 +1478,30 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           remote_field_missing?(Map.get(batch, field)),
           do: "remote_github remote_batch #{field} is missing or placeholder"
 
-    if presence == [] do
+    syntax =
+      if batch["syntax_valid"],
+        do: [],
+        else: ["remote_github remote_batch mutation_commands contains an unparsed line"]
+
+    if presence == [] and syntax == [] do
       validate_complete_remote_batch(batch)
     else
-      presence
+      presence ++ syntax
     end
+  end
+
+  defp remote_batch_syntax_valid?(section) do
+    fields =
+      ~w(current_state desired_state affected_checks mutation_commands preflight_command rollback_commands read_back_command resume_signal)
+
+    section
+    |> String.split("\n")
+    |> Enum.all?(fn line ->
+      trimmed = String.trim(line)
+
+      trimmed == "" or String.starts_with?(trimmed, "- ") or
+        Enum.any?(fields, &String.starts_with?(trimmed, "#{&1}:"))
+    end)
   end
 
   defp validate_complete_remote_batch(batch) do
@@ -1486,14 +1509,34 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     desired = parse_remote_state(batch["desired_state"])
     affected = parse_check_set(batch["affected_checks"])
 
+    parsed_commands = %{
+      "mutation_commands" => parse_remote_commands(batch["mutation_commands"], :mutation),
+      "preflight_command" => parse_remote_command(batch["preflight_command"], :preflight),
+      "rollback_commands" => parse_remote_commands(batch["rollback_commands"], :rollback),
+      "read_back_command" => parse_remote_command(batch["read_back_command"], :read_back)
+    }
+
     state_shape =
       []
       |> maybe_remote_violation(current == :error, "current_state is malformed")
       |> maybe_remote_violation(desired == :error, "desired_state is malformed")
 
-    if state_shape == [] do
+    command_shape =
+      Enum.reduce(parsed_commands, [], fn {field, result}, violations ->
+        maybe_remote_violation(
+          violations,
+          match?({:error, _reason}, result),
+          "#{field} must contain exactly one allowed operation"
+        )
+      end)
+
+    if state_shape == [] and command_shape == [] do
       same_target = current.repository == desired.repository and current.branch == desired.branch
       target = {desired.repository, desired.branch}
+      {:ok, mutations} = parsed_commands["mutation_commands"]
+      {:ok, preflight} = parsed_commands["preflight_command"]
+      {:ok, rollbacks} = parsed_commands["rollback_commands"]
+      {:ok, read_back} = parsed_commands["read_back_command"]
 
       state_shape
       |> maybe_remote_violation(
@@ -1509,34 +1552,27 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "affected_checks must equal desired_state checks"
       )
       |> maybe_remote_violation(
-        not Enum.all?(batch["mutation_commands"], &command_targets?(&1, target)),
+        not Enum.all?(mutations, &operation_targets?(&1, target)),
         "mutation_commands target mismatch"
       )
       |> maybe_remote_violation(
-        not (String.contains?(batch["preflight_command"], "--print-expected") and
-               command_targets?(batch["preflight_command"], target)),
+        not operation_targets?(preflight, target),
         "preflight_command target mismatch"
       )
       |> maybe_remote_violation(
-        not (Enum.all?(batch["rollback_commands"], &command_targets?(&1, target)) and
-               Enum.any?(
-                 batch["rollback_commands"],
-                 &String.contains?(&1, "captured-current.json")
-               )),
+        not Enum.all?(rollbacks, &operation_targets?(&1, target)),
         "rollback_commands target or captured state mismatch"
       )
       |> maybe_remote_violation(
-        not (command_targets?(batch["read_back_command"], target) and
-               Enum.all?(affected, &String.contains?(batch["read_back_command"], &1))),
+        not (operation_targets?(read_back, target) and read_back.checks == affected),
         "read_back_command target or affected checks mismatch"
       )
       |> maybe_remote_violation(
-        not (String.contains?(batch["resume_signal"], desired.repository) and
-               String.contains?(batch["resume_signal"], desired.branch)),
+        not resume_targets?(batch["resume_signal"], target),
         "resume_signal target mismatch"
       )
     else
-      state_shape
+      state_shape ++ command_shape
     end
   end
 
@@ -1577,13 +1613,124 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     |> MapSet.new()
   end
 
-  defp command_targets?(command, {repository, branch}) do
-    api_target = "repos/#{repository}/branches/#{branch}/protection"
+  defp parse_remote_commands(commands, field) do
+    commands
+    |> Enum.reduce_while({:ok, []}, fn command, {:ok, parsed} ->
+      case parse_remote_command(command, field) do
+        {:ok, operation} -> {:cont, {:ok, [operation | parsed]}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, parsed} -> {:ok, Enum.reverse(parsed)}
+      error -> error
+    end
+  end
 
-    script_target =
-      "GITHUB_REPOSITORY=#{repository} ./scripts/setup_branch_protection.sh #{branch}"
+  defp parse_remote_command(command, field) do
+    trimmed = String.trim(command)
 
-    String.contains?(command, api_target) or String.contains?(command, script_target)
+    if trimmed == "" or String.contains?(trimmed, "\n") or
+         Regex.match?(~r/[;&|`]|\$\(/, trimmed) do
+      {:error, :shell_composition}
+    else
+      match_remote_command(trimmed, field)
+    end
+  end
+
+  defp match_remote_command(command, :mutation) do
+    cond do
+      captures =
+          Regex.run(
+            ~r/^GITHUB_REPOSITORY=([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+) \.\/scripts\/setup_branch_protection\.sh ([A-Za-z0-9._\/-]+)$/,
+            command,
+            capture: :all_but_first
+          ) ->
+        [repository, branch] = captures
+        {:ok, %{kind: :script_write, repository: repository, branch: branch}}
+
+      captures =
+          Regex.run(
+            ~r/^gh api -X PUT repos\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/branches\/([A-Za-z0-9._\/-]+)\/protection --input desired-protection\.json$/,
+            command,
+            capture: :all_but_first
+          ) ->
+        [repository, branch] = captures
+        {:ok, %{kind: :api_write, repository: repository, branch: branch}}
+
+      true ->
+        {:error, :invalid_mutation}
+    end
+  end
+
+  defp match_remote_command(command, :preflight) do
+    parse_api_read(command, :preflight)
+  end
+
+  defp match_remote_command(command, :rollback) do
+    case Regex.run(
+           ~r/^gh api -X PUT repos\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/branches\/([A-Za-z0-9._\/-]+)\/protection --input captured-current\.json$/,
+           command,
+           capture: :all_but_first
+         ) do
+      [repository, branch] ->
+        {:ok, %{kind: :rollback, repository: repository, branch: branch}}
+
+      nil ->
+        {:error, :invalid_rollback}
+    end
+  end
+
+  defp match_remote_command(command, :read_back) do
+    case Regex.run(
+           ~r/^gh api repos\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/branches\/([A-Za-z0-9._\/-]+)\/protection --jq '\.required_status_checks\.contexts == (\[.*\])'$/,
+           command,
+           capture: :all_but_first
+         ) do
+      [repository, branch, encoded_checks] ->
+        case Jason.decode(encoded_checks) do
+          {:ok, checks} when is_list(checks) and checks != [] ->
+            if Enum.all?(checks, &is_binary/1) do
+              {:ok,
+               %{
+                 kind: :read_back,
+                 repository: repository,
+                 branch: branch,
+                 checks: MapSet.new(checks)
+               }}
+            else
+              {:error, :invalid_check_assertion}
+            end
+
+          _error ->
+            {:error, :invalid_check_assertion}
+        end
+
+      nil ->
+        {:error, :invalid_read_back}
+    end
+  end
+
+  defp parse_api_read(command, kind) do
+    case Regex.run(
+           ~r/^gh api repos\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/branches\/([A-Za-z0-9._\/-]+)\/protection$/,
+           command,
+           capture: :all_but_first
+         ) do
+      [repository, branch] ->
+        {:ok, %{kind: kind, repository: repository, branch: branch}}
+
+      nil ->
+        {:error, :invalid_read}
+    end
+  end
+
+  defp operation_targets?(operation, {repository, branch}) do
+    operation.repository == repository and operation.branch == branch
+  end
+
+  defp resume_targets?(resume_signal, {repository, branch}) do
+    resume_signal == "approve remote_github #{repository} #{branch} exact batch"
   end
 
   defp maybe_remote_violation(violations, true, detail),
