@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 7
-total_count: 9
-last_updated: 2026-09-09T21:30:40.645Z
+fixed_count: 9
+total_count: 11
+last_updated: 2026-09-10T01:49:00.025Z
 ---
 
 # Broken Windows Ledger
@@ -24,6 +24,8 @@ last_updated: 2026-09-09T21:30:40.645Z
 | 7 | 73 | deviation | .planning/STATE.md |  | Corrected stale Plan 2 and 0 percent SDK output to disk-backed Plan 4 of 5 and 80 percent progress | fixed |  | 2026-09-09T21:02:11.734Z | 2026-09-09T21:02:46.933Z |
 | 8 | 73 | deviation | lib/relyra/connection_resolver.ex |  | Plan 73-05 mandatory read list used stale lib/relyra/behaviours/connection_resolver.ex path; executor resolved the real published behavior path read-only | fixed |  | 2026-09-09T21:29:21.133Z | 2026-09-09T21:30:40.463Z |
 | 9 | 73 | deviation | .planning/STATE.md |  | Corrected state.update-progress reset from 5/5 to 0 percent and stale Plan 04 execution prose after Plan 73-05 closeout | fixed |  | 2026-09-09T21:30:40.548Z | 2026-09-09T21:30:40.645Z |
+| 10 | 73 | deviation | test/governance/milestone_scope_test.exs |  | Existing target-mismatch controls required valid closed-grammar operations before target comparison | fixed |  | 2026-09-10T01:48:36.141Z | 2026-09-10T01:48:59.891Z |
+| 11 | 73 | deviation | .planning/STATE.md |  | SDK closeout reset YAML progress and duplicated decision phase prefixes | fixed |  | 2026-09-10T01:48:36.283Z | 2026-09-10T01:49:00.025Z |
 
 ````json
 [
@@ -134,6 +136,30 @@ last_updated: 2026-09-09T21:30:40.645Z
     "reason": "",
     "recorded_at": "2026-09-09T21:30:40.548Z",
     "resolved_at": "2026-09-09T21:30:40.645Z"
+  },
+  {
+    "id": 10,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "test/governance/milestone_scope_test.exs",
+    "line": null,
+    "description": "Existing target-mismatch controls required valid closed-grammar operations before target comparison",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-10T01:48:36.141Z",
+    "resolved_at": "2026-09-10T01:48:59.891Z"
+  },
+  {
+    "id": 11,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "SDK closeout reset YAML progress and duplicated decision phase prefixes",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-10T01:48:36.283Z",
+    "resolved_at": "2026-09-10T01:49:00.025Z"
   }
 ]
 ````
