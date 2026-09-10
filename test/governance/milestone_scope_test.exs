@@ -519,42 +519,43 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  @tag :plan_73_13_task_2
-  test "script authorization never executes plan-selected code" do
+  @tag :plan_73_15_task_1
+  test "script-shaped remote mutations are rejected without execution" do
     for behavior <- [:write, :credential, :network] do
       %{plan: plan, root: root, sentinel: sentinel} = remote_nonexecution_fixture(behavior)
 
-      assert plan_scope_violations(plan, [], root) == []
+      assert_plan_violation(plan, "remote_github", "mutation_commands", root)
       refute File.exists?(sentinel)
     end
   end
 
-  @tag :plan_73_13_task_2
-  test "script authorization requires one tracked static result equal to desired state" do
-    for {variant, diagnostic} <- [
-          {:missing, "mutation_result_source"},
-          {:duplicate, "mutation_result_source"},
-          {:untracked, "untracked-result.json"},
-          {:symlink, "result-link.json"},
-          {:malformed, "malformed"},
-          {:extra_field, "unsupported"},
-          {:state_mismatch, "desired_state"}
-        ] do
-      %{plan: invalid, root: root} = remote_static_result_control_fixture(variant)
-      assert_plan_violation(invalid, "remote_github", diagnostic, root)
-    end
-
+  @tag :plan_73_15_task_1
+  test "only declarative complete-state payload operations cross the mutation parser" do
     %{plan: api_plan, root: api_root} = remote_plan_fixture()
+    assert plan_scope_violations(api_plan, [], api_root) == []
 
-    invalid_api =
+    %{plan: clean_script, root: clean_root} = remote_plan_fixture(:script)
+    assert_plan_violation(clean_script, "remote_github", "mutation_commands", clean_root)
+
+    %{plan: changed_script, root: changed_root} =
+      remote_script_control_fixture(:changed_after_index)
+
+    assert_plan_violation(changed_script, "remote_github", "mutation_commands", changed_root)
+
+    exact_result_script =
       String.replace(
-        api_plan,
-        "affected_checks:",
-        "mutation_result_source: desired-protection.json\naffected_checks:",
+        clean_script,
+        "mutation_result_source: predicted-protection.json",
+        "mutation_result_source: desired-protection.json",
         global: false
       )
 
-    assert_plan_violation(invalid_api, "remote_github", "mutation_result_source", api_root)
+    assert_plan_violation(
+      exact_result_script,
+      "remote_github",
+      "mutation_result_source",
+      clean_root
+    )
   end
 
   test "approval cannot be borrowed across plans or concurrent branches" do
