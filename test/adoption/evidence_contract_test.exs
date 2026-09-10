@@ -284,6 +284,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_06_task_1
   test "automated commands reject shell substitution hidden in environment assignments" do
     assert_raise ArgumentError, ~r/shell-shaped/, fn ->
       AdoptionEvidence.validate_automated_command!(
@@ -293,6 +294,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_06_task_1
   test "automated commands reject filters whose effective test selection is empty" do
     commands = [
       "mix test test/governance/milestone_scope_test.exs --only=no_such_selector --warnings-as-errors",
@@ -306,6 +308,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_06_task_1
   test "selector ownership does not cross ExUnit module boundaries" do
     entries = AdoptionEvidence.entries()
     root = repository_fixture!()
@@ -333,6 +336,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_06_task_1
   test "selector ownership recognizes tag keys rather than incidental atom values" do
     entries = AdoptionEvidence.entries()
     root = repository_fixture!()
