@@ -164,6 +164,69 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert repository_plan_schema(identity, renamed) == :current
   end
 
+  @tag :plan_73_10_task_2
+  test "completed plan surfaces derive from every trusted scoped commit" do
+    fixture = completed_plan_git_fixture()
+
+    assert {:ok, provenance} = completed_plan_provenance(fixture.root, fixture.plan_path)
+    assert provenance.commits == fixture.implementation_commits
+    assert provenance.summary_commits == fixture.implementation_commits
+
+    classes =
+      provenance.changes
+      |> Enum.flat_map(&changed_surface_classes(&1.path, &1.before, &1.after))
+
+    assert "public_api" in classes
+    refute fixture.completion_commit in provenance.commits
+  end
+
+  @tag :plan_73_10_task_2
+  test "summary hashes are an exact audit cross-check and never select reviewed changes" do
+    for {variant, diagnostic} <- [
+          {:omitted, "omitted"},
+          {:duplicate, "duplicate"},
+          {:foreign, "foreign"},
+          {:unresolved, "unresolved"},
+          {:foreign_scope, "foreign"}
+        ] do
+      fixture = completed_plan_git_fixture(variant)
+
+      assert {:error, violations, provenance} =
+               completed_plan_provenance(fixture.root, fixture.plan_path)
+
+      assert Enum.any?(violations, &String.contains?(&1, diagnostic)),
+             "expected #{diagnostic} for #{variant}, got: #{inspect(violations)}"
+
+      if variant == :omitted do
+        classes =
+          provenance.changes
+          |> Enum.flat_map(&changed_surface_classes(&1.path, &1.before, &1.after))
+
+        assert "public_api" in classes
+      end
+    end
+  end
+
+  @tag :plan_73_10_task_2
+  test "completed plan provenance rejects malformed or ambiguous execution boundaries" do
+    for {variant, diagnostic} <- [
+          {:missing_boundary, "completion boundary"},
+          {:duplicate_boundary, "completion boundary"},
+          {:empty_implementation, "implementation set is empty"},
+          {:malformed_manifest, "phase manifest"},
+          {:unreachable_manifest, "reachable"}
+        ] do
+      fixture = completed_plan_git_fixture(variant)
+      result = completed_plan_provenance(fixture.root, fixture.plan_path)
+
+      assert match?({:error, _, _}, result) or match?({:error, _}, result)
+      violations = elem(result, 1)
+
+      assert Enum.any?(violations, &String.contains?(&1, diagnostic)),
+             "expected #{diagnostic} for #{variant}, got: #{inspect(violations)}"
+    end
+  end
+
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     violations =
       case validated_governance_identity(File.cwd!()) do
