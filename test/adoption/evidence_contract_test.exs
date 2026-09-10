@@ -969,6 +969,90 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert :ok = AdoptionEvidence.validate_repository!(AdoptionEvidence.entries(), File.cwd!())
   end
 
+  @tag :plan_73_14_task_2
+  test "pull request rejects restrictive activity filters including empty types" do
+    entries = AdoptionEvidence.entries()
+
+    for types <- [["opened"], ["synchronize"], ["opened", "synchronize"], []] do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+
+      pull_request =
+        ["  pull_request:", "    types:"] ++ Enum.map(types, &"      - \"#{&1}\"")
+
+      File.write!(
+        workflow_path,
+        replace_pull_request_event(File.read!(workflow_path), pull_request)
+      )
+
+      assert_raise ArgumentError, ~r/workflow pull_request.*unsupported key types/, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
+    end
+  end
+
+  @tag :plan_73_14_task_2
+  test "pull request rejects duplicate events, keys, and unsupported grammar" do
+    entries = AdoptionEvidence.entries()
+
+    fixtures = [
+      {fn workflow -> workflow <> "\n  pull_request:\n" end,
+       ~r/workflow pull_request.*exactly once/},
+      {&replace_pull_request_event(&1, [
+         "  pull_request:",
+         "    paths-ignore:",
+         "      - prompts/**",
+         "    paths-ignore:",
+         "      - docs/**"
+       ]), ~r/workflow pull_request.*duplicate.*paths-ignore/},
+      {&replace_pull_request_event(&1, [
+         "  pull_request:",
+         "    paths:",
+         "      - test/**",
+         "    paths:",
+         "      - lib/**"
+       ]), ~r/workflow pull_request.*duplicate.*paths/},
+      {&replace_pull_request_event(&1, [
+         "  pull_request:",
+         "    branches:",
+         "      - main"
+       ]), ~r/workflow pull_request.*unsupported key branches/},
+      {&replace_pull_request_event(&1, [
+         "  pull_request:",
+         "    \"types\":",
+         "      - opened"
+       ]), ~r/workflow pull_request.*unsupported key types/},
+      {&replace_pull_request_event(&1, ["  pull_request: []"]),
+       ~r/workflow pull_request.*mapping block/}
+    ]
+
+    for {mutate, diagnostic} <- fixtures do
+      root = repository_fixture!()
+      workflow_path = Path.join(root, @workflow_path)
+      File.write!(workflow_path, mutate.(File.read!(workflow_path)))
+
+      assert_raise ArgumentError, diagnostic, fn ->
+        AdoptionEvidence.validate_repository!(entries, root)
+      end
+    end
+  end
+
+  @tag :plan_73_14_task_2
+  test "checked-in and unfiltered pull request events remain mandatory" do
+    entries = AdoptionEvidence.entries()
+    assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
+
+    root = repository_fixture!()
+    workflow_path = Path.join(root, @workflow_path)
+
+    File.write!(
+      workflow_path,
+      replace_pull_request_event(File.read!(workflow_path), ["  pull_request:"])
+    )
+
+    assert :ok = AdoptionEvidence.validate_repository!(entries, root)
+  end
+
   defp active_requirements do
     @requirements_path
     |> File.read!()
@@ -1071,6 +1155,15 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     String.replace(
       workflow,
       "  push:\n    branches:\n      - main\n    paths-ignore:\n      - \"prompts/**\"",
+      Enum.join(replacement_lines, "\n"),
+      global: false
+    )
+  end
+
+  defp replace_pull_request_event(workflow, replacement_lines) do
+    String.replace(
+      workflow,
+      "  pull_request:\n    paths-ignore:\n      - \"prompts/**\"",
       Enum.join(replacement_lines, "\n"),
       global: false
     )
