@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-06-PLAN.md
-last_updated: "2026-09-10T01:07:52.391Z"
+stopped_at: Completed 73-07-PLAN.md
+last_updated: "2026-09-10T01:24:37.126Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 73 Plan 06 completed
-state_head: 39ad76c292f39919b469c5a5703804d9a5bff563
+state_head: 4247fe261192e2c1903c8b0d3ebae33656f30651
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 7
+  percent: 88
 ---
 
 # Project State
@@ -33,11 +33,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 6 of 8
+Plan: 7 of 8
 
 Status: Executing Phase 73 gap closure
 
-Last activity: 2026-09-09 — Phase 73 Plan 06 completed
+Last activity: 2026-09-09 — Phase 73 Plan 07 completed
 
 ## Milestone Metrics
 
@@ -82,6 +82,9 @@ Last activity: 2026-09-09 — Phase 73 Plan 06 completed
 - [Phase 73]: Each baseline finding requires one complete allowed repository or executable verification reference. — Arbitrary non-empty provenance prose cannot satisfy the baseline contract.
 - [Phase 73]: Model direct-test ownership as enabled include-tag intersection minus matching exclusions, rejecting an empty effective set.
 - [Phase 73]: Treat the Evidence contract as mandatory only when jobs.security has one exact unconditional step with absent or literal-false fallibility.
+- [Phase 73]: Validate task type before authorization, risk, verification, and feature-neutrality branches; only exact decision checkpoints are authorization-only.
+- [Phase 73]: Treat completed-plan task commits or explicit before/after inputs as additive changed-surface evidence, never as a PLAN exemption.
+- [Phase 73]: Retain deterministic legacy-schema checks for Plans 73-01 through 73-03 while applying the exact current contract to later plans.
 
 ### Baseline Findings
 
@@ -119,15 +122,15 @@ Last activity: 2026-09-09 — Phase 73 Plan 06 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-10T01:07:52.373Z
+**Last session:** 2026-09-10T01:24:37.111Z
 
-**Stopped at:** Completed 73-06-PLAN.md
+**Stopped at:** Completed 73-07-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Phase 73 gap-closure Plans 73-07 and 73-08, then re-run verification against
+Execute Phase 73 gap-closure Plan 73-08, then re-run verification against
 the eight completed plan summaries and mandatory evidence contract.
 
 ## Performance Metrics
@@ -140,6 +143,7 @@ the eight completed plan summaries and mandatory evidence contract.
 | Phase 73 P04 | 12min | 2 tasks | 3 files |
 | Phase 73 P05 | 24min | 3 tasks | 1 files |
 | Phase 73 P06 | 9min | 2 tasks | 2 files |
+| Phase 73 P07 | 11min | 2 tasks | 1 files |
 
 ### Blockers
 
