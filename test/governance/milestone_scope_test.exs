@@ -265,8 +265,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   test "remote GitHub approval owns an exact reversible batch and read-back" do
-    clean = risky_plan_fixture("remote_github")
-    assert plan_scope_violations(clean) == []
+    %{plan: clean, root: root} = remote_plan_fixture()
+    assert plan_scope_violations(clean, [], root) == []
 
     for {field, diagnostic} <- [
           {"current_state", "current_state"},
@@ -279,20 +279,20 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           {"resume_signal", "resume_signal"}
         ] do
       incomplete = remove_remote_field(clean, field)
-      assert_plan_violation(incomplete, "remote_github", diagnostic)
+      assert_plan_violation(incomplete, "remote_github", diagnostic, root)
     end
 
     without_resume = Regex.replace(~r/\s*<resume-signal>.*?<\/resume-signal>/s, clean, "")
-    assert_plan_violation(without_resume, "remote_github", "resume signal")
+    assert_plan_violation(without_resume, "remote_github", "resume signal", root)
   end
 
   test "remote batch rejects placeholders and mismatched reversible targets" do
-    clean = risky_plan_fixture("remote_github")
-    assert plan_scope_violations(clean) == []
+    %{plan: clean, root: root} = remote_plan_fixture()
+    assert plan_scope_violations(clean, [], root) == []
 
     for placeholder <- ["", "   ", "TBD", "placeholder", "exact commands omitted"] do
       invalid = replace_remote_scalar(clean, "preflight_command", placeholder)
-      assert_plan_violation(invalid, "remote_github", "preflight_command")
+      assert_plan_violation(invalid, "remote_github", "preflight_command", root)
     end
 
     mismatched_branch =
@@ -302,7 +302,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "gh api repos/szTheory/relyra/branches/develop/protection --jq '.required_status_checks.contexts == [\"security (27, 1.19.5)\",\"security (28, 1.19.5)\",\"fleet-proxy-e2e\"]'"
       )
 
-    assert_plan_violation(mismatched_branch, "remote_github", "read_back_command target")
+    assert_plan_violation(mismatched_branch, "remote_github", "read_back_command target", root)
 
     mismatched_checks =
       replace_remote_scalar(
@@ -311,7 +311,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "security (27, 1.19.5), security (28, 1.19.5)"
       )
 
-    assert_plan_violation(mismatched_checks, "remote_github", "affected_checks")
+    assert_plan_violation(mismatched_checks, "remote_github", "affected_checks", root)
 
     wrong_rollback =
       String.replace(
@@ -321,7 +321,82 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         global: false
       )
 
-    assert_plan_violation(wrong_rollback, "remote_github", "rollback_commands target")
+    assert_plan_violation(wrong_rollback, "remote_github", "rollback_commands target", root)
+  end
+
+  @tag :plan_73_11_task_1
+  test "remote batch fields are singular closed and unreduced" do
+    %{plan: clean, root: root} = remote_plan_fixture()
+    assert plan_scope_violations(clean, [], root) == []
+
+    controls = [
+      {String.replace(clean, "current_state:", "current_state: duplicate\ncurrent_state:",
+         global: false
+       ), "current_state"},
+      {String.replace(
+         clean,
+         "mutation_commands:",
+         "mutation_commands:\n  - first\nmutation_commands:",
+         global: false
+       ), "mutation_commands"},
+      {String.replace(
+         clean,
+         "  - gh api -X PUT",
+         "  - duplicate\n  - duplicate\n  - gh api -X PUT",
+         global: false
+       ), "mutation_commands"},
+      {String.replace(clean, "affected_checks:", "unknown_field: surprise\naffected_checks:",
+         global: false
+       ), "unparsed"},
+      {String.replace(clean, "  - gh api -X PUT", "mutation_commands: gh api -X PUT",
+         global: false
+       ), "mutation_commands"}
+    ]
+
+    for {invalid, diagnostic} <- controls do
+      assert_plan_violation(invalid, "remote_github", diagnostic, root)
+    end
+  end
+
+  @tag :plan_73_11_task_1
+  test "payload inputs are tracked non-symlink files bound to declared states" do
+    %{plan: clean, root: root} = remote_plan_fixture()
+    assert plan_scope_violations(clean, [], root) == []
+
+    File.write!(Path.join(root, "untracked.json"), branch_protection_json(true, desired_checks()))
+    File.mkdir_p!(Path.join(root, "payload-dir"))
+    File.ln_s!("desired-protection.json", Path.join(root, "desired-link.json"))
+    File.mkdir_p!(Path.join(root, "linked"))
+    File.ln_s!("../desired-protection.json", Path.join(root, "linked/payload.json"))
+    File.ln_s!("linked", Path.join(root, "intermediate-link"))
+
+    controls = [
+      {"missing.json", "missing.json"},
+      {"untracked.json", "untracked.json"},
+      {"../outside.json", "../outside.json"},
+      {"payload-dir", "payload-dir"},
+      {"desired-link.json", "desired-link.json"},
+      {"intermediate-link/payload.json", "intermediate-link/payload.json"}
+    ]
+
+    for {path, diagnostic} <- controls do
+      invalid = String.replace(clean, "desired-protection.json", path, global: false)
+      assert_plan_violation(invalid, "remote_github", diagnostic, root)
+    end
+
+    payload_controls = [
+      {"{malformed", "malformed"},
+      {~s({"required_status_checks":{"strict":true,"strict":false,"contexts":[]}}), "duplicate"},
+      {branch_protection_json(true, desired_checks(), %{"unexpected" => true}), "unsupported"},
+      {branch_protection_json(false, desired_checks()), "desired_state"},
+      {branch_protection_json(true, current_checks()), "desired_state"}
+    ]
+
+    for {contents, diagnostic} <- payload_controls do
+      File.write!(Path.join(root, "desired-protection.json"), contents)
+      git_fixture!(root, ["add", "desired-protection.json"])
+      assert_plan_violation(clean, "remote_github", diagnostic, root)
+    end
   end
 
   test "approval cannot be borrowed across plans or concurrent branches" do
@@ -1015,8 +1090,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   @tag :plan_73_08_task_1
   test "remote approval rejects appended commands outside the exact batch" do
-    clean = risky_plan_fixture("remote_github")
-    assert plan_scope_violations(clean) == []
+    %{plan: clean, root: root} = remote_plan_fixture()
+    assert plan_scope_violations(clean, [], root) == []
 
     controls = [
       {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
@@ -1058,7 +1133,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     for {original, replacement, field} <- controls do
       invalid = String.replace(clean, original, replacement, global: false)
-      violations = plan_scope_violations(invalid)
+      violations = plan_scope_violations(invalid, [], root)
 
       assert Enum.any?(violations, &(&1 =~ "remote_github" and &1 =~ field)),
              "#{field} control was accepted: #{replacement}"
@@ -1285,11 +1360,97 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     plan |> remove_checkpoint() |> String.replace("</tasks>", "#{checkpoint}\n</tasks>")
   end
 
-  defp assert_plan_violation(plan, identity, detail) do
-    violations = plan_scope_violations(plan)
+  defp assert_plan_violation(plan, identity, detail, root \\ File.cwd!()) do
+    violations = plan_scope_violations(plan, [], root)
 
     assert Enum.any?(violations, &(&1 =~ identity and &1 =~ detail)),
            "expected plan violation containing #{inspect(identity)} and #{inspect(detail)}, got: #{inspect(violations)}"
+  end
+
+  defp remote_plan_fixture(mutation_kind \\ :api) do
+    root =
+      Path.join(System.tmp_dir!(), "relyra-remote-batch-#{System.unique_integer([:positive])}")
+
+    File.mkdir_p!(Path.join(root, "scripts"))
+    on_exit(fn -> File.rm_rf!(root) end)
+
+    File.write!(
+      Path.join(root, "desired-protection.json"),
+      branch_protection_json(true, desired_checks())
+    )
+
+    File.write!(
+      Path.join(root, "captured-current.json"),
+      branch_protection_json(true, current_checks())
+    )
+
+    File.cp!(
+      "scripts/setup_branch_protection.sh",
+      Path.join(root, "scripts/setup_branch_protection.sh")
+    )
+
+    File.chmod!(Path.join(root, "scripts/setup_branch_protection.sh"), 0o755)
+
+    git_fixture!(root, ["init", "-q"])
+
+    git_fixture!(root, [
+      "add",
+      "desired-protection.json",
+      "captured-current.json",
+      "scripts/setup_branch_protection.sh"
+    ])
+
+    plan =
+      risky_plan_fixture("remote_github")
+      |> String.replace(
+        "current_state: repository=szTheory/relyra; branch=main; checks=",
+        "current_state: repository=szTheory/relyra; branch=main; strict=true; checks=",
+        global: false
+      )
+      |> String.replace(
+        "desired_state: repository=szTheory/relyra; branch=main; checks=",
+        "desired_state: repository=szTheory/relyra; branch=main; strict=true; checks=",
+        global: false
+      )
+
+    plan =
+      case mutation_kind do
+        :api ->
+          String.replace(
+            plan,
+            "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
+            "gh api -X PUT repos/szTheory/relyra/branches/main/protection --input desired-protection.json",
+            global: false
+          )
+
+        :script ->
+          plan
+      end
+
+    %{root: root, plan: plan}
+  end
+
+  defp current_checks,
+    do: ["security (27, 1.19.5)", "security (28, 1.19.5)"]
+
+  defp desired_checks,
+    do: current_checks() ++ ["fleet-proxy-e2e"]
+
+  defp branch_protection_json(strict, contexts, extras \\ %{}) do
+    %{
+      "required_status_checks" => %{"strict" => strict, "contexts" => contexts},
+      "enforce_admins" => true,
+      "required_pull_request_reviews" => nil,
+      "restrictions" => nil,
+      "allow_force_pushes" => false,
+      "allow_deletions" => false,
+      "block_creations" => false,
+      "required_conversation_resolution" => false,
+      "lock_branch" => false,
+      "allow_fork_syncing" => false
+    }
+    |> Map.merge(extras)
+    |> Jason.encode!()
   end
 
   defp replace_fixture_command(plan, command) do
@@ -1737,7 +1898,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp add_unless(violations, true, _diagnostic), do: violations
   defp add_unless(violations, false, diagnostic), do: violations ++ [diagnostic]
 
-  defp plan_scope_violations(markdown, changed_classes \\ []) do
+  defp plan_scope_violations(markdown, changed_classes \\ [], root \\ File.cwd!()) do
     scope_sections = tag_sections(markdown, "scope_assertions")
     exclusion_sections = tag_sections(markdown, "demand_gated_exclusions")
     tasks = plan_tasks(markdown)
@@ -1750,7 +1911,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           approval_scope_violations(
             parse_scope_assertions(scope),
             validated_tasks,
-            changed_classes
+            changed_classes,
+            root
           )
 
         _other ->
@@ -1811,7 +1973,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     ["demand_gated_exclusions must appear exactly once, found #{length(sections)}"]
   end
 
-  defp approval_scope_violations(scope, tasks, changed_classes) do
+  defp approval_scope_violations(scope, tasks, changed_classes, root) do
     Enum.flat_map(@approval_classes, fn approval_class ->
       values = Map.get(scope, approval_class, [])
 
@@ -1832,7 +1994,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           mutation_index = mutation_task_index(tasks, approval_class, changed_classes)
           checkpoint_index = matching_checkpoint_index(tasks, approval_class)
 
-          checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks)
+          checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks, root)
         else
           []
         end
@@ -1886,7 +2048,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       mutation_task_index(tasks, approval_class, changed_classes) != nil
   end
 
-  defp checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks) do
+  defp checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks, root) do
     cond do
       mutation_index == nil ->
         ["#{approval_class} mutation task is missing"]
@@ -1907,7 +2069,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
         exact_batch =
           if approval_class == "remote_github",
-            do: remote_checkpoint_violations(checkpoint),
+            do: remote_checkpoint_violations(checkpoint, root),
             else: []
 
         blocking ++ exact_batch
@@ -2053,11 +2215,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp remote_checkpoint_violations(checkpoint) do
+  defp remote_checkpoint_violations(checkpoint, root) do
     batch_violations =
       case tag_sections(checkpoint.body, "remote_batch") do
         [section] ->
-          validate_remote_batch(parse_remote_batch(section))
+          validate_remote_batch(parse_remote_batch(section), root)
 
         sections ->
           [
@@ -2115,7 +2277,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     |> Map.put("syntax_valid", remote_batch_syntax_valid?(section))
   end
 
-  defp validate_remote_batch(batch) do
+  defp validate_remote_batch(batch, _root) do
     required =
       ~w(current_state desired_state affected_checks mutation_commands preflight_command rollback_commands read_back_command resume_signal)
 
