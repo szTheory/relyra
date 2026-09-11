@@ -386,6 +386,42 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Enum.any?(violations, &String.contains?(&1, "review endpoint"))
   end
 
+  @tag :plan_73_25_task_2
+  test "completion boundary changes remain outside task equality but reach approval classification" do
+    fixture = completed_plan_git_fixture(:boundary_protected)
+
+    assert {:ok, provenance} = completed_plan_provenance(fixture.root, fixture.plan_path)
+    assert provenance.commits == fixture.implementation_commits
+    assert provenance.summary_commits == fixture.implementation_commits
+    refute fixture.completion_commit in provenance.commits
+
+    boundary_changes = Map.get(provenance, :boundary_changes)
+    assert is_list(boundary_changes)
+
+    assert Enum.any?(
+             boundary_changes,
+             &(&1.path == "lib/relyra/security/signature.ex" and &1.before != &1.after)
+           )
+
+    identity = %{root: fixture.root, milestone_version: "v1.11", current_phase: "73"}
+    violations = repository_plan_violations([fixture.plan_path], %{}, identity)
+
+    assert Enum.any?(violations, &(&1 =~ "security_posture" and &1 =~ "checkpoint")),
+           "expected boundary security posture approval violation, got: #{inspect(violations)}"
+  end
+
+  @tag :plan_73_25_task_2
+  test "reviewed merge commits reject explicitly before changed paths are reduced" do
+    fixture = completed_plan_git_fixture(:merge_commit)
+
+    assert {:error, violations} = completed_plan_provenance(fixture.root, fixture.plan_path)
+
+    assert Enum.any?(violations, fn violation ->
+             violation =~ "merge commit" and violation =~ fixture.merge_commit
+           end),
+           "expected merge diagnostic with full OID, got: #{inspect(violations)}"
+  end
+
   @tag :plan_73_23_task_1
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     violations =
@@ -2007,7 +2043,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     phase_dir = Path.join(root, ".planning/phases/73-twin-contract-and-baseline")
     plan_path = Path.join(phase_dir, "73-99-PLAN.md")
     summary_path = Path.join(phase_dir, "73-99-SUMMARY.md")
-    File.mkdir_p!(Path.join(root, "lib"))
+    File.mkdir_p!(Path.join(root, "lib/relyra/security"))
     File.mkdir_p!(phase_dir)
     on_exit(fn -> File.rm_rf!(root) end)
 
@@ -2020,6 +2056,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     File.write!(
       Path.join(root, "lib/relyra.ex"),
       "def start_login(connection, relay_context, opts \\\\ [])\n"
+    )
+
+    File.write!(
+      Path.join(root, "lib/relyra/security/signature.ex"),
+      "defp do_verify(parsed, connection, certs, opts)\n"
     )
 
     initial_commit = fixture_commit!(root, ["."], "chore: initialize provenance fixture")
@@ -2044,6 +2085,41 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     File.write!(Path.join(root, "foreign.txt"), "foreign\n")
     foreign = fixture_commit!(root, ["foreign.txt"], "chore(other): unrelated task")
 
+    {implementation_commits, merge_commit} =
+      if variant == :merge_commit do
+        main_branch = root |> git_fixture!(["branch", "--show-current"]) |> String.trim()
+        git_fixture!(root, ["checkout", "-q", "-b", "merge-side"])
+
+        File.write!(
+          Path.join(root, "lib/relyra/security/signature.ex"),
+          "defp do_verify(parsed, connection, certs, policy, opts)\n"
+        )
+
+        fixture_commit!(
+          root,
+          ["lib/relyra/security/signature.ex"],
+          "test(other): side branch change"
+        )
+
+        git_fixture!(root, ["checkout", "-q", main_branch])
+        File.write!(Path.join(root, "mainline.txt"), "mainline\n")
+        fixture_commit!(root, ["mainline.txt"], "test(other): mainline change")
+
+        git_fixture!(root, [
+          "merge",
+          "-q",
+          "--no-ff",
+          "merge-side",
+          "-m",
+          "fix(73-99): merge implementation"
+        ])
+
+        merge = root |> git_fixture!(["rev-parse", "HEAD"]) |> String.trim()
+        {implementation_commits ++ [merge], merge}
+      else
+        {implementation_commits, nil}
+      end
+
     claimed =
       case {variant, implementation_commits} do
         {:omitted, [harmless, _risky]} -> [harmless]
@@ -2060,9 +2136,23 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       if variant == :missing_boundary do
         nil
       else
+        completion_paths = [Path.relative_to(summary_path, root)]
+
+        completion_paths =
+          if variant == :boundary_protected do
+            File.write!(
+              Path.join(root, "lib/relyra/security/signature.ex"),
+              "defp do_verify(parsed, connection, certs, policy, opts)\n"
+            )
+
+            completion_paths ++ ["lib/relyra/security/signature.ex"]
+          else
+            completion_paths
+          end
+
         fixture_commit!(
           root,
-          [Path.relative_to(summary_path, root)],
+          completion_paths,
           "docs(73-99): complete fixture plan"
         )
       end
@@ -2166,6 +2256,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       plan_path: plan_path,
       implementation_commits: implementation_commits,
       completion_commit: completion_commit,
+      merge_commit: merge_commit,
       descendant_commits: descendant_commits,
       review_endpoint: review_endpoint
     }
