@@ -799,13 +799,19 @@ defmodule Relyra.Adoption.EvidenceContractTest do
           ".planning/**",
           ".planning/**/*",
           ".planning/**/**",
-          ".planning/STAT?.md",
-          ".planning/[R]OADMAP.md",
           "**"
         ] do
       workflow = replace_pull_request_filter(snapshot.workflow, "paths-ignore", [pattern])
 
       assert_raise ArgumentError, ~r/pull_request.*governed input/s, fn ->
+        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+      end
+    end
+
+    for pattern <- [".planning/STAT?.md", ".planning/[R]OADMAP.md"] do
+      workflow = replace_pull_request_filter(snapshot.workflow, "paths-ignore", [pattern])
+
+      assert_raise ArgumentError, ~r/pull_request.*unsupported path pattern/, fn ->
         AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
       end
     end
@@ -884,7 +890,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         ".planning/[R]OADMAP.md"
       ])
 
-    assert_raise ArgumentError, ~r/pull_request.*must not use positive paths/s, fn ->
+    assert_raise ArgumentError, ~r/pull_request.*unsupported path pattern/s, fn ->
       AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
     end
   end
