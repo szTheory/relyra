@@ -362,9 +362,12 @@ defmodule Relyra.AdoptionEvidence do
         %{path: owner, tags: normalized_tags}
       end)
 
+    governed_input_inventory = governed_inputs!(root)
+
     %{
       aliases: aliases,
-      governed_inputs: governed_inputs!(root),
+      governed_input_inventory: governed_input_inventory,
+      governed_inputs: governed_input_inventory,
       owners: owners,
       workflow: File.read!(Path.join(root, ".github/workflows/security-gates.yml"))
     }
@@ -465,7 +468,9 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   defp validate_snapshot_shape!(entries, snapshot) when is_map(snapshot) do
-    expected_keys = MapSet.new([:aliases, :governed_inputs, :owners, :workflow])
+    expected_keys =
+      MapSet.new([:aliases, :governed_input_inventory, :governed_inputs, :owners, :workflow])
+
     actual_keys = snapshot |> Map.keys() |> MapSet.new()
 
     unless actual_keys == expected_keys do
@@ -479,15 +484,13 @@ defmodule Relyra.AdoptionEvidence do
 
     validate_snapshot_aliases!(snapshot.aliases)
 
-    unless is_list(snapshot.governed_inputs) and snapshot.governed_inputs != [] and
-             Enum.all?(snapshot.governed_inputs, &(is_binary(&1) and &1 != "")) do
-      raise ArgumentError,
-            "repository snapshot governed inputs must be non-empty normalized paths"
-    end
+    validate_snapshot_governed_inputs!(
+      "governed input inventory",
+      snapshot.governed_input_inventory
+    )
 
-    unless length(snapshot.governed_inputs) == length(Enum.uniq(snapshot.governed_inputs)) do
-      raise ArgumentError, "repository snapshot governed inputs must be unique"
-    end
+    validate_snapshot_governed_inputs!("governed inputs", snapshot.governed_inputs)
+    require_complete_governed_input_inventory!(snapshot)
 
     expected_paths = snapshot_owner_paths(entries, snapshot.aliases)
 
@@ -547,6 +550,48 @@ defmodule Relyra.AdoptionEvidence do
   defp validate_snapshot_aliases!(_aliases) do
     raise ArgumentError, "repository snapshot aliases must be a normalized map"
   end
+
+  defp validate_snapshot_governed_inputs!(label, inputs) do
+    unless is_list(inputs) and inputs != [] do
+      raise ArgumentError, "repository snapshot #{label} must be a non-empty list"
+    end
+
+    case Enum.find(inputs, &(not normalized_repository_relative_path?(&1))) do
+      nil ->
+        :ok
+
+      path ->
+        raise ArgumentError,
+              "repository snapshot #{label} contains non-normalized repository-relative path #{inspect(path)}"
+    end
+
+    unless length(inputs) == length(Enum.uniq(inputs)) do
+      raise ArgumentError, "repository snapshot #{label} must be unique"
+    end
+
+    unless inputs == Enum.sort(inputs) do
+      raise ArgumentError, "repository snapshot #{label} must use stable lexical order"
+    end
+  end
+
+  defp require_complete_governed_input_inventory!(snapshot) do
+    missing = snapshot.governed_input_inventory -- snapshot.governed_inputs
+    unexpected = snapshot.governed_inputs -- snapshot.governed_input_inventory
+
+    if missing != [] or unexpected != [] do
+      raise ArgumentError,
+            "repository snapshot governed inputs differ from governed input inventory; missing=#{inspect(missing)} unexpected=#{inspect(unexpected)}"
+    end
+  end
+
+  defp normalized_repository_relative_path?(path) when is_binary(path) and path != "" do
+    components = Path.split(path)
+
+    components != [] and Path.type(path) == :relative and Path.join(components) == path and
+      Enum.all?(components, &(&1 not in ["", ".", ".."]))
+  end
+
+  defp normalized_repository_relative_path?(_path), do: false
 
   defp snapshot_owner_paths(entries, aliases) do
     owners = repository_owners(entries)
@@ -1452,11 +1497,10 @@ defmodule Relyra.AdoptionEvidence do
       raise ArgumentError, "tracked Phase 73 plan and summary input set must not be empty"
     end
 
-    (fixed ++ discovered)
-    |> Enum.uniq()
-    |> Enum.each(&validate_governed_input!(root, &1))
+    inputs = (fixed ++ discovered) |> Enum.uniq() |> Enum.sort()
 
-    Enum.uniq(fixed ++ discovered)
+    Enum.each(inputs, &validate_governed_input!(root, &1))
+    inputs
   end
 
   defp tracked_phase_inputs!(root, basename) do
