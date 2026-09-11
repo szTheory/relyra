@@ -1,68 +1,74 @@
 ---
 phase: 73-twin-contract-and-baseline
-reviewed: 2026-09-10T16:43:00Z
+reviewed: 2026-09-11T05:04:38Z
 depth: standard
-files_reviewed: 6
+files_reviewed: 2
 files_reviewed_list:
-  - .github/workflows/security-gates.yml
-  - mix.exs
-  - mix.lock
   - test/adoption/evidence_contract_test.exs
-  - test/governance/milestone_scope_test.exs
   - test/support/adoption_evidence.ex
 findings:
-  critical: 2
+  critical: 1
   warning: 1
   info: 0
-  total: 3
+  total: 2
 status: issues_found
 ---
 
 # Phase 73: Code Review Report
 
-**Reviewed:** 2026-09-10T16:43:00Z
+**Reviewed:** 2026-09-11T05:04:38Z
 **Depth:** standard
-**Files Reviewed:** 6
+**Files Reviewed:** 2
 **Status:** issues_found
 
 ## Summary
 
-The new evidence contract has two release-blocking correctness failures. Its mandatory CI lane is nondeterministic because evidence tests repeatedly launch nested BEAM/Mix processes inside ordinary 60-second ExUnit tests, and its hand-written GitHub path-glob matcher disagrees with GitHub's documented `?` semantics, allowing governed planning changes to skip the workflow while validation passes. The owner-path validation also follows symlinks, weakening the claimed repository-local evidence boundary.
+The Plan 73-17/18 changes close all three findings from the prior report: repository validation now captures registered tags once per owner and reuses a pure snapshot, the workflow matcher rejects unsupported GitHub glob syntax, and owner provenance rejects symlink components and non-tracked lexical paths. The replacement discovery cache still does not provide its claimed cross-process single-flight guarantee, however, because each caller uses a different global lock identifier. Snapshot shape validation also labels governed inputs as normalized without enforcing normalization or preserving the required governed-input set.
 
-The independently observed `LoginTraceTest` ETS race and the archival planning-vocabulary failure are outside the Phase 73 source changes reviewed here and are not counted as findings in this report.
+The focused Plan 73-17/18 selector passed 9 tests with no failures. The five current `mix ci.evidence` failures caused by `.planning/STATE.md` entering `ready_for_verification` are in `test/governance/milestone_scope_test.exs`, outside this incremental file scope, and are not counted below; they remain a known gate blocker.
 
 ## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: Mandatory evidence tests repeatedly exceed ExUnit's timeout
+### CR-01: Per-caller lock identifiers defeat single-flight owner discovery
 
-**File:** `test/support/adoption_evidence.ex:425-479`
+**File:** `test/support/adoption_evidence.ex:670-687`
 
-**Issue:** `registered_test_tags!/2` starts a fresh `mix run` OS process for every owner inspection. `validate_repository!/2` invokes that probe once for every distinct owner/selector and then invokes it again for every owner in the lane command. The evidence suite calls full repository validation dozens of times, including from an `async: true` module and from table-driven tests such as `test/adoption/evidence_contract_test.exs:815-847`. This creates many concurrent nested BEAM VMs and makes an unchanged mandatory lane fail at ExUnit's default 60-second timeout. Two observed `mix ci.evidence` attempts timed out at line 464; an unchanged third attempt passed only after roughly 220 seconds. A mandatory acceptance lane that sometimes fails without an input change is incorrect and cannot gate releases reliably.
+**Issue:** `registered_test_tags!/2` attempts to serialize a cache miss with `:global.trans({cache_key, self()}, ...)`. Including `self()` makes the lock identifier different for every concurrent test process, so two callers that miss the same `:persistent_term` key do not contend on the same lock. Both can enter `discover_registered_test_tags!/2` and launch duplicate Elixir/BEAM probes for the same owner. Because evidence modules run asynchronously and multiple tests call `validate_repository!/2`, this preserves the process fan-out and timeout race that Plan 73-17 was intended to remove. Passing focused tests does not exercise the concurrent cache-miss boundary.
 
-**Fix:** Separate pure workflow/alias validation from expensive test discovery. Discover registered tests once per owner per lane invocation (or generate a deterministic manifest once in a single helper process), pass that snapshot into repository validation, and have mutation tests call only the pure validator for the seam they mutate. Keep test discovery bounded and serialize any unavoidable external BEAM probes; do not paper over the defect by increasing ExUnit timeouts.
+**Fix:** Lock on a caller-independent resource identifier, then repeat the cache check inside the lock. For example:
 
-### CR-02: GitHub path-filter semantics can bypass the mandatory evidence workflow
+```elixir
+lock_id = {__MODULE__, :registered_test_tags, cache_key}
 
-**File:** `test/support/adoption_evidence.ex:1133-1135`
+:global.trans(lock_id, fn ->
+  case :persistent_term.get(cache_key, :missing) do
+    :missing ->
+      tags = discover_registered_test_tags!(path, root)
+      :persistent_term.put(cache_key, tags)
+      tags
 
-**Issue:** `glob_source!/1` translates `?` to exactly one arbitrary non-slash character. GitHub Actions documents `?` in path patterns as matching zero or one occurrence of the preceding character. Consequently, a filter such as `.planning/STATE.md?` matches `.planning/STATE.md` on GitHub and can suppress an evidence-only change, but this validator translates it to a pattern requiring one character after `.md` and accepts the workflow. The contract therefore does not prove that governed planning inputs trigger the mandatory lane. The same custom grammar should not be assumed correct for other GitHub metacharacters it does not model.
+    tags ->
+      tags
+  end
+end)
+```
 
-**Fix:** Use a parser/matcher with GitHub Actions-compatible path-filter semantics. Given that the checked-in ignore policy only needs `prompts/**`, the safer minimal fix is to reject unsupported metacharacters such as `?` and `+` outright, then add an adversarial test showing `.planning/STATE.md?` is rejected rather than accepted.
+Add a barrier-controlled concurrency regression that starts multiple callers before the cache is populated and asserts the discovery function runs exactly once.
 
 ## Warnings
 
-### WR-01: Evidence owners may resolve through symlinks outside their declared path
+### WR-01: Snapshot validation accepts substituted and non-normalized governed inputs
 
-**File:** `test/support/adoption_evidence.ex:642-649`
+**File:** `test/support/adoption_evidence.ex:482-490`
 
-**Issue:** `repository_path!/2` performs only lexical `Path.expand/2` containment and then calls `File.regular?/1`, which follows symlinks. A tracked owner path can therefore be replaced by a symlink to another tagged test (including a target outside the repository), and both source discovery and alias validation will accept it as the declared owner. This undermines diagnostics and the claim that the ledger points to a specific repository-local executable owner. The governance baseline path validator already rejects symlinks component-by-component, so the two evidence paths enforce inconsistent boundaries.
+**Issue:** The snapshot validator only requires `governed_inputs` to be a non-empty unique list of non-empty strings. It does not enforce the diagnostic's claimed normalization rule (relative paths with no `.`/`..` components), lexical ordering, or equality with the required governed-input inventory. A pure snapshot mutation can therefore replace the captured inventory with a harmless value such as `["README.md"]`; workflow validation then stops checking every Phase 73 planning and evidence input and may return `:ok`. This leaves an untested degenerate snapshot field despite Plan 73-17 requiring all snapshot fields to fail closed. The normal `validate_repository!/2` capture path supplies the real inventory, so this is a robustness defect in the exported pure-validation seam rather than a direct workflow bypass.
 
-**Fix:** Require a relative tracked path and reject a symlink at every path component before compiling an owner. Reuse the component-wise `File.lstat/1` plus `git ls-files --error-unmatch` approach already used by `allowed_repository_path?/2` in the governance test.
+**Fix:** Store or derive an immutable expected inventory and require exact equality (including stable lexical order) during `validate_snapshot_shape!/2`. At minimum, validate every value with the same normalized repository-relative path grammar used for owners and reject missing, unexpected, or reordered governed paths with deterministic diagnostics. Add mutations for omission, substitution, `../` escape, absolute path, and unstable order.
 
 ---
 
-_Reviewed: 2026-09-10T16:43:00Z_
+_Reviewed: 2026-09-11T05:04:38Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
