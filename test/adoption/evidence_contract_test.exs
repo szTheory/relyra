@@ -32,9 +32,6 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
   @tag :plan_73_17_task_1
   test "repository snapshot discovers each unique owner once in lexical order" do
-    assert function_exported?(AdoptionEvidence, :repository_snapshot!, 3),
-           "repository_snapshot!/3 must expose injected once-per-owner discovery"
-
     entries = AdoptionEvidence.entries()
     root = repository_fixture!()
     test_process = self()
@@ -70,9 +67,6 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
   @tag :plan_73_17_task_1
   test "repository snapshot rejects missing empty duplicate malformed and unstable owners" do
-    assert function_exported?(AdoptionEvidence, :repository_snapshot!, 3),
-           "repository_snapshot!/3 must expose fail-closed owner snapshots"
-
     entries = AdoptionEvidence.entries()
     root = repository_fixture!()
 

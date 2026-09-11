@@ -320,14 +320,49 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   def validate_repository!(entries, root) do
+    snapshot = repository_snapshot!(entries, root)
+    validate_repository_snapshot!(entries, snapshot)
+  end
+
+  def repository_snapshot!(entries, root, options \\ []) do
     validate_entries!(entries)
 
-    workflow = File.read!(Path.join(root, ".github/workflows/security-gates.yml"))
-    required_planning_triggers!(String.split(workflow, "\n"), root)
-    aliases = mix_aliases!(root)
+    registered_test_tags =
+      Keyword.get(options, :registered_test_tags, &registered_test_tags!/2)
+
+    unless is_function(registered_test_tags, 2) do
+      raise ArgumentError, "registered_test_tags must be a two-argument function"
+    end
+
+    owner_paths =
+      entries
+      |> repository_owners()
+      |> Enum.map(& &1.owner)
+      |> Enum.uniq()
+      |> Enum.sort()
 
     owners =
-      Enum.filter(entries, &(&1.state == :existing and &1.evidence_kind != :external_canary))
+      Enum.map(owner_paths, fn owner ->
+        owner_path = repository_path!(root, owner)
+        tags = registered_test_tags.(owner_path, root)
+        %{path: owner, tags: normalize_registered_tags!(owner, tags)}
+      end)
+
+    %{
+      aliases: mix_aliases!(root),
+      governed_inputs: governed_inputs!(root),
+      owners: owners,
+      workflow: File.read!(Path.join(root, ".github/workflows/security-gates.yml"))
+    }
+  end
+
+  def validate_repository_snapshot!(entries, snapshot) do
+    validate_entries!(entries)
+    snapshot = validate_snapshot_shape!(entries, snapshot)
+    required_planning_triggers!(String.split(snapshot.workflow, "\n"), snapshot.governed_inputs)
+
+    owners = repository_owners(entries)
+    owner_tags = Map.new(snapshot.owners, &{&1.path, &1.tags})
 
     Enum.reduce(owners, MapSet.new(), fn entry, checked ->
       key = {entry.owner, entry.selector}
@@ -335,7 +370,7 @@ defmodule Relyra.AdoptionEvidence do
       if MapSet.member?(checked, key) do
         checked
       else
-        validate_owner_source!(entry, root)
+        validate_owner_source_snapshot!(entry, owner_tags)
         MapSet.put(checked, key)
       end
     end)
@@ -343,11 +378,11 @@ defmodule Relyra.AdoptionEvidence do
     lane_commands =
       Enum.reduce(owners, %{}, fn entry, commands ->
         Map.put_new_lazy(commands, entry.lane, fn ->
-          validate_owner_alias!(entry, root, aliases)
+          validate_owner_alias_snapshot!(entry, snapshot.aliases, owner_tags)
         end)
       end)
 
-    Enum.each(owners, &validate_owner_chain!(&1, root, lane_commands, workflow))
+    Enum.each(owners, &validate_owner_chain!(&1, lane_commands, snapshot.workflow))
 
     :ok
   end
@@ -372,29 +407,28 @@ defmodule Relyra.AdoptionEvidence do
     raise ArgumentError, "verification command must be non-empty text"
   end
 
-  defp validate_owner_alias!(entry, root, aliases) do
-    validate_check_alias!(entry.lane, root, aliases)
+  defp repository_owners(entries) do
+    Enum.filter(entries, &(&1.state == :existing and &1.evidence_kind != :external_canary))
+  end
+
+  defp validate_owner_alias_snapshot!(entry, aliases, owner_tags) do
+    validate_check_alias_snapshot!(entry.lane, aliases, owner_tags)
   rescue
     error in ArgumentError ->
       raise ArgumentError,
             "#{entry.requirement} row #{entry.id}: alias #{entry.lane} is not wired to an executable owner command: #{Exception.message(error)}"
   end
 
-  defp validate_owner_source!(entry, root) do
-    owner_path = Path.join(root, entry.owner)
+  defp validate_owner_source_snapshot!(entry, owner_tags) do
+    tags = Map.fetch!(owner_tags, entry.owner)
 
-    unless File.regular?(owner_path) do
-      raise ArgumentError,
-            "#{entry.requirement} row #{entry.id}: missing owner file #{entry.owner}"
-    end
-
-    unless selected_test_count!(owner_path, entry.selector, root) > 0 do
+    unless Enum.count(tags, &enabled_tag?(&1, entry.selector)) > 0 do
       raise ArgumentError,
             "#{entry.requirement} row #{entry.id}: selector #{entry.selector} matches zero tests in #{entry.owner}"
     end
   end
 
-  defp validate_owner_chain!(entry, _root, lane_commands, workflow) do
+  defp validate_owner_chain!(entry, lane_commands, workflow) do
     command = Map.fetch!(lane_commands, entry.lane)
 
     owner = Enum.find(command.owners, &(&1.path == entry.owner))
@@ -416,10 +450,139 @@ defmodule Relyra.AdoptionEvidence do
     end
   end
 
-  defp selected_test_count!(path, selector, root) do
-    path
-    |> registered_test_tags!(root)
-    |> Enum.count(&enabled_tag?(&1, selector))
+  defp validate_snapshot_shape!(entries, snapshot) when is_map(snapshot) do
+    expected_keys = MapSet.new([:aliases, :governed_inputs, :owners, :workflow])
+    actual_keys = snapshot |> Map.keys() |> MapSet.new()
+
+    unless actual_keys == expected_keys do
+      raise ArgumentError,
+            "repository snapshot has invalid fields; missing=#{inspect(MapSet.difference(expected_keys, actual_keys) |> MapSet.to_list())} unknown=#{inspect(MapSet.difference(actual_keys, expected_keys) |> MapSet.to_list())}"
+    end
+
+    unless is_binary(snapshot.workflow) and snapshot.workflow != "" do
+      raise ArgumentError, "repository snapshot workflow must be non-empty text"
+    end
+
+    unless is_map(snapshot.aliases) do
+      raise ArgumentError, "repository snapshot aliases must be a normalized map"
+    end
+
+    unless is_list(snapshot.governed_inputs) and snapshot.governed_inputs != [] and
+             Enum.all?(snapshot.governed_inputs, &(is_binary(&1) and &1 != "")) do
+      raise ArgumentError,
+            "repository snapshot governed inputs must be non-empty normalized paths"
+    end
+
+    expected_paths =
+      entries
+      |> repository_owners()
+      |> Enum.map(& &1.owner)
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    unless is_list(snapshot.owners) and snapshot.owners != [] do
+      raise ArgumentError, "repository snapshot owners must be a non-empty list"
+    end
+
+    paths = Enum.map(snapshot.owners, &snapshot_owner_path!/1)
+
+    duplicate_paths =
+      paths
+      |> Enum.frequencies()
+      |> Enum.filter(fn {_path, count} -> count > 1 end)
+      |> Enum.map(&elem(&1, 0))
+      |> Enum.sort()
+
+    if duplicate_paths != [] do
+      raise ArgumentError,
+            "owner #{hd(duplicate_paths)} has duplicate snapshot records"
+    end
+
+    if paths != Enum.sort(paths) do
+      raise ArgumentError, "repository snapshot owners must use stable lexical owner order"
+    end
+
+    case Enum.find(expected_paths, &(&1 not in paths)) do
+      nil -> :ok
+      path -> raise ArgumentError, "owner #{path} is missing from repository snapshot"
+    end
+
+    case Enum.find(paths, &(&1 not in expected_paths)) do
+      nil -> :ok
+      path -> raise ArgumentError, "owner #{path} has an unexpected snapshot record"
+    end
+
+    Enum.each(snapshot.owners, &validate_snapshot_owner!/1)
+    snapshot
+  end
+
+  defp validate_snapshot_shape!(_entries, snapshot) do
+    raise ArgumentError, "repository snapshot must be a map, got: #{inspect(snapshot)}"
+  end
+
+  defp snapshot_owner_path!(%{path: path, tags: _tags}) when is_binary(path) and path != "",
+    do: path
+
+  defp snapshot_owner_path!(owner) do
+    raise ArgumentError,
+          "repository snapshot contains a malformed owner record: #{inspect(owner)}"
+  end
+
+  defp validate_snapshot_owner!(%{path: path, tags: []}) do
+    raise ArgumentError, "owner #{path} has empty registered tags in repository snapshot"
+  end
+
+  defp validate_snapshot_owner!(%{path: path, tags: tags}) when is_list(tags) do
+    Enum.each(tags, fn
+      tag_map when is_map(tag_map) and map_size(tag_map) > 0 ->
+        Enum.each(tag_map, fn
+          {key, value}
+          when is_binary(key) and key != "" and
+                 (is_boolean(value) or is_nil(value) or is_binary(value) or is_number(value)) ->
+            :ok
+
+          _entry ->
+            raise ArgumentError, "owner #{path} has a non-normalized tag entry"
+        end)
+
+      _tag_map ->
+        raise ArgumentError, "owner #{path} has a non-normalized tag map"
+    end)
+  end
+
+  defp validate_snapshot_owner!(owner) do
+    path = if is_map(owner), do: Map.get(owner, :path, "<missing-owner>"), else: "<missing-owner>"
+    raise ArgumentError, "owner #{path} has malformed registered tags"
+  end
+
+  defp normalize_registered_tags!(owner, tags) when is_list(tags) do
+    Enum.map(tags, fn
+      tag_map when is_map(tag_map) ->
+        Map.new(tag_map, fn {key, value} ->
+          normalized_key =
+            cond do
+              is_binary(key) and key != "" -> key
+              is_atom(key) -> Atom.to_string(key)
+              true -> raise ArgumentError, "owner #{owner} returned an invalid registered tag key"
+            end
+
+          normalized_value =
+            cond do
+              is_boolean(value) or is_nil(value) or is_binary(value) or is_number(value) -> value
+              is_atom(value) -> Atom.to_string(value)
+              true -> inspect(value, limit: :infinity)
+            end
+
+          {normalized_key, normalized_value}
+        end)
+
+      _tag_map ->
+        raise ArgumentError, "owner #{owner} returned a malformed registered tag map"
+    end)
+  end
+
+  defp normalize_registered_tags!(owner, _tags) do
+    raise ArgumentError, "owner #{owner} returned malformed registered tags"
   end
 
   defp registered_test_tags!(path, root) do
@@ -531,6 +694,49 @@ defmodule Relyra.AdoptionEvidence do
     %{owners: owners, includes: includes, exclusions: exclusions}
   end
 
+  defp validate_direct_test_command_snapshot!(arguments, owner_tags) do
+    unless "--warnings-as-errors" in arguments do
+      raise ArgumentError, "direct test command is missing --warnings-as-errors"
+    end
+
+    owner_paths =
+      arguments
+      |> Enum.filter(&(String.ends_with?(&1, ".exs") and not String.starts_with?(&1, "-")))
+
+    if owner_paths == [] do
+      raise ArgumentError, "direct test command names no executable test owner path"
+    end
+
+    {includes, exclusions} = parse_test_filters!(arguments)
+
+    owners =
+      Enum.map(owner_paths, fn owner ->
+        tags =
+          case Map.fetch(owner_tags, owner) do
+            {:ok, tags} ->
+              tags
+
+            :error ->
+              raise ArgumentError, "test owner #{owner} is missing from repository snapshot"
+          end
+
+        effective_count =
+          Enum.count(tags, fn registered_tags ->
+            Enum.all?(includes, &filter_matches?(registered_tags, &1)) and
+              not Enum.any?(exclusions, &filter_matches?(registered_tags, &1))
+          end)
+
+        if effective_count == 0 do
+          raise ArgumentError,
+                "test owner #{owner} has zero selected tests: zero effective selected tests after include/exclusion filters"
+        end
+
+        %{path: owner, effective_count: effective_count}
+      end)
+
+    %{owners: owners, includes: includes, exclusions: exclusions}
+  end
+
   defp validate_check_alias!(alias_name, root) do
     validate_check_alias!(alias_name, root, mix_aliases!(root))
   end
@@ -543,6 +749,29 @@ defmodule Relyra.AdoptionEvidence do
         case command_argv!(command) do
           {"mix", ["test" | arguments]} ->
             validate_direct_test_command!(arguments, root)
+
+          _other ->
+            raise ArgumentError,
+                  "named repository check alias #{alias_name} must be one fresh-process test command"
+        end
+
+      nil ->
+        raise ArgumentError, "named repository check alias #{alias_name} does not exist"
+
+      _other ->
+        raise ArgumentError,
+              "named repository check alias #{alias_name} must be one fresh-process test command"
+    end
+  end
+
+  defp validate_check_alias_snapshot!(alias_name, aliases, owner_tags) do
+    steps = Map.get(aliases, alias_name)
+
+    case steps do
+      ["cmd " <> command] ->
+        case command_argv!(command) do
+          {"mix", ["test" | arguments]} ->
+            validate_direct_test_command_snapshot!(arguments, owner_tags)
 
           _other ->
             raise ArgumentError,
@@ -847,7 +1076,7 @@ defmodule Relyra.AdoptionEvidence do
 
   defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
 
-  defp required_planning_triggers!(lines, root) do
+  defp required_planning_triggers!(lines, governed_inputs) do
     pull_request = required_event_contract!(lines, "pull_request", ~w(paths paths-ignore))
     push = required_event_contract!(lines, "push", ~w(branches paths paths-ignore))
 
@@ -858,7 +1087,6 @@ defmodule Relyra.AdoptionEvidence do
             "workflow push must select exactly one positive main branch; got: #{inspect(branch_patterns)}"
     end
 
-    governed_inputs = governed_inputs!(root)
     validate_required_paths!("pull_request", pull_request, governed_inputs)
     validate_required_paths!("push", push, governed_inputs)
     true
