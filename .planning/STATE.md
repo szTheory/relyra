@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
-status: executing
-stopped_at: Completed 73-18-PLAN.md
-last_updated: "2026-09-11T04:32:03.023Z"
+status: ready_for_verification
+stopped_at: Completed 73-19-PLAN.md
+last_updated: "2026-09-11T04:53:20.777Z"
 last_activity: 2026-09-11
-last_activity_desc: Plan 73-18 completed — workflow filters and owner paths now fail closed at lexical provenance boundaries
-state_head: 3340653d4980c8fc5aba131122caa92869dab53b
+last_activity_desc: Plan 73-19 completed — security findings reconciled through evidence-before-disposition closure
+state_head: 33dc4051d6674d01f20b09453b5d7fa20e732541
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 19
-  completed_plans: 18
-  percent: 94
+  completed_plans: 19
+  percent: 100
 ---
 
 # Project State
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — EXECUTING
+Phase: 73 (Twin Contract and Baseline) — READY FOR VERIFICATION
 
 Plan: 19 of 19
 
-Status: Ready to execute — 1 gap-closure plan remains, Plan 73-19
+Status: All 19 plans complete — phase verification required
 
-Last activity: 2026-09-11 — Plan 73-18 completed
+Last activity: 2026-09-11 — Plan 73-19 completed
 
 ## Milestone Metrics
 
@@ -112,6 +112,8 @@ Last activity: 2026-09-11 — Plan 73-18 completed
 - [Phase 73]: Reuse registered tags only for the same absolute owner path and SHA-256 source identity within one test VM; source changes always force fresh registration.
 - [Phase 73]: Reject workflow constructs outside the repository's literal, single-star, and whole-double-star subset instead of approximating GitHub matching.
 - [Phase 73]: Require component-wise lstat and exact Git-index identity for the declared lexical owner before registered-test discovery.
+- [Phase 73]: Record current review findings as open before closure evidence restores verified status.
+- [Phase 73]: Close T-73-67, T-73-70, and T-73-71 only after all four focused selectors, three unchanged sub-60-second evidence runs, and the full security lane pass.
 
 ### Baseline Findings
 
@@ -149,17 +151,16 @@ Last activity: 2026-09-11 — Plan 73-18 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T04:32:03.000Z
+**Last session:** 2026-09-11T04:53:20.752Z
 
-**Stopped at:** Completed 73-18-PLAN.md
+**Stopped at:** Completed 73-19-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Phase 73 gap-closure Plan 19 to reconcile the current review threats
-and seal security status, then re-verify the phase before beginning Phase 74
-clean-room package-consumer planning.
+Re-verify Phase 73 against the reconciled security verdict, then begin Phase 74
+clean-room package-consumer planning after verification closes.
 
 ## Performance Metrics
 
@@ -183,6 +184,7 @@ clean-room package-consumer planning.
 | Phase 73 P16 | 21min | 2 tasks | 3 files |
 | Phase 73 P17 | 60min | 2 tasks | 2 files |
 | Phase 73 P18 | 12min | 2 tasks | 2 files |
+| Phase 73 P19 | 14min | 2 tasks | 2 files |
 
 ### Blockers
 
