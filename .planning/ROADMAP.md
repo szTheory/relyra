@@ -75,7 +75,7 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 16/16 plans executed; no gap-closure plans remain
+**Plans:** 19 plans (16 complete, 3 gap-closure plans pending)
 
 Plans:
 **Wave 1**
@@ -129,6 +129,18 @@ Plans:
 **Wave 12** *(gap closure; blocked on Wave 11 completion)*
 
 - [x] 73-16-PLAN.md — Reconcile CR-06 through CR-08 evidence with the Phase 73 security verdict.
+
+**Wave 13** *(gap closure; blocked on Wave 12 completion)*
+
+- [ ] 73-17-PLAN.md — Replace repeated registered-test process discovery with one immutable owner snapshot and bounded mandatory-lane proof.
+
+**Wave 14** *(gap closure; blocked on Wave 13 completion)*
+
+- [ ] 73-18-PLAN.md — Reject unsupported GitHub path metacharacters and bind owners to tracked non-symlink lexical paths.
+
+**Wave 15** *(gap closure; blocked on Waves 13 and 14 completion)*
+
+- [ ] 73-19-PLAN.md — Reconcile the current review threats and seal security status only after repeated deterministic evidence.
 
 ### Phase 74: Clean-Room Package Consumer
 
