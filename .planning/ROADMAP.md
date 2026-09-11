@@ -75,7 +75,7 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 22/23 plans executed (22 complete; final evidence reconciliation pending)
+**Plans:** 23/23 plans executed (23 complete; ready for phase verification)
 
 Plans:
 
@@ -154,7 +154,7 @@ Plans:
 
 **Wave 18** *(gap closure; blocked on Wave 17 completion)*
 
-- [ ] 73-23-PLAN.md — Prove the repairs through focused and repeated mandatory lanes before resealing the security verdict.
+- [x] 73-23-PLAN.md — Prove the repairs through focused and repeated mandatory lanes before resealing the security verdict.
 
 ### Phase 74: Clean-Room Package Consumer
 
@@ -304,7 +304,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
-| 73. Twin Contract and Baseline | v1.11 | 22/23 | In Progress|  |
+| 73. Twin Contract and Baseline | v1.11 | 23/23 | Ready for Verification |  |
 | 74. Clean-Room Package Consumer | v1.11 | 0/TBD | Not started | — |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |

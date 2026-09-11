@@ -4,17 +4,17 @@ milestone: v1.11
 milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
-status: executing
-stopped_at: Completed 73-22-PLAN.md
-last_updated: "2026-09-11T17:26:18.739Z"
+status: ready_for_verification
+stopped_at: Completed 73-23-PLAN.md
+last_updated: "2026-09-11T18:55:27.850Z"
 last_activity: 2026-09-11
-last_activity_desc: Plan 73-22 completed single-flight discovery and governed inventory binding
-state_head: 67a5a8435f4bd8ba816a73fe7944ae0b706cdc1c
+last_activity_desc: Plan 73-23 completed final evidence reconciliation
+state_head: a06df8e0572606941b593c2d2830fc9be9f14a50
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 23
-  completed_plans: 22
+  completed_plans: 23
   percent: 0
 ---
 
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE
+Phase: 73 (Twin Contract and Baseline) — READY FOR VERIFICATION
 
 Plan: 23 of 23
 
-Status: One gap-closure plan remains; Plan 73-23 is ready to execute
+Status: All 23 plans complete; Phase 73 is ready for verification
 
-Last activity: 2026-09-11 — Plan 73-22 closed single-flight and snapshot inventory gaps
+Last activity: 2026-09-11 — Plan 73-23 reconciled the final security and Nyquist evidence
 
 ## Milestone Metrics
 
@@ -121,6 +121,9 @@ Last activity: 2026-09-11 — Plan 73-22 closed single-flight and snapshot inven
 - [Phase 73]: Restrict frontmatter whitespace after field colons to horizontal whitespace so empty status values cannot consume the next line.
 - [Phase 73]: Keep the registration cache ResourceId caller-independent and content-addressed; self() appears only in OTP's LockRequesterId slot. — This serializes simultaneous misses without changing the default fresh-process ExUnit authority.
 - [Phase 73]: Bind candidate governed inputs exactly to one sorted capture-time inventory before workflow reduction. — Pure snapshots cannot gain coverage by omission, substitution, escape, absolute paths, duplicates, or reordering.
+- [Phase 73]: Keep the complete unchanged mix ci.security lane mandatory and passing with no timing ceiling, while retaining all three independent sub-60-second mix ci.evidence requirements.
+- [Phase 73]: Stage the exact current proof set before changing security or Nyquist disposition, then reduce both reports from that same committed evidence.
+- [Phase 73]: Count threats_open at the configured high threshold while preserving T-73-12 as a visible open medium follow-up.
 
 ### Baseline Findings
 
@@ -158,16 +161,16 @@ Last activity: 2026-09-11 — Plan 73-22 closed single-flight and snapshot inven
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T15:47:54.804Z
+**Last session:** 2026-09-11T18:55:27.820Z
 
-**Stopped at:** Completed 73-22-PLAN.md
+**Stopped at:** Completed 73-23-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Plan 73-23 to prove both repairs in the mandatory lane and reconcile the final
-Phase 73 security verdict.
+Verify Phase 73 against its reconciled mandatory evidence and security verdict before
+advancing to Phase 74.
 
 ## Performance Metrics
 
@@ -195,6 +198,7 @@ Phase 73 security verdict.
 | Phase 73 P20 | 3 min | 2 tasks | 2 files |
 | Phase 73 P21 | 10min | 2 tasks | 1 files |
 | Phase 73 P22 | 14 min | 2 tasks | 3 files |
+| Phase 73 P23 | 17min | 3 tasks | 8 files |
 
 ### Blockers
 

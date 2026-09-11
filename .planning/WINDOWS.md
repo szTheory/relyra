@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 17
-total_count: 19
-last_updated: 2026-09-11T15:49:06.625Z
+fixed_count: 19
+total_count: 21
+last_updated: 2026-09-11T18:56:35.412Z
 ---
 
 # Broken Windows Ledger
@@ -34,6 +34,8 @@ last_updated: 2026-09-11T15:49:06.625Z
 | 17 | 73 | deviation | .planning/STATE.md |  | State updater emitted zero percent and stale Plan 73-18 prose after all 19 summaries; reconciled in the final metadata changes | fixed |  | 2026-09-11T04:54:06.798Z | 2026-09-11T04:54:24.901Z |
 | 18 | 73 | deviation | test/support/adoption_evidence.ex |  | Corrected normalized-tag argument order during Task 1 GREEN | fixed |  | 2026-09-11T15:48:32.979Z | 2026-09-11T15:49:06.508Z |
 | 19 | 73 | deviation | .planning/STATE.md |  | Reconciled stale sequential tracking prose after Plan 73-22 | fixed |  | 2026-09-11T15:48:33.100Z | 2026-09-11T15:49:06.625Z |
+| 20 | 73 | deviation | .planning/phases/73-twin-contract-and-baseline/73-23-PLAN.md |  | Removed only the mix ci.security timing ceiling after explicit human approval while preserving the complete mandatory lane and all mix ci.evidence bounds | fixed |  | 2026-09-11T18:56:30.193Z | 2026-09-11T18:56:35.322Z |
+| 21 | 73 | deviation | .planning/STATE.md |  | Reconciled stale Plan 2 cursor and pending Plan 73-23 prose after all 23 summaries were present | fixed |  | 2026-09-11T18:56:30.312Z | 2026-09-11T18:56:35.412Z |
 
 ````json
 [
@@ -268,6 +270,32 @@ last_updated: 2026-09-11T15:49:06.625Z
     "reason": "",
     "recorded_at": "2026-09-11T15:48:33.100Z",
     "resolved_at": "2026-09-11T15:49:06.625Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 20,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/phases/73-twin-contract-and-baseline/73-23-PLAN.md",
+    "line": null,
+    "description": "Removed only the mix ci.security timing ceiling after explicit human approval while preserving the complete mandatory lane and all mix ci.evidence bounds",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T18:56:30.193Z",
+    "resolved_at": "2026-09-11T18:56:35.322Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 21,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "Reconciled stale Plan 2 cursor and pending Plan 73-23 prose after all 23 summaries were present",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T18:56:30.312Z",
+    "resolved_at": "2026-09-11T18:56:35.412Z",
     "milestone": "v1.11"
   }
 ]
