@@ -67,6 +67,47 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert checked_in_identity.plan_paths != []
   end
 
+  @tag :plan_73_21_task_2
+  test "lifecycle authority accepts only the three exact active STATE values" do
+    for status <- ~w(executing in_progress ready_for_verification) do
+      root = governance_repository_fixture()
+      replace_state_status!(root, "status: #{status}")
+
+      assert {:ok, identity} = validated_governance_identity(root)
+      assert identity.status == status
+    end
+
+    controls = [
+      {"completed", "status: completed", ~s(status=["completed"])},
+      {"blocked", "status: blocked", ~s(status=["blocked"])},
+      {"paused", "status: paused", ~s(status=["paused"])},
+      {"not started", "status: not_started", ~s(status=["not_started"])},
+      {"unknown", "status: unknown", ~s(status=["unknown"])},
+      {"empty", "status: ", "status=[]"},
+      {"whitespace only", "status:    ", "status=[]"},
+      {"missing", "", "status=[]"},
+      {"duplicated", "status: executing\nstatus: ready_for_verification",
+       ~s(status=["executing", "ready_for_verification"])},
+      {"quoted lookalike", ~s(status: "ready_for_verification"),
+       ~s(status=["\\\"ready_for_verification\\\""])},
+      {"malformed lookalike", "status : ready_for_verification", "status=[]"}
+    ]
+
+    for {name, replacement, field_diagnostic} <- controls do
+      root = governance_repository_fixture()
+      replace_state_status!(root, replacement)
+
+      assert {:error, violations} = validated_governance_identity(root)
+
+      assert Enum.any?(violations, fn violation ->
+               violation =~ ".planning/STATE.md" and
+                 violation =~ "must be singular and active" and
+                 violation =~ field_diagnostic
+             end),
+             "expected explicit STATE status diagnostic for #{name}, got: #{inspect(violations)}"
+    end
+  end
+
   @tag :plan_73_10_task_1
   test "active v1.11 discovery is closed, non-vacuous, and cross-source consistent" do
     root = governance_repository_fixture()
@@ -2064,6 +2105,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp mutate_file(root, relative, mutation) do
     path = Path.join(root, relative)
     File.write!(path, mutation.(File.read!(path)))
+  end
+
+  defp replace_state_status!(root, replacement) do
+    mutate_file(root, ".planning/STATE.md", fn state ->
+      Regex.replace(~r/^status\s*:[^\n]*$/m, state, replacement)
+    end)
   end
 
   defp validated_governance_identity(root) do
