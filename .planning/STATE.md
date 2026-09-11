@@ -5,16 +5,16 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-21-PLAN.md
-last_updated: "2026-09-11T15:29:19.503Z"
+stopped_at: Completed 73-22-PLAN.md
+last_updated: "2026-09-11T15:47:54.841Z"
 last_activity: 2026-09-11
-last_activity_desc: Plan 73-21 completed with the lifecycle identity fail closed
-state_head: 03fcfedbab72c98c7796feee7a6eed5e71a52f32
+last_activity_desc: Plan 73-22 completed single-flight discovery and governed inventory binding
+state_head: 72760f6a9091777cf16da435af47947f400a87d9
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 23
-  completed_plans: 21
+  completed_plans: 22
   percent: 0
 ---
 
@@ -33,11 +33,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 22 of 23
+Plan: 23 of 23
 
-Status: Two gap-closure plans remain; Plan 73-22 is ready to execute
+Status: One gap-closure plan remains; Plan 73-23 is ready to execute
 
-Last activity: 2026-09-11 — Plan 73-21 restored the exact active lifecycle identity
+Last activity: 2026-09-11 — Plan 73-22 closed single-flight and snapshot inventory gaps
 
 ## Milestone Metrics
 
@@ -119,6 +119,8 @@ Last activity: 2026-09-11 — Plan 73-21 restored the exact active lifecycle ide
 - [Phase 73]: Treat executing, in_progress, and ready_for_verification as the only active governance lifecycle states.
 - [Phase 73]: Preserve serialized live STATE while proving ready_for_verification through a checked-in identity fixture that changes only the lifecycle field.
 - [Phase 73]: Restrict frontmatter whitespace after field colons to horizontal whitespace so empty status values cannot consume the next line.
+- [Phase 73]: Keep the registration cache ResourceId caller-independent and content-addressed; self() appears only in OTP's LockRequesterId slot. — This serializes simultaneous misses without changing the default fresh-process ExUnit authority.
+- [Phase 73]: Bind candidate governed inputs exactly to one sorted capture-time inventory before workflow reduction. — Pure snapshots cannot gain coverage by omission, substitution, escape, absolute paths, duplicates, or reordering.
 
 ### Baseline Findings
 
@@ -156,16 +158,16 @@ Last activity: 2026-09-11 — Plan 73-21 restored the exact active lifecycle ide
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T15:29:19.449Z
+**Last session:** 2026-09-11T15:47:54.804Z
 
-**Stopped at:** Completed 73-21-PLAN.md
+**Stopped at:** Completed 73-22-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Plan 73-22, then run Plan 73-23 to prove both repairs and reconcile the
-final Phase 73 security verdict.
+Execute Plan 73-23 to prove both repairs in the mandatory lane and reconcile the final
+Phase 73 security verdict.
 
 ## Performance Metrics
 
@@ -192,6 +194,7 @@ final Phase 73 security verdict.
 | Phase 73 P19 | 14min | 2 tasks | 2 files |
 | Phase 73 P20 | 3 min | 2 tasks | 2 files |
 | Phase 73 P21 | 10min | 2 tasks | 1 files |
+| Phase 73 P22 | 14 min | 2 tasks | 3 files |
 
 ### Blockers
 

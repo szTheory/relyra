@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 15
-total_count: 17
-last_updated: 2026-09-11T04:54:24.901Z
+fixed_count: 17
+total_count: 19
+last_updated: 2026-09-11T15:49:06.625Z
 ---
 
 # Broken Windows Ledger
@@ -32,6 +32,8 @@ last_updated: 2026-09-11T04:54:24.901Z
 | 15 | 73 | deviation | test/adoption/evidence_contract_test.exs |  | Legacy path assertions now require grammar-first unsupported-pattern diagnostics | fixed |  | 2026-09-11T04:32:33.697Z | 2026-09-11T04:32:56.215Z |
 | 16 | 73 | deviation | .planning/STATE.md |  | Generated progress required reconciliation to Plan 73-19 at 18/19 complete | fixed |  | 2026-09-11T04:32:33.790Z | 2026-09-11T04:33:01.909Z |
 | 17 | 73 | deviation | .planning/STATE.md |  | State updater emitted zero percent and stale Plan 73-18 prose after all 19 summaries; reconciled in the final metadata changes | fixed |  | 2026-09-11T04:54:06.798Z | 2026-09-11T04:54:24.901Z |
+| 18 | 73 | deviation | test/support/adoption_evidence.ex |  | Corrected normalized-tag argument order during Task 1 GREEN | fixed |  | 2026-09-11T15:48:32.979Z | 2026-09-11T15:49:06.508Z |
+| 19 | 73 | deviation | .planning/STATE.md |  | Reconciled stale sequential tracking prose after Plan 73-22 | fixed |  | 2026-09-11T15:48:33.100Z | 2026-09-11T15:49:06.625Z |
 
 ````json
 [
@@ -240,6 +242,32 @@ last_updated: 2026-09-11T04:54:24.901Z
     "reason": "",
     "recorded_at": "2026-09-11T04:54:06.798Z",
     "resolved_at": "2026-09-11T04:54:24.901Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 18,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "test/support/adoption_evidence.ex",
+    "line": null,
+    "description": "Corrected normalized-tag argument order during Task 1 GREEN",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T15:48:32.979Z",
+    "resolved_at": "2026-09-11T15:49:06.508Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 19,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "Reconciled stale sequential tracking prose after Plan 73-22",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T15:48:33.100Z",
+    "resolved_at": "2026-09-11T15:49:06.625Z",
     "milestone": "v1.11"
   }
 ]
