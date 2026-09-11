@@ -2499,36 +2499,37 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp add_unless(violations, false, diagnostic), do: violations ++ [diagnostic]
 
   defp plan_scope_violations(markdown, changed_classes \\ [], root \\ File.cwd!()) do
-    scope_sections = tag_sections(markdown, "scope_assertions")
-    exclusion_sections = tag_sections(markdown, "demand_gated_exclusions")
-    tasks = plan_tasks(markdown)
-    type_violations = task_type_violations(tasks)
-    validated_tasks = Enum.filter(tasks, &valid_task_type?/1)
+    with {:ok, task_region, tasks} <- closed_plan_tasks(markdown),
+         [] <- task_acceptance_ownership_violations(task_region, tasks) do
+      scope_sections = tag_sections(markdown, "scope_assertions")
+      exclusion_sections = tag_sections(markdown, "demand_gated_exclusions")
 
-    scope_violations =
-      case scope_sections do
-        [scope] ->
-          approval_scope_violations(
-            parse_scope_assertions(scope),
-            validated_tasks,
-            changed_classes,
-            root
-          )
+      scope_violations =
+        case scope_sections do
+          [scope] ->
+            approval_scope_violations(
+              parse_scope_assertions(scope),
+              tasks,
+              changed_classes,
+              root
+            )
 
-        _other ->
-          ["scope_assertions must appear exactly once"]
-      end
+          _other ->
+            ["scope_assertions must appear exactly once"]
+        end
 
-    exclusion_violations = demand_gated_exclusion_violations(exclusion_sections)
-
-    type_violations ++
-      task_risk_metadata_violations(validated_tasks) ++
-      scope_violations ++
-      exclusion_violations ++
-      deterministic_verification_violations(validated_tasks) ++
-      forbidden_capability_violations(validated_tasks) ++
-      manual_acceptance_violations(markdown) ++
-      orphan_checkpoint_violations(validated_tasks)
+      task_type_violations(tasks) ++
+        task_risk_metadata_violations(tasks) ++
+        scope_violations ++
+        demand_gated_exclusion_violations(exclusion_sections) ++
+        deterministic_verification_violations(tasks) ++
+        forbidden_capability_violations(tasks) ++
+        manual_acceptance_violations(markdown) ++
+        orphan_checkpoint_violations(tasks)
+    else
+      {:error, violations} -> violations
+      violations when is_list(violations) -> violations
+    end
   end
 
   defp task_type_violations(tasks) do
@@ -3498,31 +3499,239 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp plan_tasks(markdown) do
-    ~r/<task\s+(?<attributes>[^>]*)>(?<body>.*?)<\/task>/s
-    |> Regex.scan(markdown, capture: ["attributes", "body"])
-    |> Enum.map(fn [attributes, body] ->
-      risk_metadata_sections = tag_sections(body, "risk_metadata")
+  defp closed_plan_tasks(markdown) do
+    with {:ok, task_region} <- exact_task_region(markdown),
+         {:ok, tasks} <- consume_plan_tasks(task_region.body, 0, []) do
+      if tasks == [] do
+        {:error, ["tasks region must contain at least one task"]}
+      else
+        {:ok, task_region, tasks}
+      end
+    end
+  end
 
-      %{
-        type: attribute_value(attributes, "type"),
-        gate: attribute_value(attributes, "gate"),
-        body: body,
-        name: tag_content(body, "name"),
-        action: tag_content(body, "action"),
-        files: tag_content(body, "files"),
-        verify: tag_content(body, "verify"),
-        acceptance_criteria: tag_content(body, "acceptance_criteria"),
-        resume_signal: tag_content(body, "resume-signal"),
-        risk_metadata_sections: risk_metadata_sections,
-        risk_metadata:
-          risk_metadata_sections
-          |> Enum.flat_map(&parse_key_values/1)
-          |> Enum.reduce(%{}, fn {key, value}, fields ->
-            Map.update(fields, key, [value], &[value | &1])
+  defp exact_task_region(markdown) do
+    opens = Regex.scan(~r/<tasks\b/, markdown, return: :index)
+    closes = Regex.scan(~r/<\/tasks\b/, markdown, return: :index)
+
+    with [[{open_start, _length}]] <- opens,
+         [[{close_start, _length}]] <- closes,
+         true <- close_start > open_start,
+         true <- binary_part(markdown, open_start, 7) == "<tasks>",
+         true <- binary_part(markdown, close_start, 8) == "</tasks>" do
+      body_start = open_start + 7
+
+      {:ok,
+       %{
+         body: binary_part(markdown, body_start, close_start - body_start),
+         body_start: body_start
+       }}
+    else
+      _other -> {:error, ["tasks region must appear exactly once with balanced exact tags"]}
+    end
+  end
+
+  defp consume_plan_tasks(remaining, offset, tasks) do
+    trimmed = String.trim_leading(remaining)
+    skipped = byte_size(remaining) - byte_size(trimmed)
+    task_start = offset + skipped
+
+    cond do
+      trimmed == "" ->
+        {:ok, Enum.reverse(tasks)}
+
+      String.starts_with?(trimmed, "</task>") ->
+        {:error, ["tasks region contains unmatched task close"]}
+
+      String.starts_with?(trimmed, "<acceptance_criteria") or
+          String.starts_with?(trimmed, "</acceptance_criteria") ->
+        {:error, ["acceptance_criteria must be wholly owned by one implementation task"]}
+
+      not String.starts_with?(trimmed, "<task") ->
+        {:error, ["tasks region contains unconsumed task syntax"]}
+
+      true ->
+        consume_plan_task(trimmed, task_start, tasks)
+    end
+  end
+
+  defp consume_plan_task(remaining, task_start, tasks) do
+    case Regex.run(~r/\A<task(?<attributes>[^>]*)>/s, remaining) do
+      [opening, attributes] ->
+        with {:ok, parsed_attributes} <- closed_task_attributes(attributes),
+             after_opening <-
+               binary_part(
+                 remaining,
+                 byte_size(opening),
+                 byte_size(remaining) - byte_size(opening)
+               ),
+             {close_start, _length} <- :binary.match(after_opening, "</task>"),
+             body <- binary_part(after_opening, 0, close_start),
+             false <- Regex.match?(~r/<task(?:\s|>)/, body) do
+          task_end = task_start + byte_size(opening) + close_start + byte_size("</task>")
+          task = parsed_plan_task(parsed_attributes, body, {task_start, task_end})
+          consumed = byte_size(opening) + close_start + byte_size("</task>")
+          rest = binary_part(remaining, consumed, byte_size(remaining) - consumed)
+
+          consume_plan_tasks(rest, task_end, [task | tasks])
+        else
+          {:error, violations} -> {:error, violations}
+          :nomatch -> {:error, ["task opening tag is unterminated"]}
+          true -> {:error, ["tasks region contains nested task syntax"]}
+        end
+
+      nil ->
+        {:error, ["task opening tag uses unsupported syntax"]}
+    end
+  end
+
+  defp closed_task_attributes(attributes) do
+    tokens =
+      Regex.scan(~r/\s+([a-z][a-z0-9_-]*)="([^"]*)"/, attributes, capture: :all_but_first)
+
+    residual = Regex.replace(~r/\s+[a-z][a-z0-9_-]*="[^"]*"/, attributes, "")
+    grouped = Enum.group_by(tokens, &hd/1, &Enum.at(&1, 1))
+    unknown = Map.keys(grouped) -- ~w(type tdd gate)
+    type_values = Map.get(grouped, "type", [])
+
+    violations =
+      []
+      |> add_if(String.trim(residual) != "", "task opening tag uses unsupported syntax")
+      |> add_if(unknown != [], "task opening tag contains unsupported attributes")
+      |> add_if(length(type_values) != 1, "task type must appear exactly once")
+      |> add_if(
+        length(type_values) == 1 and hd(type_values) not in @task_types,
+        "task type is unsupported: #{inspect(List.first(type_values))}"
+      )
+      |> add_if(length(Map.get(grouped, "tdd", [])) > 1, "task tdd attribute must be singular")
+      |> add_if(length(Map.get(grouped, "gate", [])) > 1, "task gate attribute must be singular")
+
+    if violations == [],
+      do:
+        {:ok,
+         %{
+           type: hd(type_values),
+           gate: List.first(Map.get(grouped, "gate", []), "")
+         }},
+      else: {:error, violations}
+  end
+
+  defp parsed_plan_task(attributes, body, span) do
+    risk_metadata_sections = tag_sections(body, "risk_metadata")
+
+    %{
+      type: attributes.type,
+      gate: attributes.gate,
+      body: body,
+      span: span,
+      name: tag_content(body, "name"),
+      action: tag_content(body, "action"),
+      files: tag_content(body, "files"),
+      verify: tag_content(body, "verify"),
+      acceptance_criteria: tag_content(body, "acceptance_criteria"),
+      resume_signal: tag_content(body, "resume-signal"),
+      risk_metadata_sections: risk_metadata_sections,
+      risk_metadata:
+        risk_metadata_sections
+        |> Enum.flat_map(&parse_key_values/1)
+        |> Enum.reduce(%{}, fn {key, value}, fields ->
+          Map.update(fields, key, [value], &[value | &1])
+        end)
+    }
+  end
+
+  defp task_acceptance_ownership_violations(task_region, tasks) do
+    tokens = acceptance_tokens(task_region.body)
+    raw_count = length(Regex.scan(~r/<\/?acceptance_criteria\b/, task_region.body))
+
+    syntax_violations =
+      if raw_count == length(tokens),
+        do: [],
+        else: ["acceptance_criteria uses unsupported or unterminated syntax"]
+
+    {pairs, balance_violations} = balanced_acceptance_pairs(tokens, task_region.body)
+
+    ownership_violations =
+      Enum.flat_map(pairs, fn pair ->
+        owners =
+          Enum.filter(tasks, fn task ->
+            implementation_bearing_task?(task) and
+              elem(task.span, 0) <= pair.open_start and elem(task.span, 1) >= pair.close_end
           end)
-      }
+
+        []
+        |> add_if(
+          length(owners) != 1,
+          "acceptance_criteria must be wholly owned by one implementation task"
+        )
+        |> add_if(
+          String.trim(pair.content) == "",
+          "acceptance_criteria must be non-empty"
+        )
+      end)
+
+    cardinality_violations =
+      tasks
+      |> Enum.filter(&implementation_bearing_task?/1)
+      |> Enum.flat_map(fn task ->
+        count =
+          Enum.count(pairs, fn pair ->
+            elem(task.span, 0) <= pair.open_start and elem(task.span, 1) >= pair.close_end
+          end)
+
+        if count == 1,
+          do: [],
+          else: [
+            "#{nonempty(task.name, "unnamed task")} acceptance_criteria must appear exactly once"
+          ]
+      end)
+
+    syntax_violations ++ balance_violations ++ ownership_violations ++ cardinality_violations
+  end
+
+  defp acceptance_tokens(body) do
+    ~r/<\/?acceptance_criteria\b[^>]*>/
+    |> Regex.scan(body, return: :index)
+    |> Enum.map(fn [{start, length}] ->
+      %{text: binary_part(body, start, length), start: start, length: length}
     end)
+  end
+
+  defp balanced_acceptance_pairs(tokens, body) do
+    {open, pairs, violations} =
+      Enum.reduce(tokens, {nil, [], []}, fn token, {open, pairs, violations} ->
+        cond do
+          token.text == "<acceptance_criteria>" and open == nil ->
+            {token, pairs, violations}
+
+          token.text == "<acceptance_criteria>" ->
+            {open, pairs, violations ++ ["nested acceptance_criteria is not allowed"]}
+
+          token.text == "</acceptance_criteria>" and open == nil ->
+            {nil, pairs, violations ++ ["unmatched acceptance_criteria close"]}
+
+          token.text == "</acceptance_criteria>" ->
+            content_start = open.start + open.length
+
+            pair = %{
+              open_start: open.start,
+              close_end: token.start + token.length,
+              content: binary_part(body, content_start, token.start - content_start)
+            }
+
+            {nil, [pair | pairs], violations}
+
+          true ->
+            {open, pairs, violations ++ ["acceptance_criteria uses unsupported syntax"]}
+        end
+      end)
+
+    violations =
+      if open == nil,
+        do: violations,
+        else: violations ++ ["unmatched acceptance_criteria open"]
+
+    {Enum.reverse(pairs), violations}
   end
 
   defp parse_key_values(section) do
@@ -3604,13 +3813,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp legacy_plan_scope_violations(markdown) do
-    tasks = plan_tasks(markdown)
-    validated_tasks = Enum.filter(tasks, &valid_task_type?/1)
-
-    task_type_violations(tasks) ++
-      deterministic_verification_violations(validated_tasks) ++
-      manual_acceptance_violations(markdown) ++
-      orphan_checkpoint_violations(validated_tasks)
+    with {:ok, task_region, tasks} <- closed_plan_tasks(markdown),
+         [] <- task_acceptance_ownership_violations(task_region, tasks) do
+      task_type_violations(tasks) ++
+        deterministic_verification_violations(tasks) ++
+        manual_acceptance_violations(markdown) ++
+        orphan_checkpoint_violations(tasks)
+    else
+      {:error, violations} -> violations
+      violations when is_list(violations) -> violations
+    end
   end
 
   defp repository_changed_surfaces(root, plan_path, changed_surfaces_by_plan) do
@@ -3998,15 +4210,6 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp add_if(violations, true, diagnostic), do: violations ++ [diagnostic]
   defp add_if(violations, false, _diagnostic), do: violations
-
-  defp attribute_value(attributes, name) do
-    case Regex.run(~r/(?:^|\s)#{Regex.escape(name)}="([^"]*)"/, attributes,
-           capture: :all_but_first
-         ) do
-      [value] -> value
-      nil -> ""
-    end
-  end
 
   defp tag_sections(markdown, tag) do
     ~r/<#{Regex.escape(tag)}>(.*?)<\/#{Regex.escape(tag)}>/s
