@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: issues_found
-threats_open: 2
+status: verified
+threats_open: 0
 asvs_level: 1
 block_on: high
 created: "2026-09-09"
@@ -60,13 +60,13 @@ created: "2026-09-09"
 | T-73-51 | Denial of Service | mandatory workflow event filters | high | mitigate | Closed by the occurrence-preserving event grammar: push accepts only one positive `main` branch in exact order, pull requests cannot declare restrictive activity filters, and duplicate events/direct keys plus unsupported event controls fail before path and owner reduction. `plan_73_14_task_1`, `plan_73_14_task_2`, and the mandatory `mix ci.evidence` lane pass. | closed — CR-06 |
 | T-73-52 | Elevation of Privilege | script/result authorization binding | high | mitigate | Closed by removing script and static-result authorization: mutation and rollback cross the parser only as tracked declarative `gh api --input` operations whose complete normalized payload state matches the declared desired or current state. `plan_73_15_task_1` and the mandatory `mix ci.evidence` lane pass. | closed — CR-07 |
 | T-73-53 | Repudiation | post-SUMMARY completed-plan provenance | high | mitigate | Closed by resolving one full exact-`HEAD` review endpoint, requiring the SUMMARY-add boundary to be its ancestor, and classifying every ordered exact-scope descendant while restricting SUMMARY and manifest equality audits to pre-boundary tasks. `plan_73_15_task_2` and the mandatory `mix ci.evidence` lane pass. | closed — CR-08 |
-| T-73-67 | Denial of Service | registered-test process fan-out | critical | mitigate | `73-REVIEW.md` CR-01 and `73-VERIFICATION.md` record repeated unchanged 60-second timeouts caused by repeated nested Mix/BEAM owner discovery. Plan 73-17 supplies the intended once-per-owner snapshot and pure mutation repair, but fresh closure evidence is pending. | open — current Critical review finding; closing evidence pending |
-| T-73-70 | Tampering | GitHub path-filter semantic mismatch | critical | mitigate | `73-REVIEW.md` CR-02 and `73-VERIFICATION.md` record that the custom `?` translation could approve a GitHub-effective ignore of `.planning/STATE.md`. Plan 73-18 supplies the intended fail-closed unsupported-metacharacter repair, but fresh closure evidence is pending. | open — current Critical review finding; closing evidence pending |
-| T-73-71 | Spoofing | symlink/untracked lexical owner provenance | medium | mitigate | `73-REVIEW.md` WR-01 and `73-VERIFICATION.md` record that lexical containment plus `File.regular?/1` could credit a symlink-resolved or untracked owner instead of the declared repository file. Plan 73-18 supplies the intended component-wise non-symlink and exact Git-tracking repair, but fresh closure evidence is pending. | open — current Warning review finding; below high threshold; closing evidence pending |
+| T-73-67 | Denial of Service | registered-test process fan-out | critical | mitigate | Closed by once-per-owner registered-test snapshot discovery and pure post-capture mutation validation. `plan_73_17_task_1` passed 3 tests, `plan_73_17_task_2` passed 1 test, three unchanged `mix ci.evidence` runs passed 99 tests in 22s, 18s, and 17s, and `mix ci.security` passed. | closed — deterministic bounded evidence |
+| T-73-70 | Tampering | GitHub path-filter semantic mismatch | critical | mitigate | Closed by the unsupported-metacharacter corpus, including `.planning/STATE.md?`, and grammar-first rejection before governed-input comparison. `plan_73_18_task_1` passed 3 tests, all three unchanged sub-60-second `mix ci.evidence` runs passed 99 tests, and `mix ci.security` passed. | closed — fail-closed path grammar evidence |
+| T-73-71 | Spoofing | symlink/untracked lexical owner provenance | medium | mitigate | Closed by component-wise non-symlink `File.lstat/1`, regular-leaf validation, and exact lexical `git ls-files --error-unmatch` tracking controls before discovery. `plan_73_18_task_2` passed 2 tests, all three unchanged sub-60-second `mix ci.evidence` runs passed 99 tests, and `mix ci.security` passed. | closed — exact owner provenance evidence |
 | DEP-73-01 | Tampering | Phoenix request handling dependency | high | mitigate | Upgraded Phoenix from 1.8.7 to 1.8.13 with its coupled transport dependencies in `ae1f0aa`; `mix ci.security` and `mix deps.audit` pass. | closed |
 | DEP-73-02 | Tampering | Phoenix request handling dependency | medium | mitigate | The Phoenix 1.8.13 upgrade resolves `GHSA-63mc-hw7g-86rr`; the post-upgrade dependency audit passes. | closed |
 
-Two threats remain open at or above the configured `high` blocking threshold, so `threats_open: 2` and the report remains `issues_found`. `T-73-12` and `T-73-71` remain visible as open medium follow-ups below that threshold; the blocking count does not erase or reclassify them.
+Zero threats remain open at or above the configured `high` blocking threshold, so `threats_open: 0`. `T-73-12` remains visible as an owned, open medium follow-up below that threshold; the blocking count does not erase or reclassify it.
 
 ---
 
@@ -105,6 +105,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 | 2026-09-10 | 32 | 27 | 5 | Post-gap review correction; CR-06–CR-08 opened as three blocking high-severity threats alongside two medium follow-ups |
 | 2026-09-10 | 32 | 31 | 1 non-blocking | ASVS L1 final reconciliation; CR-06–CR-08 closed only after the Plan 73-14/15 focused selectors and 91-test `mix ci.evidence` lane passed |
 | 2026-09-11 | 35 | 31 | 4 (2 blocking, 2 non-blocking) | Post-review correction for T-73-67/T-73-70/T-73-71; closing evidence pending |
+| 2026-09-11 | 35 | 34 | 1 non-blocking | Final reconciliation for T-73-67/T-73-70/T-73-71; four focused selectors, three sub-60-second mix ci.evidence runs, and mix ci.security passed |
 
 ---
 
@@ -112,7 +113,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 
 - [x] All threats have a disposition (mitigate / accept / transfer)
 - [x] Accepted risks documented in Accepted Risks Log
-- [ ] `threats_open: 0` confirmed
-- [ ] `status: verified` set in frontmatter
+- [x] `threats_open: 0` confirmed
+- [x] `status: verified` set in frontmatter
 
-**Approval:** withheld at the configured ASVS L1 threshold pending fresh closure evidence for T-73-67, T-73-70, and T-73-71. The later `73-REVIEW.md` and `73-VERIFICATION.md` observations supersede the prior zero-open sign-off; authorization or repair prose does not close the findings. `threats_open: 2` means two open threats at or above the configured `high` blocking threshold, while lower-severity T-73-12 and T-73-71 remain visible and owned.
+**Approval:** verified at the configured ASVS L1 threshold after T-73-67, T-73-70, and T-73-71 were closed by their four focused selectors, three sub-60-second mix ci.evidence runs, and mix ci.security. `threats_open: 0` means no open threat at or above the configured high blocking threshold; T-73-12 remains visible and owned as an open medium follow-up below that threshold.
