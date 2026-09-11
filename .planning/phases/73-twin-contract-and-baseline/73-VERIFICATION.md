@@ -1,86 +1,117 @@
 ---
 phase: 73-twin-contract-and-baseline
-verified: 2026-09-11T02:19:37Z
+verified: 2026-09-11T05:15:20Z
 status: gaps_found
 score: 8/9 must-haves verified
+covered_files:
+  - ".github/workflows/security-gates.yml"
+  - ".planning/REQUIREMENTS.md"
+  - ".planning/ROADMAP.md"
+  - ".planning/STATE.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-01-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-01-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-02-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-02-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-03-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-03-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-04-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-04-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-05-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-05-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-06-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-06-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-07-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-07-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-08-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-08-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-09-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-09-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-10-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-10-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-11-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-11-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-12-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-12-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-13-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-13-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-14-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-14-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-15-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-15-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-16-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-16-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-17-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-17-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-18-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-18-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-19-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-19-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-CONTEXT.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-REVIEW.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-SECURITY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md"
+  - "mix.exs"
+  - "test/adoption/evidence_contract_test.exs"
+  - "test/governance/milestone_scope_test.exs"
+  - "test/support/adoption_evidence.ex"
+covered_digest: "v1:sha256:9a5e7b5bb9bc9a352c8ac5a914224e552f639fcc4d7a7a4f5674e13cafd5b73f"
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
   previous_status: gaps_found
-  previous_score: 6/9
+  previous_score: 8/9
   gaps_closed:
-    - "CR-06: push and pull_request now use occurrence-preserving closed event schemas; the Plan 73-14 selectors pass."
-    - "CR-07: script-backed remote authorization was removed; complete tracked gh api --input payloads are now the only mutation and rollback grammar."
-    - "CR-08: completed-plan provenance now includes every reachable exact-scope descendant through the full HEAD review endpoint."
-  gaps_remaining: []
+    - "The closed workflow path grammar now rejects unsupported metacharacters before coverage comparison."
+    - "Evidence-owner provenance now rejects symlinks, lexical escapes, absolute paths, and untracked files before discovery."
+  gaps_remaining:
+    - "Mandatory deterministic ownership is still not established: ci.evidence is red in ready_for_verification, the cache lock is caller-specific, and governed_inputs can be substituted."
+    - "The Phase 73 security verdict is stale relative to the later Critical review finding and current red mandatory lane."
   regressions:
-    - "The mandatory ci.evidence owner is nondeterministic: the Nyquist audit observed two unchanged 60-second test timeouts and one 220-second pass; this re-verification passed in 229.0 seconds."
-    - "The workflow path matcher implements custom question-mark semantics that diverge from GitHub Actions and can accept an ignore pattern that suppresses a governed planning path."
-    - "Adoption evidence owner paths are accepted through symlinks because repository_path!/2 uses lexical containment plus File.regular?/1."
-decision_coverage:
-  honored: 13
-  total: 13
-  not_honored: []
+    - "After STATE moved to ready_for_verification, parse_state_identity/1 rejects the legitimate lifecycle state and mix ci.evidence fails five governance tests."
+    - "The exported pure snapshot validator accepts a substituted governed_inputs inventory such as [README.md]."
 gaps:
   - truth: "Automated policy checks prevent new acceptance criteria from being closed without a mandatory deterministic owner."
     status: failed
-    reason: "The mandatory owner lane is not deterministic under its declared ExUnit timeout. Two of three unchanged Nyquist runs timed out at 60 seconds in registered_test_tags!/2; the one audit pass took 220 seconds, and this independent run took 229.0 seconds."
+    reason: "The mandatory evidence lane exits non-zero in ready_for_verification; its registered-test cache uses a per-caller lock that cannot serialize concurrent misses; and pure snapshot validation accepts a substituted governed-input inventory."
     artifacts:
+      - path: "test/governance/milestone_scope_test.exs"
+        issue: "parse_state_identity/1 accepts only executing or in_progress, rejecting ready_for_verification and causing five current ci.evidence failures."
       - path: "test/support/adoption_evidence.ex"
-        issue: "registered_test_tags!/2 launches a fresh nested Mix/BEAM process for repeated owner inspection; repository validation repeats the expensive discovery from async tests."
+        issue: "registered_test_tags!/2 locks on {cache_key, self()}; validate_snapshot_shape!/2 does not bind governed_inputs to the required normalized inventory."
       - path: "test/adoption/evidence_contract_test.exs"
-        issue: "The async evidence corpus repeatedly invokes full repository validation and has no bounded once-per-owner discovery snapshot."
-      - path: ".planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md"
-        issue: "Correctly records nyquist_compliant: false and only 1/3 successful unchanged mandatory-lane attempts."
+        issue: "No concurrent cache-miss test proves single-flight behavior, and no omission/substitution/path-normalization mutations protect governed_inputs."
+      - path: "mix.exs"
+        issue: "ci.evidence is wired to both owners but currently selects 99 tests and exits non-zero with five failures."
     missing:
-      - "Discover registered tests once per owner per lane invocation, or build one deterministic manifest in a serialized helper process."
-      - "Make mutation cases exercise pure validation against the snapshot instead of spawning nested BEAM VMs repeatedly."
-      - "Add a deterministic runtime/timeout regression and make repeated unchanged mix ci.evidence runs pass within the declared timeout."
-  - truth: "A workflow path filter that omits an evidence owner or governed planning input must not count as mandatory CI ownership."
+      - "Accept ready_for_verification as an active lifecycle state and add a regression for the checked-in state."
+      - "Use a caller-independent lock identity and add a concurrency test proving one discovery for simultaneous cache misses."
+      - "Bind governed_inputs to the complete normalized stable inventory and test omission, substitution, escape, absolute, and reorder mutations."
+      - "Run the unchanged mandatory ci.evidence lane green after the final STATE transition."
+  - truth: "The final Phase 73 security verdict reports zero open high-threshold threats only after every current blocking evidence-contract finding is closed."
     status: failed
-    reason: "glob_source!/1 translates ? as one arbitrary non-slash character, while GitHub Actions path-filter semantics treat ? as zero or one occurrence of the preceding character. A pattern such as .planning/STATE.md? can suppress STATE.md on GitHub but does not match in the validator, so the validator can credit a workflow that skips governed evidence changes."
-    artifacts:
-      - path: "test/support/adoption_evidence.ex"
-        issue: "The hand-written glob translator at glob_source!/1 is not GitHub-compatible and does not fail closed on unsupported metacharacters."
-      - path: "test/adoption/evidence_contract_test.exs"
-        issue: "The corpus covers .planning/STAT?.md under the custom semantics but lacks the decisive .planning/STATE.md? bypass regression."
-    missing:
-      - "Use GitHub-compatible path-filter matching, or reject unsupported metacharacters such as ? and + because the checked-in policy only needs prompts/**."
-      - "Add a mix ci.evidence regression proving .planning/STATE.md? and adjacent unsupported patterns are rejected."
-  - truth: "Named deterministic evidence owners resolve only to the declared tracked repository-local file."
-    status: failed
-    reason: "repository_path!/2 checks lexical containment and File.regular?/1, which follows symlinks. A declared owner can therefore resolve through an intermediate or leaf symlink, including outside the repository, while still being credited as the named owner."
-    artifacts:
-      - path: "test/support/adoption_evidence.ex"
-        issue: "Owner validation lacks component-wise lstat checks and a git ls-files --error-unmatch proof for the lexical owner path."
-      - path: "test/adoption/evidence_contract_test.exs"
-        issue: "No active evidence-owner regression rejects intermediate/leaf symlinks or an untracked owner path."
-    missing:
-      - "Reject symlinks at every owner path component and require the relative lexical owner path to be tracked."
-      - "Add intermediate-symlink, leaf-symlink, repository-escape, and untracked-owner controls to mix ci.evidence."
-  - truth: "The final Phase 73 security verdict reports zero open high-threshold threats only after all blocking evidence-contract findings are closed."
-    status: failed
-    reason: "73-SECURITY.md says status: verified and threats_open: 0, but the later standard review establishes two current Critical evidence-contract defects. The register closes the older CR-06 through CR-08 findings but does not register or disposition mandatory-lane nondeterminism or the GitHub path-glob bypass."
+    reason: "73-SECURITY.md was sealed before the 05:04:38Z review found a new Critical single-flight defect, and it asserts three green ci.evidence runs although the current mandatory lane fails. Its verified/threats_open: 0 state is stale."
     artifacts:
       - path: ".planning/phases/73-twin-contract-and-baseline/73-SECURITY.md"
-        issue: "Aggregate zero-open-threat sign-off is stale relative to 73-REVIEW.md and current source evidence."
+        issue: "Closes T-73-67 using pre-transition evidence that no longer describes current source and lane state."
       - path: ".planning/phases/73-twin-contract-and-baseline/73-REVIEW.md"
-        issue: "Records 2 Critical and 1 Warning after the Plan 73-16 security closeout."
+        issue: "Later review records one Critical and one Warning; the Critical is absent from the closed threat chronology."
     missing:
-      - "Reopen and register the current Critical findings at their observed severity."
-      - "After implementation and deterministic regression evidence, reconcile the threat rows, audit trail, sign-off, status, and threats_open count again."
+      - "Reopen/register the current Critical single-flight finding and record the red final-state lane."
+      - "After all blockers close, rerun evidence/security lanes and reconcile frontmatter, rows, audit trail, sign-off, and approval prose."
 deferred:
   - truth: "The repository-wide warnings-as-errors suite is green despite archival Phase 73 vocabulary in planning/reference artifacts."
     addressed_in: "Phase 77"
-    evidence: "Phase 77 success criterion 2 owns stale phase/plan/UAT/GSD narration cleanup; baseline finding QUAL-73-006 records the exact known assertion."
+    evidence: "Phase 77 owns stale phase/plan/UAT/GSD narration cleanup; QUAL-73-006 records the archival-vocabulary failure."
+advisory: []
 ---
 
 # Phase 73: Twin Contract and Baseline Verification Report
 
-**Phase Goal:** A maintainer can see exactly which adopter jobs v1.11 proves, where each proof runs, what the current quality/CI baseline is, and which changes require approval.
-**Verified:** 2026-09-11T02:19:37Z
+**Phase Goal:** Maintainers can inspect exactly which adopter journeys exist, where their deterministic proof runs, what the current quality/CI baseline is, and which changes require approval before Phase 74 begins.
+**Verified:** 2026-09-11T05:15:20Z
 **Status:** gaps_found
-**Re-verification:** Yes — after Plans 73-14 through 73-16, the final Nyquist audit, standard code review, and independent command execution
+**Re-verification:** Yes — after gap-closure Plans 73-17 through 73-19
 
 ## Goal Achievement
 
@@ -88,15 +119,15 @@ deferred:
 
 | # | Truth | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | A machine-checked ledger maps every in-scope persona and lifecycle outcome to a named job, outcome, evidence class, owner, selector, lane, and planned/existing state. | ✓ VERIFIED | `Relyra.AdoptionEvidence` retains exactly 37 requirement IDs, all six personas, closed row fields, and live owner queries. The complete 91-test contract passed once in this run. |
-| 2 | The repository has a dated severity-ranked baseline for correctness, security, integration, readability, documentation, artifacts, and CI cost/duplication. | ✓ VERIFIED | `73-BASELINE.md` remains a substantive ten-finding, seven-category, five-severity inventory with a nine-surface CI snapshot. |
-| 3 | Automated policy checks prevent new acceptance criteria from closing without a mandatory deterministic owner. | ✗ FAILED — BLOCKER | The owner lane is nondeterministic, its custom glob grammar can miss a GitHub-effective ignore, and owner paths can resolve through symlinks. EVID-02 is not achieved. |
-| 4 | Plans and execution stop at named checkpoints before governed public API/default/security/SemVer-major/remote changes and exclude speculative protocol work. | ✓ VERIFIED | Plan 73-15 removed script authorization and extended Git-derived changed-surface review through exact HEAD. Both focused selectors pass. |
-| 5 | Planned and external-canary rows remain visible but cannot themselves close a completed requirement. | ✓ VERIFIED | Closed-state filtering and canary/planned negative controls remain active in the adoption contract. |
-| 6 | Planning-only changes run the evidence contract through the checked-in required security workflow. | ✓ VERIFIED (current workflow) | The tracked workflow has pull_request plus push-to-main, ignores only `prompts/**`, and has an unconditional non-fallible `Evidence contract` step. This does not cure the validator's future `?`-pattern bypass. |
-| 7 | Every current baseline finding names evidence, disposition, owner, target phase, approval class, blocker state, and revisit date. | ✓ VERIFIED | The baseline contract parses and checks every lifecycle field and redaction-safe evidence marker. |
-| 8 | The baseline shape and each finding's reproducible evidence are machine-checked by `ci.evidence`. | ✓ VERIFIED | The governance owner is included in the actual one-step fresh-process alias; the 91-test lane completed with zero failures, albeit too slowly and nondeterministically for EVID-02. |
-| 9 | Remote GitHub approval requires one exact reversible batch whose operations implement the complete approved state. | ✓ VERIFIED | Only tracked declarative `gh api --input` mutation/rollback payloads remain; Plan 73-15 Task 1 passes 2 tests and script/result pairings are rejected. |
+| 1 | A machine-checked ledger maps every in-scope persona and lifecycle outcome to a named job, outcome, evidence class, owner, selector, lane, and state. | ✓ VERIFIED | Live registry: 42 rows, 37 active requirement IDs, all six personas. `plan_73_17_task_1` passed 3 tests including the EVID-01 tracer and snapshot-owner checks. |
+| 2 | The repository has a dated severity-ranked baseline for correctness, security, integration, readability, documentation, artifacts, and CI cost/duplication. | ✓ VERIFIED | `73-BASELINE.md` is a populated ten-finding, seven-category, five-severity inventory with a nine-surface CI snapshot. |
+| 3 | Automated policy checks prevent new acceptance criteria from closing without a mandatory deterministic owner. | ✗ FAILED — BLOCKER | `mix ci.evidence` selects 99 tests but fails 5. The cache lock includes `self()`, and a direct probe shows `governed_inputs: ["README.md"]` is accepted. |
+| 4 | Plans stop before governed API/default/security/SemVer-major/remote changes and exclude speculative protocol work. | ✓ VERIFIED | Plan 73-15 Task 1 passed 2 tests and Task 2 passed 3; exact declarative authorization and endpoint-complete provenance remain wired. |
+| 5 | Planned and external-canary rows remain visible but cannot close a completed requirement. | ✓ VERIFIED | Closed-state filtering is substantive; planned/canary negative controls ran without adoption-test failures in the 99-test lane. |
+| 6 | Planning-only changes run the evidence contract through the checked-in required security workflow. | ✓ VERIFIED (wiring) | Pull-request and push-to-main ignore only `prompts/**`; an unconditional `Evidence contract` step runs `mix ci.evidence`; `actionlint` exits 0. |
+| 7 | Every baseline finding names evidence, disposition, owner, target phase, approval class, blocker state, and revisit date. | ✓ VERIFIED | All ten rows contain the required lifecycle fields and verification markers. |
+| 8 | Baseline shape and reproducible evidence are machine-checked by `ci.evidence`. | ✓ VERIFIED | The flat alias includes the baseline/governance owner. Its baseline tests passed within the 99-test invocation; the lane's separate state-identity failures are Truth 3. |
+| 9 | Remote GitHub approval requires one exact reversible batch implementing the complete approved state. | ✓ VERIFIED | Plan 73-15 Task 1 passed 2 tests; only tracked declarative `gh api --input` complete-state payloads cross the parser. |
 
 **Score:** 8/9 truths verified (0 present, behavior-unverified)
 
@@ -104,127 +135,118 @@ deferred:
 
 | # | Roadmap Contract | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | Ledger maps every in-scope persona and lifecycle outcome to deterministic evidence or a scheduled canary. | ✓ VERIFIED | Literal registry, six-persona coverage, and planned/existing/canary separation remain present and exercised. |
-| 2 | Severity-ranked quality and CI baseline covers all required dimensions. | ✓ VERIFIED | Dated baseline and structural owner remain intact. |
-| 3 | Policy prevents acceptance closure without a mandatory deterministic owner. | ✗ FAILED — BLOCKER | The 1/3 Nyquist success rate, 229-second independent pass, GitHub `?` mismatch, and symlink-following owner path invalidate mandatory deterministic ownership. |
-| 4 | Plans stop for governed changes and exclude speculative protocol work. | ✓ VERIFIED | CR-07/CR-08 repairs are substantive, wired, and exercised by passing Plan 73-15 selectors. |
+| 1 | Ledger maps each in-scope persona/outcome to deterministic evidence or scheduled canary. | ✓ VERIFIED | Literal registry, six-persona coverage, tracing, and state separation are exercised. |
+| 2 | Severity-ranked quality and CI baseline covers every required dimension. | ✓ VERIFIED | Dated baseline and structural validator are substantive and wired. |
+| 3 | Policy prevents closure without a mandatory deterministic owner. | ✗ FAILED — BLOCKER | Final-state lane is red, concurrent cache misses are not single-flight, and governed inputs can be substituted. |
+| 4 | Plans stop for governed changes and exclude speculative protocol work. | ✓ VERIFIED | Plan 73-15 governance selectors pass 5/5 tests. |
+
+### Deferred Items
+
+| # | Item | Addressed In | Evidence |
+| --- | --- | --- | --- |
+| 1 | Repository-wide archival-vocabulary assertion | Phase 77 | Roadmap and QUAL-73-006 assign stale planning narration cleanup to Phase 77. |
+
+### Advisory (New Scope, Unevidenced)
+
+None. Current-state findings have deterministic source or command evidence and are gaps.
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | --- | --- | --- | --- |
-| `test/support/adoption_evidence.ex` | Literal ledger and fail-closed deterministic-owner chain | ✗ PARTIAL / BLOCKER | Exists (1,176 lines), substantive, and exported validators are used. `registered_test_tags!/2`, `repository_path!/2`, and `glob_source!/1` contain the three open owner defects. |
-| `test/adoption/evidence_contract_test.exs` | Adversarial ledger/owner/workflow contract | ✗ PARTIAL / BLOCKER | Exists (1,247 lines), substantive, and selected by `ci.evidence`; it lacks timeout/cached-discovery, `.planning/STATE.md?`, and owner-symlink regressions. |
-| `.planning/phases/73-twin-contract-and-baseline/73-BASELINE.md` | Dated quality and CI inventory | ✓ VERIFIED | Exists (53 lines), populated, and consumed by the governance contract. |
-| `test/governance/milestone_scope_test.exs` | Baseline, approval, scope, provenance, and remote policy | ✓ VERIFIED | Exists (4,113 lines); Plan 73-15 selectors independently pass and the CR-07/CR-08 links are present. |
-| `mix.exs` | Focused fresh-process `ci.evidence` alias | ⚠ WIRED BUT UNRELIABLE | One `cmd mix test` owns both contract files with `--only evidence_contract --warnings-as-errors`; execution is non-empty but repeatedly exceeds the default test timeout. |
-| `.github/workflows/security-gates.yml` | Mandatory planning-aware Evidence contract step | ✓ VERIFIED CURRENT ARTIFACT | `actionlint` exits 0; current push/PR triggers and blocking step are correct. The repository validator can nevertheless approve a future suppressing glob. |
-| `.planning/phases/73-twin-contract-and-baseline/73-SECURITY.md` | Evidence-bound high-threat disposition | ✗ STALE / BLOCKER | Exists and closes CR-06 through CR-08, but `status: verified` / `threats_open: 0` predates the two current Critical review findings. |
+| `test/support/adoption_evidence.ex` | Ledger and deterministic-owner chain | ✗ PARTIAL / BLOCKER | Exists (1,603 lines), substantive, used; caller-specific locking and replaceable governed inputs leave EVID-02 open. |
+| `test/adoption/evidence_contract_test.exs` | Adversarial owner/workflow contract | ✗ PARTIAL / BLOCKER | Exists (1,558 lines), selected by `ci.evidence`; lacks concurrent-miss and governed-input substitution regressions. |
+| `test/governance/milestone_scope_test.exs` | Baseline, lifecycle, approval, scope, provenance policy | ✗ PARTIAL / BLOCKER | Exists (4,113 lines); focused approval tests pass, but final lifecycle status is rejected. |
+| `73-BASELINE.md` | Dated quality/CI inventory | ✓ VERIFIED | Exists (53 lines), populated, consumed by governance tests. |
+| `mix.exs` | Fresh-process `ci.evidence` alias | ✗ WIRED BUT RED | Correct one-command alias; current execution exits non-zero. |
+| `.github/workflows/security-gates.yml` | Mandatory Evidence contract step | ✓ VERIFIED | Required trigger/step wiring is present; path and provenance focused tests pass. |
+| `73-SECURITY.md` | Current evidence-bound threat disposition | ✗ STALE / BLOCKER | Exists (119 lines); zero-open sign-off predates current review/final-state failure. |
+| `73-VALIDATION.md` | Current Nyquist inventory | ⚠ STALE | Still covers Plans 1-16 and says `nyquist_compliant: false`; current command evidence controls this verdict. |
 
-The generic artifact query's missing-export result for `validate_repository!/2` is a parser false negative: the public function exists at `test/support/adoption_evidence.ex:322`. Conceptual key links in Plans 73-14 through 73-16 are likewise verified manually because their `from` values are descriptions rather than file paths.
+The generic artifact query's missing-export result for `validate_repository!/2` is a parser false negative: its public definition exists at line 322. Generic key-link queries also treat descriptive `from` values as paths, so conceptual links were inspected manually.
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 | --- | --- | --- | --- | --- |
-| Ledger rows | Registered ExUnit owners | Actual Mix alias plus effective tag selection | ✗ UNRELIABLE | Wired and non-empty, but repeated nested Mix discovery makes the mandatory lane nondeterministic. |
-| Workflow path policy | Governed Phase 73 inputs | Custom glob matcher | ✗ NOT FAIL-CLOSED | GitHub-effective `.planning/STATE.md?` is not modeled correctly. |
-| Declared owner path | Compiled test module | Lexical expansion plus `File.regular?/1` | ✗ HOLLOW BOUNDARY | Symlink targets are followed and the lexical owner path is not proven tracked. |
-| Remote batch | Desired/current branch-protection state | Declarative tracked JSON normalization | ✓ WIRED | Script alternative removed; complete payload equality and rollback checks remain active. |
-| SUMMARY boundary | HEAD review endpoint | Git-derived pre-boundary plus descendant commits | ✓ WIRED | All reachable exact-scope descendants enter changed-surface classification. |
-| Governance contract | Baseline | Anchored table and evidence checks | ✓ WIRED | Baseline fields and evidence markers flow into executable validation. |
+| Ledger rows | Registered ExUnit owners | Snapshot plus effective tag selection | ✗ PARTIAL | One invocation deduplicates owners, but concurrent misses use distinct lock IDs because `self()` is included. |
+| Snapshot inputs | Workflow coverage | Required-input comparison | ✗ HOLLOW | Normal capture supplies the list, but pure validation accepts and checks only a substituted list. |
+| Checked-in STATE | Active governance identity | `parse_state_identity/1` | ✗ NOT WIRED FOR FINAL STATE | Only `executing`/`in_progress` are accepted; `ready_for_verification` causes five failures. |
+| Owner path | Registered owner snapshot | Relative normalization, component lstat, regular leaf, exact Git tracking | ✓ WIRED | Plan 73-18 provenance tests pass 2/2. |
+| Workflow filters | Governed inputs | Closed path grammar | ✓ WIRED | Plan 73-18 grammar tests pass 3/3. |
+| Review | Security register | Evidence-before-disposition chronology | ✗ STALE | Review at 05:04:38Z is later; its new Critical is absent from zero-open verdict. |
+| Remote batch | Desired/current state | Declarative tracked JSON normalization | ✓ WIRED | Exact-state tests pass. |
 
 ### Data-Flow Trace (Level 4)
 
-Not applicable to rendered data. This phase produces test-only registries, Markdown inventories, and CI/governance policy. Authority flow is covered in Key Link Verification.
+No rendered data exists. Authority flow was traced from ledger/planning inputs through snapshot, alias, workflow, and command exit status above.
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | --- | --- | --- | --- |
-| CR-06 push grammar | `mix test test/adoption/evidence_contract_test.exs --only plan_73_14_task_1 --warnings-as-errors` | 3 tests, 0 failures | ✓ PASS |
-| CR-06 pull-request grammar | `mix test test/adoption/evidence_contract_test.exs --only plan_73_14_task_2 --warnings-as-errors` | 3 tests, 0 failures | ✓ PASS |
-| CR-07 declarative authorization | `mix test test/governance/milestone_scope_test.exs --only plan_73_15_task_1 --warnings-as-errors` | 2 tests, 0 failures in isolated rerun | ✓ PASS |
-| CR-08 endpoint-complete provenance | `mix test test/governance/milestone_scope_test.exs --only plan_73_15_task_2 --warnings-as-errors` | 3 tests, 0 failures | ✓ PASS |
-| Mandatory Phase 73 evidence lane | `mix ci.evidence` | 91 tests, 0 failures in 229.0 seconds; Nyquist audit separately observed two 60-second timeouts and one 220-second pass | ✗ FAIL DETERMINISM CONTRACT |
-| Security lane | `mix ci.security` | Exit 0; fresh security suites and dependency audit passed | ✓ PASS |
-| Workflow syntax | `actionlint .github/workflows/security-gates.yml` | Exit 0 | ✓ PASS |
-
-One parallel focused invocation encountered a PostgreSQL schema-migration race; the exact Plan 73-15 Task 1 selector passed immediately when rerun alone. It is not counted as a Phase 73 governance failure.
+| Plan 73-17 tracer/owner controls | `mix test ... --only plan_73_17_task_1` | 3 tests, 0 failures | ✓ PASS |
+| Plan 73-17 pure mutation bounds | `mix test ... --only plan_73_17_task_2` | 1 test, 0 failures | ✓ PASS |
+| Plan 73-18 closed path grammar | `mix test ... --only plan_73_18_task_1` | 3 tests, 0 failures | ✓ PASS |
+| Plan 73-18 exact owner provenance | `mix test ... --only plan_73_18_task_2` | 2 tests, 0 failures | ✓ PASS |
+| Plan 73-15 exact remote authorization | `mix test ... --only plan_73_15_task_1` | 2 tests, 0 failures | ✓ PASS |
+| Plan 73-15 endpoint provenance | `mix test ... --only plan_73_15_task_2` | 3 tests, 0 failures | ✓ PASS |
+| Mandatory final-state lane | `mix ci.evidence` | 99 tests, 5 failures; exit 1 in 12.2s | ✗ FAIL |
+| Governed-input substitution | `MIX_ENV=test mix run -e '<capture; replace governed_inputs with README.md; validate>'` | `substituted_governed_inputs: :ok` | ✗ FAIL CLOSEDNESS |
+| Security lane | `mix ci.security` | Exit 0; fresh-process suites/audits pass | ✓ PASS |
+| Syntax/format | `actionlint .github/workflows/*.yml`; `mix format --check-formatted` | Both exit 0 | ✓ PASS |
 
 ### Probe Execution
 
-No phase-declared or conventional `scripts/**/tests/probe-*.sh` exists. The declared executable owner is `mix ci.evidence`, run independently above.
+No phase-declared or conventional `scripts/**/tests/probe-*.sh` exists. The declared executable owner is `mix ci.evidence`, run above.
 
 ### Requirements Coverage
 
-| Requirement | Source Plans | Status | Evidence |
-| --- | --- | --- | --- |
-| EVID-01 | 73-01, 06, 09, 11, 12, 14 | ✓ SATISFIED | Inspectable 37-requirement/six-persona ledger with truthful planned/existing/canary states. |
-| EVID-02 | 73-01, 04, 06, 09, 11, 12, 14, 16 | ✗ BLOCKED | Mandatory deterministic ownership fails on repeated timeouts, GitHub path semantics, and symlink-resolved owners. |
-| QUAL-01 | 73-02, 05, 08, 11, 13, 15 | ✓ SATISFIED | Severity-ranked repository inventory is present, populated, and machine-checked. |
-| PIPE-01 | 73-02, 08, 11, 13, 15 | ✓ SATISFIED | Current CI topology, sampled duration, duplication, cache, ownership, drift, and failure evidence are inspectable. |
-| GOV-01 | 73-03, 05, 07, 08, 10, 11, 13, 15, 16 | ✓ SATISFIED | Declarative-only remote operations and full-HEAD exact-scope provenance close the prior authorization gaps. |
-| GOV-02 | 73-03, 05, 07, 10, 11, 13, 15, 16 | ✓ SATISFIED | Current plan identity, requirement membership, demand-gated exclusions, and descendant classification remain enforced. |
-
-All six Phase 73 requirement IDs exist in `REQUIREMENTS.md`, map to Phase 73, and are claimed by plans. No Phase 73 requirement is orphaned.
-
-### Plan Must-Haves and Prohibitions
-
-| Plans | Regression Result | Prohibition Result |
-| --- | --- | --- |
-| 73-01 through 73-13 | Core ledger, baseline, command, approval, remote-state, and provenance behaviors remain present; the 91-test lane reaches both owners. | Most negative controls remain active. The broad named-owner prohibition (73-01), path/symlink provenance prohibition (73-08), and path-filter prohibition (73-09) fail on the current review findings. |
-| 73-14 | Both focused selectors pass; closed push/PR event keys and activity/branch rules exist. | The duplicate/unsupported-event prohibition is verified. The syntactically-valid-filter prohibition is failed because the downstream custom path glob grammar diverges on `?`. |
-| 73-15 | Both focused selectors pass; script authorization is absent and exact-HEAD descendants are classified. | Both script/result and post-SUMMARY prohibitions are verified. |
-| 73-16 | Security report retains T-73-12 and cites passing 73-14/15 owners. | The no-false-zero prohibition is failed: the report claims zero open blocking threats despite the later Critical findings. The lower-severity preservation prohibition is verified. |
-
-All 37 plan prohibitions were reviewed against source and active controls. Five are failed as identified above; no prohibition is routed to human review because project policy requires deterministic automated enforcement.
-
-### Decision Coverage
-
-The canonical non-blocking decision query reports 13/13 trackable CONTEXT decisions honored. This heuristic does not override the observable EVID-02 failures.
-
-### Test Quality Audit
-
-| Test File | Linked Requirements | Active | Skipped | Circular | Assertion Level | Verdict |
-| --- | --- | ---: | ---: | --- | --- | --- |
-| `test/adoption/evidence_contract_test.exs` | EVID-01, EVID-02 | 38 | 0 | No | Behavioral isolated-repository mutations | BLOCKER — expensive discovery is repeated; decisive GitHub `?` and owner-symlink cases are absent. |
-| `test/governance/milestone_scope_test.exs` | QUAL-01, PIPE-01, GOV-01, GOV-02 | 53 | 0 | No | Behavioral plan/Git/filesystem mutations | PASS for CR-07/CR-08 and baseline/governance ownership. |
-
-**Disabled requirement tests:** 0. **Circular fixture generation:** 0 observed. **Insufficient/adverse owner cases:** 3.
-
-The Nyquist artifact covers 16/16 plans and 34/34 acceptance-bearing tasks, but correctly leaves `nyquist_compliant: false` because deterministic execution is part of the contract, not merely test enumeration.
-
-### Anti-Patterns and Security Reconciliation
-
-| ID | File / Line | Pattern | Severity | Impact |
+| Requirement | Source Plans | Description | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| CR-01 | `test/support/adoption_evidence.ex:425-479` | Repeated nested Mix/BEAM discovery from async validation | 🛑 BLOCKER | Required evidence times out without source changes. |
-| CR-02 | `test/support/adoption_evidence.ex:1111-1158` | Hand-written GitHub glob semantics | 🛑 BLOCKER | A governed planning-only change can skip the workflow while validation passes. |
-| WR-01 | `test/support/adoption_evidence.ex:642-650` | Lexical containment plus symlink-following regular-file check | 🛑 BLOCKER under EVID-02 | The declared repository-local owner identity is not enforced. |
-| SEC-STALE | `73-SECURITY.md` | Zero-open-threat sign-off predates current Critical findings | 🛑 BLOCKER | Security status contradicts the latest code/review evidence. |
+| EVID-01 | 73-01, 06, 09, 11, 12, 14, 17, 18 | Six-persona journey ledger | ✓ SATISFIED | 42 rows, 37 active IDs, six personas; tracer/provenance tests pass. |
+| EVID-02 | 73-01, 04, 06, 09, 11, 12, 14, 16, 17, 18, 19 | Deterministic automation in mandatory CI | ✗ BLOCKED | Final-state lane red; cache not single-flight; governed inputs replaceable. |
+| QUAL-01 | 73-02, 05, 08, 11, 13, 15, 16, 19 | Severity-ranked quality inventory | ✓ SATISFIED | Ten findings cover all required categories and dispositions. |
+| PIPE-01 | 73-02, 08, 11, 13, 15, 16, 17, 19 | CI duration/duplication/ownership/cache/failure baseline | ✓ SATISFIED | Nine dated surfaces preserve every requested field. |
+| GOV-01 | 73-03, 05, 07, 08, 10, 11, 13, 15, 16, 19 | Approval before governed mutation | ✓ SATISFIED | Focused authorization/provenance tests pass; final-state error fails closed. |
+| GOV-02 | 73-03, 05, 07, 10, 11, 13, 15, 16, 19 | No speculative protocol/product expansion | ✓ SATISFIED | Exclusions and descendant classification remain tested. |
 
-No unreferenced `TBD`, `FIXME`, or `XXX` marker exists in phase-owned implementation files. Placeholder values occur only in deliberate negative fixtures.
+All six IDs exist in `REQUIREMENTS.md`, map to Phase 73, and are claimed by plans. None is orphaned.
 
-### Full-Suite Context
+### Plan 73-17 through 73-19 Must-Haves and Prohibitions
 
-The exact-seed full suite retains the documented Phase 77 archival-vocabulary assertion. It is deferred below because the later roadmap explicitly owns stale planning narration. One unrelated concurrent LoginTrace ETS race was observed in a broad run and passed 3/3 immediately in isolation; the standard review excludes it from Phase 73 findings, so it is recorded as context rather than a phase gap.
+| Plan | Result | Prohibition Result |
+| --- | --- | --- |
+| 73-17 | ✗ PARTIAL / BLOCKER | Snapshot/pure validation exist, but caller-specific locking permits concurrent rediscovery, three final-state green runs do not exist, and no simultaneous-miss test exists. |
+| 73-18 | ✓ VERIFIED | Unsupported metacharacters and symlink/untracked owner substitutions fail closed; all 5 focused tests pass. |
+| 73-19 | ✗ FAILED / BLOCKER | Zero-open verdict is stale: a current Critical remains and current `mix ci.evidence` is red. |
+
+No prohibition is routed to human review; missing or contradicted deterministic enforcement is a gap.
+
+### Anti-Patterns Found
+
+| File | Line | Pattern | Severity | Impact |
+| --- | --- | --- | --- | --- |
+| `test/support/adoption_evidence.ex` | 676 | `:global.trans({cache_key, self()}, ...)` | 🛑 BLOCKER | Distinct caller locks defeat single-flight misses. |
+| `test/support/adoption_evidence.ex` | 482 | Weak governed-input shape validation | 🛑 BLOCKER | A substituted inventory returns `:ok`. |
+| `test/governance/milestone_scope_test.exs` | 2187 | Active-state set omits `ready_for_verification` | 🛑 BLOCKER | Five mandatory checks fail after phase transition. |
+| `73-SECURITY.md` | 4-5 | Verified/zero-open after later Critical | 🛑 BLOCKER | Security chronology is stale. |
+
+No unreferenced `TBD`, `FIXME`, or `XXX` exists in phase-owned implementation files. Placeholder matches are deliberate negative fixtures.
 
 ### Human Verification Required
 
-N/A — this is an infrastructure/governance phase. Project policy forbids manual-only completion gates; observable automation failures are gaps, not `human_needed` items.
-
-### Deferred Item Review
-
-Only the archival vocabulary assertion is specifically owned by Phase 77. The mandatory-lane runtime, path-matching, owner-path, and stale-security gaps are not deferred to Phase 77 or Phase 78: EVID-02 and the Plan 73 owner/security prohibitions require those properties before Phase 73 can close.
+N/A. This phase is fully automatable; project policy forbids manual-only completion gates. Observed failures are deterministic gaps.
 
 ### Gaps Summary
 
-The previous CR-06, CR-07, and CR-08 gaps are closed, and all four focused gap-closure selectors plus `mix ci.security` pass. The phase still cannot pass. Its mandatory evidence lane is nondeterministic (two audited 60-second failures; 220/229-second passes), the custom workflow glob matcher can approve a GitHub-effective governed-path ignore, and declared test owners may resolve through symlinks. Because the security report was sealed before these findings, its `verified` / zero-open-threat state is also stale. These failures block EVID-02 and roadmap success criterion 3.
+Plans 73-17/18 close the focused intra-invocation discovery, path-grammar, and owner-provenance cases they test. Phase 73 still cannot close: final `ready_for_verification` state makes `mix ci.evidence` fail 5/99; caller-specific locking leaves cross-process single-flight false; pure snapshots accept substituted governed inputs; and the security report was sealed before the current Critical review and red final-state lane.
+
+These block EVID-02 and roadmap success criterion 3. They are Phase 73 defects, not Phase 77/78 deferred work.
 
 **Next command:** `$gsd-plan-phase 73 --gaps`
 
 ---
 
-_Verified: 2026-09-11T02:19:37Z_
+_Verified: 2026-09-11T05:15:20Z_
 _Verifier: OpenAI Codex (gsd-verifier)_
