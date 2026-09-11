@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 11
-total_count: 13
-last_updated: 2026-09-10T19:13:17.194Z
+fixed_count: 12
+total_count: 14
+last_updated: 2026-09-11T00:25:45.691Z
 ---
 
 # Broken Windows Ledger
@@ -28,6 +28,7 @@ last_updated: 2026-09-10T19:13:17.194Z
 | 11 | 73 | deviation | .planning/STATE.md |  | SDK closeout reset YAML progress and duplicated decision phase prefixes | fixed |  | 2026-09-10T01:48:36.283Z | 2026-09-10T01:49:00.025Z |
 | 12 | 73 | deviation | test/governance/milestone_scope_test.exs |  | Kept the inherited appended-command regression on a script-backed fixture | fixed |  | 2026-09-10T19:12:23.779Z | 2026-09-10T19:13:17.107Z |
 | 13 | 73 | deviation | .planning/STATE.md |  | Reconciled final-plan SDK progress reset and stale next-step prose | fixed |  | 2026-09-10T19:13:03.017Z | 2026-09-10T19:13:17.194Z |
+| 14 | 73 | deviation | test/governance/milestone_scope_test.exs |  | Preserved legacy evidence selector ownership and migrated appended-command controls to declarative remote operations | fixed |  | 2026-09-11T00:25:28.034Z | 2026-09-11T00:25:45.691Z |
 
 ````json
 [
@@ -186,6 +187,18 @@ last_updated: 2026-09-10T19:13:17.194Z
     "reason": "",
     "recorded_at": "2026-09-10T19:13:03.017Z",
     "resolved_at": "2026-09-10T19:13:17.194Z"
+  },
+  {
+    "id": 14,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "test/governance/milestone_scope_test.exs",
+    "line": null,
+    "description": "Preserved legacy evidence selector ownership and migrated appended-command controls to declarative remote operations",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T00:25:28.034Z",
+    "resolved_at": "2026-09-11T00:25:45.691Z"
   }
 ]
 ````

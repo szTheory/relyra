@@ -127,7 +127,7 @@ status: complete
 - Task 1 focused selector — 2 tests, 0 failures; re-run at the automated tracer feedback gate.
 - Task 2 focused selector — 3 tests, 0 failures.
 - Complete governance contract — 53 tests, 0 failures.
-- Mandatory `mix ci.evidence` lane — 91 tests, 0 failures.
+- Mandatory `mix ci.evidence` lane before state advancement — 91 tests, 0 failures. A post-SUMMARY rerun correctly advanced the executable frontier to incomplete Plan 73-16 and failed only because its planned `plan_73_16_task_1` owner does not exist until that plan executes.
 - `mix ci.security` — passed all fresh-process security suites; registry-backed `hex.audit` was unavailable and retained its existing non-blocking runtime behavior.
 - `mix format --check-formatted` and `git diff --check` — passed.
 - `mix test --warnings-as-errors` and `mix qa` — 885 tests, 1 documented pre-existing failure in `DemoGuideDriftTest` for archival Phase 73 vocabulary in `73-PATTERNS.md`, `73-RESEARCH.md`, and `deferred-items.md`; no plan-owned test or code regression.
@@ -135,6 +135,7 @@ status: complete
 ## Issues Encountered
 
 - Repository-wide test and QA runs reproduced the baseline's known incomplete-phase vocabulary-policy failure. Phase 73 explicitly leaves standalone documentation cleanup to Phase 77, so the unrelated archival files were not changed.
+- The post-SUMMARY evidence rerun reached the next incomplete plan and rejected its not-yet-created selector. This is the existing executable-frontier contract and is resolved by executing Plan 73-16, not by weakening Plan 73-15 ownership checks.
 - The user-owned `.tool-versions` remains untouched; all verification and commit hooks used explicit Elixir 1.19.5 / OTP 28.4.1 selection.
 
 ## Known Stubs

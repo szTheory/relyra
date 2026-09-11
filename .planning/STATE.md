@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-14-PLAN.md
-last_updated: "2026-09-10T23:55:53.091Z"
+stopped_at: Completed 73-15-PLAN.md
+last_updated: "2026-09-11T00:25:27.774Z"
 last_activity: 2026-09-10
-last_activity_desc: Phase 73 Plan 14 completed
-state_head: c93723d660932a20c2e8aad2e621491f60dddf71
+last_activity_desc: Phase 73 Plan 15 completed
+state_head: 2c33fe7bcebff1f550bdc1508ee94c104473c8f7
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 16
-  completed_plans: 14
-  percent: 0
+  completed_plans: 15
+  percent: 94
 ---
 
 # Project State
@@ -33,11 +33,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 15 of 16
+Plan: 16 of 16
 
-Status: 2 gap-closure plans ready — execute Plan 73-15
+Status: 1 gap-closure plan remains — execute Plan 73-16
 
-Last activity: 2026-09-10 — Phase 73 Plan 14 completed
+Last activity: 2026-09-10 — Phase 73 Plan 15 completed
 
 ## Milestone Metrics
 
@@ -103,6 +103,9 @@ Last activity: 2026-09-10 — Phase 73 Plan 14 completed
 - [Phase 73]: Always derive completed-plan commits from ordered exact-scope Git history; manifests and SUMMARY hashes may only audit that derived set for exact equality.
 - [Phase 73]: Validate each required workflow event and every direct child-key occurrence before reducing branch or path semantics.
 - [Phase 73]: Require push branches to equal the single literal main selector and forbid pull-request activity filters entirely.
+- [Phase 73]: Authorize remote mutation and rollback only through tracked complete-state gh api --input payloads; scripts and static results have no authorization role.
+- [Phase 73]: Resolve one full HEAD review endpoint and classify every reachable exact-scope commit before and after the SUMMARY-add boundary.
+- [Phase 73]: Keep SUMMARY and manifest equality audits restricted to pre-boundary tasks so claims cannot omit or authorize descendants.
 
 ### Baseline Findings
 
@@ -140,16 +143,16 @@ Last activity: 2026-09-10 — Phase 73 Plan 14 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-10T23:55:53.072Z
+**Last session:** 2026-09-11T00:25:27.755Z
 
-**Stopped at:** Completed 73-14-PLAN.md
+**Stopped at:** Completed 73-15-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Phase 73 gap-closure Plan 15, then re-verify the phase before beginning Phase 74
-clean-room package-consumer planning.
+Execute Phase 73 gap-closure Plan 16 to reconcile verification and security evidence, then
+re-verify the phase before beginning Phase 74 clean-room package-consumer planning.
 
 ## Performance Metrics
 
@@ -169,6 +172,7 @@ clean-room package-consumer planning.
 | Phase 73 P12 | 16min | 2 tasks | 2 files |
 | Phase 73 P13 | 19min | 3 tasks | 1 files |
 | Phase 73 P14 | 10min | 2 tasks | 2 files |
+| Phase 73 P15 | 26min | 2 tasks | 1 files |
 
 ### Blockers
 
