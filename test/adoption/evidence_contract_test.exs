@@ -239,6 +239,96 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_22_task_2
+  test "governed inputs stay bound to the complete normalized capture inventory" do
+    entries = AdoptionEvidence.entries()
+
+    capture_snapshot = fn ->
+      root = repository_fixture!()
+
+      AdoptionEvidence.repository_snapshot!(entries, root,
+        registered_test_tags: fn _path, _root -> [%{"evidence_contract" => true}] end
+      )
+    end
+
+    clean = capture_snapshot.()
+    governed_input_inventory = Map.get(clean, :governed_input_inventory)
+    assert is_list(governed_input_inventory)
+    assert clean.governed_inputs == governed_input_inventory
+    assert clean.governed_inputs == Enum.sort(clean.governed_inputs)
+    assert clean.governed_inputs == Enum.uniq(clean.governed_inputs)
+    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, clean)
+
+    fixed_omission = capture_snapshot.()
+
+    assert_governed_inventory_error(
+      entries,
+      %{
+        fixed_omission
+        | governed_inputs: List.delete(fixed_omission.governed_inputs, ".planning/STATE.md"),
+          workflow: "workflow reduction must not run"
+      },
+      ~r/governed inputs.*inventory.*missing=.*\.planning\/STATE\.md.*unexpected=\[\]/s
+    )
+
+    discovered_omission = capture_snapshot.()
+
+    discovered =
+      Enum.find(discovered_omission.governed_inputs, &String.ends_with?(&1, "-PLAN.md"))
+
+    assert discovered
+
+    assert_governed_inventory_error(
+      entries,
+      %{
+        discovered_omission
+        | governed_inputs: List.delete(discovered_omission.governed_inputs, discovered),
+          workflow: "workflow reduction must not run"
+      },
+      ~r/governed inputs.*inventory.*missing=.*#{Regex.escape(discovered)}.*unexpected=\[\]/s
+    )
+
+    substitution = capture_snapshot.()
+    [first | remaining] = substitution.governed_inputs
+
+    assert_governed_inventory_error(
+      entries,
+      %{
+        substitution
+        | governed_inputs: Enum.sort(["README.md" | remaining]),
+          workflow: "workflow reduction must not run"
+      },
+      ~r/governed inputs.*inventory.*missing=.*#{Regex.escape(first)}.*unexpected=.*README\.md/s
+    )
+
+    for replacement <- ["../README.md", Path.join(File.cwd!(), "README.md")] do
+      invalid_path = capture_snapshot.()
+      [_first | remaining] = invalid_path.governed_inputs
+
+      assert_governed_inventory_error(
+        entries,
+        %{
+          invalid_path
+          | governed_inputs: [replacement | remaining],
+            workflow: "workflow reduction must not run"
+        },
+        ~r/governed inputs.*normalized repository-relative path.*#{Regex.escape(replacement)}/s
+      )
+    end
+
+    reordered = capture_snapshot.()
+
+    assert_governed_inventory_error(
+      entries,
+      %{
+        reordered
+        | governed_inputs: Enum.reverse(reordered.governed_inputs),
+          workflow: "workflow reduction must not run"
+      },
+      ~r/governed inputs.*stable lexical order/s
+    )
+  end
+
   test "ledger covers exactly the active milestone requirements and all adopter personas" do
     entries = AdoptionEvidence.entries()
 
@@ -1606,5 +1696,14 @@ defmodule Relyra.Adoption.EvidenceContractTest do
   defp git_add_fixture!(root, paths) do
     {output, status} = System.cmd("git", ["add", "--" | paths], cd: root, stderr_to_stdout: true)
     assert status == 0, output
+  end
+
+  defp assert_governed_inventory_error(entries, snapshot, diagnostic) do
+    error =
+      assert_raise ArgumentError, diagnostic, fn ->
+        AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+      end
+
+    refute Exception.message(error) =~ "workflow is missing"
   end
 end
