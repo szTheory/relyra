@@ -449,9 +449,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :plan_73_11_task_2
-  test "script-backed mutation is bound to one indexed executable" do
+  test "script-backed mutations remain rejected across repository controls" do
     %{plan: clean, root: root} = remote_plan_fixture(:script)
-    assert plan_scope_violations(clean, [], root) == []
+    assert_plan_violation(clean, "remote_github", "mutation_result_source", root)
 
     controls = [
       {:untracked, "untracked-script.sh"},
@@ -463,15 +463,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     for {variant, diagnostic} <- controls do
       %{plan: invalid, root: invalid_root} = remote_script_control_fixture(variant)
-      assert_plan_violation(invalid, "remote_github", diagnostic, invalid_root)
+      violations = plan_scope_violations(invalid, [], invalid_root)
+
+      assert Enum.any?(
+               violations,
+               &(&1 =~ "remote_github" and &1 =~ "mutation_result_source")
+             ),
+             "expected script rejection for #{diagnostic}, got: #{inspect(violations)}"
     end
   end
 
   @tag :plan_73_11_task_2
-  test "real branch protection script identity is accepted without mutation" do
+  test "real branch protection script identity is rejected without mutation" do
     %{plan: plan, root: root} = remote_plan_fixture(:script)
 
-    assert plan_scope_violations(plan, [], root) == []
+    assert_plan_violation(plan, "remote_github", "mutation_result_source", root)
     refute File.exists?(Path.join(root, "remote-mutation-ran"))
   end
 
@@ -524,7 +530,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     for behavior <- [:write, :credential, :network] do
       %{plan: plan, root: root, sentinel: sentinel} = remote_nonexecution_fixture(behavior)
 
-      assert_plan_violation(plan, "remote_github", "mutation_commands", root)
+      assert_plan_violation(plan, "remote_github", "mutation_result_source", root)
       refute File.exists?(sentinel)
     end
   end
@@ -535,12 +541,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert plan_scope_violations(api_plan, [], api_root) == []
 
     %{plan: clean_script, root: clean_root} = remote_plan_fixture(:script)
-    assert_plan_violation(clean_script, "remote_github", "mutation_commands", clean_root)
+    assert_plan_violation(clean_script, "remote_github", "mutation_result_source", clean_root)
 
     %{plan: changed_script, root: changed_root} =
       remote_script_control_fixture(:changed_after_index)
 
-    assert_plan_violation(changed_script, "remote_github", "mutation_commands", changed_root)
+    assert_plan_violation(
+      changed_script,
+      "remote_github",
+      "mutation_result_source",
+      changed_root
+    )
 
     exact_result_script =
       String.replace(
@@ -1648,58 +1659,6 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     %{plan: plan, root: root, sentinel: sentinel}
   end
 
-  defp remote_static_result_control_fixture(variant) do
-    %{plan: plan, root: root} = remote_plan_fixture(:script)
-    result = Path.join(root, "predicted-protection.json")
-
-    plan =
-      case variant do
-        :missing ->
-          remove_remote_field(plan, "mutation_result_source")
-
-        :duplicate ->
-          String.replace(
-            plan,
-            "mutation_result_source: predicted-protection.json",
-            "mutation_result_source: predicted-protection.json\nmutation_result_source: predicted-protection.json",
-            global: false
-          )
-
-        :untracked ->
-          File.write!(Path.join(root, "untracked-result.json"), File.read!(result))
-
-          String.replace(plan, "predicted-protection.json", "untracked-result.json",
-            global: false
-          )
-
-        :symlink ->
-          File.ln_s!("predicted-protection.json", Path.join(root, "result-link.json"))
-          git_fixture!(root, ["add", "result-link.json"])
-          String.replace(plan, "predicted-protection.json", "result-link.json", global: false)
-
-        :malformed ->
-          File.write!(result, "{malformed")
-          git_fixture!(root, ["add", "predicted-protection.json"])
-          plan
-
-        :extra_field ->
-          File.write!(
-            result,
-            branch_protection_json(true, desired_checks(), %{"unexpected" => true})
-          )
-
-          git_fixture!(root, ["add", "predicted-protection.json"])
-          plan
-
-        :state_mismatch ->
-          File.write!(result, branch_protection_json(true, current_checks()))
-          git_fixture!(root, ["add", "predicted-protection.json"])
-          plan
-      end
-
-    %{plan: plan, root: root}
-  end
-
   defp remote_script_control_fixture(variant) do
     %{plan: plan, root: root} = remote_plan_fixture(:script)
     script = Path.join(root, "scripts/setup_branch_protection.sh")
@@ -2573,7 +2532,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp parse_remote_batch(section) do
     scalar_fields =
-      ~w(current_state desired_state mutation_result_source affected_checks preflight_command read_back_command resume_signal)
+      ~w(current_state desired_state affected_checks preflight_command read_back_command resume_signal)
 
     list_fields = ~w(mutation_commands rollback_commands)
     all_fields = scalar_fields ++ list_fields
@@ -2666,33 +2625,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         end
       end)
 
-    result_source_shape =
-      case Map.fetch!(batch.occurrences, "mutation_result_source") do
-        [] ->
-          []
-
-        [value] ->
-          if remote_field_missing?(value),
-            do: ["remote_github remote_batch mutation_result_source is missing or placeholder"],
-            else: []
-
-        _values ->
-          ["remote_github remote_batch mutation_result_source must occur at most once"]
-      end
-
     syntax =
       Enum.map(batch.syntax_errors, &"remote_github remote_batch unparsed syntax: #{&1}")
 
-    if shape == [] and result_source_shape == [] and syntax == [] do
+    if shape == [] and syntax == [] do
       values =
         Map.new(batch.occurrences, fn
           {field, [value]} -> {field, value}
-          {field, []} -> {field, nil}
         end)
 
       validate_complete_remote_batch(values, root)
     else
-      shape ++ result_source_shape ++ syntax
+      shape ++ syntax
     end
   end
 
@@ -2702,13 +2646,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     affected = parse_check_set(batch["affected_checks"])
 
     parsed_commands = %{
-      "mutation_commands" =>
-        parse_remote_commands(
-          batch["mutation_commands"],
-          :mutation,
-          root,
-          batch["mutation_result_source"]
-        ),
+      "mutation_commands" => parse_remote_commands(batch["mutation_commands"], :mutation, root),
       "preflight_command" => parse_remote_command(batch["preflight_command"], :preflight),
       "rollback_commands" => parse_remote_commands(batch["rollback_commands"], :rollback, root),
       "read_back_command" => parse_remote_command(batch["read_back_command"], :read_back)
@@ -2832,13 +2770,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp parse_remote_commands(commands, field, root) do
-    parse_remote_commands(commands, field, root, nil)
-  end
-
-  defp parse_remote_commands(commands, field, root, mutation_result_source) do
     commands
     |> Enum.reduce_while({:ok, []}, fn command, {:ok, parsed} ->
-      case parse_remote_command(command, field, root, mutation_result_source) do
+      case parse_remote_command(command, field, root) do
         {:ok, operation} -> {:cont, {:ok, [operation | parsed]}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
@@ -2854,60 +2788,35 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp parse_remote_command(command, field, root) do
-    parse_remote_command(command, field, root, nil)
-  end
-
-  defp parse_remote_command(command, field, root, mutation_result_source) do
     trimmed = String.trim(command)
 
     if trimmed == "" or String.contains?(trimmed, "\n") or
          Regex.match?(~r/[;&|`]|\$\(/, trimmed) do
       {:error, :shell_composition}
     else
-      match_remote_command(trimmed, field, root, mutation_result_source)
+      match_remote_command(trimmed, field, root)
     end
   end
 
-  defp match_remote_command(command, :mutation, root, mutation_result_source) do
-    cond do
-      captures =
-          Regex.run(
-            ~r/^GITHUB_REPOSITORY=([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+) \.\/([A-Za-z0-9._\/-]+) ([A-Za-z0-9._\/-]+)$/,
-            command,
-            capture: :all_but_first
-          ) ->
-        [repository, script, branch] = captures
+  defp match_remote_command(command, :mutation, root) do
+    case Regex.run(
+           ~r/^gh api -X PUT repos\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/branches\/([A-Za-z0-9._\/-]+)\/protection --input ([A-Za-z0-9._\/-]+)$/,
+           command,
+           capture: :all_but_first
+         ) do
+      [repository, branch, input] ->
+        parse_payload_operation(root, input, :api_write, repository, branch)
 
-        if is_binary(mutation_result_source) do
-          parse_script_operation(root, script, mutation_result_source, repository, branch)
-        else
-          {:error, :mutation_result_source_required_for_script}
-        end
-
-      captures =
-          Regex.run(
-            ~r/^gh api -X PUT repos\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/branches\/([A-Za-z0-9._\/-]+)\/protection --input ([A-Za-z0-9._\/-]+)$/,
-            command,
-            capture: :all_but_first
-          ) ->
-        [repository, branch, input] = captures
-
-        if is_nil(mutation_result_source) do
-          parse_payload_operation(root, input, :api_write, repository, branch)
-        else
-          {:error, :mutation_result_source_not_allowed_for_api_payload}
-        end
-
-      true ->
+      nil ->
         {:error, :invalid_mutation}
     end
   end
 
-  defp match_remote_command(command, :preflight, _root, _mutation_result_source) do
+  defp match_remote_command(command, :preflight, _root) do
     parse_api_read(command, :preflight)
   end
 
-  defp match_remote_command(command, :rollback, root, _mutation_result_source) do
+  defp match_remote_command(command, :rollback, root) do
     case Regex.run(
            ~r/^gh api -X PUT repos\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/branches\/([A-Za-z0-9._\/-]+)\/protection --input ([A-Za-z0-9._\/-]+)$/,
            command,
@@ -2921,7 +2830,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp match_remote_command(command, :read_back, _root, _mutation_result_source) do
+  defp match_remote_command(command, :read_back, _root) do
     case Regex.run(
            ~r/^gh api repos\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/branches\/([A-Za-z0-9._\/-]+)\/protection --jq '\.required_status_checks\.contexts == (\[.*\])'$/,
            command,
@@ -3085,66 +2994,6 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       lock_branch: false,
       allow_fork_syncing: false
     }
-  end
-
-  defp parse_script_operation(root, script, result_source, repository, branch) do
-    with :ok <- validate_remote_input(root, script),
-         {:ok, indexed_oid} <- executable_indexed_script(root, script),
-         :ok <- working_tree_matches_index(root, script, indexed_oid) do
-      case parse_static_mutation_result(root, result_source) do
-        {:ok, state} ->
-          {:ok,
-           %{
-             kind: :script_write,
-             repository: repository,
-             branch: branch,
-             script: script,
-             result_source: result_source,
-             state: state
-           }}
-
-        {:error, reason} ->
-          {:error, {result_source, reason}}
-      end
-    else
-      {:error, reason} -> {:error, {script, reason}}
-    end
-  end
-
-  defp parse_static_mutation_result(root, result_source) do
-    with :ok <- validate_remote_input(root, result_source),
-         {:ok, state} <- normalize_branch_protection_file(root, result_source) do
-      {:ok, state}
-    end
-  end
-
-  defp executable_indexed_script(root, script) do
-    case System.cmd(
-           "git",
-           ["-C", root, "ls-files", "--stage", "--error-unmatch", "--", script],
-           stderr_to_stdout: true
-         ) do
-      {output, 0} ->
-        case Regex.run(~r/^100755 ([0-9a-f]{40,64}) 0\t/, output, capture: :all_but_first) do
-          [oid] -> {:ok, oid}
-          nil -> {:error, :script_must_have_executable_git_mode}
-        end
-
-      {_output, _status} ->
-        {:error, :script_is_not_tracked}
-    end
-  end
-
-  defp working_tree_matches_index(root, script, indexed_oid) do
-    case System.cmd("git", ["-C", root, "hash-object", "--", script], stderr_to_stdout: true) do
-      {output, 0} ->
-        if String.trim(output) == indexed_oid,
-          do: :ok,
-          else: {:error, :script_working_tree_differs_from_indexed_revision}
-
-      {_output, _status} ->
-        {:error, :script_working_tree_is_unreadable}
-    end
   end
 
   defp resume_targets?(resume_signal, {repository, branch}) do
