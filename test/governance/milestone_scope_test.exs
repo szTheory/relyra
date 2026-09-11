@@ -276,6 +276,46 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              trusted_plan_commits(absent.root, "73-99", absent.completion_commit)
   end
 
+  @tag :plan_73_15_task_2
+  test "post-summary risky commits remain inside completed-plan governance" do
+    fixture = completed_plan_git_fixture(:post_summary_risky)
+
+    assert {:ok, provenance} = completed_plan_provenance(fixture.root, fixture.plan_path)
+    assert provenance.commits == fixture.implementation_commits ++ fixture.descendant_commits
+    assert provenance.summary_commits == fixture.implementation_commits
+    assert provenance.review_endpoint == fixture.review_endpoint
+
+    identity = %{
+      root: fixture.root,
+      milestone_version: "v1.11",
+      current_phase: "73"
+    }
+
+    violations = repository_plan_violations([fixture.plan_path], %{}, identity)
+
+    assert Enum.any?(violations, &(&1 =~ "public_api" and &1 =~ "checkpoint")),
+           "expected descendant public API approval violation, got: #{inspect(violations)}"
+  end
+
+  @tag :plan_73_15_task_2
+  test "review endpoint includes every ordered exact-scope descendant only" do
+    for variant <- [:post_summary_harmless, :post_summary_foreign, :post_summary_multiple] do
+      fixture = completed_plan_git_fixture(variant)
+      assert {:ok, provenance} = completed_plan_provenance(fixture.root, fixture.plan_path)
+      assert provenance.commits == fixture.implementation_commits ++ fixture.descendant_commits
+      assert provenance.summary_commits == fixture.implementation_commits
+      refute fixture.completion_commit in provenance.commits
+    end
+  end
+
+  @tag :plan_73_15_task_2
+  test "review endpoint must descend from the unique summary boundary" do
+    fixture = completed_plan_git_fixture(:divergent_endpoint)
+
+    assert {:error, violations} = completed_plan_provenance(fixture.root, fixture.plan_path)
+    assert Enum.any?(violations, &String.contains?(&1, "review endpoint"))
+  end
+
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     violations =
       case validated_governance_identity(File.cwd!()) do
@@ -1782,7 +1822,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       "def start_login(connection, relay_context, opts \\\\ [])\n"
     )
 
-    fixture_commit!(root, ["."], "chore: initialize provenance fixture")
+    initial_commit = fixture_commit!(root, ["."], "chore: initialize provenance fixture")
 
     implementation_commits =
       if variant == :empty_implementation do
@@ -1874,11 +1914,60 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         :ok
     end
 
+    descendant_commits =
+      case variant do
+        :post_summary_risky ->
+          File.write!(
+            Path.join(root, "lib/relyra.ex"),
+            "def start_login(connection, relay_context, policy, audit, opts \\ [])\n"
+          )
+
+          [fixture_commit!(root, ["lib/relyra.ex"], "fix(73-99): risky descendant")]
+
+        :post_summary_harmless ->
+          File.write!(Path.join(root, "README.md"), "baseline\nharmless task\ndescendant\n")
+          [fixture_commit!(root, ["README.md"], "test(73-99): harmless descendant")]
+
+        :post_summary_foreign ->
+          File.write!(
+            Path.join(root, "lib/relyra.ex"),
+            "def start_login(connection, relay_context, policy, audit, opts \\ [])\n"
+          )
+
+          fixture_commit!(root, ["lib/relyra.ex"], "fix(73-98): foreign descendant")
+          []
+
+        :post_summary_multiple ->
+          File.write!(Path.join(root, "README.md"), "baseline\nharmless task\ndescendant one\n")
+          first = fixture_commit!(root, ["README.md"], "test(73-99): first descendant")
+
+          File.write!(
+            Path.join(root, "lib/relyra.ex"),
+            "def start_login(connection, relay_context, policy, audit, opts \\ [])\n"
+          )
+
+          second = fixture_commit!(root, ["lib/relyra.ex"], "fix(73-99): second descendant")
+          [first, second]
+
+        :divergent_endpoint ->
+          git_fixture!(root, ["checkout", "-q", "-b", "divergent-review", initial_commit])
+          File.write!(Path.join(root, "divergent.txt"), "divergent endpoint\n")
+          fixture_commit!(root, ["divergent.txt"], "test(73-99): divergent endpoint")
+          []
+
+        _other ->
+          []
+      end
+
+    review_endpoint = root |> git_fixture!(["rev-parse", "HEAD"]) |> String.trim()
+
     %{
       root: root,
       plan_path: plan_path,
       implementation_commits: implementation_commits,
-      completion_commit: completion_commit
+      completion_commit: completion_commit,
+      descendant_commits: descendant_commits,
+      review_endpoint: review_endpoint
     }
   end
 
