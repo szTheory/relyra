@@ -110,6 +110,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 | 2026-09-11 | 36 | 33 | 3 (1 blocking, 2 non-blocking) | Post-Plan 73-19 correction for the later 2026-09-11T05:04:38Z review: T-73-67 reopened, T-73-76 registered, and the checked-in `ready_for_verification` `mix ci.evidence` lane observed 99 tests with 5 failures. |
 | 2026-09-11 | 36 | 33 | 3 (1 blocking, 2 non-blocking) | Plan 73-23 evidence staging: `plan_73_21_task_1`, `plan_73_21_task_2`, `plan_73_22_task_1`, and `plan_73_22_task_2` each passed 1 test; three unchanged `mix ci.evidence` runs each passed 103 tests in 20s, 20s, and 21s; the complete unchanged `mix ci.security` lane passed (126s observed, with no timing ceiling). Final disposition reconciliation remains pending. |
 | 2026-09-11 | 36 | 35 | 1 non-blocking | Plan 73-23 final reconciliation: `plan_73_21_task_1`, `plan_73_21_task_2`, `plan_73_22_task_1`, and `plan_73_22_task_2` each passed 1 test; three unchanged sub-60-second `mix ci.evidence` runs each passed 103 tests in 20s, 20s, and 21s; the complete unchanged `mix ci.security` lane passed. T-73-67 and T-73-76 close while T-73-12 remains an open medium follow-up below the blocking threshold. |
+| 2026-09-11 | 36 | 35 | 1 non-blocking | ASVS L1 execute-phase post-hook recheck: the plan-authored register remains fully dispositioned, `threats_open: 0` at the configured high threshold, and T-73-12 remains visible as the sole open medium follow-up. |
 
 ---
 
