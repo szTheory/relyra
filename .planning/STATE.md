@@ -4,17 +4,17 @@ milestone: v1.11
 milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
-status: ready_for_verification
-stopped_at: Gap-closure plans 73-20 through 73-23 ready to execute
-last_updated: "2026-09-11T14:57:06.096Z"
+status: executing
+stopped_at: Completed 73-20-PLAN.md
+last_updated: "2026-09-11T15:10:44.835Z"
 last_activity: 2026-09-11
-last_activity_desc: Phase 73 verification gaps planned in 73-20 through 73-23
-state_head: 906a67e08f6b8cb449f783bd313ada7fe7208737
+last_activity_desc: Plan 73-20 completed with the security verdict open before deterministic repairs
+state_head: c394b1060fc9460cdd48f2a7fc20700fdc1138c5
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 23
-  completed_plans: 19
+  completed_plans: 20
   percent: 0
 ---
 
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE
+Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 19 of 23
+Plan: 21 of 23
 
-Status: Four verified gap-closure plans ready to execute
+Status: Three gap-closure plans remain; Plans 73-21 and 73-22 are ready to execute
 
-Last activity: 2026-09-11 — Plans 73-20 through 73-23 created and verified
+Last activity: 2026-09-11 — Plan 73-20 recorded the open security verdict before repair
 
 ## Milestone Metrics
 
@@ -114,6 +114,8 @@ Last activity: 2026-09-11 — Plans 73-20 through 73-23 created and verified
 - [Phase 73]: Require component-wise lstat and exact Git-index identity for the declared lexical owner before registered-test discovery.
 - [Phase 73]: Record current review findings as open before closure evidence restores verified status.
 - [Phase 73]: Close T-73-67, T-73-70, and T-73-71 only after all four focused selectors, three unchanged sub-60-second evidence runs, and the full security lane pass.
+- [Phase 73]: A later Critical review and red mandatory lane invalidate the prior verified seal until current deterministic evidence closes the defects. — Current source and mandatory-lane output supersede earlier green evidence under D-07, D-08, and D-12.
+- [Phase 73]: Keep threats_open threshold-aware: T-73-67 is the sole blocking threat while T-73-12 and T-73-76 remain visible lower-severity follow-ups. — The configured high threshold counts blockers without erasing medium risks.
 
 ### Baseline Findings
 
@@ -151,16 +153,16 @@ Last activity: 2026-09-11 — Plans 73-20 through 73-23 created and verified
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T04:53:20.752Z
+**Last session:** 2026-09-11T15:10:44.777Z
 
-**Stopped at:** Completed 73-19-PLAN.md
+**Stopped at:** Completed 73-20-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Re-verify Phase 73 against the reconciled security verdict, then begin Phase 74
-clean-room package-consumer planning after verification closes.
+Execute Plans 73-21 and 73-22, then run Plan 73-23 to prove the repairs and
+reconcile the final Phase 73 security verdict.
 
 ## Performance Metrics
 
@@ -185,6 +187,7 @@ clean-room package-consumer planning after verification closes.
 | Phase 73 P17 | 60min | 2 tasks | 2 files |
 | Phase 73 P18 | 12min | 2 tasks | 2 files |
 | Phase 73 P19 | 14min | 2 tasks | 2 files |
+| Phase 73 P20 | 3 min | 2 tasks | 2 files |
 
 ### Blockers
 
