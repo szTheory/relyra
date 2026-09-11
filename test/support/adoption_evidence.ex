@@ -334,22 +334,36 @@ defmodule Relyra.AdoptionEvidence do
       raise ArgumentError, "registered_test_tags must be a two-argument function"
     end
 
-    owner_paths =
-      entries
-      |> repository_owners()
-      |> Enum.map(& &1.owner)
-      |> Enum.uniq()
-      |> Enum.sort()
+    entries
+    |> repository_owners()
+    |> Enum.uniq_by(& &1.owner)
+    |> Enum.each(fn entry -> snapshot_owner_path!(entries, %{}, root, entry.owner) end)
+
+    aliases = mix_aliases!(root)
+    owner_paths = snapshot_owner_paths(entries, aliases)
 
     owners =
       Enum.map(owner_paths, fn owner ->
-        owner_path = repository_path!(root, owner)
+        owner_path = snapshot_owner_path!(entries, aliases, root, owner)
         tags = registered_test_tags.(owner_path, root)
-        %{path: owner, tags: normalize_registered_tags!(owner, tags)}
+        normalized_tags = normalize_registered_tags!(owner, tags)
+
+        if normalized_tags == [] do
+          case Enum.find(repository_owners(entries), &(&1.owner == owner)) do
+            nil ->
+              :ok
+
+            entry ->
+              raise ArgumentError,
+                    "#{entry.requirement} row #{entry.id}: selector #{entry.selector} matches zero tests in #{entry.owner}"
+          end
+        end
+
+        %{path: owner, tags: normalized_tags}
       end)
 
     %{
-      aliases: mix_aliases!(root),
+      aliases: aliases,
       governed_inputs: governed_inputs!(root),
       owners: owners,
       workflow: File.read!(Path.join(root, ".github/workflows/security-gates.yml"))
@@ -463,9 +477,7 @@ defmodule Relyra.AdoptionEvidence do
       raise ArgumentError, "repository snapshot workflow must be non-empty text"
     end
 
-    unless is_map(snapshot.aliases) do
-      raise ArgumentError, "repository snapshot aliases must be a normalized map"
-    end
+    validate_snapshot_aliases!(snapshot.aliases)
 
     unless is_list(snapshot.governed_inputs) and snapshot.governed_inputs != [] and
              Enum.all?(snapshot.governed_inputs, &(is_binary(&1) and &1 != "")) do
@@ -473,12 +485,11 @@ defmodule Relyra.AdoptionEvidence do
             "repository snapshot governed inputs must be non-empty normalized paths"
     end
 
-    expected_paths =
-      entries
-      |> repository_owners()
-      |> Enum.map(& &1.owner)
-      |> Enum.uniq()
-      |> Enum.sort()
+    unless length(snapshot.governed_inputs) == length(Enum.uniq(snapshot.governed_inputs)) do
+      raise ArgumentError, "repository snapshot governed inputs must be unique"
+    end
+
+    expected_paths = snapshot_owner_paths(entries, snapshot.aliases)
 
     unless is_list(snapshot.owners) and snapshot.owners != [] do
       raise ArgumentError, "repository snapshot owners must be a non-empty list"
@@ -518,6 +529,77 @@ defmodule Relyra.AdoptionEvidence do
 
   defp validate_snapshot_shape!(_entries, snapshot) do
     raise ArgumentError, "repository snapshot must be a map, got: #{inspect(snapshot)}"
+  end
+
+  defp validate_snapshot_aliases!(aliases) when is_map(aliases) do
+    Enum.each(aliases, fn
+      {name, steps}
+      when is_binary(name) and name != "" and is_list(steps) ->
+        unless Enum.all?(steps, &is_binary/1) do
+          raise ArgumentError, "repository snapshot aliases must contain normalized steps"
+        end
+
+      _alias ->
+        raise ArgumentError, "repository snapshot aliases must be a normalized map"
+    end)
+  end
+
+  defp validate_snapshot_aliases!(_aliases) do
+    raise ArgumentError, "repository snapshot aliases must be a normalized map"
+  end
+
+  defp snapshot_owner_paths(entries, aliases) do
+    owners = repository_owners(entries)
+
+    alias_owners =
+      owners
+      |> Enum.map(& &1.lane)
+      |> Enum.uniq()
+      |> Enum.flat_map(&alias_owner_paths(&1, aliases))
+
+    owners
+    |> Enum.map(& &1.owner)
+    |> Kernel.++(alias_owners)
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
+
+  defp alias_owner_paths(alias_name, aliases) do
+    with ["cmd " <> command] <- Map.get(aliases, alias_name),
+         {"mix", ["test" | arguments]} <- command_argv!(command) do
+      Enum.filter(
+        arguments,
+        &(String.ends_with?(&1, ".exs") and not String.starts_with?(&1, "-"))
+      )
+    else
+      _other -> []
+    end
+  rescue
+    ArgumentError -> []
+  end
+
+  defp snapshot_owner_path!(entries, aliases, root, owner) do
+    repository_path!(root, owner)
+  rescue
+    error in ArgumentError ->
+      case Enum.find(repository_owners(entries), &(&1.owner == owner)) do
+        nil ->
+          lane_entry =
+            Enum.find(repository_owners(entries), fn entry ->
+              owner in alias_owner_paths(entry.lane, aliases)
+            end)
+
+          if lane_entry do
+            raise ArgumentError,
+                  "#{lane_entry.requirement} row #{lane_entry.id}: alias #{lane_entry.lane} is not wired to an executable owner command: #{Exception.message(error)}"
+          else
+            reraise error, __STACKTRACE__
+          end
+
+        entry ->
+          raise ArgumentError,
+                "#{entry.requirement} row #{entry.id}: missing owner file #{entry.owner}"
+      end
   end
 
   defp snapshot_owner_path!(%{path: path, tags: _tags}) when is_binary(path) and path != "",
@@ -586,6 +668,30 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   defp registered_test_tags!(path, root) do
+    cache_key =
+      {__MODULE__, :registered_test_tags, Path.expand(path),
+       :crypto.hash(:sha256, File.read!(path))}
+
+    case :persistent_term.get(cache_key, :missing) do
+      :missing ->
+        :global.trans({cache_key, self()}, fn ->
+          case :persistent_term.get(cache_key, :missing) do
+            :missing ->
+              tags = discover_registered_test_tags!(path, root)
+              :persistent_term.put(cache_key, tags)
+              tags
+
+            tags ->
+              tags
+          end
+        end)
+
+      tags ->
+        tags
+    end
+  end
+
+  defp discover_registered_test_tags!(path, root) do
     probe = """
     ExUnit.start(autorun: false)
     [owner] = System.argv()
@@ -621,23 +727,20 @@ defmodule Relyra.AdoptionEvidence do
     IO.puts("RELYRA_EXUNIT_PROBE:" <> Base.encode64(:erlang.term_to_binary(tags)))
     """
 
-    mix = System.find_executable("mix") || raise ArgumentError, "cannot locate Mix executable"
+    elixir =
+      System.find_executable("elixir") || raise ArgumentError, "cannot locate Elixir executable"
+
+    code_path_arguments =
+      :code.get_path()
+      |> Enum.map(&List.to_string/1)
+      |> Enum.filter(&String.contains?(&1, "/_build/test/lib/"))
+      |> Enum.flat_map(&["-pa", &1])
 
     {output, status} =
       System.cmd(
-        mix,
-        [
-          "run",
-          "--no-start",
-          "--no-compile",
-          "--no-deps-check",
-          "-e",
-          probe,
-          "--",
-          path
-        ],
+        elixir,
+        code_path_arguments ++ ["-e", probe, "--", path],
         cd: root,
-        env: [{"MIX_ENV", "test"}],
         stderr_to_stdout: true
       )
 
