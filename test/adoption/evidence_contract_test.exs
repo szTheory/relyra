@@ -414,6 +414,76 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert :ok = validate_repository_snapshot!(entries, snapshot, File.cwd!())
   end
 
+  @tag :plan_73_24_task_3
+  test "direct test argv rejects every unmodeled option operand and warnings multiplicity" do
+    owner = "test/adoption/evidence_contract_test.exs"
+
+    for {arguments, offending} <- [
+          {"--stale", "--stale"},
+          {"--failed", "--failed"},
+          {"--name-pattern ownership", "--name-pattern"},
+          {"--partitions 2", "--partitions"},
+          {"--partition 1", "--partition"},
+          {"--profile-require profile.exs", "--profile-require"},
+          {"--formatter ExUnit.CLIFormatter", "--formatter"},
+          {"--exit-status 0", "--exit-status"},
+          {"--seed 0", "--seed"},
+          {"--include evidence_contract", "--include"},
+          {"--trace", "--trace"},
+          {"unexpected", "unexpected"}
+        ] do
+      command = "mix test #{owner} #{arguments} --warnings-as-errors"
+
+      error =
+        assert_raise ArgumentError, fn ->
+          AdoptionEvidence.validate_automated_command!(command, File.cwd!())
+        end
+
+      assert Exception.message(error) =~ offending
+    end
+
+    duplicate_warnings =
+      "mix test #{owner} --warnings-as-errors --warnings-as-errors"
+
+    assert_raise ArgumentError, ~r/exactly one --warnings-as-errors/, fn ->
+      AdoptionEvidence.validate_automated_command!(duplicate_warnings, File.cwd!())
+    end
+  end
+
+  @tag :plan_73_24_task_3
+  test "real stale mode reaches a zero-test exit zero that the validator rejects" do
+    {root, owner} = mix_zero_test_fixture!()
+    command = "mix test #{owner} --stale --warnings-as-errors"
+
+    {_seed_output, 0} = run_fixture_mix!(root, command)
+    {stale_output, 0} = run_fixture_mix!(root, command)
+
+    assert stale_output =~ "No stale tests"
+
+    assert_raise ArgumentError, ~r/--stale/, fn ->
+      AdoptionEvidence.validate_automated_command!(command, root)
+    end
+  end
+
+  @tag :plan_73_24_task_3
+  test "real ExUnit include union and include override agree with validator selection" do
+    {root, owner} = mix_selection_fixture!()
+
+    union_command =
+      "mix test #{owner} --only alpha --only beta --warnings-as-errors"
+
+    {union_output, 0} = run_fixture_mix!(root, union_command)
+    assert union_output =~ "2 tests, 0 failures"
+    assert :ok = AdoptionEvidence.validate_automated_command!(union_command, root)
+
+    overlap_command =
+      "mix test #{owner} --only alpha --exclude alpha --warnings-as-errors"
+
+    {overlap_output, 0} = run_fixture_mix!(root, overlap_command)
+    assert overlap_output =~ "1 test, 0 failures"
+    assert :ok = AdoptionEvidence.validate_automated_command!(overlap_command, root)
+  end
+
   test "ledger covers exactly the active milestone requirements and all adopter personas" do
     entries = AdoptionEvidence.entries()
 
@@ -1770,6 +1840,67 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     on_exit(fn -> File.rm_rf!(root) end)
     root
+  end
+
+  defp mix_zero_test_fixture! do
+    mix_test_fixture!("""
+    defmodule ZeroTestFixtureTest do
+      use ExUnit.Case
+
+      test "executes once before the stale manifest is current" do
+        assert true
+      end
+    end
+    """)
+  end
+
+  defp mix_selection_fixture! do
+    mix_test_fixture!("""
+    defmodule SelectionFixtureTest do
+      use ExUnit.Case
+
+      @tag :alpha
+      test "alpha selection" do
+        assert true
+      end
+
+      @tag :beta
+      test "beta selection" do
+        assert true
+      end
+    end
+    """)
+  end
+
+  defp mix_test_fixture!(owner_source) do
+    root =
+      Path.join(System.tmp_dir!(), "relyra-mix-argv-#{System.unique_integer([:positive])}")
+
+    owner = "test/owner_test.exs"
+    File.mkdir_p!(Path.join(root, "test"))
+
+    File.write!(
+      Path.join(root, "mix.exs"),
+      "defmodule MixArgvFixture.MixProject do\n  use Mix.Project\n  def project, do: [app: :mix_argv_fixture, version: \"0.1.0\"]\nend\n"
+    )
+
+    File.write!(Path.join(root, "test/test_helper.exs"), "ExUnit.start()\n")
+    File.write!(Path.join(root, owner), owner_source)
+    {_, 0} = System.cmd("git", ["init", "--quiet"], cd: root, stderr_to_stdout: true)
+
+    {_, 0} =
+      System.cmd("git", ["add", "--", "mix.exs", "test/test_helper.exs", owner],
+        cd: root,
+        stderr_to_stdout: true
+      )
+
+    on_exit(fn -> File.rm_rf!(root) end)
+    {root, owner}
+  end
+
+  defp run_fixture_mix!(root, command) do
+    ["mix" | arguments] = String.split(command, " ", trim: true)
+    System.cmd("mix", arguments, cd: root, stderr_to_stdout: true)
   end
 
   defp write_fixture_file!(root, path, contents) do
