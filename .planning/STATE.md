@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-15-PLAN.md
-last_updated: "2026-09-11T00:25:27.774Z"
+stopped_at: Completed 73-16-PLAN.md
+last_updated: "2026-09-11T01:28:12.411Z"
 last_activity: 2026-09-10
-last_activity_desc: Phase 73 Plan 15 completed
-state_head: 2c33fe7bcebff1f550bdc1508ee94c104473c8f7
+last_activity_desc: Phase 73 Plan 16 completed
+state_head: 1c092711ebeb6313bd57bd81a2e8063fdcf4ab88
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 16
-  completed_plans: 15
-  percent: 94
+  completed_plans: 16
+  percent: 100
 ---
 
 # Project State
@@ -37,7 +37,7 @@ Plan: 16 of 16
 
 Status: 1 gap-closure plan remains — execute Plan 73-16
 
-Last activity: 2026-09-10 — Phase 73 Plan 15 completed
+Last activity: 2026-09-10 — Phase 73 Plan 16 completed
 
 ## Milestone Metrics
 
@@ -106,6 +106,8 @@ Last activity: 2026-09-10 — Phase 73 Plan 15 completed
 - [Phase 73]: Authorize remote mutation and rollback only through tracked complete-state gh api --input payloads; scripts and static results have no authorization role.
 - [Phase 73]: Resolve one full HEAD review endpoint and classify every reachable exact-scope commit before and after the SUMMARY-add boundary.
 - [Phase 73]: Keep SUMMARY and manifest equality audits restricted to pre-boundary tasks so claims cannot omit or authorize descendants.
+- [Phase 73]: Close CR-06 only after both Plan 73-14 focused selector owners and the mandatory evidence lane pass.
+- [Phase 73]: Treat declarative payload authorization plus exact-HEAD descendant provenance as sufficient to close CR-07 and CR-08 while retaining T-73-12 as a visible medium follow-up.
 
 ### Baseline Findings
 
@@ -143,9 +145,9 @@ Last activity: 2026-09-10 — Phase 73 Plan 15 completed
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T00:25:27.755Z
+**Last session:** 2026-09-11T01:28:12.389Z
 
-**Stopped at:** Completed 73-15-PLAN.md
+**Stopped at:** Completed 73-16-PLAN.md
 
 **Resume file:** None
 
@@ -173,6 +175,7 @@ re-verify the phase before beginning Phase 74 clean-room package-consumer planni
 | Phase 73 P13 | 19min | 3 tasks | 1 files |
 | Phase 73 P14 | 10min | 2 tasks | 2 files |
 | Phase 73 P15 | 26min | 2 tasks | 1 files |
+| Phase 73 P16 | 21min | 2 tasks | 3 files |
 
 ### Blockers
 
