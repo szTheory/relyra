@@ -566,6 +566,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :plan_73_15_task_1
+  @tag :plan_73_13_task_2
   test "script-shaped remote mutations are rejected without execution" do
     for behavior <- [:write, :credential, :network] do
       %{plan: plan, root: root, sentinel: sentinel} = remote_nonexecution_fixture(behavior)
@@ -576,6 +577,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :plan_73_15_task_1
+  @tag :plan_73_13_task_2
   test "only declarative complete-state payload operations cross the mutation parser" do
     %{plan: api_plan, root: api_root} = remote_plan_fixture()
     assert plan_scope_violations(api_plan, [], api_root) == []
@@ -1300,33 +1302,23 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   @tag :plan_73_08_task_1
   test "remote approval rejects appended commands outside the exact batch" do
-    %{plan: clean, root: root} = remote_plan_fixture(:script)
+    %{plan: clean, root: root} = remote_plan_fixture()
     assert plan_scope_violations(clean, [], root) == []
 
+    mutation =
+      "gh api -X PUT repos/szTheory/relyra/branches/main/protection --input desired-protection.json"
+
     controls = [
-      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
-       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main && gh api -X DELETE repos/szTheory/relyra",
+      {mutation, mutation <> " && gh api -X DELETE repos/szTheory/relyra", "mutation_commands"},
+      {mutation, mutation <> "\ngh api repos/szTheory/relyra/branches/main/protection",
        "mutation_commands"},
-      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
-       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main\ngh api repos/szTheory/relyra/branches/main/protection",
-       "mutation_commands"},
-      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
-       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main; true",
-       "mutation_commands"},
-      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
-       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main | tee result.txt",
-       "mutation_commands"},
-      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
-       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main `whoami`",
-       "mutation_commands"},
-      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
-       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main $(whoami)",
-       "mutation_commands"},
-      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
-       "GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main extra",
-       "mutation_commands"},
-      {"GITHUB_REPOSITORY=szTheory/relyra ./scripts/setup_branch_protection.sh main",
-       "GITHUB_REPOSITORY=szTheory/other ./scripts/setup_branch_protection.sh main",
+      {mutation, mutation <> "; true", "mutation_commands"},
+      {mutation, mutation <> " | tee result.txt", "mutation_commands"},
+      {mutation, mutation <> " `whoami`", "mutation_commands"},
+      {mutation, mutation <> " $(whoami)", "mutation_commands"},
+      {mutation, mutation <> " extra", "mutation_commands"},
+      {mutation,
+       "gh api -X PUT repos/szTheory/other/branches/main/protection --input desired-protection.json",
        "mutation_commands"},
       {"gh api repos/szTheory/relyra/branches/main/protection",
        "gh api -X DELETE repos/szTheory/relyra/branches/main/protection", "preflight_command"},
@@ -3449,12 +3441,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     summary_relative = Path.relative_to(summary_path, root)
 
     with {:ok, [boundary]} <- completion_boundaries(root, summary_relative, plan_id),
-         {:ok, trusted_commits} <- trusted_plan_commits(root, plan_id, boundary),
-         :ok <- validate_trusted_commits(root, trusted_commits, boundary, plan_id),
-         {:ok, changes} <- commit_changed_surfaces(root, trusted_commits) do
-      provenance = %{commits: trusted_commits, changes: changes, completion_boundary: boundary}
+         {:ok, endpoint} <- review_endpoint(root),
+         :ok <- validate_review_endpoint(root, boundary, endpoint),
+         {:ok, history} <- trusted_plan_history(root, plan_id, boundary, endpoint),
+         :ok <- validate_trusted_commits(root, history.commits, boundary, endpoint, plan_id),
+         {:ok, changes} <- commit_changed_surfaces(root, history.commits) do
+      provenance = %{
+        commits: history.commits,
+        changes: changes,
+        completion_boundary: boundary,
+        review_endpoint: endpoint
+      }
 
-      case summary_commit_cross_check(root, summary_path, trusted_commits) do
+      case summary_commit_cross_check(root, summary_path, history.pre_boundary) do
         {:ok, summary_commits} ->
           {:ok, Map.put(provenance, :summary_commits, summary_commits)}
 
@@ -3475,7 +3474,14 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp completion_boundaries(root, summary_relative, plan_id) do
     with {:ok, rows} <-
-           git_lines(root, ["log", "--format=%H%x09%s", "--diff-filter=A", "--", summary_relative]) do
+           git_lines(root, [
+             "log",
+             "--all",
+             "--format=%H%x09%s",
+             "--diff-filter=A",
+             "--",
+             summary_relative
+           ]) do
       boundaries =
         Enum.flat_map(rows, fn row ->
           case String.split(row, "\t", parts: 2) do
@@ -3489,10 +3495,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp trusted_plan_commits(root, plan_id, boundary) do
+    with {:ok, endpoint} <- review_endpoint(root),
+         :ok <- validate_review_endpoint(root, boundary, endpoint),
+         {:ok, history} <- trusted_plan_history(root, plan_id, boundary, endpoint) do
+      {:ok, history.commits}
+    else
+      {:error, violations, history} -> {:error, violations, history.commits}
+      {:error, reasons} -> {:error, reasons}
+    end
+  end
+
+  defp trusted_plan_history(root, plan_id, boundary, endpoint) do
     manifest_path = Path.join(root, ".planning/.phase-manifest.json")
 
     with {:ok, rows} <- git_lines(root, ["log", "--reverse", "--format=%H%x09%s", boundary]) do
-      derived =
+      pre_boundary =
         Enum.flat_map(rows, fn row ->
           case String.split(row, "\t", parts: 2) do
             [commit, subject] when commit != boundary ->
@@ -3503,10 +3520,57 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           end
         end)
 
-      case manifest_commit_cross_check(root, manifest_path, plan_id, boundary, derived) do
-        :ok -> {:ok, derived}
-        {:error, violations} -> {:error, violations, derived}
+      with {:ok, descendants} <-
+             post_summary_plan_commits(root, plan_id, boundary, endpoint) do
+        history = %{
+          pre_boundary: pre_boundary,
+          descendants: descendants,
+          commits: pre_boundary ++ descendants
+        }
+
+        case manifest_commit_cross_check(root, manifest_path, plan_id, boundary, pre_boundary) do
+          :ok -> {:ok, history}
+          {:error, violations} -> {:error, violations, history}
+        end
       end
+    end
+  end
+
+  defp review_endpoint(root) do
+    case git_lines(root, ["rev-parse", "--verify", "HEAD^{commit}"]) do
+      {:ok, [endpoint]} when byte_size(endpoint) in 40..64 ->
+        if Regex.match?(~r/^[0-9a-f]+$/, endpoint),
+          do: {:ok, endpoint},
+          else: {:error, ["review endpoint is not a full commit OID"]}
+
+      _other ->
+        {:error, ["review endpoint must resolve to one full HEAD commit OID"]}
+    end
+  end
+
+  defp validate_review_endpoint(root, boundary, endpoint) do
+    if git_success?(root, ["merge-base", "--is-ancestor", boundary, endpoint]),
+      do: :ok,
+      else: {:error, ["completion boundary must be an ancestor of review endpoint"]}
+  end
+
+  defp post_summary_plan_commits(root, plan_id, boundary, endpoint) do
+    with {:ok, rows} <-
+           git_lines(root, [
+             "log",
+             "--reverse",
+             "--format=%H%x09%s",
+             "#{boundary}..#{endpoint}"
+           ]) do
+      commits =
+        Enum.flat_map(rows, fn row ->
+          case String.split(row, "\t", parts: 2) do
+            [commit, subject] -> if conventional_scope(subject) == plan_id, do: [commit], else: []
+            _other -> []
+          end
+        end)
+
+      {:ok, commits}
     end
   end
 
@@ -3569,7 +3633,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp validate_trusted_commits(root, commits, boundary, plan_id) do
+  defp validate_trusted_commits(root, commits, boundary, endpoint, plan_id) do
     violations =
       []
       |> add_if(commits == [], "trusted implementation set is empty for #{plan_id}")
@@ -3579,12 +3643,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       Enum.reduce(commits, violations, fn commit, found ->
         found
         |> add_unless(
-          git_success?(root, ["merge-base", "--is-ancestor", commit, "HEAD"]),
-          "commit #{commit} is not reachable from HEAD"
+          git_success?(root, ["merge-base", "--is-ancestor", commit, endpoint]),
+          "commit #{commit} is not reachable from review endpoint"
         )
         |> add_unless(
-          git_success?(root, ["merge-base", "--is-ancestor", commit, boundary]),
-          "commit #{commit} is not on completion boundary ancestry"
+          git_success?(root, ["merge-base", "--is-ancestor", commit, boundary]) or
+            git_success?(root, ["merge-base", "--is-ancestor", boundary, commit]),
+          "commit #{commit} is not on completion boundary history"
         )
         |> add_unless(
           commit_scope(root, commit) == plan_id,
