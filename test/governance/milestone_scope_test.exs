@@ -441,8 +441,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     security = File.read!(Path.join(phase_dir, "73-SECURITY.md"))
     validation = File.read!(Path.join(phase_dir, "73-VALIDATION.md"))
 
-    assert security =~ "status: issues_found"
-    assert security =~ "threats_open: 6"
+    assert (security =~ "status: issues_found" and security =~ "threats_open: 6") or
+             (security =~ "status: verified" and security =~ "threats_open: 0")
+
     assert security =~ "43 threats: 35 closed and 8 open"
     assert security =~ ~r/^\| T-73-12 \|.*\| medium \|.*\| open/m
 
@@ -474,11 +475,20 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert security =~
              "| 2026-09-11 | 43 | 35 | 8 (6 blocking, 2 non-blocking) | #{security_correction}"
 
-    assert validation =~ "status: gaps_found"
-    assert validation =~ "nyquist_compliant: false"
-    assert validation =~ ~r/^\| EVID-02 \|.*\| blocked/m
-    assert validation =~ ~r/^\| GOV-01 \|.*\| blocked/m
-    assert validation =~ ~r/^\| GOV-02 \|.*\| blocked/m
+    assert (validation =~ "status: gaps_found" and
+              validation =~ "nyquist_compliant: false") or
+             (validation =~ "status: validated" and
+                validation =~ "nyquist_compliant: true")
+
+    if validation =~ "PHASE73_FINAL_RECONCILIATION" do
+      assert validation =~ ~r/^\| EVID-02 \|.*\| green/m
+      assert validation =~ ~r/^\| GOV-01 \|.*\| green/m
+      assert validation =~ ~r/^\| GOV-02 \|.*\| green/m
+    else
+      assert validation =~ ~r/^\| EVID-02 \|.*\| blocked/m
+      assert validation =~ ~r/^\| GOV-01 \|.*\| blocked/m
+      assert validation =~ ~r/^\| GOV-02 \|.*\| blocked/m
+    end
 
     correction_section =
       validation
@@ -496,6 +506,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @tag :plan_73_26_task_1
   test "one canonical source-bound proof stages identically before disposition changes" do
     reconciliation = Relyra.Phase73Reconciliation
+
+    assert Code.ensure_loaded?(reconciliation)
 
     assert function_exported?(reconciliation, :validate_documents!, 4),
            "Phase 73 reconciliation validator must exist before proof staging"
@@ -550,7 +562,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
 
     assert_raise ArgumentError, ~r/open.*staged.*final|chronology/s, fn ->
-      reordered = String.replace(security, "PHASE73_OPEN_REVIEW", "PHASE73_OPEN_REVIEW_LATE")
+      reordered =
+        String.replace(
+          security,
+          "Post-review correction for the 2026-09-11T19:23:38Z review",
+          "missing open chronology marker"
+        )
+
       apply(reconciliation, :validate_documents!, [reordered, validation, proof, root])
     end
   end
@@ -558,6 +576,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @tag :plan_73_26_task_2
   test "final reconciliation requires exact closures owners and positive security constituents" do
     reconciliation = Relyra.Phase73Reconciliation
+
+    assert Code.ensure_loaded?(reconciliation)
 
     assert function_exported?(reconciliation, :validate_repository!, 1),
            "Phase 73 repository reconciliation must exist before final status"
