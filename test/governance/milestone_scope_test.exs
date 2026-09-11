@@ -38,6 +38,35 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @demand_gated_exclusions ~w(AUTHN-POST-01 KMS-01 SIGNED-META-01)
   @phase_73_requirements ~w(EVID-01 EVID-02 QUAL-01 PIPE-01 GOV-01 GOV-02)
 
+  @tag :plan_73_21_task_1
+  test "ready_for_verification reaches the complete active governance identity" do
+    root = governance_repository_fixture()
+
+    mutate_file(root, ".planning/STATE.md", fn state ->
+      Regex.replace(
+        ~r/^status:\s*(?:executing|in_progress|ready_for_verification)$/m,
+        state,
+        "status: ready_for_verification"
+      )
+    end)
+
+    assert {:ok, identity} = validated_governance_identity(root)
+    assert identity.status == "ready_for_verification"
+    assert identity.milestone_version == "v1.11"
+    assert identity.milestone_name == "First-Adopter Twin"
+    assert identity.current_phase == "73"
+    assert identity.phase_requirements["73"] == MapSet.new(@phase_73_requirements)
+    assert identity.plan_paths != []
+
+    phase_dir = Path.join(root, ".planning/phases/73-twin-contract-and-baseline")
+    assert Enum.all?(identity.plan_paths, &(Path.dirname(&1) == phase_dir))
+
+    assert {:ok, checked_in_identity} = validated_governance_identity(File.cwd!())
+    assert checked_in_identity.status in ~w(executing in_progress ready_for_verification)
+    assert checked_in_identity.phase_requirements["73"] == MapSet.new(@phase_73_requirements)
+    assert checked_in_identity.plan_paths != []
+  end
+
   @tag :plan_73_10_task_1
   test "active v1.11 discovery is closed, non-vacuous, and cross-source consistent" do
     root = governance_repository_fixture()
