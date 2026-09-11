@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 12
-total_count: 14
-last_updated: 2026-09-11T00:25:45.691Z
+fixed_count: 14
+total_count: 16
+last_updated: 2026-09-11T04:33:01.909Z
 ---
 
 # Broken Windows Ledger
@@ -29,6 +29,8 @@ last_updated: 2026-09-11T00:25:45.691Z
 | 12 | 73 | deviation | test/governance/milestone_scope_test.exs |  | Kept the inherited appended-command regression on a script-backed fixture | fixed |  | 2026-09-10T19:12:23.779Z | 2026-09-10T19:13:17.107Z |
 | 13 | 73 | deviation | .planning/STATE.md |  | Reconciled final-plan SDK progress reset and stale next-step prose | fixed |  | 2026-09-10T19:13:03.017Z | 2026-09-10T19:13:17.194Z |
 | 14 | 73 | deviation | test/governance/milestone_scope_test.exs |  | Preserved legacy evidence selector ownership and migrated appended-command controls to declarative remote operations | fixed |  | 2026-09-11T00:25:28.034Z | 2026-09-11T00:25:45.691Z |
+| 15 | 73 | deviation | test/adoption/evidence_contract_test.exs |  | Legacy path assertions now require grammar-first unsupported-pattern diagnostics | fixed |  | 2026-09-11T04:32:33.697Z | 2026-09-11T04:32:56.215Z |
+| 16 | 73 | deviation | .planning/STATE.md |  | Generated progress required reconciliation to Plan 73-19 at 18/19 complete | fixed |  | 2026-09-11T04:32:33.790Z | 2026-09-11T04:33:01.909Z |
 
 ````json
 [
@@ -199,6 +201,32 @@ last_updated: 2026-09-11T00:25:45.691Z
     "reason": "",
     "recorded_at": "2026-09-11T00:25:28.034Z",
     "resolved_at": "2026-09-11T00:25:45.691Z"
+  },
+  {
+    "id": 15,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "test/adoption/evidence_contract_test.exs",
+    "line": null,
+    "description": "Legacy path assertions now require grammar-first unsupported-pattern diagnostics",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T04:32:33.697Z",
+    "resolved_at": "2026-09-11T04:32:56.215Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 16,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "Generated progress required reconciliation to Plan 73-19 at 18/19 complete",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T04:32:33.790Z",
+    "resolved_at": "2026-09-11T04:33:01.909Z",
+    "milestone": "v1.11"
   }
 ]
 ````
