@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 23
-total_count: 25
-last_updated: 2026-09-11T21:17:23.594Z
+fixed_count: 26
+total_count: 28
+last_updated: 2026-09-11T22:28:55.649Z
 ---
 
 # Broken Windows Ledger
@@ -40,6 +40,9 @@ last_updated: 2026-09-11T21:17:23.594Z
 | 23 | 73 | deviation | test/adoption/evidence_contract_test.exs |  | Updated two historical hollow-selection fixtures to preserve genuine zero-selection coverage under ExUnit include override semantics | fixed |  | 2026-09-11T21:08:42.202Z | 2026-09-11T21:09:09.708Z |
 | 24 | 73 | deviation | .planning/STATE.md |  | Reconciled SDK Plan 2 cursor and zero-percent progress to the disk-backed Plan 73-25 frontier after 24 completed summaries | fixed |  | 2026-09-11T21:10:27.306Z | 2026-09-11T21:10:27.457Z |
 | 25 | 73 | deviation | test/support/adoption_evidence.ex |  | Batched governed-input Git tracking checks after post-boundary repetition exposed redundant per-file subprocess cost | fixed |  | 2026-09-11T21:17:23.507Z | 2026-09-11T21:17:23.594Z |
+| 26 | 73 | deviation | test/support/phase_73_reconciliation.ex |  | Accepted valid ExUnit terminal summaries with parenthesized excluded counts | fixed |  | 2026-09-11T22:28:38.475Z | 2026-09-11T22:28:55.480Z |
+| 27 | 73 | deviation | test/governance/milestone_scope_test.exs |  | Separated preserved historical open evidence from the final live report status | fixed |  | 2026-09-11T22:28:38.552Z | 2026-09-11T22:28:55.565Z |
+| 28 | 73 | deviation | .planning/STATE.md |  | Corrected last-plan lifecycle and percentage fields after SDK reduction | fixed |  | 2026-09-11T22:28:38.628Z | 2026-09-11T22:28:55.649Z |
 
 ````json
 [
@@ -352,6 +355,45 @@ last_updated: 2026-09-11T21:17:23.594Z
     "reason": "",
     "recorded_at": "2026-09-11T21:17:23.507Z",
     "resolved_at": "2026-09-11T21:17:23.594Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 26,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "test/support/phase_73_reconciliation.ex",
+    "line": null,
+    "description": "Accepted valid ExUnit terminal summaries with parenthesized excluded counts",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T22:28:38.475Z",
+    "resolved_at": "2026-09-11T22:28:55.480Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 27,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "test/governance/milestone_scope_test.exs",
+    "line": null,
+    "description": "Separated preserved historical open evidence from the final live report status",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T22:28:38.552Z",
+    "resolved_at": "2026-09-11T22:28:55.565Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 28,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "Corrected last-plan lifecycle and percentage fields after SDK reduction",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T22:28:38.628Z",
+    "resolved_at": "2026-09-11T22:28:55.649Z",
     "milestone": "v1.11"
   }
 ]
