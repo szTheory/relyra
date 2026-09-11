@@ -386,6 +386,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Enum.any?(violations, &String.contains?(&1, "review endpoint"))
   end
 
+  @tag :plan_73_23_task_1
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     violations =
       case validated_governance_identity(File.cwd!()) do
