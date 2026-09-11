@@ -99,7 +99,11 @@ Each TDD task was committed as a verified RED/GREEN pair:
 5. **Task 3 RED: Reproduce closed-argv and filter-semantics failures** — `90d2980` (test)
 6. **Task 3 GREEN: Close Mix test argv and align ExUnit selection** — `51a7d05` (feat)
 
-**Plan metadata:** pending final metadata commit
+**Plan metadata:** `a539b26` (docs), followed by this post-boundary tracking correction
+
+## Post-Boundary Correction
+
+- `2a74edf` (`perf`) batches governed-input Git tracking into one exact inventory comparison after the first post-boundary run exposed redundant per-file subprocess cost. It preserves component-wise path provenance and is intentionally separate from the six pre-summary authoritative task commits.
 
 ## Files Created/Modified
 
@@ -139,9 +143,18 @@ Each TDD task was committed as a verified RED/GREEN pair:
 - **Verification:** Tracking artifacts now agree on 24 completed plans, two remaining plans, and the Plan 73-25 frontier.
 - **Committed in:** final metadata commit
 
+**3. [Rule 1 - Performance bug] Batched repeated governed-input tracking checks**
+
+- **Found during:** Post-boundary `mix ci.evidence` verification
+- **Issue:** The new mandatory repository-authority recomputation reused a per-file Git tracking probe, causing the existing 25-iteration pure-snapshot regression to exceed its 60-second test timeout.
+- **Fix:** Retained component-wise regular/non-symlink provenance validation while comparing the complete sorted inventory with one Git index query per recomputation.
+- **Files modified:** `test/support/adoption_evidence.ex`
+- **Verification:** The formerly timing-out selector passed in 2.1 seconds; the subsequent evidence run completed in 22.8 seconds without a timeout.
+- **Committed in:** `2a74edf`
+
 ---
 
-**Total deviations:** 2 auto-fixed bugs.
+**Total deviations:** 3 auto-fixed bugs.
 **Impact on plan:** The correction preserves the intended negative coverage under the newly required ExUnit precedence; no product runtime, public API, default, dependency, workflow, remote state, or SemVer behavior changed.
 
 ## TDD Gate Compliance
@@ -152,7 +165,7 @@ Each TDD task was committed as a verified RED/GREEN pair:
 - **Task 2 GREEN:** `af3f86c`; the focused selector passed 2 tests and the complete adoption contract passed 50 tests.
 - **Task 3 RED:** `90d2980`; all three named controls failed on the planned closedness/selection behavior, and `/tmp/relyra-73-24-task3-red.json` received `RED_EVIDENCE_OK`.
 - **Task 3 GREEN:** `51a7d05`; the focused selector passed 3 tests and the mandatory evidence lane passed 109 tests.
-- **REFACTOR:** No separate refactor commit was needed; formatting and regression cleanup were included in each minimal GREEN boundary.
+- **REFACTOR/PERFORMANCE:** `2a74edf`; post-boundary batching preserved exact tracking authority and restored the bounded repeated-validation regression.
 
 ## Automated Evidence
 
@@ -161,12 +174,15 @@ Each TDD task was committed as a verified RED/GREEN pair:
 - Complete adoption evidence contract after Task 2: 50 tests, 0 failures.
 - `plan_73_24_task_3`: 3 tests, 0 failures, including real isolated Mix commands.
 - Historical selector regression group: 7 tests, 0 failures.
-- `mix ci.evidence`: 109 tests, 0 failures.
+- Pre-summary `mix ci.evidence`: 109 tests, 0 failures.
+- Post-summary `mix ci.evidence`: repository authority, summary provenance, and 108 other tests passed; the sole expected frontier failure is Plan 73-25's not-yet-implemented `plan_73_25_task_1` owner.
 - `mix format --check-formatted` and `git diff --check`: passed.
 
 ## Issues Encountered
 
 - The first full Task 3 evidence run exposed two historical negative fixtures whose include-plus-exclude construction was invalid under the corrected ExUnit precedence. Their empty-selection intent was restored within Task 3 and the complete lane then passed.
+- The first post-boundary run also exposed redundant per-file Git subprocess cost and the SDK's invalid `ready_to_execute` governance lifecycle. Batching restored the bounded test, and STATE remains in the allowed `executing` lifecycle while pointing to Plan 73-25.
+- Once this summary made Plan 73-25 the active frontier, the final evidence run correctly rejected its not-yet-implemented selector. All Plan 73-24 controls and the other 108 evidence tests passed; Plan 73-25 owns that next RED/GREEN boundary.
 
 ## Known Stubs
 
@@ -187,11 +203,11 @@ None.
 ## Next Phase Readiness
 
 - Plans 73-25 and 73-26 can build on the rooted evidence contract and closed command model while the current reports truthfully remain open.
-- The mandatory evidence lane is positive and deterministic at 109 tests; later reconciliation can cite the committed bypass regressions rather than the superseded green-only proof set.
+- The Plan 73-24 implementation boundary is positive and deterministic at 109 tests. The tracked summary intentionally activates Plan 73-25, whose absent task selector is now the sole mandatory-lane failure and next execution target.
 
 ## Self-Check: PASSED
 
-All six modified implementation/report artifacts and all six authoritative task commits exist. The persisted ledger records base `942165e6bbcbb2aa2a02382fbdf55c78524059c6` and measures six commits before the summary boundary; coverage metadata names passing deterministic evidence for every deliverable.
+All six modified implementation/report artifacts, all six pre-summary authoritative task commits, and post-boundary performance correction `2a74edf` exist. The persisted ledger records base `942165e6bbcbb2aa2a02382fbdf55c78524059c6` and measured six commits before the summary boundary; coverage metadata names passing deterministic evidence for every Plan 73-24 deliverable.
 
 ---
 *Phase: 73-twin-contract-and-baseline*

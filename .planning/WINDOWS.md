@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 22
-total_count: 24
-last_updated: 2026-09-11T21:10:27.457Z
+fixed_count: 23
+total_count: 25
+last_updated: 2026-09-11T21:17:23.594Z
 ---
 
 # Broken Windows Ledger
@@ -39,6 +39,7 @@ last_updated: 2026-09-11T21:10:27.457Z
 | 22 | 73 | deviation | .planning/phases/73-twin-contract-and-baseline/73-23-SUMMARY.md |  | Separated pre-execution plan revision 67b1fef from the Git-derived authoritative Task Commits set | fixed |  | 2026-09-11T19:00:01.441Z | 2026-09-11T19:00:01.555Z |
 | 23 | 73 | deviation | test/adoption/evidence_contract_test.exs |  | Updated two historical hollow-selection fixtures to preserve genuine zero-selection coverage under ExUnit include override semantics | fixed |  | 2026-09-11T21:08:42.202Z | 2026-09-11T21:09:09.708Z |
 | 24 | 73 | deviation | .planning/STATE.md |  | Reconciled SDK Plan 2 cursor and zero-percent progress to the disk-backed Plan 73-25 frontier after 24 completed summaries | fixed |  | 2026-09-11T21:10:27.306Z | 2026-09-11T21:10:27.457Z |
+| 25 | 73 | deviation | test/support/adoption_evidence.ex |  | Batched governed-input Git tracking checks after post-boundary repetition exposed redundant per-file subprocess cost | fixed |  | 2026-09-11T21:17:23.507Z | 2026-09-11T21:17:23.594Z |
 
 ````json
 [
@@ -338,6 +339,19 @@ last_updated: 2026-09-11T21:10:27.457Z
     "reason": "",
     "recorded_at": "2026-09-11T21:10:27.306Z",
     "resolved_at": "2026-09-11T21:10:27.457Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 25,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "test/support/adoption_evidence.ex",
+    "line": null,
+    "description": "Batched governed-input Git tracking checks after post-boundary repetition exposed redundant per-file subprocess cost",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T21:17:23.507Z",
+    "resolved_at": "2026-09-11T21:17:23.594Z",
     "milestone": "v1.11"
   }
 ]
