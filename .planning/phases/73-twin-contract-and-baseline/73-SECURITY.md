@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: verified
-threats_open: 0
+status: issues_found
+threats_open: 1
 asvs_level: 1
 block_on: high
 created: "2026-09-09"
@@ -60,7 +60,7 @@ created: "2026-09-09"
 | T-73-51 | Denial of Service | mandatory workflow event filters | high | mitigate | Closed by the occurrence-preserving event grammar: push accepts only one positive `main` branch in exact order, pull requests cannot declare restrictive activity filters, and duplicate events/direct keys plus unsupported event controls fail before path and owner reduction. `plan_73_14_task_1`, `plan_73_14_task_2`, and the mandatory `mix ci.evidence` lane pass. | closed — CR-06 |
 | T-73-52 | Elevation of Privilege | script/result authorization binding | high | mitigate | Closed by removing script and static-result authorization: mutation and rollback cross the parser only as tracked declarative `gh api --input` operations whose complete normalized payload state matches the declared desired or current state. `plan_73_15_task_1` and the mandatory `mix ci.evidence` lane pass. | closed — CR-07 |
 | T-73-53 | Repudiation | post-SUMMARY completed-plan provenance | high | mitigate | Closed by resolving one full exact-`HEAD` review endpoint, requiring the SUMMARY-add boundary to be its ancestor, and classifying every ordered exact-scope descendant while restricting SUMMARY and manifest equality audits to pre-boundary tasks. `plan_73_15_task_2` and the mandatory `mix ci.evidence` lane pass. | closed — CR-08 |
-| T-73-67 | Denial of Service | registered-test process fan-out | critical | mitigate | Closed by once-per-owner registered-test snapshot discovery and pure post-capture mutation validation. `plan_73_17_task_1` passed 3 tests, `plan_73_17_task_2` passed 1 test, three unchanged `mix ci.evidence` runs passed 99 tests in 22s, 18s, and 17s, and `mix ci.security` passed. | closed — deterministic bounded evidence |
+| T-73-67 | Denial of Service | registered-test process fan-out | critical | mitigate | Reopened by the later `73-REVIEW.md` review at 2026-09-11T05:04:38Z: `registered_test_tags!/2` locks on a caller-specific identity, so concurrent cache misses can launch duplicate probes. Require a caller-independent single-flight lock, a repeated cache check inside that lock, and a barrier-controlled simultaneous-miss regression proving discovery runs exactly once. | open — blocking |
 | T-73-70 | Tampering | GitHub path-filter semantic mismatch | critical | mitigate | Closed by the unsupported-metacharacter corpus, including `.planning/STATE.md?`, and grammar-first rejection before governed-input comparison. `plan_73_18_task_1` passed 3 tests, all three unchanged sub-60-second `mix ci.evidence` runs passed 99 tests, and `mix ci.security` passed. | closed — fail-closed path grammar evidence |
 | T-73-71 | Spoofing | symlink/untracked lexical owner provenance | medium | mitigate | Closed by component-wise non-symlink `File.lstat/1`, regular-leaf validation, and exact lexical `git ls-files --error-unmatch` tracking controls before discovery. `plan_73_18_task_2` passed 2 tests, all three unchanged sub-60-second `mix ci.evidence` runs passed 99 tests, and `mix ci.security` passed. | closed — exact owner provenance evidence |
 | DEP-73-01 | Tampering | Phoenix request handling dependency | high | mitigate | Upgraded Phoenix from 1.8.7 to 1.8.13 with its coupled transport dependencies in `ae1f0aa`; `mix ci.security` and `mix deps.audit` pass. | closed |
