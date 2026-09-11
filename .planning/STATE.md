@@ -5,16 +5,16 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-20-PLAN.md
-last_updated: "2026-09-11T15:10:44.835Z"
+stopped_at: Completed 73-21-PLAN.md
+last_updated: "2026-09-11T15:29:19.503Z"
 last_activity: 2026-09-11
-last_activity_desc: Plan 73-20 completed with the security verdict open before deterministic repairs
-state_head: c394b1060fc9460cdd48f2a7fc20700fdc1138c5
+last_activity_desc: Plan 73-21 completed with the lifecycle identity fail closed
+state_head: 03fcfedbab72c98c7796feee7a6eed5e71a52f32
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 23
-  completed_plans: 20
+  completed_plans: 21
   percent: 0
 ---
 
@@ -33,11 +33,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 21 of 23
+Plan: 22 of 23
 
-Status: Three gap-closure plans remain; Plans 73-21 and 73-22 are ready to execute
+Status: Two gap-closure plans remain; Plan 73-22 is ready to execute
 
-Last activity: 2026-09-11 — Plan 73-20 recorded the open security verdict before repair
+Last activity: 2026-09-11 — Plan 73-21 restored the exact active lifecycle identity
 
 ## Milestone Metrics
 
@@ -116,6 +116,9 @@ Last activity: 2026-09-11 — Plan 73-20 recorded the open security verdict befo
 - [Phase 73]: Close T-73-67, T-73-70, and T-73-71 only after all four focused selectors, three unchanged sub-60-second evidence runs, and the full security lane pass.
 - [Phase 73]: A later Critical review and red mandatory lane invalidate the prior verified seal until current deterministic evidence closes the defects. — Current source and mandatory-lane output supersede earlier green evidence under D-07, D-08, and D-12.
 - [Phase 73]: Keep threats_open threshold-aware: T-73-67 is the sole blocking threat while T-73-12 and T-73-76 remain visible lower-severity follow-ups. — The configured high threshold counts blockers without erasing medium risks.
+- [Phase 73]: Treat executing, in_progress, and ready_for_verification as the only active governance lifecycle states.
+- [Phase 73]: Preserve serialized live STATE while proving ready_for_verification through a checked-in identity fixture that changes only the lifecycle field.
+- [Phase 73]: Restrict frontmatter whitespace after field colons to horizontal whitespace so empty status values cannot consume the next line.
 
 ### Baseline Findings
 
@@ -153,16 +156,16 @@ Last activity: 2026-09-11 — Plan 73-20 recorded the open security verdict befo
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T15:10:44.777Z
+**Last session:** 2026-09-11T15:29:19.449Z
 
-**Stopped at:** Completed 73-20-PLAN.md
+**Stopped at:** Completed 73-21-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Plans 73-21 and 73-22, then run Plan 73-23 to prove the repairs and
-reconcile the final Phase 73 security verdict.
+Execute Plan 73-22, then run Plan 73-23 to prove both repairs and reconcile the
+final Phase 73 security verdict.
 
 ## Performance Metrics
 
@@ -188,6 +191,7 @@ reconcile the final Phase 73 security verdict.
 | Phase 73 P18 | 12min | 2 tasks | 2 files |
 | Phase 73 P19 | 14min | 2 tasks | 2 files |
 | Phase 73 P20 | 3 min | 2 tasks | 2 files |
+| Phase 73 P21 | 10min | 2 tasks | 1 files |
 
 ### Blockers
 
