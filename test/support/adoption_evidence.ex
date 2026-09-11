@@ -1151,7 +1151,7 @@ defmodule Relyra.AdoptionEvidence do
   defp tag_value_string(value) when is_atom(value), do: Atom.to_string(value)
   defp tag_value_string(value), do: to_string(value)
 
-  defp repository_path!(root, owner) do
+  defp repository_path!(root, owner, options \\ []) do
     expanded_root = Path.expand(root)
     components = repository_path_components!(owner)
     expanded_owner = Path.join([expanded_root | components])
@@ -1190,7 +1190,10 @@ defmodule Relyra.AdoptionEvidence do
       end
     end)
 
-    require_tracked_repository_path!(expanded_root, owner)
+    unless Keyword.get(options, :skip_tracking?, false) do
+      require_tracked_repository_path!(expanded_root, owner)
+    end
+
     expanded_owner
   end
 
@@ -1598,7 +1601,8 @@ defmodule Relyra.AdoptionEvidence do
 
     inputs = (fixed ++ discovered) |> Enum.uniq() |> Enum.sort()
 
-    Enum.each(inputs, &validate_governed_input!(root, &1))
+    Enum.each(inputs, &repository_path!(root, &1, skip_tracking?: true))
+    require_tracked_governed_inputs!(root, inputs)
     inputs
   end
 
@@ -1624,19 +1628,24 @@ defmodule Relyra.AdoptionEvidence do
     end
   end
 
-  defp validate_governed_input!(root, path) do
-    repository_path!(root, path)
-
-    case System.cmd("git", ["ls-files", "--error-unmatch", "--", path],
+  defp require_tracked_governed_inputs!(root, inputs) do
+    case System.cmd("git", ["ls-files", "--" | inputs],
            cd: root,
            stderr_to_stdout: true
          ) do
-      {_output, 0} ->
-        :ok
+      {output, 0} ->
+        tracked = output |> String.split("\n", trim: true) |> Enum.sort()
+        missing = inputs -- tracked
+        unexpected = tracked -- inputs
+
+        if missing != [] or unexpected != [] do
+          raise ArgumentError,
+                "governed inputs differ from tracked repository paths; missing=#{inspect(missing)} unexpected=#{inspect(unexpected)}"
+        end
 
       {output, status} ->
         raise ArgumentError,
-              "governed input #{path} is not tracked; git exited #{status}: #{String.trim(output)}"
+              "cannot validate tracked governed inputs; git exited #{status}: #{String.trim(output)}"
     end
   end
 
