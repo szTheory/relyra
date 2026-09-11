@@ -3953,7 +3953,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp summary_task_commits(summary) do
     case Regex.run(~r/^## Task Commits\s*(.*?)(?=^## |\z)/ms, summary, capture: :all_but_first) do
       [section] ->
-        ~r/`([0-9a-f]{7,40})`/
+        ~r/^\d+\.\s+\*\*[^\n]+?\*\*\s+[—-]\s+`([0-9a-f]{7,40})`/mu
         |> Regex.scan(section, capture: :all_but_first)
         |> Enum.map(fn [commit] -> commit end)
 
@@ -3972,10 +3972,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
          :ok <- validate_review_endpoint(root, boundary, endpoint),
          {:ok, history} <- trusted_plan_history(root, plan_id, boundary, endpoint),
          :ok <- validate_trusted_commits(root, history.commits, boundary, endpoint, plan_id),
-         {:ok, changes} <- commit_changed_surfaces(root, history.commits) do
+         {:ok, changes} <- commit_changed_surfaces(root, history.commits),
+         {:ok, boundary_changes} <- commit_changed_surfaces(root, [boundary]) do
       provenance = %{
         commits: history.commits,
-        changes: changes,
+        changes: changes ++ boundary_changes,
+        boundary_changes: boundary_changes,
         completion_boundary: boundary,
         review_endpoint: endpoint
       }
@@ -4271,13 +4273,42 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp commit_paths(root, commit) do
-    case System.cmd(
-           "git",
-           ["-C", root, "diff-tree", "--no-commit-id", "--name-only", "-r", commit],
+    case commit_parent_count(root, commit) do
+      {:ok, 1} ->
+        case System.cmd(
+               "git",
+               ["-C", root, "diff-tree", "--no-commit-id", "--name-only", "-r", commit],
+               stderr_to_stdout: true
+             ) do
+          {output, 0} -> {:ok, String.split(output, "\n", trim: true)}
+          {_output, _status} -> {:error, "cannot resolve task commit #{commit}"}
+        end
+
+      {:ok, parents} when parents > 1 ->
+        {:error,
+         "merge commit #{commit} has #{parents} parents; reviewed provenance must be linear"}
+
+      {:ok, parents} ->
+        {:error, "reviewed commit #{commit} must have exactly one parent, found #{parents}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp commit_parent_count(root, commit) do
+    case System.cmd("git", ["-C", root, "rev-list", "--parents", "-n", "1", commit],
            stderr_to_stdout: true
          ) do
-      {output, 0} -> {:ok, String.split(output, "\n", trim: true)}
-      {_output, _status} -> {:error, "cannot resolve task commit #{commit}"}
+      {row, 0} ->
+        fields = String.split(row, ~r/\s+/, trim: true)
+
+        if fields == [],
+          do: {:error, "cannot resolve parent topology for commit #{commit}"},
+          else: {:ok, length(fields) - 1}
+
+      {_output, _status} ->
+        {:error, "cannot resolve parent topology for commit #{commit}"}
     end
   end
 
