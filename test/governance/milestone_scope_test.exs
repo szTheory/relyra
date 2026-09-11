@@ -2213,7 +2213,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     case fields do
       %{"milestone" => [milestone], "current_phase" => [phase], "status" => [status]}
-      when status in ["executing", "in_progress"] ->
+      when status in ["executing", "in_progress", "ready_for_verification"] ->
         {:ok, %{milestone_version: milestone, current_phase: phase, status: status}}
 
       _other ->
@@ -2280,6 +2280,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              milestone_version: project.milestone_version,
              milestone_name: project.milestone_name,
              current_phase: state.current_phase,
+             status: state.status,
              active_phases: [state.current_phase],
              phase_requirements: roadmap.phase_requirements,
              plan_paths: plan_paths
