@@ -83,8 +83,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       {"paused", "status: paused", ~s(status=["paused"])},
       {"not started", "status: not_started", ~s(status=["not_started"])},
       {"unknown", "status: unknown", ~s(status=["unknown"])},
-      {"empty", "status: ", "status=[]"},
-      {"whitespace only", "status:    ", "status=[]"},
+      {"empty", "status: ", ~s(status=[""])},
+      {"whitespace only", "status:    ", ~s(status=[""])},
       {"missing", "", "status=[]"},
       {"duplicated", "status: executing\nstatus: ready_for_verification",
        ~s(status=["executing", "ready_for_verification"])},
@@ -2109,7 +2109,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp replace_state_status!(root, replacement) do
     mutate_file(root, ".planning/STATE.md", fn state ->
-      Regex.replace(~r/^status\s*:[^\n]*$/m, state, replacement)
+      Regex.replace(~r/^status[ \t]*:[^\n]*$/m, state, replacement)
     end)
   end
 
@@ -2254,7 +2254,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       end
 
     fields =
-      ~r/^(milestone|current_phase|status):\s*([^\n]+)$/m
+      ~r/^(milestone|current_phase|status):[ \t]*([^\n]+)$/m
       |> Regex.scan(frontmatter, capture: :all_but_first)
       |> Enum.group_by(&hd/1, &(&1 |> Enum.at(1) |> String.trim()))
 
@@ -2264,12 +2264,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         {:ok, %{milestone_version: milestone, current_phase: phase, status: status}}
 
       _other ->
-        {:error, "STATE milestone/current phase/status must be singular and active"}
+        {:error, state_identity_diagnostic(fields)}
     end
   end
 
   defp parse_state_identity(_error),
     do: {:error, "STATE milestone/current phase/status is unreadable"}
+
+  defp state_identity_diagnostic(fields) do
+    observed =
+      ~w(milestone current_phase status)
+      |> Enum.map_join(", ", fn field -> "#{field}=#{inspect(Map.get(fields, field, []))}" end)
+
+    ".planning/STATE.md: STATE milestone/current phase/status must be singular and active; " <>
+      observed
+  end
 
   defp governance_identity_violations(project, roadmap, requirements, state) do
     []
