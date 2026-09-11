@@ -119,6 +119,58 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_22_task_1
+  test "simultaneous cold misses discover each owner once per cache identity" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+    parent = self()
+    {:ok, discovery_counts} = Agent.start_link(fn -> %{} end)
+    namespace = {:plan_73_22_task_1, System.unique_integer([:positive, :monotonic])}
+
+    discover_registered_test_tags = fn path, fixture_root ->
+      owner = Path.relative_to(path, fixture_root)
+      Agent.update(discovery_counts, &Map.update(&1, owner, 1, fn count -> count + 1 end))
+      Process.sleep(100)
+      [%{"evidence_contract" => true}]
+    end
+
+    tasks =
+      for _caller <- 1..4 do
+        Task.async(fn ->
+          send(parent, {:plan_73_22_ready, self()})
+
+          receive do
+            :plan_73_22_release ->
+              AdoptionEvidence.repository_snapshot!(entries, root,
+                registration_cache_namespace: namespace,
+                discover_registered_test_tags: discover_registered_test_tags
+              )
+          end
+        end)
+      end
+
+    for _task <- tasks do
+      assert_receive {:plan_73_22_ready, caller}, 5_000
+      send(caller, :plan_73_22_release)
+    end
+
+    snapshots = Task.await_many(tasks, 30_000)
+    [snapshot | _remaining] = snapshots
+    assert Enum.uniq(snapshots) == [snapshot]
+
+    expected_counts = Map.new(snapshot.owners, &{&1.path, 1})
+    assert Agent.get(discovery_counts, & &1) == expected_counts
+
+    distinct_snapshot =
+      AdoptionEvidence.repository_snapshot!(entries, root,
+        registration_cache_namespace: {namespace, :distinct},
+        discover_registered_test_tags: discover_registered_test_tags
+      )
+
+    assert distinct_snapshot == snapshot
+    assert Agent.get(discovery_counts, & &1) == Map.new(snapshot.owners, &{&1.path, 2})
+  end
+
   @tag :plan_73_17_task_2
   test "pure snapshot mutations stay bounded and reject every degenerate field" do
     entries = AdoptionEvidence.entries()
