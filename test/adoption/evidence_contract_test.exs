@@ -110,6 +110,74 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_17_task_2
+  test "pure snapshot mutations stay bounded and reject every degenerate field" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+    {:ok, discovery_count} = Agent.start_link(fn -> 0 end)
+
+    snapshot =
+      AdoptionEvidence.repository_snapshot!(entries, root,
+        registered_test_tags: fn _path, _root ->
+          Agent.update(discovery_count, &(&1 + 1))
+          [%{"evidence_contract" => true}]
+        end
+      )
+
+    captured_count = Agent.get(discovery_count, & &1)
+    [first_owner | remaining_owners] = snapshot.owners
+
+    mutations = [
+      fn clean ->
+        %{clean | workflow: String.replace(clean.workflow, "run: mix ci.evidence", "run: mix qa")}
+      end,
+      fn clean ->
+        put_in(
+          clean.aliases["ci.evidence"],
+          Enum.map(clean.aliases["ci.evidence"], &(&1 <> " --exclude evidence_contract"))
+        )
+      end,
+      fn clean -> %{clean | owners: remaining_owners} end,
+      fn clean -> %{clean | owners: [%{first_owner | tags: []} | remaining_owners]} end
+    ]
+
+    mutation_messages = fn ordered_mutations ->
+      for _iteration <- 1..10, mutate <- ordered_mutations do
+        error =
+          assert_raise ArgumentError, fn ->
+            AdoptionEvidence.validate_repository_snapshot!(entries, mutate.(snapshot))
+          end
+
+        Exception.message(error)
+      end
+    end
+
+    forward_messages = mutation_messages.(mutations)
+    reverse_messages = mutation_messages.(Enum.reverse(mutations))
+
+    assert Enum.sort(forward_messages) == Enum.sort(reverse_messages)
+
+    for _iteration <- 1..25 do
+      assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+    end
+
+    assert Agent.get(discovery_count, & &1) == captured_count
+
+    assert_raise ArgumentError, ~r/aliases.*normalized/, fn ->
+      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        snapshot
+        | aliases: Map.put(snapshot.aliases, :unused_alias, :malformed)
+      })
+    end
+
+    assert_raise ArgumentError, ~r/governed inputs.*unique/, fn ->
+      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        snapshot
+        | governed_inputs: snapshot.governed_inputs ++ [hd(snapshot.governed_inputs)]
+      })
+    end
+  end
+
   test "ledger covers exactly the active milestone requirements and all adopter personas" do
     entries = AdoptionEvidence.entries()
 
