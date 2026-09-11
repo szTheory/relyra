@@ -16,6 +16,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     :end_user
   ]
 
+  @tag :plan_73_17_task_1
   test "tracer resolves EVID-01 from literal ledger through a real selector and mandatory CI" do
     entries = AdoptionEvidence.entries()
 
@@ -27,6 +28,92 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert owner.lane == "ci.evidence"
 
     assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
+  end
+
+  @tag :plan_73_17_task_1
+  test "repository snapshot discovers each unique owner once in lexical order" do
+    assert function_exported?(AdoptionEvidence, :repository_snapshot!, 3),
+           "repository_snapshot!/3 must expose injected once-per-owner discovery"
+
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+    test_process = self()
+
+    registered_test_tags = fn path, _root ->
+      send(test_process, {:registered_owner, Path.relative_to(path, root)})
+      [%{"evidence_contract" => true}]
+    end
+
+    snapshot =
+      AdoptionEvidence.repository_snapshot!(entries, root,
+        registered_test_tags: registered_test_tags
+      )
+
+    expected_owners =
+      entries
+      |> Enum.filter(&(&1.state == :existing and &1.evidence_kind != :external_canary))
+      |> Enum.map(& &1.owner)
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    discovered_owners =
+      Enum.map(expected_owners, fn _owner ->
+        assert_receive {:registered_owner, owner}
+        owner
+      end)
+
+    assert discovered_owners == expected_owners
+    refute_receive {:registered_owner, _owner}
+    assert Enum.map(snapshot.owners, & &1.path) == expected_owners
+    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+  end
+
+  @tag :plan_73_17_task_1
+  test "repository snapshot rejects missing empty duplicate malformed and unstable owners" do
+    assert function_exported?(AdoptionEvidence, :repository_snapshot!, 3),
+           "repository_snapshot!/3 must expose fail-closed owner snapshots"
+
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+
+    snapshot =
+      AdoptionEvidence.repository_snapshot!(entries, root,
+        registered_test_tags: fn _path, _root -> [%{"evidence_contract" => true}] end
+      )
+
+    [first, second] = snapshot.owners
+
+    assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*missing.*snapshot/s, fn ->
+      AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | owners: [second]})
+    end
+
+    assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*empty.*registered.*tags/s, fn ->
+      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        snapshot
+        | owners: [%{first | tags: []}, second]
+      })
+    end
+
+    assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*duplicate.*snapshot/s, fn ->
+      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        snapshot
+        | owners: [first, second, first]
+      })
+    end
+
+    assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*normalized.*tag/s, fn ->
+      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        snapshot
+        | owners: [%{first | tags: [%{evidence_contract: true}]}, second]
+      })
+    end
+
+    assert_raise ArgumentError, ~r/stable lexical owner order/s, fn ->
+      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        snapshot
+        | owners: Enum.reverse(snapshot.owners)
+      })
+    end
   end
 
   test "ledger covers exactly the active milestone requirements and all adopter personas" do
