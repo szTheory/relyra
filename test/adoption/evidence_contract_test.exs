@@ -329,6 +329,79 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     )
   end
 
+  @tag :plan_73_24_task_2
+  test "repository authority rejects twin-field inventory forgery before workflow reduction" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+
+    snapshot =
+      AdoptionEvidence.repository_snapshot!(entries, root,
+        registered_test_tags: fn _path, _root -> [%{"evidence_contract" => true}] end
+      )
+
+    [omitted | remaining] = snapshot.governed_inputs
+
+    ignored_workflow =
+      snapshot.workflow
+      |> replace_pull_request_filter("paths-ignore", [omitted])
+      |> replace_push_filter("paths-ignore", [omitted])
+
+    for {_name, forged_inputs, diagnostic} <- [
+          {"omission", remaining,
+           ~r/repository authority.*missing=.*#{Regex.escape(omitted)}.*unexpected=\[\]/s},
+          {"substitution", Enum.sort(["README.md" | remaining]),
+           ~r/repository authority.*missing=.*#{Regex.escape(omitted)}.*unexpected=.*README\.md/s}
+        ] do
+      forged = %{
+        snapshot
+        | governed_input_inventory: forged_inputs,
+          governed_inputs: forged_inputs,
+          workflow: ignored_workflow
+      }
+
+      assert_raise ArgumentError, diagnostic, fn ->
+        AdoptionEvidence.validate_repository_snapshot!(entries, forged)
+      end
+    end
+  end
+
+  @tag :plan_73_24_task_2
+  test "security owner rejects every direct dependency shape including skipped prerequisites", %{
+    repository_snapshot: snapshot
+  } do
+    entries = AdoptionEvidence.entries()
+
+    fixtures = [
+      {"scalar", "    needs: prerequisite\n"},
+      {"list", "    needs:\n      - prerequisite\n"},
+      {"duplicate", "    needs: first\n    needs: second\n"},
+      {"skipped prerequisite", "    needs: skipped_prerequisite\n",
+       "  skipped_prerequisite:\n    if: false\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n"}
+    ]
+
+    for fixture <- fixtures do
+      {_name, needs, prerequisite} =
+        case fixture do
+          {fixture_name, fixture_needs} ->
+            {fixture_name, fixture_needs, ""}
+
+          {fixture_name, fixture_needs, fixture_prerequisite} ->
+            {fixture_name, fixture_needs, fixture_prerequisite}
+        end
+
+      workflow =
+        snapshot.workflow
+        |> String.replace("jobs:\n", "jobs:\n" <> prerequisite, global: false)
+        |> String.replace("  security:\n", "  security:\n" <> needs, global: false)
+
+      assert_raise ArgumentError, ~r/jobs\.security needs.*absent/s, fn ->
+        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+      end
+    end
+
+    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+  end
+
   test "ledger covers exactly the active milestone requirements and all adopter personas" do
     entries = AdoptionEvidence.entries()
 
