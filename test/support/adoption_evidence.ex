@@ -330,10 +330,6 @@ defmodule Relyra.AdoptionEvidence do
 
     registered_test_tags = registered_test_tags_function!(options)
 
-    unless is_function(registered_test_tags, 2) do
-      raise ArgumentError, "registered_test_tags must be a two-argument function"
-    end
-
     entries
     |> repository_owners()
     |> Enum.uniq_by(& &1.owner)
