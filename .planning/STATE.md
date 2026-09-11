@@ -201,7 +201,7 @@ Execute Plan 73-25 to close task-syntax, completion-boundary, and merge-provenan
 | Phase 73 P21 | 10min | 2 tasks | 1 files |
 | Phase 73 P22 | 14 min | 2 tasks | 3 files |
 | Phase 73 P23 | 17min | 3 tasks | 8 files |
-| Phase 73 P24 | 25min | 3 tasks | 6 files |
+| Phase 73 P24 | 37min | 3 tasks | 6 files |
 
 ### Blockers
 

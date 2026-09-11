@@ -64,7 +64,7 @@ coverage:
         ref: "mix ci.evidence — 109 tests, 0 failures"
         status: pass
     human_judgment: false
-duration: 25min
+duration: 37min
 completed: 2026-09-11
 status: complete
 ---
@@ -75,9 +75,9 @@ status: complete
 
 ## Performance
 
-- **Duration:** 25 min
+- **Duration:** 37 min
 - **Started:** 2026-09-11T20:41:43Z
-- **Completed:** 2026-09-11T21:06:39Z
+- **Completed:** 2026-09-11T21:18:25Z
 - **Tasks:** 3
 - **Files modified:** 5 implementation, test, and report files plus this summary
 
