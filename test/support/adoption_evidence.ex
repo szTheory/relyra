@@ -322,7 +322,7 @@ defmodule Relyra.AdoptionEvidence do
 
   def validate_repository!(entries, root) do
     snapshot = repository_snapshot!(entries, root)
-    validate_repository_snapshot!(entries, snapshot)
+    validate_repository_snapshot!(entries, snapshot, root)
   end
 
   def repository_snapshot!(entries, root, options \\ []) do
@@ -369,9 +369,10 @@ defmodule Relyra.AdoptionEvidence do
     }
   end
 
-  def validate_repository_snapshot!(entries, snapshot) do
+  def validate_repository_snapshot!(entries, snapshot, root) do
     validate_entries!(entries)
     snapshot = validate_snapshot_shape!(entries, snapshot)
+    require_authoritative_governed_inputs!(snapshot, root)
     required_planning_triggers!(String.split(snapshot.workflow, "\n"), snapshot.governed_inputs)
 
     owners = repository_owners(entries)
@@ -577,6 +578,32 @@ defmodule Relyra.AdoptionEvidence do
     if missing != [] or unexpected != [] do
       raise ArgumentError,
             "repository snapshot governed inputs differ from governed input inventory; missing=#{inspect(missing)} unexpected=#{inspect(unexpected)}"
+    end
+  end
+
+  defp require_authoritative_governed_inputs!(snapshot, root) do
+    authority = governed_inputs!(root)
+
+    require_authoritative_governed_input_field!(
+      "governed input inventory",
+      snapshot.governed_input_inventory,
+      authority
+    )
+
+    require_authoritative_governed_input_field!(
+      "governed inputs",
+      snapshot.governed_inputs,
+      authority
+    )
+  end
+
+  defp require_authoritative_governed_input_field!(label, candidate, authority) do
+    missing = authority -- candidate
+    unexpected = candidate -- authority
+
+    if missing != [] or unexpected != [] do
+      raise ArgumentError,
+            "repository snapshot #{label} differs from repository authority; missing=#{inspect(missing)} unexpected=#{inspect(unexpected)}"
     end
   end
 
@@ -1271,6 +1298,7 @@ defmodule Relyra.AdoptionEvidence do
          jobs <- indented_block(lines, jobs_index, 0),
          {:ok, security_index} <- find_line(jobs, ~r/^  security:\s*$/),
          security <- indented_block(jobs, security_index, 2),
+         :ok <- reject_direct_property!(security, "needs", 4, "jobs.security"),
          nil <- property_at_indent(security, "if", 4),
          :ok <- blocking_fallibility!(security, 4, "jobs.security"),
          {:ok, steps_index} <- find_line(security, ~r/^    steps:\s*$/),
@@ -1322,6 +1350,21 @@ defmodule Relyra.AdoptionEvidence do
     lines
     |> Enum.filter(&(indentation(&1) == indent))
     |> property(key)
+  end
+
+  defp reject_direct_property!(lines, key, indent, scope) do
+    occurrences =
+      Enum.filter(lines, fn line ->
+        indentation(line) == indent and
+          Regex.match?(~r/^\s+#{Regex.escape(key)}:\s*[^#]*?\s*$/, line)
+      end)
+
+    if occurrences == [] do
+      :ok
+    else
+      raise ArgumentError,
+            "#{scope} #{key} must be absent; found #{length(occurrences)} direct declaration(s)"
+    end
   end
 
   defp blocking_fallibility!(lines, indent, scope) do

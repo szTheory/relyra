@@ -36,7 +36,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert owner.selector == "evidence_contract"
     assert owner.lane == "ci.evidence"
 
-    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+    assert :ok = validate_repository_snapshot!(entries, snapshot)
   end
 
   @tag :plan_73_17_task_1
@@ -71,7 +71,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert discovered_owners == expected_owners
     refute_receive {:registered_owner, _owner}
     assert Enum.map(snapshot.owners, & &1.path) == expected_owners
-    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+    assert :ok = validate_repository_snapshot!(entries, snapshot)
   end
 
   @tag :plan_73_17_task_1
@@ -87,32 +87,32 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     [first, second] = snapshot.owners
 
     assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*missing.*snapshot/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | owners: [second]})
+      validate_repository_snapshot!(entries, %{snapshot | owners: [second]})
     end
 
     assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*empty.*registered.*tags/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | owners: [%{first | tags: []}, second]
       })
     end
 
     assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*duplicate.*snapshot/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | owners: [first, second, first]
       })
     end
 
     assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*normalized.*tag/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | owners: [%{first | tags: [%{evidence_contract: true}]}, second]
       })
     end
 
     assert_raise ArgumentError, ~r/stable lexical owner order/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | owners: Enum.reverse(snapshot.owners)
       })
@@ -206,7 +206,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       for _iteration <- 1..10, mutate <- ordered_mutations do
         error =
           assert_raise ArgumentError, fn ->
-            AdoptionEvidence.validate_repository_snapshot!(entries, mutate.(snapshot))
+            validate_repository_snapshot!(entries, mutate.(snapshot))
           end
 
         Exception.message(error)
@@ -219,20 +219,20 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert Enum.sort(forward_messages) == Enum.sort(reverse_messages)
 
     for _iteration <- 1..25 do
-      assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+      assert :ok = validate_repository_snapshot!(entries, snapshot)
     end
 
     assert Agent.get(discovery_count, & &1) == captured_count
 
     assert_raise ArgumentError, ~r/aliases.*normalized/, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | aliases: Map.put(snapshot.aliases, :unused_alias, :malformed)
       })
     end
 
     assert_raise ArgumentError, ~r/governed inputs.*unique/, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | governed_inputs: snapshot.governed_inputs ++ [hd(snapshot.governed_inputs)]
       })
@@ -246,20 +246,23 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     capture_snapshot = fn ->
       root = repository_fixture!()
 
-      AdoptionEvidence.repository_snapshot!(entries, root,
-        registered_test_tags: fn _path, _root -> [%{"evidence_contract" => true}] end
-      )
+      snapshot =
+        AdoptionEvidence.repository_snapshot!(entries, root,
+          registered_test_tags: fn _path, _root -> [%{"evidence_contract" => true}] end
+        )
+
+      {snapshot, root}
     end
 
-    clean = capture_snapshot.()
+    {clean, clean_root} = capture_snapshot.()
     governed_input_inventory = Map.get(clean, :governed_input_inventory)
     assert is_list(governed_input_inventory)
     assert clean.governed_inputs == governed_input_inventory
     assert clean.governed_inputs == Enum.sort(clean.governed_inputs)
     assert clean.governed_inputs == Enum.uniq(clean.governed_inputs)
-    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, clean)
+    assert :ok = validate_repository_snapshot!(entries, clean, clean_root)
 
-    fixed_omission = capture_snapshot.()
+    {fixed_omission, fixed_omission_root} = capture_snapshot.()
 
     assert_governed_inventory_error(
       entries,
@@ -268,10 +271,11 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         | governed_inputs: List.delete(fixed_omission.governed_inputs, ".planning/STATE.md"),
           workflow: "workflow reduction must not run"
       },
+      fixed_omission_root,
       ~r/governed inputs.*inventory.*missing=.*\.planning\/STATE\.md.*unexpected=\[\]/s
     )
 
-    discovered_omission = capture_snapshot.()
+    {discovered_omission, discovered_omission_root} = capture_snapshot.()
 
     discovered =
       Enum.find(discovered_omission.governed_inputs, &String.ends_with?(&1, "-PLAN.md"))
@@ -285,10 +289,11 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         | governed_inputs: List.delete(discovered_omission.governed_inputs, discovered),
           workflow: "workflow reduction must not run"
       },
+      discovered_omission_root,
       ~r/governed inputs.*inventory.*missing=.*#{Regex.escape(discovered)}.*unexpected=\[\]/s
     )
 
-    substitution = capture_snapshot.()
+    {substitution, substitution_root} = capture_snapshot.()
     [first | remaining] = substitution.governed_inputs
 
     assert_governed_inventory_error(
@@ -298,11 +303,12 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         | governed_inputs: Enum.sort(["README.md" | remaining]),
           workflow: "workflow reduction must not run"
       },
+      substitution_root,
       ~r/governed inputs.*inventory.*missing=.*#{Regex.escape(first)}.*unexpected=.*README\.md/s
     )
 
     for replacement <- ["../README.md", Path.join(File.cwd!(), "README.md")] do
-      invalid_path = capture_snapshot.()
+      {invalid_path, invalid_path_root} = capture_snapshot.()
       [_first | remaining] = invalid_path.governed_inputs
 
       assert_governed_inventory_error(
@@ -312,11 +318,12 @@ defmodule Relyra.Adoption.EvidenceContractTest do
           | governed_inputs: [replacement | remaining],
             workflow: "workflow reduction must not run"
         },
+        invalid_path_root,
         ~r/governed inputs.*normalized repository-relative path.*#{Regex.escape(replacement)}/s
       )
     end
 
-    reordered = capture_snapshot.()
+    {reordered, reordered_root} = capture_snapshot.()
 
     assert_governed_inventory_error(
       entries,
@@ -325,6 +332,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         | governed_inputs: Enum.reverse(reordered.governed_inputs),
           workflow: "workflow reduction must not run"
       },
+      reordered_root,
       ~r/governed inputs.*stable lexical order/s
     )
   end
@@ -360,7 +368,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       }
 
       assert_raise ArgumentError, diagnostic, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, forged)
+        validate_repository_snapshot!(entries, forged, root)
       end
     end
   end
@@ -395,11 +403,15 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         |> String.replace("  security:\n", "  security:\n" <> needs, global: false)
 
       assert_raise ArgumentError, ~r/jobs\.security needs.*absent/s, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+        validate_repository_snapshot!(
+          entries,
+          %{snapshot | workflow: workflow},
+          File.cwd!()
+        )
       end
     end
 
-    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+    assert :ok = validate_repository_snapshot!(entries, snapshot, File.cwd!())
   end
 
   test "ledger covers exactly the active milestone requirements and all adopter personas" do
@@ -554,7 +566,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     entries = AdoptionEvidence.entries()
     root = repository_fixture!()
 
-    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+    assert :ok = validate_repository_snapshot!(entries, snapshot)
 
     [owner | _] = AdoptionEvidence.deterministic_owners(entries, "EVID-01")
 
@@ -566,7 +578,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
 
     assert_raise ArgumentError, ~r/EVID-01.*selector missing_selector matches zero tests/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(
+      validate_repository_snapshot!(
         replace_entry(entries, owner, %{selector: "missing_selector"}),
         snapshot
       )
@@ -575,7 +587,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     unwired_step = String.replace(fixture_evidence_step(), owner.owner <> " ", "")
 
     assert_raise ArgumentError, ~r/EVID-01.*alias ci\.evidence is not wired.*owner/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | aliases: Map.put(snapshot.aliases, "ci.evidence", [unwired_step])
       })
@@ -586,7 +598,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert_raise ArgumentError,
                  ~r/EVID-01.*enabled blocking.*mix ci\.evidence.*jobs\.security/s,
                  fn ->
-                   AdoptionEvidence.validate_repository_snapshot!(entries, %{
+                   validate_repository_snapshot!(entries, %{
                      snapshot
                      | workflow: workflow
                    })
@@ -608,7 +620,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert_raise ArgumentError,
                  ~r/EVID-01.*selector evidence_contract matches zero tests/s,
                  fn ->
-                   AdoptionEvidence.validate_repository_snapshot!(entries, inert_snapshot)
+                   validate_repository_snapshot!(entries, inert_snapshot)
                  end
   end
 
@@ -642,7 +654,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     for mutate <- mutations do
       assert_raise ArgumentError, ~r/EVID-01.*enabled blocking.*jobs\.security/s, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        validate_repository_snapshot!(entries, %{
           snapshot
           | workflow: mutate.(snapshot.workflow)
         })
@@ -671,7 +683,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
           "mix test test/adoption/evidence_contract_test.exs test/governance/milestone_scope_test.exs --only=evidence_contract --exclude=no_such_selector --warnings-as-errors"
         ] do
       assert :ok =
-               AdoptionEvidence.validate_repository_snapshot!(entries, %{
+               validate_repository_snapshot!(entries, %{
                  snapshot
                  | aliases: Map.put(snapshot.aliases, "ci.evidence", ["cmd " <> command])
                })
@@ -686,7 +698,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     for command <- commands do
       assert_raise ArgumentError, ~r/zero selected tests/, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        validate_repository_snapshot!(entries, %{
           snapshot
           | aliases: Map.put(snapshot.aliases, "ci.evidence", ["cmd " <> command])
         })
@@ -699,7 +711,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
           "mix test test/adoption/evidence_contract_test.exs --only evidence_contract --only evidence_contract --warnings-as-errors"
         ] do
       assert_raise ArgumentError, ~r/(missing its filter value|duplicate filter values)/, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        validate_repository_snapshot!(entries, %{
           snapshot
           | aliases: Map.put(snapshot.aliases, "ci.evidence", ["cmd " <> command])
         })
@@ -721,7 +733,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       )
 
     assert_raise ArgumentError, ~r/selector evidence_contract matches zero tests/, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, unselected_snapshot)
+      validate_repository_snapshot!(entries, unselected_snapshot)
     end
   end
 
@@ -739,7 +751,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       )
 
     assert_raise ArgumentError, ~r/selector evidence_contract matches zero tests/, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, wrong_key_snapshot)
+      validate_repository_snapshot!(entries, wrong_key_snapshot)
     end
   end
 
@@ -757,7 +769,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       )
 
     assert :ok =
-             AdoptionEvidence.validate_repository_snapshot!(entries, %{
+             validate_repository_snapshot!(entries, %{
                snapshot
                | workflow: literal_false
              })
@@ -803,7 +815,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     for mutate <- mutations do
       assert_raise ArgumentError, ~r/enabled blocking.*jobs\.security/s, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        validate_repository_snapshot!(entries, %{
           snapshot
           | workflow: mutate.(snapshot.workflow)
         })
@@ -835,7 +847,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     repository_snapshot: snapshot
   } do
     assert_raise ArgumentError, ~r/alias ci\.evidence.*fresh-process/, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(AdoptionEvidence.entries(), %{
+      validate_repository_snapshot!(AdoptionEvidence.entries(), %{
         snapshot
         | aliases: Map.put(snapshot.aliases, "ci.evidence", [])
       })
@@ -898,7 +910,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       )
 
     assert_raise ArgumentError, ~r/selector evidence_contract matches zero tests/, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, unregistered_snapshot)
+      validate_repository_snapshot!(entries, unregistered_snapshot)
     end
   end
 
@@ -915,7 +927,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert_raise ArgumentError,
                  ~r/EVID-01.*row.*ci\.evidence.*test\/adoption\/evidence_contract_test\.exs.*zero effective selected tests/s,
                  fn ->
-                   AdoptionEvidence.validate_repository_snapshot!(entries, %{
+                   validate_repository_snapshot!(entries, %{
                      snapshot
                      | aliases: Map.put(snapshot.aliases, "ci.evidence", [hollow_step])
                    })
@@ -943,7 +955,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     assert_raise ArgumentError,
                  ~r/alias ci\.evidence.*#{Regex.escape(empty_owner)}.*zero effective selected tests/s,
-                 fn -> AdoptionEvidence.validate_repository_snapshot!(entries, mutated) end
+                 fn -> validate_repository_snapshot!(entries, mutated) end
   end
 
   @tag :plan_73_12_task_1
@@ -958,14 +970,14 @@ defmodule Relyra.Adoption.EvidenceContractTest do
           fixture_evidence_step() <> " --only="
         ] do
       assert_raise ArgumentError, ~r/(duplicate filter values|missing its filter value)/, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{
+        validate_repository_snapshot!(entries, %{
           snapshot
           | aliases: Map.put(snapshot.aliases, "ci.evidence", [step])
         })
       end
     end
 
-    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+    assert :ok = validate_repository_snapshot!(entries, snapshot)
   end
 
   @tag :plan_73_09_task_2
@@ -983,7 +995,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       )
 
     assert :ok =
-             AdoptionEvidence.validate_repository_snapshot!(entries, %{
+             validate_repository_snapshot!(entries, %{
                snapshot
                | workflow: literal_false
              })
@@ -998,7 +1010,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         )
 
       assert_raise ArgumentError, ~r/jobs\.security.*continue-on-error/s, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+        validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
       end
     end
   end
@@ -1019,7 +1031,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       workflow = replace_pull_request_filter(snapshot.workflow, "paths-ignore", [pattern])
 
       assert_raise ArgumentError, ~r/pull_request.*governed input/s, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+        validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
       end
     end
 
@@ -1027,7 +1039,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       workflow = replace_pull_request_filter(snapshot.workflow, "paths-ignore", [pattern])
 
       assert_raise ArgumentError, ~r/pull_request.*unsupported path pattern/, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+        validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
       end
     end
   end
@@ -1045,7 +1057,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       ])
 
     assert_raise ArgumentError, ~r/pull_request.*must not use positive paths/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | workflow: excluded_workflow
       })
@@ -1059,7 +1071,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       ])
 
     assert_raise ArgumentError, ~r/pull_request.*must not use positive paths/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | workflow: included_workflow
       })
@@ -1068,7 +1080,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     push_workflow = replace_push_filter(snapshot.workflow, "paths", ["**", "!.planning/**"])
 
     assert_raise ArgumentError, ~r/push.*must not use positive paths/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{
+      validate_repository_snapshot!(entries, %{
         snapshot
         | workflow: push_workflow
       })
@@ -1094,7 +1106,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         )
 
       assert_raise ArgumentError, ~r/(non-empty block list|unclosed.*character class)/, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+        validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
       end
     end
 
@@ -1106,7 +1118,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       ])
 
     assert_raise ArgumentError, ~r/pull_request.*unsupported path pattern/s, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+      validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
     end
   end
 
@@ -1130,7 +1142,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       assert_raise ArgumentError,
                    ~r/workflow (pull_request|push) must not use positive paths/,
                    fn ->
-                     AdoptionEvidence.validate_repository_snapshot!(entries, %{
+                     validate_repository_snapshot!(entries, %{
                        snapshot
                        | workflow: workflow
                      })
@@ -1170,7 +1182,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       assert_raise ArgumentError,
                    ~r/workflow #{event} path filter skips governed input #{Regex.escape(path)}/,
                    fn ->
-                     AdoptionEvidence.validate_repository_snapshot!(entries, %{
+                     validate_repository_snapshot!(entries, %{
                        snapshot
                        | workflow: workflow
                      })
@@ -1183,7 +1195,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     repository_snapshot: snapshot
   } do
     entries = AdoptionEvidence.entries()
-    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+    assert :ok = validate_repository_snapshot!(entries, snapshot)
 
     workflow =
       snapshot.workflow
@@ -1197,7 +1209,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       )
 
     assert :ok =
-             AdoptionEvidence.validate_repository_snapshot!(entries, %{
+             validate_repository_snapshot!(entries, %{
                snapshot
                | workflow: workflow
              })
@@ -1225,7 +1237,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       workflow = replace_push_event(snapshot.workflow, push)
 
       assert_raise ArgumentError, ~r/workflow push.*exactly one positive main branch/, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+        validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
       end
     end
 
@@ -1239,7 +1251,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       ])
 
     assert_raise ArgumentError, ~r/workflow push.*branches-ignore/, fn ->
-      AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+      validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
     end
   end
 
@@ -1285,7 +1297,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       workflow = mutate.(snapshot.workflow)
 
       assert_raise ArgumentError, diagnostic, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+        validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
       end
     end
   end
@@ -1295,7 +1307,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     repository_snapshot: snapshot
   } do
     assert :ok =
-             AdoptionEvidence.validate_repository_snapshot!(AdoptionEvidence.entries(), snapshot)
+             validate_repository_snapshot!(AdoptionEvidence.entries(), snapshot)
   end
 
   @tag :plan_73_14_task_2
@@ -1311,7 +1323,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       workflow = replace_pull_request_event(snapshot.workflow, pull_request)
 
       assert_raise ArgumentError, ~r/workflow pull_request.*unsupported key types/, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+        validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
       end
     end
   end
@@ -1357,7 +1369,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       workflow = mutate.(snapshot.workflow)
 
       assert_raise ArgumentError, diagnostic, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+        validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
       end
     end
   end
@@ -1367,12 +1379,12 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     repository_snapshot: snapshot
   } do
     entries = AdoptionEvidence.entries()
-    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+    assert :ok = validate_repository_snapshot!(entries, snapshot)
 
     workflow = replace_pull_request_event(snapshot.workflow, ["  pull_request:"])
 
     assert :ok =
-             AdoptionEvidence.validate_repository_snapshot!(entries, %{
+             validate_repository_snapshot!(entries, %{
                snapshot
                | workflow: workflow
              })
@@ -1383,7 +1395,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     repository_snapshot: snapshot
   } do
     assert :ok =
-             AdoptionEvidence.validate_repository_snapshot!(AdoptionEvidence.entries(), snapshot)
+             validate_repository_snapshot!(AdoptionEvidence.entries(), snapshot)
 
     prompts_only =
       snapshot.workflow
@@ -1391,7 +1403,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       |> replace_push_filter("paths-ignore", ["prompts/**"])
 
     assert :ok =
-             AdoptionEvidence.validate_repository_snapshot!(AdoptionEvidence.entries(), %{
+             validate_repository_snapshot!(AdoptionEvidence.entries(), %{
                snapshot
                | workflow: prompts_only
              })
@@ -1430,7 +1442,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
       error =
         assert_raise ArgumentError, fn ->
-          AdoptionEvidence.validate_repository_snapshot!(entries, %{
+          validate_repository_snapshot!(entries, %{
             snapshot
             | workflow: workflow
           })
@@ -1460,7 +1472,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
       error =
         assert_raise ArgumentError, fn ->
-          AdoptionEvidence.validate_repository_snapshot!(entries, %{
+          validate_repository_snapshot!(entries, %{
             snapshot
             | workflow: workflow
           })
@@ -1476,7 +1488,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     repository_snapshot: checked_in_snapshot
   } do
     entries = AdoptionEvidence.entries()
-    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, checked_in_snapshot)
+    assert :ok = validate_repository_snapshot!(entries, checked_in_snapshot)
 
     root = repository_fixture!()
     owner = "test/provenance/tracked_owner_test.exs"
@@ -1771,10 +1783,14 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert status == 0, output
   end
 
-  defp assert_governed_inventory_error(entries, snapshot, diagnostic) do
+  defp validate_repository_snapshot!(entries, snapshot, root \\ File.cwd!()) do
+    AdoptionEvidence.validate_repository_snapshot!(entries, snapshot, root)
+  end
+
+  defp assert_governed_inventory_error(entries, snapshot, root, diagnostic) do
     error =
       assert_raise ArgumentError, diagnostic, fn ->
-        AdoptionEvidence.validate_repository_snapshot!(entries, snapshot)
+        validate_repository_snapshot!(entries, snapshot, root)
       end
 
     refute Exception.message(error) =~ "workflow is missing"
