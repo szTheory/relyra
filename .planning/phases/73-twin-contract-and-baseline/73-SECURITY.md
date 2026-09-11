@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: blocked
-threats_open: 3
+status: verified
+threats_open: 0
 asvs_level: 1
 block_on: high
 created: "2026-09-09"
@@ -56,14 +56,14 @@ created: "2026-09-09"
 | T-73-47 | Spoofing | payload/script provenance | high | mitigate | Script-backed authorization validates indexed executable identity and a separately tracked normalized static result without launching plan-selected code; Plan 73-13 ambient-authority controls pass (`test/governance/milestone_scope_test.exs:522`, `test/governance/milestone_scope_test.exs:3089`). | closed |
 | T-73-48 | Elevation of Privilege | desired/rollback state binding | high | mitigate | Branch-protection normalization retains the complete ten-field state and enforces exact safe invariants for every accepted non-declared control in both mutation and rollback comparisons; Plan 73-13 field mutation controls pass (`test/governance/milestone_scope_test.exs:478`, `test/governance/milestone_scope_test.exs:2971`). | closed |
 | T-73-49 | Repudiation | reviewed script revision | high | mitigate | Script working content must match its indexed object ID, preventing post-review mutation; changed-after-index adversaries pass. | closed |
-| T-73-50 | Information Disclosure | script validation | medium | mitigate | Fixed argv and output checks do not constrain side effects before output; CR-04 confirms the selected executable retains ambient filesystem, credential, and network authority. | open — below high threshold (CR-04) |
+| T-73-50 | Information Disclosure | script validation | medium | mitigate | Superseded by removal of the script-backed authorization surface: mutation and rollback accept only tracked declarative `gh api --input` payload operations whose complete normalized states match the approved batch. `plan_73_15_task_1` and the mandatory `mix ci.evidence` lane pass. | closed — script surface removed |
 | T-73-51 | Denial of Service | mandatory workflow event filters | high | mitigate | Closed by the occurrence-preserving event grammar: push accepts only one positive `main` branch in exact order, pull requests cannot declare restrictive activity filters, and duplicate events/direct keys plus unsupported event controls fail before path and owner reduction. `plan_73_14_task_1`, `plan_73_14_task_2`, and the mandatory `mix ci.evidence` lane pass. | closed — CR-06 |
-| T-73-52 | Elevation of Privilege | script/result authorization binding | high | mitigate | CR-07 proves an arbitrary indexed mutation script can be approved with an unrelated benign static result; non-execution during validation does not establish or bind the script's effects. | open — CR-07 |
-| T-73-53 | Repudiation | post-SUMMARY completed-plan provenance | high | mitigate | CR-08 proves exact-scope same-plan commits after the SUMMARY-add boundary are absent from trusted history and changed-surface review. | open — CR-08 |
+| T-73-52 | Elevation of Privilege | script/result authorization binding | high | mitigate | Closed by removing script and static-result authorization: mutation and rollback cross the parser only as tracked declarative `gh api --input` operations whose complete normalized payload state matches the declared desired or current state. `plan_73_15_task_1` and the mandatory `mix ci.evidence` lane pass. | closed — CR-07 |
+| T-73-53 | Repudiation | post-SUMMARY completed-plan provenance | high | mitigate | Closed by resolving one full exact-`HEAD` review endpoint, requiring the SUMMARY-add boundary to be its ancestor, and classifying every ordered exact-scope descendant while restricting SUMMARY and manifest equality audits to pre-boundary tasks. `plan_73_15_task_2` and the mandatory `mix ci.evidence` lane pass. | closed — CR-08 |
 | DEP-73-01 | Tampering | Phoenix request handling dependency | high | mitigate | Upgraded Phoenix from 1.8.7 to 1.8.13 with its coupled transport dependencies in `ae1f0aa`; `mix ci.security` and `mix deps.audit` pass. | closed |
 | DEP-73-02 | Tampering | Phoenix request handling dependency | medium | mitigate | The Phoenix 1.8.13 upgrade resolves `GHSA-63mc-hw7g-86rr`; the post-upgrade dependency audit passes. | closed |
 
-Three threats remain open at or above the configured `high` threshold, so `threats_open: 3`. `T-73-12` and `T-73-50` remain additional owned, non-blocking medium follow-ups routed to later cleanup.
+Zero threats remain open at or above the configured `high` blocking threshold, so `threats_open: 0`. `T-73-12` remains visible as an owned, non-blocking medium follow-up routed to later cleanup; the count does not erase or reclassify it.
 
 ---
 
@@ -100,6 +100,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 | 2026-09-10 | 29 | 22 | 7 | Post-review correction; five high-severity threats reopened from confirmed CR-01–CR-05 bypasses |
 | 2026-09-10 | 29 | 27 | 2 non-blocking | ASVS L1 gap-closure verification; CR-01–CR-05 closed by Plans 73-12–13 and the 82-test evidence lane |
 | 2026-09-10 | 32 | 27 | 5 | Post-gap review correction; CR-06–CR-08 opened as three blocking high-severity threats alongside two medium follow-ups |
+| 2026-09-10 | 32 | 31 | 1 non-blocking | ASVS L1 final reconciliation; CR-06–CR-08 closed only after the Plan 73-14/15 focused selectors and 91-test `mix ci.evidence` lane passed |
 
 ---
 
@@ -107,7 +108,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 
 - [x] All threats have a disposition (mitigate / accept / transfer)
 - [x] Accepted risks documented in Accepted Risks Log
-- [ ] `threats_open: 0` confirmed
-- [ ] `status: verified` set in frontmatter
+- [x] `threats_open: 0` confirmed
+- [x] `status: verified` set in frontmatter
 
-**Approval:** blocked at the configured ASVS L1 threshold. Plans 73-12 and 73-13 close CR-01–CR-05 and the mandatory 82-test evidence lane passes, but independent review and phase verification confirmed three additional high-severity fail-open paths in workflow triggering, script/result authorization, and post-SUMMARY provenance. Resolve CR-06–CR-08 before restoring `status: verified` and `threats_open: 0`.
+**Approval:** verified at the configured ASVS L1 threshold. The Plan 73-14 event-grammar selectors, Plan 73-15 declarative-authorization and exact-HEAD provenance selectors, and the mandatory 91-test `mix ci.evidence` lane all passed before CR-06–CR-08 were closed. `threats_open: 0` means no open threat at or above the configured `high` blocking threshold; lower-severity `T-73-12` remains visible and owned as a non-blocking follow-up.
