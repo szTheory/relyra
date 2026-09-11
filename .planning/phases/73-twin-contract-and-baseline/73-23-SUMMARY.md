@@ -79,14 +79,17 @@ status: complete
 - Closed T-73-67 and T-73-76 from their exact repaired controls, retained T-73-12 as an open medium follow-up below the blocking threshold, and reconciled validation through 23 plans and 49 acceptance-bearing tasks.
 - Re-ran final committed-state verification: the governance selector passed 1 test, `mix ci.evidence` passed 103 tests in 21 seconds, and `mix ci.security` passed in 140 seconds with no timing ceiling.
 
+## Planning Revision
+
+The pre-execution Plan 73-23 revision is committed at `67b1fef`. It is included in the persisted ledger's measured actuals but is intentionally separate from the authoritative task-commit set.
+
 ## Task Commits
 
-The plan revision and each task were committed atomically:
+Each task was committed atomically:
 
-1. **Approved plan revision before execution** — `67b1fef` (docs)
-2. **Task 1: Make the active-plan prerequisite executable and green** — `ecf0468` (test)
-3. **Task 2: Stage one current proof set in security and validation** — `c6d1a7a` (docs)
-4. **Task 3: Reconcile final security and Nyquist dispositions** — `a06df8e` (docs)
+1. **Task 1: Make the active-plan prerequisite executable and green** — `ecf0468` (test)
+2. **Task 2: Stage one current proof set in security and validation** — `c6d1a7a` (docs)
+3. **Task 3: Reconcile final security and Nyquist dispositions** — `a06df8e` (docs)
 
 **Plan metadata:** pending final metadata commit
 
@@ -132,9 +135,18 @@ The plan revision and each task were committed atomically:
 - **Verification:** Tracking assertions confirm `ready_for_verification`, Plan 23 of 23, 23/23 complete, the checked Plan 73-23 row, and all six Phase 73 requirements complete.
 - **Committed in:** final metadata commit
 
+**3. [Rule 1 - Bug] Separated the planning revision from authoritative Task Commits**
+
+- **Found during:** Post-boundary ready-state `mix ci.evidence`
+- **Issue:** The first summary draft listed pre-execution planning revision `67b1fef` inside `## Task Commits`, while Git-derived exact-scope provenance correctly classified only the three actual task commits as authoritative.
+- **Fix:** Retained `67b1fef` in a separate Planning Revision section for measured-ledger transparency and limited `## Task Commits` to `ecf0468`, `c6d1a7a`, and `a06df8e`.
+- **Files modified:** `.planning/phases/73-twin-contract-and-baseline/73-23-SUMMARY.md`
+- **Verification:** The post-boundary `mix ci.evidence` lane validates SUMMARY equality against the Git-derived task set.
+- **Committed in:** post-boundary metadata correction commit
+
 ---
 
-**Total deviations:** 2 (1 approved plan revision, 1 auto-fixed tracking bug).
+**Total deviations:** 3 (1 approved plan revision, 2 auto-fixed closeout bugs).
 **Impact on plan:** The decision changed timing classification only and the auto-fix restored tracking accuracy. The security alias, subprocess structure, bootstrap, security policy, runtime behavior, public API, defaults, dependencies, baseline samples, workflow, remote state, and SemVer posture remain unchanged.
 
 ## Issues Encountered
@@ -165,7 +177,7 @@ None.
 
 ## Self-Check: PASSED
 
-All modified artifacts and all four measured plan-range commits exist. Coverage metadata classified all three deliverables as automated and passing; final governance, evidence, security, arithmetic, chronology, format, and diff checks passed.
+All modified artifacts, the three authoritative task commits, and the pre-execution planning revision exist. Actuals measured four commits before the summary boundary. Coverage metadata classified all three deliverables as automated and passing; final governance, evidence, security, arithmetic, chronology, format, and diff checks passed.
 
 ---
 *Phase: 73-twin-contract-and-baseline*

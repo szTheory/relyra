@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 19
-total_count: 21
-last_updated: 2026-09-11T18:56:35.412Z
+fixed_count: 20
+total_count: 22
+last_updated: 2026-09-11T19:00:01.555Z
 ---
 
 # Broken Windows Ledger
@@ -36,6 +36,7 @@ last_updated: 2026-09-11T18:56:35.412Z
 | 19 | 73 | deviation | .planning/STATE.md |  | Reconciled stale sequential tracking prose after Plan 73-22 | fixed |  | 2026-09-11T15:48:33.100Z | 2026-09-11T15:49:06.625Z |
 | 20 | 73 | deviation | .planning/phases/73-twin-contract-and-baseline/73-23-PLAN.md |  | Removed only the mix ci.security timing ceiling after explicit human approval while preserving the complete mandatory lane and all mix ci.evidence bounds | fixed |  | 2026-09-11T18:56:30.193Z | 2026-09-11T18:56:35.322Z |
 | 21 | 73 | deviation | .planning/STATE.md |  | Reconciled stale Plan 2 cursor and pending Plan 73-23 prose after all 23 summaries were present | fixed |  | 2026-09-11T18:56:30.312Z | 2026-09-11T18:56:35.412Z |
+| 22 | 73 | deviation | .planning/phases/73-twin-contract-and-baseline/73-23-SUMMARY.md |  | Separated pre-execution plan revision 67b1fef from the Git-derived authoritative Task Commits set | fixed |  | 2026-09-11T19:00:01.441Z | 2026-09-11T19:00:01.555Z |
 
 ````json
 [
@@ -296,6 +297,19 @@ last_updated: 2026-09-11T18:56:35.412Z
     "reason": "",
     "recorded_at": "2026-09-11T18:56:30.312Z",
     "resolved_at": "2026-09-11T18:56:35.412Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 22,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/phases/73-twin-contract-and-baseline/73-23-SUMMARY.md",
+    "line": null,
+    "description": "Separated pre-execution plan revision 67b1fef from the Git-derived authoritative Task Commits set",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T19:00:01.441Z",
+    "resolved_at": "2026-09-11T19:00:01.555Z",
     "milestone": "v1.11"
   }
 ]
