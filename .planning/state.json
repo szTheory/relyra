@@ -6,7 +6,7 @@
     {
       "number": "73",
       "name": "Twin Contract and Baseline",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "74",
@@ -42,7 +42,7 @@
   "next": {
     "command": "/gsd:progress --next",
     "label": "Advance to the next step",
-    "reason": "Phase 73 of 7 · 0% · executing"
+    "reason": "Phase 73 of 7 · 92% · ready_to_execute"
   },
-  "updated_at": "2026-09-09T17:25:07.979Z"
+  "updated_at": "2026-09-11T21:09:27.589Z"
 }

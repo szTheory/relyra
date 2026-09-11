@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 1
 waived_count: 1
-fixed_count: 20
-total_count: 22
-last_updated: 2026-09-11T19:00:01.555Z
+fixed_count: 22
+total_count: 24
+last_updated: 2026-09-11T21:10:27.457Z
 ---
 
 # Broken Windows Ledger
@@ -37,6 +37,8 @@ last_updated: 2026-09-11T19:00:01.555Z
 | 20 | 73 | deviation | .planning/phases/73-twin-contract-and-baseline/73-23-PLAN.md |  | Removed only the mix ci.security timing ceiling after explicit human approval while preserving the complete mandatory lane and all mix ci.evidence bounds | fixed |  | 2026-09-11T18:56:30.193Z | 2026-09-11T18:56:35.322Z |
 | 21 | 73 | deviation | .planning/STATE.md |  | Reconciled stale Plan 2 cursor and pending Plan 73-23 prose after all 23 summaries were present | fixed |  | 2026-09-11T18:56:30.312Z | 2026-09-11T18:56:35.412Z |
 | 22 | 73 | deviation | .planning/phases/73-twin-contract-and-baseline/73-23-SUMMARY.md |  | Separated pre-execution plan revision 67b1fef from the Git-derived authoritative Task Commits set | fixed |  | 2026-09-11T19:00:01.441Z | 2026-09-11T19:00:01.555Z |
+| 23 | 73 | deviation | test/adoption/evidence_contract_test.exs |  | Updated two historical hollow-selection fixtures to preserve genuine zero-selection coverage under ExUnit include override semantics | fixed |  | 2026-09-11T21:08:42.202Z | 2026-09-11T21:09:09.708Z |
+| 24 | 73 | deviation | .planning/STATE.md |  | Reconciled SDK Plan 2 cursor and zero-percent progress to the disk-backed Plan 73-25 frontier after 24 completed summaries | fixed |  | 2026-09-11T21:10:27.306Z | 2026-09-11T21:10:27.457Z |
 
 ````json
 [
@@ -310,6 +312,32 @@ last_updated: 2026-09-11T19:00:01.555Z
     "reason": "",
     "recorded_at": "2026-09-11T19:00:01.441Z",
     "resolved_at": "2026-09-11T19:00:01.555Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 23,
+    "kind": "deviation",
+    "phase": "73",
+    "file": "test/adoption/evidence_contract_test.exs",
+    "line": null,
+    "description": "Updated two historical hollow-selection fixtures to preserve genuine zero-selection coverage under ExUnit include override semantics",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T21:08:42.202Z",
+    "resolved_at": "2026-09-11T21:09:09.708Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 24,
+    "kind": "deviation",
+    "phase": "73",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "Reconciled SDK Plan 2 cursor and zero-percent progress to the disk-backed Plan 73-25 frontier after 24 completed summaries",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T21:10:27.306Z",
+    "resolved_at": "2026-09-11T21:10:27.457Z",
     "milestone": "v1.11"
   }
 ]

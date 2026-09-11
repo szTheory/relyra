@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: ready_to_execute
-stopped_at: Planned 73-24 through 73-26 gap closure
-last_updated: "2026-09-11T20:34:36.155Z"
+stopped_at: Completed 73-24-PLAN.md
+last_updated: "2026-09-11T21:09:29.048Z"
 last_activity: 2026-09-11
-last_activity_desc: Planned Phase 73 verification gap closure in Plans 73-24 through 73-26
-state_head: e4a483f995b865494373cc537f67ba7ea06bad9b
+last_activity_desc: Completed Plan 73-24 evidence authority and Mix argv closure
+state_head: 51a7d05dc5d4acb0ca300ff7f3812cb38d18eec7
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 26
-  completed_plans: 23
-  percent: 0
+  completed_plans: 24
+  percent: 92
 ---
 
 # Project State
@@ -33,11 +33,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE
 
-Plan: 23 of 26
+Plan: 25 of 26
 
-Status: 23 plans complete; 3 gap-closure plans are ready to execute
+Status: 24 plans complete; Plan 73-25 is next
 
-Last activity: 2026-09-11 — Planned Phase 73 verification gap closure in Plans 73-24 through 73-26
+Last activity: 2026-09-11 — Completed Plan 73-24 evidence authority and Mix argv closure
 
 ## Milestone Metrics
 
@@ -124,6 +124,9 @@ Last activity: 2026-09-11 — Planned Phase 73 verification gap closure in Plans
 - [Phase 73]: Keep the complete unchanged mix ci.security lane mandatory and passing with no timing ceiling, while retaining all three independent sub-60-second mix ci.evidence requirements.
 - [Phase 73]: Stage the exact current proof set before changing security or Nyquist disposition, then reduce both reports from that same committed evidence.
 - [Phase 73]: Count threats_open at the configured high threshold while preserving T-73-12 as a visible open medium follow-up.
+- [Phase 73]: Use a repository root outside the mutable snapshot as independent authority for both governed-input fields.
+- [Phase 73]: Require jobs.security to remain dependency-free so skipped prerequisites cannot suppress mandatory evidence.
+- [Phase 73]: Accept only fully consumed Mix test argv and model includes as ExUnit alternatives that override exclusions.
 
 ### Baseline Findings
 
@@ -161,16 +164,15 @@ Last activity: 2026-09-11 — Planned Phase 73 verification gap closure in Plans
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T18:55:27.820Z
+**Last session:** 2026-09-11T21:09:29.011Z
 
-**Stopped at:** Completed 73-23-PLAN.md
+**Stopped at:** Completed 73-24-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Verify Phase 73 against its reconciled mandatory evidence and security verdict before
-advancing to Phase 74.
+Execute Plan 73-25 to close task-syntax, completion-boundary, and merge-provenance gaps.
 
 ## Performance Metrics
 
@@ -199,6 +201,7 @@ advancing to Phase 74.
 | Phase 73 P21 | 10min | 2 tasks | 1 files |
 | Phase 73 P22 | 14 min | 2 tasks | 3 files |
 | Phase 73 P23 | 17min | 3 tasks | 8 files |
+| Phase 73 P24 | 25min | 3 tasks | 6 files |
 
 ### Blockers
 
