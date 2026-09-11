@@ -598,7 +598,7 @@ defmodule Relyra.AdoptionEvidence do
 
         entry ->
           raise ArgumentError,
-                "#{entry.requirement} row #{entry.id}: missing owner file #{entry.owner}"
+                "#{entry.requirement} row #{entry.id}: missing owner file #{entry.owner}: #{Exception.message(error)}"
       end
   end
 
@@ -973,14 +973,91 @@ defmodule Relyra.AdoptionEvidence do
 
   defp repository_path!(root, owner) do
     expanded_root = Path.expand(root)
-    expanded_owner = Path.expand(owner, expanded_root)
+    components = repository_path_components!(owner)
+    expanded_owner = Path.join([expanded_root | components])
 
-    unless String.starts_with?(expanded_owner, expanded_root <> "/") and
-             File.regular?(expanded_owner) do
-      raise ArgumentError, "test owner path #{owner} is missing or outside the repository"
+    root_stat = lstat_repository_component!(owner, expanded_root)
+
+    unless root_stat.type == :directory do
+      raise ArgumentError, "test owner path #{owner} repository root is not a directory"
     end
 
+    components
+    |> Enum.with_index()
+    |> Enum.reduce(expanded_root, fn {component, index}, parent ->
+      path = Path.join(parent, component)
+      stat = lstat_repository_component!(owner, path)
+
+      if stat.type == :symlink do
+        relative = Path.relative_to(path, expanded_root)
+        raise ArgumentError, "test owner path #{owner} contains symbolic link #{relative}"
+      end
+
+      leaf? = index == length(components) - 1
+
+      cond do
+        leaf? and stat.type != :regular ->
+          raise ArgumentError, "test owner path #{owner} leaf is not a regular file"
+
+        not leaf? and stat.type != :directory ->
+          relative = Path.relative_to(path, expanded_root)
+
+          raise ArgumentError,
+                "test owner path #{owner} has non-directory component #{relative}"
+
+        true ->
+          path
+      end
+    end)
+
+    require_tracked_repository_path!(expanded_root, owner)
     expanded_owner
+  end
+
+  defp repository_path_components!(owner) when is_binary(owner) and owner != "" do
+    components = Path.split(owner)
+    normalized = if components == [], do: "", else: Path.join(components)
+
+    unless Path.type(owner) == :relative and normalized == owner and
+             Enum.all?(components, &(&1 not in ["", ".", ".."])) do
+      raise ArgumentError,
+            "test owner path #{inspect(owner)} must be a non-empty normalized repository-relative path"
+    end
+
+    components
+  end
+
+  defp repository_path_components!(owner) do
+    raise ArgumentError,
+          "test owner path #{inspect(owner)} must be a non-empty normalized repository-relative path"
+  end
+
+  defp lstat_repository_component!(owner, path) do
+    case File.lstat(path) do
+      {:ok, stat} ->
+        stat
+
+      {:error, reason} ->
+        raise ArgumentError,
+              "test owner path #{owner} is missing at #{path}: #{:file.format_error(reason)}"
+    end
+  end
+
+  defp require_tracked_repository_path!(root, owner) do
+    case System.cmd("git", ["ls-files", "--error-unmatch", "--", owner],
+           cd: root,
+           stderr_to_stdout: true
+         ) do
+      {output, 0} ->
+        if String.split(output, "\n", trim: true) != [owner] do
+          raise ArgumentError,
+                "test owner path #{owner} did not resolve to one exact tracked lexical path"
+        end
+
+      {output, status} ->
+        raise ArgumentError,
+              "test owner path is not tracked at #{owner}; git exited #{status}: #{String.trim(output)}"
+    end
   end
 
   defp command_argv!(command) do
