@@ -2,7 +2,7 @@
 phase: "73"
 slug: "twin-contract-and-baseline"
 status: validated
-nyquist_compliant: true
+nyquist_compliant: false
 wave_0_complete: true
 created: "2026-09-09"
 revised: "2026-09-10"
@@ -10,7 +10,7 @@ revised: "2026-09-10"
 
 # Phase 73 — Validation Strategy
 
-> Final deterministic evidence map after Plans 73-01 through 73-13 and the post-merge working-directory isolation repair.
+> Final evidence map after Plans 73-01 through 73-16 and the post-merge working-directory isolation repair.
 
 ## Test Infrastructure
 
@@ -20,8 +20,8 @@ revised: "2026-09-10"
 | **Config file** | `config/test.exs` |
 | **Mandatory owner** | `mix ci.evidence` runs both Phase 73 contract modules in one fresh process with `--only evidence_contract --warnings-as-errors` |
 | **Required workflow** | `.github/workflows/security-gates.yml`, `jobs.security` → `Evidence contract` → `mix ci.evidence` |
-| **Focused ownership** | Plan/task tags from `plan_73_06_task_1` through `plan_73_13_task_3`, plus `cwd_isolation` for the post-merge race regression |
-| **Environment** | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1` prefixes Mix verification commands |
+| **Focused ownership** | Plan/task tags from `plan_73_06_task_1` through `plan_73_15_task_2`, plus `cwd_isolation` for the post-merge race regression |
+| **Environment** | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1` prefixes Mix verification commands |
 | **Workflow syntax** | `actionlint .github/workflows/security-gates.yml` |
 | **Repository closeout context** | Exact full-suite seed `778220`: 864 tests; the sole failure is the explicitly deferred Phase 77 documentation-vocabulary assertion and is not a Phase 73 Nyquist gap |
 
@@ -70,6 +70,12 @@ Every command is deterministic, non-watch, network-independent, and selected by 
 | 73-13-01 | QUAL-01, PIPE-01, GOV-01 | Complete branch-protection state retains and validates every accepted control | `mix test test/governance/milestone_scope_test.exs --only plan_73_13_task_1 --warnings-as-errors` | green (2) |
 | 73-13-02 | GOV-01 | Indexed script identity binds to tracked static result evidence without executing plan-selected code | `mix test test/governance/milestone_scope_test.exs --only plan_73_13_task_2 --warnings-as-errors` | green (2) |
 | 73-13-03 | GOV-01, GOV-02 | Git derives the complete ordered exact-scope commit set; manifest and SUMMARY are equality audits only | `mix test test/governance/milestone_scope_test.exs --only plan_73_13_task_3 --warnings-as-errors` | green (2) |
+| 73-14-01 | EVID-01, EVID-02 | Push event grammar preserves occurrences and rejects negation, extra branches, duplicate/unsupported keys, and `branches-ignore` | `mix test test/adoption/evidence_contract_test.exs --only plan_73_14_task_1 --warnings-as-errors` | green (3) |
+| 73-14-02 | EVID-01, EVID-02 | Pull-request event grammar rejects restrictive activity filters, duplicate/unsupported keys, and malformed event values | `mix test test/adoption/evidence_contract_test.exs --only plan_73_14_task_2 --warnings-as-errors` | green (3) |
+| 73-15-01 | QUAL-01, PIPE-01, GOV-01, GOV-02 | Remote authorization accepts only tracked declarative `gh api --input` operations whose complete normalized payload equals approved state | `mix test test/governance/milestone_scope_test.exs --only plan_73_15_task_1 --warnings-as-errors` | green (2) |
+| 73-15-02 | QUAL-01, PIPE-01, GOV-01, GOV-02 | Exact full-HEAD review includes every reachable same-plan descendant after the SUMMARY boundary | `mix test test/governance/milestone_scope_test.exs --only plan_73_15_task_2 --warnings-as-errors` | green (3) |
+| 73-16-01 | EVID-02 | CR-06 security disposition cites both non-zero event-grammar owners before closure | `mix test test/adoption/evidence_contract_test.exs --only plan_73_14_task_1 --warnings-as-errors && mix test test/adoption/evidence_contract_test.exs --only plan_73_14_task_2 --warnings-as-errors` | green (3 + 3) |
+| 73-16-02 | GOV-01, GOV-02 | CR-07/CR-08 dispositions require the mandatory lane, zero high-threshold open threats, preserved T-73-12, and verified report state | `mix ci.evidence && test "$(sed -n 's/^threats_open: //p' .planning/phases/73-twin-contract-and-baseline/73-SECURITY.md)" = "0" && rg -n 'T-73-51.*closed|T-73-52.*closed|T-73-53.*closed|status: verified' .planning/phases/73-twin-contract-and-baseline/73-SECURITY.md` | warning — mandatory lane passed 1/3 audit attempts; two attempts timed out |
 | post-merge-cwd | EVID-02 | Fixture alias inspection never mutates VM-global cwd | `mix test test/adoption/evidence_contract_test.exs --only cwd_isolation --warnings-as-errors` | green (1) |
 
 ## Automation and Safety Boundaries
@@ -82,15 +88,15 @@ Every command is deterministic, non-watch, network-independent, and selected by 
 
 ## Validation Sign-Off
 
-- [x] All 6 Phase 73 requirements map to complete deterministic behavioral tests in a mandatory CI lane.
-- [x] All 28 acceptance-bearing tasks across 13 completed plans map to executable commands.
-- [x] Every dedicated Plan 73-06 through 73-13 selector has a non-zero selected set.
-- [x] The complete owner lane passes 82 tests across both contract modules.
+- [x] All 6 Phase 73 requirements map to automated behavioral tests in the mandatory CI lane.
+- [x] All 34 acceptance-bearing tasks across 16 completed plans map to executable commands.
+- [x] Every dedicated Plan 73-06 through 73-15 selector has a non-zero selected set.
+- [ ] The complete 91-test owner lane is deterministic under its declared default timeout; this audit observed two timeouts and one pass across three unchanged runs.
 - [x] The post-merge cwd-race regression passes independently.
 - [x] Workflow syntax passes `actionlint`.
 - [x] The sole exact-seed full-suite failure is owned by Phase 77 and is not a Phase 73 gap.
 
-**Approval:** Phase 73 is Nyquist-compliant. Plans 73-12 and 73-13 close the five previously confirmed fail-open behaviors with focused adversarial tests, and the complete 82-test mandatory owner lane passes.
+**Approval:** Partial. Plans 73-14 and 73-15 have focused non-zero behavioral coverage and all six requirements remain mapped, but the mandatory `mix ci.evidence` lane timed out on two of three unchanged audit runs. The passing third run proves coverage exists; the repeated default-timeout failures prevent a deterministic Nyquist sign-off.
 
 ## Validation Audit 2026-09-10 — Final 11-Plan Coverage
 
@@ -147,3 +153,25 @@ Audit commands executed on 2026-09-10 with Elixir 1.19.5 / OTP 28.1:
 - `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.1 mix format --check-formatted` — exit 0.
 - `actionlint .github/workflows/security-gates.yml` — exit 0.
 - `git diff --check` — exit 0.
+
+## Validation Audit 2026-09-10 — Final 16-Plan Refresh
+
+| Metric | Count |
+|--------|-------|
+| Phase requirements mapped | 6/6 |
+| Completed plans mapped | 16/16 |
+| Acceptance-bearing tasks mapped | 34/34 |
+| New focused selectors | 4/4 green |
+| Mandatory evidence attempts | 1 passing, 2 timed out |
+| Mandatory evidence tests on passing attempt | 91 passing |
+| Escalated implementation bugs | 0 |
+| Nyquist compliant | no — nondeterministic mandatory lane |
+
+Audit commands executed on 2026-09-10 with Elixir 1.19.5 / OTP 28.4.1:
+
+- `mix test test/adoption/evidence_contract_test.exs --only plan_73_14_task_1 --warnings-as-errors` — 3 tests, 0 failures.
+- `mix test test/adoption/evidence_contract_test.exs --only plan_73_14_task_2 --warnings-as-errors` — 3 tests, 0 failures.
+- `mix test test/governance/milestone_scope_test.exs --only plan_73_15_task_1 --warnings-as-errors` — 2 tests, 0 failures.
+- `mix test test/governance/milestone_scope_test.exs --only plan_73_15_task_2 --warnings-as-errors` — 3 tests, 0 failures.
+- `mix ci.evidence` — attempts 1 and 2: 91 tests, 1 failure from a 60-second timeout in `active v1.11 plans declare scope and stop before every risky mutation`; attempt 3: 91 tests, 0 failures in 220.0 seconds.
+- The known repository-wide archival vocabulary-policy failure was not modified and remains owned by Phase 77.
