@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-24-PLAN.md
-last_updated: "2026-09-11T21:09:29.048Z"
+stopped_at: Completed 73-25-PLAN.md
+last_updated: "2026-09-11T21:44:57.596Z"
 last_activity: 2026-09-11
-last_activity_desc: Completed Plan 73-24 evidence authority and Mix argv closure
-state_head: 51a7d05dc5d4acb0ca300ff7f3812cb38d18eec7
+last_activity_desc: Completed Plan 73-25 task and provenance closure
+state_head: 9d6b951bed68e3eb20aeae459ef2d09964882915
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 26
-  completed_plans: 24
-  percent: 92
+  completed_plans: 25
+  percent: 96
 ---
 
 # Project State
@@ -33,11 +33,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 25 of 26
+Plan: 26 of 26
 
-Status: 24 plans complete; Plan 73-25 is next
+Status: 25 plans complete; Plan 73-26 is next
 
-Last activity: 2026-09-11 — Completed Plan 73-24 evidence authority and Mix argv closure
+Last activity: 2026-09-11 — Completed Plan 73-25 task and provenance closure
 
 ## Milestone Metrics
 
@@ -127,6 +127,8 @@ Last activity: 2026-09-11 — Completed Plan 73-24 evidence authority and Mix ar
 - [Phase 73]: Use a repository root outside the mutable snapshot as independent authority for both governed-input fields.
 - [Phase 73]: Require jobs.security to remain dependency-free so skipped prerequisites cannot suppress mandatory evidence.
 - [Phase 73]: Accept only fully consumed Mix test argv and model includes as ExUnit alternatives that override exclusions.
+- [Phase 73]: Consume the singular tasks region linearly and reject structural residue before semantic governance reduction.
+- [Phase 73]: Classify completion-boundary deltas outside Task Commits equality and reject every non-linear reviewed commit before path reduction.
 
 ### Baseline Findings
 
@@ -164,15 +166,15 @@ Last activity: 2026-09-11 — Completed Plan 73-24 evidence authority and Mix ar
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T21:09:29.011Z
+**Last session:** 2026-09-11T21:44:57.568Z
 
-**Stopped at:** Completed 73-24-PLAN.md
+**Stopped at:** Completed 73-25-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Plan 73-25 to close task-syntax, completion-boundary, and merge-provenance gaps.
+Execute Plan 73-26 to prove all current repairs and reconcile security and validation from one committed evidence set.
 
 ## Performance Metrics
 
@@ -202,6 +204,7 @@ Execute Plan 73-25 to close task-syntax, completion-boundary, and merge-provenan
 | Phase 73 P22 | 14 min | 2 tasks | 3 files |
 | Phase 73 P23 | 17min | 3 tasks | 8 files |
 | Phase 73 P24 | 37min | 3 tasks | 6 files |
+| Phase 73 P25 | 16min | 2 tasks | 1 files |
 
 ### Blockers
 
