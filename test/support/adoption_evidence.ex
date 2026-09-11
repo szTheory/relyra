@@ -14,6 +14,7 @@ defmodule Relyra.AdoptionEvidence do
   @personas [:evaluator, :developer, :tenant_admin, :security_reviewer, :sre, :end_user]
   @evidence_kinds [:package_contract, :application, :browser, :external_canary, :security_corpus]
   @states [:planned, :existing]
+  @registration_cache_namespace :repository_snapshot
   @fields [
     :id,
     :requirement,
@@ -327,8 +328,7 @@ defmodule Relyra.AdoptionEvidence do
   def repository_snapshot!(entries, root, options \\ []) do
     validate_entries!(entries)
 
-    registered_test_tags =
-      Keyword.get(options, :registered_test_tags, &registered_test_tags!/2)
+    registered_test_tags = registered_test_tags_function!(options)
 
     unless is_function(registered_test_tags, 2) do
       raise ArgumentError, "registered_test_tags must be a two-argument function"
@@ -668,16 +668,34 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   defp registered_test_tags!(path, root) do
+    registered_test_tags!(
+      path,
+      root,
+      @registration_cache_namespace,
+      &discover_registered_test_tags!/2
+    )
+  end
+
+  defp registered_test_tags!(path, root, namespace, discover_registered_test_tags) do
     cache_key =
-      {__MODULE__, :registered_test_tags, Path.expand(path),
+      {__MODULE__, :registered_test_tags, namespace, Path.expand(path),
        :crypto.hash(:sha256, File.read!(path))}
+
+    lock_resource = {__MODULE__, :registered_test_tags_lock, cache_key}
 
     case :persistent_term.get(cache_key, :missing) do
       :missing ->
-        :global.trans({cache_key, self()}, fn ->
+        :global.trans({lock_resource, self()}, fn ->
           case :persistent_term.get(cache_key, :missing) do
             :missing ->
-              tags = discover_registered_test_tags!(path, root)
+              owner = Path.relative_to(path, root)
+
+              tags =
+                normalize_registered_tags!(
+                  owner,
+                  discover_registered_test_tags.(path, root)
+                )
+
               :persistent_term.put(cache_key, tags)
               tags
 
@@ -689,6 +707,40 @@ defmodule Relyra.AdoptionEvidence do
       tags ->
         tags
     end
+  end
+
+  defp registered_test_tags_function!(options) do
+    case Keyword.fetch(options, :registered_test_tags) do
+      {:ok, registered_test_tags} ->
+        require_two_argument_function!(registered_test_tags, :registered_test_tags)
+
+      :error ->
+        namespace =
+          Keyword.get(options, :registration_cache_namespace, @registration_cache_namespace)
+
+        discover_registered_test_tags =
+          Keyword.get(
+            options,
+            :discover_registered_test_tags,
+            &discover_registered_test_tags!/2
+          )
+
+        discover_registered_test_tags =
+          require_two_argument_function!(
+            discover_registered_test_tags,
+            :discover_registered_test_tags
+          )
+
+        fn path, root ->
+          registered_test_tags!(path, root, namespace, discover_registered_test_tags)
+        end
+    end
+  end
+
+  defp require_two_argument_function!(function, _name) when is_function(function, 2), do: function
+
+  defp require_two_argument_function!(_function, name) do
+    raise ArgumentError, "#{name} must be a two-argument function"
   end
 
   defp discover_registered_test_tags!(path, root) do
