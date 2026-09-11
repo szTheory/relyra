@@ -195,7 +195,10 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       fn clean ->
         put_in(
           clean.aliases["ci.evidence"],
-          Enum.map(clean.aliases["ci.evidence"], &(&1 <> " --exclude evidence_contract"))
+          Enum.map(
+            clean.aliases["ci.evidence"],
+            &String.replace(&1, "--only evidence_contract", "--exclude evidence_contract")
+          )
         )
       end,
       fn clean -> %{clean | owners: remaining_owners} end,
@@ -991,8 +994,11 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     entries = AdoptionEvidence.entries()
 
     hollow_step =
-      fixture_evidence_step() <>
-        " --exclude evidence_contract"
+      String.replace(
+        fixture_evidence_step(),
+        "--only evidence_contract",
+        "--exclude evidence_contract"
+      )
 
     assert_raise ArgumentError,
                  ~r/EVID-01.*row.*ci\.evidence.*test\/adoption\/evidence_contract_test\.exs.*zero effective selected tests/s,

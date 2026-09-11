@@ -634,11 +634,9 @@ defmodule Relyra.AdoptionEvidence do
 
   defp alias_owner_paths(alias_name, aliases) do
     with ["cmd " <> command] <- Map.get(aliases, alias_name),
-         {"mix", ["test" | arguments]} <- command_argv!(command) do
-      Enum.filter(
-        arguments,
-        &(String.ends_with?(&1, ".exs") and not String.starts_with?(&1, "-"))
-      )
+         {"mix", ["test" | arguments]} <- command_argv!(command),
+         parsed <- parse_test_argv!(arguments) do
+      parsed.owner_paths
     else
       _other -> []
     end
@@ -880,31 +878,16 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   defp validate_direct_test_command!(arguments, root) do
-    unless "--warnings-as-errors" in arguments do
-      raise ArgumentError, "direct test command is missing --warnings-as-errors"
-    end
-
-    owner_paths =
-      arguments
-      |> Enum.filter(&(String.ends_with?(&1, ".exs") and not String.starts_with?(&1, "-")))
-
-    if owner_paths == [] do
-      raise ArgumentError, "direct test command names no executable test owner path"
-    end
-
-    {includes, exclusions} = parse_test_filters!(arguments)
+    parsed = parse_test_argv!(arguments)
 
     owners =
-      Enum.map(owner_paths, fn owner ->
+      Enum.map(parsed.owner_paths, fn owner ->
         owner_path = repository_path!(root, owner)
 
         effective_count =
           owner_path
           |> registered_test_tags!(root)
-          |> Enum.count(fn tags ->
-            Enum.all?(includes, &filter_matches?(tags, &1)) and
-              not Enum.any?(exclusions, &filter_matches?(tags, &1))
-          end)
+          |> Enum.count(&selected_by_filters?(&1, parsed.includes, parsed.exclusions))
 
         if effective_count == 0 do
           raise ArgumentError,
@@ -914,26 +897,14 @@ defmodule Relyra.AdoptionEvidence do
         %{path: owner, effective_count: effective_count}
       end)
 
-    %{owners: owners, includes: includes, exclusions: exclusions}
+    Map.put(parsed, :owners, owners)
   end
 
   defp validate_direct_test_command_snapshot!(arguments, owner_tags) do
-    unless "--warnings-as-errors" in arguments do
-      raise ArgumentError, "direct test command is missing --warnings-as-errors"
-    end
-
-    owner_paths =
-      arguments
-      |> Enum.filter(&(String.ends_with?(&1, ".exs") and not String.starts_with?(&1, "-")))
-
-    if owner_paths == [] do
-      raise ArgumentError, "direct test command names no executable test owner path"
-    end
-
-    {includes, exclusions} = parse_test_filters!(arguments)
+    parsed = parse_test_argv!(arguments)
 
     owners =
-      Enum.map(owner_paths, fn owner ->
+      Enum.map(parsed.owner_paths, fn owner ->
         tags =
           case Map.fetch(owner_tags, owner) do
             {:ok, tags} ->
@@ -944,10 +915,10 @@ defmodule Relyra.AdoptionEvidence do
           end
 
         effective_count =
-          Enum.count(tags, fn registered_tags ->
-            Enum.all?(includes, &filter_matches?(registered_tags, &1)) and
-              not Enum.any?(exclusions, &filter_matches?(registered_tags, &1))
-          end)
+          Enum.count(
+            tags,
+            &selected_by_filters?(&1, parsed.includes, parsed.exclusions)
+          )
 
         if effective_count == 0 do
           raise ArgumentError,
@@ -957,7 +928,7 @@ defmodule Relyra.AdoptionEvidence do
         %{path: owner, effective_count: effective_count}
       end)
 
-    %{owners: owners, includes: includes, exclusions: exclusions}
+    Map.put(parsed, :owners, owners)
   end
 
   defp validate_check_alias!(alias_name, root) do
@@ -1010,16 +981,59 @@ defmodule Relyra.AdoptionEvidence do
     end
   end
 
-  defp parse_test_filters!(arguments) do
-    {includes, exclusions} = collect_test_filters!(arguments, [], [])
+  defp parse_test_argv!(arguments) when is_list(arguments) do
+    {owner_paths, warning_count, includes, exclusions} =
+      consume_test_argv!(arguments, [], 0, [], [])
+
+    case warning_count do
+      0 ->
+        raise ArgumentError, "direct test command is missing --warnings-as-errors"
+
+      1 ->
+        :ok
+
+      _many ->
+        raise ArgumentError, "direct test command must contain exactly one --warnings-as-errors"
+    end
+
+    owner_paths = Enum.reverse(owner_paths)
+
+    if owner_paths == [] do
+      raise ArgumentError, "direct test command names no executable test owner path"
+    end
+
+    if length(owner_paths) != length(Enum.uniq(owner_paths)) do
+      raise ArgumentError, "direct test command contains duplicate test owner paths"
+    end
+
     reject_duplicate_filters!(includes, "--only")
     reject_duplicate_filters!(exclusions, "--exclude")
-    {Enum.reverse(includes), Enum.reverse(exclusions)}
+
+    %{
+      owner_paths: owner_paths,
+      includes: Enum.reverse(includes),
+      exclusions: Enum.reverse(exclusions)
+    }
   end
 
-  defp collect_test_filters!([], includes, exclusions), do: {includes, exclusions}
+  defp parse_test_argv!(arguments) do
+    raise ArgumentError, "direct test arguments must be a list, got: #{inspect(arguments)}"
+  end
 
-  defp collect_test_filters!([option | rest], includes, exclusions)
+  defp consume_test_argv!([], owner_paths, warning_count, includes, exclusions),
+    do: {owner_paths, warning_count, includes, exclusions}
+
+  defp consume_test_argv!(
+         ["--warnings-as-errors" | rest],
+         owner_paths,
+         warning_count,
+         includes,
+         exclusions
+       ) do
+    consume_test_argv!(rest, owner_paths, warning_count + 1, includes, exclusions)
+  end
+
+  defp consume_test_argv!([option | rest], owner_paths, warning_count, includes, exclusions)
        when option in ["--only", "--exclude"] do
     case rest do
       [value | remaining] when value != "" ->
@@ -1030,9 +1044,21 @@ defmodule Relyra.AdoptionEvidence do
         filter = parse_filter!(option, value)
 
         if option == "--only" do
-          collect_test_filters!(remaining, [filter | includes], exclusions)
+          consume_test_argv!(
+            remaining,
+            owner_paths,
+            warning_count,
+            [filter | includes],
+            exclusions
+          )
         else
-          collect_test_filters!(remaining, includes, [filter | exclusions])
+          consume_test_argv!(
+            remaining,
+            owner_paths,
+            warning_count,
+            includes,
+            [filter | exclusions]
+          )
         end
 
       _other ->
@@ -1040,18 +1066,44 @@ defmodule Relyra.AdoptionEvidence do
     end
   end
 
-  defp collect_test_filters!([argument | rest], includes, exclusions) do
+  defp consume_test_argv!([argument | rest], owner_paths, warning_count, includes, exclusions) do
     cond do
       String.starts_with?(argument, "--only=") ->
         value = String.replace_prefix(argument, "--only=", "")
-        collect_test_filters!(rest, [parse_filter!("--only", value) | includes], exclusions)
+
+        consume_test_argv!(
+          rest,
+          owner_paths,
+          warning_count,
+          [parse_filter!("--only", value) | includes],
+          exclusions
+        )
 
       String.starts_with?(argument, "--exclude=") ->
         value = String.replace_prefix(argument, "--exclude=", "")
-        collect_test_filters!(rest, includes, [parse_filter!("--exclude", value) | exclusions])
+
+        consume_test_argv!(
+          rest,
+          owner_paths,
+          warning_count,
+          includes,
+          [parse_filter!("--exclude", value) | exclusions]
+        )
+
+      String.starts_with?(argument, "-") ->
+        raise ArgumentError, "direct test command contains unsupported token #{inspect(argument)}"
+
+      String.ends_with?(argument, ".exs") and normalized_repository_relative_path?(argument) ->
+        consume_test_argv!(
+          rest,
+          [argument | owner_paths],
+          warning_count,
+          includes,
+          exclusions
+        )
 
       true ->
-        collect_test_filters!(rest, includes, exclusions)
+        raise ArgumentError, "direct test command contains unsupported token #{inspect(argument)}"
     end
   end
 
@@ -1070,6 +1122,14 @@ defmodule Relyra.AdoptionEvidence do
     if length(filters) != length(Enum.uniq(filters)) do
       raise ArgumentError, "#{option} has duplicate filter values"
     end
+  end
+
+  defp selected_by_filters?(tags, [], exclusions) do
+    not Enum.any?(exclusions, &filter_matches?(tags, &1))
+  end
+
+  defp selected_by_filters?(tags, includes, _exclusions) do
+    Enum.any?(includes, &filter_matches?(tags, &1))
   end
 
   defp filter_matches?(tags, {key, :enabled}), do: enabled_tag?(tags, key)
