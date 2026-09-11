@@ -5,17 +5,17 @@ milestone_name: Phases
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: executing
-stopped_at: Completed 73-16-PLAN.md
-last_updated: "2026-09-11T03:06:26.069Z"
-last_activity: 2026-09-10
-last_activity_desc: Phase 73 planning complete — 19 plans ready
-state_head: 68e7e79afc1a85ff52d6aa37eb173e4c279f69a4
+stopped_at: Completed 73-17-PLAN.md
+last_updated: "2026-09-11T04:15:01.921Z"
+last_activity: 2026-09-11
+last_activity_desc: Plan 73-17 completed — deterministic owner snapshots bound ci.evidence below 60 seconds
+state_head: 34521d4e26fb431614b192fe91ac5e7cb0b55f3a
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 19
-  completed_plans: 16
-  percent: 0
+  completed_plans: 17
+  percent: 89
 ---
 
 # Project State
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — READY TO EXECUTE
+Phase: 73 (Twin Contract and Baseline) — EXECUTING
 
-Plan: 16 of 19
+Plan: 18 of 19
 
-Status: Ready to execute — 3 gap-closure plans remain, starting with Plan 73-17
+Status: Ready to execute — 2 gap-closure plans remain, starting with Plan 73-18
 
-Last activity: 2026-09-10 — Phase 73 planning complete
+Last activity: 2026-09-11 — Plan 73-17 completed
 
 ## Milestone Metrics
 
@@ -108,6 +108,8 @@ Last activity: 2026-09-10 — Phase 73 planning complete
 - [Phase 73]: Keep SUMMARY and manifest equality audits restricted to pre-boundary tasks so claims cannot omit or authorize descendants.
 - [Phase 73]: Close CR-06 only after both Plan 73-14 focused selector owners and the mandatory evidence lane pass.
 - [Phase 73]: Treat declarative payload authorization plus exact-HEAD descendant provenance as sufficient to close CR-07 and CR-08 while retaining T-73-12 as a visible medium follow-up.
+- [Phase 73]: Capture each lexical evidence owner once through fresh ExUnit registration, then validate the immutable normalized snapshot without further discovery.
+- [Phase 73]: Reuse registered tags only for the same absolute owner path and SHA-256 source identity within one test VM; source changes always force fresh registration.
 
 ### Baseline Findings
 
@@ -145,16 +147,16 @@ Last activity: 2026-09-10 — Phase 73 planning complete
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T01:28:12.389Z
+**Last session:** 2026-09-11T04:15:01.882Z
 
-**Stopped at:** Completed 73-16-PLAN.md
+**Stopped at:** Completed 73-17-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Execute Phase 73 gap-closure Plans 17 through 19 to close deterministic-owner,
-workflow-filter, owner-provenance, and security-reconciliation gaps, then re-verify the
+Execute Phase 73 gap-closure Plans 18 through 19 to close workflow-filter,
+owner-provenance, and security-reconciliation gaps, then re-verify the
 phase before beginning Phase 74 clean-room package-consumer planning.
 
 ## Performance Metrics
@@ -177,6 +179,7 @@ phase before beginning Phase 74 clean-room package-consumer planning.
 | Phase 73 P14 | 10min | 2 tasks | 2 files |
 | Phase 73 P15 | 26min | 2 tasks | 1 files |
 | Phase 73 P16 | 21min | 2 tasks | 3 files |
+| Phase 73 P17 | 60min | 2 tasks | 2 files |
 
 ### Blockers
 
