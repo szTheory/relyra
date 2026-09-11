@@ -457,6 +457,85 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_later_plan_73_26_rows_follow!(validation, validation_offset)
   end
 
+  @tag :plan_73_25_task_1
+  test "task regions reject every unconsumed or empty executable shape" do
+    clean = no_risk_plan_fixture()
+
+    controls = [
+      {String.replace(clean, ~s(<task type="auto">), ~s(<task type=auto>), global: false),
+       "task opening tag uses unsupported syntax"},
+      {String.replace(clean, ~s(<task type="auto">), "<task>", global: false),
+       "task type must appear exactly once"},
+      {String.replace(clean, "</task>", "", global: false), "task opening tag is unterminated"},
+      {Regex.replace(~r/<tasks>.*?<\/tasks>/s, clean, "<tasks>\n</tasks>"),
+       "tasks region must contain at least one task"},
+      {String.replace(
+         clean,
+         "<action>Extend deterministic policy tests only.</action>",
+         "<action>Extend deterministic policy tests only.</action>\n<task type=\"auto\">nested</task>",
+         global: false
+       ), "nested task"},
+      {String.replace(clean, "</tasks>", "</task>\n</tasks>", global: false),
+       "unmatched task close"}
+    ]
+
+    for {invalid, diagnostic} <- controls do
+      violations = plan_scope_violations(invalid)
+
+      assert Enum.any?(violations, &String.contains?(&1, diagnostic)),
+             "expected #{inspect(diagnostic)}, got: #{inspect(violations)}"
+    end
+  end
+
+  @tag :plan_73_25_task_1
+  test "acceptance criteria are balanced singular and owned by one implementation task" do
+    clean = no_risk_plan_fixture()
+    [acceptance] = Regex.run(~r/<acceptance_criteria>.*?<\/acceptance_criteria>/s, clean)
+
+    controls = [
+      {clean
+       |> String.replace(acceptance, "", global: false)
+       |> String.replace("</task>", "</task>\n#{acceptance}", global: false),
+       "acceptance_criteria must be wholly owned"},
+      {String.replace(clean, acceptance, acceptance <> "\n" <> acceptance, global: false),
+       "acceptance_criteria must appear exactly once"},
+      {String.replace(
+         clean,
+         acceptance,
+         "<acceptance_criteria>#{acceptance}</acceptance_criteria>",
+         global: false
+       ), "nested acceptance_criteria"},
+      {String.replace(clean, "</acceptance_criteria>", "", global: false),
+       "unmatched acceptance_criteria open"},
+      {String.replace(clean, "<acceptance_criteria>", "", global: false),
+       "unmatched acceptance_criteria close"},
+      {String.replace(clean, acceptance, "<acceptance_criteria>   </acceptance_criteria>",
+         global: false
+       ), "acceptance_criteria must be non-empty"}
+    ]
+
+    for {invalid, diagnostic} <- controls do
+      violations = plan_scope_violations(invalid)
+
+      assert Enum.any?(violations, &String.contains?(&1, diagnostic)),
+             "expected #{inspect(diagnostic)}, got: #{inspect(violations)}"
+    end
+  end
+
+  @tag :plan_73_25_task_1
+  test "closed task grammar accepts tracked plans and ignores task prose outside its region" do
+    assert plan_scope_violations(no_risk_plan_fixture() <> "\nProse names `<task>` only.\n") == []
+
+    assert {:ok, identity} = validated_governance_identity(File.cwd!())
+
+    violations =
+      Enum.flat_map(identity.plan_paths, fn path ->
+        repository_plan_scope_violations(identity, path, File.read!(path), [])
+      end)
+
+    assert violations == []
+  end
+
   test "all approval classes require a matching plan-local blocking decision before mutation" do
     for approval_class <- @approval_classes -- ["remote_github"] do
       clean = risky_plan_fixture(approval_class)
