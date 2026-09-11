@@ -1157,6 +1157,99 @@ defmodule Relyra.Adoption.EvidenceContractTest do
              })
   end
 
+  @tag :plan_73_18_task_1
+  test "checked-in prompts ignore remains valid for both mandatory events", %{
+    repository_snapshot: snapshot
+  } do
+    assert :ok =
+             AdoptionEvidence.validate_repository_snapshot!(AdoptionEvidence.entries(), snapshot)
+
+    prompts_only =
+      snapshot.workflow
+      |> replace_pull_request_filter("paths-ignore", ["prompts/**"])
+      |> replace_push_filter("paths-ignore", ["prompts/**"])
+
+    assert :ok =
+             AdoptionEvidence.validate_repository_snapshot!(AdoptionEvidence.entries(), %{
+               snapshot
+               | workflow: prompts_only
+             })
+  end
+
+  @tag :plan_73_18_task_1
+  test "unsupported path grammar fails closed before governed input comparison", %{
+    repository_snapshot: snapshot
+  } do
+    entries = AdoptionEvidence.entries()
+
+    unsupported_patterns = [
+      ".planning/STATE.md?",
+      ".planning/STATE.md+",
+      ".planning/[S]TATE.md",
+      ".planning/{STATE,ROADMAP}.md",
+      ".planning/(STATE).md",
+      ".planning/@(STATE).md",
+      ~S(.planning/STATE\.md),
+      ".planning/***",
+      ".planning/**suffix",
+      "",
+      ".",
+      "../prompts/**",
+      "/prompts/**",
+      "prompts//**",
+      "prompts/\t**"
+    ]
+
+    for {event, replace} <- [
+          {"pull_request", &replace_pull_request_filter/3},
+          {"push", &replace_push_filter/3}
+        ],
+        pattern <- unsupported_patterns do
+      workflow = replace.(snapshot.workflow, "paths-ignore", [pattern])
+
+      error =
+        assert_raise ArgumentError, fn ->
+          AdoptionEvidence.validate_repository_snapshot!(entries, %{
+            snapshot
+            | workflow: workflow
+          })
+        end
+
+      message = Exception.message(error)
+      assert message =~ "workflow #{event}"
+      assert message =~ "unsupported path pattern"
+      assert message =~ inspect(pattern)
+      refute message =~ "skips governed input"
+    end
+  end
+
+  @tag :plan_73_18_task_1
+  test "one invalid paths-ignore sibling rejects the ordered list", %{
+    repository_snapshot: snapshot
+  } do
+    entries = AdoptionEvidence.entries()
+    invalid = ".planning/STATE.md?"
+
+    for {event, replace} <- [
+          {"pull_request", &replace_pull_request_filter/3},
+          {"push", &replace_push_filter/3}
+        ],
+        patterns <- [["prompts/**", invalid], [invalid, "prompts/**"]] do
+      workflow = replace.(snapshot.workflow, "paths-ignore", patterns)
+
+      error =
+        assert_raise ArgumentError, fn ->
+          AdoptionEvidence.validate_repository_snapshot!(entries, %{
+            snapshot
+            | workflow: workflow
+          })
+        end
+
+      assert Exception.message(error) =~
+               "workflow #{event} contains unsupported path pattern #{inspect(invalid)}"
+    end
+  end
+
   defp active_requirements do
     @requirements_path
     |> File.read!()
