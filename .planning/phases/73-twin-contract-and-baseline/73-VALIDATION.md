@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: gaps_found
-nyquist_compliant: false
+status: validated
+nyquist_compliant: true
 wave_0_complete: true
 created: "2026-09-09"
 revised: "2026-09-11"
@@ -18,24 +18,24 @@ revised: "2026-09-11"
 |----------|-------|
 | **Framework** | ExUnit bundled with Elixir 1.19.5 |
 | **Config file** | `config/test.exs` |
-| **Mandatory owner** | `mix ci.evidence` runs both Phase 73 contract modules in one fresh process with `--only evidence_contract --warnings-as-errors`; the current staged proof is three independent 103-test passes in 20s, 20s, and 21s |
+| **Mandatory owner** | `mix ci.evidence` runs both Phase 73 contract modules in one fresh process with `--only evidence_contract --warnings-as-errors`; the current canonical proof is three independent 116-test passes in 26590ms, 25486ms, and 28991ms |
 | **Required workflow** | `.github/workflows/security-gates.yml`, `jobs.security` → `Evidence contract` → `mix ci.evidence` |
-| **Focused ownership** | Plan/task tags through `plan_73_23_task_1`, including current non-zero selectors `plan_73_21_task_1`, `plan_73_21_task_2`, `plan_73_22_task_1`, and `plan_73_22_task_2`, plus `cwd_isolation` for the post-merge race regression |
+| **Focused ownership** | Plan/task tags through `plan_73_26_task_2`; the current repair proof captures `plan_73_24_task_1`, `plan_73_24_task_2`, `plan_73_24_task_3`, `plan_73_25_task_1`, and `plan_73_25_task_2`, plus mandatory reconciliation owners `plan_73_26_task_1` and `plan_73_26_task_2` |
 | **Environment** | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1` prefixes Mix verification commands |
 | **Workflow syntax** | `actionlint .github/workflows/security-gates.yml` |
 | **Repository closeout context** | Exact full-suite seed `778220`: 864 tests; the sole failure is the explicitly deferred Phase 77 documentation-vocabulary assertion and is not a Phase 73 Nyquist gap |
-| **Current coverage** | 23 plans and 49 acceptance-bearing tasks are mapped and green in the final reconciled proof set |
+| **Current coverage** | 26 plans and 56 acceptance-bearing tasks are mapped exactly once and green in the final reconciled proof set |
 
 ## Requirement Coverage
 
 | Requirement | Observable contract | Behavioral owner | Mandatory command | Status |
 |-------------|---------------------|------------------|-------------------|--------|
 | EVID-01 | One literal ledger covers all 37 active requirements and six personas while preserving planned/canary visibility | `test/adoption/evidence_contract_test.exs` | `mix ci.evidence` | green |
-| EVID-02 | Closure requires a valid existing row, one executable argv, a real alias, registered non-zero ExUnit selection, and an unconditional blocking workflow owner for every planning path | Both Phase 73 contract modules | `mix ci.evidence` | blocked — CR-01, CR-02, CR-03, WR-01 |
+| EVID-02 | Closure requires a valid existing row, one executable argv, a real alias, registered non-zero ExUnit selection, and an unconditional blocking workflow owner for every planning path | Both Phase 73 contract modules | `mix ci.evidence` | green — CR-01, CR-02, CR-03, and WR-01 repaired |
 | QUAL-01 | The dated seven-category/five-severity inventory is fail-closed and every row has tracked non-symlink or executable provenance | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
 | PIPE-01 | The nine-surface CI baseline retains measured topology, sample duration, duplication, cache, ownership, drift, and redaction-safe failure evidence | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
-| GOV-01 | Governed changes require exact plan-local prior approval, trusted commit provenance, and singular reversible state-bound remote batches | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | blocked — CR-04, CR-05, CR-06 |
-| GOV-02 | Trusted plan identity selects the full schema and rejects demand-gated or unrelated implementation scope | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | blocked — CR-04, CR-05, CR-06 |
+| GOV-01 | Governed changes require exact plan-local prior approval, trusted commit provenance, and singular reversible state-bound remote batches | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green — CR-04, CR-05, and CR-06 repaired |
+| GOV-02 | Trusted plan identity selects the full schema and rejects demand-gated or unrelated implementation scope | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green — CR-04, CR-05, and CR-06 repaired |
 
 ## Per-Task Verification Map
 
@@ -92,6 +92,13 @@ Every command is deterministic, non-watch, network-independent, and selected by 
 | 73-23-01 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Active-plan prerequisites are executable, ordered, and green before report mutation | `mix test test/governance/milestone_scope_test.exs --only plan_73_23_task_1 --warnings-as-errors` | green (1) |
 | 73-23-02 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Four focused selectors, three independent bounded evidence runs, and the complete security lane establish one proof set | `mix ci.evidence && mix ci.security` | green |
 | 73-23-03 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Security and Nyquist dispositions reduce only after the staged proof set is recorded | `mix ci.evidence` | green |
+| 73-24-01 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Current blocker rows remain open before repair evidence | `mix test test/governance/milestone_scope_test.exs --only plan_73_24_task_1 --warnings-as-errors` | green (1) |
+| 73-24-02 | EVID-01, EVID-02, PIPE-01, GOV-01 | Repository authority and dependency-free security ownership | `mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_2 --warnings-as-errors` | green (2) |
+| 73-24-03 | EVID-02, QUAL-01, GOV-02 | Closed Mix argv and ExUnit multiple-include semantics | `mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_3 --warnings-as-errors` | green (3) |
+| 73-25-01 | GOV-01, GOV-02 | Total task consumption and task-local acceptance ownership | `mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_1 --warnings-as-errors` | green (3) |
+| 73-25-02 | EVID-02, GOV-01 | Completion-boundary classification and explicit merge rejection | `mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_2 --warnings-as-errors` | green (2) |
+| 73-26-01 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Canonical proof capture, source freshness, report equality, chronology, and positive security constituent mapping | `mix test test/governance/milestone_scope_test.exs --only plan_73_26_task_1 --warnings-as-errors` | green (1) |
+| 73-26-02 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Final threat and Nyquist reduction from the exact 56-owner staged proof | `mix test test/governance/milestone_scope_test.exs --only plan_73_26_task_2 --warnings-as-errors` | green (1) |
 | post-merge-cwd | EVID-02 | Fixture alias inspection never mutates VM-global cwd | `mix test test/adoption/evidence_contract_test.exs --only cwd_isolation --warnings-as-errors` | green (1) |
 
 ## Automation and Safety Boundaries
@@ -675,3 +682,28 @@ The current source-bound proof is staged without changing `status: gaps_found` o
 | Mandatory evidence | 3/3 unchanged runs; 116 tests each; 26590ms, 25486ms, 28991ms |
 | Security composition | unchanged `mix ci.security`; 13/13 positive constituent summaries; 143094ms |
 | Nyquist compliant | no — staged proof precedes final reconciliation |
+
+## Validation Audit 2026-09-11 — Plan 73-26 Final Reconciliation
+
+PHASE73_FINAL_RECONCILIATION
+
+| Metric | Final result |
+|--------|--------------|
+| Proof set | `phase73-8f3da8af3cd49bac` |
+| Phase requirements green | 6/6 |
+| Completed plans mapped | 26/26 |
+| Acceptance-bearing tasks mapped | 56/56 unique owners through `73-26-02` |
+| Focused repair selectors | 5/5 positive |
+| Mandatory evidence | 3/3 unchanged runs; identical 116-test vectors; each below 60 seconds |
+| Security composition | unchanged `mix ci.security`; 13/13 positive constituent summaries |
+| Current blocker findings | 0 high/critical; CR-01 through CR-06 closed |
+| Current warning finding | WR-01 implemented and closed |
+| Nyquist compliant | yes |
+
+The complete owner table above exactly equals the repository-derived task set stored in
+canonical proof `phase73-8f3da8af3cd49bac`. Final validation follows the preserved open
+correction and staged proof rows; it does not reinterpret or overwrite any historical audit.
+
+**Approval:** validated from the same source-bound proof embedded in both reports. No
+manual, absent, duplicate, extra, plan-inconsistent, or zero-test owner contributes to the
+26-plan / 56-task result.

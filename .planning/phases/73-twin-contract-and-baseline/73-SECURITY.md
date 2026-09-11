@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: issues_found
-threats_open: 6
+status: verified
+threats_open: 0
 asvs_level: 1
 block_on: high
 created: "2026-09-09"
@@ -544,3 +544,35 @@ Disposition is intentionally unchanged until a later append-only reconciliation 
 | Audit Date | State | Proof Set | Result |
 |------------|-------|-----------|--------|
 | 2026-09-11 | staged; findings remain open | `phase73-8f3da8af3cd49bac` | Five focused owners passed; three unchanged `mix ci.evidence` runs each selected 116 tests and passed in 26590ms, 25486ms, and 28991ms; unchanged `mix ci.security` mapped 13 positive ExUnit summaries and passed in 143094ms. |
+
+## Plan 73-26 Final Reconciliation
+
+PHASE73_FINAL_RECONCILIATION
+
+The staged proof set `phase73-8f3da8af3cd49bac` is the sole source for these later
+dispositions. The earlier open rows and correction audit remain unchanged above.
+
+| Closure | Finding | Owning selector | Proof set | Final status |
+|---------|---------|-----------------|-----------|--------------|
+| T-73-91_CLOSED | CR-01 | `plan_73_24_task_2` | `phase73-8f3da8af3cd49bac` | closed |
+| T-73-92_CLOSED | CR-02 | `plan_73_24_task_3` | `phase73-8f3da8af3cd49bac` | closed |
+| T-73-93_CLOSED | CR-03 | `plan_73_24_task_2` | `phase73-8f3da8af3cd49bac` | closed |
+| T-73-94_CLOSED | CR-04 | `plan_73_25_task_1` | `phase73-8f3da8af3cd49bac` | closed |
+| T-73-95_CLOSED | CR-05 | `plan_73_25_task_2` | `phase73-8f3da8af3cd49bac` | closed |
+| T-73-96_CLOSED | CR-06 | `plan_73_25_task_2` | `phase73-8f3da8af3cd49bac` | closed |
+| T-73-97_CLOSED | WR-01 | `plan_73_24_task_3` | `phase73-8f3da8af3cd49bac` | closed — implemented |
+
+The final register contains 43 threats: 42 closed and 1 open. Historical medium
+`T-73-12` remains visibly open below the configured high threshold; zero high or
+critical ASVS Level 1 blockers remain.
+
+### Final Sign-Off
+
+- [x] All threats have a disposition (mitigate / accept / transfer)
+- [x] Accepted risks remain documented in the Accepted Risks Log
+- [x] `threats_open: 0` confirmed at the configured high threshold
+- [x] `status: verified` set only after the shared staged proof passed
+
+**Approval:** verified from canonical proof set `phase73-8f3da8af3cd49bac`; CR-01
+through CR-06 and WR-01 are repaired, while T-73-12 remains the sole visible open
+medium follow-up.
