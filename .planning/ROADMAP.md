@@ -75,9 +75,10 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 19/19 plans executed (19 complete; phase verification pending)
+**Plans:** 19/23 plans executed (19 complete; phase verification pending)
 
 Plans:
+
 **Wave 1**
 
 - [x] 73-01-PLAN.md — Trace adopter evidence from a literal ledger through deterministic ownership into mandatory CI.
@@ -141,6 +142,19 @@ Plans:
 **Wave 15** *(gap closure; blocked on Waves 13 and 14 completion)*
 
 - [x] 73-19-PLAN.md — Reconcile the current review threats and seal security status only after repeated deterministic evidence.
+
+**Wave 16** *(gap closure; blocked on Wave 15 completion)*
+
+- [ ] 73-20-PLAN.md — Reopen the stale security verdict and record the current red deterministic-owner evidence before repairs begin.
+
+**Wave 17** *(gap closure; blocked on Wave 16 completion; Plans 21 and 22 may execute in parallel)*
+
+- [ ] 73-21-PLAN.md — Accept the checked-in ready-for-verification lifecycle state through the exact fail-closed governance identity.
+- [ ] 73-22-PLAN.md — Enforce caller-independent single-flight discovery and exact normalized governed-input inventory.
+
+**Wave 18** *(gap closure; blocked on Wave 17 completion)*
+
+- [ ] 73-23-PLAN.md — Prove the repairs through focused and repeated mandatory lanes before resealing the security verdict.
 
 ### Phase 74: Clean-Room Package Consumer
 
@@ -290,7 +304,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
-| 73. Twin Contract and Baseline | v1.11 | 19/19 | In Progress|  |
+| 73. Twin Contract and Baseline | v1.11 | 19/23 | In Progress|  |
 | 74. Clean-Room Package Consumer | v1.11 | 0/TBD | Not started | — |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |
