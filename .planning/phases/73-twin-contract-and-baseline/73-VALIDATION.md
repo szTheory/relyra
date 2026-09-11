@@ -2,10 +2,10 @@
 phase: "73"
 slug: "twin-contract-and-baseline"
 status: validated
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: true
 created: "2026-09-09"
-revised: "2026-09-10"
+revised: "2026-09-11"
 ---
 
 # Phase 73 — Validation Strategy
@@ -24,18 +24,18 @@ revised: "2026-09-10"
 | **Environment** | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1` prefixes Mix verification commands |
 | **Workflow syntax** | `actionlint .github/workflows/security-gates.yml` |
 | **Repository closeout context** | Exact full-suite seed `778220`: 864 tests; the sole failure is the explicitly deferred Phase 77 documentation-vocabulary assertion and is not a Phase 73 Nyquist gap |
-| **Current coverage** | 23 plans and 49 acceptance-bearing tasks are mapped; final disposition reconciliation remains pending |
+| **Current coverage** | 23 plans and 49 acceptance-bearing tasks are mapped and green in the final reconciled proof set |
 
 ## Requirement Coverage
 
 | Requirement | Observable contract | Behavioral owner | Mandatory command | Status |
 |-------------|---------------------|------------------|-------------------|--------|
-| EVID-01 | One literal ledger covers all 37 active requirements and six personas while preserving planned/canary visibility | `test/adoption/evidence_contract_test.exs` | `mix ci.evidence` | staged — final reconciliation pending |
-| EVID-02 | Closure requires a valid existing row, one executable argv, a real alias, registered non-zero ExUnit selection, and an unconditional blocking workflow owner for every planning path | Both Phase 73 contract modules | `mix ci.evidence` | staged — final reconciliation pending |
-| QUAL-01 | The dated seven-category/five-severity inventory is fail-closed and every row has tracked non-symlink or executable provenance | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | staged — final reconciliation pending |
-| PIPE-01 | The nine-surface CI baseline retains measured topology, sample duration, duplication, cache, ownership, drift, and redaction-safe failure evidence | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | staged — final reconciliation pending |
-| GOV-01 | Governed changes require exact plan-local prior approval, trusted commit provenance, and singular reversible state-bound remote batches | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | staged — final reconciliation pending |
-| GOV-02 | Trusted plan identity selects the full schema and rejects demand-gated or unrelated implementation scope | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | staged — final reconciliation pending |
+| EVID-01 | One literal ledger covers all 37 active requirements and six personas while preserving planned/canary visibility | `test/adoption/evidence_contract_test.exs` | `mix ci.evidence` | green |
+| EVID-02 | Closure requires a valid existing row, one executable argv, a real alias, registered non-zero ExUnit selection, and an unconditional blocking workflow owner for every planning path | Both Phase 73 contract modules | `mix ci.evidence` | green |
+| QUAL-01 | The dated seven-category/five-severity inventory is fail-closed and every row has tracked non-symlink or executable provenance | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
+| PIPE-01 | The nine-surface CI baseline retains measured topology, sample duration, duplication, cache, ownership, drift, and redaction-safe failure evidence | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
+| GOV-01 | Governed changes require exact plan-local prior approval, trusted commit provenance, and singular reversible state-bound remote batches | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
+| GOV-02 | Trusted plan identity selects the full schema and rejects demand-gated or unrelated implementation scope | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
 
 ## Per-Task Verification Map
 
@@ -90,8 +90,8 @@ Every command is deterministic, non-watch, network-independent, and selected by 
 | 73-22-01 | EVID-01, EVID-02 | Simultaneous owner cache misses serialize through one caller-independent discovery | `mix test test/adoption/evidence_contract_test.exs --only plan_73_22_task_1 --warnings-as-errors` | green (1) |
 | 73-22-02 | EVID-01, EVID-02 | Pure snapshots bind to the complete normalized governed-input inventory | `mix test test/adoption/evidence_contract_test.exs --only plan_73_22_task_2 --warnings-as-errors` | green (1) |
 | 73-23-01 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Active-plan prerequisites are executable, ordered, and green before report mutation | `mix test test/governance/milestone_scope_test.exs --only plan_73_23_task_1 --warnings-as-errors` | green (1) |
-| 73-23-02 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Four focused selectors, three independent bounded evidence runs, and the complete security lane establish one proof set | `mix ci.evidence && mix ci.security` | staged — final reconciliation pending |
-| 73-23-03 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Security and Nyquist dispositions reduce only after the staged proof set is recorded | `mix ci.evidence` | pending final reconciliation |
+| 73-23-02 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Four focused selectors, three independent bounded evidence runs, and the complete security lane establish one proof set | `mix ci.evidence && mix ci.security` | green |
+| 73-23-03 | EVID-01, EVID-02, QUAL-01, PIPE-01, GOV-01, GOV-02 | Security and Nyquist dispositions reduce only after the staged proof set is recorded | `mix ci.evidence` | green |
 | post-merge-cwd | EVID-02 | Fixture alias inspection never mutates VM-global cwd | `mix test test/adoption/evidence_contract_test.exs --only cwd_isolation --warnings-as-errors` | green (1) |
 
 ## Automation and Safety Boundaries
@@ -113,7 +113,7 @@ Every command is deterministic, non-watch, network-independent, and selected by 
 - [x] Workflow syntax passes `actionlint`.
 - [x] The sole exact-seed full-suite failure is owned by Phase 77 and is not a Phase 73 gap.
 
-**Approval:** Pending final reconciliation. All 23 plans and 49 acceptance-bearing tasks are mapped; `plan_73_21_task_1`, `plan_73_21_task_2`, `plan_73_22_task_1`, and `plan_73_22_task_2` each passed 1 test; three unchanged `mix ci.evidence` runs passed 103 tests in 20s, 20s, and 21s; and the complete unchanged `mix ci.security` lane passed. The reports intentionally retain their pre-closeout dispositions until Task 3 reduces this single staged proof set.
+**Approval:** Nyquist-compliant across 23 plans and 49 acceptance-bearing tasks after `plan_73_21_task_1`, `plan_73_21_task_2`, `plan_73_22_task_1`, and `plan_73_22_task_2` each passed 1 test, three unchanged sub-60-second `mix ci.evidence` runs each passed 103 tests in 20s, 20s, and 21s, and the complete unchanged `mix ci.security` lane passed.
 
 ## Validation Audit 2026-09-10 — Final 11-Plan Coverage
 
@@ -215,3 +215,19 @@ Audit commands executed on 2026-09-11 with Elixir 1.19.5 / OTP 28.4.1:
 - `mix test test/adoption/evidence_contract_test.exs --only plan_73_22_task_2 --warnings-as-errors` — 1 test, 0 failures.
 - `mix ci.evidence` — three independent unchanged runs, each 103 tests and 0 failures, in 20s, 20s, and 21s.
 - `mix ci.security` — the complete unchanged alias exited 0 in 126s; the observed duration is informational because this plan applies no timing ceiling to the security lane.
+
+## Validation Audit 2026-09-11 — Plan 73-23 Final Reconciliation
+
+| Metric | Count |
+|--------|-------|
+| Phase requirements green | 6/6 |
+| Completed plans mapped | 23/23 |
+| Acceptance-bearing tasks mapped | 49/49 |
+| Current focused selectors | 4/4 passing |
+| Mandatory evidence attempts | 3/3 passing |
+| Mandatory evidence tests per attempt | 103 |
+| Mandatory evidence durations | 20s, 20s, 21s |
+| Complete security lane | passing; no timing ceiling |
+| Nyquist compliant | yes |
+
+Final reconciliation uses the staged 2026-09-11 proof set without reinterpreting historical audit samples: all four focused Plan 73-21/22 selectors passed with non-zero selection, all three unchanged `mix ci.evidence` processes passed below 60 seconds with identical counts, and the complete unchanged `mix ci.security` lane passed.
