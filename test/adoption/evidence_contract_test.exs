@@ -1250,6 +1250,88 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  @tag :plan_73_18_task_2
+  test "tracked regular lexical owners and checked-in owners remain valid", %{
+    repository_snapshot: checked_in_snapshot
+  } do
+    entries = AdoptionEvidence.entries()
+    assert :ok = AdoptionEvidence.validate_repository_snapshot!(entries, checked_in_snapshot)
+
+    root = repository_fixture!()
+    owner = "test/provenance/tracked_owner_test.exs"
+    write_fixture_file!(root, owner, "raise \"owner source must not compile in this fixture\"\n")
+    git_add_fixture!(root, [owner])
+
+    snapshot =
+      entries
+      |> replace_first_owner(owner)
+      |> AdoptionEvidence.repository_snapshot!(root,
+        registered_test_tags: fn path, fixture_root ->
+          send(self(), {:registered_owner, Path.relative_to(path, fixture_root)})
+          [%{"evidence_contract" => true}]
+        end
+      )
+
+    assert %{path: ^owner} = Enum.find(snapshot.owners, &(&1.path == owner))
+  end
+
+  @tag :plan_73_18_task_2
+  test "owner provenance rejects symlinks escapes absolute and untracked paths before discovery" do
+    entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
+
+    tracked_target = "test/provenance/tracked_target_test.exs"
+    untracked_owner = "test/provenance/untracked_owner_test.exs"
+    leaf_inside = "test/provenance/leaf_inside_test.exs"
+    leaf_outside = "test/provenance/leaf_outside_test.exs"
+    intermediate_link = "test/linked_provenance"
+    intermediate_owner = intermediate_link <> "/intermediate_owner_test.exs"
+    intermediate_target = "test/provenance/intermediate_owner_test.exs"
+    outside_owner = root <> "-outside-owner.exs"
+
+    for path <- [tracked_target, untracked_owner, intermediate_target] do
+      write_fixture_file!(root, path, "raise \"invalid owner reached compilation\"\n")
+    end
+
+    File.write!(outside_owner, "raise \"outside owner reached compilation\"\n")
+    on_exit(fn -> File.rm(outside_owner) end)
+
+    File.ln_s!("tracked_target_test.exs", Path.join(root, leaf_inside))
+    File.ln_s!(outside_owner, Path.join(root, leaf_outside))
+    File.ln_s!("provenance", Path.join(root, intermediate_link))
+
+    git_add_fixture!(root, [tracked_target, leaf_inside, leaf_outside, intermediate_link])
+
+    rejected = [
+      {intermediate_owner, ~r/symbolic link.*test\/linked_provenance/},
+      {leaf_inside, ~r/symbolic link.*leaf_inside_test\.exs/},
+      {leaf_outside, ~r/symbolic link.*leaf_outside_test\.exs/},
+      {"../#{Path.basename(outside_owner)}", ~r/normalized repository-relative/},
+      {outside_owner, ~r/normalized repository-relative/},
+      {untracked_owner, ~r/not tracked.*#{Regex.escape(untracked_owner)}/}
+    ]
+
+    for {owner, diagnostic} <- rejected do
+      test_process = self()
+
+      error =
+        assert_raise ArgumentError, diagnostic, fn ->
+          entries
+          |> replace_first_owner(owner)
+          |> AdoptionEvidence.repository_snapshot!(root,
+            registered_test_tags: fn path, fixture_root ->
+              relative = Path.relative_to(path, fixture_root)
+              send(test_process, {:registered_owner, relative})
+              [%{"evidence_contract" => true}]
+            end
+          )
+        end
+
+      assert Exception.message(error) =~ "missing owner file"
+      refute_receive {:registered_owner, ^owner}
+    end
+  end
+
   defp active_requirements do
     @requirements_path
     |> File.read!()
@@ -1326,6 +1408,11 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     Enum.map(entries, fn entry ->
       if entry.id == target.id, do: Map.merge(entry, updates), else: entry
     end)
+  end
+
+  defp replace_first_owner(entries, owner) do
+    [first | _] = AdoptionEvidence.deterministic_owners(entries, "EVID-01")
+    replace_entry(entries, first, %{owner: owner})
   end
 
   defp fixture_evidence_step do
@@ -1450,5 +1537,16 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     on_exit(fn -> File.rm_rf!(root) end)
     root
+  end
+
+  defp write_fixture_file!(root, path, contents) do
+    destination = Path.join(root, path)
+    File.mkdir_p!(Path.dirname(destination))
+    File.write!(destination, contents)
+  end
+
+  defp git_add_fixture!(root, paths) do
+    {output, status} = System.cmd("git", ["add", "--" | paths], cd: root, stderr_to_stdout: true)
+    assert status == 0, output
   end
 end
