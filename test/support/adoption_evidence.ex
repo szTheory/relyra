@@ -1276,11 +1276,7 @@ defmodule Relyra.AdoptionEvidence do
             do: String.trim_leading(pattern, "!"),
             else: pattern
 
-        if glob == "" do
-          raise ArgumentError, "workflow paths contains an empty negative pattern"
-        end
-
-        glob_regex!(glob)
+        workflow_glob_regex!(event, glob)
       end)
 
       raise ArgumentError,
@@ -1291,7 +1287,7 @@ defmodule Relyra.AdoptionEvidence do
       raise ArgumentError, "workflow paths-ignore does not support negative patterns"
     end
 
-    Enum.each(paths_ignore || [], &glob_regex!/1)
+    Enum.each(paths_ignore || [], &workflow_glob_regex!(event, &1))
 
     governed_inputs
     |> Enum.each(fn path ->
@@ -1432,10 +1428,6 @@ defmodule Relyra.AdoptionEvidence do
           value
       end
 
-    if normalized == "" or String.contains?(normalized, ["\n", "\r", "\\", "{", "}"]) do
-      raise ArgumentError, "workflow #{key} contains an unsupported pattern #{inspect(value)}"
-    end
-
     normalized
   end
 
@@ -1450,43 +1442,70 @@ defmodule Relyra.AdoptionEvidence do
       raise ArgumentError, "workflow path pattern must contain printable ASCII only"
     end
 
-    case Regex.compile("\\A" <> glob_source!(pattern) <> "\\z") do
+    segments = String.split(pattern, "/", trim: false)
+    validate_glob_segments!(segments)
+
+    case Regex.compile("\\A" <> glob_source!(segments) <> "\\z") do
       {:ok, regex} -> regex
       {:error, reason} -> raise ArgumentError, "unsupported workflow path pattern: #{reason}"
     end
   end
 
-  defp glob_source!(<<>>), do: ""
+  defp workflow_glob_regex!(event, pattern) do
+    glob_regex!(pattern)
+  rescue
+    error in ArgumentError ->
+      raise ArgumentError,
+            "workflow #{event} contains unsupported path pattern #{inspect(pattern)}: #{Exception.message(error)}"
+  end
 
-  defp glob_source!(<<"**/", rest::binary>>),
-    do: "(?:.*/)?" <> glob_source!(rest)
+  defp validate_glob_segments!(segments) do
+    cond do
+      segments == [] or Enum.any?(segments, &(&1 == "")) ->
+        raise ArgumentError, "workflow path pattern must be a non-empty relative path"
 
-  defp glob_source!(<<"**", rest::binary>>), do: ".*" <> glob_source!(rest)
-  defp glob_source!(<<"*", rest::binary>>), do: "[^/]*" <> glob_source!(rest)
-  defp glob_source!(<<"?", rest::binary>>), do: "[^/]" <> glob_source!(rest)
+      Enum.any?(segments, &(&1 in [".", ".."])) ->
+        raise ArgumentError, "workflow path pattern must not contain dot path components"
 
-  defp glob_source!(<<"[", rest::binary>>) do
-    case :binary.split(rest, "]") do
-      [class, remaining] when class != "" ->
-        normalized_class =
-          case class do
-            <<"!", negated::binary>> when negated != "" -> "^" <> negated
-            _other -> class
-          end
-
-        if String.contains?(normalized_class, ["[", "\\", "/"]) do
-          raise ArgumentError, "unsupported workflow path character class"
-        end
-
-        "[" <> normalized_class <> "]" <> glob_source!(remaining)
-
-      _other ->
-        raise ArgumentError, "unclosed workflow path character class"
+      true ->
+        Enum.each(segments, &validate_glob_segment!/1)
     end
   end
 
-  defp glob_source!(<<character, rest::binary>>),
-    do: Regex.escape(<<character>>) <> glob_source!(rest)
+  defp validate_glob_segment!("**"), do: :ok
+
+  defp validate_glob_segment!(segment) do
+    cond do
+      String.contains?(segment, "[") and not String.contains?(segment, "]") ->
+        raise ArgumentError, "unclosed workflow path character class"
+
+      String.contains?(segment, "**") ->
+        raise ArgumentError, "double star must occupy a complete path segment"
+
+      not String.match?(segment, ~r/\A[A-Za-z0-9._*-]+\z/) ->
+        raise ArgumentError,
+              "path segments may contain only literal letters, digits, dot, underscore, hyphen, and single star"
+
+      true ->
+        :ok
+    end
+  end
+
+  defp glob_source!(["**"]), do: ".*"
+
+  defp glob_source!(["**" | remaining]),
+    do: "(?:[^/]+/)*" <> glob_source!(remaining)
+
+  defp glob_source!([segment]), do: segment_glob_source(segment)
+
+  defp glob_source!([segment | remaining]),
+    do: segment_glob_source(segment) <> "/" <> glob_source!(remaining)
+
+  defp segment_glob_source(segment) do
+    segment
+    |> String.split("*", trim: false)
+    |> Enum.map_join("[^/]*", &Regex.escape/1)
+  end
 
   defp validate_member!(id, field, value, vocabulary) do
     unless value in vocabulary do
