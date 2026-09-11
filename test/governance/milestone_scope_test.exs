@@ -440,9 +440,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert validation =~ "status: gaps_found"
     assert validation =~ "nyquist_compliant: false"
-    assert validation =~ "EVID-02 |" and validation =~ "EVID-02 | blocked"
-    assert validation =~ "GOV-01 |" and validation =~ "GOV-01 | blocked"
-    assert validation =~ "GOV-02 |" and validation =~ "GOV-02 | blocked"
+    assert validation =~ ~r/^\| EVID-02 \|.*\| blocked/m
+    assert validation =~ ~r/^\| GOV-01 \|.*\| blocked/m
+    assert validation =~ ~r/^\| GOV-02 \|.*\| blocked/m
 
     correction_section =
       validation

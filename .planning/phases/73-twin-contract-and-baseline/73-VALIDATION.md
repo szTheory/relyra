@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: validated
-nyquist_compliant: true
+status: gaps_found
+nyquist_compliant: false
 wave_0_complete: true
 created: "2026-09-09"
 revised: "2026-09-11"
@@ -31,11 +31,11 @@ revised: "2026-09-11"
 | Requirement | Observable contract | Behavioral owner | Mandatory command | Status |
 |-------------|---------------------|------------------|-------------------|--------|
 | EVID-01 | One literal ledger covers all 37 active requirements and six personas while preserving planned/canary visibility | `test/adoption/evidence_contract_test.exs` | `mix ci.evidence` | green |
-| EVID-02 | Closure requires a valid existing row, one executable argv, a real alias, registered non-zero ExUnit selection, and an unconditional blocking workflow owner for every planning path | Both Phase 73 contract modules | `mix ci.evidence` | green |
+| EVID-02 | Closure requires a valid existing row, one executable argv, a real alias, registered non-zero ExUnit selection, and an unconditional blocking workflow owner for every planning path | Both Phase 73 contract modules | `mix ci.evidence` | blocked — CR-01, CR-02, CR-03, WR-01 |
 | QUAL-01 | The dated seven-category/five-severity inventory is fail-closed and every row has tracked non-symlink or executable provenance | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
 | PIPE-01 | The nine-surface CI baseline retains measured topology, sample duration, duplication, cache, ownership, drift, and redaction-safe failure evidence | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
-| GOV-01 | Governed changes require exact plan-local prior approval, trusted commit provenance, and singular reversible state-bound remote batches | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
-| GOV-02 | Trusted plan identity selects the full schema and rejects demand-gated or unrelated implementation scope | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | green |
+| GOV-01 | Governed changes require exact plan-local prior approval, trusted commit provenance, and singular reversible state-bound remote batches | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | blocked — CR-04, CR-05, CR-06 |
+| GOV-02 | Trusted plan identity selects the full schema and rejects demand-gated or unrelated implementation scope | `test/governance/milestone_scope_test.exs` | `mix ci.evidence` | blocked — CR-04, CR-05, CR-06 |
 
 ## Per-Task Verification Map
 
@@ -245,3 +245,15 @@ Final reconciliation uses the staged 2026-09-11 proof set without reinterpreting
 | Nyquist compliant | yes |
 
 The post-execution Nyquist capability rechecked the committed Plan 73-23 result set and found no validation gap requiring a new test or implementation change.
+
+## Validation Audit 2026-09-11 — Current-Review Correction
+
+| Metric | Count |
+|--------|-------|
+| Review timestamp | 2026-09-11T19:23:38Z |
+| Current blocker findings | 6 — CR-01, CR-02, CR-03, CR-04, CR-05, CR-06 |
+| Current warning findings | 1 — WR-01 |
+| Blocked requirements | 3 — EVID-02, GOV-01, GOV-02 |
+| Nyquist compliant | no |
+
+The refreshed review supersedes the earlier green-only seal with seven uncovered counterexample families: CR-01 twin-field governed-inventory omission or substitution; CR-02 unmodeled Mix argv zero-test modes; CR-03 a skipped `jobs.security` prerequisite; CR-04 attribute-free or malformed task disappearance; CR-05 SUMMARY-add boundary omission; CR-06 merge-commit changed-surface omission; and WR-01 multiple-include plus include-overrides-exclude semantics. Historical audit rows remain unchanged, and later repair evidence must follow this correction before final disposition.

@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: verified
-threats_open: 0
+status: issues_found
+threats_open: 6
 asvs_level: 1
 block_on: high
 created: "2026-09-09"
@@ -64,10 +64,17 @@ created: "2026-09-09"
 | T-73-70 | Tampering | GitHub path-filter semantic mismatch | critical | mitigate | Closed by the unsupported-metacharacter corpus, including `.planning/STATE.md?`, and grammar-first rejection before governed-input comparison. `plan_73_18_task_1` passed 3 tests, all three unchanged sub-60-second `mix ci.evidence` runs passed 99 tests, and `mix ci.security` passed. | closed — fail-closed path grammar evidence |
 | T-73-71 | Spoofing | symlink/untracked lexical owner provenance | medium | mitigate | Closed by component-wise non-symlink `File.lstat/1`, regular-leaf validation, and exact lexical `git ls-files --error-unmatch` tracking controls before discovery. `plan_73_18_task_2` passed 2 tests, all three unchanged sub-60-second `mix ci.evidence` runs passed 99 tests, and `mix ci.security` passed. | closed — exact owner provenance evidence |
 | T-73-76 | Tampering | exported pure snapshot `governed_inputs` inventory | medium | mitigate | Closed by binding candidate governed inputs to the complete normalized stable capture inventory before reduction and rejecting omission, substitution, parent escape, absolute path, and reorder mutations. `plan_73_22_task_2` passed 1 test; the three unchanged `mix ci.evidence` runs and complete `mix ci.security` lane passed. | closed — governed inventory evidence |
+| T-73-91 | Tampering | snapshot governed-input authority | high | mitigate | Recompute tracked governed inputs from the separately supplied repository root and compare both candidate lists before workflow reduction. | open — CR-01 |
+| T-73-92 | Elevation of Privilege | Mix test argv | high | mitigate | Fully consume one closed test grammar, require a positive selected set, and reproduce and reject zero-test successful modes. | open — CR-02 |
+| T-73-93 | Denial of Service | `jobs.security` dependency graph | high | mitigate | Reject every direct `needs` declaration on the mandatory security job and cover a skipped prerequisite. | open — CR-03 |
+| T-73-94 | Tampering | PLAN task and acceptance parser | high | transfer | Keep open for Plan 73-25's closed task grammar and acceptance ownership repair. | open — CR-04 |
+| T-73-95 | Repudiation | SUMMARY-add completion boundary | high | transfer | Keep open for Plan 73-25's completion-boundary classification repair. | open — CR-05 |
+| T-73-96 | Tampering | merge commit changed surfaces | high | transfer | Keep open for Plan 73-25's explicit linear-history enforcement. | open — CR-06 |
+| T-73-97 | Denial of Service | ExUnit include reduction | medium | mitigate | Share one OR/override selector predicate between live and snapshot paths and compare it with real commands. | open — WR-01 |
 | DEP-73-01 | Tampering | Phoenix request handling dependency | high | mitigate | Upgraded Phoenix from 1.8.7 to 1.8.13 with its coupled transport dependencies in `ae1f0aa`; `mix ci.security` and `mix deps.audit` pass. | closed |
 | DEP-73-02 | Tampering | Phoenix request handling dependency | medium | mitigate | The Phoenix 1.8.13 upgrade resolves `GHSA-63mc-hw7g-86rr`; the post-upgrade dependency audit passes. | closed |
 
-The register contains 36 threats: 35 closed and one open. No open threat is at or above the configured `high` threshold, so `threats_open: 0`; `T-73-12` remains visible as one open medium follow-up below that threshold.
+The register contains 43 threats: 35 closed and 8 open. Six open threats are at or above the configured `high` threshold, so `threats_open: 6`; `T-73-12` and `T-73-97` remain visible as two open medium follow-ups below that threshold.
 
 ---
 
@@ -111,6 +118,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 | 2026-09-11 | 36 | 33 | 3 (1 blocking, 2 non-blocking) | Plan 73-23 evidence staging: `plan_73_21_task_1`, `plan_73_21_task_2`, `plan_73_22_task_1`, and `plan_73_22_task_2` each passed 1 test; three unchanged `mix ci.evidence` runs each passed 103 tests in 20s, 20s, and 21s; the complete unchanged `mix ci.security` lane passed (126s observed, with no timing ceiling). Final disposition reconciliation remains pending. |
 | 2026-09-11 | 36 | 35 | 1 non-blocking | Plan 73-23 final reconciliation: `plan_73_21_task_1`, `plan_73_21_task_2`, `plan_73_22_task_1`, and `plan_73_22_task_2` each passed 1 test; three unchanged sub-60-second `mix ci.evidence` runs each passed 103 tests in 20s, 20s, and 21s; the complete unchanged `mix ci.security` lane passed. T-73-67 and T-73-76 close while T-73-12 remains an open medium follow-up below the blocking threshold. |
 | 2026-09-11 | 36 | 35 | 1 non-blocking | ASVS L1 execute-phase post-hook recheck: the plan-authored register remains fully dispositioned, `threats_open: 0` at the configured high threshold, and T-73-12 remains visible as the sole open medium follow-up. |
+| 2026-09-11 | 43 | 35 | 8 (6 blocking, 2 non-blocking) | Post-review correction for the 2026-09-11T19:23:38Z review: T-73-91 through T-73-97 registered open before source repair; CR-01 through CR-06 block closure and WR-01 remains a medium follow-up. |
 
 ---
 
@@ -118,7 +126,7 @@ These dependency findings are not reclassified as accepted risks and are not con
 
 - [x] All threats have a disposition (mitigate / accept / transfer)
 - [x] Accepted risks documented in Accepted Risks Log
-- [x] `threats_open: 0` confirmed
-- [x] `status: verified` set in frontmatter
+- [ ] `threats_open: 0` confirmed
+- [ ] `status: verified` set in frontmatter
 
-**Approval:** verified after `plan_73_21_task_1`, `plan_73_21_task_2`, `plan_73_22_task_1`, and `plan_73_22_task_2` each passed 1 test, three unchanged sub-60-second `mix ci.evidence` runs each passed 103 tests in 20s, 20s, and 21s, and the complete unchanged `mix ci.security` lane passed; T-73-12 remains visible as an open medium follow-up below the configured high blocking threshold.
+**Approval:** withdrawn after the 2026-09-11T19:23:38Z review confirmed CR-01 through CR-06 as blocker-class fail-open paths. T-73-12 and WR-01 remain visible medium follow-ups; fresh repair evidence and final reconciliation are still required.
