@@ -399,6 +399,64 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              Enum.map_join(violations, "\n", &"  - #{&1}")
   end
 
+  @tag :plan_73_24_task_1
+  test "current review findings are registered open before repair evidence" do
+    phase_dir = ".planning/phases/73-twin-contract-and-baseline"
+    security = File.read!(Path.join(phase_dir, "73-SECURITY.md"))
+    validation = File.read!(Path.join(phase_dir, "73-VALIDATION.md"))
+
+    assert security =~ "status: issues_found"
+    assert security =~ "threats_open: 6"
+    assert security =~ "43 threats: 35 closed and 8 open"
+    assert security =~ ~r/^\| T-73-12 \|.*\| medium \|.*\| open/m
+
+    for {threat, finding, severity} <- [
+          {"T-73-91", "CR-01", "high"},
+          {"T-73-92", "CR-02", "high"},
+          {"T-73-93", "CR-03", "high"},
+          {"T-73-94", "CR-04", "high"},
+          {"T-73-95", "CR-05", "high"},
+          {"T-73-96", "CR-06", "high"},
+          {"T-73-97", "WR-01", "medium"}
+        ] do
+      rows = Regex.scan(~r/^\| #{threat} \|.*$/m, security) |> List.flatten()
+      assert [row] = rows, "expected one unique #{threat} row, got: #{inspect(rows)}"
+      assert row =~ "| #{severity} |"
+      assert row =~ finding
+      assert row =~ "| open"
+    end
+
+    security_correction =
+      "Post-review correction for the 2026-09-11T19:23:38Z review"
+
+    validation_correction =
+      "## Validation Audit 2026-09-11 — Current-Review Correction"
+
+    assert {:ok, security_offset} = byte_offset(security, security_correction)
+    assert {:ok, validation_offset} = byte_offset(validation, validation_correction)
+
+    assert security =~
+             "| 2026-09-11 | 43 | 35 | 8 (6 blocking, 2 non-blocking) | #{security_correction}"
+
+    assert validation =~ "status: gaps_found"
+    assert validation =~ "nyquist_compliant: false"
+    assert validation =~ "EVID-02 |" and validation =~ "EVID-02 | blocked"
+    assert validation =~ "GOV-01 |" and validation =~ "GOV-01 | blocked"
+    assert validation =~ "GOV-02 |" and validation =~ "GOV-02 | blocked"
+
+    correction_section =
+      validation
+      |> String.split(validation_correction, parts: 2)
+      |> List.last()
+
+    for finding <- ~w(CR-01 CR-02 CR-03 CR-04 CR-05 CR-06 WR-01) do
+      assert correction_section =~ finding
+    end
+
+    assert_later_plan_73_26_rows_follow!(security, security_offset)
+    assert_later_plan_73_26_rows_follow!(validation, validation_offset)
+  end
+
   test "all approval classes require a matching plan-local blocking decision before mutation" do
     for approval_class <- @approval_classes -- ["remote_github"] do
       clean = risky_plan_fixture(approval_class)
@@ -4196,5 +4254,24 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     path = Path.join(tmp_dir, "73-BASELINE.md")
     File.write!(path, markdown)
     path
+  end
+
+  defp byte_offset(markdown, marker) do
+    case :binary.match(markdown, marker) do
+      {offset, _length} -> {:ok, offset}
+      :nomatch -> :error
+    end
+  end
+
+  defp assert_later_plan_73_26_rows_follow!(markdown, correction_offset) do
+    markdown
+    |> String.split("\n")
+    |> Enum.filter(&String.contains?(&1, "Plan 73-26"))
+    |> Enum.each(fn row ->
+      assert {:ok, offset} = byte_offset(markdown, row)
+
+      assert offset > correction_offset,
+             "Plan 73-26 row predates current-review correction: #{row}"
+    end)
   end
 end
