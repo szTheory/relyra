@@ -493,6 +493,115 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_later_plan_73_26_rows_follow!(validation, validation_offset)
   end
 
+  @tag :plan_73_26_task_1
+  test "one canonical source-bound proof stages identically before disposition changes" do
+    reconciliation = Relyra.Phase73Reconciliation
+
+    assert function_exported?(reconciliation, :validate_documents!, 4),
+           "Phase 73 reconciliation validator must exist before proof staging"
+
+    root = File.cwd!()
+    proof = apply(reconciliation, :fixture_proof!, [root])
+    {security, validation} = apply(reconciliation, :fixture_documents!, [proof, :staged])
+
+    assert :ok = apply(reconciliation, :validate_documents!, [security, validation, proof, root])
+
+    mutations = [
+      {"stale source digest",
+       Map.put(proof, "source_digest", "sha256:" <> String.duplicate("0", 64))},
+      {"missing proof field", Map.delete(proof, "focused")},
+      {"fabricated result", put_in(proof, ["evidence_runs", Access.at(0), "exit_code"], 1)},
+      {"fabricated count",
+       put_in(proof, ["focused", Access.at(0), "summaries", Access.at(0), "tests"], 0)},
+      {"fabricated output digest",
+       put_in(proof, ["focused", Access.at(0), "output_sha256"], "forged")},
+      {"zero-test security constituent",
+       put_in(proof, ["security_constituents", Access.at(0), "summary", "tests"], 0)},
+      {"missing owner", update_in(proof, ["acceptance_task_ids"], &tl/1)},
+      {"duplicate owner",
+       update_in(proof, ["acceptance_task_ids"], fn ids -> ids ++ [hd(ids)] end)},
+      {"extra owner", update_in(proof, ["acceptance_task_ids"], &(&1 ++ ["73-99-99"]))}
+    ]
+
+    for {name, corrupt} <- mutations do
+      {corrupt_security, corrupt_validation} =
+        apply(reconciliation, :fixture_documents!, [corrupt, :staged])
+
+      error =
+        assert_raise ArgumentError, fn ->
+          apply(reconciliation, :validate_documents!, [
+            corrupt_security,
+            corrupt_validation,
+            corrupt,
+            root
+          ])
+        end
+
+      assert Exception.message(error) != "", "#{name} must fail with a diagnostic"
+    end
+
+    assert_raise ArgumentError, ~r/identical canonical proof/, fn ->
+      apply(reconciliation, :validate_documents!, [
+        String.replace(security, proof["proof_set_id"], "phase73-forged", global: false),
+        validation,
+        proof,
+        root
+      ])
+    end
+
+    assert_raise ArgumentError, ~r/open.*staged.*final|chronology/s, fn ->
+      reordered = String.replace(security, "PHASE73_OPEN_REVIEW", "PHASE73_OPEN_REVIEW_LATE")
+      apply(reconciliation, :validate_documents!, [reordered, validation, proof, root])
+    end
+  end
+
+  @tag :plan_73_26_task_2
+  test "final reconciliation requires exact closures owners and positive security constituents" do
+    reconciliation = Relyra.Phase73Reconciliation
+
+    assert function_exported?(reconciliation, :validate_repository!, 1),
+           "Phase 73 repository reconciliation must exist before final status"
+
+    root = File.cwd!()
+    proof = apply(reconciliation, :fixture_proof!, [root])
+    {security, validation} = apply(reconciliation, :fixture_documents!, [proof, :final])
+
+    assert :ok = apply(reconciliation, :validate_documents!, [security, validation, proof, root])
+    assert length(proof["acceptance_task_ids"]) == 56
+    assert List.last(proof["acceptance_task_ids"]) == "73-26-02"
+
+    [first_owner | _] = proof["acceptance_task_ids"]
+
+    for invalid <- [
+          String.replace(validation, "| #{first_owner} |", "| 73-99-99 |", global: false),
+          String.replace(validation, "| #{first_owner} |", "", global: false),
+          String.replace(validation, "nyquist_compliant: true", "nyquist_compliant: false",
+            global: false
+          ),
+          String.replace(validation, "PHASE73_FINAL_RECONCILIATION", "", global: false)
+        ] do
+      assert_raise ArgumentError, fn ->
+        apply(reconciliation, :validate_documents!, [security, invalid, proof, root])
+      end
+    end
+
+    for invalid <- [
+          String.replace(security, "threats_open: 0", "threats_open: 1", global: false),
+          String.replace(
+            security,
+            "43 threats: 42 closed and 1 open",
+            "43 threats: 41 closed and 2 open",
+            global: false
+          ),
+          String.replace(security, "T-73-91_CLOSED", "", global: false),
+          String.replace(security, "PHASE73_FINAL_RECONCILIATION", "", global: false)
+        ] do
+      assert_raise ArgumentError, fn ->
+        apply(reconciliation, :validate_documents!, [invalid, validation, proof, root])
+      end
+    end
+  end
+
   @tag :plan_73_25_task_1
   test "task regions reject every unconsumed or empty executable shape" do
     clean = no_risk_plan_fixture()
