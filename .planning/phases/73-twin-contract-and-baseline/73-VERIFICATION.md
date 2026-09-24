@@ -1,13 +1,14 @@
 ---
 phase: 73-twin-contract-and-baseline
-verified: 2026-09-11T23:32:37Z
+verified: 2026-09-24T14:35:04Z
 status: gaps_found
-score: 6/9 must-haves verified
+score: 3/4 must-haves verified
 covered_files:
   - ".github/workflows/security-gates.yml"
   - ".planning/REQUIREMENTS.md"
   - ".planning/ROADMAP.md"
   - ".planning/STATE.md"
+  - ".planning/WINDOWS.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-01-PLAN.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-01-SUMMARY.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-02-PLAN.md"
@@ -60,83 +61,69 @@ covered_files:
   - ".planning/phases/73-twin-contract-and-baseline/73-25-SUMMARY.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-26-PLAN.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-26-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-27-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-27-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-28-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-28-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-29-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-29-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-30-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-30-SUMMARY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-31-PLAN.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-31-SUMMARY.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-CONTEXT.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-DISCUSSION-LOG.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-PATTERNS.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json"
+  - ".planning/phases/73-twin-contract-and-baseline/73-RESEARCH.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-REVIEW.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-SECURITY.md"
+  - ".planning/phases/73-twin-contract-and-baseline/73-UI-REVIEW.md"
   - ".planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md"
+  - ".planning/phases/73-twin-contract-and-baseline/COVERAGE.md"
+  - ".planning/phases/73-twin-contract-and-baseline/deferred-items.md"
+  - ".planning/phases/73-twin-contract-and-baseline/prompt.txt"
+  - "AGENTS.md"
   - "mix.exs"
   - "test/adoption/evidence_contract_test.exs"
   - "test/governance/milestone_scope_test.exs"
+  - "test/governance/phase_73_reconciliation_test.exs"
   - "test/support/adoption_evidence.ex"
   - "test/support/phase_73_reconciliation.ex"
-covered_digest: "v1:sha256:5e18df8d6e4e086db27a8ec1b63112c32c9e92b20efe49640cf645004cfc9576"
+covered_digest: "v1:sha256:00d852bb5e8fa25331ca14a145b2aba085f326e3a821423afadbfb80a4036f88"
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
   previous_status: gaps_found
   previous_score: 6/9
   gaps_closed:
-    - "Plans 73-24 and 73-25 reject the prior inventory, argv, dependency, malformed-task, boundary, and merge counterexamples."
+    - "Required workflow events are anchored beneath the real top-level on mapping and the Evidence owner is structurally mandatory."
+    - "Duplicate task children and post-SUMMARY plan descendants are classified by current governance tests before scope reduction."
   gaps_remaining:
-    - "Proof identity and final report state are forgeable; security inventory is self-shrinking; actual proof/report replay is not mandatory."
-    - "Required workflow events need not belong to a real top-level on mapping."
-    - "Duplicate task children and foreign-scoped descendant commits disappear before governance classification."
+    - "A current mandatory proof replay reaches the evidence lane, but its active-plan governance test exceeds the 60-second ExUnit timeout under the full lane."
   regressions:
-    - "CR-01 through CR-07 affect files committed after the previous 2026-09-11T19:36:28Z verification."
+    - "The current full ci.evidence execution reports one timeout in active v1.11 plan governance; its isolated named owner passes."
 gaps:
-  - truth: "Automated policy checks prevent new acceptance criteria from being closed without a mandatory deterministic owner."
+  - truth: "Mandatory deterministic evidence completes and provides a passing current proof for the acceptance-owner and plan-governance contracts."
     status: failed
-    reason: "Four fail-open paths remain: forged result vectors retain a proof ID, event text need not be under on, security-suite removal lowers the expected count, and mandatory CI never validates/replays the checked-in final artifacts."
+    reason: "The checked-in proof validator and all 15 focused selectors pass, but the replayed ci.evidence lane exits nonzero: 124 tests, 1 failure. The active-plan governance test times out at 60 seconds when run with the full evidence lane; its isolated plan_73_23_task_1 run passes in 27.8 seconds. This leaves the Phase 73 mandatory owner lane red under current execution."
     artifacts:
+      - path: "test/governance/milestone_scope_test.exs"
+        issue: "The all-active-plans governance test at line 558 exceeds the default ExUnit timeout under full ci.evidence load."
       - path: "test/support/phase_73_reconciliation.ex"
-        issue: "No proof-ID recomputation; substring-based final state; self-derived security inventory."
-      - path: "test/support/adoption_evidence.ex"
-        issue: "Required events are searched across the whole workflow."
-      - path: "test/governance/milestone_scope_test.exs"
-        issue: "Plan 26 tests use generated fixtures and never call the real-artifact validator."
+        issue: "verify_repository_evidence!/1 correctly propagates the evidence-lane failure, so the current reconciliation replay exits nonzero before the fresh security-lane replay."
     missing:
-      - "Recompute proof identity; parse singular typed report state; pin the exact 13 suites from the supplied root."
-      - "Anchor events under one exact on mapping and wire real artifact validation/replay into non-recursive mandatory CI."
-  - truth: "Plans and execution stop at named checkpoints for governed changes and exclude speculative protocol work."
-    status: failed
-    reason: "Duplicate action/files sections collapse to empty strings, and foreign-scoped descendant commits are filtered out before classification."
-    artifacts:
-      - path: "test/governance/milestone_scope_test.exs"
-        issue: "Task child cardinality is unchecked and post_summary_plan_commits/4 trusts subject scope as a filter."
-    missing:
-      - "Require singular closed child sections before semantic reduction."
-      - "Classify every descendant commit, then map it to exactly one existing governed plan or reject it."
-  - truth: "The final Phase 73 proof, security report, and validation report are authoritative current evidence."
-    status: failed
-    reason: "The validator accepts altered counts under the same proof ID and false live states accompanied by decoy text."
-    artifacts:
-      - path: ".planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json"
-        issue: "Its ID is not recomputed during validation."
-      - path: ".planning/phases/73-twin-contract-and-baseline/73-SECURITY.md"
-        issue: "Live closure fields are not parsed authoritatively."
-      - path: ".planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md"
-        issue: "Live Nyquist fields are not parsed authoritatively."
-    missing:
-      - "Fail closed on proof identity, typed live state, and checked-in artifact drift."
-deferred:
-  - truth: "Repository-wide warnings-as-errors is green despite archival Phase 73 vocabulary."
-    addressed_in: "Phase 77"
-    evidence: "Phase 77 success criterion 2 and QUAL-04 explicitly own stale planning vocabulary."
-advisory:
-  - finding: "Security constituent discovery reads ambient Mix state instead of the supplied root."
-    category: security
-    reason: "Cross-checkout captures can misattribute summaries; thread root through isolated alias discovery."
-    evidence_status: "source-confirmed; no wrong-root execution"
+      - "Make the active-plan governance owner complete within the mandatory lane's ExUnit timeout, then rerun the current reconciliation proof successfully."
+      - "Capture a fresh proof only after the mandatory evidence and pinned security lanes pass."
 ---
 
 # Phase 73: Twin Contract and Baseline Verification Report
 
 **Phase Goal:** A maintainer can see exactly which adopter jobs v1.11 proves, where each proof runs, what the current quality/CI baseline is, and which changes require approval.
-**Verified:** 2026-09-11T23:32:37Z
+**Verified:** 2026-09-24T14:35:04Z
 **Status:** gaps_found
-**Re-verification:** Yes — after Plans 73-24 through 73-26 and the 2026-09-11T23:25:40Z review
+**Re-verification:** Yes — after the September 11 baseline; current 73-31 plan and summary included
 
 ## Goal Achievement
 
@@ -144,159 +131,114 @@ advisory:
 
 | # | Truth | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | Ledger maps every in-scope persona and lifecycle outcome to named evidence metadata. | ✓ VERIFIED | Literal registry remains complete; current 116-test lane exercises it. |
-| 2 | Repository has a dated severity-ranked quality and CI baseline. | ✓ VERIFIED | Ten findings, seven categories, five severities, and nine CI surfaces remain present and checked. |
-| 3 | Policy prevents closure without a mandatory deterministic owner. | ✗ FAILED — BLOCKER | CR-01, CR-03, CR-04, and CR-05 leave identity, events, security ownership, and final artifacts fail-open. |
-| 4 | Plans stop for governed changes and exclude speculative protocol work. | ✗ FAILED — BLOCKER | CR-06 and CR-07 erase task or commit evidence before classification. |
-| 5 | Planned/canary rows remain visible but cannot close requirements. | ✓ VERIFIED | Deterministic-owner reduction and active adversarial tests preserve this boundary. |
-| 6 | Planning-only changes run the current Evidence contract in the checked-in workflow. | ✓ VERIFIED | Current workflow has PR/main triggers and an unconditional `mix ci.evidence` step; CR-03 means the validator cannot preserve it against drift. |
-| 7 | Every baseline finding has evidence and lifecycle ownership fields. | ✓ VERIFIED | All ten rows retain the complete field set. |
-| 8 | Baseline shape/evidence are machine-checked by `ci.evidence`. | ✓ VERIFIED | Fresh run: 116 tests, 0 failures. |
-| 9 | Governed-change approval covers every relevant task and changed surface. | ✗ FAILED — BLOCKER | Duplicate task children and foreign descendants can disappear before approval is computed. |
+| 1 | A machine-checked ledger maps every in-scope persona and lifecycle outcome to named deterministic evidence or an explicitly scheduled external canary. | ✓ VERIFIED | `test/support/adoption_evidence.ex` defines the single closed ledger; its contract checks all 37 v1.11 requirement IDs, six personas, owner paths, effective selectors, aliases, and the required workflow. The evidence tests ran in the current replay. |
+| 2 | The repository has a severity-ranked baseline inventory for correctness, security, integration, readability, documentation, artifacts, and CI cost/duplication. | ✓ VERIFIED | `73-BASELINE.md` has ten findings across the seven required categories and a nine-surface CI snapshot; `milestone_scope_test.exs` validates the anchored schemas, severities, evidence, ownership, lifecycle fields, and redaction policy. |
+| 3 | Automated policy checks prevent new acceptance criteria from being closed without a mandatory deterministic owner. | ✗ FAILED — BLOCKER | The owner and mandatory workflow are wired, and the replay rejects closure on any failing proof. However, current `mix ci.phase73.reconciliation` exits 1 because the replayed `mix ci.evidence` result is 124 tests with one timeout. A currently red owner lane does not provide the required passing deterministic closure evidence. |
+| 4 | Plans and execution stop at named checkpoints for public API, default, security, SemVer-major, and remote GitHub changes, and exclude speculative protocol work. | ✓ VERIFIED | Current governance contracts derive lifecycle identity, task structure, changed surfaces, approval classes/order, exact remote batches, and the exact demand-gated exclusion set from checked-in plans and Git provenance. The owner test passes alone; the full lane timeout is recorded under Truth 3. |
 
-**Score:** 6/9 truths verified (0 present, behavior-unverified)
+**Score:** 3/4 roadmap truths verified (143 plan-frontmatter truths reviewed; see Plan Must-Have Audit)
 
-### Roadmap Success Criteria
+### Plan Must-Have Audit
 
-| # | Contract | Status |
-| --- | --- | --- |
-| 1 | Complete persona/outcome evidence ledger | ✓ VERIFIED |
-| 2 | Severity-ranked quality/CI baseline | ✓ VERIFIED |
-| 3 | No closure without mandatory deterministic ownership | ✗ FAILED — BLOCKER |
-| 4 | Prior checkpoints and feature-neutral plans/execution | ✗ FAILED — BLOCKER |
+All 31 current PLAN frontmatters and all 31 matching SUMMARYs were inspected. Their 143 plan-level truths expand the four roadmap contracts into ledger, baseline, approval, scope, provenance, and current-proof details. All are backed by current source and named automated owners except the mandatory fresh replay condition below; plan reports and summaries were treated as context, not runtime evidence.
 
-### All-Plan Must-Have Audit
+| Plan range | Plan-level must-have focus | Status | Evidence |
+| --- | --- | --- | --- |
+| 73-01–73-03 | Literal adopter ledger, evidence baseline, checkpoints, exclusions | ✓ VERIFIED | Adoption and governance contracts exercise closed vocabularies, coverage, path ownership, task scope, approval, and baseline schemas. |
+| 73-04–73-15 | Fail-closed owners, selectors, Mix/workflow parsing, provenance, and authorization | ✓ VERIFIED | Current adversarial contract tests validate malformed rows, empty selectors, unwired owners, workflow semantics, command grammar, tracked paths, and mutation checkpoints. |
+| 73-16–73-26 | Open-before-close history, current source ownership, exact task inventory, anti-hollow policy | ✓ VERIFIED | Current mandatory replay passed 15 focused selectors; the required 13-suite security lane separately passed. |
+| 73-27–73-31 | Recomputed proof, typed live report state, top-level workflow authority, total task/descendant inventory, final replay | ⚠️ PARTIAL | Checked-in proof/reports validate against current governed bytes; all focused selectors pass; current replay fails during `ci.evidence` before the reconciliation helper can freshly replay the pinned security inventory. |
 
-All 26 PLAN frontmatters were checked: **118 truths, 54 artifacts, 68 links, 63 prohibitions**. A failed row means at least one literal must-have is contradicted.
-
-| Plans | Status | Reason |
-| --- | --- | --- |
-| 73-02, 73-08, 73-11, 73-15, 73-17, 73-18, 73-20, 73-21, 73-22, 73-24 | ✓ VERIFIED | Their baseline, remote-state, exact-scope, cache/path, chronology, lifecycle, inventory, and prior-counterexample contracts remain active. Plan 15's literal exact-scope promise holds but is insufficient for the roadmap goal. |
-| 73-01, 73-04, 73-06, 73-09, 73-12, 73-14 | ✗ FAILED | Required-workflow ownership is not anchored beneath `on:`. |
-| 73-03, 73-05, 73-07, 73-10, 73-13, 73-25 | ✗ FAILED | Task-child or complete Git-provenance governance is not total. |
-| 73-16, 73-19, 73-23, 73-26 | ✗ FAILED | Final security/Nyquist reconciliation is not authoritative or mandatory. |
-
-Judgment-tier prohibitions were not silently passed. Prohibitions contradicted by CR-01 through CR-07 inherit their failed plan status; remaining negatives have source and active-test evidence. Project policy requires automation, so no manual gate is substituted.
+The 73-31 proof claims 31 tracked plans, 66 unique acceptance owners, 15 focused selectors, three matching bounded `ci.evidence` runs, and 13 security constituents. The live proof validator accepted the source-bound record and identical report blocks; the current replay independently confirmed the focused selectors, then failed on the full evidence lane. Its historical captured run values are not used to override this current failure.
 
 ### Deferred Items
 
-| Item | Addressed In | Evidence |
-| --- | --- | --- |
-| Repository-wide archival-vocabulary assertion | Phase 77 | Phase 77 success criterion 2 and QUAL-04 explicitly own stale planning vocabulary. |
-
-None of CR-01 through CR-07 matches a later roadmap phase closely enough to defer.
+None. The identified blocker concerns Phase 73's own mandatory proof lane and is not scheduled to a later phase.
 
 ### Advisory (New Scope, Unevidenced)
 
-| Finding | Category | Why advisory |
-| --- | --- | --- |
-| Security constituent discovery uses ambient Mix state, not supplied root | Security | Source confirms cross-checkout attribution risk, but no wrong-root execution was required to establish the seven blockers. |
+No new-scope findings were raised. The lifecycle mismatch below is informational and does not affect the goal verdict.
 
 ### Required Artifacts
 
-| Artifact | Status | Details |
-| --- | --- | --- |
-| `test/support/adoption_evidence.ex` | ✗ PARTIAL / BLOCKER | 1,807 substantive lines and active, but required events are unanchored. |
-| `test/adoption/evidence_contract_test.exs` | ✗ PARTIAL / BLOCKER | 1,935 active lines; lacks CR-03 regression. |
-| `test/governance/milestone_scope_test.exs` | ✗ PARTIAL / BLOCKER | 4,810 active lines; duplicate children/foreign descendants fail-open and final reconciliation is fixture-only. |
-| `test/support/phase_73_reconciliation.ex` | ✗ PARTIAL / BLOCKER | 661 lines; identity/state/security inventory incomplete; real validators orphaned from CI. |
-| `73-RECONCILIATION-PROOF.json` | ✗ UNTRUSTWORTHY | Exists, but ID is not recomputed from results. |
-| `73-SECURITY.md`; `73-VALIDATION.md` | ✗ UNTRUSTWORTHY | Final states can be satisfied by decoy strings. |
-| `73-BASELINE.md` | ✓ VERIFIED | Complete dated inventory, actively checked. |
-| `mix.exs`; workflow | ✓ CURRENT SHAPE | 116-test alias and real current triggers/step exist, but validators accept weaker mutations. |
+| Artifact | Expected | Status | Details |
+| --- | --- | --- | --- |
+| `test/support/adoption_evidence.ex` | Literal ledger and fail-closed closure/owner validation | ✓ VERIFIED | Substantive test-only registry; compiled and exercised through `ci.evidence`. |
+| `test/adoption/evidence_contract_test.exs` | Ledger, selector, alias, and workflow adversarial contract | ✓ VERIFIED | Real ExUnit module is selected by the fresh-process `ci.evidence` alias. |
+| `73-BASELINE.md` | Dated ranked quality findings and CI before-snapshot | ✓ VERIFIED | Ten findings; seven categories; five severities; nine CI surfaces; the governance contract validates its structure. |
+| `test/governance/milestone_scope_test.exs` | Baseline and plan-approval policy | ⚠️ PARTIAL | 123 of 124 current tests passed; `active v1.11 plans declare scope and stop before every risky mutation` timed out in the full run. The same tagged test passes by itself. |
+| `mix.exs` + `security-gates.yml` | Mandatory fresh-process Evidence and reconciliation owners | ✓ VERIFIED | AST/structure tests and live code show one `ci.evidence` step and one non-recursive `ci.phase73.reconciliation` step in `jobs.security`; both are unconditional. |
+| `test/support/phase_73_reconciliation.ex` + `phase_73_reconciliation_test.exs` | Source-bound proof validation and real current replay | ⚠️ PARTIAL | Proof identity, manifest, reports, chronology, and focused result vectors validate; the mandatory replay exits at its failing evidence command before security revalidation. |
+| `73-RECONCILIATION-PROOF.json`, `73-SECURITY.md`, `73-VALIDATION.md` | Current shared proof with authoritative reports | ⚠️ PARTIAL | Proof ID `phase73-2fc3c2eaf9548744` is recomputed and report blocks match; historical run results are valid for their captured source, but a fresh end-to-end replay did not pass. |
 
 ### Key Link Verification
 
-| From | To | Status | Details |
-| --- | --- | --- | --- |
-| Ledger | registered owners/alias | ✓ WIRED current source | Fresh lane selects 116 tests. |
-| Workflow | real PR/main triggers | ✗ PARTIAL | Event text outside `on:` is accepted. |
-| `ci.security` | 13 independent suites | ✗ PARTIAL | Expected list silently shrinks with filtered leaves. |
-| Proof results | proof-set ID | ✗ NOT WIRED | Validation checks only the prefix. |
-| Checked-in proof/reports | mandatory CI | ✗ NOT WIRED | Real validation/replay entry points have no caller. |
-| Task/Git inputs | approval classifier | ✗ PARTIAL | Duplicate children and foreign commits disappear. |
-| Baseline | governance owner | ✓ WIRED | Anchored and active in `ci.evidence`. |
+| From | To | Via | Status | Details |
+| --- | --- | --- | --- | --- |
+| Literal evidence rows | `test/adoption/evidence_contract_test.exs` | Real module/tag/file selection | ✓ WIRED | Current evidence contract executed; exact aliases and nonzero registered tests are checked. |
+| `ci.evidence` alias | `.github/workflows/security-gates.yml` | Enabled blocking `Evidence contract` step | ✓ WIRED | Workflow command is unconditional under `jobs.security`; planning paths are included. |
+| `73-BASELINE.md` | `test/governance/milestone_scope_test.exs` | Anchored table/schema parser | ✓ WIRED | Baseline contract tests ran in the evidence process. |
+| Plan files and task commits | Governance scope classifier | Repository plan identity and Git provenance | ✓ WIRED | Focused repairs pass; the all-plan aggregate test passes alone but times out under full-lane load. |
+| Checked-in proof | Security and validation reports | Recomputed proof ID and identical canonical embedded blocks | ✓ WIRED | Real checked-in artifacts validated before command replay. |
+| `ci.phase73.reconciliation` | Real proof replay | Dedicated test calls `verify_repository_evidence!/1` | ⚠️ PARTIAL | Replay is mandatory and fail-closed, but currently exits 1 at the `ci.evidence` subcommand. |
 
 ### Data-Flow Trace (Level 4)
 
-No rendered data exists. Repository/Git authority was traced through parsers, snapshots, result records, report reduction, and CI status. Proof ID validation, final-state search, security inventory discovery, and commit-scope filtering terminate in derived/caller-controlled input rather than independent authority.
-
-### Refreshed Review Validation
-
-| Finding | Independent evidence | Verdict |
-| --- | --- | --- |
-| CR-01 | Changed all three positive evidence counts, kept checked-in ID; validation returned `:ok`. | 🛑 CONFIRMED |
-| CR-02 | Changed live states to open, appended closed-state decoys; validation returned `:ok`. | 🛑 CONFIRMED |
-| CR-03 | Renamed top-level `on:` to `env:`; snapshot validation returned `:ok`. | 🛑 CONFIRMED |
-| CR-04 | Source filters all non-test alias leaves and derives expected count from the reduced list. | 🛑 CONFIRMED |
-| CR-05 | No callers exist for real validation/replay; Plan 26 uses fixture proof/documents. | 🛑 CONFIRMED |
-| CR-06 | Duplicate child sections make `tag_content/2` return empty before semantic reduction. | 🛑 CONFIRMED |
-| CR-07 | Descendants survive only when commit subject scope equals the current plan ID. | 🛑 CONFIRMED |
-| WR-01 | Security discovery uses ambient `Mix.Project.config/0`, not supplied root. | ⚠ CONFIRMED |
+Not applicable to rendered or query-backed application data. Phase 73 artifacts are a literal test ledger, Markdown inventory, governance parser, and machine-produced proof record. The proof's source manifest and command result vectors are recomputed from checked-in files and current command executions; no static UI fallback or mocked runtime data is involved.
 
 ### Behavioral Spot-Checks
 
-| Behavior | Result | Status |
-| --- | --- | --- |
-| Plan 26 focused selectors | 2 tests, 0 failures, 61 excluded | ✓ PASS, fixture-only |
-| `mix ci.evidence` | 116 tests, 0 failures in 26.2s | ✓ PASS, incomplete |
-| Forged counts / original identity | `:ok` | ✗ FAIL CLOSEDNESS |
-| False states / decoy closed strings | `:ok` | ✗ FAIL CLOSEDNESS |
-| Workflow without top-level `on:` | `:ok` | ✗ FAIL CLOSEDNESS |
-| `actionlint`; format; `git diff --check` | all exit 0 | ✓ PASS |
+| Behavior | Command | Result | Status |
+| --- | --- | --- | --- |
+| Validate current proof/reports and replay focused plus evidence owners | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.phase73.reconciliation` | Exit 1 after 319.8s. Proof/report checks and focused selectors completed; the nested evidence lane reported 124 tests, 1 failure: the all-active-plan scope test exceeded 60s. | ✗ FAIL |
+| Exercise the timed-out scope owner in isolation | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix test test/governance/milestone_scope_test.exs --only plan_73_23_task_1 --warnings-as-errors` | Exit 0; 1 test, 0 failures, 68 excluded; 27.8s. | ✓ PASS |
+| Verify the unchanged pinned security suite composition | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.security` | Exit 0; required fresh-process security suites completed with zero test failures. `hex.audit` reported unavailable in this runtime and continued per its configured behavior. | ✓ PASS |
 
 ### Probe Execution
 
-No phase-declared `probe-*.sh` exists. The three direct fail-open invocations above are deterministic probes.
+| Probe | Command | Result | Status |
+| --- | --- | --- | --- |
+| None declared | Phase PLAN/SUMMARY scan and `find scripts -path '*/tests/probe-*.sh' -type f` | No phase-declared or conventional probe scripts found. | N/A |
 
 ### Requirements Coverage
 
-| Requirement | Status | Evidence |
-| --- | --- | --- |
-| EVID-01 | ✓ SATISFIED | Literal six-persona/all-requirement ledger. |
-| EVID-02 | ✗ BLOCKED | CR-01 and CR-03 through CR-05 allow unbound/skipped/reduced/unchecked proof. |
-| QUAL-01 | ✓ SATISFIED | Complete seven-category baseline. |
-| PIPE-01 | ✓ SATISFIED | Complete dated nine-surface CI baseline. |
-| GOV-01 | ✗ BLOCKED | CR-06/CR-07 erase approval-relevant input. |
-| GOV-02 | ✗ BLOCKED | The same erasures can hide demand-gated implementation. |
+| Requirement | Source Plan | Description | Status | Evidence |
+| --- | --- | --- | --- | --- |
+| EVID-01 | 73-01, 06, 09, 11, 12, 14, 17, 18, 22–26, 30–31 | Machine-checked ledger maps six personas and v1.11 requirements to evidence | ✓ SATISFIED | Ledger schema, requirement/persona coverage, selected owner, and required-lane wiring exercised in the current evidence run. |
+| EVID-02 | 73-01, 04, 06, 09, 11, 12, 14, 16–31 | Acceptance closure requires deterministic ownership in mandatory CI | ✗ BLOCKED | Mandatory owner is wired and fail-closed, but current full evidence run exits nonzero due the governance-test timeout. |
+| QUAL-01 | 73-02, 05, 08, 11, 13, 15, 19–21, 23–27, 30–31 | Severity-ranked inventory covers seven requested quality categories | ✓ SATISFIED | `73-BASELINE.md` and its active structural contract. |
+| PIPE-01 | 73-02, 08, 11, 13, 15, 19–21, 23–28, 30–31 | Current CI duration, duplication, ownership, cache, and failure evidence | ✓ SATISFIED | Dated nine-surface snapshot plus machine-checked schema and ownership fields. |
+| GOV-01 | 73-03, 05, 07–08, 10–11, 13, 15–16, 19–21, 23–26, 29–31 | Named approval checkpoint for governed mutations | ✓ SATISFIED | Current approval-class, ordering, changed-surface, provenance, and exact remote-batch contracts; isolated active-plan owner passed. |
+| GOV-02 | 73-03, 05, 07, 10–11, 13, 15–16, 19–21, 23–26, 29–31 | No speculative protocol or unrelated product expansion | ✓ SATISFIED | Exact exclusions are parsed structurally; Phase 73 implementation changes are limited to test governance, local CI wiring, and planning evidence. |
 
-All six IDs exist in `REQUIREMENTS.md`, map to Phase 73, and appear in plan frontmatter. No Phase 73 requirement is orphaned.
-
-### Decision Coverage
-
-All 13 trackable CONTEXT decisions are textually honored according to the non-blocking gate. This does not override the reproducible failures.
+**Orphaned requirements:** None. Every PLAN `requirements:` ID is one of the six Phase 73 IDs, and each exists in `REQUIREMENTS.md` with Phase 73 traceability. No additional requirements map to Phase 73 without plan ownership.
 
 ### Test Quality Audit
 
-| Test File | Active/Skipped | Assertion | Verdict |
-| --- | --- | --- | --- |
-| adoption contract | active / 0 skipped | behavioral | ⚠ Missing CR-03 |
-| governance contract | active / 0 skipped | behavioral | 🛑 Plan 26 final proof is fixture-only; CR-06/07 uncovered or accepted |
+| Test File | Linked Requirement | Active | Skipped | Circular | Assertion Level | Verdict |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| `test/adoption/evidence_contract_test.exs` | EVID-01, EVID-02 | Yes | 0 found | No | Behavioral and value-level owner/closure assertions | ✓ PASS |
+| `test/governance/milestone_scope_test.exs` | QUAL-01, PIPE-01, GOV-01, GOV-02 | Yes | 0 found | No | Structural, negative-control, and repository provenance assertions | ⚠️ One aggregate owner times out in full-lane load; isolated run passes |
+| `test/governance/phase_73_reconciliation_test.exs` | EVID-01, EVID-02 and proof reconciliation | Yes | 0 found | No | Recomputed identity, real report validation, and replay invocation | ✓ Contract checks pass; replay fails at evidence lane |
 
-No circular oracle generation was found; temporary writes are isolated fixtures.
+**Disabled tests on requirements:** 0. **Circular expected-value generation detected:** 0. **Insufficient assertions:** 0 identified. Temporary fixture writers mutate isolated repository copies; they do not generate expected values by running the system under test.
 
 ### Anti-Patterns Found
 
-| File | Pattern | Severity | Impact |
-| --- | --- | --- | --- |
-| reconciliation helper | ID not recomputed; substring states; filtered suite list | 🛑 BLOCKER | Proof/results/status/suite removal can be forged. |
-| adoption helper | events unbounded by top-level `on:` | 🛑 BLOCKER | No real trigger can pass. |
-| governance test | fixture-only closeout; duplicate child collapse; foreign-scope filter | 🛑 BLOCKER | Final evidence and governed changes can disappear. |
-| reconciliation helper | ambient-root alias lookup | ⚠ WARNING | Cross-checkout attribution can be wrong. |
-
-No unreferenced `TBD`, `FIXME`, or `XXX` exists; placeholder matches are negative fixtures.
+| File | Line | Pattern | Severity | Impact |
+| --- | ---: | --- | --- | --- |
+| `.planning/ROADMAP.md` | Phase 73 plan count | `31/31 plans executed (30 complete)` while 31 plans and summaries exist; `.planning/STATE.md` also retains the 30-plan frontier | ℹ️ Info | Lifecycle progress text is stale/inconsistent after Plan 73-31 merge. Not part of the phase goal verdict; left untouched as requested. |
+| Current changed test/support files | — | No unreferenced `TBD`, `FIXME`, or `XXX` debt markers found | — | No blocking debt markers. Placeholder matches occur in negative governance fixtures. |
 
 ### Human Verification Required
 
-N/A — infrastructure/governance phase. Every failure is deterministic and project policy forbids manual-only completion gates.
+N/A — infrastructure/foundation phase with no user-facing elements. No behavior-dependent invariant was left without a named test; the outstanding issue is a deterministic CI timeout and remains an automated gap.
 
 ### Gaps Summary
 
-The ledger, baseline, current workflow, and 116-test lane are real, but the policies asserting that those proofs are current and mandatory accept seven blocker-class counterexamples. None matches a later roadmap phase. Repair reconciliation authority/CI wiring, trigger anchoring, and total task/commit governance; add counterexample tests and regenerate the proof/reports afterward.
-
-**Next command:** `$gsd-plan-phase 73 --gaps`
+The ledger, baseline, approval model, feature-neutral scope, current proof format, and mandatory workflow links are present and substantive. The September 11 failure modes around proof identity, typed live report state, top-level event ownership, task parsing, and descendant classification have current structural checks and focused owners. However, the current full `ci.evidence` execution times out the all-active-plan governance test, causing `ci.phase73.reconciliation` to exit 1 before it can replay the security lane. A targeted run of that owner passes in isolation, and `mix ci.security` passes, but those facts do not turn the current mandatory evidence lane green. Phase 73 therefore remains `gaps_found` pending a bounded full-lane owner and a successful fresh reconciliation replay.
 
 ---
 
-_Verified: 2026-09-11T23:32:37Z_
-_Verifier: OpenAI Codex (gsd-verifier)_
+_Verified: 2026-09-24T14:35:04Z_
+_Verifier: the agent (gsd-verifier)_
