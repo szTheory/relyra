@@ -43,7 +43,7 @@ returns.
 - Make no remote GitHub mutation until the exact action batch is approved.
 - Prefer demonstrated correctness, clarity, and maintenance gains over aesthetic churn.
 
-## v1.11 Phases
+## v1.11 First-Adopter Twin
 
 - [ ] **Phase 73: Twin Contract and Baseline** — Define the executable adopter model, evidence ownership, quality baseline, and immutable guardrails.
 - [ ] **Phase 74: Clean-Room Package Consumer** — Prove a fresh Phoenix application can adopt only the files Relyra actually ships.

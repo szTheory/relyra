@@ -1,7 +1,7 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v1.11 — Phases",
+  "milestone": "v1.11 — First-Adopter Twin",
   "phases": [
     {
       "number": "73",
@@ -42,7 +42,7 @@
   "next": {
     "command": "/gsd:progress --next",
     "label": "Advance to the next step",
-    "reason": "Phase 73 of 7 · 96% · executing"
+    "reason": "Phase 73: 26/26 plans complete; verification found gaps (6/9 must-haves verified)"
   },
-  "updated_at": "2026-09-11T21:44:56.873Z"
+  "updated_at": "2026-09-24T01:42:35Z"
 }

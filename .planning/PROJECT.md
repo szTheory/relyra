@@ -51,6 +51,9 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 ## Current Milestone: v1.11 First-Adopter Twin
 
+Standing guidance for future milestone selection and roadmap refreshes is in
+[`docs/relyra-milestone-roadmap-guide.txt`](../docs/relyra-milestone-roadmap-guide.txt).
+
 **Goal:** Make Relyra as adopter-ready as practical before a real adopter arrives by maintaining a realistic digital first adopter, testing the complete public integration boundary, and closing high-value quality gaps until returns diminish.
 
 **Target features:**

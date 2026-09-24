@@ -1,14 +1,14 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1.11
-milestone_name: Phases
+milestone_name: First-Adopter Twin
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
-status: ready_for_verification
+status: in_progress
 stopped_at: Completed 73-26-PLAN.md
-last_updated: "2026-09-11T22:27:57.240Z"
-last_activity: 2026-09-11
-last_activity_desc: Completed Plan 73-26 source-bound reconciliation
+last_updated: "2026-09-24T01:42:35Z"
+last_activity: 2026-09-24
+last_activity_desc: Phase 73 verification found gaps; prepare gap-planning cycle
 state_head: 547526eab014342a414e249a81ad3da9a6a75e76
 progress:
   total_phases: 7
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — READY FOR VERIFICATION
+Phase: 73 (Twin Contract and Baseline) — GAP CLOSURE
 
 Plan: 26 of 26
 
-Status: 26 of 26 plans complete; ready for phase verification
+Status: 26 of 26 plans complete; verification found gaps requiring targeted plans
 
-Last activity: 2026-09-11 — Completed Plan 73-26 source-bound reconciliation
+Last activity: 2026-09-24 — Reconciled project state with Phase 73 verification (6/9 must-haves verified)
 
 ## Milestone Metrics
 
@@ -168,7 +168,7 @@ Last activity: 2026-09-11 — Completed Plan 73-26 source-bound reconciliation
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T22:27:57.214Z
+**Last session:** 2026-09-24T01:42:35Z
 
 **Stopped at:** Completed 73-26-PLAN.md
 
@@ -176,7 +176,8 @@ Last activity: 2026-09-11 — Completed Plan 73-26 source-bound reconciliation
 
 ## Operator Next Step
 
-Verify Phase 73 against the completed 26-plan evidence set.
+Run `$gsd-plan-phase 73 --gaps` to plan the three open verification gaps, then execute
+those plans and re-verify Phase 73.
 
 ## Performance Metrics
 
