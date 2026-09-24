@@ -421,7 +421,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     phase_dir = ".planning/phases/73-twin-contract-and-baseline"
     plan_paths = Path.wildcard(Path.join(phase_dir, "73-*-PLAN.md")) |> Enum.sort()
 
-    assert length(plan_paths) == 31
+    assert length(plan_paths) == 32
 
     violations = Enum.flat_map(plan_paths, &plan_task_structure_violations/1)
 
@@ -555,6 +555,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :plan_73_23_task_1
+  @tag :plan_73_32_task_1
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     violations =
       case validated_governance_identity(File.cwd!()) do
@@ -565,6 +566,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert violations == [],
            "Active milestone plans violate approval policy:\n" <>
              Enum.map_join(violations, "\n", &"  - #{&1}")
+
+    owners = Relyra.Phase73Reconciliation.acceptance_task_ids!(File.cwd!())
+    assert length(owners) == 68
+    assert List.last(owners) == "73-32-02"
   end
 
   @tag :plan_73_24_task_1
@@ -721,8 +726,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     {security, validation} = apply(reconciliation, :fixture_documents!, [proof, :final])
 
     assert :ok = apply(reconciliation, :validate_documents!, [security, validation, proof, root])
-    assert length(proof["acceptance_task_ids"]) == 66
-    assert List.last(proof["acceptance_task_ids"]) == "73-31-02"
+    assert length(proof["acceptance_task_ids"]) == 68
+    assert List.last(proof["acceptance_task_ids"]) == "73-32-02"
 
     [first_owner | _] = proof["acceptance_task_ids"]
 
@@ -757,7 +762,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :plan_73_31_task_1
-  test "current tracked plan inventory builds one validated 31-plan proof" do
+  test "current tracked plan inventory builds one validated 32-plan proof" do
     reconciliation = Relyra.Phase73Reconciliation
     root = File.cwd!()
 
@@ -768,16 +773,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
                ".planning/phases/73-twin-contract-and-baseline/73-*-PLAN.md"
              ])
 
-    assert length(String.split(tracked_plans, "\n", trim: true)) == 31
+    assert length(String.split(tracked_plans, "\n", trim: true)) == 32
     proof = reconciliation.fixture_proof!(root)
     {security, validation} = reconciliation.fixture_documents!(proof, :staged)
 
-    assert length(proof["acceptance_task_ids"]) == 66
-    assert List.last(proof["acceptance_task_ids"]) == "73-31-02"
+    assert length(proof["acceptance_task_ids"]) == 68
+    assert List.last(proof["acceptance_task_ids"]) == "73-32-02"
 
     assert Enum.any?(
              proof["governed_sources"],
-             &(&1["path"] == ".planning/phases/73-twin-contract-and-baseline/73-31-PLAN.md")
+             &(&1["path"] == ".planning/phases/73-twin-contract-and-baseline/73-32-PLAN.md")
            )
 
     assert :ok = reconciliation.validate_documents!(security, validation, proof, root)
@@ -841,6 +846,27 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert workflow =~ ~r/jobs:\s*\n  security:/
     assert workflow =~ ~r/- name: Evidence contract\n\s+run:.*mix ci\.evidence/
     assert :ok = AdoptionEvidence.validate_repository!(AdoptionEvidence.entries(), File.cwd!())
+  end
+
+  @tag :plan_73_32_task_2
+  test "both current reconciliation owners are selected by mandatory fresh-process evidence" do
+    source = File.read!("test/governance/milestone_scope_test.exs")
+    owners = ["plan_73_32_task_1", "plan_73_32_task_2"]
+
+    for owner <- owners do
+      assert source =~ "@tag :#{owner}"
+      assert length(Regex.scan(~r/@tag :#{owner}\s+test\b/s, source)) == 1
+    end
+
+    assert [step] = mix_alias_steps("ci.evidence")
+    assert step =~ ~r/^cmd mix test\b/
+    assert step =~ "test/governance/milestone_scope_test.exs"
+    assert step =~ "--only evidence_contract"
+    assert step =~ "--warnings-as-errors"
+
+    workflow = File.read!(".github/workflows/security-gates.yml")
+    assert workflow =~ ~r/jobs:\s*\n  security:/
+    assert workflow =~ ~r/- name: Evidence contract\n\s+run:.*mix ci\.evidence/
   end
 
   @tag :plan_73_25_task_1

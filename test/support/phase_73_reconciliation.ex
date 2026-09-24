@@ -31,7 +31,9 @@ defmodule Relyra.Phase73Reconciliation do
     "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_1 --warnings-as-errors",
     "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_2 --warnings-as-errors",
     "mix test test/governance/milestone_scope_test.exs --only plan_73_31_task_1 --warnings-as-errors",
-    "mix test test/governance/milestone_scope_test.exs --only plan_73_31_task_2 --warnings-as-errors"
+    "mix test test/governance/milestone_scope_test.exs --only plan_73_31_task_2 --warnings-as-errors",
+    "mix test test/governance/milestone_scope_test.exs --only plan_73_32_task_1 --warnings-as-errors",
+    "mix test test/governance/milestone_scope_test.exs --only plan_73_32_task_2 --warnings-as-errors"
   ]
   @evidence_command "mix ci.evidence"
   @security_command "mix ci.security"
@@ -67,6 +69,7 @@ defmodule Relyra.Phase73Reconciliation do
     ".planning/phases/73-twin-contract-and-baseline/73-29-SUMMARY.md",
     ".planning/phases/73-twin-contract-and-baseline/73-30-PLAN.md",
     ".planning/phases/73-twin-contract-and-baseline/73-31-PLAN.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-32-PLAN.md",
     "mix.exs",
     "test/adoption/evidence_contract_test.exs",
     "test/governance/milestone_scope_test.exs",
@@ -261,8 +264,8 @@ defmodule Relyra.Phase73Reconciliation do
       |> Enum.map(&Path.join(root, &1))
       |> Enum.sort()
 
-    unless length(paths) == 31 do
-      raise ArgumentError, "expected exactly 31 tracked Phase 73 plans, found #{length(paths)}"
+    unless length(paths) == 32 do
+      raise ArgumentError, "expected exactly 32 tracked Phase 73 plans, found #{length(paths)}"
     end
 
     ids =
@@ -281,9 +284,9 @@ defmodule Relyra.Phase73Reconciliation do
         end)
       end)
 
-    unless length(ids) == 66 and length(Enum.uniq(ids)) == 66 and List.last(ids) == "73-31-02" do
+    unless length(ids) == 68 and length(Enum.uniq(ids)) == 68 and List.last(ids) == "73-32-02" do
       raise ArgumentError,
-            "acceptance owner inventory must contain 66 unique task IDs through 73-31-02; got #{inspect(ids)}"
+            "acceptance owner inventory must contain 68 unique task IDs through 73-32-02; got #{inspect(ids)}"
     end
 
     ids
@@ -477,7 +480,7 @@ defmodule Relyra.Phase73Reconciliation do
     unless owner_ids == expected and length(owner_ids) == length(Enum.uniq(owner_ids)) and
              Enum.all?(owner_types, &(&1 == "automated")) do
       raise ArgumentError,
-            "validation owner map must exactly equal the canonical 66-task automated inventory; expected=#{inspect(expected)} actual=#{inspect(owner_ids)} types=#{inspect(owner_types)}"
+            "validation owner map must exactly equal the canonical 68-task automated inventory; expected=#{inspect(expected)} actual=#{inspect(owner_ids)} types=#{inspect(owner_types)}"
     end
 
     :ok
