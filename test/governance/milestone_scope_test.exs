@@ -4553,8 +4553,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp repository_provenance_snapshot(root) do
     with {:ok, endpoint} <- review_endpoint(root),
          {:ok, tracked_paths} <-
-           git_lines(root, ["ls-files", "--cached", "--", ".planning/phases"]) do
-      %{root: Path.expand(root), endpoint: endpoint, tracked_paths: tracked_paths}
+           git_lines(root, ["ls-files", "--cached", "--", ".planning/phases"]),
+         {:ok, commit_rows} <- git_lines(root, ["log", "--all", "--format=%H%x09%P%x09%s"]) do
+      commits =
+        Map.new(commit_rows, fn row ->
+          [commit, parents, subject] = String.split(row, "\t", parts: 3)
+
+          {commit, %{parents: String.split(parents, " ", trim: true), subject: subject}}
+        end)
+
+      %{
+        root: Path.expand(root),
+        endpoint: endpoint,
+        tracked_paths: tracked_paths,
+        commits: commits
+      }
     else
       _error -> nil
     end
@@ -4650,11 +4663,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     with {:ok, [boundary]} <- completion_boundaries(root, summary_relative, plan_id),
          {:ok, endpoint} <- review_endpoint(root, snapshot),
-         :ok <- validate_review_endpoint(root, boundary, endpoint),
+         :ok <- validate_review_endpoint(root, boundary, endpoint, snapshot),
          {:ok, history} <- trusted_plan_history(root, plan_id, boundary, endpoint, snapshot),
-         :ok <- validate_trusted_commits(root, history.commits, boundary, endpoint, plan_id),
-         {:ok, changes} <- commit_changed_surfaces(root, history.commits),
-         {:ok, boundary_changes} <- commit_changed_surfaces(root, [boundary]) do
+         :ok <-
+           validate_trusted_commits(root, history.commits, boundary, endpoint, plan_id, snapshot),
+         {:ok, changes} <- commit_changed_surfaces(root, history.commits, snapshot),
+         {:ok, boundary_changes} <- commit_changed_surfaces(root, [boundary], snapshot) do
       provenance = %{
         commits: history.commits,
         descendant_assignments: history.descendant_assignments,
@@ -4768,10 +4782,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp validate_review_endpoint(root, boundary, endpoint) do
-    if git_success?(root, ["merge-base", "--is-ancestor", boundary, endpoint]),
-      do: :ok,
-      else: {:error, ["completion boundary must be an ancestor of review endpoint"]}
+  defp validate_review_endpoint(root, boundary, endpoint, snapshot \\ nil) do
+    if snapshot_is_ancestor?(snapshot, boundary, endpoint) or
+         (is_nil(snapshot) and
+            git_success?(root, ["merge-base", "--is-ancestor", boundary, endpoint])),
+       do: :ok,
+       else: {:error, ["completion boundary must be an ancestor of review endpoint"]}
   end
 
   defp post_summary_plan_commits(root, plan_id, boundary, endpoint, snapshot) do
@@ -4917,7 +4933,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp validate_trusted_commits(root, commits, boundary, endpoint, plan_id) do
+  defp validate_trusted_commits(root, commits, boundary, endpoint, plan_id, snapshot) do
     violations =
       []
       |> add_if(commits == [], "trusted implementation set is empty for #{plan_id}")
@@ -4927,16 +4943,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       Enum.reduce(commits, violations, fn commit, found ->
         found
         |> add_unless(
-          git_success?(root, ["merge-base", "--is-ancestor", commit, endpoint]),
+          snapshot_is_ancestor?(snapshot, commit, endpoint) or
+            (is_nil(snapshot) and
+               git_success?(root, ["merge-base", "--is-ancestor", commit, endpoint])),
           "commit #{commit} is not reachable from review endpoint"
         )
         |> add_unless(
-          git_success?(root, ["merge-base", "--is-ancestor", commit, boundary]) or
-            git_success?(root, ["merge-base", "--is-ancestor", boundary, commit]),
+          snapshot_is_ancestor?(snapshot, commit, boundary) or
+            snapshot_is_ancestor?(snapshot, boundary, commit) or
+            (is_nil(snapshot) and
+               (git_success?(root, ["merge-base", "--is-ancestor", commit, boundary]) or
+                  git_success?(root, ["merge-base", "--is-ancestor", boundary, commit]))),
           "commit #{commit} is not on completion boundary history"
         )
         |> add_unless(
-          commit_scope(root, commit) == plan_id,
+          commit_scope(root, commit, snapshot) == plan_id,
           "commit #{commit} has foreign plan scope"
         )
       end)
@@ -4997,18 +5018,23 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp commit_scope(root, commit) do
-    case System.cmd("git", ["-C", root, "show", "-s", "--format=%s", commit],
-           stderr_to_stdout: true
-         ) do
-      {subject, 0} -> subject |> String.trim() |> conventional_scope()
-      _other -> nil
+  defp commit_scope(root, commit, snapshot) do
+    if is_map(snapshot) and snapshot.root == Path.expand(root) and
+         Map.has_key?(snapshot.commits, commit) do
+      snapshot.commits |> Map.fetch!(commit) |> Map.fetch!(:subject) |> conventional_scope()
+    else
+      case System.cmd("git", ["-C", root, "show", "-s", "--format=%s", commit],
+             stderr_to_stdout: true
+           ) do
+        {subject, 0} -> subject |> String.trim() |> conventional_scope()
+        _other -> nil
+      end
     end
   end
 
-  defp commit_changed_surfaces(root, commits) do
+  defp commit_changed_surfaces(root, commits, snapshot \\ nil) do
     Enum.reduce_while(commits, {:ok, []}, fn commit, {:ok, changes} ->
-      case commit_paths(root, commit) do
+      case commit_paths(root, commit, snapshot) do
         {:ok, paths} ->
           commit_changes =
             Enum.map(paths, fn path ->
@@ -5027,8 +5053,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp commit_paths(root, commit) do
-    case commit_parent_count(root, commit) do
+  defp commit_paths(root, commit, snapshot) do
+    case commit_parent_count(root, commit, snapshot) do
       {:ok, 1} ->
         case System.cmd(
                "git",
@@ -5051,19 +5077,54 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp commit_parent_count(root, commit) do
-    case System.cmd("git", ["-C", root, "rev-list", "--parents", "-n", "1", commit],
-           stderr_to_stdout: true
-         ) do
-      {row, 0} ->
-        fields = String.split(row, ~r/\s+/, trim: true)
+  defp commit_parent_count(root, commit, snapshot) do
+    if is_map(snapshot) and snapshot.root == Path.expand(root) and
+         Map.has_key?(snapshot.commits, commit) do
+      {:ok, snapshot.commits |> Map.fetch!(commit) |> Map.fetch!(:parents) |> length()}
+    else
+      case System.cmd("git", ["-C", root, "rev-list", "--parents", "-n", "1", commit],
+             stderr_to_stdout: true
+           ) do
+        {row, 0} ->
+          fields = String.split(row, ~r/\s+/, trim: true)
 
-        if fields == [],
-          do: {:error, "cannot resolve parent topology for commit #{commit}"},
-          else: {:ok, length(fields) - 1}
+          if fields == [],
+            do: {:error, "cannot resolve parent topology for commit #{commit}"},
+            else: {:ok, length(fields) - 1}
 
-      {_output, _status} ->
-        {:error, "cannot resolve parent topology for commit #{commit}"}
+        {_output, _status} ->
+          {:error, "cannot resolve parent topology for commit #{commit}"}
+      end
+    end
+  end
+
+  defp snapshot_is_ancestor?(snapshot, ancestor, descendant) do
+    if is_map(snapshot) and Map.has_key?(snapshot.commits, ancestor) do
+      snapshot_ancestor_walk?(snapshot, ancestor, [descendant], MapSet.new())
+    else
+      false
+    end
+  end
+
+  defp snapshot_ancestor_walk?(_snapshot, _ancestor, [], _visited), do: false
+
+  defp snapshot_ancestor_walk?(snapshot, ancestor, [commit | rest], visited) do
+    cond do
+      commit == ancestor ->
+        true
+
+      MapSet.member?(visited, commit) ->
+        snapshot_ancestor_walk?(snapshot, ancestor, rest, visited)
+
+      true ->
+        parents = get_in(snapshot, [:commits, commit, :parents]) || []
+
+        snapshot_ancestor_walk?(
+          snapshot,
+          ancestor,
+          parents ++ rest,
+          MapSet.put(visited, commit)
+        )
     end
   end
 
