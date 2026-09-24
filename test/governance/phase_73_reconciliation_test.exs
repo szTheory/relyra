@@ -204,8 +204,8 @@ defmodule Relyra.Phase73ReconciliationTest do
          "50 threats: 49 closed and 1 open",
          "50 threats: 48 closed and 2 open"
        ), validation},
-      {security, String.replace(validation, "| 73-30-02 | automated |", "| 73-30-02 | manual |")},
-      {security, String.replace(validation, "| 73-30-02 | automated |", "", global: false)}
+      {security, String.replace(validation, "| 73-31-02 | automated |", "| 73-31-02 | manual |")},
+      {security, String.replace(validation, "| 73-31-02 | automated |", "", global: false)}
     ]
 
     for {bad_security, bad_validation} <- mutations do
@@ -233,6 +233,9 @@ defmodule Relyra.Phase73ReconciliationTest do
         ] do
       copy_file!(File.cwd!(), root, relative)
     end
+
+    {_, 0} = System.cmd("git", ["init", "--quiet", root])
+    {_, 0} = System.cmd("git", ["-C", root, "add", "--", phase])
 
     root
   end
