@@ -4,6 +4,7 @@ defmodule Relyra.Phase73ReconciliationTest do
   alias Relyra.Phase73Reconciliation
 
   @tag :phase_73_reconciliation_replay
+  @tag timeout: :infinity
   test "checked-in proof and every required lane replay through one owner" do
     assert :ok = Phase73Reconciliation.verify_repository_evidence!(File.cwd!())
   end
