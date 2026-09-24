@@ -2052,3 +2052,710 @@ PHASE73_FINAL_RECONCILIATION
 | 73-31-02 | automated |
 
 All seven closure references use current proof `phase73-2fc3c2eaf9548744` after `mix ci.phase73.reconciliation` validated and replayed the checked-in artifacts and command inventories.
+
+
+## Validation Audit 2026-09-24 — Plan 73-32 Current Reconciliation
+
+Refresh chronology: current source-bound evidence covers all 32 tracked plans, 68 unique automated owners, 17 positive focused selectors, three matching successful evidence vectors, and all 13 pinned security constituents.
+
+PHASE73_STAGED_PROOF
+<!-- phase73-reconciliation-proof:start -->
+```json
+{
+  "acceptance_task_ids": [
+    "73-01-01",
+    "73-01-02",
+    "73-02-01",
+    "73-02-02",
+    "73-03-01",
+    "73-03-02",
+    "73-04-01",
+    "73-04-02",
+    "73-05-01",
+    "73-05-02",
+    "73-05-03",
+    "73-06-01",
+    "73-06-02",
+    "73-07-01",
+    "73-07-02",
+    "73-08-01",
+    "73-08-02",
+    "73-09-01",
+    "73-09-02",
+    "73-10-01",
+    "73-10-02",
+    "73-11-01",
+    "73-11-02",
+    "73-12-01",
+    "73-12-02",
+    "73-13-01",
+    "73-13-02",
+    "73-13-03",
+    "73-14-01",
+    "73-14-02",
+    "73-15-01",
+    "73-15-02",
+    "73-16-01",
+    "73-16-02",
+    "73-17-01",
+    "73-17-02",
+    "73-18-01",
+    "73-18-02",
+    "73-19-01",
+    "73-19-02",
+    "73-20-01",
+    "73-20-02",
+    "73-21-01",
+    "73-21-02",
+    "73-22-01",
+    "73-22-02",
+    "73-23-01",
+    "73-23-02",
+    "73-23-03",
+    "73-24-01",
+    "73-24-02",
+    "73-24-03",
+    "73-25-01",
+    "73-25-02",
+    "73-26-01",
+    "73-26-02",
+    "73-27-01",
+    "73-27-02",
+    "73-28-01",
+    "73-28-02",
+    "73-29-01",
+    "73-29-02",
+    "73-30-01",
+    "73-30-02",
+    "73-31-01",
+    "73-31-02",
+    "73-32-01",
+    "73-32-02"
+  ],
+  "captured_at": "2026-09-24T15:29:58Z",
+  "evidence_runs": [
+    {
+      "command": "mix ci.evidence",
+      "duration_ms": 50986,
+      "exit_code": 0,
+      "output_sha256": "8e575f5117b76c18fa8bb3a1f27a35d9cb2ad8e5f9b7ccfc49fea8b8c102b4fe",
+      "summaries": [
+        {
+          "excluded": 0,
+          "failures": 0,
+          "tests": 125
+        }
+      ]
+    },
+    {
+      "command": "mix ci.evidence",
+      "duration_ms": 52467,
+      "exit_code": 0,
+      "output_sha256": "e693bf469e1f9870184b0815c829a6d90afbe6f6391ada5e6cf425b60103628a",
+      "summaries": [
+        {
+          "excluded": 0,
+          "failures": 0,
+          "tests": 125
+        }
+      ]
+    },
+    {
+      "command": "mix ci.evidence",
+      "duration_ms": 58389,
+      "exit_code": 0,
+      "output_sha256": "141bdb514ead80476e321329cff3bf66ca114a9b3d38824e1f393fb68d07888a",
+      "summaries": [
+        {
+          "excluded": 0,
+          "failures": 0,
+          "tests": 125
+        }
+      ]
+    }
+  ],
+  "focused": [
+    {
+      "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_24_task_1 --warnings-as-errors",
+      "duration_ms": 2067,
+      "exit_code": 0,
+      "output_sha256": "4887fc8614d019ab45c16bb78dd0effb246a5dffda68f8ec6286a6a0935fa3c6",
+      "summaries": [
+        {
+          "excluded": 69,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_2 --warnings-as-errors",
+      "duration_ms": 2596,
+      "exit_code": 0,
+      "output_sha256": "9787bd2f3bfb6c9ce918fe730ab7fecf6468b571f64c3c89eb5027f219265595",
+      "summaries": [
+        {
+          "excluded": 53,
+          "failures": 0,
+          "tests": 2
+        }
+      ]
+    },
+    {
+      "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_3 --warnings-as-errors",
+      "duration_ms": 4191,
+      "exit_code": 0,
+      "output_sha256": "5e309dd87dc6e79506c7ead9e8950c295296d94d61449bd80975b45f65d4b4ae",
+      "summaries": [
+        {
+          "excluded": 52,
+          "failures": 0,
+          "tests": 3
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_1 --warnings-as-errors",
+      "duration_ms": 7510,
+      "exit_code": 0,
+      "output_sha256": "06ca2776e73a8a3adb90892ac1c49ffbe1bb230eb6368dbf5496530baa2f6206",
+      "summaries": [
+        {
+          "excluded": 67,
+          "failures": 0,
+          "tests": 3
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_2 --warnings-as-errors",
+      "duration_ms": 6536,
+      "exit_code": 0,
+      "output_sha256": "e0a485cc39443dd725d1a54a4932c3878c30705931b9ed81290266330d8d5ad3",
+      "summaries": [
+        {
+          "excluded": 68,
+          "failures": 0,
+          "tests": 2
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_27_task_1 --warnings-as-errors",
+      "duration_ms": 1662,
+      "exit_code": 0,
+      "output_sha256": "eae6f19f5b42aa7f63386ec126d4cba2096e7b5a010825219a37faa9203d668b",
+      "summaries": [
+        {
+          "excluded": 4,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_27_task_2 --warnings-as-errors",
+      "duration_ms": 1512,
+      "exit_code": 0,
+      "output_sha256": "81d9d8532fbc4a12e17ddba5c3b45f71d336503dbd49a0ca01c40c6779dceb5b",
+      "summaries": [
+        {
+          "excluded": 4,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_28_task_1 --warnings-as-errors",
+      "duration_ms": 1758,
+      "exit_code": 0,
+      "output_sha256": "d1057beb03f2a519b236dc622390847d9d1fccf811e43d2d12714a9bab4394f3",
+      "summaries": [
+        {
+          "excluded": 54,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_28_task_2 --warnings-as-errors",
+      "duration_ms": 1926,
+      "exit_code": 0,
+      "output_sha256": "122f482336b2846a3e20ac05010073ee59356bd0aea3b493774d6d8d5b28f0b9",
+      "summaries": [
+        {
+          "excluded": 53,
+          "failures": 0,
+          "tests": 2
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_29_task_1 --warnings-as-errors",
+      "duration_ms": 5157,
+      "exit_code": 0,
+      "output_sha256": "596cef6ee28bdadfef7aaf229d86aa3fbf9f2da6deaf8cb0a92a935154768b2a",
+      "summaries": [
+        {
+          "excluded": 67,
+          "failures": 0,
+          "tests": 3
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_29_task_2 --warnings-as-errors",
+      "duration_ms": 4624,
+      "exit_code": 0,
+      "output_sha256": "2f9651449ef71e38c76fc892e862250cda0eb2643f4393cb1ee0bba702c3fd56",
+      "summaries": [
+        {
+          "excluded": 69,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_1 --warnings-as-errors",
+      "duration_ms": 1644,
+      "exit_code": 0,
+      "output_sha256": "3e3f05105a7549473ab1c13fdf8844abb967beed3bcfdc71969127d48c3e57ad",
+      "summaries": [
+        {
+          "excluded": 4,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_2 --warnings-as-errors",
+      "duration_ms": 1631,
+      "exit_code": 0,
+      "output_sha256": "3f527a436dd79fed887d81465f0dd610d50c744984359ead464ac5b0c5cb414a",
+      "summaries": [
+        {
+          "excluded": 4,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_31_task_1 --warnings-as-errors",
+      "duration_ms": 2218,
+      "exit_code": 0,
+      "output_sha256": "d3c37f0fcd2e9ac6b1ef4cbb9c42f463ab0047705fb300ceb6781da09f27e495",
+      "summaries": [
+        {
+          "excluded": 69,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_31_task_2 --warnings-as-errors",
+      "duration_ms": 6793,
+      "exit_code": 0,
+      "output_sha256": "c5c46613a94c3edb135d05a16c0d2e27e96055ec157105f0102efeabc8db5cdd",
+      "summaries": [
+        {
+          "excluded": 69,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_32_task_1 --warnings-as-errors",
+      "duration_ms": 25686,
+      "exit_code": 0,
+      "output_sha256": "652c43d97d7550213a85971f1671dd5c2565742f8ac7d66908bf1b0aa7f1a6bb",
+      "summaries": [
+        {
+          "excluded": 69,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_32_task_2 --warnings-as-errors",
+      "duration_ms": 2105,
+      "exit_code": 0,
+      "output_sha256": "b414f581fb4c9a24a8edff81b9725c301e418479ecd6ed115acfd29544c709e8",
+      "summaries": [
+        {
+          "excluded": 69,
+          "failures": 0,
+          "tests": 1
+        }
+      ]
+    }
+  ],
+  "governed_sources": [
+    {
+      "path": ".github/workflows/security-gates.yml",
+      "sha256": "c2a4c8d1513dda0fb6e16d938a5cfac869a6179f89aef2a940aca8fc2369bffa"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-24-PLAN.md",
+      "sha256": "ed8c713aeb34af4a3538d2d11b3427e36264019095deefa8b582c3c0d2ad32f1"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-24-SUMMARY.md",
+      "sha256": "fdc8e50d0bc425419aa3c669b5aaeccb6c05e7a1a0fc6a97ab75bbb5ddcbc257"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-25-PLAN.md",
+      "sha256": "933f5e52a2988ea47132e28339d63ea39f2c2106fb87932c6ad02778f7ea865b"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-25-SUMMARY.md",
+      "sha256": "572247fc6a5fcfe2f0411dc040a534286f5c1d2a7dfab0dd526f9b7b731f442f"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-26-PLAN.md",
+      "sha256": "5c8cb97358a0811d603e2fbc0e36290b0177c6ab96d53c497e07d6339a5af99e"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-26-SUMMARY.md",
+      "sha256": "70ad68b62a5947d43d9af9fd4e676aca32c3d41ffb332a57f86565076a860fb1"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-27-PLAN.md",
+      "sha256": "d92597b15545919bf57ce26209469fe3b970430655dffd9191b898003fc6fa4f"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-27-SUMMARY.md",
+      "sha256": "2f9fc5e0f34b0bff529cb6d5ab8a250666b66b904d5fd509ea873a71fb1bb151"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-28-PLAN.md",
+      "sha256": "4b9f9618dca71c6f02007fcf30a62f017bd1c0209a173622f2b366496c7ac0bc"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-28-SUMMARY.md",
+      "sha256": "4888e59ec3fd117f724332c6261686d630450c09b6922ae9808b2eeea8750376"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-29-PLAN.md",
+      "sha256": "425d31d711ad18ea12e5c03e46caeeeb2df656b753ead497b22835b21c0a0b18"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-29-SUMMARY.md",
+      "sha256": "35c8f9b2cace2c58b147f7a87078023c2c3ffcdfdbd8308d60f6d9dc45b5a1f1"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-30-PLAN.md",
+      "sha256": "3c6eb4f77952254c81733920605dbc2a96ad60b83e046b7aac04ef0330c164c7"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-31-PLAN.md",
+      "sha256": "d124b19266e1466dc5e6265f21016b54431d3011a13061b819336d1eaa860ef8"
+    },
+    {
+      "path": ".planning/phases/73-twin-contract-and-baseline/73-32-PLAN.md",
+      "sha256": "da428853a772eb022c69e02aea1c7e19c8d3c59d99513b3fa7a90da989898ab6"
+    },
+    {
+      "path": "mix.exs",
+      "sha256": "1837f4133a7f89b8ea1b8de04ec2a194bbdc764ece211b587f383cca80fdf9b0"
+    },
+    {
+      "path": "test/adoption/evidence_contract_test.exs",
+      "sha256": "7587a7a3dbb041d5777e611c75015d45c6dddce6dbde429fb7dbfbbe12608cf6"
+    },
+    {
+      "path": "test/governance/milestone_scope_test.exs",
+      "sha256": "34d8d4b99756413b190a06e5c2c2ebbe1125f9f3156023a0bb58f02158ccdfe4"
+    },
+    {
+      "path": "test/governance/phase_73_reconciliation_test.exs",
+      "sha256": "9809b0e20c881e34703c2c5fd337f3ef67deedc8aab91eba1b0a86fd6d3e2664"
+    },
+    {
+      "path": "test/support/adoption_evidence.ex",
+      "sha256": "8d938b262aea20643fbd5f182c5fda5125034cae305435648548c51b54723855"
+    },
+    {
+      "path": "test/support/phase_73_reconciliation.ex",
+      "sha256": "048d96d9ab0694a38a176de6122af29a7f0bc26e0a3654272d8984df1aea83b8"
+    }
+  ],
+  "proof_set_id": "phase73-e76f4d404296add9",
+  "schema": "phase73-reconciliation-proof",
+  "security": {
+    "command": "mix ci.security",
+    "duration_ms": 105696,
+    "exit_code": 0,
+    "output_sha256": "566c2ba5846b6d7a1562a695e1044ce3de13dff94d0eb2d4809f4a94bbe48861",
+    "summaries": [
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 6
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 4
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 6
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 1
+      },
+      {
+        "excluded": 3,
+        "failures": 0,
+        "tests": 9
+      },
+      {
+        "excluded": 4,
+        "failures": 0,
+        "tests": 3
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 7
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 5
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 5
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 9
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 3
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 3
+      },
+      {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 5
+      }
+    ]
+  },
+  "security_constituents": [
+    {
+      "command": "test test/conformance/sp_conformance_test.exs test/mix/tasks/relyra_conformance_test.exs --only conformance --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 6
+      }
+    },
+    {
+      "command": "cmd mix test test/security/ci_gate_integrity_test.exs --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 4
+      }
+    },
+    {
+      "command": "cmd mix test test/security/strict_default_proof_test.exs --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 6
+      }
+    },
+    {
+      "command": "cmd mix test test/relyra/ecto/escape_hatch_audit_test.exs --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 1
+      }
+    },
+    {
+      "command": "cmd mix test test/security/xml/corpus_security_test.exs test/relyra/security/xml/corpus_gate_test.exs --only security_corpus --warnings-as-errors",
+      "summary": {
+        "excluded": 3,
+        "failures": 0,
+        "tests": 9
+      }
+    },
+    {
+      "command": "cmd mix test test/security/xml/corpus_security_test.exs --only gate02_c14n --warnings-as-errors",
+      "summary": {
+        "excluded": 4,
+        "failures": 0,
+        "tests": 3
+      }
+    },
+    {
+      "command": "cmd mix test test/security/xml/adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 7
+      }
+    },
+    {
+      "command": "cmd mix test test/security/authn_request_signing_test.exs --only authn_request_signing --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 5
+      }
+    },
+    {
+      "command": "cmd mix test test/security/xml_enc_test.exs --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 5
+      }
+    },
+    {
+      "command": "cmd mix test test/security/xml_enc_adversarial_test.exs --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 9
+      }
+    },
+    {
+      "command": "cmd mix test test/security/metadata_attribute_injection_test.exs --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 3
+      }
+    },
+    {
+      "command": "cmd mix test test/security/login_trace_test.exs --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 3
+      }
+    },
+    {
+      "command": "cmd mix test test/security/testing_fixture_crypto_test.exs --warnings-as-errors",
+      "summary": {
+        "excluded": 0,
+        "failures": 0,
+        "tests": 5
+      }
+    }
+  ],
+  "source_digest": "sha256:f3d5d9905300267690652c266472b1b5e88b621989940283d4149dec414cfdf3",
+  "version": 1
+}
+```
+<!-- phase73-reconciliation-proof:end -->
+
+PHASE73_FINAL_RECONCILIATION
+
+| Metric | Final result |
+|--------|--------------|
+| Proof set | `phase73-e76f4d404296add9` |
+| Phase plans mapped | 32/32 |
+| Acceptance-bearing tasks mapped | 68/68 unique automated owners through `73-32-02` |
+| Focused repair owners | 17/17 positive |
+| Mandatory evidence | 3/3 matching runs; 125 tests each; 50986ms, 52467ms, 58389ms |
+| Security composition | 13/13 positive constituents |
+| High and critical blockers | 0 |
+| Nyquist compliant | yes |
+
+| Acceptance task | Owner |
+|-----------------|-------|
+| 73-01-01 | automated |
+| 73-01-02 | automated |
+| 73-02-01 | automated |
+| 73-02-02 | automated |
+| 73-03-01 | automated |
+| 73-03-02 | automated |
+| 73-04-01 | automated |
+| 73-04-02 | automated |
+| 73-05-01 | automated |
+| 73-05-02 | automated |
+| 73-05-03 | automated |
+| 73-06-01 | automated |
+| 73-06-02 | automated |
+| 73-07-01 | automated |
+| 73-07-02 | automated |
+| 73-08-01 | automated |
+| 73-08-02 | automated |
+| 73-09-01 | automated |
+| 73-09-02 | automated |
+| 73-10-01 | automated |
+| 73-10-02 | automated |
+| 73-11-01 | automated |
+| 73-11-02 | automated |
+| 73-12-01 | automated |
+| 73-12-02 | automated |
+| 73-13-01 | automated |
+| 73-13-02 | automated |
+| 73-13-03 | automated |
+| 73-14-01 | automated |
+| 73-14-02 | automated |
+| 73-15-01 | automated |
+| 73-15-02 | automated |
+| 73-16-01 | automated |
+| 73-16-02 | automated |
+| 73-17-01 | automated |
+| 73-17-02 | automated |
+| 73-18-01 | automated |
+| 73-18-02 | automated |
+| 73-19-01 | automated |
+| 73-19-02 | automated |
+| 73-20-01 | automated |
+| 73-20-02 | automated |
+| 73-21-01 | automated |
+| 73-21-02 | automated |
+| 73-22-01 | automated |
+| 73-22-02 | automated |
+| 73-23-01 | automated |
+| 73-23-02 | automated |
+| 73-23-03 | automated |
+| 73-24-01 | automated |
+| 73-24-02 | automated |
+| 73-24-03 | automated |
+| 73-25-01 | automated |
+| 73-25-02 | automated |
+| 73-26-01 | automated |
+| 73-26-02 | automated |
+| 73-27-01 | automated |
+| 73-27-02 | automated |
+| 73-28-01 | automated |
+| 73-28-02 | automated |
+| 73-29-01 | automated |
+| 73-29-02 | automated |
+| 73-30-01 | automated |
+| 73-30-02 | automated |
+| 73-31-01 | automated |
+| 73-31-02 | automated |
+| 73-32-01 | automated |
+| 73-32-02 | automated |
+
+Current proof `phase73-e76f4d404296add9` is the source-bound basis for the latest report record.

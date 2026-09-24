@@ -421,7 +421,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     phase_dir = ".planning/phases/73-twin-contract-and-baseline"
     plan_paths = Path.wildcard(Path.join(phase_dir, "73-*-PLAN.md")) |> Enum.sort()
 
-    assert length(plan_paths) == 31
+    assert length(plan_paths) == 32
 
     violations = Enum.flat_map(plan_paths, &plan_task_structure_violations/1)
 
@@ -555,6 +555,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :plan_73_23_task_1
+  @tag :plan_73_32_task_1
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     violations =
       case validated_governance_identity(File.cwd!()) do
@@ -565,6 +566,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert violations == [],
            "Active milestone plans violate approval policy:\n" <>
              Enum.map_join(violations, "\n", &"  - #{&1}")
+
+    owners = Relyra.Phase73Reconciliation.acceptance_task_ids!(File.cwd!())
+    assert length(owners) == 68
+    assert List.last(owners) == "73-32-02"
   end
 
   @tag :plan_73_24_task_1
@@ -721,8 +726,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     {security, validation} = apply(reconciliation, :fixture_documents!, [proof, :final])
 
     assert :ok = apply(reconciliation, :validate_documents!, [security, validation, proof, root])
-    assert length(proof["acceptance_task_ids"]) == 66
-    assert List.last(proof["acceptance_task_ids"]) == "73-31-02"
+    assert length(proof["acceptance_task_ids"]) == 68
+    assert List.last(proof["acceptance_task_ids"]) == "73-32-02"
 
     [first_owner | _] = proof["acceptance_task_ids"]
 
@@ -757,7 +762,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :plan_73_31_task_1
-  test "current tracked plan inventory builds one validated 31-plan proof" do
+  test "current tracked plan inventory builds one validated 32-plan proof" do
     reconciliation = Relyra.Phase73Reconciliation
     root = File.cwd!()
 
@@ -768,16 +773,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
                ".planning/phases/73-twin-contract-and-baseline/73-*-PLAN.md"
              ])
 
-    assert length(String.split(tracked_plans, "\n", trim: true)) == 31
+    assert length(String.split(tracked_plans, "\n", trim: true)) == 32
     proof = reconciliation.fixture_proof!(root)
     {security, validation} = reconciliation.fixture_documents!(proof, :staged)
 
-    assert length(proof["acceptance_task_ids"]) == 66
-    assert List.last(proof["acceptance_task_ids"]) == "73-31-02"
+    assert length(proof["acceptance_task_ids"]) == 68
+    assert List.last(proof["acceptance_task_ids"]) == "73-32-02"
 
     assert Enum.any?(
              proof["governed_sources"],
-             &(&1["path"] == ".planning/phases/73-twin-contract-and-baseline/73-31-PLAN.md")
+             &(&1["path"] == ".planning/phases/73-twin-contract-and-baseline/73-32-PLAN.md")
            )
 
     assert :ok = reconciliation.validate_documents!(security, validation, proof, root)
@@ -841,6 +846,27 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert workflow =~ ~r/jobs:\s*\n  security:/
     assert workflow =~ ~r/- name: Evidence contract\n\s+run:.*mix ci\.evidence/
     assert :ok = AdoptionEvidence.validate_repository!(AdoptionEvidence.entries(), File.cwd!())
+  end
+
+  @tag :plan_73_32_task_2
+  test "both current reconciliation owners are selected by mandatory fresh-process evidence" do
+    source = File.read!("test/governance/milestone_scope_test.exs")
+    owners = ["plan_73_32_task_1", "plan_73_32_task_2"]
+
+    for owner <- owners do
+      assert source =~ "@tag :#{owner}"
+      assert length(Regex.scan(~r/@tag :#{owner}\s+test\b/s, source)) == 1
+    end
+
+    assert [step] = mix_alias_steps("ci.evidence")
+    assert step =~ ~r/^cmd mix test\b/
+    assert step =~ "test/governance/milestone_scope_test.exs"
+    assert step =~ "--only evidence_contract"
+    assert step =~ "--warnings-as-errors"
+
+    workflow = File.read!(".github/workflows/security-gates.yml")
+    assert workflow =~ ~r/jobs:\s*\n  security:/
+    assert workflow =~ ~r/- name: Evidence contract\n\s+run:.*mix ci\.evidence/
   end
 
   @tag :plan_73_25_task_1
@@ -4297,10 +4323,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             %{root: File.cwd!(), milestone_version: "v1.11", current_phase: "73"}
         end
 
+    provenance_snapshot = repository_provenance_snapshot(identity.root)
+
     Enum.flat_map(plan_paths, fn plan_path ->
       markdown = File.read!(plan_path)
 
-      case repository_changed_surfaces(identity.root, plan_path, changed_surfaces_by_plan) do
+      case repository_changed_surfaces(
+             identity.root,
+             plan_path,
+             changed_surfaces_by_plan,
+             provenance_snapshot
+           ) do
         {:ok, changes} ->
           changed_classes =
             changes
@@ -4320,6 +4353,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           plan_violations ++ ["#{plan_path} completed-plan diff provenance #{reason}"]
       end
     end)
+  end
+
+  defp repository_provenance_snapshot(root) do
+    with {:ok, endpoint} <- review_endpoint(root),
+         {:ok, tracked_paths} <-
+           git_lines(root, ["ls-files", "--cached", "--", ".planning/phases"]) do
+      %{root: Path.expand(root), endpoint: endpoint, tracked_paths: tracked_paths}
+    else
+      _error -> nil
+    end
   end
 
   defp repository_plan_scope_violations(identity, plan_path, markdown, changed_classes) do
@@ -4357,13 +4400,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp repository_changed_surfaces(root, plan_path, changed_surfaces_by_plan) do
+  defp repository_changed_surfaces(root, plan_path, changed_surfaces_by_plan, snapshot) do
     cond do
       Map.has_key?(changed_surfaces_by_plan, plan_path) ->
         validate_changed_surfaces(Map.fetch!(changed_surfaces_by_plan, plan_path))
 
       executed_plan?(plan_path) ->
-        case completed_plan_provenance(root, plan_path) do
+        case completed_plan_provenance(root, plan_path, snapshot) do
           {:ok, provenance} -> {:ok, provenance.changes}
           {:error, reasons, _provenance} -> {:error, Enum.join(reasons, "; ")}
           {:error, reasons} -> {:error, Enum.join(reasons, "; ")}
@@ -4403,15 +4446,15 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp completed_plan_provenance(root, plan_path) do
+  defp completed_plan_provenance(root, plan_path, snapshot \\ nil) do
     plan_id = plan_path |> Path.basename() |> String.replace_suffix("-PLAN.md", "")
     summary_path = String.replace_suffix(plan_path, "-PLAN.md", "-SUMMARY.md")
     summary_relative = Path.relative_to(summary_path, root)
 
     with {:ok, [boundary]} <- completion_boundaries(root, summary_relative, plan_id),
-         {:ok, endpoint} <- review_endpoint(root),
+         {:ok, endpoint} <- review_endpoint(root, snapshot),
          :ok <- validate_review_endpoint(root, boundary, endpoint),
-         {:ok, history} <- trusted_plan_history(root, plan_id, boundary, endpoint),
+         {:ok, history} <- trusted_plan_history(root, plan_id, boundary, endpoint, snapshot),
          :ok <- validate_trusted_commits(root, history.commits, boundary, endpoint, plan_id),
          {:ok, changes} <- commit_changed_surfaces(root, history.commits),
          {:ok, boundary_changes} <- commit_changed_surfaces(root, [boundary]) do
@@ -4476,7 +4519,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp trusted_plan_history(root, plan_id, boundary, endpoint) do
+  defp trusted_plan_history(root, plan_id, boundary, endpoint, snapshot \\ nil) do
     manifest_path = Path.join(root, ".planning/.phase-manifest.json")
 
     with {:ok, rows} <- git_lines(root, ["log", "--reverse", "--format=%H%x09%s", boundary]) do
@@ -4492,7 +4535,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         end)
 
       with {:ok, descendants, descendant_assignments} <-
-             post_summary_plan_commits(root, plan_id, boundary, endpoint) do
+             post_summary_plan_commits(root, plan_id, boundary, endpoint, snapshot) do
         history = %{
           pre_boundary: pre_boundary,
           descendants: descendants,
@@ -4508,7 +4551,15 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp review_endpoint(root) do
+  defp review_endpoint(root, snapshot \\ nil) do
+    if is_map(snapshot) and snapshot.root == Path.expand(root) do
+      {:ok, snapshot.endpoint}
+    else
+      read_review_endpoint(root)
+    end
+  end
+
+  defp read_review_endpoint(root) do
     case git_lines(root, ["rev-parse", "--verify", "HEAD^{commit}"]) do
       {:ok, [endpoint]} when byte_size(endpoint) in 40..64 ->
         if Regex.match?(~r/^[0-9a-f]+$/, endpoint),
@@ -4526,7 +4577,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       else: {:error, ["completion boundary must be an ancestor of review endpoint"]}
   end
 
-  defp post_summary_plan_commits(root, plan_id, boundary, endpoint) do
+  defp post_summary_plan_commits(root, plan_id, boundary, endpoint, snapshot) do
     with {:ok, rows} <-
            git_lines(root, [
              "log",
@@ -4534,7 +4585,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              "--format=%H%x09%s",
              "#{boundary}..#{endpoint}"
            ]) do
-      with {:ok, assignments} <- assign_plan_descendants(root, rows) do
+      with {:ok, assignments} <- assign_plan_descendants(root, rows, snapshot) do
         commits =
           assignments
           |> Enum.filter(&(&1.scope == plan_id))
@@ -4545,7 +4596,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp assign_plan_descendants(root, rows) do
+  defp assign_plan_descendants(root, rows, snapshot) do
     rows
     |> Enum.reduce_while({:ok, []}, fn row, {:ok, assignments} ->
       case String.split(row, "\t", parts: 2) do
@@ -4553,7 +4604,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           scope = conventional_scope(subject)
 
           if is_binary(scope) and Regex.match?(~r/^\d+(?:\.\d+)?-\d+$/, scope) do
-            case tracked_plan_paths(root, scope) do
+            case tracked_plan_paths(root, scope, snapshot) do
               {:ok, [path]} ->
                 assignment = %{commit: commit, scope: scope, plan_path: path}
                 {:cont, {:ok, assignments ++ [assignment]}}
@@ -4589,8 +4640,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp tracked_plan_paths(root, plan_id) do
-    with {:ok, paths} <- git_lines(root, ["ls-files", "--cached", "--", ".planning/phases"]) do
+  defp tracked_plan_paths(root, plan_id, snapshot) do
+    paths_result =
+      if is_map(snapshot) and snapshot.root == Path.expand(root),
+        do: {:ok, snapshot.tracked_paths},
+        else: git_lines(root, ["ls-files", "--cached", "--", ".planning/phases"])
+
+    with {:ok, paths} <- paths_result do
       expected = "#{plan_id}-PLAN.md"
 
       matches =
