@@ -78,9 +78,11 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Bound the active-plan owner and extend the evidence inventory** - `8062df9` (`test`)
-2. **Task 1: Reuse shared governance provenance within an invocation** - `0e97b36` (`test`)
-3. **Task 2: Capture current proof and refresh both reports** - `694c23f` (`docs`)
+1. **Plan: Create the timeout gap-closure scope** - `51e1b922e4b8e1405319d421191687b265619e81` (`docs`)
+2. **Plan: Add per-command failure criteria after review** - `32a08c84378b142fff6dfa127d656f1fdca8189b` (`docs`)
+3. **Task 1: Bound the active-plan owner and extend the evidence inventory** - `8062df9` (`test`)
+4. **Task 1: Reuse shared governance provenance within an invocation** - `0e97b36` (`test`)
+5. **Task 2: Capture current proof and refresh both reports** - `694c23f` (`docs`)
 
 **Plan metadata:** committed separately after this summary was written.
 
