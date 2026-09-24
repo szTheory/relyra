@@ -109,10 +109,12 @@ status: complete
 
 ## Task Commits
 
-Each task was committed atomically:
+Plan updates and implementation tasks were committed atomically:
 
-1. **Task 1: Accept the exact post-Phase-73 lifecycle under fail-closed governance** - `d76c138` (fix)
-2. **Task 2: Capture Phase 73 proof and hand off for post-transition replay** - `12e94f0` (test)
+1. **Plan: Align lifecycle verification sequence** - `8856410` (docs)
+2. **Plan: Align worktree lifecycle verification** - `5054f86` (docs)
+3. **Task 1: Accept the exact post-Phase-73 lifecycle under fail-closed governance** - `e0c02d9` (fix)
+4. **Task 2: Capture Phase 73 proof and hand off for post-transition replay** - `42f9955` (test)
 
 ## Files Created/Modified
 
