@@ -421,7 +421,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     phase_dir = ".planning/phases/73-twin-contract-and-baseline"
     plan_paths = Path.wildcard(Path.join(phase_dir, "73-*-PLAN.md")) |> Enum.sort()
 
-    assert length(plan_paths) == 30
+    assert length(plan_paths) == 31
 
     violations = Enum.flat_map(plan_paths, &plan_task_structure_violations/1)
 
@@ -721,8 +721,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     {security, validation} = apply(reconciliation, :fixture_documents!, [proof, :final])
 
     assert :ok = apply(reconciliation, :validate_documents!, [security, validation, proof, root])
-    assert length(proof["acceptance_task_ids"]) == 64
-    assert List.last(proof["acceptance_task_ids"]) == "73-30-02"
+    assert length(proof["acceptance_task_ids"]) == 66
+    assert List.last(proof["acceptance_task_ids"]) == "73-31-02"
 
     [first_owner | _] = proof["acceptance_task_ids"]
 
@@ -754,6 +754,63 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         apply(reconciliation, :validate_documents!, [invalid, validation, proof, root])
       end
     end
+  end
+
+  @tag :plan_73_31_task_1
+  test "current tracked plan inventory builds one validated 31-plan proof" do
+    reconciliation = Relyra.Phase73Reconciliation
+    root = File.cwd!()
+
+    assert {tracked_plans, 0} =
+             System.cmd("git", [
+               "ls-files",
+               "--",
+               ".planning/phases/73-twin-contract-and-baseline/73-*-PLAN.md"
+             ])
+
+    assert length(String.split(tracked_plans, "\n", trim: true)) == 31
+    proof = reconciliation.fixture_proof!(root)
+    {security, validation} = reconciliation.fixture_documents!(proof, :staged)
+
+    assert length(proof["acceptance_task_ids"]) == 66
+    assert List.last(proof["acceptance_task_ids"]) == "73-31-02"
+
+    assert Enum.any?(
+             proof["governed_sources"],
+             &(&1["path"] == ".planning/phases/73-twin-contract-and-baseline/73-31-PLAN.md")
+           )
+
+    assert :ok = reconciliation.validate_documents!(security, validation, proof, root)
+
+    for owners <- [tl(proof["acceptance_task_ids"]), proof["acceptance_task_ids"] ++ ["73-99-99"]] do
+      corrupt = Map.put(proof, "acceptance_task_ids", owners)
+      {bad_security, bad_validation} = reconciliation.fixture_documents!(corrupt, :staged)
+
+      assert_raise ArgumentError, fn ->
+        reconciliation.validate_documents!(bad_security, bad_validation, corrupt, root)
+      end
+    end
+  end
+
+  @tag :plan_73_31_task_2
+  test "new reconciliation owners are real tests in the mandatory fresh-process lane" do
+    source = File.read!("test/governance/milestone_scope_test.exs")
+
+    for tag <- ["plan_73_31_task_1", "plan_73_31_task_2"] do
+      assert source =~ "@tag :#{tag}"
+      assert length(Regex.scan(~r/@tag :#{tag}\s+test\b/s, source)) == 1
+    end
+
+    assert [step] = mix_alias_steps("ci.evidence")
+    assert step =~ "cmd mix test"
+    assert step =~ "test/governance/milestone_scope_test.exs"
+    assert step =~ "--only evidence_contract"
+    assert step =~ "--warnings-as-errors"
+
+    workflow = File.read!(".github/workflows/security-gates.yml")
+    assert workflow =~ ~r/jobs:\s*\n  security:/
+    assert workflow =~ ~r/- name: Evidence contract\n\s+run:.*mix ci\.evidence/
+    assert :ok = AdoptionEvidence.validate_repository!(AdoptionEvidence.entries(), File.cwd!())
   end
 
   @tag :plan_73_25_task_1
