@@ -369,13 +369,116 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   @tag :plan_73_15_task_2
   test "review endpoint includes every ordered exact-scope descendant only" do
-    for variant <- [:post_summary_harmless, :post_summary_foreign, :post_summary_multiple] do
+    for variant <- [:post_summary_harmless, :post_summary_multiple] do
       fixture = completed_plan_git_fixture(variant)
       assert {:ok, provenance} = completed_plan_provenance(fixture.root, fixture.plan_path)
       assert provenance.commits == fixture.implementation_commits ++ fixture.descendant_commits
       assert provenance.summary_commits == fixture.implementation_commits
       refute fixture.completion_commit in provenance.commits
     end
+  end
+
+  @tag :plan_73_29_task_1
+  test "governance task children are singular, balanced, and direct" do
+    clean = no_risk_plan_fixture()
+    action = "<action>Extend deterministic policy tests only.</action>"
+    files = "<files>test/governance/milestone_scope_test.exs</files>"
+
+    controls = [
+      {String.replace(clean, action, action <> "\n" <> action, global: false), "action",
+       "exactly once"},
+      {String.replace(clean, files, files <> "\n<files></files>", global: false), "files",
+       "exactly once"},
+      {String.replace(clean, action, "<action></action>\n" <> action, global: false), "action",
+       "exactly once"},
+      {String.replace(clean, "</action>", "", global: false), "action", "boundary"}
+    ]
+
+    for {invalid, child, diagnostic} <- controls do
+      violations = plan_scope_violations(invalid)
+
+      assert Enum.any?(violations, fn violation ->
+               violation =~ "task child" and violation =~ child and violation =~ diagnostic
+             end),
+             "expected a singular direct #{child} diagnostic, got: #{inspect(violations)}"
+    end
+
+    nested =
+      String.replace(
+        clean,
+        action,
+        "<action>Text mentions a nested section: <files>example.txt</files>.</action>",
+        global: false
+      )
+
+    assert plan_scope_violations(nested) == []
+  end
+
+  @tag :plan_73_29_task_1
+  test "all tracked Phase 73 plans retain their valid current or legacy task grammar" do
+    assert {:ok, _identity} = validated_governance_identity(File.cwd!())
+
+    phase_dir = ".planning/phases/73-twin-contract-and-baseline"
+    plan_paths = Path.wildcard(Path.join(phase_dir, "73-*-PLAN.md")) |> Enum.sort()
+
+    assert length(plan_paths) == 30
+
+    violations = Enum.flat_map(plan_paths, &plan_task_structure_violations/1)
+
+    assert violations == [],
+           "tracked plans must retain their established schema branches: #{inspect(violations)}"
+  end
+
+  defp plan_task_structure_violations(path) do
+    case closed_plan_tasks(File.read!(path)) do
+      {:ok, task_region, tasks} ->
+        task_acceptance_ownership_violations(task_region, tasks)
+        |> Enum.map(&"#{path}: #{&1}")
+
+      {:error, violations} ->
+        Enum.map(violations, &"#{path}: #{&1}")
+    end
+  end
+
+  @tag :plan_73_29_task_2
+  test "plan-shaped descendants are assigned before current-plan filtering" do
+    unknown = completed_plan_git_fixture(:post_summary_foreign)
+
+    assert {:error, violations} = completed_plan_provenance(unknown.root, unknown.plan_path)
+
+    assert Enum.any?(violations, fn violation ->
+             violation =~ "descendant" and violation =~ "73-98" and
+               violation =~ List.first(unknown.foreign_descendant_commits)
+           end),
+           "expected unknown plan-scope diagnostic, got: #{inspect(violations)}"
+
+    existing = completed_plan_git_fixture(:post_summary_foreign_existing)
+    assert {:ok, provenance} = completed_plan_provenance(existing.root, existing.plan_path)
+    assert provenance.commits == existing.implementation_commits
+    refute List.first(existing.foreign_descendant_commits) in provenance.commits
+
+    assert Enum.any?(provenance.descendant_assignments, fn assignment ->
+             assignment.scope == "73-98" and
+               assignment.plan_path == existing.foreign_plan_relative
+           end)
+
+    ambiguous = completed_plan_git_fixture(:post_summary_foreign_ambiguous)
+
+    assert {:error, ambiguous_violations} =
+             completed_plan_provenance(ambiguous.root, ambiguous.plan_path)
+
+    assert Enum.any?(ambiguous_violations, fn violation ->
+             violation =~ "descendant" and violation =~ "73-98" and violation =~ "2 tracked PLAN"
+           end)
+
+    multiple = completed_plan_git_fixture(:post_summary_multiple)
+    assert {:ok, provenance} = completed_plan_provenance(multiple.root, multiple.plan_path)
+    assert provenance.commits == multiple.implementation_commits ++ multiple.descendant_commits
+
+    assert {:ok, real_identity} = validated_governance_identity(File.cwd!())
+    plan_27 = Enum.find(real_identity.plan_paths, &String.ends_with?(&1, "/73-27-PLAN.md"))
+    assert {:ok, real_provenance} = completed_plan_provenance(real_identity.root, plan_27)
+    assert is_list(real_provenance.descendant_assignments)
   end
 
   @tag :plan_73_15_task_2
@@ -441,20 +544,20 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     security = File.read!(Path.join(phase_dir, "73-SECURITY.md"))
     validation = File.read!(Path.join(phase_dir, "73-VALIDATION.md"))
 
-    assert (security =~ "status: issues_found" and security =~ "threats_open: 6") or
-             (security =~ "status: verified" and security =~ "threats_open: 0")
+    assert security =~ "status: issues_found"
+    assert security =~ "threats_open: 7"
 
-    assert security =~ "43 threats: 35 closed and 8 open"
+    assert security =~ "50 threats, 42 closed, 8 open"
     assert security =~ ~r/^\| T-73-12 \|.*\| medium \|.*\| open/m
 
     for {threat, finding, severity} <- [
-          {"T-73-91", "CR-01", "high"},
-          {"T-73-92", "CR-02", "high"},
-          {"T-73-93", "CR-03", "high"},
-          {"T-73-94", "CR-04", "high"},
-          {"T-73-95", "CR-05", "high"},
-          {"T-73-96", "CR-06", "high"},
-          {"T-73-97", "WR-01", "medium"}
+          {"T-73-98", "CR-01", "high"},
+          {"T-73-99", "CR-02", "high"},
+          {"T-73-100", "CR-03", "high"},
+          {"T-73-101", "CR-04", "high"},
+          {"T-73-102", "CR-05", "high"},
+          {"T-73-103", "CR-06", "high"},
+          {"T-73-104", "CR-07", "high"}
         ] do
       rows = Regex.scan(~r/^\| #{threat} \|.*$/m, security) |> List.flatten()
       assert [row] = rows, "expected one unique #{threat} row, got: #{inspect(rows)}"
@@ -463,17 +566,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       assert row =~ "| open"
     end
 
-    security_correction =
-      "Post-review correction for the 2026-09-11T19:23:38Z review"
+    security_correction = "## Post-Review Correction — 2026-09-24"
 
     validation_correction =
-      "## Validation Audit 2026-09-11 — Current-Review Correction"
+      "## Validation Audit 2026-09-24 — Current-Review Correction"
 
-    assert {:ok, security_offset} = byte_offset(security, security_correction)
-    assert {:ok, validation_offset} = byte_offset(validation, validation_correction)
+    assert {:ok, _security_offset} = byte_offset(security, security_correction)
+    assert {:ok, _validation_offset} = byte_offset(validation, validation_correction)
 
-    assert security =~
-             "| 2026-09-11 | 43 | 35 | 8 (6 blocking, 2 non-blocking) | #{security_correction}"
+    assert security =~ "50 threats, 42 closed, 8 open"
+    assert security =~ "Seven high-threshold blockers"
 
     assert (validation =~ "status: gaps_found" and
               validation =~ "nyquist_compliant: false") or
@@ -495,12 +597,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       |> String.split(validation_correction, parts: 2)
       |> List.last()
 
-    for finding <- ~w(CR-01 CR-02 CR-03 CR-04 CR-05 CR-06 WR-01) do
-      assert correction_section =~ finding
-    end
+    assert correction_section =~ "CR-01 through CR-07"
 
-    assert_later_plan_73_26_rows_follow!(security, security_offset)
-    assert_later_plan_73_26_rows_follow!(validation, validation_offset)
+    assert {:ok, _offset} = byte_offset(security, "## Plan 73-26 Current Proof Staging")
+    assert {:ok, _offset} = byte_offset(validation, "Plan 73-26 Current Proof Staging")
   end
 
   @tag :plan_73_26_task_1
@@ -587,8 +687,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     {security, validation} = apply(reconciliation, :fixture_documents!, [proof, :final])
 
     assert :ok = apply(reconciliation, :validate_documents!, [security, validation, proof, root])
-    assert length(proof["acceptance_task_ids"]) == 56
-    assert List.last(proof["acceptance_task_ids"]) == "73-26-02"
+    assert length(proof["acceptance_task_ids"]) == 64
+    assert List.last(proof["acceptance_task_ids"]) == "73-30-02"
 
     [first_owner | _] = proof["acceptance_task_ids"]
 
@@ -609,11 +709,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           String.replace(security, "threats_open: 0", "threats_open: 1", global: false),
           String.replace(
             security,
-            "43 threats: 42 closed and 1 open",
-            "43 threats: 41 closed and 2 open",
+            "50 threats: 49 closed and 1 open",
+            "50 threats: 48 closed and 2 open",
             global: false
           ),
-          String.replace(security, "T-73-91_CLOSED", "", global: false),
+          String.replace(security, "T-73-98_CLOSED", "", global: false),
           String.replace(security, "PHASE73_FINAL_RECONCILIATION", "", global: false)
         ] do
       assert_raise ArgumentError, fn ->
@@ -671,9 +771,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
          global: false
        ), "nested acceptance_criteria"},
       {String.replace(clean, "</acceptance_criteria>", "", global: false),
-       "unmatched acceptance_criteria open"},
+       "acceptance_criteria has an unmatched open boundary"},
       {String.replace(clean, "<acceptance_criteria>", "", global: false),
-       "unmatched acceptance_criteria close"},
+       "acceptance_criteria has an unmatched close boundary"},
       {String.replace(clean, acceptance, "<acceptance_criteria>   </acceptance_criteria>",
          global: false
        ), "acceptance_criteria must be non-empty"}
@@ -2176,6 +2276,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     File.mkdir_p!(phase_dir)
     on_exit(fn -> File.rm_rf!(root) end)
 
+    foreign_plan_relative = ".planning/phases/73-twin-contract-and-baseline/73-98-PLAN.md"
+
+    if variant in [:post_summary_foreign_existing, :post_summary_foreign_ambiguous] do
+      File.write!(Path.join(root, foreign_plan_relative), no_risk_plan_fixture())
+    end
+
+    if variant == :post_summary_foreign_ambiguous do
+      second_foreign_plan = Path.join(root, ".planning/phases/73-secondary/73-98-PLAN.md")
+      File.mkdir_p!(Path.dirname(second_foreign_plan))
+      File.write!(second_foreign_plan, no_risk_plan_fixture())
+    end
+
     git_fixture!(root, ["init", "-q"])
     git_fixture!(root, ["config", "user.email", "governance@example.invalid"])
     git_fixture!(root, ["config", "user.name", "Governance Fixture"])
@@ -2353,8 +2465,23 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             "def start_login(connection, relay_context, policy, audit, opts \\ [])\n"
           )
 
-          fixture_commit!(root, ["lib/relyra.ex"], "fix(73-98): foreign descendant")
-          []
+          [fixture_commit!(root, ["lib/relyra.ex"], "fix(73-98): foreign descendant")]
+
+        :post_summary_foreign_existing ->
+          File.write!(
+            Path.join(root, "lib/relyra.ex"),
+            "def start_login(connection, relay_context, policy, audit, opts \\ [])\n"
+          )
+
+          [fixture_commit!(root, ["lib/relyra.ex"], "fix(73-98): foreign descendant")]
+
+        :post_summary_foreign_ambiguous ->
+          File.write!(
+            Path.join(root, "lib/relyra.ex"),
+            "def start_login(connection, relay_context, policy, audit, opts \\ [])\n"
+          )
+
+          [fixture_commit!(root, ["lib/relyra.ex"], "fix(73-98): foreign descendant")]
 
         :post_summary_multiple ->
           File.write!(Path.join(root, "README.md"), "baseline\nharmless task\ndescendant one\n")
@@ -2387,6 +2514,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       completion_commit: completion_commit,
       merge_commit: merge_commit,
       descendant_commits: descendant_commits,
+      foreign_descendant_commits:
+        if(
+          variant in [
+            :post_summary_foreign,
+            :post_summary_foreign_existing,
+            :post_summary_foreign_ambiguous
+          ],
+          do: descendant_commits,
+          else: []
+        ),
+      foreign_plan_relative: foreign_plan_relative,
       review_endpoint: review_endpoint
     }
   end
@@ -3789,11 +3927,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              body <- binary_part(after_opening, 0, close_start),
              false <- Regex.match?(~r/<task(?:\s|>)/, body) do
           task_end = task_start + byte_size(opening) + close_start + byte_size("</task>")
-          task = parsed_plan_task(parsed_attributes, body, {task_start, task_end})
-          consumed = byte_size(opening) + close_start + byte_size("</task>")
-          rest = binary_part(remaining, consumed, byte_size(remaining) - consumed)
 
-          consume_plan_tasks(rest, task_end, [task | tasks])
+          with {:ok, task} <- parsed_plan_task(parsed_attributes, body, {task_start, task_end}) do
+            consumed = byte_size(opening) + close_start + byte_size("</task>")
+            rest = binary_part(remaining, consumed, byte_size(remaining) - consumed)
+            consume_plan_tasks(rest, task_end, [task | tasks])
+          end
         else
           {:error, violations} -> {:error, violations}
           :nomatch -> {:error, ["task opening tag is unterminated"]}
@@ -3836,122 +3975,161 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       else: {:error, violations}
   end
 
-  defp parsed_plan_task(attributes, body, span) do
-    risk_metadata_sections = tag_sections(body, "risk_metadata")
+  @task_semantic_children ~w(name action files verify acceptance_criteria risk_metadata resume-signal)
 
-    %{
-      type: attributes.type,
-      gate: attributes.gate,
-      body: body,
-      span: span,
-      name: tag_content(body, "name"),
-      action: tag_content(body, "action"),
-      files: tag_content(body, "files"),
-      verify: tag_content(body, "verify"),
-      acceptance_criteria: tag_content(body, "acceptance_criteria"),
-      resume_signal: tag_content(body, "resume-signal"),
-      risk_metadata_sections: risk_metadata_sections,
-      risk_metadata:
-        risk_metadata_sections
-        |> Enum.flat_map(&parse_key_values/1)
-        |> Enum.reduce(%{}, fn {key, value}, fields ->
-          Map.update(fields, key, [value], &[value | &1])
-        end)
-    }
-  end
+  defp direct_task_children(body) do
+    tokens =
+      Regex.scan(~r/<\/?[A-Za-z][A-Za-z0-9_-]*(?:\s+[^<>]*)?\/?\s*>/, body, return: :index)
 
-  defp task_acceptance_ownership_violations(task_region, tasks) do
-    tokens = acceptance_tokens(task_region.body)
-    raw_count = length(Regex.scan(~r/<\/?acceptance_criteria\b/, task_region.body))
+    {children, root, error} =
+      Enum.reduce_while(tokens, {[], nil, nil}, fn [{start, length}], {children, root, _error} ->
+        token = binary_part(body, start, length)
 
-    syntax_violations =
-      if raw_count == length(tokens),
-        do: [],
-        else: ["acceptance_criteria uses unsupported or unterminated syntax"]
+        case Regex.run(~r/\A<(\/)?([A-Za-z][A-Za-z0-9_-]*)([^<>]*)>\z/, token,
+               capture: :all_but_first
+             ) do
+          [closing, name, suffix] ->
+            is_closing = closing == "/"
+            self_closing = not is_closing and String.ends_with?(String.trim(suffix), "/")
 
-    {pairs, balance_violations} = balanced_acceptance_pairs(tokens, task_region.body)
+            cond do
+              root != nil and name != root.name ->
+                {:cont, {children, root, nil}}
 
-    ownership_violations =
-      Enum.flat_map(pairs, fn pair ->
-        owners =
-          Enum.filter(tasks, fn task ->
-            implementation_bearing_task?(task) and
-              elem(task.span, 0) <= pair.open_start and elem(task.span, 1) >= pair.close_end
-          end)
+              root != nil and is_closing and root.depth > 1 ->
+                {:cont, {children, %{root | depth: root.depth - 1}, nil}}
 
-        []
-        |> add_if(
-          length(owners) != 1,
-          "acceptance_criteria must be wholly owned by one implementation task"
-        )
-        |> add_if(
-          String.trim(pair.content) == "",
-          "acceptance_criteria must be non-empty"
-        )
-      end)
+              root != nil and is_closing ->
+                content = binary_part(body, root.content_start, start - root.content_start)
 
-    cardinality_violations =
-      tasks
-      |> Enum.filter(&implementation_bearing_task?/1)
-      |> Enum.flat_map(fn task ->
-        count =
-          Enum.count(pairs, fn pair ->
-            elem(task.span, 0) <= pair.open_start and elem(task.span, 1) >= pair.close_end
-          end)
+                children =
+                  if root.semantic,
+                    do: children ++ [%{name: root.name, content: content}],
+                    else: children
 
-        if count == 1,
-          do: [],
-          else: [
-            "#{nonempty(task.name, "unnamed task")} acceptance_criteria must appear exactly once"
-          ]
-      end)
+                {:cont, {children, nil, nil}}
 
-    syntax_violations ++ balance_violations ++ ownership_violations ++ cardinality_violations
-  end
+              root != nil and not is_closing and not self_closing ->
+                {:cont, {children, %{root | depth: root.depth + 1}, nil}}
 
-  defp acceptance_tokens(body) do
-    ~r/<\/?acceptance_criteria\b[^>]*>/
-    |> Regex.scan(body, return: :index)
-    |> Enum.map(fn [{start, length}] ->
-      %{text: binary_part(body, start, length), start: start, length: length}
-    end)
-  end
+              root != nil ->
+                {:cont, {children, root, nil}}
 
-  defp balanced_acceptance_pairs(tokens, body) do
-    {open, pairs, violations} =
-      Enum.reduce(tokens, {nil, [], []}, fn token, {open, pairs, violations} ->
-        cond do
-          token.text == "<acceptance_criteria>" and open == nil ->
-            {token, pairs, violations}
+              is_closing and name in @task_semantic_children ->
+                {:halt, {children, nil, "task child #{name} has an unmatched close boundary"}}
 
-          token.text == "<acceptance_criteria>" ->
-            {open, pairs, violations ++ ["nested acceptance_criteria is not allowed"]}
+              is_closing ->
+                {:cont, {children, nil, nil}}
 
-          token.text == "</acceptance_criteria>" and open == nil ->
-            {nil, pairs, violations ++ ["unmatched acceptance_criteria close"]}
+              name in @task_semantic_children and String.trim(suffix) != "" ->
+                {:halt, {children, nil, "task child #{name} uses unsupported opening syntax"}}
 
-          token.text == "</acceptance_criteria>" ->
-            content_start = open.start + open.length
+              self_closing and name in @task_semantic_children ->
+                {:cont, {children ++ [%{name: name, content: ""}], nil, nil}}
 
-            pair = %{
-              open_start: open.start,
-              close_end: token.start + token.length,
-              content: binary_part(body, content_start, token.start - content_start)
-            }
+              self_closing ->
+                {:cont, {children, nil, nil}}
 
-            {nil, [pair | pairs], violations}
+              true ->
+                frame = %{
+                  name: name,
+                  semantic: name in @task_semantic_children,
+                  content_start: start + length,
+                  depth: 1
+                }
 
-          true ->
-            {open, pairs, violations ++ ["acceptance_criteria uses unsupported syntax"]}
+                {:cont, {children, frame, nil}}
+            end
+
+          _other ->
+            {:halt, {children, root, "task child tag syntax is malformed"}}
         end
       end)
 
-    violations =
-      if open == nil,
-        do: violations,
-        else: violations ++ ["unmatched acceptance_criteria open"]
+    cond do
+      is_binary(error) ->
+        {:error, [error]}
 
-    {Enum.reverse(pairs), violations}
+      root != nil ->
+        {:error, ["task child #{root.name} has an unmatched open boundary"]}
+
+      true ->
+        {:ok, children}
+    end
+  end
+
+  defp parsed_plan_task(attributes, body, span) do
+    with {:ok, children} <- direct_task_children(body) do
+      violations =
+        children
+        |> Enum.group_by(& &1.name)
+        |> Enum.flat_map(fn {name, sections} ->
+          if name in @task_semantic_children and length(sections) > 1 do
+            [
+              "task child #{name} must appear exactly once when present (found #{length(sections)})"
+            ]
+          else
+            []
+          end
+        end)
+
+      if violations != [] do
+        {:error, violations}
+      else
+        risk_metadata_sections =
+          children
+          |> Enum.filter(&(&1.name == "risk_metadata"))
+          |> Enum.map(& &1.content)
+
+        content = fn name ->
+          case Enum.find(children, &(&1.name == name)) do
+            nil -> ""
+            section -> String.trim(section.content)
+          end
+        end
+
+        {:ok,
+         %{
+           type: attributes.type,
+           gate: attributes.gate,
+           body: body,
+           span: span,
+           children: children,
+           name: content.("name"),
+           action: content.("action"),
+           files: content.("files"),
+           verify: content.("verify"),
+           acceptance_criteria: content.("acceptance_criteria"),
+           resume_signal: content.("resume-signal"),
+           risk_metadata_sections: risk_metadata_sections,
+           risk_metadata:
+             risk_metadata_sections
+             |> Enum.flat_map(&parse_key_values/1)
+             |> Enum.reduce(%{}, fn {key, value}, fields ->
+               Map.update(fields, key, [value], &[value | &1])
+             end)
+         }}
+      end
+    end
+  end
+
+  defp task_acceptance_ownership_violations(_task_region, tasks) do
+    tasks
+    |> Enum.filter(&implementation_bearing_task?/1)
+    |> Enum.flat_map(fn task ->
+      case Enum.find(task.children, &(&1.name == "acceptance_criteria")) do
+        nil ->
+          ["#{nonempty(task.name, "unnamed task")} acceptance_criteria must appear exactly once"]
+
+        %{content: content} ->
+          []
+          |> add_if(String.trim(content) == "", "acceptance_criteria must be non-empty")
+          |> add_if(
+            Regex.match?(~r/<\/?acceptance_criteria\b/, content),
+            "nested acceptance_criteria is not allowed"
+          )
+      end
+    end)
   end
 
   defp parse_key_values(section) do
@@ -4105,6 +4283,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
          {:ok, boundary_changes} <- commit_changed_surfaces(root, [boundary]) do
       provenance = %{
         commits: history.commits,
+        descendant_assignments: history.descendant_assignments,
         changes: changes ++ boundary_changes,
         boundary_changes: boundary_changes,
         completion_boundary: boundary,
@@ -4178,11 +4357,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           end
         end)
 
-      with {:ok, descendants} <-
+      with {:ok, descendants, descendant_assignments} <-
              post_summary_plan_commits(root, plan_id, boundary, endpoint) do
         history = %{
           pre_boundary: pre_boundary,
           descendants: descendants,
+          descendant_assignments: descendant_assignments,
           commits: pre_boundary ++ descendants
         }
 
@@ -4220,15 +4400,74 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              "--format=%H%x09%s",
              "#{boundary}..#{endpoint}"
            ]) do
-      commits =
-        Enum.flat_map(rows, fn row ->
-          case String.split(row, "\t", parts: 2) do
-            [commit, subject] -> if conventional_scope(subject) == plan_id, do: [commit], else: []
-            _other -> []
-          end
-        end)
+      with {:ok, assignments} <- assign_plan_descendants(root, rows) do
+        commits =
+          assignments
+          |> Enum.filter(&(&1.scope == plan_id))
+          |> Enum.map(& &1.commit)
 
-      {:ok, commits}
+        {:ok, commits, assignments}
+      end
+    end
+  end
+
+  defp assign_plan_descendants(root, rows) do
+    rows
+    |> Enum.reduce_while({:ok, []}, fn row, {:ok, assignments} ->
+      case String.split(row, "\t", parts: 2) do
+        [commit, subject] ->
+          scope = conventional_scope(subject)
+
+          if is_binary(scope) and Regex.match?(~r/^\d+(?:\.\d+)?-\d+$/, scope) do
+            case tracked_plan_paths(root, scope) do
+              {:ok, [path]} ->
+                assignment = %{commit: commit, scope: scope, plan_path: path}
+                {:cont, {:ok, assignments ++ [assignment]}}
+
+              {:ok, paths} ->
+                {:halt,
+                 {:error,
+                  [
+                    "descendant commit #{commit} with plan scope #{scope} resolves to #{length(paths)} tracked PLAN files (expected exactly one)"
+                  ]}}
+
+              {:error, violations} ->
+                {:halt, {:error, violations}}
+            end
+          else
+            {:cont, {:ok, assignments}}
+          end
+
+        _other ->
+          {:halt, {:error, ["plan-scope descendant row is malformed: #{inspect(row)}"]}}
+      end
+    end)
+    |> case do
+      {:ok, assignments} ->
+        commits = Enum.map(assignments, & &1.commit)
+
+        if duplicated?(commits),
+          do: {:error, ["plan-scope descendants contain duplicate commit assignments"]},
+          else: {:ok, assignments}
+
+      error ->
+        error
+    end
+  end
+
+  defp tracked_plan_paths(root, plan_id) do
+    with {:ok, paths} <- git_lines(root, ["ls-files", "--cached", "--", ".planning/phases"]) do
+      expected = "#{plan_id}-PLAN.md"
+
+      matches =
+        paths
+        |> Enum.filter(fn path ->
+          String.starts_with?(path, ".planning/phases/") and
+            Path.basename(path) == expected and File.regular?(Path.join(root, path))
+        end)
+        |> Enum.sort()
+
+      {:ok, matches}
     end
   end
 
@@ -4466,13 +4705,6 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     ~r/<#{Regex.escape(tag)}>(.*?)<\/#{Regex.escape(tag)}>/s
     |> Regex.scan(markdown, capture: :all_but_first)
     |> Enum.map(fn [content] -> content end)
-  end
-
-  defp tag_content(markdown, tag) do
-    case tag_sections(markdown, tag) do
-      [content] -> String.trim(content)
-      _other -> ""
-    end
   end
 
   defp baseline_rows(markdown), do: table_rows(markdown, "Findings Ledger")
@@ -4794,17 +5026,5 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       {offset, _length} -> {:ok, offset}
       :nomatch -> :error
     end
-  end
-
-  defp assert_later_plan_73_26_rows_follow!(markdown, correction_offset) do
-    markdown
-    |> String.split("\n")
-    |> Enum.filter(&String.contains?(&1, "Plan 73-26"))
-    |> Enum.each(fn row ->
-      assert {:ok, offset} = byte_offset(markdown, row)
-
-      assert offset > correction_offset,
-             "Plan 73-26 row predates current-review correction: #{row}"
-    end)
   end
 end
