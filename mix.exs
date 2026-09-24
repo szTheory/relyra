@@ -32,6 +32,7 @@ defmodule Relyra.MixProject do
         "ci.docs": :test,
         "ci.conformance": :test,
         "ci.evidence": :test,
+        "ci.phase73.reconciliation": :test,
         "ci.security": :test,
         "ci.verify": :test,
         "ci.integration": :test,
@@ -234,6 +235,9 @@ defmodule Relyra.MixProject do
       ],
       "ci.evidence": [
         "cmd mix test test/adoption/evidence_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --warnings-as-errors"
+      ],
+      "ci.phase73.reconciliation": [
+        "cmd mix test test/governance/phase_73_reconciliation_test.exs --only phase_73_reconciliation_replay --warnings-as-errors"
       ],
       "ci.security": [
         "compile --warnings-as-errors",

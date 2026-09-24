@@ -80,6 +80,9 @@ jobs:
       - name: Evidence contract
         run: mix ci.evidence
 
+      - name: Phase 73 reconciliation
+        run: mix ci.phase73.reconciliation
+
       - name: Verification lane
         run: mix ci.verify
 

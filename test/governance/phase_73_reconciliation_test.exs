@@ -3,6 +3,11 @@ defmodule Relyra.Phase73ReconciliationTest do
 
   alias Relyra.Phase73Reconciliation
 
+  @tag :phase_73_reconciliation_replay
+  test "checked-in proof and every required lane replay through one owner" do
+    assert :ok = Phase73Reconciliation.verify_repository_evidence!(File.cwd!())
+  end
+
   @tag :plan_73_27_task_1
   test "recomputes proof identity and honors singular typed report state" do
     root = fixture_root!()

@@ -20,7 +20,9 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     {:ok,
      repository_snapshot:
        AdoptionEvidence.repository_snapshot!(AdoptionEvidence.entries(), File.cwd!(),
-         registered_test_tags: fn _path, _root -> [%{"evidence_contract" => true}] end
+         registered_test_tags: fn _path, _root ->
+           [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
+         end
        )}
   end
 
@@ -47,7 +49,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     registered_test_tags = fn path, _root ->
       send(test_process, {:registered_owner, Path.relative_to(path, root)})
-      [%{"evidence_contract" => true}]
+      [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
     end
 
     snapshot =
@@ -60,6 +62,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       |> Enum.filter(&(&1.state == :existing and &1.evidence_kind != :external_canary))
       |> Enum.map(& &1.owner)
       |> Enum.uniq()
+      |> Kernel.++(["test/governance/phase_73_reconciliation_test.exs"])
       |> Enum.sort()
 
     discovered_owners =
@@ -81,33 +84,35 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     snapshot =
       AdoptionEvidence.repository_snapshot!(entries, root,
-        registered_test_tags: fn _path, _root -> [%{"evidence_contract" => true}] end
+        registered_test_tags: fn _path, _root ->
+          [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
+        end
       )
 
-    [first, second] = snapshot.owners
+    [first | remaining] = snapshot.owners
 
     assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*missing.*snapshot/s, fn ->
-      validate_repository_snapshot!(entries, %{snapshot | owners: [second]})
+      validate_repository_snapshot!(entries, %{snapshot | owners: remaining})
     end
 
     assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*empty.*registered.*tags/s, fn ->
       validate_repository_snapshot!(entries, %{
         snapshot
-        | owners: [%{first | tags: []}, second]
+        | owners: [%{first | tags: []} | remaining]
       })
     end
 
     assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*duplicate.*snapshot/s, fn ->
       validate_repository_snapshot!(entries, %{
         snapshot
-        | owners: [first, second, first]
+        | owners: [first | remaining] ++ [first]
       })
     end
 
     assert_raise ArgumentError, ~r/#{Regex.escape(first.path)}.*normalized.*tag/s, fn ->
       validate_repository_snapshot!(entries, %{
         snapshot
-        | owners: [%{first | tags: [%{evidence_contract: true}]}, second]
+        | owners: [%{first | tags: [%{evidence_contract: true}]} | remaining]
       })
     end
 
@@ -131,7 +136,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       owner = Path.relative_to(path, fixture_root)
       Agent.update(discovery_counts, &Map.update(&1, owner, 1, fn count -> count + 1 end))
       Process.sleep(100)
-      [%{"evidence_contract" => true}]
+      [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
     end
 
     tasks =
@@ -181,7 +186,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       AdoptionEvidence.repository_snapshot!(entries, root,
         registered_test_tags: fn _path, _root ->
           Agent.update(discovery_count, &(&1 + 1))
-          [%{"evidence_contract" => true}]
+          [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
         end
       )
 
@@ -251,7 +256,9 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
       snapshot =
         AdoptionEvidence.repository_snapshot!(entries, root,
-          registered_test_tags: fn _path, _root -> [%{"evidence_contract" => true}] end
+          registered_test_tags: fn _path, _root ->
+            [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
+          end
         )
 
       {snapshot, root}
@@ -347,7 +354,9 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     snapshot =
       AdoptionEvidence.repository_snapshot!(entries, root,
-        registered_test_tags: fn _path, _root -> [%{"evidence_contract" => true}] end
+        registered_test_tags: fn _path, _root ->
+          [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
+        end
       )
 
     [omitted | remaining] = snapshot.governed_inputs
@@ -522,15 +531,150 @@ defmodule Relyra.Adoption.EvidenceContractTest do
            ) == [deterministic]
   end
 
-  test "ci.evidence is a flat fresh-process alias and the required workflow owns it" do
+  @tag :plan_73_28_task_2
+  test "reconciliation has a flat fresh-process owner and mandatory security step" do
     assert [step] = mix_alias_steps("ci.evidence")
     assert step =~ ~r/^cmd mix test test\/adoption\/evidence_contract_test\.exs\b/
     assert step =~ "--warnings-as-errors"
 
+    assert [reconciliation_step] = mix_alias_steps("ci.phase73.reconciliation")
+
+    assert reconciliation_step ==
+             "cmd mix test test/governance/phase_73_reconciliation_test.exs --only phase_73_reconciliation_replay --warnings-as-errors"
+
     workflow = File.read!(@workflow_path)
     assert workflow_step_command(workflow, "Evidence contract") == "mix ci.evidence"
+
+    assert workflow_step_command(workflow, "Phase 73 reconciliation") ==
+             "mix ci.phase73.reconciliation"
+
     refute workflow =~ ~r/^\s*-\s+["']?\.planning\/\*\*/m
     assert workflow =~ ~r/^\s*-\s+["']?prompts\/\*\*/m
+  end
+
+  @tag :plan_73_28_task_2
+  test "reconciliation owner rejects orphaned and fallible chain mutations", %{
+    repository_snapshot: snapshot
+  } do
+    entries = AdoptionEvidence.entries()
+    owner_path = "test/governance/phase_73_reconciliation_test.exs"
+    selector = "phase_73_reconciliation_replay"
+
+    command =
+      "cmd mix test #{owner_path} --only #{selector} --warnings-as-errors"
+
+    step =
+      "      - name: Phase 73 reconciliation\n        run: mix ci.phase73.reconciliation"
+
+    mutations = [
+      {:alias_missing,
+       fn current ->
+         %{current | aliases: Map.delete(current.aliases, "ci.phase73.reconciliation")}
+       end, ~r/Phase 73 reconciliation alias|snapshot record/},
+      {:alias_multi_step,
+       fn current ->
+         %{
+           current
+           | aliases: Map.put(current.aliases, "ci.phase73.reconciliation", [command, command])
+         }
+       end, ~r/Phase 73 reconciliation alias|snapshot record/},
+      {:alias_recursive,
+       fn current ->
+         %{
+           current
+           | aliases:
+               Map.put(current.aliases, "ci.phase73.reconciliation", ["cmd mix ci.evidence"])
+         }
+       end, ~r/Phase 73 reconciliation alias|snapshot record/},
+      {:owner_missing,
+       fn current ->
+         %{
+           current
+           | aliases:
+               Map.put(current.aliases, "ci.phase73.reconciliation", [
+                 String.replace(command, owner_path, "test/adoption/evidence_contract_test.exs")
+               ])
+         }
+       end, ~r/Phase 73 reconciliation alias|snapshot record/},
+      {:step_missing,
+       fn current ->
+         %{current | workflow: String.replace(current.workflow, step <> "\n", "", global: false)}
+       end, ~r/Phase 73 reconciliation step/},
+      {:step_moved,
+       fn current ->
+         moved_step =
+           "  optional:\n    runs-on: ubuntu-latest\n    steps:\n" <>
+             "      - name: Phase 73 reconciliation\n        run: mix ci.phase73.reconciliation"
+
+         %{current | workflow: String.replace(current.workflow, step, moved_step, global: false)}
+       end, ~r/Phase 73 reconciliation step/},
+      {:step_duplicate,
+       fn current ->
+         %{current | workflow: String.replace(current.workflow, step, step <> "\n" <> step)}
+       end, ~r/Phase 73 reconciliation step/},
+      {:step_renamed,
+       fn current ->
+         %{
+           current
+           | workflow:
+               String.replace(current.workflow, "Phase 73 reconciliation", "Optional replay",
+                 global: false
+               )
+         }
+       end, ~r/Phase 73 reconciliation step/},
+      {:step_wrong_command,
+       fn current ->
+         %{
+           current
+           | workflow:
+               String.replace(
+                 current.workflow,
+                 "run: mix ci.phase73.reconciliation",
+                 "run: mix ci.evidence",
+                 global: false
+               )
+         }
+       end, ~r/Phase 73 reconciliation step/},
+      {:step_conditional,
+       fn current ->
+         %{
+           current
+           | workflow:
+               String.replace(
+                 current.workflow,
+                 step,
+                 "      - name: Phase 73 reconciliation\n        if: false\n        run: mix ci.phase73.reconciliation",
+                 global: false
+               )
+         }
+       end, ~r/Phase 73 reconciliation step/},
+      {:step_fallible,
+       fn current ->
+         %{
+           current
+           | workflow:
+               String.replace(
+                 current.workflow,
+                 step,
+                 "      - name: Phase 73 reconciliation\n        continue-on-error: true\n        run: mix ci.phase73.reconciliation",
+                 global: false
+               )
+         }
+       end, ~r/Phase 73 reconciliation step/}
+    ]
+
+    for {_name, mutate, diagnostic} <- mutations do
+      assert_raise ArgumentError, diagnostic, fn ->
+        validate_repository_snapshot!(entries, mutate.(snapshot))
+      end
+    end
+
+    assert_raise ArgumentError, ~r/zero selected tests|Phase 73 reconciliation owner/, fn ->
+      validate_repository_snapshot!(
+        entries,
+        replace_snapshot_owner_tags(snapshot, owner_path, [%{"evidence_contract" => true}])
+      )
+    end
   end
 
   test "nil, empty, singleton, and duplicate ledgers fail closed without merging rows" do
@@ -1339,8 +1483,9 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     fixtures = [
       {"duplicate event",
-       fn workflow -> workflow <> "\n  push:\n    branches:\n      - main\n" end,
-       ~r/workflow push.*exactly once/},
+       fn workflow ->
+         String.replace(workflow, "  push:\n", "  push:\n  push:\n", global: false)
+       end, ~r/workflow push.*exactly once/},
       {"duplicate branches",
        &replace_push_event(&1, [
          "  push:",
@@ -1386,6 +1531,43 @@ defmodule Relyra.Adoption.EvidenceContractTest do
              validate_repository_snapshot!(AdoptionEvidence.entries(), snapshot)
   end
 
+  @tag :plan_73_28_task_1
+  test "required workflow events must descend from one exact top-level on mapping", %{
+    repository_snapshot: snapshot
+  } do
+    entries = AdoptionEvidence.entries()
+    assert :ok = validate_repository_snapshot!(entries, snapshot)
+
+    nested_on =
+      snapshot.workflow
+      |> String.split("jobs:", parts: 2)
+      |> then(fn [_header, jobs] ->
+        "env:\n  on:\n    pull_request:\n      paths-ignore:\n        - prompts/**\n" <>
+          "    push:\n      branches:\n        - main\n      paths-ignore:\n        - prompts/**\n" <>
+          "jobs:" <> jobs
+      end)
+
+    mutations = [
+      {String.replace(snapshot.workflow, "on:\n", "events:\n", global: false),
+       ~r/exact top-level on mapping/},
+      {nested_on, ~r/exact top-level on mapping/},
+      {String.replace(snapshot.workflow, "on:\n", "on: true\n", global: false),
+       ~r/top-level on.*block mapping/},
+      {String.replace(snapshot.workflow, "on:\n", "on: [push]\n", global: false),
+       ~r/top-level on.*block mapping/},
+      {String.replace(snapshot.workflow, "on:\n", "\"on\":\n", global: false),
+       ~r/top-level on.*block mapping/},
+      {snapshot.workflow <> "\non:\n  workflow_dispatch:\n",
+       ~r/top-level on mapping must appear exactly once/}
+    ]
+
+    for {workflow, diagnostic} <- mutations do
+      assert_raise ArgumentError, diagnostic, fn ->
+        validate_repository_snapshot!(entries, %{snapshot | workflow: workflow})
+      end
+    end
+  end
+
   @tag :plan_73_14_task_2
   test "pull request rejects restrictive activity filters including empty types", %{
     repository_snapshot: snapshot
@@ -1411,8 +1593,11 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     entries = AdoptionEvidence.entries()
 
     fixtures = [
-      {fn workflow -> workflow <> "\n  pull_request:\n" end,
-       ~r/workflow pull_request.*exactly once/},
+      {fn workflow ->
+         String.replace(workflow, "  pull_request:\n", "  pull_request:\n  pull_request:\n",
+           global: false
+         )
+       end, ~r/workflow pull_request.*exactly once/},
       {&replace_pull_request_event(&1, [
          "  pull_request:",
          "    paths-ignore:",
@@ -1577,7 +1762,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       |> AdoptionEvidence.repository_snapshot!(root,
         registered_test_tags: fn path, fixture_root ->
           send(self(), {:registered_owner, Path.relative_to(path, fixture_root)})
-          [%{"evidence_contract" => true}]
+          [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
         end
       )
 
@@ -1631,7 +1816,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
             registered_test_tags: fn path, fixture_root ->
               relative = Path.relative_to(path, fixture_root)
               send(test_process, {:registered_owner, relative})
-              [%{"evidence_contract" => true}]
+              [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
             end
           )
         end
@@ -1784,7 +1969,12 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         [app: :evidence_fixture, version: "0.1.0", aliases: aliases()]
       end
 
-      defp aliases, do: [{:"ci.evidence", #{inspect(actual_steps)}}]
+      defp aliases do
+        [
+          {:"ci.evidence", #{inspect(actual_steps)}},
+          {:"ci.phase73.reconciliation", ["cmd mix test test/governance/phase_73_reconciliation_test.exs --only phase_73_reconciliation_replay --warnings-as-errors"]}
+        ]
+      end
 
       def unrelated_decoy do
         [{:"ci.evidence", [#{inspect(decoy_step)}]}]
@@ -1815,6 +2005,11 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       Path.join(root, "test/governance/milestone_scope_test.exs")
     )
 
+    File.cp!(
+      "test/governance/phase_73_reconciliation_test.exs",
+      Path.join(root, "test/governance/phase_73_reconciliation_test.exs")
+    )
+
     File.cp!(@workflow_path, Path.join(root, @workflow_path))
 
     planning_paths =
@@ -1839,7 +2034,8 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         @workflow_path,
         "test/support/adoption_evidence.ex",
         "test/adoption/evidence_contract_test.exs",
-        "test/governance/milestone_scope_test.exs"
+        "test/governance/milestone_scope_test.exs",
+        "test/governance/phase_73_reconciliation_test.exs"
       ] ++ planning_paths
 
     {_, 0} = System.cmd("git", ["add", "--" | tracked_paths], cd: root, stderr_to_stdout: true)

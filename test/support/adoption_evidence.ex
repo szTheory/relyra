@@ -15,6 +15,10 @@ defmodule Relyra.AdoptionEvidence do
   @evidence_kinds [:package_contract, :application, :browser, :external_canary, :security_corpus]
   @states [:planned, :existing]
   @registration_cache_namespace :repository_snapshot
+  @phase73_reconciliation_alias "ci.phase73.reconciliation"
+  @phase73_reconciliation_owner "test/governance/phase_73_reconciliation_test.exs"
+  @phase73_reconciliation_selector "phase_73_reconciliation_replay"
+  @phase73_reconciliation_step "Phase 73 reconciliation"
   @fields [
     :id,
     :requirement,
@@ -397,6 +401,7 @@ defmodule Relyra.AdoptionEvidence do
       end)
 
     Enum.each(owners, &validate_owner_chain!(&1, lane_commands, snapshot.workflow))
+    validate_phase73_reconciliation_chain!(snapshot.aliases, owner_tags, snapshot.workflow)
 
     :ok
   end
@@ -628,8 +633,57 @@ defmodule Relyra.AdoptionEvidence do
     owners
     |> Enum.map(& &1.owner)
     |> Kernel.++(alias_owners)
+    |> Kernel.++(alias_owner_paths(@phase73_reconciliation_alias, aliases))
     |> Enum.uniq()
     |> Enum.sort()
+  end
+
+  defp validate_phase73_reconciliation_chain!(aliases, owner_tags, workflow) do
+    expected_step =
+      "cmd mix test #{@phase73_reconciliation_owner} --only #{@phase73_reconciliation_selector} --warnings-as-errors"
+
+    unless Map.get(aliases, @phase73_reconciliation_alias) == [expected_step] do
+      raise ArgumentError,
+            "EVID-02 Phase 73 reconciliation alias must be one exact non-recursive fresh-process test command"
+    end
+
+    command = validate_check_alias_snapshot!(@phase73_reconciliation_alias, aliases, owner_tags)
+    selector = {@phase73_reconciliation_selector, :enabled}
+
+    owner = Enum.find(command.owners, &(&1.path == @phase73_reconciliation_owner))
+
+    unless owner && selector in command.includes && owner.effective_count > 0 do
+      raise ArgumentError,
+            "EVID-02 Phase 73 reconciliation owner must select a positive #{@phase73_reconciliation_selector} test"
+    end
+
+    unless mandatory_security_step?(
+             workflow,
+             @phase73_reconciliation_step,
+             "mix #{@phase73_reconciliation_alias}"
+           ) and
+             mandatory_step_follows_evidence_contract?(workflow) do
+      raise ArgumentError,
+            "EVID-02 workflow must own one unconditional blocking Phase 73 reconciliation step after Evidence contract under jobs.security"
+    end
+  end
+
+  defp mandatory_step_follows_evidence_contract?(workflow) do
+    lines = String.split(workflow, "\n")
+
+    step_index = fn name ->
+      lines
+      |> Enum.with_index()
+      |> Enum.filter(fn {line, _index} ->
+        Regex.match?(~r/^      - name:\s*#{Regex.escape(name)}\s*$/, line)
+      end)
+      |> Enum.map(&elem(&1, 1))
+    end
+
+    case {step_index.("Evidence contract"), step_index.(@phase73_reconciliation_step)} do
+      {[evidence_index], [reconciliation_index]} -> reconciliation_index > evidence_index
+      _other -> false
+    end
   end
 
   defp alias_owner_paths(alias_name, aliases) do
@@ -1456,8 +1510,9 @@ defmodule Relyra.AdoptionEvidence do
   defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
 
   defp required_planning_triggers!(lines, governed_inputs) do
-    pull_request = required_event_contract!(lines, "pull_request", ~w(paths paths-ignore))
-    push = required_event_contract!(lines, "push", ~w(branches paths paths-ignore))
+    on_lines = top_level_on_mapping!(lines)
+    pull_request = required_event_contract!(on_lines, "pull_request", ~w(paths paths-ignore))
+    push = required_event_contract!(on_lines, "push", ~w(branches paths paths-ignore))
 
     branch_patterns = path_filter_values!(push, "branches", allow_missing?: false)
 
@@ -1469,6 +1524,32 @@ defmodule Relyra.AdoptionEvidence do
     validate_required_paths!("pull_request", pull_request, governed_inputs)
     validate_required_paths!("push", push, governed_inputs)
     true
+  end
+
+  defp top_level_on_mapping!(lines) do
+    candidates =
+      lines
+      |> Enum.with_index()
+      |> Enum.filter(fn {line, _index} ->
+        indentation(line) == 0 and
+          Regex.match?(~r/^(?:on\s*:|["']on["']\s*:)/, line)
+      end)
+
+    case candidates do
+      [] ->
+        raise ArgumentError, "workflow requires one exact top-level on mapping"
+
+      [{header, index}] ->
+        unless Regex.match?(~r/^on:\s*(?:#.*)?$/, header) do
+          raise ArgumentError,
+                "workflow top-level on must be one block mapping without a scalar or alias"
+        end
+
+        indented_block(lines, index, 0)
+
+      _many ->
+        raise ArgumentError, "workflow top-level on mapping must appear exactly once"
+    end
   end
 
   defp required_event_contract!(lines, event, allowed_keys) do
