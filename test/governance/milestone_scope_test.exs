@@ -795,6 +795,36 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @tag :plan_73_31_task_2
   test "new reconciliation owners are real tests in the mandatory fresh-process lane" do
     source = File.read!("test/governance/milestone_scope_test.exs")
+    reconciliation_source = File.read!("test/support/phase_73_reconciliation.ex")
+
+    finding_owners = [
+      {"CR-01", "test/governance/phase_73_reconciliation_test.exs", "plan_73_27_task_1"},
+      {"CR-01", "test/governance/phase_73_reconciliation_test.exs", "plan_73_27_task_2"},
+      {"CR-02", "test/governance/phase_73_reconciliation_test.exs", "plan_73_27_task_1"},
+      {"CR-03", "test/adoption/evidence_contract_test.exs", "plan_73_28_task_1"},
+      {"CR-04", "test/governance/phase_73_reconciliation_test.exs", "plan_73_27_task_2"},
+      {"CR-05", "test/adoption/evidence_contract_test.exs", "plan_73_28_task_2"},
+      {"CR-05", "test/governance/phase_73_reconciliation_test.exs", "plan_73_30_task_1"},
+      {"CR-06", "test/governance/milestone_scope_test.exs", "plan_73_29_task_1"},
+      {"CR-07", "test/governance/milestone_scope_test.exs", "plan_73_29_task_2"}
+    ]
+
+    owner_sources = %{
+      "test/adoption/evidence_contract_test.exs" =>
+        File.read!("test/adoption/evidence_contract_test.exs"),
+      "test/governance/milestone_scope_test.exs" => source,
+      "test/governance/phase_73_reconciliation_test.exs" =>
+        File.read!("test/governance/phase_73_reconciliation_test.exs")
+    }
+
+    for {finding, owner, tag} <- finding_owners do
+      owner_source = Map.fetch!(owner_sources, owner)
+      assert owner_source =~ "@tag :#{tag}", "#{finding} must retain owner #{tag}"
+
+      assert reconciliation_source =~
+               "mix test #{owner} --only #{tag} --warnings-as-errors",
+             "#{finding} focused owner #{tag} must remain in the current proof"
+    end
 
     for tag <- ["plan_73_31_task_1", "plan_73_31_task_2"] do
       assert source =~ "@tag :#{tag}"
