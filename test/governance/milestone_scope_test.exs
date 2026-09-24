@@ -129,7 +129,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
          mutate_file(
            root,
            ".planning/ROADMAP.md",
-           &Regex.replace(~r/^- \[ \] \*\*Phase 7[3-9]:.*\n/m, &1, "")
+           &Regex.replace(~r/^- \[[ x]\] \*\*Phase 7[3-9]:.*\n/m, &1, "")
          )
        end},
       {"STATE milestone",
@@ -169,7 +169,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
          mutate_file(
            root,
            ".planning/ROADMAP.md",
-           &String.replace(&1, "- [ ] **Phase 73:", "- [-] **Phase 73:")
+           &String.replace(&1, "- [x] **Phase 73:", "- [-] **Phase 73:")
          )
        end},
       {"duplicate phase identity",
