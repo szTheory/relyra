@@ -1,6 +1,6 @@
 ---
 phase: 73-twin-contract-and-baseline
-verified: 2026-09-24T20:30:59Z
+verified: 2026-09-24T23:55:58Z
 status: passed
 score: 154/154 must-haves verified (4 roadmap truths + 150 plan truths)
 covered_files:
@@ -87,7 +87,7 @@ covered_files:
   - test/governance/phase_73_reconciliation_test.exs
   - test/support/adoption_evidence.ex
   - test/support/phase_73_reconciliation.ex
-covered_digest: "v1:sha256:69ba5f473cf874460ca08074a44265b5173a0809e5a221146088c4f6f8fcc675"
+covered_digest: "v1:sha256:70e1c5fc9c58f7bc69be72b8f7d4750ca6444f14a5fe91abf10e48c876428aad"
 behavior_unverified: 0
 overrides_applied: 0
 ---
@@ -95,7 +95,7 @@ overrides_applied: 0
 # Phase 73: Twin Contract and Baseline Verification Report
 
 **Phase Goal:** A maintainer can see exactly which adopter jobs v1.11 proves, where each proof runs, what the current quality/CI baseline is, and which changes require approval.
-**Verified:** 2026-09-24T20:30:59Z
+**Verified:** 2026-09-24T23:55:58Z
 **Status:** passed
 **Re-verification:** Fresh post-transition verification; prior report treated as stale.
 
@@ -144,7 +144,7 @@ Not applicable to rendered dynamic data. The phase delivers repository contracts
 | Behavior | Command | Result | Status |
 |---|---|---|---|
 | Evidence ledger, closure ownership and mandatory workflow contract | `mix ci.evidence` | Current proof records three runs, each 127 tests / 0 failures; latest run is included in the fresh current proof. | PASS |
-| Final Phase 73 lifecycle, proof and report reconciliation | `mix ci.phase73.reconciliation` | Fresh post-transition replay: 1 test / 0 failures, immediately before verification dispatch. | PASS |
+| Final Phase 73 lifecycle, proof and report reconciliation | `mix ci.phase73.reconciliation` | Fresh post-transition replay after lifecycle correction: 1 test / 0 failures (466.4s); this owner replays focused, three-run evidence, and all pinned security constituents. | PASS |
 | Repository test suite warnings gate | `mix test --warnings-as-errors` | Current post-transition evidence: 926 tests / 0 failures; only Phase 73 planning artifacts changed since. | PASS |
 | Formatting | `mix format --check-formatted` | Current post-transition check passed. | PASS |
 
@@ -185,5 +185,5 @@ No gaps found. The exact Phase 73 roadmap goal is achieved in the current Phase 
 
 ---
 
-_Verified: 2026-09-24T20:30:59Z_
+_Verified: 2026-09-24T23:55:58Z_
 _Verifier: the agent (gsd-verifier)_

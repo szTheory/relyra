@@ -4,7 +4,7 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 74
 current_phase_name: clean-room-package-consumer
-status: executing
+status: planning
 stopped_at: Phase 74 context gathered (assumptions mode)
 last_updated: "2026-09-24T21:52:21.770Z"
 last_activity: 2026-09-24
@@ -63,6 +63,10 @@ Last activity: 2026-09-24 — Phase 73 complete, transitioned to Phase 74
   demand-gated.
 - New acceptance criteria require deterministic automated evidence in mandatory CI;
   external services remain scheduled canaries.
+- Default to shift-left verification: add integration, E2E, smoke, seam, or browser
+  automation to a mandatory CI lane whenever it provides recurring value. Avoid manual
+  UAT and human completion gates; hand off only checks that cannot yet be automated, and
+  track those as explicit automation gaps.
 - Perform cleanup behind the twin's evidence and stop at diminishing returns rather than
   pursuing aesthetic purity.
 - [Phase 73]: Use a closed, test-only Elixir ledger whose planned rows remain visible but cannot satisfy deterministic closure.
