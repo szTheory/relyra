@@ -118,3 +118,7 @@ Plan 73-32 evidence and reports pass the independent current replay. The execute
 ---
 *Phase: 73-twin-contract-and-baseline*
 *Completed: 2026-09-24*
+
+## Self-Check: PASSED
+
+All five plan artifacts and this summary exist. Task commits `8062df9`, `0e97b36`, `694c23f`, and summary commit `d7cabb0` are present in the worktree history; the self-check-only summary update is committed immediately afterward.
