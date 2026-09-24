@@ -11,8 +11,10 @@ defmodule Relyra.Phase73Reconciliation do
   @proof_end "```\n<!-- phase73-reconciliation-proof:end -->"
   @stage_marker "PHASE73_STAGED_PROOF"
   @final_marker "PHASE73_FINAL_RECONCILIATION"
-  @security_open_marker "Post-review correction for the 2026-09-11T19:23:38Z review"
-  @validation_open_marker "## Validation Audit 2026-09-11 — Current-Review Correction"
+  @historical_security_open_marker "Post-review correction for the 2026-09-11T19:23:38Z review"
+  @historical_validation_open_marker "## Validation Audit 2026-09-11 — Current-Review Correction"
+  @security_open_marker "## Post-Review Correction — 2026-09-24"
+  @validation_open_marker "## Validation Audit 2026-09-24 — Current-Review Correction"
 
   @focused_commands [
     "mix test test/governance/milestone_scope_test.exs --only plan_73_24_task_1 --warnings-as-errors",
@@ -56,8 +58,11 @@ defmodule Relyra.Phase73Reconciliation do
     ".planning/phases/73-twin-contract-and-baseline/73-26-PLAN.md",
     ".planning/phases/73-twin-contract-and-baseline/73-26-SUMMARY.md",
     ".planning/phases/73-twin-contract-and-baseline/73-27-PLAN.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-27-SUMMARY.md",
     ".planning/phases/73-twin-contract-and-baseline/73-28-PLAN.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-28-SUMMARY.md",
     ".planning/phases/73-twin-contract-and-baseline/73-29-PLAN.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-29-SUMMARY.md",
     ".planning/phases/73-twin-contract-and-baseline/73-30-PLAN.md",
     "mix.exs",
     "test/adoption/evidence_contract_test.exs",
@@ -136,22 +141,25 @@ defmodule Relyra.Phase73Reconciliation do
     root = Path.expand(root)
     validate_proof!(proof, root)
 
-    security_block = embedded_proof!(security)
-    validation_block = embedded_proof!(validation)
+    security_block = current_embedded_proof!(security)
+    validation_block = current_embedded_proof!(validation)
     canonical = encode_proof(proof)
 
     unless security_block == canonical and validation_block == canonical do
-      raise ArgumentError, "reports must embed one identical canonical proof record"
+      raise ArgumentError,
+            "reports must embed one identical canonical proof record for the current evidence"
     end
 
     security_state = report_state!(security, :security)
     validation_state = report_state!(validation, :validation)
 
     stage? =
-      String.contains?(security, @stage_marker) and String.contains?(validation, @stage_marker)
+      current_marker_before?(security, @security_open_marker, @stage_marker) and
+        current_marker_before?(validation, @validation_open_marker, @stage_marker)
 
     final? =
-      String.contains?(security, @final_marker) and String.contains?(validation, @final_marker)
+      marker_after_latest?(security, @proof_start, @final_marker) and
+        marker_after_latest?(validation, @proof_start, @final_marker)
 
     unless stage? do
       raise ArgumentError, "proof-bearing reports must contain the staged chronology row"
@@ -335,6 +343,7 @@ defmodule Relyra.Phase73Reconciliation do
     status: #{if state == :final, do: "verified", else: "issues_found"}
     threats_open: #{if state == :final, do: "0", else: "7"}
     ---
+    #{@historical_security_open_marker}
     #{@security_open_marker}
     | T-73-12 | medium | open |
     | T-73-98 | high | open |
@@ -356,6 +365,7 @@ defmodule Relyra.Phase73Reconciliation do
     status: #{if state == :final, do: "validated", else: "gaps_found"}
     nyquist_compliant: #{state == :final}
     ---
+    #{@historical_validation_open_marker}
     #{@validation_open_marker}
     #{@stage_marker}
     #{block}
@@ -419,16 +429,20 @@ defmodule Relyra.Phase73Reconciliation do
       nyquist_compliant: true
     })
 
-    owner_ids =
-      ~r/^\| (73-\d{2}-\d{2}) \|/m
-      |> Regex.scan(validation, capture: :all_but_first)
-      |> List.flatten()
+    final_section = validation |> String.split(@final_marker) |> List.last()
+
+    owner_rows =
+      Regex.scan(~r/^\| (73-\d{2}-\d{2}) \| ([^|]+) \|$/m, final_section, capture: :all_but_first)
+
+    owner_ids = Enum.map(owner_rows, fn [id, _owner_type] -> id end)
+    owner_types = Enum.map(owner_rows, fn [_id, owner_type] -> String.trim(owner_type) end)
 
     expected = proof["acceptance_task_ids"]
 
-    unless owner_ids == expected and length(owner_ids) == length(Enum.uniq(owner_ids)) do
+    unless owner_ids == expected and length(owner_ids) == length(Enum.uniq(owner_ids)) and
+             Enum.all?(owner_types, &(&1 == "automated")) do
       raise ArgumentError,
-            "validation owner map must exactly equal the canonical 64-task inventory; expected=#{inspect(expected)} actual=#{inspect(owner_ids)}"
+            "validation owner map must exactly equal the canonical 64-task automated inventory; expected=#{inspect(expected)} actual=#{inspect(owner_ids)} types=#{inspect(owner_types)}"
     end
 
     :ok
@@ -673,29 +687,53 @@ defmodule Relyra.Phase73Reconciliation do
     root |> Path.join(@proof_path) |> File.read!() |> Jason.decode!()
   end
 
-  defp embedded_proof!(document) do
+  defp current_embedded_proof!(document) do
     pattern = ~r/#{Regex.escape(@proof_start)}(.*?)#{Regex.escape(@proof_end)}/s
+    matches = Regex.scan(pattern, document, capture: :all_but_first)
 
-    case Regex.scan(pattern, document, capture: :all_but_first) do
-      [[proof]] ->
-        proof
-
-      matches ->
-        raise ArgumentError,
-              "report must contain exactly one canonical proof block; found #{length(matches)}"
+    case List.last(matches) do
+      [proof] -> proof
+      nil -> raise ArgumentError, "report must contain a current canonical proof block"
     end
   end
 
   defp assert_chronology!(document, open_marker, true, final?) do
-    open_offset = offset!(document, open_marker)
-    stage_offset = offset!(document, @stage_marker)
+    historical_marker =
+      if open_marker == @security_open_marker,
+        do: @historical_security_open_marker,
+        else: @historical_validation_open_marker
 
-    unless open_offset < stage_offset do
+    historical_offset = offset!(document, historical_marker)
+    open_offset = offset!(document, open_marker)
+    stage_offset = last_offset!(document, @stage_marker)
+    proof_offset = last_offset!(document, @proof_start)
+
+    unless historical_offset < open_offset and open_offset < stage_offset and
+             stage_offset < proof_offset do
       raise ArgumentError, "open -> staged -> final chronology is invalid"
     end
 
-    if final? and not (stage_offset < offset!(document, @final_marker)) do
+    if final? and not (proof_offset < last_offset!(document, @final_marker)) do
       raise ArgumentError, "open -> staged -> final chronology is invalid"
+    end
+  end
+
+  defp last_offset!(document, marker) do
+    case :binary.matches(document, marker) do
+      [] -> raise ArgumentError, "chronology marker is missing: #{marker}"
+      matches -> matches |> List.last() |> elem(0)
+    end
+  end
+
+  defp current_marker_before?(document, current_marker, marker) do
+    offset!(document, current_marker) < last_offset!(document, marker)
+  end
+
+  defp marker_after_latest?(document, earlier_marker, later_marker) do
+    case {List.last(:binary.matches(document, earlier_marker)),
+          List.last(:binary.matches(document, later_marker))} do
+      {{earlier_offset, _}, {later_offset, _}} -> later_offset > earlier_offset
+      _missing -> false
     end
   end
 

@@ -117,6 +117,93 @@ defmodule Relyra.Phase73ReconciliationTest do
     refute runner =~ "ci.phase73.reconciliation"
   end
 
+  @tag :plan_73_30_task_1
+  test "staged reconciliation validates current report blocks and rejects proof mutations" do
+    root = fixture_root!()
+    on_exit(fn -> File.rm_rf!(root) end)
+    proof = Phase73Reconciliation.fixture_proof!(root)
+    {security, validation} = Phase73Reconciliation.fixture_documents!(proof, :staged)
+
+    assert :ok = Phase73Reconciliation.validate_documents!(security, validation, proof, root)
+
+    for corrupt <- [
+          put_in(proof["source_digest"], "sha256:" <> String.duplicate("0", 64)),
+          put_in(proof["acceptance_task_ids"], Enum.drop(proof["acceptance_task_ids"], -1)),
+          put_in(proof, ["focused", Access.at(0), "summaries", Access.at(0), "tests"], 2),
+          put_in(proof, ["security_constituents", Access.at(0), "summary", "tests"], 2)
+        ] do
+      {bad_security, bad_validation} = Phase73Reconciliation.fixture_documents!(corrupt, :staged)
+
+      assert_raise ArgumentError,
+                   ~r/(source digest|owner inventory|identity|constituent summaries)/,
+                   fn ->
+                     Phase73Reconciliation.validate_documents!(
+                       bad_security,
+                       bad_validation,
+                       corrupt,
+                       root
+                     )
+                   end
+    end
+
+    duplicate_state =
+      String.replace(security, "status: issues_found", "status: verified", global: false)
+
+    assert_raise ArgumentError,
+                 ~r/security and validation frontmatter state contradicts proof chronology/,
+                 fn ->
+                   Phase73Reconciliation.validate_documents!(
+                     duplicate_state,
+                     validation,
+                     proof,
+                     root
+                   )
+                 end
+
+    real_phase = ".planning/phases/73-twin-contract-and-baseline"
+    real_proof = Path.join([File.cwd!(), real_phase, "73-RECONCILIATION-PROOF.json"])
+    real_security = File.read!(Path.join([File.cwd!(), real_phase, "73-SECURITY.md"]))
+    real_validation = File.read!(Path.join([File.cwd!(), real_phase, "73-VALIDATION.md"]))
+    encoded_real = Jason.encode!(Jason.decode!(File.read!(real_proof)), pretty: true) <> "\n"
+
+    proof_blocks =
+      ~r/<!-- phase73-reconciliation-proof:start -->\n```json\n(.*?)```\n<!-- phase73-reconciliation-proof:end -->/s
+
+    for report <- [real_security, real_validation] do
+      assert report =~ "2026-09-24"
+      assert report =~ "status: issues_found" or report =~ "status: gaps_found"
+      assert [block] = Regex.scan(proof_blocks, report, capture: :all_but_first) |> List.last()
+      assert block == encoded_real
+    end
+  end
+
+  @tag :plan_73_30_task_2
+  test "final fixture accepts exact owner and closure records and rejects omissions" do
+    root = fixture_root!()
+    on_exit(fn -> File.rm_rf!(root) end)
+    proof = Phase73Reconciliation.fixture_proof!(root)
+    {security, validation} = Phase73Reconciliation.fixture_documents!(proof, :final)
+
+    assert :ok = Phase73Reconciliation.validate_documents!(security, validation, proof, root)
+
+    mutations = [
+      {String.replace(security, "T-73-104_CLOSED", "T-73-104_OPEN"), validation},
+      {String.replace(
+         security,
+         "50 threats: 49 closed and 1 open",
+         "50 threats: 48 closed and 2 open"
+       ), validation},
+      {security, String.replace(validation, "| 73-30-02 | automated |", "| 73-30-02 | manual |")},
+      {security, String.replace(validation, "| 73-30-02 | automated |", "", global: false)}
+    ]
+
+    for {bad_security, bad_validation} <- mutations do
+      assert_raise ArgumentError, fn ->
+        Phase73Reconciliation.validate_documents!(bad_security, bad_validation, proof, root)
+      end
+    end
+  end
+
   defp fixture_root! do
     root =
       Path.join(System.tmp_dir!(), "phase73-reconciliation-#{System.unique_integer([:positive])}")

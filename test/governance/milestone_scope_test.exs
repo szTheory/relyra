@@ -429,6 +429,35 @@ defmodule Relyra.Governance.MilestoneScopeTest do
            "tracked plans must retain their established schema branches: #{inspect(violations)}"
   end
 
+  @tag :plan_73_29_task_1
+  test "changed-surface gates distinguish local workflow edits from real major and remote changes" do
+    mix_before = File.read!("mix.exs")
+
+    major_bump =
+      Regex.replace(~r/@version "(\d+)\./, mix_before, fn _match, major ->
+        "@version \"#{String.to_integer(major) + 1}."
+      end)
+
+    alias_edit = String.replace(mix_before, "ci.phase73.reconciliation", "ci.phase73.replay")
+    workflow_before = File.read!(".github/workflows/security-gates.yml")
+    workflow_after = workflow_before <> "\n# Local workflow policy change\n"
+
+    assert changed_surface_classes("mix.exs", mix_before, alias_edit) == []
+    assert changed_surface_classes("mix.exs", mix_before, major_bump) == ["semver_major"]
+
+    assert changed_surface_classes(
+             ".github/workflows/security-gates.yml",
+             workflow_before,
+             workflow_after
+           ) == []
+
+    assert changed_surface_classes(
+             "scripts/setup_branch_protection.sh",
+             "current remote mutation tool",
+             "changed remote mutation tool"
+           ) == ["remote_github"]
+  end
+
   defp plan_task_structure_violations(path) do
     case closed_plan_tasks(File.read!(path)) do
       {:ok, task_region, tasks} ->
@@ -3147,7 +3176,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp remote_state_path?(path) do
-    String.starts_with?(path, ".github/") or path == "scripts/setup_branch_protection.sh"
+    path == "scripts/setup_branch_protection.sh"
   end
 
   defp changed_surface_classes(_path, before_content, after_content)
@@ -3164,13 +3193,26 @@ defmodule Relyra.Governance.MilestoneScopeTest do
        else: ["public_api"]
   end
 
+  defp changed_surface_classes("mix.exs", before_content, after_content) do
+    before_major = mix_major_version(before_content)
+    after_major = mix_major_version(after_content)
+
+    if before_major == after_major, do: [], else: ["semver_major"]
+  end
+
   defp changed_surface_classes(path, _before_content, _after_content) do
     cond do
       published_behaviour_path?(path) -> ["public_api"]
       security_seam_path?(path) -> ["security_posture"]
-      path == "mix.exs" -> ["semver_major"]
       remote_state_path?(path) -> ["remote_github"]
       true -> []
+    end
+  end
+
+  defp mix_major_version(contents) do
+    case Regex.run(~r/^\s*@version\s+"(\d+)\./m, contents, capture: :all_but_first) do
+      [major] -> major
+      nil -> :invalid
     end
   end
 
