@@ -5,16 +5,16 @@ milestone_name: First-Adopter Twin
 current_phase: 73
 current_phase_name: Twin Contract and Baseline
 status: in_progress
-stopped_at: Completed 73-26-PLAN.md
-last_updated: "2026-09-24T01:42:35Z"
+stopped_at: Completed 73-30-PLAN.md
+last_updated: "2026-09-24T04:42:26Z"
 last_activity: 2026-09-24
-last_activity_desc: Phase 73 verification found gaps; prepare gap-planning cycle
-state_head: 547526eab014342a414e249a81ad3da9a6a75e76
+last_activity_desc: Closed Phase 73 verification gaps and passed the mandatory final reconciliation replay
+state_head: e62120126236b0b899efc4260ea6eb9d723d6f0e
 progress:
   total_phases: 7
-  completed_phases: 0
-  total_plans: 26
-  completed_plans: 26
+  completed_phases: 1
+  total_plans: 30
+  completed_plans: 30
   percent: 100
 ---
 
@@ -31,13 +31,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 73 (Twin Contract and Baseline) — GAP CLOSURE
+Phase: 73 (Twin Contract and Baseline) — COMPLETE
 
-Plan: 26 of 26
+Plan: 30 of 30
 
-Status: 26 of 26 plans complete; verification found gaps requiring targeted plans
+Status: All 30 plans complete; final proof and mandatory replay passed
 
-Last activity: 2026-09-24 — Reconciled project state with Phase 73 verification (6/9 must-haves verified)
+Last activity: 2026-09-24 — Closed CR-01 through CR-07 with proof `phase73-ee36f48be03a2738`; 64/64 automated owners validated
 
 ## Milestone Metrics
 
@@ -131,6 +131,10 @@ Last activity: 2026-09-24 — Reconciled project state with Phase 73 verificatio
 - [Phase 73]: Classify completion-boundary deltas outside Task Commits equality and reject every non-linear reviewed commit before path reduction.
 - [Phase 73]: Derive the canonical reconciliation identity from governed-source bytes and normalized result vectors while retaining exact output hashes and capture timings.
 - [Phase 73]: Require every recursively expanded ci.security ExUnit constituent to contribute exactly one positive summary before threat or Nyquist closure.
+- [Phase 73]: Required workflow triggers must descend from one exact top-level `on:` mapping, and final proof replay must run unconditionally in `jobs.security`.
+- [Phase 73]: Governance task children and plan-shaped descendants must be uniquely assigned before semantic approval or scope classification.
+- [Phase 73]: Bind all seven current finding closures to one recomputed proof, three bounded evidence runs, the pinned security inventory, and 64 automated task owners.
+- [Phase 73]: Treat local Mix alias and workflow changes as local configuration; only an actual SemVer major change or remote mutation path invokes those approval classes.
 
 ### Baseline Findings
 
@@ -168,16 +172,15 @@ Last activity: 2026-09-24 — Reconciled project state with Phase 73 verificatio
 
 ## Session Continuity
 
-**Last session:** 2026-09-24T01:42:35Z
+**Last session:** 2026-09-24T04:42:26Z
 
-**Stopped at:** Completed 73-26-PLAN.md
+**Stopped at:** Completed 73-30-PLAN.md; final reconciliation replay passed
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Run `$gsd-plan-phase 73 --gaps` to plan the three open verification gaps, then execute
-those plans and re-verify Phase 73.
+Run `$gsd-plan-phase 74` to plan the Clean-Room Package Consumer phase.
 
 ## Performance Metrics
 

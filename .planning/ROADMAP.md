@@ -45,7 +45,7 @@ returns.
 
 ## v1.11 First-Adopter Twin
 
-- [ ] **Phase 73: Twin Contract and Baseline** — Define the executable adopter model, evidence ownership, quality baseline, and immutable guardrails.
+- [x] **Phase 73: Twin Contract and Baseline** — Define the executable adopter model, evidence ownership, quality baseline, and immutable guardrails.
 - [ ] **Phase 74: Clean-Room Package Consumer** — Prove a fresh Phoenix application can adopt only the files Relyra actually ships.
 - [ ] **Phase 75: SaaS Twin Domain Realism** — Expand LedgerLoop into a coherent multi-tenant adopter with credible humans, trust history, and incidents.
 - [ ] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end.
@@ -75,7 +75,7 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 26/30 plans executed (26 complete; 4 gap-closure plans pending)
+**Plans:** 30/30 plans executed (30 complete)
 
 Plans:
 
@@ -170,16 +170,16 @@ Plans:
 
 **Wave 22** *(gap closure; blocked on Wave 21 completion; Plans 27 and 29 may execute in parallel)*
 
-- [ ] 73-27-PLAN.md — Reopen stale reports and bind proof identity, live state, and security inventory to independent authority.
-- [ ] 73-29-PLAN.md — Reject duplicate task children and assign every plan-shaped descendant before governance classification.
+- [x] 73-27-PLAN.md — Reopen stale reports and bind proof identity, live state, and security inventory to independent authority.
+- [x] 73-29-PLAN.md — Reject duplicate task children and assign every plan-shaped descendant before governance classification.
 
 **Wave 23** *(gap closure; blocked on Plan 73-27)*
 
-- [ ] 73-28-PLAN.md — Anchor required events beneath top-level `on:` and wire real reconciliation into the mandatory security job.
+- [x] 73-28-PLAN.md — Anchor required events beneath top-level `on:` and wire real reconciliation into the mandatory security job.
 
 **Wave 24** *(gap closure; blocked on Plans 73-27 through 73-29)*
 
-- [ ] 73-30-PLAN.md — Capture, stage, and mandatorily replay one authoritative final proof before resealing reports.
+- [x] 73-30-PLAN.md — Capture, stage, and mandatorily replay one authoritative final proof before resealing reports.
 
 ### Phase 74: Clean-Room Package Consumer
 
