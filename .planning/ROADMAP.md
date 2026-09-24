@@ -75,9 +75,11 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 30/30 plans executed (30 complete)
+**Plans:** 31/31 plans executed (30 complete)
 
 Plans:
+
+- [x] 73-31-PLAN.md
 
 **Wave 1**
 
@@ -329,7 +331,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
-| 73. Twin Contract and Baseline | v1.11 | 26/30 | In Progress |  |
+| 73. Twin Contract and Baseline | v1.11 | 31/31 | In Progress|  |
 | 74. Clean-Room Package Consumer | v1.11 | 0/TBD | Not started | — |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |
