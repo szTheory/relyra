@@ -105,6 +105,7 @@ None - plan executed as written, including its conditional Git provenance snapsh
 
 - The fresh worktree had no fetched Mix dependencies. `mix deps.get` fetched the locked dependencies; Hex cache persistence initially failed under the sandbox's default home, so the command was rerun with `HEX_HOME=/tmp/relyra-hex-cache`. No dependency files changed.
 - Before the provenance snapshot, the full evidence lane measured 90.2 seconds and the focused active-plan owner measured 53.3 seconds. The final capture recorded three passing evidence runs below 60 seconds. A fresh independent reconciliation replay passed in 608.1 seconds.
+- A separate standalone `mix ci.evidence` sample after the snapshot took 70.85 seconds (73.5 seconds in a slowest-test trace); later canonical capture and independent replay each recorded all three evidence runs below the strict 60-second proof limit.
 - The commit hook could not infer the Elixir version from the worktree's Node-only `.tool-versions`; commits were retried with the project's pinned Elixir and Erlang environment, and the format hook passed.
 
 ## User Setup Required
@@ -121,4 +122,4 @@ Plan 73-32 evidence and reports pass the independent current replay. The execute
 
 ## Self-Check: PASSED
 
-All five plan artifacts and this summary exist. Task commits `8062df9`, `0e97b36`, `694c23f`, and summary commit `d7cabb0` are present in the worktree history; the self-check-only summary update is committed immediately afterward.
+All five plan artifacts and this summary exist. Task commits `8062df9`, `0e97b36`, `694c23f`, and summary commit `d7cabb0` are present in the worktree history.
