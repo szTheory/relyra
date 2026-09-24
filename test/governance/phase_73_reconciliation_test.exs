@@ -1,0 +1,150 @@
+defmodule Relyra.Phase73ReconciliationTest do
+  use ExUnit.Case, async: true
+
+  alias Relyra.Phase73Reconciliation
+
+  @tag :plan_73_27_task_1
+  test "recomputes proof identity and honors singular typed report state" do
+    root = fixture_root!()
+    on_exit(fn -> File.rm_rf!(root) end)
+    proof = Phase73Reconciliation.fixture_proof!(root)
+    {security, validation} = Phase73Reconciliation.fixture_documents!(proof, :staged)
+
+    assert :ok = Phase73Reconciliation.validate_documents!(security, validation, proof, root)
+
+    for corrupt <- [
+          put_in(proof, ["focused", Access.at(0), "summaries", Access.at(0), "tests"], 2),
+          update_in(proof, ["evidence_runs"], fn runs ->
+            Enum.map(runs, &put_in(&1, ["summaries", Access.at(0), "tests"], 2))
+          end),
+          then(proof, fn current ->
+            updated =
+              update_in(current, ["security", "summaries", Access.at(0), "tests"], &(&1 + 1))
+
+            put_in(
+              updated,
+              ["security_constituents", Access.at(0), "summary", "tests"],
+              updated["security"]["summaries"] |> hd() |> Map.fetch!("tests")
+            )
+          end)
+        ] do
+      {bad_security, bad_validation} = Phase73Reconciliation.fixture_documents!(corrupt, :staged)
+
+      assert_raise ArgumentError, ~r/identity/, fn ->
+        Phase73Reconciliation.validate_documents!(bad_security, bad_validation, corrupt, root)
+      end
+    end
+
+    forged_state = security <> "\nstatus: verified\nthreats_open: 0\n"
+    forged_validation = validation <> "\nstatus: validated\nnyquist_compliant: true\n"
+
+    assert :ok =
+             Phase73Reconciliation.validate_documents!(
+               forged_state,
+               forged_validation,
+               proof,
+               root
+             )
+
+    duplicate_status =
+      String.replace(security, "status: issues_found", "status: issues_found\nstatus: verified")
+
+    assert_raise ArgumentError, ~r/status must occur exactly once/, fn ->
+      Phase73Reconciliation.validate_documents!(duplicate_status, validation, proof, root)
+    end
+  end
+
+  @tag :plan_73_27_task_2
+  test "uses supplied root security inventory and exposes one replay orchestrator" do
+    root = fixture_root!()
+    on_exit(fn -> File.rm_rf!(root) end)
+
+    commands = Phase73Reconciliation.security_constituent_commands!(root)
+    assert length(commands) == 13
+
+    mix_path = Path.join(root, "mix.exs")
+    original = File.read!(mix_path)
+    mutable = Enum.find(commands, &String.starts_with?(&1, "cmd mix test"))
+    second = Enum.at(commands, 1)
+    third = Enum.at(commands, 2)
+
+    for corrupted <- [
+          String.replace(
+            original,
+            ~s("cmd mix test test/security/ci_gate_integrity_test.exs --warnings-as-errors",\n),
+            "",
+            global: false
+          ),
+          String.replace(
+            original,
+            mutable,
+            String.replace(mutable, "--warnings-as-errors", "--warnings"),
+            global: false
+          ),
+          String.replace(original, second, "__SWAP__", global: false)
+          |> String.replace(third, second, global: false)
+          |> String.replace("__SWAP__", third, global: false)
+        ] do
+      File.write!(mix_path, corrupted)
+
+      assert_raise ArgumentError, ~r/root ci.security constituent inventory/, fn ->
+        Phase73Reconciliation.security_constituent_commands!(root)
+      end
+    end
+
+    File.write!(mix_path, original)
+    assert Phase73Reconciliation.security_constituent_commands!(root) == commands
+
+    source = File.read!(Path.join(File.cwd!(), "test/support/phase_73_reconciliation.ex"))
+
+    assert [runner] =
+             Regex.run(~r/def verify_repository_evidence!\(root\) do(.*?)\n  end/s, source,
+               capture: :all_but_first
+             )
+
+    assert Regex.scan(~r/validate_repository!\(root\)/, runner) |> length() == 1
+    assert Regex.scan(~r/verify_focused_and_evidence!\(root\)/, runner) |> length() == 1
+    assert Regex.scan(~r/verify_security_lane!\(root\)/, runner) |> length() == 1
+
+    assert runner =~
+             ~r/validate_repository!\(root\).*verify_focused_and_evidence!\(root\).*verify_security_lane!\(root\)/s
+
+    refute runner =~ "ci.phase73.reconciliation"
+  end
+
+  defp fixture_root! do
+    root =
+      Path.join(System.tmp_dir!(), "phase73-reconciliation-#{System.unique_integer([:positive])}")
+
+    phase = ".planning/phases/73-twin-contract-and-baseline"
+    copy_tree!(File.cwd!(), root, phase)
+
+    for relative <- [
+          ".github/workflows/security-gates.yml",
+          "mix.exs",
+          "test/adoption/evidence_contract_test.exs",
+          "test/governance/milestone_scope_test.exs",
+          "test/governance/phase_73_reconciliation_test.exs",
+          "test/support/adoption_evidence.ex",
+          "test/support/phase_73_reconciliation.ex"
+        ] do
+      copy_file!(File.cwd!(), root, relative)
+    end
+
+    root
+  end
+
+  defp copy_tree!(source_root, destination_root, relative) do
+    source = Path.join(source_root, relative)
+    destination = Path.join(destination_root, relative)
+    File.mkdir_p!(Path.dirname(destination))
+    File.cp_r!(source, destination)
+  end
+
+  defp copy_file!(source_root, destination_root, relative) do
+    source = Path.join(source_root, relative)
+    destination = Path.join(destination_root, relative)
+    File.mkdir_p!(Path.dirname(destination))
+    File.cp!(source, destination)
+  end
+end

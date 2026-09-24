@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: verified
-threats_open: 0
+status: issues_found
+threats_open: 7
 asvs_level: 1
 block_on: high
 created: "2026-09-09"
@@ -576,3 +576,22 @@ critical ASVS Level 1 blockers remain.
 **Approval:** verified from canonical proof set `phase73-8f3da8af3cd49bac`; CR-01
 through CR-06 and WR-01 are repaired, while T-73-12 remains the sole visible open
 medium follow-up.
+
+## Post-Review Correction — 2026-09-24
+
+The later review reopened CR-01 through CR-07. This correction supersedes the live
+verified status above until the repaired repository has a newly captured and replayed
+proof. All seven high-severity findings are open before repair evidence is accepted.
+
+| Threat | Finding | Severity | Current state |
+|--------|---------|----------|---------------|
+| T-73-98 | CR-01 proof identity | high | open |
+| T-73-99 | CR-02 typed report state | high | open |
+| T-73-100 | CR-03 workflow event ownership | high | open |
+| T-73-101 | CR-04 security inventory | high | open |
+| T-73-102 | CR-05 mandatory replay owner | high | open |
+| T-73-103 | CR-06 duplicate task children | high | open |
+| T-73-104 | CR-07 descendant plan assignment | high | open |
+
+Current register: 50 threats, 42 closed, 8 open. Seven high-threshold blockers
+remain open; historical medium T-73-12 remains a separate non-blocking follow-up.

@@ -19,10 +19,33 @@ defmodule Relyra.Phase73Reconciliation do
     "mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_2 --warnings-as-errors",
     "mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_3 --warnings-as-errors",
     "mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_1 --warnings-as-errors",
-    "mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_2 --warnings-as-errors"
+    "mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_2 --warnings-as-errors",
+    "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_27_task_1 --warnings-as-errors",
+    "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_27_task_2 --warnings-as-errors",
+    "mix test test/adoption/evidence_contract_test.exs --only plan_73_28_task_1 --warnings-as-errors",
+    "mix test test/adoption/evidence_contract_test.exs --only plan_73_28_task_2 --warnings-as-errors",
+    "mix test test/governance/milestone_scope_test.exs --only plan_73_29_task_1 --warnings-as-errors",
+    "mix test test/governance/milestone_scope_test.exs --only plan_73_29_task_2 --warnings-as-errors",
+    "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_1 --warnings-as-errors",
+    "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_2 --warnings-as-errors"
   ]
   @evidence_command "mix ci.evidence"
   @security_command "mix ci.security"
+  @security_commands [
+    "test test/conformance/sp_conformance_test.exs test/mix/tasks/relyra_conformance_test.exs --only conformance --warnings-as-errors",
+    "cmd mix test test/security/ci_gate_integrity_test.exs --warnings-as-errors",
+    "cmd mix test test/security/strict_default_proof_test.exs --warnings-as-errors",
+    "cmd mix test test/relyra/ecto/escape_hatch_audit_test.exs --warnings-as-errors",
+    "cmd mix test test/security/xml/corpus_security_test.exs test/relyra/security/xml/corpus_gate_test.exs --only security_corpus --warnings-as-errors",
+    "cmd mix test test/security/xml/corpus_security_test.exs --only gate02_c14n --warnings-as-errors",
+    "cmd mix test test/security/xml/adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors",
+    "cmd mix test test/security/authn_request_signing_test.exs --only authn_request_signing --warnings-as-errors",
+    "cmd mix test test/security/xml_enc_test.exs --warnings-as-errors",
+    "cmd mix test test/security/xml_enc_adversarial_test.exs --warnings-as-errors",
+    "cmd mix test test/security/metadata_attribute_injection_test.exs --warnings-as-errors",
+    "cmd mix test test/security/login_trace_test.exs --warnings-as-errors",
+    "cmd mix test test/security/testing_fixture_crypto_test.exs --warnings-as-errors"
+  ]
 
   @governed_sources [
     ".github/workflows/security-gates.yml",
@@ -31,9 +54,15 @@ defmodule Relyra.Phase73Reconciliation do
     ".planning/phases/73-twin-contract-and-baseline/73-25-PLAN.md",
     ".planning/phases/73-twin-contract-and-baseline/73-25-SUMMARY.md",
     ".planning/phases/73-twin-contract-and-baseline/73-26-PLAN.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-26-SUMMARY.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-27-PLAN.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-28-PLAN.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-29-PLAN.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-30-PLAN.md",
     "mix.exs",
     "test/adoption/evidence_contract_test.exs",
     "test/governance/milestone_scope_test.exs",
+    "test/governance/phase_73_reconciliation_test.exs",
     "test/support/adoption_evidence.ex",
     "test/support/phase_73_reconciliation.ex"
   ]
@@ -51,7 +80,7 @@ defmodule Relyra.Phase73Reconciliation do
 
     require_equal_evidence_vectors!(evidence)
 
-    security_commands = security_constituent_commands!()
+    security_commands = security_constituent_commands!(root)
     security = run_command!(root, @security_command, length(security_commands))
 
     security_constituents =
@@ -68,10 +97,7 @@ defmodule Relyra.Phase73Reconciliation do
       "security_constituents" => security_constituents
     }
 
-    proof_set_id =
-      ("phase73-" <>
-         sha256(source_digest <> Jason.encode!(normalized_results)))
-      |> binary_part(0, 24)
+    proof_set_id = proof_identity(source_digest, normalized_results)
 
     proof = %{
       "schema" => @schema,
@@ -118,6 +144,9 @@ defmodule Relyra.Phase73Reconciliation do
       raise ArgumentError, "reports must embed one identical canonical proof record"
     end
 
+    security_state = report_state!(security, :security)
+    validation_state = report_state!(validation, :validation)
+
     stage? =
       String.contains?(security, @stage_marker) and String.contains?(validation, @stage_marker)
 
@@ -126,6 +155,19 @@ defmodule Relyra.Phase73Reconciliation do
 
     unless stage? do
       raise ArgumentError, "proof-bearing reports must contain the staged chronology row"
+    end
+
+    staged_state? =
+      security_state == %{status: "issues_found", threats_open: 7} and
+        validation_state == %{status: "gaps_found", nyquist_compliant: false}
+
+    final_state? =
+      security_state == %{status: "verified", threats_open: 0} and
+        validation_state == %{status: "validated", nyquist_compliant: true}
+
+    unless (staged_state? and not final?) or (final_state? and final?) do
+      raise ArgumentError,
+            "security and validation frontmatter state contradicts proof chronology"
     end
 
     assert_chronology!(security, @security_open_marker, stage?, final?)
@@ -162,13 +204,20 @@ defmodule Relyra.Phase73Reconciliation do
     root = Path.expand(root)
     proof = read_proof!(root)
     validate_proof!(proof, root)
-    commands = security_constituent_commands!()
+    commands = security_constituent_commands!(root)
     fresh = run_command!(root, @security_command, length(commands))
 
     unless result_vector(fresh) == result_vector(proof["security"]) do
       raise ArgumentError, "fresh security result vector differs from canonical proof"
     end
 
+    :ok
+  end
+
+  def verify_repository_evidence!(root) do
+    :ok = validate_repository!(root)
+    :ok = verify_focused_and_evidence!(root)
+    :ok = verify_security_lane!(root)
     :ok
   end
 
@@ -194,8 +243,8 @@ defmodule Relyra.Phase73Reconciliation do
   def acceptance_task_ids!(root) do
     paths = Path.wildcard(Path.join(root, Path.join(@phase_dir, "73-*-PLAN.md"))) |> Enum.sort()
 
-    unless length(paths) == 26 do
-      raise ArgumentError, "expected exactly 26 tracked Phase 73 plans, found #{length(paths)}"
+    unless length(paths) == 30 do
+      raise ArgumentError, "expected exactly 30 tracked Phase 73 plans, found #{length(paths)}"
     end
 
     ids =
@@ -214,9 +263,9 @@ defmodule Relyra.Phase73Reconciliation do
         end)
       end)
 
-    unless length(ids) == 56 and length(Enum.uniq(ids)) == 56 and List.last(ids) == "73-26-02" do
+    unless length(ids) == 64 and length(Enum.uniq(ids)) == 64 and List.last(ids) == "73-30-02" do
       raise ArgumentError,
-            "acceptance owner inventory must contain 56 unique task IDs through 73-26-02; got #{inspect(ids)}"
+            "acceptance owner inventory must contain 64 unique task IDs through 73-30-02; got #{inspect(ids)}"
     end
 
     ids
@@ -237,7 +286,7 @@ defmodule Relyra.Phase73Reconciliation do
       }
     end
 
-    security_commands = security_constituent_commands!()
+    security_commands = security_constituent_commands!(root)
     security_summaries = Enum.map(security_commands, fn _command -> summary end)
 
     security = %{
@@ -251,7 +300,7 @@ defmodule Relyra.Phase73Reconciliation do
     proof = %{
       "schema" => @schema,
       "version" => 1,
-      "proof_set_id" => "phase73-fixture",
+      "proof_set_id" => "phase73-0000000000000000",
       "captured_at" => "2026-09-11T00:00:00Z",
       "source_digest" => source_digest(manifest),
       "governed_sources" => manifest,
@@ -265,6 +314,12 @@ defmodule Relyra.Phase73Reconciliation do
         end)
     }
 
+    proof =
+      put_in(
+        proof["proof_set_id"],
+        proof_identity(proof["source_digest"], normalized_result_vectors(proof))
+      )
+
     validate_proof!(proof, root)
     proof
   end
@@ -274,25 +329,33 @@ defmodule Relyra.Phase73Reconciliation do
     owner_rows = Enum.map_join(proof["acceptance_task_ids"], "\n", &"| #{&1} | automated |")
 
     security = """
+    ---
+    phase: "73"
+    slug: "twin-contract-and-baseline"
     status: #{if state == :final, do: "verified", else: "issues_found"}
-    threats_open: #{if state == :final, do: "0", else: "6"}
+    threats_open: #{if state == :final, do: "0", else: "7"}
+    ---
     #{@security_open_marker}
     | T-73-12 | medium | open |
-    | T-73-91 | high | open |
-    | T-73-92 | high | open |
-    | T-73-93 | high | open |
-    | T-73-94 | high | open |
-    | T-73-95 | high | open |
-    | T-73-96 | high | open |
-    | T-73-97 | medium | open |
+    | T-73-98 | high | open |
+    | T-73-99 | high | open |
+    | T-73-100 | high | open |
+    | T-73-101 | high | open |
+    | T-73-102 | high | open |
+    | T-73-103 | high | open |
+    | T-73-104 | high | open |
     #{@stage_marker}
     #{block}
     #{if state == :final, do: fixture_security_final(), else: ""}
     """
 
     validation = """
+    ---
+    phase: "73"
+    slug: "twin-contract-and-baseline"
     status: #{if state == :final, do: "validated", else: "gaps_found"}
     nyquist_compliant: #{state == :final}
+    ---
     #{@validation_open_marker}
     #{@stage_marker}
     #{block}
@@ -306,8 +369,8 @@ defmodule Relyra.Phase73Reconciliation do
   def encode_proof(proof), do: Jason.encode!(proof, pretty: true) <> "\n"
 
   defp fixture_security_final do
-    closures = Enum.map_join(91..97, "\n", &"T-73-#{&1}_CLOSED")
-    @final_marker <> "\n" <> closures <> "\n43 threats: 42 closed and 1 open"
+    closures = Enum.map_join(98..104, "\n", &"T-73-#{&1}_CLOSED")
+    @final_marker <> "\n" <> closures <> "\n50 threats: 49 closed and 1 open"
   end
 
   defp validate_open_documents!(security, validation) do
@@ -319,35 +382,42 @@ defmodule Relyra.Phase73Reconciliation do
 
     if partial?, do: raise(ArgumentError, "partial reconciliation state is not allowed")
 
-    require_contains!(security, "status: issues_found", "open security status")
-    require_contains!(security, "threats_open: 6", "open blocking threat count")
+    require_state!(report_state!(security, :security), %{status: "issues_found", threats_open: 7})
     require_contains!(security, @security_open_marker, "open security chronology")
-    require_contains!(validation, "status: gaps_found", "open validation status")
-    require_contains!(validation, "nyquist_compliant: false", "open Nyquist status")
+
+    require_state!(report_state!(validation, :validation), %{
+      status: "gaps_found",
+      nyquist_compliant: false
+    })
+
     require_contains!(validation, @validation_open_marker, "open validation chronology")
     :ok
   end
 
   defp validate_staged_documents!(security, validation) do
-    require_contains!(security, "status: issues_found", "staged security status")
-    require_contains!(security, "threats_open: 6", "staged blocking threat count")
-    require_contains!(validation, "status: gaps_found", "staged validation status")
-    require_contains!(validation, "nyquist_compliant: false", "staged Nyquist status")
+    require_state!(report_state!(security, :security), %{status: "issues_found", threats_open: 7})
+
+    require_state!(report_state!(validation, :validation), %{
+      status: "gaps_found",
+      nyquist_compliant: false
+    })
+
     :ok
   end
 
   defp validate_final_documents!(security, validation, proof) do
-    require_contains!(security, "status: verified", "final security status")
-    require_contains!(security, "threats_open: 0", "final blocking threat count")
-    require_contains!(security, "43 threats: 42 closed and 1 open", "final threat totals")
+    require_state!(report_state!(security, :security), %{status: "verified", threats_open: 0})
+    require_contains!(security, "50 threats: 49 closed and 1 open", "final threat totals")
     require_contains!(security, ~r/^\| T-73-12 \|.*\| open/m, "historical open T-73-12")
 
-    for id <- 91..97 do
+    for id <- 98..104 do
       require_contains!(security, "T-73-#{id}_CLOSED", "T-73-#{id} closure")
     end
 
-    require_contains!(validation, "status: validated", "final validation status")
-    require_contains!(validation, "nyquist_compliant: true", "final Nyquist status")
+    require_state!(report_state!(validation, :validation), %{
+      status: "validated",
+      nyquist_compliant: true
+    })
 
     owner_ids =
       ~r/^\| (73-\d{2}-\d{2}) \|/m
@@ -358,7 +428,7 @@ defmodule Relyra.Phase73Reconciliation do
 
     unless owner_ids == expected and length(owner_ids) == length(Enum.uniq(owner_ids)) do
       raise ArgumentError,
-            "validation owner map must exactly equal the canonical 56-task inventory; expected=#{inspect(expected)} actual=#{inspect(owner_ids)}"
+            "validation owner map must exactly equal the canonical 64-task inventory; expected=#{inspect(expected)} actual=#{inspect(owner_ids)}"
     end
 
     :ok
@@ -370,8 +440,8 @@ defmodule Relyra.Phase73Reconciliation do
     require_equal!(proof["version"], 1, "proof version")
 
     unless is_binary(proof["proof_set_id"]) and
-             String.starts_with?(proof["proof_set_id"], "phase73-") do
-      raise ArgumentError, "proof_set_id must identify the Phase 73 proof set"
+             String.match?(proof["proof_set_id"], ~r/^phase73-[0-9a-f]{16}$/) do
+      raise ArgumentError, "proof_set_id must be a complete canonical Phase 73 identity"
     end
 
     case DateTime.from_iso8601(proof["captured_at"] || "") do
@@ -400,7 +470,7 @@ defmodule Relyra.Phase73Reconciliation do
     require_equal_evidence_vectors!(proof["evidence_runs"])
     validate_result!(proof["security"], @security_command, "security")
 
-    commands = security_constituent_commands!()
+    commands = security_constituent_commands!(root)
     constituents = proof["security_constituents"]
 
     unless is_list(constituents) and length(constituents) == length(commands) do
@@ -417,6 +487,19 @@ defmodule Relyra.Phase73Reconciliation do
       Enum.map(constituents, & &1["summary"]),
       proof["security"]["summaries"],
       "security constituent summaries"
+    )
+
+    normalized_results = %{
+      "focused" => result_vectors(proof["focused"]),
+      "evidence" => result_vectors(proof["evidence_runs"]),
+      "security" => result_vector(proof["security"]),
+      "security_constituents" => constituents
+    }
+
+    require_equal!(
+      proof["proof_set_id"],
+      proof_identity(proof["source_digest"], normalized_results),
+      "proof identity"
     )
 
     :ok
@@ -539,11 +622,31 @@ defmodule Relyra.Phase73Reconciliation do
     end)
   end
 
-  defp security_constituent_commands! do
-    aliases = Mix.Project.config() |> Keyword.fetch!(:aliases) |> Map.new()
+  def security_constituent_commands!(root) do
+    aliases =
+      root |> Path.join("mix.exs") |> File.read!() |> Code.string_to_quoted!() |> aliases_ast!()
 
-    expand_alias!(aliases, :"ci.security", MapSet.new())
-    |> Enum.filter(&exunit_command?/1)
+    actual =
+      expand_alias!(aliases, :"ci.security", MapSet.new())
+      |> Enum.filter(&exunit_command?/1)
+
+    require_equal!(actual, @security_commands, "root ci.security constituent inventory")
+    actual
+  end
+
+  defp aliases_ast!(ast) do
+    {_ast, found} =
+      Macro.prewalk(ast, nil, fn
+        {:defp, _, [{:aliases, _, nil}, [do: body]]} = node, _acc -> {node, body}
+        node, acc -> {node, acc}
+      end)
+
+    case found do
+      pairs when is_list(pairs) -> Map.new(pairs)
+      _ -> raise ArgumentError, "mix.exs must define a literal aliases/0 list"
+    end
+  rescue
+    _ -> raise ArgumentError, "mix.exs must define a literal aliases/0 list"
   end
 
   defp expand_alias!(aliases, name, seen) do
@@ -618,6 +721,94 @@ defmodule Relyra.Phase73Reconciliation do
       "#{byte_size(path)}:#{path}:#{digest}\n"
     end)
     |> then(&("sha256:" <> sha256(&1)))
+  end
+
+  defp proof_identity(source_digest, normalized_results) do
+    "phase73-" <> binary_part(sha256(source_digest <> Jason.encode!(normalized_results)), 0, 16)
+  end
+
+  defp normalized_result_vectors(proof) do
+    %{
+      "focused" => result_vectors(proof["focused"]),
+      "evidence" => result_vectors(proof["evidence_runs"]),
+      "security" => result_vector(proof["security"]),
+      "security_constituents" => proof["security_constituents"]
+    }
+  end
+
+  defp report_state!(document, kind) do
+    frontmatter =
+      case Regex.run(~r/\A---\r?\n(.*?)\r?\n---(?:\r?\n|$)/s, document, capture: :all_but_first) do
+        [body] -> body
+        _ -> raise ArgumentError, "#{kind} report requires one leading YAML frontmatter block"
+      end
+
+    status =
+      frontmatter_scalar!(
+        frontmatter,
+        "status",
+        ~r/^(?:issues_found|verified|gaps_found|validated)$/
+      )
+
+    case kind do
+      :security ->
+        %{status: status, threats_open: frontmatter_integer!(frontmatter, "threats_open")}
+
+      :validation ->
+        %{
+          status: status,
+          nyquist_compliant: frontmatter_boolean!(frontmatter, "nyquist_compliant")
+        }
+    end
+  end
+
+  defp frontmatter_scalar!(frontmatter, key, allowed) do
+    value = frontmatter_value!(frontmatter, key)
+
+    unless Regex.match?(allowed, value) do
+      raise ArgumentError, "frontmatter #{key} has unsupported scalar #{inspect(value)}"
+    end
+
+    value
+  end
+
+  defp frontmatter_integer!(frontmatter, key) do
+    value = frontmatter_value!(frontmatter, key)
+
+    case Integer.parse(value) do
+      {integer, ""} when integer >= 0 -> integer
+      _ -> raise ArgumentError, "frontmatter #{key} must be one non-negative integer"
+    end
+  end
+
+  defp frontmatter_boolean!(frontmatter, key) do
+    case frontmatter_value!(frontmatter, key) do
+      "true" ->
+        true
+
+      "false" ->
+        false
+
+      value ->
+        raise ArgumentError, "frontmatter #{key} must be true or false, got #{inspect(value)}"
+    end
+  end
+
+  defp frontmatter_value!(frontmatter, key) do
+    matches =
+      Regex.scan(~r/^#{Regex.escape(key)}:[ \t]*([^\r\n]*)\r?$/m, frontmatter,
+        capture: :all_but_first
+      )
+
+    case matches do
+      [[value]] when value != "" -> value
+      [[""]] -> raise ArgumentError, "frontmatter #{key} must have a single-line value"
+      _ -> raise ArgumentError, "frontmatter #{key} must occur exactly once"
+    end
+  end
+
+  defp require_state!(actual, expected) do
+    require_equal!(actual, expected, "live frontmatter state")
   end
 
   defp exact_keys!(map, expected, label) do

@@ -1,8 +1,8 @@
 ---
 phase: "73"
 slug: "twin-contract-and-baseline"
-status: validated
-nyquist_compliant: true
+status: gaps_found
+nyquist_compliant: false
 wave_0_complete: true
 created: "2026-09-09"
 revised: "2026-09-11"
@@ -703,6 +703,19 @@ PHASE73_FINAL_RECONCILIATION
 The complete owner table above exactly equals the repository-derived task set stored in
 canonical proof `phase73-8f3da8af3cd49bac`. Final validation follows the preserved open
 correction and staged proof rows; it does not reinterpret or overwrite any historical audit.
+
+## Validation Audit 2026-09-24 — Current-Review Correction
+
+The later review reopened CR-01 through CR-07. The prior validated record is retained as
+history, while live validation remains `gaps_found` until each repair is staged and the
+non-recursive mandatory replay passes.
+
+| Finding | Current state | Closure evidence |
+|---------|---------------|------------------|
+| CR-01 through CR-07 | blocked | Plans 73-27 through 73-30 and current mandatory replay |
+
+Nyquist status is false while any high-severity finding remains open. Historical 73-26
+closure rows remain archival evidence only.
 
 **Approval:** validated from the same source-bound proof embedded in both reports. No
 manual, absent, duplicate, extra, plan-inconsistent, or zero-test owner contributes to the
