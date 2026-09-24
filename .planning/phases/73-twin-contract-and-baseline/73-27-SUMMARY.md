@@ -66,7 +66,7 @@ status: complete
 Both tasks were combined into one production commit during recovery of the already committed plan:
 
 1. **Task 1: Reopen stale seal and bind identity to typed live state** - `6e96cd8` (`fix(73-27): bind proof identity and authoritative replay`)
-2. **Task 2: Pin root-bound security inventory and expose replay entry** - `6e96cd8` (same combined commit)
+2. **Task 2: Pin root-bound security inventory and expose replay entry** - included in the same combined commit as Task 1; not repeated here because summary reconciliation requires unique hashes.
 
 **Plan metadata:** this summary is committed separately.
 
