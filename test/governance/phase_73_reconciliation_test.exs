@@ -169,9 +169,12 @@ defmodule Relyra.Phase73ReconciliationTest do
     proof_blocks =
       ~r/<!-- phase73-reconciliation-proof:start -->\n```json\n(.*?)```\n<!-- phase73-reconciliation-proof:end -->/s
 
-    for report <- [real_security, real_validation] do
+    for {report, open_status, final_status} <- [
+          {real_security, "issues_found", "verified"},
+          {real_validation, "gaps_found", "validated"}
+        ] do
       assert report =~ "2026-09-24"
-      assert report =~ "status: issues_found" or report =~ "status: gaps_found"
+      assert report =~ "status: #{open_status}" or report =~ "status: #{final_status}"
       assert [block] = Regex.scan(proof_blocks, report, capture: :all_but_first) |> List.last()
       assert block == encoded_real
     end
@@ -183,11 +186,18 @@ defmodule Relyra.Phase73ReconciliationTest do
     on_exit(fn -> File.rm_rf!(root) end)
     proof = Phase73Reconciliation.fixture_proof!(root)
     {security, validation} = Phase73Reconciliation.fixture_documents!(proof, :final)
+    proof_id = proof["proof_set_id"]
 
     assert :ok = Phase73Reconciliation.validate_documents!(security, validation, proof, root)
 
     mutations = [
       {String.replace(security, "T-73-104_CLOSED", "T-73-104_OPEN"), validation},
+      {String.replace(
+         security,
+         "| T-73-104 | CR-07 | high | closed | Plan 73-29; plan_73_29_task_2; proof `#{proof_id}` |",
+         "| T-73-104 | CR-07 | high | closed | Plan 73-29; plan_73_29_task_2; proof `phase73-0000000000000000` |",
+         global: false
+       ), validation},
       {String.replace(
          security,
          "50 threats: 49 closed and 1 open",

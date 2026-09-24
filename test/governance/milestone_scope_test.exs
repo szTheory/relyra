@@ -573,8 +573,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     security = File.read!(Path.join(phase_dir, "73-SECURITY.md"))
     validation = File.read!(Path.join(phase_dir, "73-VALIDATION.md"))
 
-    assert security =~ "status: issues_found"
-    assert security =~ "threats_open: 7"
+    assert (security =~ "status: issues_found" and security =~ "threats_open: 7") or
+             (security =~ "status: verified" and security =~ "threats_open: 0")
 
     assert security =~ "50 threats, 42 closed, 8 open"
     assert security =~ ~r/^\| T-73-12 \|.*\| medium \|.*\| open/m
@@ -588,7 +588,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           {"T-73-103", "CR-06", "high"},
           {"T-73-104", "CR-07", "high"}
         ] do
-      rows = Regex.scan(~r/^\| #{threat} \|.*$/m, security) |> List.flatten()
+      open_history =
+        security
+        |> String.split("## Plan 73-30 — Current Proof Staging", parts: 2)
+        |> hd()
+
+      rows = Regex.scan(~r/^\| #{threat} \|.*$/m, open_history) |> List.flatten()
       assert [row] = rows, "expected one unique #{threat} row, got: #{inspect(rows)}"
       assert row =~ "| #{severity} |"
       assert row =~ finding

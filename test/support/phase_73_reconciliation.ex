@@ -355,7 +355,7 @@ defmodule Relyra.Phase73Reconciliation do
     | T-73-104 | high | open |
     #{@stage_marker}
     #{block}
-    #{if state == :final, do: fixture_security_final(), else: ""}
+    #{if state == :final, do: fixture_security_final(proof), else: ""}
     """
 
     validation = """
@@ -378,8 +378,24 @@ defmodule Relyra.Phase73Reconciliation do
   def proof_block(proof), do: @proof_start <> encode_proof(proof) <> @proof_end
   def encode_proof(proof), do: Jason.encode!(proof, pretty: true) <> "\n"
 
-  defp fixture_security_final do
-    closures = Enum.map_join(98..104, "\n", &"T-73-#{&1}_CLOSED")
+  defp fixture_security_final(proof) do
+    proof_id = proof["proof_set_id"]
+
+    closures = [
+      {98, "CR-01", "Plan 73-27; plan_73_27_task_1 and plan_73_27_task_2"},
+      {99, "CR-02", "Plan 73-27; plan_73_27_task_1"},
+      {100, "CR-03", "Plan 73-28; plan_73_28_task_1"},
+      {101, "CR-04", "Plan 73-27; plan_73_27_task_2"},
+      {102, "CR-05", "Plan 73-28; plan_73_28_task_2 and plan_73_30_task_1"},
+      {103, "CR-06", "Plan 73-29; plan_73_29_task_1"},
+      {104, "CR-07", "Plan 73-29; plan_73_29_task_2"}
+    ]
+
+    closures =
+      Enum.map_join(closures, "\n", fn {id, finding, owners} ->
+        "| T-73-#{id} | #{finding} | high | closed | #{owners}; proof `#{proof_id}` |\nT-73-#{id}_CLOSED"
+      end)
+
     @final_marker <> "\n" <> closures <> "\n50 threats: 49 closed and 1 open"
   end
 
@@ -422,6 +438,15 @@ defmodule Relyra.Phase73Reconciliation do
 
     for id <- 98..104 do
       require_contains!(security, "T-73-#{id}_CLOSED", "T-73-#{id} closure")
+
+      proof_id = Regex.escape(proof["proof_set_id"])
+
+      unless Regex.match?(
+               ~r/^\| T-73-#{id} \|.*\| closed \|.*#{proof_id}.*\|$/m,
+               security
+             ) do
+        raise ArgumentError, "T-73-#{id} closure must reference the current proof set"
+      end
     end
 
     require_state!(report_state!(validation, :validation), %{

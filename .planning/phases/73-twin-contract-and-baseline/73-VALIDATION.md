@@ -797,13 +797,13 @@ security and validation state remains open until the mandatory reconciliation re
     "73-30-01",
     "73-30-02"
   ],
-  "captured_at": "2026-09-24T03:52:46Z",
+  "captured_at": "2026-09-24T04:04:37Z",
   "evidence_runs": [
     {
       "command": "mix ci.evidence",
-      "duration_ms": 49467,
+      "duration_ms": 33405,
       "exit_code": 0,
-      "output_sha256": "3d44247e6405889ef2cfb9b7400108cbce58b33a3e27ca92b22132b11c62ba56",
+      "output_sha256": "8980adf71150863ed1a51e20e821f97190d05cc350e807408f95535036f06cdf",
       "summaries": [
         {
           "excluded": 0,
@@ -814,9 +814,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix ci.evidence",
-      "duration_ms": 51806,
+      "duration_ms": 33698,
       "exit_code": 0,
-      "output_sha256": "cbbf118323332e40da6971bd75874cb57844799c83999aa1c8bab95d07b6cd7a",
+      "output_sha256": "2f1a8b77232dc1efe8186b790dd39444fd436bf5156a093fb9393bffa8186586",
       "summaries": [
         {
           "excluded": 0,
@@ -827,9 +827,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix ci.evidence",
-      "duration_ms": 46932,
+      "duration_ms": 32807,
       "exit_code": 0,
-      "output_sha256": "1c80a5056f51fa11505998f8e3d6f33a08d056cfbca04c06496998f3d169d7c0",
+      "output_sha256": "8ce4d9fc1de1f665ee1dc269b3424897056d16b93cf649c8f7e99659b417d4dc",
       "summaries": [
         {
           "excluded": 0,
@@ -842,9 +842,9 @@ security and validation state remains open until the mandatory reconciliation re
   "focused": [
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_24_task_1 --warnings-as-errors",
-      "duration_ms": 1522,
+      "duration_ms": 1380,
       "exit_code": 0,
-      "output_sha256": "a03e8a853a6ef14f3af1bbaa34944c86cbd182a863c332f531d347f9f4ac9051",
+      "output_sha256": "244819a2a64d4f003c26d55421948676ff674320d69a59bb9fab963b4358f0a6",
       "summaries": [
         {
           "excluded": 66,
@@ -855,9 +855,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_2 --warnings-as-errors",
-      "duration_ms": 1780,
+      "duration_ms": 1571,
       "exit_code": 0,
-      "output_sha256": "928ea581012c3001833e3f66e7d9c575cdd82708672d4f38f6ca5b4c244a8d53",
+      "output_sha256": "925304bc7ac12a64079aac58152e8aff999f4f108f7aeb8b136dd1fac8b15bdc",
       "summaries": [
         {
           "excluded": 53,
@@ -868,9 +868,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_3 --warnings-as-errors",
-      "duration_ms": 3450,
+      "duration_ms": 2455,
       "exit_code": 0,
-      "output_sha256": "33b4f239c8d7491517fa572cc40bc1a5596d98d125fb2af5bb5646c95f0056d7",
+      "output_sha256": "29e42a5a05ce735cc0d2370cf739836cc29c30fee88081ea631807ce2846f8f5",
       "summaries": [
         {
           "excluded": 52,
@@ -881,9 +881,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_1 --warnings-as-errors",
-      "duration_ms": 6931,
+      "duration_ms": 4115,
       "exit_code": 0,
-      "output_sha256": "eda4ceb10f6c3cec50646ae080908d410eff574f4cc05d03239f8e2d400f9a25",
+      "output_sha256": "9cff2bdf3648ce7e3d17e2c9cc3ae468ecaceef0d248d1e6c9bcf04ec2384d35",
       "summaries": [
         {
           "excluded": 64,
@@ -894,9 +894,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_2 --warnings-as-errors",
-      "duration_ms": 5363,
+      "duration_ms": 3639,
       "exit_code": 0,
-      "output_sha256": "d517baf8d51f258b71f4dde0eff40c0afe0cd87413230a3081017b1c29ce1111",
+      "output_sha256": "5a168e9a547591fddc2e57ada4fa70d32d02d0b7e4206e9df5a7ba22f8144106",
       "summaries": [
         {
           "excluded": 65,
@@ -907,9 +907,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_27_task_1 --warnings-as-errors",
-      "duration_ms": 956,
+      "duration_ms": 786,
       "exit_code": 0,
-      "output_sha256": "e84d8cd90ce576565c214816cc763f185a0a6204275d7364fb2fb39662ee0795",
+      "output_sha256": "7e199580f921d022afef3cd0ed8def1027c8a9735c8e6437f1430f850b8aba39",
       "summaries": [
         {
           "excluded": 4,
@@ -920,9 +920,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_27_task_2 --warnings-as-errors",
-      "duration_ms": 892,
+      "duration_ms": 932,
       "exit_code": 0,
-      "output_sha256": "46329cd8699f27356677fad8940c95866363cccd0ad92c2a187b018cc265e235",
+      "output_sha256": "f7a129aa959ab48767d980c57a66bb4921d9178637fa755fc545b6872b205c30",
       "summaries": [
         {
           "excluded": 4,
@@ -933,9 +933,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_28_task_1 --warnings-as-errors",
-      "duration_ms": 1391,
+      "duration_ms": 1136,
       "exit_code": 0,
-      "output_sha256": "ed337ab181bb550923b33440222715ea1e958718de7e0ad4d53e04fad4c74e59",
+      "output_sha256": "fb69ac9093245c80af4763213d8ba53e51c54618c9a46bb9af0de4bb37811357",
       "summaries": [
         {
           "excluded": 54,
@@ -946,9 +946,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_28_task_2 --warnings-as-errors",
-      "duration_ms": 1423,
+      "duration_ms": 1119,
       "exit_code": 0,
-      "output_sha256": "a6e294a6457fbd8a2bf07f5f67eed7a79b9c00bac0b9f7636033bbe30c11a7d5",
+      "output_sha256": "f7564f97c9a95469cf089b35d32a0729e18186c8748235f753a3b515f698c1fa",
       "summaries": [
         {
           "excluded": 53,
@@ -959,9 +959,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_29_task_1 --warnings-as-errors",
-      "duration_ms": 4030,
+      "duration_ms": 2880,
       "exit_code": 0,
-      "output_sha256": "23fde39db98c027a1831c3d5d5c5616b83e6118ae82a435cc098ff1d608bb727",
+      "output_sha256": "27799a939190c3c0759a7d3c43bb2f07ee87e3a156db2d3788e13ff61ffcbc71",
       "summaries": [
         {
           "excluded": 64,
@@ -972,9 +972,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_29_task_2 --warnings-as-errors",
-      "duration_ms": 3774,
+      "duration_ms": 2763,
       "exit_code": 0,
-      "output_sha256": "d5d2d3492ea1a3690b5443794a317d35d0bb223647318c140b5d6e047416ba5c",
+      "output_sha256": "3483193e4a4e11ea3b4328b0a06bd5cee3789efa2f76a98699854374da5dcb2c",
       "summaries": [
         {
           "excluded": 66,
@@ -985,9 +985,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_1 --warnings-as-errors",
-      "duration_ms": 1155,
+      "duration_ms": 784,
       "exit_code": 0,
-      "output_sha256": "8e46706fb4b1745913c38b0c00682ca0735f672934d28ef4719f4abcb1653b86",
+      "output_sha256": "ed62e2b3d225bfd0852d06dd7be2394da7145cb4e79faf884a5f7c39fe1ab8ef",
       "summaries": [
         {
           "excluded": 4,
@@ -998,9 +998,9 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_2 --warnings-as-errors",
-      "duration_ms": 1048,
+      "duration_ms": 781,
       "exit_code": 0,
-      "output_sha256": "1a7c33fce09237d6f3e8983e0cd1ddd5680a8d04edfb621a9e43dcce3d37b538",
+      "output_sha256": "01a058504326420e6ddbfa522c8671d6ec12fe3a9ab36708b451cc51efe14faa",
       "summaries": [
         {
           "excluded": 4,
@@ -1077,11 +1077,11 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "path": "test/governance/milestone_scope_test.exs",
-      "sha256": "f684fb0fc6d661833dc133d2ae5bf546c27ecba16c757a2906a89bb995909168"
+      "sha256": "d4253864c0a6b03d88ef7b26b4a93cbf3f983acad07118cd18618ab75ecd492e"
     },
     {
       "path": "test/governance/phase_73_reconciliation_test.exs",
-      "sha256": "141d8f00beb0f325a7db0eb6c80eb16dd693aa356679c0e3b386f1e650bc1063"
+      "sha256": "edc17843a051c50e3ed8b2e130d3274e32cd25989b280bbbe9d7e1d3f7489b26"
     },
     {
       "path": "test/support/adoption_evidence.ex",
@@ -1089,16 +1089,16 @@ security and validation state remains open until the mandatory reconciliation re
     },
     {
       "path": "test/support/phase_73_reconciliation.ex",
-      "sha256": "565d130b167620da6759d985338aa78e7694c13694b20a51e5d5dbd0d40f6436"
+      "sha256": "7a6713a0da819da2405711cc23e379d7e0d3a790ccaa0bb5e5ed99ade784f181"
     }
   ],
-  "proof_set_id": "phase73-e9dde643da81874d",
+  "proof_set_id": "phase73-cf71bd681a97cb35",
   "schema": "phase73-reconciliation-proof",
   "security": {
     "command": "mix ci.security",
-    "duration_ms": 144089,
+    "duration_ms": 137987,
     "exit_code": 0,
-    "output_sha256": "bbf4ad0ebc865e3a926610dcf77f7efb9b1f4b33b62b86a18e695cba8df210ae",
+    "output_sha256": "1c62645f1aee26c5fc8bc7501b9653ba3a1db2efdd17ba74306e68ff17ad0a83",
     "summaries": [
       {
         "excluded": 0,
@@ -1273,7 +1273,7 @@ security and validation state remains open until the mandatory reconciliation re
       }
     }
   ],
-  "source_digest": "sha256:7709219c922a5a9bf3f259425ddb5ca8ad59b685f41d77095db991c40ad6ff82",
+  "source_digest": "sha256:c01980bd81d711f86311c65ab031a89b5b5a7df9a1c0565514a5c54abf9a18db",
   "version": 1
 }
 ```
@@ -1281,8 +1281,8 @@ security and validation state remains open until the mandatory reconciliation re
 
 | Metric | Current staged result |
 |--------|-----------------------|
-| Proof set | `phase73-e9dde643da81874d` |
+| Proof set | `phase73-cf71bd681a97cb35` |
 | Focused owners | 13/13 positive |
-| Mandatory evidence | 3/3 unchanged runs; 122 tests each; 49467ms, 51806ms, 46932ms |
-| Security composition | `mix ci.security`; 13/13 positive constituent summaries; 144089ms |
+| Mandatory evidence | 3/3 unchanged runs; 122 tests each; 33405ms, 33698ms, 32807ms |
+| Security composition | `mix ci.security`; 13/13 positive constituent summaries; 137987ms |
 | Nyquist compliant | no — staged proof precedes final reconciliation |
