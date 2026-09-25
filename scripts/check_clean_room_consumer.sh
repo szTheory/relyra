@@ -90,6 +90,7 @@ run_command() {
   printf 'package consumer [%s]: %s\n' "$profile" "$description"
 
   if (cd "$cwd" && env -i "${isolated_env[@]}" "$@") >"$log_path" 2>&1; then
+    grep -E '^[[:alnum:] _-]+: PASS' "$log_path" || true
     printf 'PASS: %s\n' "$label"
   else
     local status=$?
@@ -235,7 +236,12 @@ run_command installer "run the public Phoenix consumer installer" "$consumer_dir
   mix relyra.install --module PackageConsumer --router lib/package_consumer_web/router.ex --repo PackageConsumer.Repo
 run_command compile "compile the clean-room consumer with warnings as errors" \
   "$consumer_dir" mix compile --warnings-as-errors
-run_command signed-acs "boot endpoint, query owned PostgreSQL, prove artifact provenance and post signed ACS" \
-  "$consumer_dir" mix run smoke/signed_acs.exs
 
-printf 'package consumer [%s]: PASS — artifact, installer, compile, owned PostgreSQL and signed ACS\n' "$profile"
+while IFS= read -r smoke_script; do
+  relative_script="${smoke_script#"$consumer_dir"/}"
+  smoke_label="smoke-${relative_script//\//-}"
+  run_command "$smoke_label" "run consumer smoke $relative_script" \
+    "$consumer_dir" mix run "$relative_script"
+done < <(find "$consumer_dir/smoke" -maxdepth 1 -type f -name '*.exs' -print | LC_ALL=C sort)
+
+printf 'package consumer [%s]: PASS — artifact, installer, compile, owned PostgreSQL and every consumer smoke\n' "$profile"
