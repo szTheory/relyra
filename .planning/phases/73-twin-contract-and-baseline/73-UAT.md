@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 73-twin-contract-and-baseline
-source: ["73-01-SUMMARY.md", "73-02-SUMMARY.md", "73-03-SUMMARY.md", "73-04-SUMMARY.md", "73-05-SUMMARY.md", "73-06-SUMMARY.md", "73-07-SUMMARY.md", "73-08-SUMMARY.md", "73-09-SUMMARY.md", "73-10-SUMMARY.md", "73-11-SUMMARY.md", "73-12-SUMMARY.md", "73-13-SUMMARY.md", "73-14-SUMMARY.md", "73-15-SUMMARY.md", "73-16-SUMMARY.md", "73-17-SUMMARY.md", "73-18-SUMMARY.md", "73-19-SUMMARY.md", "73-20-SUMMARY.md", "73-21-SUMMARY.md", "73-22-SUMMARY.md", "73-23-SUMMARY.md", "73-24-SUMMARY.md", "73-25-SUMMARY.md", "73-26-SUMMARY.md", "73-27-SUMMARY.md", "73-28-SUMMARY.md", "73-29-SUMMARY.md", "73-30-SUMMARY.md", "73-31-SUMMARY.md", "73-32-SUMMARY.md", "73-33-SUMMARY.md"]
+source: ["73-01-SUMMARY.md", "73-02-SUMMARY.md", "73-03-SUMMARY.md", "73-04-SUMMARY.md", "73-05-SUMMARY.md", "73-06-SUMMARY.md", "73-07-SUMMARY.md", "73-08-SUMMARY.md", "73-09-SUMMARY.md", "73-10-SUMMARY.md", "73-11-SUMMARY.md", "73-12-SUMMARY.md", "73-13-SUMMARY.md", "73-14-SUMMARY.md", "73-15-SUMMARY.md", "73-16-SUMMARY.md", "73-17-SUMMARY.md", "73-18-SUMMARY.md", "73-19-SUMMARY.md", "73-20-SUMMARY.md", "73-21-SUMMARY.md", "73-22-SUMMARY.md", "73-23-SUMMARY.md", "73-24-SUMMARY.md", "73-25-SUMMARY.md", "73-26-SUMMARY.md", "73-27-SUMMARY.md", "73-28-SUMMARY.md", "73-29-SUMMARY.md", "73-30-SUMMARY.md", "73-31-SUMMARY.md", "73-32-SUMMARY.md", "73-33-SUMMARY.md", "73-34-SUMMARY.md"]
 started: 2026-09-24T23:55:58Z
-updated: 2026-09-25T14:58:33Z
+updated: 2026-09-25T17:48:34Z
 ---
 
 ## Current Test
@@ -737,23 +737,21 @@ evidence: "mix test --warnings-as-errors (declared pass)"
 
 ### 85. Completed Phase 73 governance accepts the legitimate current Phase 75 planning lifecycle.
 expected: "The completed Phase 73 governance evidence recognizes the current Phase 75 planning state while still rejecting malformed, skipped, or mismatched lifecycle fixtures."
-result: issue
+result: pass
 source: automated
-evidence: "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence — 127 tests, 7 failures; governance checks report STATE current phase disagrees with ROADMAP active phases."
-severity: blocker
+evidence: "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence — 128 tests, 0 failures; completed Phase 73 governance accepts the Phase 75 planning fixture and the current ready_for_verification lifecycle."
 
 ### 86. Phase 73 reconciliation binds its proof to the current tracked governed sources.
 expected: "The Phase 73 proof manifest matches the current tracked governed inputs and its reconciliation lane passes."
-result: issue
+result: pass
 source: automated
-evidence: "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.phase73.reconciliation — 1 test, 1 failure; governed source manifest mismatch for mix.exs (proof SHA-256 38ea2569… vs current 1837f413…)."
-severity: blocker
+evidence: "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.phase73.reconciliation — 1 test, 0 failures in 563.9s; proof phase73-617a876eb05a67c6 replayed with current governed-source digests, three identical evidence runs, and the complete security lane."
 
 ## Summary
 
 total: 86
-passed: 84
-issues: 2
+passed: 86
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
@@ -762,7 +760,9 @@ blocked: 0
 
   - gap_id: G-73-85
   truth: "Completed Phase 73 governance evidence recognizes the current Phase 75 planning state and continues to reject malformed or inconsistent lifecycle states."
-  status: failed
+  status: resolved
+  resolved_by: 73-34-PLAN.md
+  resolved_at: 2026-09-25
   reason: "Fresh mix ci.evidence reports that STATE current phase disagrees with ROADMAP active phases."
   severity: blocker
   test: 85
@@ -774,7 +774,9 @@ blocked: 0
     - "Add deterministic later-phase lifecycle fixtures and recognize completed Phase 73 evidence without weakening malformed-state rejection."
   - gap_id: G-73-86
     truth: "The Phase 73 reconciliation proof is current for every tracked governed source, including mix.exs."
-    status: failed
+    status: resolved
+    resolved_by: 73-34-PLAN.md
+    resolved_at: 2026-09-25
     reason: "Fresh mix ci.phase73.reconciliation reports that the proof's recorded mix.exs SHA-256 differs from the current tracked mix.exs SHA-256."
     severity: blocker
     test: 86
