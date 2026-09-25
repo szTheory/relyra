@@ -45,7 +45,7 @@ returns.
 
 ## v1.11 First-Adopter Twin
 
-- [ ] **Phase 73: Twin Contract and Baseline** — Define the executable adopter model, evidence ownership, quality baseline, and immutable guardrails.
+- [x] **Phase 73: Twin Contract and Baseline** — Define the executable adopter model, evidence ownership, quality baseline, and immutable guardrails. (completed 2026-09-25)
 - [x] **Phase 74: Clean-Room Package Consumer** — Prove a fresh Phoenix application can adopt only the files Relyra actually ships. (completed 2026-09-24)
 - [ ] **Phase 75: SaaS Twin Domain Realism** — Expand LedgerLoop into a coherent multi-tenant adopter with credible humans, trust history, and incidents.
 - [ ] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end.
@@ -75,7 +75,7 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 34/34 plans executed
+**Plans:** 34/34 plans complete
 
 Plans:
 
@@ -95,7 +95,7 @@ Plans:
 
 **Wave 28** *(gap closure; blocked on Wave 27 completion)*
 
-- [ ] 73-34-PLAN.md — Accept Phase 75 planning and refresh the current source-bound proof.
+- [x] 73-34-PLAN.md — Accept Phase 75 planning and refresh the current source-bound proof.
 
 **Wave 1**
 
@@ -363,7 +363,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
-| 73. Twin Contract and Baseline | v1.11 | 34/34 | In Progress | —          |
+| 73. Twin Contract and Baseline | v1.11 | 34/34 | Complete    | 2026-09-25 |
 | 74. Clean-Room Package Consumer | v1.11 | 4/4 | Complete    | 2026-09-24 |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |

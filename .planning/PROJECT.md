@@ -309,4 +309,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-09-09 after starting v1.11 First-Adopter Twin*
+*Last updated: 2026-09-25 after Phase 73 — automated evidence governance and shift-left verification*
