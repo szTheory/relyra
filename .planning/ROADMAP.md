@@ -363,7 +363,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
-| 73. Twin Contract and Baseline | v1.11 | 33/33 | Complete    | 2026-09-24 |
+| 73. Twin Contract and Baseline | v1.11 | 33/34 | In Progress | —          |
 | 74. Clean-Room Package Consumer | v1.11 | 4/4 | Complete    | 2026-09-24 |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |
