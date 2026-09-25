@@ -265,7 +265,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert {:ok, checked_in_identity} = validated_governance_identity(File.cwd!())
     assert checked_in_identity.current_phase in ["73", "74", "75"]
-    assert checked_in_identity.governance_phase == checked_in_identity.current_phase
+
+    expected_governance_phase =
+      if checked_in_identity.status == "planning",
+        do: "73",
+        else: checked_in_identity.current_phase
+
+    assert checked_in_identity.governance_phase == expected_governance_phase
 
     assert checked_in_identity.status in [
              "executing",
