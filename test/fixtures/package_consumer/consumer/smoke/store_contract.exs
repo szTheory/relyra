@@ -5,6 +5,47 @@ contract_error = fn message ->
   raise "package consumer store contract: #{message}"
 end
 
+run_pair = fn operation ->
+  parent = self()
+
+  tasks =
+    for _ <- 1..2 do
+      Task.async(fn ->
+        send(parent, {:ready, self()})
+
+        receive do
+          :release -> operation.()
+        after
+          5_000 -> contract_error.("concurrency barrier timed out")
+        end
+      end)
+    end
+
+  Enum.each(tasks, fn task ->
+    receive do
+      {:ready, pid} when pid == task.pid -> :ok
+    after
+      5_000 -> contract_error.("concurrent store operation did not reach the launch barrier")
+    end
+  end)
+
+  Enum.each(tasks, &send(&1.pid, :release))
+  Enum.map(tasks, &Task.await(&1, 5_000))
+end
+
+assert_race! = fn label, results, expected_error ->
+  successes = Enum.count(results, &(&1 == :ok))
+  errors = for {:error, %Error{type: type}} <- results, do: type
+  unexpected = Enum.count(results, &(&1 != :ok and not match?({:error, %Error{}}, &1)))
+
+  unless length(results) == 2 and successes == 1 and errors == [expected_error] and
+           unexpected == 0 do
+    contract_error.(
+      "#{label} race expected one :ok and one #{inspect(expected_error)}; observed #{successes} successes, #{inspect(errors)} errors, #{unexpected} unexpected outcomes"
+    )
+  end
+end
+
 artifact_root = System.fetch_env!("PACKAGE_CONSUMER_ARTIFACT_ROOT")
 checkout_root = System.fetch_env!("PACKAGE_CONSUMER_CHECKOUT")
 consumer_root = System.fetch_env!("PACKAGE_CONSUMER_CONSUMER")
@@ -193,9 +234,61 @@ case Relyra.ReplayStore.consume_replay_key(
     )
 end
 
+race_intent = %{
+  request_intent
+  | request_id: "consumer-request-race",
+    relay_state: "consumer-relay-race",
+    in_response_to: "consumer-request-race"
+}
+
+request_race =
+  run_pair.(fn ->
+    Relyra.RequestStore.put_intent("consumer-relay-race", race_intent, request_store_opts)
+  end)
+
+assert_race!.(:request_intent, request_race, :request_intent_consumed)
+
+replay_race =
+  run_pair.(fn ->
+    Relyra.ReplayStore.consume_replay_key(
+      "consumer-replay-race",
+      %{replay_metadata | assertion_id: "consumer-assertion-race"},
+      replay_store_opts
+    )
+  end)
+
+assert_race!.(:replay_key, replay_race, :replayed_assertion)
+
+row_counts = fn ->
+  request_count =
+    Repo.query!("SELECT count(*) FROM package_consumer_request_intents").rows
+
+  replay_count = Repo.query!("SELECT count(*) FROM package_consumer_replay_keys").rows
+  {request_count, replay_count}
+end
+
+counts_before_reruns = row_counts.()
+
+library_reruns = run_migrations!.(library_migrations)
+host_reruns = run_migrations!.(host_migrations)
+
+unless library_reruns == [] and host_reruns == [] do
+  contract_error.(
+    "rerunning both migration sources must apply zero versions; got #{length(library_reruns)} and #{length(host_reruns)}"
+  )
+end
+
+unless counts_before_reruns == {[[2]], [[2]]} and row_counts.() == counts_before_reruns do
+  contract_error.(
+    "concurrent writes must leave one row per operation and migration reruns must preserve both tables"
+  )
+end
+
 IO.puts(
   "library migration: PASS — #{length(library_versions)} versions from the unpacked artifact"
 )
 
 IO.puts("host migration: PASS — consumer-owned request and replay tables")
 IO.puts("persistent adapters: PASS — request read/consume and typed request/replay rejections")
+IO.puts("store concurrency: PASS — unique indexes allow one request and replay write each")
+IO.puts("migration reruns: PASS — both sources applied zero versions without changing rows")
