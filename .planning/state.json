@@ -11,7 +11,7 @@
     {
       "number": "74",
       "name": "Clean-Room Package Consumer",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "75",
@@ -44,5 +44,5 @@
     "label": "Advance to the next step",
     "reason": "Phase 74 of 7 · 14% · executing"
   },
-  "updated_at": "2026-09-24T21:52:21.782Z"
+  "updated_at": "2026-09-25T01:20:47.176Z"
 }
