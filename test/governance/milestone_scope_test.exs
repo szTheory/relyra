@@ -230,13 +230,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
 
     proof = Relyra.Phase73Reconciliation.fixture_proof!(File.cwd!())
-    assert length(proof["acceptance_task_ids"]) == 70
-    assert List.last(proof["acceptance_task_ids"]) == "73-33-02"
-    assert length(proof["focused"]) == 19
+    assert length(proof["acceptance_task_ids"]) == 72
+    assert List.last(proof["acceptance_task_ids"]) == "73-34-02"
+    assert length(proof["focused"]) == 21
 
     assert Enum.map(Enum.take(proof["focused"], -2), & &1["command"]) == [
-             "mix test test/governance/milestone_scope_test.exs --only plan_73_33_task_1 --warnings-as-errors",
-             "mix test test/governance/milestone_scope_test.exs --only plan_73_33_task_2 --warnings-as-errors"
+             "mix test test/governance/milestone_scope_test.exs --only plan_73_34_task_1 --warnings-as-errors",
+             "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_34_task_2 --warnings-as-errors"
            ]
   end
 
@@ -3243,12 +3243,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              _other -> false
            end),
          true <-
-           Map.get(roadmap.phase_requirements, "73") ==
-             Map.get(requirements.phase_requirements, "73"),
-         true <- Map.has_key?(roadmap.phase_requirements, state.current_phase),
-         true <-
-           Map.get(roadmap.phase_requirements, state.current_phase) ==
-             Map.get(requirements.phase_requirements, state.current_phase) do
+           Enum.all?(Enum.slice(entries, phase_73_index..current_index), fn [_mark, phase, _name] ->
+             roadmap_requirements = Map.get(roadmap.phase_requirements, phase)
+
+             is_struct(roadmap_requirements, MapSet) and
+               roadmap_requirements == Map.get(requirements.phase_requirements, phase)
+           end) do
       true
     else
       _ -> false

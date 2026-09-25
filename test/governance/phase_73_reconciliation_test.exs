@@ -215,6 +215,36 @@ defmodule Relyra.Phase73ReconciliationTest do
     end
   end
 
+  @tag :plan_73_34_task_2
+  test "current tracked mix.exs digest is required by the proof manifest" do
+    root = fixture_root!()
+    on_exit(fn -> File.rm_rf!(root) end)
+
+    proof = Phase73Reconciliation.fixture_proof!(root)
+    {security, validation} = Phase73Reconciliation.fixture_documents!(proof, :staged)
+    mix_source = File.read!(Path.join(root, "mix.exs"))
+    expected_digest = :crypto.hash(:sha256, mix_source) |> Base.encode16(case: :lower)
+
+    assert [%{"sha256" => ^expected_digest}] =
+             Enum.filter(proof["governed_sources"], &(&1["path"] == "mix.exs"))
+
+    assert :ok = Phase73Reconciliation.validate_documents!(security, validation, proof, root)
+
+    stale =
+      update_in(proof["governed_sources"], fn sources ->
+        Enum.map(sources, fn
+          %{"path" => "mix.exs"} = source -> %{source | "sha256" => String.duplicate("0", 64)}
+          source -> source
+        end)
+      end)
+
+    {stale_security, stale_validation} = Phase73Reconciliation.fixture_documents!(stale, :staged)
+
+    assert_raise ArgumentError, ~r/governed source manifest/, fn ->
+      Phase73Reconciliation.validate_documents!(stale_security, stale_validation, stale, root)
+    end
+  end
+
   defp fixture_root! do
     root =
       Path.join(System.tmp_dir!(), "phase73-reconciliation-#{System.unique_integer([:positive])}")
