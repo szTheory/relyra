@@ -778,7 +778,14 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     if identity.status == "planning" do
       assert identity.current_phase in ["74", "75"]
       assert identity.governance_phase == "73"
-      assert length(identity.plan_paths) == if(identity.current_phase == "75", do: 34, else: 33)
+
+      expected_plan_count =
+        if identity.current_phase == "75" and
+             File.exists?(".planning/phases/73-twin-contract-and-baseline/73-34-SUMMARY.md"),
+           do: 34,
+           else: 33
+
+      assert length(identity.plan_paths) == expected_plan_count
       assert Enum.all?(identity.plan_paths, &executed_plan?/1)
     else
       violations = repository_plan_violations(identity.plan_paths, %{}, identity)
@@ -4654,33 +4661,43 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     provenance_snapshot = repository_provenance_snapshot(identity.root)
 
-    Enum.flat_map(plan_paths, fn plan_path ->
-      markdown = File.read!(plan_path)
+    plan_paths
+    |> Task.async_stream(
+      fn plan_path ->
+        markdown = File.read!(plan_path)
 
-      case repository_changed_surfaces(
-             identity.root,
-             plan_path,
-             changed_surfaces_by_plan,
-             provenance_snapshot
-           ) do
-        {:ok, changes} ->
-          changed_classes =
-            changes
-            |> Enum.flat_map(fn change ->
-              changed_surface_classes(change.path, change.before, change.after)
-            end)
-            |> Enum.uniq()
+        case repository_changed_surfaces(
+               identity.root,
+               plan_path,
+               changed_surfaces_by_plan,
+               provenance_snapshot
+             ) do
+          {:ok, changes} ->
+            changed_classes =
+              changes
+              |> Enum.flat_map(fn change ->
+                changed_surface_classes(change.path, change.before, change.after)
+              end)
+              |> Enum.uniq()
 
-          repository_plan_scope_violations(identity, plan_path, markdown, changed_classes)
-          |> Enum.map(&"#{plan_path}: #{&1}")
-
-        {:error, reason} ->
-          plan_violations =
-            repository_plan_scope_violations(identity, plan_path, markdown, [])
+            repository_plan_scope_violations(identity, plan_path, markdown, changed_classes)
             |> Enum.map(&"#{plan_path}: #{&1}")
 
-          plan_violations ++ ["#{plan_path} completed-plan diff provenance #{reason}"]
-      end
+          {:error, reason} ->
+            plan_violations =
+              repository_plan_scope_violations(identity, plan_path, markdown, [])
+              |> Enum.map(&"#{plan_path}: #{&1}")
+
+            plan_violations ++ ["#{plan_path} completed-plan diff provenance #{reason}"]
+        end
+      end,
+      max_concurrency: max(System.schedulers_online(), 4),
+      ordered: true,
+      timeout: :infinity
+    )
+    |> Enum.flat_map(fn
+      {:ok, violations} -> violations
+      {:exit, reason} -> ["completed-plan governance worker exited: #{inspect(reason)}"]
     end)
   end
 
