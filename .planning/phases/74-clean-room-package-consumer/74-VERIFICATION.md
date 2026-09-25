@@ -1,9 +1,10 @@
 ---
 phase: 74-clean-room-package-consumer
-verified: 2026-09-25T03:47:34Z
+verified: 2026-09-25T19:59:24Z
 status: passed
 score: 5/5
 covered_files:
+
   - .github/workflows/security-gates.yml
   - .planning/REQUIREMENTS.md
   - .planning/ROADMAP.md
@@ -61,7 +62,8 @@ covered_files:
   - test/fixtures/package_consumer/prior_scaffold/lib/package_consumer_web/router.ex
   - test/governance/milestone_scope_test.exs
   - test/support/phase_73_reconciliation.ex
-covered_digest: "v1:sha256:ffed3e89def2de94c71ea45734e14b50f1620dc63abd8cfaa59e0b86101016ba"
+
+covered_digest: "v1:sha256:795bda3645953e26e881416950c335f55d5f31ce77a7cc1e2a486e2991c42473"
 behavior_unverified: 0
 overrides_applied: 0
 decision_coverage:
@@ -74,7 +76,7 @@ decision_coverage:
 
 **Phase Goal:** A Phoenix developer can install, compile, migrate, boot, and safely exercise Relyra from the locally built Hex artifact without any checkout-private support.
 
-**Verified:** 2026-09-25T03:47:34Z
+**Verified:** 2026-09-25T19:59:24Z
 **Status:** PASSED  
 **Re-verification:** No
 
@@ -141,7 +143,7 @@ decision_coverage:
 | `mix test test/adoption/package_consumer_ci_contract_test.exs --warnings-as-errors` | 1 test, 0 failures. | ✓ PASS |
 | `actionlint .github/workflows/security-gates.yml` | Exit 0. | ✓ PASS |
 | `mix ci.phase73.reconciliation` | 1 test, 0 failures; reconciled proof replay passed. | ✓ PASS |
-| `mix qa` | 927 tests, 0 failures, 10 excluded. | ✓ PASS |
+| `mix qa` | 929 tests, 0 failures, 10 excluded. | ✓ PASS |
 
 ### Requirements Coverage
 
@@ -183,5 +185,5 @@ None. All five roadmap success criteria and six mapped PKG requirements are veri
 
 ---
 
-_Verified: 2026-09-25T03:47:34Z_
+_Verified: 2026-09-25T19:59:24Z_
 _Verifier: gsd-verifier_
