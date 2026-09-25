@@ -61,10 +61,6 @@ created: "2026-09-24"
 
 ---
 
-## Manual-Only Verifications
-
-All phase behaviors have automated verification. No manual-only gate is permitted.
-
 ---
 
 ## Validation Sign-Off

@@ -452,14 +452,16 @@ defmodule Relyra.Phase73Reconciliation do
     require_contains!(security, "50 threats: 49 closed and 1 open", "final threat totals")
     require_contains!(security, ~r/^\| T-73-12 \|.*\| open/m, "historical open T-73-12")
 
+    final_security_section = security |> String.split(@final_marker) |> List.last()
+
     for id <- 98..104 do
-      require_contains!(security, "T-73-#{id}_CLOSED", "T-73-#{id} closure")
+      require_contains!(final_security_section, "T-73-#{id}_CLOSED", "T-73-#{id} closure")
 
       proof_id = Regex.escape(proof["proof_set_id"])
 
       unless Regex.match?(
                ~r/^\| T-73-#{id} \|.*\| closed \|.*#{proof_id}.*\|$/m,
-               security
+               final_security_section
              ) do
         raise ArgumentError, "T-73-#{id} closure must reference the current proof set"
       end

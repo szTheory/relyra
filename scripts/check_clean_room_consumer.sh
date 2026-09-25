@@ -4,6 +4,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 profile="full"
 contract_case=""
+concurrency_check="false"
 
 while (($#)); do
   case "$1" in
@@ -23,6 +24,10 @@ while (($#)); do
       contract_case="$2"
       shift 2
       ;;
+    --concurrency-check)
+      concurrency_check="true"
+      shift
+      ;;
     *)
       echo "package consumer: unsupported argument '$1'" >&2
       exit 2
@@ -30,8 +35,8 @@ while (($#)); do
   esac
 done
 
-if [[ "$profile" != "full" && "$profile" != "contracts" ]]; then
-  echo "package consumer: unsupported profile '$profile'; use --profile full or --profile contracts" >&2
+if [[ "$profile" != "full" && "$profile" != "contracts" && "$profile" != "minimal" ]]; then
+  echo "package consumer: unsupported profile '$profile'; use --profile full, minimal or contracts" >&2
   exit 2
 fi
 
@@ -40,11 +45,56 @@ if [[ "$profile" == "full" && -n "$contract_case" ]]; then
   exit 2
 fi
 
+if [[ "$profile" != "minimal" && "$concurrency_check" == "true" ]]; then
+  echo "package consumer: --concurrency-check is only valid with --profile minimal" >&2
+  exit 2
+fi
+
 if [[ "$profile" == "contracts" && -z "$contract_case" ]]; then
   "$0" --profile contracts --case omission
   "$0" --profile contracts --case fresh
   "$0" --profile contracts --case prior
   printf 'package consumer [contracts]: PASS — omission, fresh installer and prior scaffold contracts\n'
+  exit 0
+fi
+
+if [[ "$profile" == "minimal" && "$concurrency_check" == "true" ]]; then
+  concurrency_root="$(mktemp -d "${TMPDIR:-/tmp}/relyra-package-consumer-race.XXXXXX")"
+  concurrency_root="$(cd "$concurrency_root" && pwd -P)"
+  trap 'rm -rf "$concurrency_root"' EXIT
+  "$repo_root/scripts/check_clean_room_consumer.sh" --profile minimal >"$concurrency_root/run-a.log" 2>&1 &
+  pid_a=$!
+  "$repo_root/scripts/check_clean_room_consumer.sh" --profile minimal >"$concurrency_root/run-b.log" 2>&1 &
+  pid_b=$!
+  status_a=0
+  status_b=0
+  wait "$pid_a" || status_a=$?
+  wait "$pid_b" || status_b=$?
+  if [[ "$status_a" != "0" || "$status_b" != "0" ]]; then
+    echo "package consumer: minimal concurrency check failed: run A exit=$status_a, run B exit=$status_b; inspect $concurrency_root/run-a.log and run-b.log, then rerun --profile minimal --concurrency-check" >&2
+    exit 1
+  fi
+  receipt_a="$(grep '^ISOLATION_RECEIPT|' "$concurrency_root/run-a.log" | tail -n 1)"
+  receipt_b="$(grep '^ISOLATION_RECEIPT|' "$concurrency_root/run-b.log" | tail -n 1)"
+  IFS='|' read -r _ root_a artifact_a consumer_a mix_a hex_a archives_a deps_a build_a output_a <<<"$receipt_a"
+  IFS='|' read -r _ root_b artifact_b consumer_b mix_b hex_b archives_b deps_b build_b output_b <<<"$receipt_b"
+  if [[ -z "$root_a" || -z "$root_b" ]]; then
+    echo "package consumer: minimal concurrency check failed: expected one isolation receipt per run; inspect $concurrency_root/run-a.log and run-b.log" >&2
+    exit 1
+  fi
+  paths_a=("$root_a" "$artifact_a" "$consumer_a" "$mix_a" "$hex_a" "$archives_a" "$deps_a" "$build_a" "$output_a")
+  paths_b=("$root_b" "$artifact_b" "$consumer_b" "$mix_b" "$hex_b" "$archives_b" "$deps_b" "$build_b" "$output_b")
+  for path_a in "${paths_a[@]}"; do
+    for path_b in "${paths_b[@]}"; do
+      if [[ "$path_a" == "$path_b" || "$path_a/" == "$path_b/"* || "$path_b/" == "$path_a/"* ]]; then
+        echo "package consumer: minimal concurrency isolation failed: path sets overlap at $path_a and $path_b; inspect both run receipts and make every path run-owned" >&2
+        exit 1
+      fi
+    done
+  done
+  grep -h '^minimal compile: PASS' "$concurrency_root/run-a.log" "$concurrency_root/run-b.log"
+  printf 'package consumer [minimal]: PASS — concurrent run roots and all mutable paths are disjoint\n'
+  printf 'ISOLATION_RECEIPT_A|%s\nISOLATION_RECEIPT_B|%s\n' "${paths_a[*]}" "${paths_b[*]}"
   exit 0
 fi
 
@@ -82,6 +132,7 @@ isolated_env=(
   "MIX_DEPS_PATH=$deps_path"
   "MIX_BUILD_ROOT=$build_root"
   "PACKAGE_CONSUMER_RUN_ROOT=$run_root"
+  "PACKAGE_CONSUMER_PROFILE=$([[ "$profile" == "contracts" ]] && echo full || echo "$profile")"
   "PACKAGE_CONSUMER_ARTIFACT_OUTPUT=$artifact_output"
   "PACKAGE_CONSUMER_CONSUMER=$consumer_dir"
   "PACKAGE_CONSUMER_CHECKOUT=$repo_root"
@@ -175,6 +226,37 @@ case "$artifact_root/" in
     exit 1
     ;;
 esac
+
+if [[ "$profile" == "minimal" ]]; then
+  cp -R "$repo_root/test/fixtures/package_consumer/consumer/." "$consumer_dir/"
+  isolated_env+=("PACKAGE_CONSUMER_RELYRA_PATH=$artifact_root" "PACKAGE_CONSUMER_ARTIFACT_ROOT=$artifact_root")
+  run_command minimal-deps "resolve the minimal consumer with Relyra as its only direct dependency" \
+    "$consumer_dir" mix deps.get
+  run_command minimal-compile "compile without optional dependencies and warnings" \
+    "$consumer_dir" mix compile --no-optional-deps --warnings-as-errors
+  probe=''
+  probe+='source = Mix.Project.deps_paths()[:relyra] |> Path.expand(); '
+  probe+='build = :code.lib_dir(:relyra) |> to_string() |> Path.expand(); '
+  probe+='artifact = Path.expand(System.fetch_env!("PACKAGE_CONSUMER_ARTIFACT_ROOT")); '
+  probe+='checkout = Path.expand(System.fetch_env!("PACKAGE_CONSUMER_CHECKOUT")); '
+  probe+='build_root = Path.expand(System.fetch_env!("MIX_BUILD_ROOT")); '
+  probe+='inside = fn path, root -> relative = Path.relative_to(path, root); relative not in [".", ".."] and Path.type(relative) == :relative and not String.starts_with?(relative, "../") end; '
+  probe+='unless (source == artifact or inside.(source, artifact)) and not inside.(source, checkout), do: raise("minimal package provenance failed: resolved source is outside this unpacked artifact (source=#{source}; artifact=#{artifact})"); '
+  probe+='unless inside.(build, build_root), do: raise("minimal package provenance failed: compiled application is outside this isolated build root"); '
+  probe+='unless Code.ensure_loaded?(Relyra.Testing), do: raise("minimal package contract failed: public Relyra.Testing helper is unavailable"); '
+  probe+='if Code.ensure_loaded?(Relyra.TestSupport), do: raise("minimal package contract failed: private support leaked into consumer"); '
+  probe+='optional = [Phoenix.Router, Ecto.Repo, Postgrex, Req] |> Enum.filter(&Code.ensure_loaded?/1); '
+  probe+='unless optional == [], do: raise("minimal package contract failed: optional integration modules loaded"); '
+  probe+='checkout_path = :code.get_path() |> Enum.map(&(to_string(&1))) |> Enum.find(&String.contains?(&1, checkout)); '
+  probe+='if checkout_path, do: raise("minimal package contract failed: checkout path present in code path"); '
+  probe+='IO.puts("minimal compile: PASS — optional Phoenix/Ecto/Postgrex/Req modules absent; public helper available; private support unavailable"); '
+  probe+='IO.puts("ISOLATION_RECEIPT|#{System.fetch_env!("PACKAGE_CONSUMER_RUN_ROOT")}|#{artifact}|#{System.fetch_env!("PACKAGE_CONSUMER_CONSUMER")}|#{System.fetch_env!("MIX_HOME")}|#{System.fetch_env!("HEX_HOME")}|#{System.fetch_env!("MIX_DEPS_PATH")}|#{build_root}|#{System.fetch_env!("PACKAGE_CONSUMER_RUN_ROOT")}/output")'
+  run_command minimal-provenance "assert artifact source, isolated build output and optional module absence" \
+    "$consumer_dir" mix run --no-start -e "$probe"
+  printf 'ISOLATION_RECEIPT|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+    "$run_root" "$artifact_root" "$consumer_dir" "$mix_home" "$hex_home" "$mix_archives" "$deps_path" "$build_root" "$output_dir"
+  exit 0
+fi
 
 if [[ "$profile" == "contracts" ]]; then
   if [[ -n "$contract_case" && "$contract_case" != "omission" && "$contract_case" != "fresh" && "$contract_case" != "prior" ]]; then

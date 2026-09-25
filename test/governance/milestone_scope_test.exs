@@ -47,6 +47,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       {"74", "planning"} ->
         assert identity.governance_phase == "73"
 
+      {"74", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
+        assert identity.governance_phase == "74"
+
       {"73", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         planning_root = governance_repository_fixture()
         planning_state!(planning_root)
@@ -71,12 +74,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert identity.phase_requirements["73"] == MapSet.new(@phase_73_requirements)
     assert identity.phase_requirements["74"] == MapSet.new(@phase_74_requirements)
 
-    assert Enum.all?(
-             identity.plan_paths,
-             &String.contains?(&1, "/73-twin-contract-and-baseline/")
-           )
+    governed_phase_dir =
+      if identity.governance_phase == "73",
+        do: "/73-twin-contract-and-baseline/",
+        else: "/74-clean-room-package-consumer/"
 
-    assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, "/73-33-PLAN.md"))
+    assert Enum.all?(identity.plan_paths, &String.contains?(&1, governed_phase_dir))
+
+    expected_current_plan =
+      if identity.governance_phase == "73", do: "73-33-PLAN.md", else: "74-04-PLAN.md"
+
+    assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, expected_current_plan))
 
     for status <- ~w(executing in_progress ready_for_verification) do
       root = governance_repository_fixture()
@@ -180,7 +188,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert {:ok, checked_in_identity} = validated_governance_identity(File.cwd!())
     assert checked_in_identity.current_phase in ["73", "74"]
-    assert checked_in_identity.governance_phase == "73"
+    assert checked_in_identity.governance_phase == checked_in_identity.current_phase
 
     assert checked_in_identity.status in [
              "executing",
@@ -635,9 +643,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert {:ok, provenance} = completed_plan_provenance(multiple.root, multiple.plan_path)
     assert provenance.commits == multiple.implementation_commits ++ multiple.descendant_commits
 
-    assert {:ok, real_identity} = validated_governance_identity(File.cwd!())
-    plan_27 = Enum.find(real_identity.plan_paths, &String.ends_with?(&1, "/73-27-PLAN.md"))
-    assert {:ok, real_provenance} = completed_plan_provenance(real_identity.root, plan_27)
+    real_root = File.cwd!()
+    plan_27 = Path.join(real_root, ".planning/phases/73-twin-contract-and-baseline/73-27-PLAN.md")
+    assert {:ok, real_provenance} = completed_plan_provenance(real_root, plan_27)
     assert is_list(real_provenance.descendant_assignments)
   end
 
@@ -2544,12 +2552,14 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     mutate_file(root, ".planning/STATE.md", fn state ->
       state
-      |> String.replace("current_phase: 74", "current_phase: 73")
-      |> String.replace("status: planning", "status: executing")
+      |> then(&Regex.replace(~r/^current_phase: .*$/m, &1, "current_phase: 73"))
+      |> then(&Regex.replace(~r/^status: .*$/m, &1, "status: executing"))
     end)
 
     mutate_file(root, ".planning/ROADMAP.md", fn roadmap ->
-      String.replace(roadmap, "- [x] **Phase 73:", "- [ ] **Phase 73:")
+      roadmap
+      |> String.replace("- [x] **Phase 73:", "- [ ] **Phase 73:")
+      |> String.replace("- [ ] **Phase 74:", "- [x] **Phase 74:")
     end)
 
     File.cp!(
@@ -3122,10 +3132,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     |> add_unless(
       (state.status == "planning" and exact_completed_predecessor) or
         (state.status != "planning" and
-           match?(
-             [[_mark, phase, _name] | _] when phase == state.current_phase,
-             roadmap.phase_entries
-           )),
+           Enum.any?(roadmap.phase_entries, fn [mark, phase, _name] ->
+             mark == " " and phase == state.current_phase
+           end)),
       "STATE current phase disagrees with ROADMAP active phases"
     )
     |> add_unless(

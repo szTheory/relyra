@@ -38,9 +38,9 @@ The `contracts` profile now runs an isolated omission control, exact fresh-insta
 
 Fresh installation is compared against a sorted path/hash manifest and exact installer receipt, including one router insertion. The frozen prior scaffold contains adopter-edited resolver and mapper callbacks, preserved configuration, and an already-injected route. An ordinary installer rerun preserves all four files byte-for-byte; warnings-as-errors compilation and signed ACS use the preserved callbacks and router to produce the expected receipt and redirect. A separate forced copy proves only resolver/mapper outputs are overwritten and match the fresh generated hashes.
 
-## Task Commit
+## Task Commits
 
-- **Tasks 1–3: Add omission, fresh-golden and prior-scaffold contracts** — `97d0b26`
+1. **Tasks 1–3: Add omission, fresh-golden and prior-scaffold contracts** — `97d0b26`
 
 ## Verification
 
@@ -54,6 +54,7 @@ Fresh installation is compared against a sorted path/hash manifest and exact ins
 
 - Plan 74-03's callback contract needed the existing signed ACS smoke to select the prior scaffold resolver and mapper when the prior profile runs. Added an environment-controlled choice that leaves the ordinary full profile using its original proof adapters.
 - The first prior fixture run showed its router did not represent an already-installed scaffold. Added the shipped route marker to the frozen fixture so the ordinary rerun verifies the installer's `already present` path.
+- Commit `97d0b26` reverted interim PKG-02 and PKG-04 requirement checkmarks while Phase 74 was still active. The requirements remain pending until the complete phase closes; Phase 74 closeout owns their final transition.
 
 ## Next Plan
 

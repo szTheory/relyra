@@ -59,6 +59,12 @@ jobs:
           mix local.rebar --force
           mix deps.get
 
+      - name: Package consumer contracts
+        run: |
+          scripts/check_clean_room_consumer.sh --profile full
+          scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check
+          scripts/check_clean_room_consumer.sh --profile contracts
+
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
