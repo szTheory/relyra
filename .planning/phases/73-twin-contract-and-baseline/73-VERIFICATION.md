@@ -1,6 +1,6 @@
 ---
 phase: 73-twin-contract-and-baseline
-verified: 2026-09-25T17:54:27Z
+verified: 2026-09-25T17:58:45Z
 status: passed
 score: 157/157 must-haves verified (4 roadmap truths + 153 plan truths)
 covered_files:
@@ -90,7 +90,7 @@ covered_files:
   - test/governance/phase_73_reconciliation_test.exs
   - test/support/adoption_evidence.ex
   - test/support/phase_73_reconciliation.ex
-covered_digest: "v1:sha256:db80431ab95398d19394bec13d027e72c7a1f1942eb5a0e8c2ad96ad208ec6b6"
+covered_digest: "v1:sha256:14462a93d9da22b77eda6cbcc435cdf6e11a2a46202bc330e670ca6c5ff357a8"
 behavior_unverified: 0
 overrides_applied: 0
 ---
@@ -98,7 +98,7 @@ overrides_applied: 0
 # Phase 73: Twin Contract and Baseline Verification Report
 
 **Phase Goal:** A maintainer can see exactly which adopter jobs v1.11 proves, where each proof runs, what the current quality/CI baseline is, and which changes require approval.
-**Verified:** 2026-09-25T17:54:27Z
+**Verified:** 2026-09-25T17:58:45Z
 **Status:** passed
 **Re-verification:** Re-verification after Plans 73-34 gap closure and refreshed automated evidence.
 
@@ -200,5 +200,5 @@ None. Re-verification found no new-scope concern without deterministic evidence.
 
 ---
 
-_Verified: 2026-09-25T17:54:27Z_
+_Verified: 2026-09-25T17:58:45Z_
 _Verifier: the agent (gsd-verifier)_
