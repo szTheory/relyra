@@ -6,11 +6,11 @@ current_phase: 75
 current_phase_name: SaaS Twin Domain Realism
 current_plan: Not started
 status: planning
-stopped_at: "Phase 74 complete; Phase 73 and 74 verification reports are stale. Run $gsd-verify-work 73 first; check progress afterward for Phase 74."
-last_updated: "2026-09-25T13:17:22Z"
+stopped_at: "Fresh Phase 73 automated verification exposed two blockers, now diagnosed in 73-UAT.md. Run $gsd-plan-phase 73 --gaps, execute the resulting fix plan, then refresh Phase 73 and Phase 74 verification before planning Phase 75."
+last_updated: "2026-09-25T14:58:33Z"
 last_activity: 2026-09-25
-last_activity_desc: Phase 74 complete; refreshing stale Phase 73 verification before Phase 75 planning
-state_head: c30ab5e
+last_activity_desc: Fresh Phase 73 evidence failed on a Phase 75 lifecycle mismatch and stale mix.exs proof digest; both gaps diagnosed for closure
+state_head: 3c7a432
 progress:
   total_phases: 7
   completed_phases: 2
@@ -28,7 +28,7 @@ See `.planning/PROJECT.md`.
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection —
 never a silent compromise. Trust mutations are durable, attributable, and reviewable.
 
-**Current focus:** Phase 75 — SaaS Twin Domain Realism; Phase 73 and 74 verification reports must be refreshed before planning.
+**Current focus:** Close the two diagnosed Phase 73 deterministic verification gaps, refresh Phase 73 and 74 verification reports, then plan Phase 75 — SaaS Twin Domain Realism.
 
 ## Current Position
 
@@ -36,11 +36,11 @@ Phase: 75 — SaaS Twin Domain Realism
 
 Current Plan: Not started
 Total Plans in Phase: 4
-Next gate: Phase 73 has 33/33 plan summaries and Phase 74 has 4/4; both verification reports are stale. Refresh Phase 73 first, then recheck progress for Phase 74 before planning Phase 75.
+Next gate: Phase 73 has 33/33 plan summaries, but its fresh evidence run exposed two diagnosed blockers recorded in `73-UAT.md`: completed-phase lifecycle checks only accept Phase 74 planning, and the reconciliation proof has a stale `mix.exs` digest. Plan and execute gap closure, then refresh Phase 73 and Phase 74 verification before planning Phase 75.
 
-Status: Phase 75 is ready to plan after stale Phase 73 and 74 verification reports are refreshed.
+Status: Phase 75 planning is held until Phase 73 blockers are closed and both Phase 73 and Phase 74 verification reports are current.
 
-Last activity: 2026-09-25 — Phase 74 complete; Phase 73 verification identified as stale.
+Last activity: 2026-09-25 — Fresh Phase 73 automated evidence identified and diagnosed two verification blockers; UAT contains automated evidence and gap closure criteria.
 
 ## Milestone Metrics
 
@@ -183,15 +183,15 @@ Last activity: 2026-09-25 — Phase 74 complete; Phase 73 verification identifie
 
 ## Session Continuity
 
-**Last session:** 2026-09-25T13:17:22Z
+**Last session:** 2026-09-25T14:58:33Z
 
-**Stopped at:** Phase 74 implementation is complete; next run `$gsd-verify-work 73`, then check `$gsd-progress` because Phase 74's verification report is also stale.
+**Stopped at:** Phase 73 UAT now has 84 automated passes and two diagnosed blockers (`G-73-85`, `G-73-86`). Run `$gsd-plan-phase 73 --gaps`, execute its plan, then run `$gsd-verify-work 73`, `$gsd-verify-work 74`, and `$gsd-progress` before planning Phase 75.
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Run `$gsd-verify-work 73` to refresh the stale Phase 73 verification. Then run `$gsd-progress`; Phase 74's verification report is also stale, so let progress route the next gate before planning Phase 75.
+Run `$gsd-plan-phase 73 --gaps` to close the two diagnosed deterministic blockers. After executing that plan, run `$gsd-verify-work 73`, then `$gsd-verify-work 74`, and `$gsd-progress` to confirm both verification reports are current before planning Phase 75.
 
 ## Performance Metrics
 

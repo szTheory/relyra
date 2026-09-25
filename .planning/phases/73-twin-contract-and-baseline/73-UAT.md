@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 73-twin-contract-and-baseline
 source: ["73-01-SUMMARY.md", "73-02-SUMMARY.md", "73-03-SUMMARY.md", "73-04-SUMMARY.md", "73-05-SUMMARY.md", "73-06-SUMMARY.md", "73-07-SUMMARY.md", "73-08-SUMMARY.md", "73-09-SUMMARY.md", "73-10-SUMMARY.md", "73-11-SUMMARY.md", "73-12-SUMMARY.md", "73-13-SUMMARY.md", "73-14-SUMMARY.md", "73-15-SUMMARY.md", "73-16-SUMMARY.md", "73-17-SUMMARY.md", "73-18-SUMMARY.md", "73-19-SUMMARY.md", "73-20-SUMMARY.md", "73-21-SUMMARY.md", "73-22-SUMMARY.md", "73-23-SUMMARY.md", "73-24-SUMMARY.md", "73-25-SUMMARY.md", "73-26-SUMMARY.md", "73-27-SUMMARY.md", "73-28-SUMMARY.md", "73-29-SUMMARY.md", "73-30-SUMMARY.md", "73-31-SUMMARY.md", "73-32-SUMMARY.md", "73-33-SUMMARY.md"]
 started: 2026-09-24T23:55:58Z
-updated: 2026-09-25T13:33:18Z
+updated: 2026-09-25T14:58:33Z
 ---
 
 ## Current Test
@@ -735,38 +735,57 @@ coverage_id: D3
 evidence: "test/governance/milestone_scope_test.exs#active v1.11 plans declare scope and stop before every risky mutation (declared pass)"
 evidence: "mix test --warnings-as-errors (declared pass)"
 
-### 85. Phase 73 evidence remains valid against the current Phase 75 planning state and current tracked proof inputs.
-expected: "The mandatory evidence lane and phase reconciliation replay pass against the repository's current authoritative planning state and tracked inputs."
+### 85. Completed Phase 73 governance accepts the legitimate current Phase 75 planning lifecycle.
+expected: "The completed Phase 73 governance evidence recognizes the current Phase 75 planning state while still rejecting malformed, skipped, or mismatched lifecycle fixtures."
 result: issue
 source: automated
 evidence: "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence — 127 tests, 7 failures; governance checks report STATE current phase disagrees with ROADMAP active phases."
+severity: blocker
+
+### 86. Phase 73 reconciliation binds its proof to the current tracked governed sources.
+expected: "The Phase 73 proof manifest matches the current tracked governed inputs and its reconciliation lane passes."
+result: issue
+source: automated
 evidence: "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.phase73.reconciliation — 1 test, 1 failure; governed source manifest mismatch for mix.exs (proof SHA-256 38ea2569… vs current 1837f413…)."
 severity: blocker
 
 ## Summary
 
-total: 85
+total: 86
 passed: 84
-issues: 1
+issues: 2
 pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
 
-- gap_id: G-73-85
-  truth: "Phase 73 evidence and reconciliation pass against the current Phase 75 planning state and current tracked proof inputs."
+  - gap_id: G-73-85
+  truth: "Completed Phase 73 governance evidence recognizes the current Phase 75 planning state and continues to reject malformed or inconsistent lifecycle states."
   status: failed
-  reason: "Fresh automated verification fails: ci.evidence reports a STATE/ROADMAP active-phase disagreement; ci.phase73.reconciliation reports a stale governed-source manifest for mix.exs."
+  reason: "Fresh mix ci.evidence reports that STATE current phase disagrees with ROADMAP active phases."
   severity: blocker
   test: 85
+  root_cause: "The Phase 73 governance lifecycle special case only accepts planning at current_phase 74; its exact_completed_predecessor predicate is hard-coded to Phase 73 complete / Phase 74 active. Current STATE is planning at Phase 75, so valid later-phase planning falls through the active-phase branch and fails."
   artifacts:
     - path: "test/governance/milestone_scope_test.exs"
-      issue: "Current lifecycle identity is rejected by the Phase 73 evidence selectors."
-    - path: "test/support/phase_73_reconciliation.ex"
-      issue: "Checked-in Phase 73 proof does not match the current tracked mix.exs input."
+      issue: "The completed-predecessor lifecycle parser and fixtures only model Phase 74 planning."
   missing:
-    - "Refresh or generalize deterministic Phase 73 lifecycle and proof reconciliation so valid later-phase planning state can be verified without human UAT."
+    - "Add deterministic later-phase lifecycle fixtures and recognize completed Phase 73 evidence without weakening malformed-state rejection."
+  - gap_id: G-73-86
+    truth: "The Phase 73 reconciliation proof is current for every tracked governed source, including mix.exs."
+    status: failed
+    reason: "Fresh mix ci.phase73.reconciliation reports that the proof's recorded mix.exs SHA-256 differs from the current tracked mix.exs SHA-256."
+    severity: blocker
+    test: 86
+    root_cause: "Phase 74 changed mix.exs after Phase 73's proof was captured, but the proof and append-only reports were not refreshed against that later governed-source state."
+    artifacts:
+      - path: "test/support/phase_73_reconciliation.ex"
+        issue: "Current proof source-manifest equality check correctly rejects stale mix.exs evidence."
+      - path: ".planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json"
+        issue: "The manifest retains the pre-Phase-74 mix.exs digest."
+    missing:
+      - "Recapture and replay the Phase 73 proof from the current tracked source state, then synchronize its reports through the existing append-only evidence path."
 
 ## Automated Coverage Metadata Notes
 
