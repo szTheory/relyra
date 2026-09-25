@@ -1,6 +1,6 @@
 ---
 phase: 74-clean-room-package-consumer
-verified: 2026-09-25T03:41:54Z
+verified: 2026-09-25T03:47:34Z
 status: passed
 score: 5/5
 covered_files:
@@ -43,6 +43,7 @@ covered_files:
   - lib/relyra/phoenix/controllers/metadata_controller.ex
   - lib/relyra/telemetry/handlers/login_trace.ex
   - lib/relyra/testing/phoenix.ex
+  - mix.exs
   - scripts/check_clean_room_consumer.sh
   - test/adoption/package_consumer_ci_contract_test.exs
   - test/fixtures/package_consumer/consumer/lib/package_consumer.ex
@@ -60,7 +61,7 @@ covered_files:
   - test/fixtures/package_consumer/prior_scaffold/lib/package_consumer_web/router.ex
   - test/governance/milestone_scope_test.exs
   - test/support/phase_73_reconciliation.ex
-covered_digest: "v1:sha256:e7dedf0830fcff35c7d91bbfe34b34d6248f6d2c28567e93b735e7c2fcb57d71"
+covered_digest: "v1:sha256:ffed3e89def2de94c71ea45734e14b50f1620dc63abd8cfaa59e0b86101016ba"
 behavior_unverified: 0
 overrides_applied: 0
 decision_coverage:
@@ -73,7 +74,7 @@ decision_coverage:
 
 **Phase Goal:** A Phoenix developer can install, compile, migrate, boot, and safely exercise Relyra from the locally built Hex artifact without any checkout-private support.
 
-**Verified:** 2026-09-25T03:41:54Z  
+**Verified:** 2026-09-25T03:47:34Z
 **Status:** PASSED  
 **Re-verification:** No
 
@@ -159,10 +160,10 @@ No orphaned Phase 74 requirements were found; all six are mapped in `REQUIREMENT
 
 | Test/evidence owner | Active | Disabled | Circular | Assertion level | Verdict |
 |---|---:|---:|---:|---|---|
-| `test/adoption/package_consumer_ci_contract_test.exs` | Yes | No | No | Structural/value assertions over workflow triggers, matrix, and exact commands | ✓ PASS |
+| `mix.exs` and `test/adoption/package_consumer_ci_contract_test.exs` | Yes | No | No | The fixture-only ignore filter removes harness inputs from Mix test discovery; the focused test asserts workflow triggers, matrix, and exact commands | ✓ PASS |
 | Consumer smoke scripts and installer contracts | Yes | No | No | Behavioral assertions against a real Phoenix endpoint, isolated PostgreSQL, fixed golden files, and mutated package artifact | ✓ PASS |
 
-The expected installer files and receipt come from checked-in goldens, not from invoking the system under test to generate expected values. The tests linked to these contracts contain no disabled/skipped cases. QA reports 10 excluded tests; the package fixture `.exs` files are harness inputs rather than test modules.
+The expected installer files and receipt come from checked-in goldens, not from invoking the system under test to generate expected values. The tests linked to these contracts contain no disabled/skipped cases. QA reports 10 excluded tests; `test_ignore_filters: [~r{^test/fixtures/}]` excludes package fixture inputs from test discovery and its unmatched-fixture warning.
 
 ### Decision Coverage
 
@@ -178,9 +179,9 @@ None. Phase 74 acceptance is automated, consistent with project policy.
 
 ### Gaps Summary
 
-None. All five roadmap success criteria and six mapped PKG requirements are verified. The roadmap phase checkbox and planning status remain at `ready_for_verification` until the orchestrator performs Phase 74 closeout.
+None. All five roadmap success criteria and six mapped PKG requirements are verified. Phase 74 is marked complete in planning state and the roadmap, with Phase 75 now current.
 
 ---
 
-_Verified: 2026-09-25T03:41:54Z_  
+_Verified: 2026-09-25T03:47:34Z_
 _Verifier: gsd-verifier_

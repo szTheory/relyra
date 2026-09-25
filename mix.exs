@@ -13,6 +13,7 @@ defmodule Relyra.MixProject do
       description: "Strict-by-default SAML 2.0 Service Provider library for Elixir and Phoenix.",
       elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
+      test_ignore_filters: [~r{^test/fixtures/}],
       start_permanent: Mix.env() == :prod,
       compilers: [:parser_path_guard] ++ Mix.compilers(),
       elixirc_options: [ignore_module_conflict: true],
