@@ -113,8 +113,12 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Accept ordered Phase 75 planning under completed Phase 73 governance** - `01e85a3` (test)
-2. **Task 2: Extend source-bound reconciliation and current planning owners** - `069e019`, `8bd518b`, `a2d0232`, `6bfa69e`, `6a998d8` (test)
+1. **Task 1: Accept ordered Phase 75 planning under completed Phase 73 governance** - `01e85a371cfb08ac92851469e91cabee04b27e1f` (test)
+2. **Task 2: Extend source-bound reconciliation and current planning owners** - `069e0193c167f08b1048e198279a57e6a75ff39b` (test)
+3. **Task 2: Extend source-bound reconciliation and current planning owners** - `8bd518b08b07d51a6e53990abc6d8c6a7185756e` (test)
+4. **Task 2: Extend source-bound reconciliation and current planning owners** - `a2d023234be9a89f133c47f4a255f3a061c7d4a8` (test)
+5. **Task 2: Extend source-bound reconciliation and current planning owners** - `6bfa69e4adbbeb264812e4c86ba5463edab49c1d` (test)
+6. **Task 2: Extend source-bound reconciliation and current planning owners** - `6a998d8911ddc7a0758b2966833ea3e508c7f071` (test)
 
 ## Files Created/Modified
 
