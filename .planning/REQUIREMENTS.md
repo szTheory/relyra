@@ -15,9 +15,9 @@
 ### Packaged Consumer
 
 - [ ] **PKG-01**: A clean-room Phoenix consumer installs Relyra exclusively from the locally built and unpacked Hex artifact.
-- [x] **PKG-02**: The consumer cannot access checkout-only files, root fixtures, or private `Relyra.TestSupport` modules.
+- [ ] **PKG-02**: The consumer cannot access checkout-only files, root fixtures, or private `Relyra.TestSupport` modules.
 - [ ] **PKG-03**: A developer can run the installer, compile with warnings as errors, and boot the consumer from fresh state.
-- [x] **PKG-04**: A developer can apply Relyra and adopter migrations to an empty PostgreSQL database.
+- [ ] **PKG-04**: A developer can apply Relyra and adopter migrations to an empty PostgreSQL database.
 - [ ] **PKG-05**: The packaged consumer passes representative supported BEAM and optional-dependency profiles.
 - [ ] **PKG-06**: Installer regeneration or upgrade drift produces either an intentional compatible result or a precise automated failure.
 
@@ -94,9 +94,9 @@
 | EVID-02 | Phase 73 | Complete |
 | EVID-03 | Phase 76 | Pending |
 | PKG-01 | Phase 74 | Pending |
-| PKG-02 | Phase 74 | Complete |
+| PKG-02 | Phase 74 | Gaps Found |
 | PKG-03 | Phase 74 | Pending |
-| PKG-04 | Phase 74 | Complete |
+| PKG-04 | Phase 74 | Gaps Found |
 | PKG-05 | Phase 74 | Pending |
 | PKG-06 | Phase 74 | Pending |
 | TWIN-01 | Phase 75 | Pending |

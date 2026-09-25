@@ -115,11 +115,25 @@ request_intent =
   |> Map.put(:return_to, "/welcome")
   |> Map.put(:expires_at, DateTime.utc_now() |> DateTime.add(3600, :second))
 
+resolver =
+  if System.get_env("PACKAGE_CONSUMER_SCAFFOLD") == "prior" do
+    PackageConsumer.Relyra.Connections
+  else
+    PackageConsumer.ProofResolver
+  end
+
+mapper =
+  if System.get_env("PACKAGE_CONSUMER_SCAFFOLD") == "prior" do
+    PackageConsumer.Relyra.UserMapper
+  else
+    PackageConsumer.ProofMapper
+  end
+
 opts =
   Testing.consume_opts(fixture,
     request_intent: request_intent,
-    connection_resolver: PackageConsumer.ProofResolver,
-    user_mapper: PackageConsumer.ProofMapper,
+    connection_resolver: resolver,
+    user_mapper: mapper,
     session_adapter: PackageConsumer.ProofSessionAdapter
   )
 
