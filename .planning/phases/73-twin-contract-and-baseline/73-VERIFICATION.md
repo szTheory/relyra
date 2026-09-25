@@ -1,6 +1,6 @@
 ---
 phase: 73-twin-contract-and-baseline
-verified: 2026-09-25T17:58:45Z
+verified: 2026-09-25T18:58:12Z
 status: passed
 score: 157/157 must-haves verified (4 roadmap truths + 153 plan truths)
 covered_files:
@@ -90,7 +90,7 @@ covered_files:
   - test/governance/phase_73_reconciliation_test.exs
   - test/support/adoption_evidence.ex
   - test/support/phase_73_reconciliation.ex
-covered_digest: "v1:sha256:14462a93d9da22b77eda6cbcc435cdf6e11a2a46202bc330e670ca6c5ff357a8"
+covered_digest: "v1:sha256:0621884c167a579aeb40301cb66c2dd549256d3117fd55d2399e96a88abe3462"
 behavior_unverified: 0
 overrides_applied: 0
 ---
@@ -98,9 +98,9 @@ overrides_applied: 0
 # Phase 73: Twin Contract and Baseline Verification Report
 
 **Phase Goal:** A maintainer can see exactly which adopter jobs v1.11 proves, where each proof runs, what the current quality/CI baseline is, and which changes require approval.
-**Verified:** 2026-09-25T17:58:45Z
+**Verified:** 2026-09-25T18:58:12Z
 **Status:** passed
-**Re-verification:** Re-verification after Plans 73-34 gap closure and refreshed automated evidence.
+**Re-verification:** Refreshed after the Phase 73 completion transition and Phase 74 verification-pending lifecycle correction.
 
 ## Goal Achievement
 
@@ -155,7 +155,7 @@ Not applicable to rendered dynamic data. The phase delivers repository contracts
 | Behavior | Command | Result | Status |
 |---|---|---|---|
 | Evidence ledger, closure ownership and mandatory workflow contract | `mix ci.evidence` | Current proof records three runs, each 128 tests / 0 failures; latest run is included in the fresh current proof. | PASS |
-| Final Phase 73 lifecycle, proof and report reconciliation | `mix ci.phase73.reconciliation` | Current replay after Plan 73-34: 1 test / 0 failures (563.9s); this owner replays 21 focused selectors, three identical 128-test evidence runs, and all 13 pinned security constituents. | PASS |
+| Final Phase 73 lifecycle, proof and report reconciliation | `mix ci.phase73.reconciliation` | Committed-tree replay: 1 test / 0 failures (439.0s); this owner replays 21 focused selectors, three identical evidence runs, and all 13 pinned security constituents. | PASS |
 | Repository test suite warnings gate | `mix test --warnings-as-errors` | Prior supporting evidence: 926 tests / 0 failures. Not rerun for this planning-only re-verification; the changed acceptance owners were rerun through mandatory CI. | PRIOR PASS |
 | Formatting | `mix format --check-formatted` | Current post-transition check passed. | PASS |
 
@@ -192,7 +192,7 @@ None. Historical plan `must_haves.prohibitions` entries are negative guardrails,
 
 ## Gaps Summary
 
-No gaps found. The exact Phase 73 roadmap goal is achieved with Phase 73 in `ready_for_verification`; the ordered Phase 75 planning lifecycle is independently covered by a deterministic fixture. All four roadmap success criteria and all 153 plan-level truth assertions are supported by current code, mandatory deterministic ownership, a reconciled proof set, and fresh replay checks. The six Phase 73 requirement IDs are all satisfied with no orphaned mappings.
+No gaps found. The exact Phase 73 roadmap goal is achieved, Phase 73 is complete, and Phase 74 is correctly marked verification-pending. The ordered Phase 75 planning lifecycle is independently covered by a deterministic fixture. All four roadmap success criteria and all 153 plan-level truth assertions are supported by current code, mandatory deterministic ownership, a reconciled proof set, and the fresh replay. The six Phase 73 requirement IDs are all satisfied with no orphaned mappings.
 
 ### Advisory (New Scope, Unevidenced)
 
@@ -200,5 +200,5 @@ None. Re-verification found no new-scope concern without deterministic evidence.
 
 ---
 
-_Verified: 2026-09-25T17:58:45Z_
+_Verified: 2026-09-25T18:58:12Z_
 _Verifier: the agent (gsd-verifier)_

@@ -3,7 +3,7 @@ status: completed
 phase: 73-twin-contract-and-baseline
 source: ["73-01-SUMMARY.md", "73-02-SUMMARY.md", "73-03-SUMMARY.md", "73-04-SUMMARY.md", "73-05-SUMMARY.md", "73-06-SUMMARY.md", "73-07-SUMMARY.md", "73-08-SUMMARY.md", "73-09-SUMMARY.md", "73-10-SUMMARY.md", "73-11-SUMMARY.md", "73-12-SUMMARY.md", "73-13-SUMMARY.md", "73-14-SUMMARY.md", "73-15-SUMMARY.md", "73-16-SUMMARY.md", "73-17-SUMMARY.md", "73-18-SUMMARY.md", "73-19-SUMMARY.md", "73-20-SUMMARY.md", "73-21-SUMMARY.md", "73-22-SUMMARY.md", "73-23-SUMMARY.md", "73-24-SUMMARY.md", "73-25-SUMMARY.md", "73-26-SUMMARY.md", "73-27-SUMMARY.md", "73-28-SUMMARY.md", "73-29-SUMMARY.md", "73-30-SUMMARY.md", "73-31-SUMMARY.md", "73-32-SUMMARY.md", "73-33-SUMMARY.md", "73-34-SUMMARY.md"]
 started: 2026-09-24T23:55:58Z
-updated: 2026-09-25T17:58:45Z
+updated: 2026-09-25T18:49:37Z
 ---
 
 ## Current Test
@@ -745,7 +745,7 @@ evidence: "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.e
 expected: "The Phase 73 proof manifest matches the current tracked governed inputs and its reconciliation lane passes."
 result: pass
 source: automated
-evidence: "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.phase73.reconciliation — 1 test, 0 failures in 563.9s; proof phase73-617a876eb05a67c6 replayed with current governed-source digests, three identical evidence runs, and the complete security lane."
+evidence: "ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.phase73.reconciliation — fresh replay passed: 1 test, 0 failures in 709.8s; includes current governed-source validation, three evidence runs, and the full security lane."
 
 ## Summary
 
