@@ -6,11 +6,11 @@ current_phase: 75
 current_phase_name: SaaS Twin Domain Realism
 current_plan: Not started
 status: planning
-stopped_at: Phase 74 complete, ready to plan Phase 75
-last_updated: "2026-09-25T03:44:27.216Z"
+stopped_at: "Phase 74 complete; Phase 73 verification is stale. Run $gsd-verify-work 73 before planning Phase 75."
+last_updated: "2026-09-25T13:15:57Z"
 last_activity: 2026-09-25
-last_activity_desc: Phase 74 complete, transitioned to Phase 75
-state_head: 1fd6af50b2b8619ae153532c2408bda90b318c59
+last_activity_desc: Phase 74 complete; refreshing stale Phase 73 verification before Phase 75 planning
+state_head: c30ab5e
 progress:
   total_phases: 7
   completed_phases: 2
@@ -28,7 +28,7 @@ See `.planning/PROJECT.md`.
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection —
 never a silent compromise. Trust mutations are durable, attributable, and reviewable.
 
-**Current focus:** Phase 74 — Clean-Room Package Consumer
+**Current focus:** Phase 75 — SaaS Twin Domain Realism; Phase 73 verification must be refreshed before planning.
 
 ## Current Position
 
@@ -36,11 +36,11 @@ Phase: 75 — SaaS Twin Domain Realism
 
 Current Plan: Not started
 Total Plans in Phase: 4
-Plan: 74-04 complete; phase goal verification is next
+Next gate: Phase 73 has 33/33 plan summaries, but its verification is stale. Refresh it before planning Phase 75.
 
-Status: Ready to plan
+Status: Phase 75 is ready to plan after the stale Phase 73 verification is refreshed.
 
-Last activity: 2026-09-24 — Phase 74 complete, transitioned to Phase 75
+Last activity: 2026-09-25 — Phase 74 complete; Phase 73 verification identified as stale.
 
 ## Milestone Metrics
 
@@ -152,8 +152,9 @@ Last activity: 2026-09-24 — Phase 74 complete, transitioned to Phase 75
   prove the Hex package as a clean-room consumer.
 - LedgerLoop already has strong narrative and real-IdP foundations worth expanding.
 - Standalone source/docs contain temporary phase, plan, decision-code, and UAT references.
-- Root QA has one known incomplete-phase vocabulary-policy failure and reports Mix
-  test-pattern warnings; both are inventoried for Phase 77.
+- Root QA has one known incomplete-phase vocabulary-policy failure, inventoried for
+  Phase 77. Phase 74 added a Mix test-ignore rule for fixture scripts, clearing the
+  recurring test-pattern warning.
 - Recent main and recurring Fleet/Keycloak canaries are green; CI topology still needs
   measured duration and ownership analysis.
 - Live GitHub inventory currently shows no open issues or pull requests and several old
@@ -182,15 +183,15 @@ Last activity: 2026-09-24 — Phase 74 complete, transitioned to Phase 75
 
 ## Session Continuity
 
-**Last session:** 2026-09-25T01:40:22.981Z
+**Last session:** 2026-09-25T13:15:57Z
 
-**Stopped at:** Phase 74 complete, ready to plan Phase 75
+**Stopped at:** Phase 74 complete; next run `$gsd-verify-work 73` to refresh its stale report, then plan Phase 75.
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Run `$gsd-execute-phase 74` to execute the four ready plans for the Clean-Room Package Consumer phase.
+Run `$gsd-verify-work 73` to refresh the stale Phase 73 verification before planning Phase 75.
 
 ## Performance Metrics
 
@@ -227,6 +228,6 @@ Run `$gsd-execute-phase 74` to execute the four ready plans for the Clean-Room P
 | Phase 74 P03 | 17 | 3 tasks | 8 files |
 | Phase 74 P04 | 75 min | 2 tasks | 35 files |
 
-### Blockers
+### Resolved Issues
 
-- Phoenix was upgraded from 1.8.7 to 1.8.13 in `ae1f0aa`, resolving GHSA-63mc-hw7g-86rr and high-severity GHSA-6983-jfq8-485w; `mix ci.security` now passes.
+- Phoenix was upgraded from 1.8.7 to 1.8.13 in `ae1f0aa`, resolving GHSA-63mc-hw7g-86rr and GHSA-6983-jfq8-485w; `mix ci.security` passes.
