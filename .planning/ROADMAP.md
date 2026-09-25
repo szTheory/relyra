@@ -46,7 +46,7 @@ returns.
 ## v1.11 First-Adopter Twin
 
 - [x] **Phase 73: Twin Contract and Baseline** — Define the executable adopter model, evidence ownership, quality baseline, and immutable guardrails.
-- [ ] **Phase 74: Clean-Room Package Consumer** — Prove a fresh Phoenix application can adopt only the files Relyra actually ships.
+- [x] **Phase 74: Clean-Room Package Consumer** — Prove a fresh Phoenix application can adopt only the files Relyra actually ships. (completed 2026-09-24)
 - [ ] **Phase 75: SaaS Twin Domain Realism** — Expand LedgerLoop into a coherent multi-tenant adopter with credible humans, trust history, and incidents.
 - [ ] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end.
 - [ ] **Phase 77: Code and Documentation Craftsmanship** — Remove high-value quality debt and temporary planning narration behind the twin's safety net.
@@ -209,7 +209,7 @@ Relyra from the locally built Hex artifact without any checkout-private support.
 5. Reinstallation or upgrade drift is either compatible and intentional or fails with a
    precise diagnostic that identifies the broken adopter contract.
 
-**Plans:** 4/4 complete
+**Plans:** 4/4 plans complete
 
 Plans:
 
@@ -352,7 +352,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
 | 73. Twin Contract and Baseline | v1.11 | 33/33 | Complete    | 2026-09-24 |
-| 74. Clean-Room Package Consumer | v1.11 | 4/4 | In Progress|  |
+| 74. Clean-Room Package Consumer | v1.11 | 4/4 | Complete    | 2026-09-24 |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |
 | 77. Code and Documentation Craftsmanship | v1.11 | 0/TBD | Not started | — |
