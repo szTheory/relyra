@@ -2,19 +2,19 @@
 gsd_state_version: "1.0"
 milestone: v1.11
 milestone_name: First-Adopter Twin
-current_phase: 75
-current_phase_name: SaaS Twin Domain Realism
+current_phase: 73
+current_phase_name: twin-contract-and-baseline
 current_plan: Not started
 status: planning
-stopped_at: "Fresh Phase 73 automated verification exposed two blockers, now diagnosed in 73-UAT.md. Run $gsd-plan-phase 73 --gaps, execute the resulting fix plan, then refresh Phase 73 and Phase 74 verification before planning Phase 75."
-last_updated: "2026-09-25T14:58:33Z"
+stopped_at: Fresh Phase 73 automated verification exposed two blockers, now diagnosed in 73-UAT.md. Run $gsd-plan-phase 73 --gaps, execute the resulting fix plan, then refresh Phase 73 and Phase 74 verification before planning Phase 75.
+last_updated: "2026-09-25T15:35:48.577Z"
 last_activity: 2026-09-25
 last_activity_desc: Fresh Phase 73 evidence failed on a Phase 75 lifecycle mismatch and stale mix.exs proof digest; both gaps diagnosed for closure
-state_head: 3c7a432
+state_head: e19dc2b23899f688d78d4992673c6daf6ccb0f90
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 37
+  total_plans: 38
   completed_plans: 37
   percent: 29
 ---
@@ -32,10 +32,10 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 75 — SaaS Twin Domain Realism
+Phase: 73 (twin-contract-and-baseline) — READY TO EXECUTE
 
 Current Plan: Not started
-Total Plans in Phase: 4
+Total Plans in Phase: 34
 Next gate: Phase 73 has 33/33 plan summaries, but its fresh evidence run exposed two diagnosed blockers recorded in `73-UAT.md`: completed-phase lifecycle checks only accept Phase 74 planning, and the reconciliation proof has a stale `mix.exs` digest. Plan and execute gap closure, then refresh Phase 73 and Phase 74 verification before planning Phase 75.
 
 Status: Phase 75 planning is held until Phase 73 blockers are closed and both Phase 73 and Phase 74 verification reports are current.

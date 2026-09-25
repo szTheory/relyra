@@ -45,7 +45,7 @@ returns.
 
 ## v1.11 First-Adopter Twin
 
-- [x] **Phase 73: Twin Contract and Baseline** — Define the executable adopter model, evidence ownership, quality baseline, and immutable guardrails.
+- [ ] **Phase 73: Twin Contract and Baseline** — Define the executable adopter model, evidence ownership, quality baseline, and immutable guardrails.
 - [x] **Phase 74: Clean-Room Package Consumer** — Prove a fresh Phoenix application can adopt only the files Relyra actually ships. (completed 2026-09-24)
 - [ ] **Phase 75: SaaS Twin Domain Realism** — Expand LedgerLoop into a coherent multi-tenant adopter with credible humans, trust history, and incidents.
 - [ ] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end.
@@ -75,15 +75,27 @@ runs, what the current quality/CI baseline is, and which changes require approva
 4. Plans and execution stop at named checkpoints for public API, default, security,
    SemVer-major, or remote GitHub changes, and exclude speculative protocol work.
 
-**Plans:** 33/33 plans complete
+**Plans:** 33/34 plans complete
 
 Plans:
 
-- [x] 73-33-PLAN.md
+- [ ] 73-34-PLAN.md — Recognize Phase 75 planning and refresh Phase 73's source-bound proof.
 
-- [x] 73-32-PLAN.md
+**Wave 25** *(gap closure; blocked on Wave 24 completion)*
 
-- [x] 73-31-PLAN.md
+- [x] 73-31-PLAN.md — Bind the completed Phase 73 owner inventory and replay one current proof across both reports.
+
+**Wave 26** *(gap closure; blocked on Wave 25 completion)*
+
+- [x] 73-32-PLAN.md — Bound the active-plan owner and capture and replay the current 32-plan proof.
+
+**Wave 27** *(gap closure; blocked on Wave 26 completion)*
+
+- [x] 73-33-PLAN.md — Accept the completed-73/current-74 planning lifecycle and capture proof for post-transition replay.
+
+**Wave 28** *(gap closure; blocked on Wave 27 completion)*
+
+- [ ] 73-34-PLAN.md — Accept Phase 75 planning and refresh the current source-bound proof.
 
 **Wave 1**
 
