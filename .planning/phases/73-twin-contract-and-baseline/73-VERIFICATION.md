@@ -1,6 +1,6 @@
 ---
 phase: 73-twin-contract-and-baseline
-verified: 2026-09-24T23:55:58Z
+verified: 2026-09-25T00:31:02Z
 status: passed
 score: 154/154 must-haves verified (4 roadmap truths + 150 plan truths)
 covered_files:
@@ -87,7 +87,7 @@ covered_files:
   - test/governance/phase_73_reconciliation_test.exs
   - test/support/adoption_evidence.ex
   - test/support/phase_73_reconciliation.ex
-covered_digest: "v1:sha256:70e1c5fc9c58f7bc69be72b8f7d4750ca6444f14a5fe91abf10e48c876428aad"
+covered_digest: "v1:sha256:e0521ae3ea43c8f815ac1f13d51079899eaaefef597f4a946d7c37c4cb701923"
 behavior_unverified: 0
 overrides_applied: 0
 ---
@@ -95,7 +95,7 @@ overrides_applied: 0
 # Phase 73: Twin Contract and Baseline Verification Report
 
 **Phase Goal:** A maintainer can see exactly which adopter jobs v1.11 proves, where each proof runs, what the current quality/CI baseline is, and which changes require approval.
-**Verified:** 2026-09-24T23:55:58Z
+**Verified:** 2026-09-25T00:31:02Z
 **Status:** passed
 **Re-verification:** Fresh post-transition verification; prior report treated as stale.
 
@@ -185,5 +185,5 @@ No gaps found. The exact Phase 73 roadmap goal is achieved in the current Phase 
 
 ---
 
-_Verified: 2026-09-24T23:55:58Z_
+_Verified: 2026-09-25T00:31:02Z_
 _Verifier: the agent (gsd-verifier)_

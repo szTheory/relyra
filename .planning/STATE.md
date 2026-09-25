@@ -184,7 +184,7 @@ Last activity: 2026-09-24 — Phase 73 complete, transitioned to Phase 74
 
 ## Operator Next Step
 
-Run `$gsd-plan-phase 74` to plan the Clean-Room Package Consumer phase.
+Run `$gsd-execute-phase 74` to execute the four ready plans for the Clean-Room Package Consumer phase.
 
 ## Performance Metrics
 
