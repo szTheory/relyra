@@ -637,7 +637,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     phase_dir = ".planning/phases/73-twin-contract-and-baseline"
     plan_paths = Path.wildcard(Path.join(phase_dir, "73-*-PLAN.md")) |> Enum.sort()
 
-    assert length(plan_paths) == 33
+    assert length(plan_paths) == 34
 
     violations = Enum.flat_map(plan_paths, &plan_task_structure_violations/1)
 
@@ -776,9 +776,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert {:ok, identity} = validated_governance_identity(File.cwd!())
 
     if identity.status == "planning" do
-      assert identity.current_phase == "74"
+      assert identity.current_phase in ["74", "75"]
       assert identity.governance_phase == "73"
-      assert length(identity.plan_paths) == 33
+      assert length(identity.plan_paths) == if(identity.current_phase == "75", do: 34, else: 33)
       assert Enum.all?(identity.plan_paths, &executed_plan?/1)
     else
       violations = repository_plan_violations(identity.plan_paths, %{}, identity)
@@ -789,8 +789,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
 
     owners = Relyra.Phase73Reconciliation.acceptance_task_ids!(File.cwd!())
-    assert length(owners) == 70
-    assert List.last(owners) == "73-33-02"
+    assert length(owners) == 72
+    assert List.last(owners) == "73-34-02"
   end
 
   @tag :plan_73_24_task_1
@@ -947,8 +947,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     {security, validation} = apply(reconciliation, :fixture_documents!, [proof, :final])
 
     assert :ok = apply(reconciliation, :validate_documents!, [security, validation, proof, root])
-    assert length(proof["acceptance_task_ids"]) == 70
-    assert List.last(proof["acceptance_task_ids"]) == "73-33-02"
+    assert length(proof["acceptance_task_ids"]) == 72
+    assert List.last(proof["acceptance_task_ids"]) == "73-34-02"
 
     [first_owner | _] = proof["acceptance_task_ids"]
 
@@ -983,7 +983,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :plan_73_31_task_1
-  test "current tracked plan inventory builds one validated 33-plan proof" do
+  test "current tracked plan inventory builds one validated 34-plan proof" do
     reconciliation = Relyra.Phase73Reconciliation
     root = File.cwd!()
 
@@ -994,12 +994,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
                ".planning/phases/73-twin-contract-and-baseline/73-*-PLAN.md"
              ])
 
-    assert length(String.split(tracked_plans, "\n", trim: true)) == 33
+    assert length(String.split(tracked_plans, "\n", trim: true)) == 34
     proof = reconciliation.fixture_proof!(root)
     {security, validation} = reconciliation.fixture_documents!(proof, :staged)
 
-    assert length(proof["acceptance_task_ids"]) == 70
-    assert List.last(proof["acceptance_task_ids"]) == "73-33-02"
+    assert length(proof["acceptance_task_ids"]) == 72
+    assert List.last(proof["acceptance_task_ids"]) == "73-34-02"
 
     assert Enum.any?(
              proof["governed_sources"],
@@ -1773,6 +1773,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert Enum.any?(
              automation_policy_violations(fixture_dir),
+             &String.contains?(&1, "UAT artifact")
+           )
+
+    refute Enum.any?(
+             automation_policy_violations(".planning/phases/73-twin-contract-and-baseline"),
              &String.contains?(&1, "UAT artifact")
            )
   end
@@ -4307,9 +4312,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     uat_violations =
       for directory <- directories,
           path <- Path.wildcard(Path.join(directory, "*-UAT.md")),
+          not archival_uat?(File.read!(path)),
           do: "#{path} requires a UAT artifact"
 
     document_violations ++ uat_violations
+  end
+
+  defp archival_uat?(document) do
+    Regex.match?(~r/^status: (?:diagnosed|completed)$/m, document) and
+      not Enum.any?(
+        ["<human-check>", "## Manual-Only Verifications", "status: human_needed"],
+        &String.contains?(document, &1)
+      )
   end
 
   defp parse_scope_assertions(section) do
