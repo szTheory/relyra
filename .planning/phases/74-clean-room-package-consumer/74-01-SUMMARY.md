@@ -76,7 +76,7 @@ Each task was committed atomically:
 1. **Task 1: Run one packaged Phoenix ACS success from a fresh consumer** - `bacb2be` (test)
 2. **Task 2: Make artifact provenance and checkout isolation executable** - `5471a33` (test)
 
-**Plan metadata:** pending
+**Plan metadata:** `c1ad91a` (recorded plan summary)
 
 ## Files Created/Modified
 
@@ -123,3 +123,10 @@ Plan 74-02 can add the host-owned runtime-store migration and Ecto adapter smoke
 ---
 *Phase: 74-clean-room-package-consumer*
 *Completed: 2026-09-24*
+
+## Self-Check: PASSED
+
+- All five declared artifacts exist in the repository.
+- Task commits `bacb2be` and `5471a33` are reachable in Git history.
+- `scripts/check_clean_room_consumer.sh --profile full` passed after both tasks.
+- The consumer provenance, private-support and signed ACS markers passed.

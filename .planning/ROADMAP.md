@@ -213,7 +213,7 @@ Relyra from the locally built Hex artifact without any checkout-private support.
 
 Plans:
 
-- [ ] 74-01-PLAN.md — Prove the packaged Phoenix ACS success path from an isolated consumer.
+- [x] 74-01-PLAN.md — Prove the packaged Phoenix ACS success path from an isolated consumer.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -352,7 +352,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | Phase | Milestone | Plans Complete | Status | Completed |
 |---|---|---|---|---|
 | 73. Twin Contract and Baseline | v1.11 | 33/33 | Complete    | 2026-09-24 |
-| 74. Clean-Room Package Consumer | v1.11 | 0/4 | Planned | — |
+| 74. Clean-Room Package Consumer | v1.11 | 1/4 | In Progress|  |
 | 75. SaaS Twin Domain Realism | v1.11 | 0/TBD | Not started | — |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |
 | 77. Code and Documentation Craftsmanship | v1.11 | 0/TBD | Not started | — |
