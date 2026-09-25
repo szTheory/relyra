@@ -40,9 +40,9 @@
     }
   ],
   "next": {
-    "command": "/gsd:verify-work 74",
-    "label": "Verify Phase 74 from deterministic evidence",
-    "reason": "Phase 74 implementation is complete; verification must be current before planning Phase 75"
+    "command": "/gsd:verify-work 73",
+    "label": "Refresh Phase 73 verification, then verify Phase 74",
+    "reason": "The Phase 73 transition made both completed phases' verification reports stale; refresh them before planning Phase 75"
   },
-  "updated_at": "2026-09-25T18:04:51Z"
+  "updated_at": "2026-09-25T18:08:42Z"
 }
