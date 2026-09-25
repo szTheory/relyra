@@ -47,6 +47,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       {"74", "planning"} ->
         assert identity.governance_phase == "73"
 
+      {"75", "planning"} ->
+        assert identity.governance_phase == "73"
+
       {"74", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         assert identity.governance_phase == "74"
 
@@ -98,12 +101,86 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  @tag :plan_73_34_task_1
+  test "completed Phase 73 accepts the ordered Phase 75 planning lifecycle" do
+    root = governance_repository_fixture()
+    planning_state!(root, "75")
+
+    File.cp!(
+      ".planning/phases/73-twin-contract-and-baseline/73-10-SUMMARY.md",
+      Path.join(root, ".planning/phases/73-twin-contract-and-baseline/73-10-SUMMARY.md")
+    )
+
+    assert {:ok, later} = validated_governance_identity(root)
+    assert later.current_phase == "75"
+    assert later.governance_phase == "73"
+    assert later.status == "planning"
+
+    assert later.phase_requirements["75"] ==
+             MapSet.new(["TWIN-01", "TWIN-02", "TWIN-03", "TWIN-04", "TWIN-05"])
+
+    assert Enum.all?(later.plan_paths, &String.contains?(&1, "/73-twin-contract-and-baseline/"))
+
+    controls = [
+      {:duplicate_state,
+       fn root ->
+         mutate_file(root, ".planning/STATE.md", fn state ->
+           String.replace(state, "current_phase: 75", "current_phase: 75\ncurrent_phase: 75")
+         end)
+       end},
+      {:malformed_status,
+       fn root ->
+         mutate_file(
+           root,
+           ".planning/STATE.md",
+           &String.replace(&1, "status: planning", "status : planning")
+         )
+       end},
+      {:skipped_intermediate,
+       fn root ->
+         mutate_file(
+           root,
+           ".planning/ROADMAP.md",
+           &String.replace(&1, "- [x] **Phase 74:", "- [ ] **Phase 74:")
+         )
+       end},
+      {:missing_current,
+       fn root ->
+         mutate_file(root, ".planning/ROADMAP.md", &String.replace(&1, "- [ ] **Phase 75:", ""))
+       end},
+      {:mismatched_requirements,
+       fn root ->
+         mutate_file(
+           root,
+           ".planning/REQUIREMENTS.md",
+           &String.replace(
+             &1,
+             "| TWIN-01 | Phase 75 | Pending |",
+             "| TWIN-01 | Phase 74 | Pending |"
+           )
+         )
+       end}
+    ]
+
+    for {name, mutate} <- controls do
+      invalid_root = governance_repository_fixture()
+      planning_state!(invalid_root, "75")
+      mutate.(invalid_root)
+
+      assert {:error, violations} = validated_governance_identity(invalid_root)
+      assert violations != [], "expected #{name} to reject the later-phase lifecycle"
+    end
+
+    assert {:ok, checked_in} = validated_governance_identity(File.cwd!())
+    assert checked_in.current_phase in ["73", "74", "75"]
+  end
+
   @tag :plan_73_33_task_2
   test "planning lifecycle controls fail closed across authoritative documents" do
     controls = [
       {:duplicate_current_phase, :state, "current_phase: 74\ncurrent_phase: 74"},
       {:malformed_status, :state, "status : planning"},
-      {:skipped_phase, :state, "current_phase: 75"},
+      {:skipped_phase, :state, "current_phase: 76"},
       {:nonexistent_phase, :roadmap, "### Phase 74: Clean-Room Package Consumer"},
       {:mismatched_roadmap, :roadmap, "- [x] **Phase 74: Clean-Room Package Consumer**"},
       {:mismatched_requirements, :requirements, "| PKG-01 | Phase 73 | Pending |"}
@@ -187,7 +264,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Enum.all?(identity.plan_paths, &(Path.dirname(&1) == phase_dir))
 
     assert {:ok, checked_in_identity} = validated_governance_identity(File.cwd!())
-    assert checked_in_identity.current_phase in ["73", "74"]
+    assert checked_in_identity.current_phase in ["73", "74", "75"]
     assert checked_in_identity.governance_phase == checked_in_identity.current_phase
 
     assert checked_in_identity.status in [
@@ -2583,17 +2660,25 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp planning_state!(root) do
+  defp planning_state!(root, phase \\ "74") do
     mutate_file(root, ".planning/STATE.md", fn state ->
       state
-      |> String.replace("current_phase: 73", "current_phase: 74")
+      |> String.replace("current_phase: 73", "current_phase: #{phase}")
       |> String.replace("status: executing", "status: planning")
     end)
 
     mutate_file(root, ".planning/ROADMAP.md", fn roadmap ->
-      String.replace(roadmap, "- [ ] **Phase 73:", "- [x] **Phase 73:")
+      Regex.replace(~r/^- \[([ x])\] \*\*Phase ([0-9.]+):/m, roadmap, fn line, mark, number ->
+        previous =
+          phase_order(number) < phase_order(phase) and phase_order(number) >= phase_order("73")
+
+        next_mark = if number == phase, do: " ", else: if(previous, do: "x", else: mark)
+        String.replace(line, "[#{mark}]", "[#{next_mark}]", global: false)
+      end)
     end)
   end
+
+  defp phase_order(phase), do: phase |> String.split(".") |> Enum.map(&String.to_integer/1)
 
   defp completed_plan_git_fixture(variant \\ :clean) do
     root = Path.join(System.tmp_dir!(), "relyra-plan-git-#{System.unique_integer([:positive])}")
@@ -3110,14 +3195,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         do: "73",
         else: state.current_phase
 
-    exact_completed_predecessor =
-      state.status == "planning" and state.current_phase == "74" and
-        Enum.any?(roadmap.phase_entries, &(&1 == ["x", "73", "Twin Contract and Baseline"])) and
-        Enum.any?(roadmap.phase_entries, &(&1 == [" ", "74", "Clean-Room Package Consumer"])) and
-        Map.get(roadmap.phase_requirements, "74") ==
-          Map.get(requirements.phase_requirements, "74") and
-        Map.get(roadmap.phase_requirements, "73") ==
-          Map.get(requirements.phase_requirements, "73")
+    exact_completed_predecessor = completed_phase_73_planning?(roadmap, requirements, state)
 
     []
     |> add_unless(
@@ -3142,6 +3220,39 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         Map.get(requirements.phase_requirements, lifecycle_phase),
       "Phase #{lifecycle_phase} requirement set disagrees between ROADMAP and REQUIREMENTS"
     )
+  end
+
+  defp completed_phase_73_planning?(roadmap, requirements, state) do
+    entries = roadmap.phase_entries
+    phase_73_index = Enum.find_index(entries, &(&1 == ["x", "73", "Twin Contract and Baseline"]))
+    current_index = Enum.find_index(entries, &(Enum.at(&1, 1) == state.current_phase))
+
+    pending_phases =
+      entries
+      |> Enum.take((current_index || -1) + 1)
+      |> Enum.flat_map(fn [mark, phase, _name] -> if mark == " ", do: [phase], else: [] end)
+
+    with true <- state.status == "planning",
+         true <- is_integer(phase_73_index),
+         true <- is_integer(current_index) and current_index > phase_73_index,
+         true <- pending_phases == [state.current_phase],
+         true <-
+           Enum.all?(Enum.slice(entries, (phase_73_index + 1)..current_index), fn
+             ["x", _phase, _name] -> true
+             [" ", phase, _name] -> phase == state.current_phase
+             _other -> false
+           end),
+         true <-
+           Map.get(roadmap.phase_requirements, "73") ==
+             Map.get(requirements.phase_requirements, "73"),
+         true <- Map.has_key?(roadmap.phase_requirements, state.current_phase),
+         true <-
+           Map.get(roadmap.phase_requirements, state.current_phase) ==
+             Map.get(requirements.phase_requirements, state.current_phase) do
+      true
+    else
+      _ -> false
+    end
   end
 
   defp validate_governance_paths(root, project, roadmap, state) do
