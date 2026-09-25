@@ -164,7 +164,7 @@ run_command() {
   last_command_log="$log_path"
   printf 'package consumer [%s]: %s\n' "$profile" "$description"
 
-  if (cd "$cwd" && env -i "${isolated_env[@]}" "$@") >"$log_path" 2>&1; then
+  if (cd "$cwd" && env -i "${isolated_env[@]}" "$@" </dev/null) >"$log_path" 2>&1; then
     grep -E '^[[:alnum:] _-]+: PASS' "$log_path" || true
     printf 'PASS: %s\n' "$label"
   else
