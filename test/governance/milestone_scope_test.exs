@@ -38,9 +38,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @demand_gated_exclusions ~w(AUTHN-POST-01 KMS-01 SIGNED-META-01)
   @phase_73_requirements ~w(EVID-01 EVID-02 QUAL-01 PIPE-01 GOV-01 GOV-02)
   @phase_74_requirements ~w(PKG-01 PKG-02 PKG-03 PKG-04 PKG-05 PKG-06)
+  @phase_76_requirements ~w(EVID-03 JOUR-01 JOUR-02 JOUR-03 JOUR-04 JOUR-05 JOUR-06)
 
   @tag :plan_73_33_task_1
-  test "completed Phase 73 accepts the exact Phase 74 planning lifecycle" do
+  test "completed Phase 73 accepts the ordered current planning lifecycle" do
     assert {:ok, identity} = validated_governance_identity(File.cwd!())
 
     case {identity.current_phase, identity.status} do
@@ -52,6 +53,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       {"75", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         assert identity.governance_phase == "75"
+
+      {"76", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
+        assert identity.governance_phase == "76"
 
       {"74", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         assert identity.governance_phase == "74"
@@ -83,11 +87,14 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert identity.phase_requirements["75"] ==
              MapSet.new(["TWIN-01", "TWIN-02", "TWIN-03", "TWIN-04", "TWIN-05"])
 
+    assert identity.phase_requirements["76"] == MapSet.new(@phase_76_requirements)
+
     governed_phase_dir =
       case identity.governance_phase do
         "73" -> "/73-twin-contract-and-baseline/"
         "74" -> "/74-clean-room-package-consumer/"
         "75" -> "/75-saas-twin-domain-realism/"
+        "76" -> "/76-lifecycle-and-recovery-journeys/"
       end
 
     assert Enum.all?(identity.plan_paths, &String.contains?(&1, governed_phase_dir))
@@ -97,6 +104,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "73" -> "73-33-PLAN.md"
         "74" -> "74-04-PLAN.md"
         "75" -> "75-03-PLAN.md"
+        "76" -> "76-02-PLAN.md"
       end
 
     assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, expected_current_plan))
@@ -184,7 +192,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
 
     assert {:ok, checked_in} = validated_governance_identity(File.cwd!())
-    assert checked_in.current_phase in ["73", "74", "75"]
+    assert checked_in.current_phase in ["73", "74", "75", "76"]
   end
 
   @tag :plan_73_33_task_2
@@ -276,7 +284,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Enum.all?(identity.plan_paths, &(Path.dirname(&1) == phase_dir))
 
     assert {:ok, checked_in_identity} = validated_governance_identity(File.cwd!())
-    assert checked_in_identity.current_phase in ["73", "74", "75"]
+    assert checked_in_identity.current_phase in ["73", "74", "75", "76"]
 
     expected_governance_phase =
       if checked_in_identity.status == "planning",
@@ -1628,6 +1636,35 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       )
 
     assert plan_scope_violations(named_alias) == []
+  end
+
+  test "nested demo test commands stay scoped and bind future owners to task outputs" do
+    command =
+      "mix cmd --cd demo/ledger_loop mix test test/ledger_loop_web/lifecycle_journeys_test.exs --warnings-as-errors"
+
+    assert :ok = AdoptionEvidence.validate_automated_command!(command, File.cwd!())
+
+    future_command =
+      "mix cmd --cd demo/ledger_loop mix test test/ledger_loop_web/future_journey_test.exs --warnings-as-errors"
+
+    assert_raise ArgumentError, ~r/is missing/, fn ->
+      AdoptionEvidence.validate_automated_command!(future_command, File.cwd!())
+    end
+
+    assert :ok =
+             AdoptionEvidence.validate_automated_command!(future_command, File.cwd!(),
+               planned_files: "demo/ledger_loop/test/ledger_loop_web/future_journey_test.exs"
+             )
+
+    for unsafe <- [
+          "mix cmd --cd demo/ledger_loop mix run test/ledger_loop_web/lifecycle_journeys_test.exs --warnings-as-errors",
+          "mix cmd --cd ../outside mix test test/ledger_loop_web/lifecycle_journeys_test.exs --warnings-as-errors",
+          "mix cmd --cd demo/ledger_loop mix test ../test/governance/milestone_scope_test.exs --warnings-as-errors"
+        ] do
+      assert_raise ArgumentError, fn ->
+        AdoptionEvidence.validate_automated_command!(unsafe, File.cwd!())
+      end
+    end
   end
 
   test "active plans use only requirements owned by their roadmap phase" do
@@ -4186,7 +4223,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         results =
           Enum.map(commands, fn command ->
             try do
-              AdoptionEvidence.validate_automated_command!(command, File.cwd!())
+              AdoptionEvidence.validate_automated_command!(command, File.cwd!(),
+                planned_files: task.files
+              )
+
               :ok
             rescue
               error in ArgumentError -> {:error, Exception.message(error)}

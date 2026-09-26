@@ -85,8 +85,10 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Complete one verified Northstar login from SP redirect through adopter session** — `b0ac248` (RED test), `15d9847` (GREEN fix and route contract).
-2. **Task 2: Reject the accepted assertion when it is posted again** — `1806a79` (RED test), `c29ab84` (GREEN consumed-intent recovery and replay rejection).
+1. **Task 1: Specify one verified Northstar login from SP redirect through adopter session** — `b0ac248` (RED test).
+2. **Task 1: Scope replay identity to trusted connection context** — `15d9847` (GREEN fix and route contract).
+3. **Task 2: Specify rejection of an accepted assertion replay** — `1806a79` (RED test).
+4. **Task 2: Recover consumed intent for replay rejection** — `c29ab84` (GREEN fix).
 
 **Measured plan commits:** 4 (`407e005f87fdb53dbb19904a76e8248220fc3726..HEAD` at summary creation).
 

@@ -406,10 +406,16 @@ defmodule Relyra.AdoptionEvidence do
     :ok
   end
 
-  def validate_automated_command!(command, root) when is_binary(command) do
+  def validate_automated_command!(command, root, options \\ [])
+
+  def validate_automated_command!(command, root, options)
+      when is_binary(command) and is_list(options) do
     case command_argv!(command) do
       {"mix", ["test" | arguments]} ->
         validate_direct_test_command!(arguments, root)
+
+      {"mix", ["cmd", "--cd", "demo/ledger_loop", "mix", "test" | arguments]} ->
+        validate_nested_test_command!(arguments, root, "demo/ledger_loop", options)
 
       {"mix", [alias_name]} ->
         validate_check_alias!(alias_name, root)
@@ -422,7 +428,7 @@ defmodule Relyra.AdoptionEvidence do
     :ok
   end
 
-  def validate_automated_command!(_command, _root) do
+  def validate_automated_command!(_command, _root, _options) do
     raise ArgumentError, "verification command must be non-empty text"
   end
 
@@ -952,6 +958,135 @@ defmodule Relyra.AdoptionEvidence do
       end)
 
     Map.put(parsed, :owners, owners)
+  end
+
+  defp validate_nested_test_command!(arguments, root, project_directory, options) do
+    parsed = parse_test_argv!(arguments)
+
+    project_root =
+      repository_path!(root, Path.join(project_directory, "mix.exs")) |> Path.dirname()
+
+    planned_files = planned_files(options)
+
+    owners =
+      Enum.map(parsed.owner_paths, fn owner ->
+        unless String.starts_with?(owner, "test/") do
+          raise ArgumentError,
+                "nested test owner #{owner} must be beneath #{project_directory}/test"
+        end
+
+        repository_owner = Path.join(project_directory, owner)
+
+        case File.lstat(Path.join(root, repository_owner)) do
+          {:error, :enoent} ->
+            if repository_owner in planned_files do
+              _components = repository_path_components!(repository_owner)
+              %{path: repository_owner, effective_count: :planned}
+            else
+              validate_existing_nested_owner!(repository_owner, root, project_root, parsed)
+            end
+
+          _existing_or_other_error ->
+            validate_existing_nested_owner!(repository_owner, root, project_root, parsed)
+        end
+      end)
+
+    Map.put(parsed, :owners, owners)
+  end
+
+  defp validate_existing_nested_owner!(repository_owner, root, project_root, parsed) do
+    owner_path = repository_path!(root, repository_owner)
+
+    effective_count =
+      owner_path
+      |> registered_test_tags!(
+        project_root,
+        {:nested_mix_test, "demo/ledger_loop"},
+        &discover_nested_registered_test_tags!/2
+      )
+      |> Enum.count(&selected_by_filters?(&1, parsed.includes, parsed.exclusions))
+
+    if effective_count == 0 do
+      raise ArgumentError,
+            "test owner #{repository_owner} has zero selected tests: zero effective selected tests after include/exclusion filters"
+    end
+
+    %{path: repository_owner, effective_count: effective_count}
+  end
+
+  defp planned_files(options) do
+    options
+    |> Keyword.get(:planned_files, "")
+    |> String.split(~r/[\n,]/, trim: true)
+    |> Enum.map(&String.trim/1)
+  end
+
+  defp discover_nested_registered_test_tags!(path, project_root) do
+    probe = """
+    ExUnit.start(autorun: false)
+    [owner] = System.argv()
+
+    tags =
+      owner
+      |> Code.compile_file()
+      |> Enum.flat_map(fn {module, _binary} ->
+        if function_exported?(module, :__ex_unit__, 0) do
+          module.__ex_unit__().tests
+          |> Enum.map(fn test ->
+            Map.new(test.tags, fn {key, value} ->
+              normalized_value =
+                cond do
+                  is_boolean(value) or is_nil(value) or is_binary(value) or is_number(value) ->
+                    value
+
+                  is_atom(value) ->
+                    Atom.to_string(value)
+
+                  true ->
+                    inspect(value, limit: :infinity)
+                end
+
+              {Atom.to_string(key), normalized_value}
+            end)
+          end)
+        else
+          []
+        end
+      end)
+
+    IO.puts("RELYRA_EXUNIT_PROBE:" <> Base.encode64(:erlang.term_to_binary(tags)))
+    """
+
+    elixir =
+      System.find_executable("elixir") || raise ArgumentError, "cannot locate Elixir executable"
+
+    code_path_arguments =
+      project_root
+      |> Path.join("_build/test/lib/*/ebin")
+      |> Path.wildcard()
+      |> Enum.flat_map(&["-pa", &1])
+
+    {output, status} =
+      System.cmd(
+        elixir,
+        code_path_arguments ++ ["-e", probe, "--", path],
+        cd: project_root,
+        stderr_to_stdout: true
+      )
+
+    with 0 <- status,
+         [encoded] <-
+           Regex.run(~r/^RELYRA_EXUNIT_PROBE:([A-Za-z0-9+\/=]+)$/m, output,
+             capture: :all_but_first
+           ),
+         {:ok, binary} <- Base.decode64(encoded),
+         tags when is_list(tags) <- :erlang.binary_to_term(binary, [:safe]) do
+      tags
+    else
+      _other ->
+        raise ArgumentError,
+              "cannot inspect registered ExUnit tests in #{path}; probe exited #{status}: #{String.trim(output)}"
+    end
   end
 
   defp validate_direct_test_command_snapshot!(arguments, owner_tags) do
