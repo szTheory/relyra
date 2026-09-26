@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 77
 current_phase_name: Code and Documentation Craftsmanship
-current_plan: Not started
+current_plan: 2
 status: executing
-stopped_at: Phase 77 context gathered
-last_updated: "2026-09-26T18:24:35.624Z"
+stopped_at: Completed 77-01-PLAN.md
+last_updated: "2026-09-26T18:47:32.545Z"
 last_activity: 2026-09-26
-last_activity_desc: Phase 76 complete, transitioned to Phase 77
-state_head: 997174a27dd351301f6d495a9790ef3b060a0728
+last_activity_desc: Phase 77 execution started
+state_head: fe7bc57351121d49ef5733ccaf7249722766bc6c
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 49
-  completed_plans: 46
+  completed_plans: 47
   percent: 57
 ---
 
@@ -34,15 +34,15 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 77 (Code and Documentation Craftsmanship) — READY TO EXECUTE
+Phase: 77 (Code and Documentation Craftsmanship) — EXECUTING
 
-Current Plan: Not started
+Current Plan: 2
 Total Plans in Phase: 3
 Next gate: Run `$gsd-execute-phase 77 --auto` to execute the three approved plans.
 
 Status: Ready to execute
 
-Last activity: 2026-09-26 — Phase 76 verified and complete; transitioned to Phase 77
+Last activity: 2026-09-26 — Phase 77 execution started
 
 ## Milestone Metrics
 
@@ -157,6 +157,8 @@ Last activity: 2026-09-26 — Phase 76 verified and complete; transitioned to Ph
 - [Phase 76]: LedgerLoop receipt scenario keys use the verified principal connection ID because LoginResult carries that ID under principal; behaviour signatures remain unchanged.
 - [Phase 76]: Incident recovery ties attempts to the seeded timeline by owning connection and explicit remediation cause; each ACS attempt keeps its own hashed correlation.
 - [Phase 76]: Keep real-provider health on an independent schedule/dispatch workflow; require exact HTTPS origins before entering credentials and persist only allowlisted status metadata.
+- [Phase 77]: Ignore quoted Markdown examples while retaining active prose and UAT rejection.
+- [Phase 77]: Keep the JTBD map current and maintainer-owned; leave adopter narratives in user-flow guides.
 
 ### Baseline Findings
 
@@ -195,11 +197,11 @@ Last activity: 2026-09-26 — Phase 76 verified and complete; transitioned to Ph
 
 ## Session Continuity
 
-**Last session:** 2026-09-26T17:20:56.719Z
+**Last session:** 2026-09-26T18:47:32.479Z
 
-**Stopped at:** Phase 77 context gathered
+**Stopped at:** Completed 77-01-PLAN.md
 
-**Resume file:** .planning/phases/77-code-and-documentation-craftsmanship/77-CONTEXT.md
+**Resume file:** None
 
 ## Operator Next Step
 
@@ -248,6 +250,7 @@ Run `$gsd-discuss-phase 77` to begin the next planned phase.
 | Phase 76 P2 | 11 min | 2 tasks | 5 files |
 | Phase 76 P4 | 13 min | 2 tasks | 5 files |
 | Phase 76 P5 | 42 min | 2 tasks | 17 files |
+| Phase 77 P1 | 11min | 2 tasks | 3 files |
 
 ### Resolved Issues
 
