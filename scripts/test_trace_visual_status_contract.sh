@@ -18,6 +18,8 @@ STATUS_PATH="$RUNNER_TEMP_DIR/relyra-trace-visual-status.json"
 WORKFLOW_PATH="$ROOT_DIR/.github/workflows/demo-app-e2e.yml"
 
 assert_workflow_contract() {
+  grep -Fq 'name: Trace visual and failed-state browser e2e' "$WORKFLOW_PATH"
+  grep -Fq 'run: npm run demo:trace-visual' "$WORKFLOW_PATH"
   grep -Fq 'uses: actions/upload-artifact@v4' "$WORKFLOW_PATH"
   grep -Fq 'name: demo-app-e2e-trace-visual-status' "$WORKFLOW_PATH"
   grep -Fq 'path: ${{ runner.temp }}/relyra-trace-visual-status.json' "$WORKFLOW_PATH"
