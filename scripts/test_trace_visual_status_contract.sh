@@ -15,6 +15,17 @@ trap cleanup EXIT
 mkdir -m 700 -- "$FAKE_BIN" "$RUNNER_TEMP_DIR"
 RUNNER_TEMP_DIR="$(CDPATH='' cd -P -- "$RUNNER_TEMP_DIR" && pwd)"
 STATUS_PATH="$RUNNER_TEMP_DIR/relyra-trace-visual-status.json"
+WORKFLOW_PATH="$ROOT_DIR/.github/workflows/demo-app-e2e.yml"
+
+assert_workflow_contract() {
+  grep -Fq 'uses: actions/upload-artifact@v4' "$WORKFLOW_PATH"
+  grep -Fq 'name: demo-app-e2e-trace-visual-status' "$WORKFLOW_PATH"
+  grep -Fq 'path: ${{ runner.temp }}/relyra-trace-visual-status.json' "$WORKFLOW_PATH"
+  grep -Fq 'if-no-files-found: error' "$WORKFLOW_PATH"
+  grep -Fq 'retention-days: 7' "$WORKFLOW_PATH"
+  grep -Fq '`demo-app-e2e` maintainer' "$WORKFLOW_PATH"
+  grep -Fq '`npm run demo:trace-visual`' "$WORKFLOW_PATH"
+}
 
 cat > "$FAKE_BIN/npx" <<'FAKE_NPX'
 #!/usr/bin/env bash
@@ -61,5 +72,6 @@ run_harness() {
 
 run_harness 0 0
 run_harness 23 23
+assert_workflow_contract
 
-printf '%s\n' "Trace visual status contract passed for successful and failed browser commands."
+printf '%s\n' "Trace visual status contract passed for success, failure, and workflow ownership."
