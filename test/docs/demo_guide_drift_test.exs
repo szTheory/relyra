@@ -911,6 +911,66 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
              Enum.map_join(violations, "\n", &"  - #{&1}")
   end
 
+  test "active completion directives are rejected while quoted examples are ignored" do
+    phase_dir = temp_phase_dir!("77-policy")
+    document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+    File.write!(
+      document_path,
+      """
+      # Policy examples
+
+      Inline example: `<human-check>` and `status: human_needed`.
+
+      > ## Manual-Only Verifications
+      > This is quoted policy vocabulary.
+
+      ```yaml
+      status: human_needed
+      ```
+      """
+    )
+
+    assert phase_policy_violations(phase_dir) == []
+
+    File.write!(
+      document_path,
+      "# Active policy\n\n<human-check> must be completed before release.\n"
+    )
+
+    expected_violation = "#{document_path} contains \"<human-check>\""
+    assert [^expected_violation] = phase_policy_violations(phase_dir)
+  end
+
+  test "active incomplete phases still reject required UAT artifacts" do
+    phase_dir = temp_phase_dir!("77-uat")
+    uat_path = Path.join(phase_dir, "77-UAT.md")
+    File.write!(uat_path, "# Required UAT\n")
+
+    expected_violation = "#{uat_path} requires a UAT artifact"
+    assert [^expected_violation] = phase_policy_violations(phase_dir)
+  end
+
+  test "Getting Started proves the adopter flow without repository workflow details" do
+    guide = File.read!("guides/getting_started.md")
+
+    assert_in_order(guide, [
+      "## 1. Install",
+      "## 2. Scaffold",
+      "## 3. Prove local login with `Relyra.Testing`",
+      "## 4. Choose one provider runbook",
+      "## 5. Production follow-ons"
+    ])
+
+    assert guide =~ "Relyra.Testing.signed_success/1"
+    assert guide =~ "Relyra.Testing.Phoenix.post_response/5"
+    assert guide =~ "recipes/okta.md"
+    refute guide =~ "Maintainers:"
+    refute guide =~ "mix ci.docs"
+    refute guide =~ "planning-pr-checks.yml"
+    refute guide =~ "GSD"
+  end
+
   test "assert_in_order advances beyond repeated tokens" do
     assert_in_order("repeat middle repeat", ["repeat", "middle", "repeat"])
   end
@@ -931,19 +991,33 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
   defp automation_policy_violations(phase) do
     phase_dirs = Path.wildcard(".planning/phases/#{phase}-*")
 
+    Enum.flat_map(phase_dirs, &phase_policy_violations/1)
+  end
+
+  defp phase_policy_violations(phase_dir) do
     document_violations =
-      for phase_dir <- phase_dirs,
-          path <- Path.wildcard(Path.join(phase_dir, "*.md")),
+      for path <- Path.wildcard(Path.join(phase_dir, "*.md")),
           marker <- ["<human-check>", "## Manual-Only Verifications", "status: human_needed"],
           String.contains?(File.read!(path), marker),
           do: "#{path} contains #{inspect(marker)}"
 
     uat_violations =
-      for phase_dir <- phase_dirs,
-          path <- Path.wildcard(Path.join(phase_dir, "*-UAT.md")),
+      for path <- Path.wildcard(Path.join(phase_dir, "*-UAT.md")),
           do: "#{path} requires a UAT artifact"
 
     document_violations ++ uat_violations
+  end
+
+  defp temp_phase_dir!(suffix) do
+    path =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-doc-policy-#{suffix}-#{System.unique_integer([:positive])}"
+      )
+
+    File.mkdir_p!(path)
+    on_exit(fn -> File.rm_rf!(path) end)
+    path
   end
 
   defp run_make(args, env \\ []) do
