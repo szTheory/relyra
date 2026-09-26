@@ -1885,46 +1885,63 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "relyra-artifact-inventory-#{System.unique_integer([:positive])}"
       )
 
-    tracked_path = "_build/phase-77-owner-control.log"
+    tracked_paths = [
+      "_build/generated.log",
+      "deps/generated.txt",
+      "node_modules/module/index.js",
+      "playwright-report/index.html",
+      "test-results/result.json",
+      "coverage/coverage.out",
+      ".DS_Store",
+      "tmp/backup.bak",
+      "tmp/source.orig"
+    ]
+
     untracked_path = "test-results/phase-77-untracked-control.log"
 
     try do
-      File.mkdir_p!(Path.join(root, Path.dirname(tracked_path)))
       File.mkdir_p!(Path.join(root, "test/governance"))
+
+      for path <- tracked_paths do
+        File.mkdir_p!(Path.join(root, Path.dirname(path)))
+        File.write!(Path.join(root, path), "tracked artifact control\n")
+      end
+
       File.mkdir_p!(Path.join(root, "test-results"))
-      File.write!(Path.join(root, tracked_path), "generated artifact control\n")
       File.write!(Path.join(root, "test/governance/milestone_scope_test.exs"), "fixture\n")
       File.write!(Path.join(root, untracked_path), "worktree-only control\n")
 
       {_, 0} = System.cmd("git", ["init", "--quiet", root])
 
       {_, 0} =
-        System.cmd("git", [
-          "-C",
-          root,
-          "add",
-          "--",
-          tracked_path,
-          "test/governance/milestone_scope_test.exs"
-        ])
+        System.cmd(
+          "git",
+          ["-C", root, "add", "-f", "--"] ++
+            tracked_paths ++
+            ["test/governance/milestone_scope_test.exs"]
+        )
 
       {tracked_output, 0} = System.cmd("git", ["-C", root, "ls-files", "-z"])
-      tracked_paths = String.split(tracked_output, <<0>>, trim: true)
+      indexed_paths = String.split(tracked_output, <<0>>, trim: true)
 
-      assert tracked_path in tracked_paths
-      refute untracked_path in tracked_paths
+      assert Enum.all?(tracked_paths, &(&1 in indexed_paths))
+      refute untracked_path in indexed_paths
 
-      unowned_baseline = artifact_control_baseline(tracked_path)
+      unowned_baseline = artifact_control_baseline(tracked_paths)
+      unowned_violations = baseline_violations(unowned_baseline, root)
 
-      assert Enum.any?(baseline_violations(unowned_baseline, root), fn violation ->
-               violation =~ "QUAL-73-005" and violation =~ tracked_path
-             end),
-             "a suspicious tracked path must require exact path-specific ownership"
+      for path <- tracked_paths do
+        assert Enum.any?(unowned_violations, fn violation ->
+                 violation =~ "QUAL-73-005" and violation =~ path
+               end),
+               "#{path} must require exact path-specific ownership"
+      end
 
-      owned_baseline = artifact_control_baseline(tracked_path, owned?: true)
+      owned_baseline = artifact_control_baseline(tracked_paths, owned?: true)
 
       refute Enum.any?(baseline_violations(owned_baseline, root), fn violation ->
-               violation =~ "QUAL-73-005" and violation =~ tracked_path
+               violation =~ "QUAL-73-005" and
+                 Enum.any?(tracked_paths, &String.contains?(violation, &1))
              end)
     after
       File.rm_rf!(root)
@@ -5490,12 +5507,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       finding_violations(markdown, root) ++ ci_violations(markdown)
   end
 
-  defp artifact_control_baseline(tracked_path, opts \\ []) do
+  defp artifact_control_baseline(tracked_paths, opts \\ []) do
     owned? = Keyword.get(opts, :owned?, false)
+    path_refs = Enum.map_join(tracked_paths, ", ", &"`#{&1}`")
 
     evidence =
       if owned? do
-        "`#{tracked_path}` is generated output retained as an isolated inventory test control. " <>
+        "Tracked paths #{path_refs} are controlled artifact fixtures; purpose: prove Git-index ownership checks. " <>
           "[VERIFIED: `test/governance/milestone_scope_test.exs`, isolated Git-index fixture]"
       else
         "The repository artifact inventory is clean. " <>
@@ -5504,7 +5522,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     disposition =
       if owned? do
-        "Retain `#{tracked_path}` as generated output for the inventory control; purpose and owner are the repository quality test owner."
+        "Retain #{path_refs} as controlled artifacts; purpose: inventory assertion; owner: Repository quality test owner."
       else
         "Inventory generated paths."
       end
@@ -5549,11 +5567,54 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           ) ++
           duplicate_id_violations(rows) ++
           evidence_violations(rows, root) ++
-          severity_policy_violations(rows)
+          severity_policy_violations(rows) ++
+          tracked_artifact_ownership_violations(rows, root)
 
       {:error, reason} ->
         ["Findings Ledger non-vacuous table #{reason}"]
     end
+  end
+
+  defp tracked_artifact_ownership_violations(rows, root) do
+    case System.cmd("git", ["-C", root, "ls-files", "-z"], stderr_to_stdout: true) do
+      {output, 0} ->
+        output
+        |> String.split(<<0>>, trim: true)
+        |> Enum.filter(&suspicious_tracked_artifact?/1)
+        |> Enum.flat_map(fn path ->
+          owned? =
+            Enum.any?(rows, fn row ->
+              owner = String.trim(row["Owner"] || "")
+              evidence = row["Reproducible Evidence"] || ""
+              disposition = row["Disposition"] || ""
+
+              row["Finding ID"] == "QUAL-73-005" and
+                String.contains?(evidence, "`#{path}`") and
+                String.contains?(evidence, "purpose:") and
+                String.contains?(disposition, "`#{path}`") and
+                String.contains?(disposition, "purpose:") and
+                String.contains?(disposition, "owner: #{owner}")
+            end)
+
+          if owned?,
+            do: [],
+            else: [
+              "QUAL-73-005 tracked artifact #{path} requires path-specific purpose, owner, and disposition"
+            ]
+        end)
+
+      {output, status} ->
+        ["QUAL-73-005 Git-index inventory failed (#{status}): #{String.trim(output)}"]
+    end
+  end
+
+  defp suspicious_tracked_artifact?(path) do
+    components = Path.split(path)
+    directories = ~w(_build deps node_modules playwright-report test-results coverage)
+    filename = Path.basename(path)
+
+    Enum.any?(components, &(&1 in directories)) or filename == ".DS_Store" or
+      Path.extname(filename) in [".log", ".bak", ".orig"]
   end
 
   defp ci_violations(markdown) do
