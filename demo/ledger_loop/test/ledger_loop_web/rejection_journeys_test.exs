@@ -53,6 +53,9 @@ defmodule LedgerLoopWeb.RejectionJourneysTest do
     assert accepted.status == 302
     assert get_resp_header(accepted, "location") == ["/"]
     assert Repo.aggregate(LoginReceipt, :count, :id) == 1
+
+    assert [%LoginReceipt{scenario_key: scenario_key}] = Repo.all(from(receipt in LoginReceipt))
+    assert scenario_key =~ @connection_id
   end
 
   defp signer_options(fun) when is_function(fun, 1), do: []
