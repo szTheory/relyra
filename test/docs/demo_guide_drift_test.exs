@@ -998,7 +998,7 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     document_violations =
       for path <- Path.wildcard(Path.join(phase_dir, "*.md")),
           marker <- ["<human-check>", "## Manual-Only Verifications", "status: human_needed"],
-          String.contains?(File.read!(path), marker),
+          String.contains?(active_markdown_prose(File.read!(path)), marker),
           do: "#{path} contains #{inspect(marker)}"
 
     uat_violations =
@@ -1006,6 +1006,15 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
           do: "#{path} requires a UAT artifact"
 
     document_violations ++ uat_violations
+  end
+
+  defp active_markdown_prose(markdown) do
+    markdown
+    |> String.replace(~r/^ {0,3}(`{3,}|~{3,})[^\n]*\n.*?^ {0,3}\1[ \t]*$/ms, "")
+    |> String.replace(~r/(`+)(?s:.*?)\1/, "")
+    |> String.split("\n")
+    |> Enum.reject(&Regex.match?(~r/^\s{0,3}>/, &1))
+    |> Enum.join("\n")
   end
 
   defp temp_phase_dir!(suffix) do
