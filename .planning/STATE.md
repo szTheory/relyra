@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 76
 current_phase_name: Lifecycle and Recovery Journeys
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 76-01-PLAN.md
-last_updated: "2026-09-26T12:58:51.615Z"
+stopped_at: Completed 76-03-PLAN.md
+last_updated: "2026-09-26T13:16:59.963Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 76 execution started
-state_head: c29ab84b9bf6d1f69489e15ee9d3615941630abf
+state_head: 414774f57af201c4658ce057249f5976e5bb94d5
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 46
-  completed_plans: 42
+  completed_plans: 43
   percent: 43
 ---
 
@@ -36,7 +36,7 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 76 (Lifecycle and Recovery Journeys) — EXECUTING
 
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 5
 Next gate: Execute Phase 76 plans (`$gsd-execute-phase 76`).
 
@@ -152,6 +152,8 @@ Last activity: 2026-09-26 — Phase 76 execution started
 - [Phase 74]: Include Req in the full consumer profile because current Relyra source expands Req.Response structs at compile time; verify no-optional compilation separately in Plan 74-04.
 - [Phase 76]: Bind replay keys to the trusted persisted request or resolved connection; ignore the response document ConnectionId for replay scope.
 - [Phase 76]: Recover consumed request context only from the configured request-store adapter, then let the existing replay-store uniqueness constraint reject duplicates without changing behaviour callback signatures.
+- [Phase 76]: Test the supported organization-scoped LiveAdmin path, including staged-key activation required before the draft connection can be enabled.
+- [Phase 76]: Use the CertificateInventory after_fetch optimistic-lock hook to prove conflict rollback and successful retry; two simultaneous Sandbox transactions remain an automation gap.
 
 ### Baseline Findings
 
@@ -190,9 +192,9 @@ Last activity: 2026-09-26 — Phase 76 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-26T12:58:51.500Z
+**Last session:** 2026-09-26T13:16:59.907Z
 
-**Stopped at:** Completed 76-01-PLAN.md
+**Stopped at:** Completed 76-03-PLAN.md
 
 **Resume file:** None
 
@@ -239,6 +241,7 @@ Run `$gsd-execute-phase 76` to execute the verified Phase 76 plans.
 | Phase 75 P02 | 5 min | 2 tasks | 4 files |
 | Phase 75 P03 | 7 min | 2 tasks | 5 files |
 | Phase 76 P01 | 29 min | 2 tasks | 7 files |
+| Phase 76 P03 | 11min | 2 tasks | 2 files |
 
 ### Resolved Issues
 
