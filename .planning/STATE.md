@@ -2,21 +2,21 @@
 gsd_state_version: "1.0"
 milestone: v1.11
 milestone_name: First-Adopter Twin
-current_phase: 75
-current_phase_name: SaaS Twin Domain Realism
-current_plan: 3
-status: verifying
-stopped_at: Completed 75-03-PLAN.md
-last_updated: "2026-09-26T01:29:50.327Z"
+current_phase: 76
+current_phase_name: Lifecycle and Recovery Journeys
+current_plan: Not started
+status: planning
+stopped_at: Phase 75 complete, ready to plan Phase 76
+last_updated: "2026-09-26T02:32:12Z"
 last_activity: 2026-09-25
-last_activity_desc: Phase 75 execution started
-state_head: 95ef1f43167661f53b7c241be23edf2363c8dca4
+last_activity_desc: Phase 75 complete, transitioned to Phase 76
+state_head: 790408fa905f60792a2bd5d5671dff9583ccfad7
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 41
   completed_plans: 41
-  percent: 29
+  percent: 43
 ---
 
 # Project State
@@ -28,19 +28,21 @@ See `.planning/PROJECT.md`.
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection —
 never a silent compromise. Trust mutations are durable, attributable, and reviewable.
 
-**Current focus:** Phase 75 — SaaS Twin Domain Realism
+**Last updated:** 2026-09-26
+
+**Current focus:** Phase 76 — Lifecycle and Recovery Journeys
 
 ## Current Position
 
-Phase: 75 (SaaS Twin Domain Realism) — EXECUTING
+Phase: 76 — Lifecycle and Recovery Journeys
 
-Current Plan: 3
-Total Plans in Phase: 3
-Next gate: Run $gsd-execute-phase 75 to execute the three verified Phase 75 plans.
+Current Plan: Not started
+Total Plans in Phase: TBD
+Next gate: Run `$gsd-discuss-phase 76` before planning the lifecycle and recovery journeys.
 
-Status: Phase complete — ready for verification
+Status: Ready to plan
 
-Last activity: 2026-09-25 — Phase 75 execution started
+Last activity: 2026-09-25 — Phase 75 verified and complete; transitioned to Phase 76
 
 ## Milestone Metrics
 
@@ -129,6 +131,9 @@ Last activity: 2026-09-25 — Phase 75 execution started
 - [Phase 73]: Keep the registration cache ResourceId caller-independent and content-addressed; self() appears only in OTP's LockRequesterId slot. — This serializes simultaneous misses without changing the default fresh-process ExUnit authority.
 - [Phase 73]: Bind candidate governed inputs exactly to one sorted capture-time inventory before workflow reduction. — Pure snapshots cannot gain coverage by omission, substitution, escape, absolute paths, duplicates, or reordering.
 - [Phase 73]: Keep the complete unchanged mix ci.security lane mandatory and passing with no timing ceiling, while retaining all three independent sub-60-second mix ci.evidence requirements.
+- [Phase 75]: Tenant identity owns LedgerLoop fixture relationships; Northstar and Harborline remain isolated tenant/provider scenarios.
+- [Phase 75]: Keep operational metadata health distinct from active/next/retired certificate lifecycle and validity facts.
+- [Phase 75]: Scope reset by explicit fixture-owned IDs and prove unrelated tenant/connection sentinels survive.
 - [Phase 73]: Stage the exact current proof set before changing security or Nyquist disposition, then reduce both reports from that same committed evidence.
 - [Phase 73]: Count threats_open at the configured high threshold while preserving T-73-12 as a visible open medium follow-up.
 - [Phase 73]: Use a repository root outside the mutable snapshot as independent authority for both governed-input fields.
@@ -183,15 +188,15 @@ Last activity: 2026-09-25 — Phase 75 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-26T01:29:50.293Z
+**Last session:** 2026-09-26T02:32:12Z
 
-**Stopped at:** Completed 75-03-PLAN.md
+**Stopped at:** Phase 75 complete, ready to plan Phase 76
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Run `$gsd-progress` before planning Phase 75 — SaaS Twin Domain Realism.
+Run `$gsd-discuss-phase 76` to begin the next planned phase.
 
 ## Performance Metrics
 
@@ -230,7 +235,6 @@ Run `$gsd-progress` before planning Phase 75 — SaaS Twin Domain Realism.
 | Phase 73 P34 | 53min | 2 tasks | 6 files |
 | Phase 75 P01 | 8 min | 2 tasks | 5 files |
 | Phase 75 P02 | 5 min | 2 tasks | 4 files |
-| Phase 75 P03 | 13 min | 2 tasks | 5 files |
 | Phase 75 P03 | 7 min | 2 tasks | 5 files |
 
 ### Resolved Issues

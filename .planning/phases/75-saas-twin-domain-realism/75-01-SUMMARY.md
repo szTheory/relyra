@@ -79,7 +79,7 @@ status: complete
 ## Task Commits
 
 1. **Task 1: Map one second-tenant principal through the complete fixture and reset path** — `557ec82` (feat)
-2. **Task 2: Complete named people, roles, authorization and provider variation** — `557ec82` (feat; implemented with Task 1 in one atomic fixture/test commit)
+2. **Task 2: Complete named people, roles, authorization and provider variation** — implemented with Task 1 in the same atomic fixture/test commit.
 
 **Plan metadata:** pending
 

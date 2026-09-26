@@ -1,9 +1,9 @@
 ---
 phase: "75"
 slug: "saas-twin-domain-realism"
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: "2026-09-25"
 ---
 
@@ -56,19 +56,19 @@ created: "2026-09-25"
 
 ---
 
-## Manual-Only Verifications
+## Automated Acceptance
 
-All phase behaviors have automated verification. No manual-only verification is required.
+All five phase requirements have deterministic ExUnit evidence in the `mix ci.demo_app` lane. No manual-only verification is required.
 
 ---
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s for focused tests
-- [ ] `nyquist_compliant: true` set in frontmatter after validation
+- [x] All tasks have automated verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s for focused tests
+- [x] `nyquist_compliant: true` set in frontmatter after validation
 
-**Approval:** pending
+**Approval:** automated evidence recorded

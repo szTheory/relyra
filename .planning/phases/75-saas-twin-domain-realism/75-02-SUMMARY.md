@@ -81,7 +81,7 @@ status: complete
 ## Task Commits
 
 1. **Task 1: Seed and prove connection, revision and certificate chronology** — `7cc4d93` (feat)
-2. **Task 2: Complete degraded and recovered health with audit evidence** — `7cc4d93` (feat; implemented with Task 1 in one atomic fixture/history commit)
+2. **Task 2: Complete degraded and recovered health with audit evidence** — implemented with Task 1 in the same atomic fixture/history commit.
 
 **Plan metadata:** pending
 
@@ -90,6 +90,7 @@ status: complete
 - `demo/ledger_loop/lib/ledger_loop/demo/fixtures.ex` — Fixed trust event and row catalog.
 - `demo/ledger_loop/lib/ledger_loop/demo/reset.ex` — Dependency-ordered fixture reconstruction and pointer update.
 - `demo/ledger_loop/test/twin/certificate_history_test.exs` — Chronology, ownership, pointer, validity, and safety proof.
+- `demo/ledger_loop/priv/fake_idp/rollover_next_cert.pem` and `rollover_retired_cert.pem` — Valid deterministic demo trust-history certificates.
 - `demo/ledger_loop/test/ledger_loop/demo/keycloak_provisioner_test.exs` — Preserved the negative provisioning guarantee while recognizing unrelated named fixture history.
 
 ## Decisions Made
@@ -110,6 +111,11 @@ status: complete
 - **Committed in:** `7cc4d93`
 
 **Total deviations:** 1 auto-fixed (1 compatibility assertion). **Impact:** Kept the existing Keycloak security guarantee while allowing independent trust history rows.
+
+### Post-review hardening
+
+- Replaced placeholder staged-rollover certificate PEMs with valid committed demo certificates and derive each SHA-256 fingerprint from its DER bytes.
+- **Verification:** focused certificate-history and incident-timeline tests passed; `mix ci.demo_app` passed (97 tests, 0 failures).
 
 ## Issues Encountered
 

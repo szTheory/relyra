@@ -90,7 +90,7 @@ status: complete
 ## Task Commits
 
 1. **Task 1: Present a fixed symptom-to-recovery support timeline** — `95ef1f4` (feat)
-2. **Task 2: Prove full reset determinism, scenario ownership and sentinel survival** — `95ef1f4` (feat; implemented with Task 1 in one atomic fixture/reset contract commit)
+2. **Task 2: Prove full reset determinism, scenario ownership and sentinel survival** — implemented with Task 1 in the same atomic fixture/reset contract commit.
 
 **Plan metadata:** pending
 
@@ -110,6 +110,11 @@ status: complete
 ## Deviations from Plan
 
 None - plan executed as written.
+
+### Post-review hardening
+
+- The incident test temporarily disables and restores `DEMO_TRACE_VISUAL_FIXTURE` around reset, so an opt-in visual audit row cannot contaminate the incident owner.
+- **Verification:** the incident owner passed with `DEMO_TRACE_VISUAL_FIXTURE=1` and in the normal test environment; `mix ci.demo_app` passed (97 tests, 0 failures).
 
 ## Issues Encountered
 
