@@ -14,7 +14,7 @@ affects: [76-lifecycle-and-recovery-journeys]
 actuals:
   tokens: 4676
   tasks: 2
-  commits: 1
+  commits: 2
 tech-stack:
   added: []
   patterns:
@@ -80,7 +80,15 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Reject every representative invalid response at the configured ACS; Task 2: Keep paired Northstar and Harborline outcomes within their organizations** — `b0177f2` (implementation and focused route tests).
+The original implementation predates plan-scoped commit subjects. Its hash and the scoped route regression are preserved below.
+
+## Historical Execution Commit
+
+- `b0177f2` — rejection matrix, paired tenant journeys, and receipt ownership implementation.
+
+## Plan-Scoped Follow-Up
+
+- `1ac2b3f` — assert the accepted ACS control receipt belongs to its verified connection.
 
 ## Files Created/Modified
 
@@ -134,4 +142,5 @@ Plan 76-02 is complete. Plan 76-04 can reuse the route driver and scoped trace p
 
 - Summary artifact contains passing automated coverage for both requirements.
 - Implementation commit `b0177f2` exists and contains only the five implementation files listed above.
+- Plan-scoped route regression commit `1ac2b3f` exists and passes its focused owner.
 - The requirement evidence uses stable test owners; no manual completion check is required.
