@@ -42,6 +42,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @phase_77_requirements ~w(QUAL-02 QUAL-03 QUAL-04 QUAL-05 QUAL-06)
 
   @tag :plan_73_33_task_1
+  @tag :plan_77_04_task_1
   test "completed Phase 73 accepts the ordered current planning lifecycle" do
     assert {:ok, identity} = validated_governance_identity(File.cwd!())
 
@@ -54,6 +55,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       {phase, "planning"} when phase in ["76", "77"] ->
         assert identity.governance_phase == "73"
+
+      {"77", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
+        assert identity.governance_phase == "77"
 
       {"75", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         assert identity.governance_phase == "75"
@@ -117,6 +121,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "74" -> "/74-clean-room-package-consumer/"
         "75" -> "/75-saas-twin-domain-realism/"
         "76" -> "/76-lifecycle-and-recovery-journeys/"
+        "77" -> "/77-code-and-documentation-craftsmanship/"
       end
 
     assert Enum.all?(identity.plan_paths, &String.contains?(&1, governed_phase_dir))
@@ -127,6 +132,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "74" -> "74-04-PLAN.md"
         "75" -> "75-03-PLAN.md"
         "76" -> "76-02-PLAN.md"
+        "77" -> "77-04-PLAN.md"
       end
 
     assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, expected_current_plan))
@@ -1655,6 +1661,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              "lib/relyra/security/signature.ex",
              malformed,
              source
+           )
+
+    assert "security_posture" in changed_surface_classes(
+             "lib/relyra/security/signature.ex",
+             malformed,
+             malformed
            )
 
     assert "security_posture" in changed_surface_classes(
@@ -3889,6 +3901,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     path == "scripts/setup_branch_protection.sh"
   end
 
+  defp changed_surface_classes("lib/relyra/security/signature.ex", before_content, after_content) do
+    case {signature_source_ast(before_content), signature_source_ast(after_content)} do
+      {{:ok, before_ast}, {:ok, after_ast}} when before_ast == after_ast -> []
+      _different_or_unparseable -> ["security_posture"]
+    end
+  end
+
   defp changed_surface_classes(_path, before_content, after_content)
        when before_content == after_content,
        do: []
@@ -3918,6 +3937,28 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       true -> []
     end
   end
+
+  defp signature_source_ast(source) when is_binary(source) do
+    case Code.string_to_quoted(source) do
+      {:ok, ast} ->
+        normalized_ast =
+          Macro.prewalk(ast, fn
+            {form, metadata, children} when is_list(metadata) ->
+              source_metadata = [:line, :column, :end_line, :end_column]
+              {form, Keyword.drop(metadata, source_metadata), children}
+
+            node ->
+              node
+          end)
+
+        {:ok, normalized_ast}
+
+      {:error, _reason} ->
+        :error
+    end
+  end
+
+  defp signature_source_ast(_source), do: :error
 
   defp mix_major_version(contents) do
     case Regex.run(~r/^\s*@version\s+"(\d+)\./m, contents, capture: :all_but_first) do

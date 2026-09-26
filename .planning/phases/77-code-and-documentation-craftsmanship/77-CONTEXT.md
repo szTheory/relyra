@@ -36,6 +36,7 @@ security posture.
 - **D-08:** Close Phase 77-owned `QUAL-73-002`, `QUAL-73-003`, and `QUAL-73-006` with concrete evidence. Revalidate and classify `QUAL-73-004` before addressing its reported golden-fixture warnings; do not weaken fixture coverage.
 - **D-09:** Preserve the adversarial proof and configured-certificate trust path for the resolved critical signature finding. Carry forward closure evidence for findings already owned by Phases 74 and 79; do not absorb Phase 78/79 work into this phase. Follow the Phase 73 severity policy for any still-open critical or high finding.
 - **D-10:** Audit tracked paths for this phase. Remove an artifact only when evidence shows it is obsolete or duplicate; every retained exceptional artifact needs a clear owner. Unrelated untracked working-tree state is outside this requirement.
+- **D-11 (approved 2026-09-26):** The user approved the bounded follow-up with “Approve the bounded follow-up (Recommended).” For governance classification only, parsed comment-only edits to `lib/relyra/security/signature.ex` preserve the security-posture classification when ASTs match after source-location metadata is removed. Documentation attributes, executable/specification changes, and malformed sources remain posture-sensitive; runtime security behavior, trust policy, and defaults are outside this approval.
 
 ### the agent's Discretion
 - Choose the exact files and small refactors needed to resolve the in-scope findings, after confirming each is still present.
