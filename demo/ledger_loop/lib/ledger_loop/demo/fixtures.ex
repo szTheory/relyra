@@ -72,6 +72,7 @@ defmodule LedgerLoop.Demo.Fixtures do
   @staged_active_cert_id "ffffffff-6666-6666-6666-ffffffffffff"
   @staged_next_cert_id "00000000-7777-7777-7777-000000000000"
   @retired_cert_id "11111111-7777-7777-7777-111111111111"
+  @harborline_active_cert_id "22222222-9999-9999-9999-222222222222"
 
   @trust_source_id "22222222-7777-7777-7777-222222222222"
   @trust_registered_revision_id "33333333-7777-7777-7777-333333333333"
@@ -252,6 +253,20 @@ defmodule LedgerLoop.Demo.Fixtures do
         use: :signing,
         inserted_at: @trust_applied_at,
         updated_at: @trust_applied_at
+      },
+      %{
+        id: @harborline_active_cert_id,
+        connection_record_id: @harborline_conn_id,
+        fingerprint_sha256: @demo_idp_cert_fingerprint,
+        pem: @demo_idp_cert_pem,
+        source: "tenant_journey_fixture",
+        role: :signing,
+        lifecycle_state: :active,
+        party: :idp,
+        use: :signing,
+        activated_at: @fixed_timestamp,
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
       }
     ]
   end

@@ -59,6 +59,8 @@ defmodule LedgerLoop.Demo.Reset do
       Repo.insert_all(Connection, Fixtures.relyra_connections())
       Repo.insert_all(MetadataSource, Fixtures.relyra_metadata_sources())
       Repo.insert_all(MetadataRevision, Fixtures.relyra_metadata_revisions())
+      # Rebuild only the fixture-owned trust catalog, including Harborline's
+      # active certificate for paired route-level tenant journeys.
       Repo.insert_all(Certificate, Fixtures.relyra_certificates())
       Repo.insert_all(AttributeMapping, Fixtures.relyra_attribute_mappings())
       Repo.insert_all(GroupMapping, Fixtures.relyra_group_mappings())
