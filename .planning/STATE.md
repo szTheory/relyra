@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 76
 current_phase_name: Lifecycle and Recovery Journeys
-current_plan: 3
+current_plan: 4
 status: executing
-stopped_at: Completed 76-03-PLAN.md
-last_updated: "2026-09-26T13:16:59.963Z"
+stopped_at: Completed 76-02-PLAN.md
+last_updated: "2026-09-26T14:13:12.039Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 76 execution started
-state_head: 414774f57af201c4658ce057249f5976e5bb94d5
+state_head: b0177f22f22c2532b1ef3f4812ea1a7a58ad19d6
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 46
-  completed_plans: 43
+  completed_plans: 44
   percent: 43
 ---
 
@@ -36,7 +36,7 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 76 (Lifecycle and Recovery Journeys) — EXECUTING
 
-Current Plan: 3
+Current Plan: 4
 Total Plans in Phase: 5
 Next gate: Execute Phase 76 plans (`$gsd-execute-phase 76`).
 
@@ -154,6 +154,7 @@ Last activity: 2026-09-26 — Phase 76 execution started
 - [Phase 76]: Recover consumed request context only from the configured request-store adapter, then let the existing replay-store uniqueness constraint reject duplicates without changing behaviour callback signatures.
 - [Phase 76]: Test the supported organization-scoped LiveAdmin path, including staged-key activation required before the draft connection can be enabled.
 - [Phase 76]: Use the CertificateInventory after_fetch optimistic-lock hook to prove conflict rollback and successful retry; two simultaneous Sandbox transactions remain an automation gap.
+- [Phase 76]: LedgerLoop receipt scenario keys use the verified principal connection ID because LoginResult carries that ID under principal; behaviour signatures remain unchanged.
 
 ### Baseline Findings
 
@@ -192,9 +193,9 @@ Last activity: 2026-09-26 — Phase 76 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-26T13:16:59.907Z
+**Last session:** 2026-09-26T14:13:12.000Z
 
-**Stopped at:** Completed 76-03-PLAN.md
+**Stopped at:** Completed 76-02-PLAN.md
 
 **Resume file:** None
 
@@ -242,6 +243,7 @@ Run `$gsd-execute-phase 76` to execute the verified Phase 76 plans.
 | Phase 75 P03 | 7 min | 2 tasks | 5 files |
 | Phase 76 P01 | 29 min | 2 tasks | 7 files |
 | Phase 76 P03 | 11min | 2 tasks | 2 files |
+| Phase 76 P2 | 11 min | 2 tasks | 5 files |
 
 ### Resolved Issues
 
