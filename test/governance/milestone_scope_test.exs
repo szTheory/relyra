@@ -1877,6 +1877,60 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              Enum.map_join(violations, "\n", &"  - #{&1}")
   end
 
+  @tag :phase_77_03_task_1
+  test "tracked artifact findings require path-specific ownership and ignore untracked controls" do
+    root =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-artifact-inventory-#{System.unique_integer([:positive])}"
+      )
+
+    tracked_path = "_build/phase-77-owner-control.log"
+    untracked_path = "test-results/phase-77-untracked-control.log"
+
+    try do
+      File.mkdir_p!(Path.join(root, Path.dirname(tracked_path)))
+      File.mkdir_p!(Path.join(root, "test/governance"))
+      File.mkdir_p!(Path.join(root, "test-results"))
+      File.write!(Path.join(root, tracked_path), "generated artifact control\n")
+      File.write!(Path.join(root, "test/governance/milestone_scope_test.exs"), "fixture\n")
+      File.write!(Path.join(root, untracked_path), "worktree-only control\n")
+
+      {_, 0} = System.cmd("git", ["init", "--quiet", root])
+
+      {_, 0} =
+        System.cmd("git", [
+          "-C",
+          root,
+          "add",
+          "--",
+          tracked_path,
+          "test/governance/milestone_scope_test.exs"
+        ])
+
+      {tracked_output, 0} = System.cmd("git", ["-C", root, "ls-files", "-z"])
+      tracked_paths = String.split(tracked_output, <<0>>, trim: true)
+
+      assert tracked_path in tracked_paths
+      refute untracked_path in tracked_paths
+
+      unowned_baseline = artifact_control_baseline(tracked_path)
+
+      assert Enum.any?(baseline_violations(unowned_baseline, root), fn violation ->
+               violation =~ "QUAL-73-005" and violation =~ tracked_path
+             end),
+             "a suspicious tracked path must require exact path-specific ownership"
+
+      owned_baseline = artifact_control_baseline(tracked_path, owned?: true)
+
+      refute Enum.any?(baseline_violations(owned_baseline, root), fn violation ->
+               violation =~ "QUAL-73-005" and violation =~ tracked_path
+             end)
+    after
+      File.rm_rf!(root)
+    end
+  end
+
   test "dated baseline publishes the complete severity-ranked findings contract" do
     baseline = File.read!(@baseline_path)
     sections = baseline_sections(baseline)
@@ -5434,6 +5488,40 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp baseline_violations(markdown, root \\ File.cwd!()) do
     duplicate_heading_violations(markdown) ++
       finding_violations(markdown, root) ++ ci_violations(markdown)
+  end
+
+  defp artifact_control_baseline(tracked_path, opts \\ []) do
+    owned? = Keyword.get(opts, :owned?, false)
+
+    evidence =
+      if owned? do
+        "`#{tracked_path}` is generated output retained as an isolated inventory test control. " <>
+          "[VERIFIED: `test/governance/milestone_scope_test.exs`, isolated Git-index fixture]"
+      else
+        "The repository artifact inventory is clean. " <>
+          "[VERIFIED: `test/governance/milestone_scope_test.exs`, isolated Git-index fixture]"
+      end
+
+    disposition =
+      if owned? do
+        "Retain `#{tracked_path}` as generated output for the inventory control; purpose and owner are the repository quality test owner."
+      else
+        "Inventory generated paths."
+      end
+
+    """
+    ## Findings Ledger
+
+    | Finding ID | Severity | Category | Finding | Reproducible Evidence | Disposition | Owner | Target Phase | Approval Class | Blocker State | Revisit Date |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+    | QUAL-73-005 | Informational | Artifacts | clean tracked-artifact scan | #{evidence} | #{disposition} | Repository quality test owner | Phase 77 | none | deferred | Next quality audit |
+
+    ## CI Baseline Snapshot
+
+    | Surface | Current Observation | Measured Duration | Duplication | Cache Declaration | Owning Lane | Required-Check State | Failure Evidence | Provenance |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+    | Artifact inventory | Git-index fixture | Not timed | None | None | ci.evidence | Mandatory | Test assertion | `test/governance/milestone_scope_test.exs` |
+    """
   end
 
   defp duplicate_heading_violations(markdown) do
