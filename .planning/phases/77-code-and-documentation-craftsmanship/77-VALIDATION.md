@@ -38,13 +38,13 @@ created: "2026-09-26"
 
 | Requirement | Behavior | Automated command | Evidence owner | Failure signal |
 |-------------|----------|-------------------|----------------|----------------|
-| QUAL-02 | Code/test changes compile cleanly and preserve the focused project quality checks. | `mix qa` and `mix format --check-formatted` | Root QA and formatter | Non-zero exit or formatter reports unformatted files. |
-| QUAL-03 | Security-sensitive cleanup preserves the independent security suites and adversarial XMLDSig corpus. | `mix ci.security` | `test/security/xml/adversarial_crypto_test.exs` and fresh-process security lane | Non-zero exit or any security suite reports a failing test. |
-| QUAL-04 | Current source and adopter documentation satisfy the timeless-prose and active-phase acceptance contracts. | `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors`; `mix ci.docs` | `test/docs/demo_guide_drift_test.exs` and docs lane | Non-zero exit or a reported stale narration/policy violation. |
-| QUAL-05 | Tracked artifacts satisfy the existing milestone-scope ownership contract. | `mix ci.evidence` | `test/governance/milestone_scope_test.exs` and evidence lane | Non-zero exit or an unexplained tracked path. |
-| QUAL-06 | Baseline findings have current, evidence-backed dispositions; critical/high security proof remains intact. | `mix ci.evidence`; `mix ci.security` for security findings | Baseline disposition validator and security lane | Non-zero exit, unresolved critical/high finding, or missing evidence/disposition. |
+| QUAL-02 | Bounded source/test comments retain contracts and remove temporary narration. | `mix test test/relyra/security/signature_crypto_test.exs --warnings-as-errors`; `mix ci.docs` | 77-01 T2, 77-02 T1–T2; docs and security tests | Non-zero exit, formatting drift, or a stale signature comment. |
+| QUAL-03 | Security-sensitive cleanup preserves the independent security suites and adversarial XMLDSig corpus. | `mix ci.security` | 77-02 T1–T2 and 77-03 T3; `test/security/xml/adversarial_crypto_test.exs` and fresh-process security lane | Non-zero exit, changed crypto behavior, or any security suite failure. |
+| QUAL-04 | Current source and adopter documentation satisfy timeless prose and active-phase acceptance contracts. | `mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors`; `mix ci.docs` | 77-01 T1–T2 and 77-02 T1; docs lane | Non-zero exit or a reported stale narration/policy violation. |
+| QUAL-05 | Tracked artifacts satisfy the existing milestone-scope ownership contract. | `mix ci.evidence` | 77-03 T1 and T3; `test/governance/milestone_scope_test.exs` and evidence lane | Non-zero exit or an unexplained tracked path. |
+| QUAL-06 | Baseline findings have current, evidence-backed dispositions; critical/high security proof remains intact. | `mix qa`; `mix ci.evidence`; `mix ci.security` | 77-03 T2–T3; baseline disposition validator and security lane | Non-zero exit, unresolved critical/high finding, or missing evidence/disposition. |
 
-Plan task IDs and focused commands should be added to this map when plans assign each requirement to its owning task. Avoid creating manual-only or human-needed completion gates.
+Each task's PLAN.md names its focused command; the map above assigns the requirement owner. Acceptance remains deterministic and automated.
 
 ---
 
@@ -54,7 +54,7 @@ Existing ExUnit infrastructure and the `ci.docs`, `ci.evidence`, and `ci.securit
 
 ---
 
-## Manual-Only Verifications
+## Automated Acceptance Boundary
 
 None. Acceptance evidence remains deterministic and automated; source review does not create a blocking human completion state.
 
@@ -62,7 +62,7 @@ None. Acceptance evidence remains deterministic and automated; source review doe
 
 ## Validation Sign-Off
 
-- [ ] All plan tasks have a focused automated verify command or a documented Wave 0 dependency.
+- [x] All plan tasks have a focused automated verify command or a documented Wave 0 dependency.
 - [ ] Sampling continuity: no three consecutive tasks without automated verification.
 - [x] Wave 0 covers the existing framework and lane references.
 - [ ] No watch-mode flags.

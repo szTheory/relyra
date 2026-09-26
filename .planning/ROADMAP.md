@@ -335,7 +335,12 @@ standalone documentation, with high-value findings resolved and security rationa
 5. Every critical/high baseline finding is fixed, stopped at an approval checkpoint, or
    dispositioned with concrete evidence and rationale.
 
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 77-01-PLAN.md — Context-aware acceptance policy and standalone docs
+- [ ] 77-02-PLAN.md — Timeless signature rationale with unchanged crypto proof
+- [ ] 77-03-PLAN.md — Tracked-artifact audit and evidence-backed finding dispositions
 
 ### Phase 78: CI Efficiency and Reliability
 
