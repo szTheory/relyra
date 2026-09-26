@@ -48,7 +48,7 @@ returns.
 - [x] **Phase 73: Twin Contract and Baseline** — Define the executable adopter model, evidence ownership, quality baseline, and immutable guardrails. (completed 2026-09-25)
 - [x] **Phase 74: Clean-Room Package Consumer** — Prove a fresh Phoenix application can adopt only the files Relyra actually ships. (completed 2026-09-25)
 - [x] **Phase 75: SaaS Twin Domain Realism** — Expand LedgerLoop into a coherent multi-tenant adopter with credible humans, trust history, and incidents. (completed 2026-09-25)
-- [ ] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end.
+- [x] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end. (completed 2026-09-26)
 - [ ] **Phase 77: Code and Documentation Craftsmanship** — Remove high-value quality debt and temporary planning narration behind the twin's safety net.
 - [ ] **Phase 78: CI Efficiency and Reliability** — Give every gate clear ownership and improve measured CI cost without weakening independent defenses.
 - [ ] **Phase 79: Adopter-Ready Closeout** — Finish with green intentional repository state, approved GitHub hygiene, and a diminishing-returns assessment.
@@ -296,7 +296,7 @@ diagnose the high-risk workflows a real adopter will depend on.
 5. An operator diagnoses and recovers the seeded incident through correlated redacted
    evidence; browser and scheduled real-IdP canaries have explicit safe failure ownership.
 
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 **Wave 1**
@@ -311,7 +311,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 76-05-PLAN.md — Separate the scheduled real-IdP canary and enforce its safe evidence contract.
+- [x] 76-05-PLAN.md — Separate the scheduled real-IdP canary and enforce its safe evidence contract.
 
 ### Phase 77: Code and Documentation Craftsmanship
 
@@ -392,7 +392,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 73. Twin Contract and Baseline | v1.11 | 34/34 | Complete    | 2026-09-25 |
 | 74. Clean-Room Package Consumer | v1.11 | 4/4 | Complete    | 2026-09-25 |
 | 75. SaaS Twin Domain Realism | v1.11 | 3/3 | Complete    | 2026-09-25 |
-| 76. Lifecycle and Recovery Journeys | v1.11 | 4/5 | In Progress|  |
+| 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 0/TBD | Not started | — |
 | 78. CI Efficiency and Reliability | v1.11 | 0/TBD | Not started | — |
 | 79. Adopter-Ready Closeout | v1.11 | 0/TBD | Not started | — |

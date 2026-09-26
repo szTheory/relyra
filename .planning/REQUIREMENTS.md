@@ -10,7 +10,7 @@
 
 - [x] **EVID-01**: Maintainer can inspect a machine-checked ledger mapping evaluator, developer, tenant-admin, security-reviewer, SRE, and end-user journeys to automated evidence.
 - [x] **EVID-02**: Every new acceptance criterion is enforced by deterministic automation in a mandatory CI lane.
-- [ ] **EVID-03**: External-provider canaries are clearly separated from deterministic merge gates and retain safe failure evidence.
+- [x] **EVID-03**: External-provider canaries are clearly separated from deterministic merge gates and retain safe failure evidence.
 
 ### Packaged Consumer
 
@@ -92,7 +92,7 @@
 |---|---|---|
 | EVID-01 | Phase 73 | Complete |
 | EVID-02 | Phase 73 | Complete |
-| EVID-03 | Phase 76 | Pending |
+| EVID-03 | Phase 76 | Complete |
 | PKG-01 | Phase 74 | Complete |
 | PKG-02 | Phase 74 | Complete |
 | PKG-03 | Phase 74 | Complete |

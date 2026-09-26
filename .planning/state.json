@@ -21,7 +21,7 @@
     {
       "number": "76",
       "name": "Lifecycle and Recovery Journeys",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "77",
@@ -42,7 +42,7 @@
   "next": {
     "command": "/gsd:progress --next",
     "label": "Advance to the next step",
-    "reason": "Phase 76 of 7 · 43% · executing"
+    "reason": "Phase 77 of 7 · 57% · planning"
   },
-  "updated_at": "2026-09-26T14:30:22.576Z"
+  "updated_at": "2026-09-26T16:38:01Z"
 }
