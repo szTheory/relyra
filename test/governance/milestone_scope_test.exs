@@ -6,6 +6,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   alias Relyra.AdoptionEvidence
 
   @baseline_path ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
+  @signature_source_path "lib/relyra/security/signature.ex"
   @finding_columns [
     "Finding ID",
     "Severity",
@@ -1677,7 +1678,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :plan_77_04_task_1
-  test "verified comment-only signature edits do not require a retroactive posture checkpoint" do
+  test "completed signature documentation changes retain their approved posture checkpoint" do
     assert {:ok, identity} = validated_governance_identity(File.cwd!())
 
     plan_path =
@@ -1686,12 +1687,67 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         ".planning/phases/77-code-and-documentation-craftsmanship/77-02-PLAN.md"
       )
 
+    assert {:ok, provenance} = completed_plan_provenance(File.cwd!(), plan_path)
+
+    signature_classes =
+      provenance.changes
+      |> Enum.filter(&(&1.path == @signature_source_path))
+      |> Enum.flat_map(&changed_surface_classes(&1.path, &1.before, &1.after))
+
+    assert "security_posture" in signature_classes,
+           "the completed @doc source edits must remain posture mutations"
+
+    plan = File.read!(plan_path)
+    assert plan =~ "security_posture: mutation"
+    assert plan =~ "<decision>approval_class: security_posture</decision>"
+
     violations = repository_plan_violations([plan_path], %{}, identity)
 
-    posture_violations = Enum.filter(violations, &String.contains?(&1, "security_posture"))
+    assert violations == [],
+           "the approved posture checkpoint must satisfy the completed plan: #{inspect(violations)}"
+  end
 
-    assert posture_violations == [],
-           "verified comment-only changes should not trigger posture approval: #{inspect(posture_violations)}"
+  @tag :plan_77_04_task_1
+  test "only fully verified comment-only signature provenance suppresses posture requirements" do
+    before_source = "defmodule SignatureFixture do\n  def verify(value), do: value\nend\n"
+    after_source = "# Rationale only.\n" <> before_source
+
+    comment_changes = [
+      %{path: @signature_source_path, before: before_source, after: after_source}
+    ]
+
+    neutral_paths = verified_comment_only_signature_paths(comment_changes)
+    assert neutral_paths == [@signature_source_path]
+
+    plan =
+      risky_plan_fixture("security_posture")
+      |> String.replace("governed/file.ex", @signature_source_path)
+      |> String.replace("security_posture: mutation", "security_posture: unchanged")
+      |> String.replace(
+        "<action>approval_class: security_posture. Change the assertion trust policy.</action>",
+        "<action>Add rationale comments to the signature source.</action>"
+      )
+      |> remove_checkpoint()
+
+    assert plan_scope_violations(plan, [], File.cwd!(), neutral_paths) == []
+
+    semantic_change = %{
+      path: @signature_source_path,
+      before: before_source,
+      after: String.replace(before_source, "do: value", "do: :trusted")
+    }
+
+    malformed_change = %{
+      path: @signature_source_path,
+      before: before_source,
+      after: "defmodule Broken do\n  def verify(\n"
+    }
+
+    refute @signature_source_path in verified_comment_only_signature_paths([semantic_change])
+
+    refute @signature_source_path in verified_comment_only_signature_paths(
+             comment_changes ++ [malformed_change]
+           )
   end
 
   test "decision checkpoints authorize mutations but never satisfy acceptance" do
@@ -3625,7 +3681,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp add_unless(violations, true, _diagnostic), do: violations
   defp add_unless(violations, false, diagnostic), do: violations ++ [diagnostic]
 
-  defp plan_scope_violations(markdown, changed_classes \\ [], root \\ File.cwd!()) do
+  defp plan_scope_violations(
+         markdown,
+         changed_classes \\ [],
+         root \\ File.cwd!(),
+         verified_posture_neutral_paths \\ []
+       ) do
     with {:ok, task_region, tasks} <- closed_plan_tasks(markdown),
          [] <- task_acceptance_ownership_violations(task_region, tasks) do
       scope_sections = tag_sections(markdown, "scope_assertions")
@@ -3638,7 +3699,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
               parse_scope_assertions(scope),
               tasks,
               changed_classes,
-              root
+              root,
+              verified_posture_neutral_paths
             )
 
           _other ->
@@ -3646,7 +3708,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         end
 
       task_type_violations(tasks) ++
-        task_risk_metadata_violations(tasks) ++
+        task_risk_metadata_violations(tasks, verified_posture_neutral_paths) ++
         scope_violations ++
         demand_gated_exclusion_violations(exclusion_sections) ++
         deterministic_verification_violations(tasks) ++
@@ -3701,7 +3763,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     ["demand_gated_exclusions must appear exactly once, found #{length(sections)}"]
   end
 
-  defp approval_scope_violations(scope, tasks, changed_classes, root) do
+  defp approval_scope_violations(
+         scope,
+         tasks,
+         changed_classes,
+         root,
+         verified_posture_neutral_paths
+       ) do
     Enum.flat_map(@approval_classes, fn approval_class ->
       values = Map.get(scope, approval_class, [])
 
@@ -3718,8 +3786,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         end
 
       checkpoint_violations =
-        if risky_scope?(approval_class, values, tasks, changed_classes) do
-          mutation_index = mutation_task_index(tasks, approval_class, changed_classes)
+        if risky_scope?(
+             approval_class,
+             values,
+             tasks,
+             changed_classes,
+             verified_posture_neutral_paths
+           ) do
+          mutation_index =
+            mutation_task_index(
+              tasks,
+              approval_class,
+              changed_classes,
+              verified_posture_neutral_paths
+            )
+
           checkpoint_index = matching_checkpoint_index(tasks, approval_class)
 
           checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks, root)
@@ -3731,7 +3812,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp task_risk_metadata_violations(tasks) do
+  defp task_risk_metadata_violations(tasks, verified_posture_neutral_paths) do
     tasks
     |> Enum.filter(&implementation_bearing_task?/1)
     |> Enum.flat_map(fn task ->
@@ -3763,7 +3844,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         end)
 
       mismatch_violations =
-        for risk_class <- governed_task_classes(task),
+        for risk_class <- governed_task_classes(task, verified_posture_neutral_paths),
             Map.get(task.risk_metadata, risk_class) != ["mutation"],
             do: "#{identity} #{risk_class} risk_metadata contradicts governed surface"
 
@@ -3771,9 +3852,20 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end)
   end
 
-  defp risky_scope?(approval_class, values, tasks, changed_classes) do
+  defp risky_scope?(
+         approval_class,
+         values,
+         tasks,
+         changed_classes,
+         verified_posture_neutral_paths
+       ) do
     values != ["unchanged"] or
-      mutation_task_index(tasks, approval_class, changed_classes) != nil
+      mutation_task_index(
+        tasks,
+        approval_class,
+        changed_classes,
+        verified_posture_neutral_paths
+      ) != nil
   end
 
   defp checkpoint_violations(approval_class, mutation_index, checkpoint_index, tasks, root) do
@@ -3832,11 +3924,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp mutation_task_index(tasks, approval_class, changed_classes \\ []) do
+  defp mutation_task_index(
+         tasks,
+         approval_class,
+         changed_classes \\ [],
+         verified_posture_neutral_paths \\ []
+       ) do
     Enum.find_index(tasks, fn task ->
       implementation_bearing_task?(task) and
         (Map.get(task.risk_metadata, approval_class) == ["mutation"] or
-           approval_class in governed_task_classes(task) or
+           approval_class in governed_task_classes(task, verified_posture_neutral_paths) or
            String.contains?(task.action, "approval_class: #{approval_class}"))
     end) || changed_surface_mutation_index(tasks, approval_class, changed_classes)
   end
@@ -3847,7 +3944,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp governed_task_classes(task) do
+  defp governed_task_classes(task, verified_posture_neutral_paths) do
     files =
       task.files
       |> String.split(~r/[\n,]/, trim: true)
@@ -3871,7 +3968,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     )
     |> maybe_add_class(
       "security_posture",
-      Enum.any?(files, &security_seam_path?/1) or
+      Enum.any?(files, fn path ->
+        security_seam_path?(path) and
+          not (path == @signature_source_path and path in verified_posture_neutral_paths)
+      end) or
         Regex.match?(
           ~r/\b(?:change|weaken|replace)\b.{0,100}\b(?:trust|algorithm|key material)\b/is,
           content
@@ -3919,7 +4019,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     path == "scripts/setup_branch_protection.sh"
   end
 
-  defp changed_surface_classes("lib/relyra/security/signature.ex", before_content, after_content) do
+  defp changed_surface_classes(@signature_source_path, before_content, after_content) do
     case {signature_source_ast(before_content), signature_source_ast(after_content)} do
       {{:ok, before_ast}, {:ok, after_ast}} when before_ast == after_ast -> []
       _different_or_unparseable -> ["security_posture"]
@@ -5007,7 +5107,15 @@ defmodule Relyra.Governance.MilestoneScopeTest do
               end)
               |> Enum.uniq()
 
-            repository_plan_scope_violations(identity, plan_path, markdown, changed_classes)
+            verified_posture_neutral_paths = verified_comment_only_signature_paths(changes)
+
+            repository_plan_scope_violations(
+              identity,
+              plan_path,
+              markdown,
+              changed_classes,
+              verified_posture_neutral_paths
+            )
             |> Enum.map(&"#{plan_path}: #{&1}")
 
           {:error, reason} ->
@@ -5051,10 +5159,45 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp repository_plan_scope_violations(identity, plan_path, markdown, changed_classes) do
+  defp repository_plan_scope_violations(
+         identity,
+         plan_path,
+         markdown,
+         changed_classes,
+         verified_posture_neutral_paths \\ []
+       ) do
     case repository_plan_schema(identity, plan_path) do
-      :legacy -> legacy_plan_scope_violations(markdown)
-      :current -> plan_scope_violations(markdown, changed_classes)
+      :legacy ->
+        legacy_plan_scope_violations(markdown)
+
+      :current ->
+        plan_scope_violations(
+          markdown,
+          changed_classes,
+          identity.root,
+          verified_posture_neutral_paths
+        )
+    end
+  end
+
+  defp verified_comment_only_signature_paths(changes) do
+    signature_changes = Enum.filter(changes, &(&1.path == @signature_source_path))
+
+    has_source_edit? =
+      Enum.any?(signature_changes, fn change -> change.before != change.after end)
+
+    if has_source_edit? and
+         Enum.all?(signature_changes, fn change ->
+           with {:ok, before_ast} <- signature_source_ast(change.before),
+                {:ok, after_ast} <- signature_source_ast(change.after) do
+             before_ast == after_ast
+           else
+             _parse_failure -> false
+           end
+         end) do
+      [@signature_source_path]
+    else
+      []
     end
   end
 
