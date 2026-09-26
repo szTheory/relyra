@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 76
 current_phase_name: Lifecycle and Recovery Journeys
-current_plan: Not started
+current_plan: 2
 status: executing
-stopped_at: Phase 76 planning complete (5 plans); ready to execute
-last_updated: "2026-09-26T12:18:03Z"
+stopped_at: Completed 76-01-PLAN.md
+last_updated: "2026-09-26T12:58:51.615Z"
 last_activity: 2026-09-26
-last_activity_desc: Phase 76 plans verified (5/5); ready to execute
-state_head: db96eed8864551cf399f754037fe6d0244b1d05e
+last_activity_desc: Phase 76 execution started
+state_head: c29ab84b9bf6d1f69489e15ee9d3615941630abf
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 46
-  completed_plans: 41
+  completed_plans: 42
   percent: 43
 ---
 
@@ -34,15 +34,15 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 76 (Lifecycle and Recovery Journeys) — READY TO EXECUTE
+Phase: 76 (Lifecycle and Recovery Journeys) — EXECUTING
 
-Current Plan: Not started
+Current Plan: 2
 Total Plans in Phase: 5
 Next gate: Execute Phase 76 plans (`$gsd-execute-phase 76`).
 
 Status: Ready to execute
 
-Last activity: 2026-09-26 — Phase 76 plans verified (5/5); ready to execute
+Last activity: 2026-09-26 — Phase 76 execution started
 
 ## Milestone Metrics
 
@@ -150,6 +150,8 @@ Last activity: 2026-09-26 — Phase 76 plans verified (5/5); ready to execute
 - [Phase 74]: Build and unpack the local Hex artifact, then resolve the consumer dependency directly from the unpacked package.
 - [Phase 74]: Use the shipped Relyra.Testing fixture and real Phoenix ACS route; record the host receipt only after verified consumption.
 - [Phase 74]: Include Req in the full consumer profile because current Relyra source expands Req.Response structs at compile time; verify no-optional compilation separately in Plan 74-04.
+- [Phase 76]: Bind replay keys to the trusted persisted request or resolved connection; ignore the response document ConnectionId for replay scope.
+- [Phase 76]: Recover consumed request context only from the configured request-store adapter, then let the existing replay-store uniqueness constraint reject duplicates without changing behaviour callback signatures.
 
 ### Baseline Findings
 
@@ -188,11 +190,11 @@ Last activity: 2026-09-26 — Phase 76 plans verified (5/5); ready to execute
 
 ## Session Continuity
 
-**Last session:** 2026-09-26T12:18:03Z
+**Last session:** 2026-09-26T12:58:51.500Z
 
-**Stopped at:** Phase 76 planning complete (5 plans); ready to execute
+**Stopped at:** Completed 76-01-PLAN.md
 
-**Resume file:** .planning/phases/76-lifecycle-and-recovery-journeys/76-01-PLAN.md
+**Resume file:** None
 
 ## Operator Next Step
 
@@ -236,6 +238,7 @@ Run `$gsd-execute-phase 76` to execute the verified Phase 76 plans.
 | Phase 75 P01 | 8 min | 2 tasks | 5 files |
 | Phase 75 P02 | 5 min | 2 tasks | 4 files |
 | Phase 75 P03 | 7 min | 2 tasks | 5 files |
+| Phase 76 P01 | 29 min | 2 tasks | 7 files |
 
 ### Resolved Issues
 

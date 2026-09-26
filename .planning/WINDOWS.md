@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 1
+open_count: 2
 waived_count: 1
 fixed_count: 26
-total_count: 28
-last_updated: 2026-09-11T22:28:55.649Z
+total_count: 29
+last_updated: 2026-09-26T12:57:07.799Z
 ---
 
 # Broken Windows Ledger
@@ -43,6 +43,7 @@ last_updated: 2026-09-11T22:28:55.649Z
 | 26 | 73 | deviation | test/support/phase_73_reconciliation.ex |  | Accepted valid ExUnit terminal summaries with parenthesized excluded counts | fixed |  | 2026-09-11T22:28:38.475Z | 2026-09-11T22:28:55.480Z |
 | 27 | 73 | deviation | test/governance/milestone_scope_test.exs |  | Separated preserved historical open evidence from the final live report status | fixed |  | 2026-09-11T22:28:38.552Z | 2026-09-11T22:28:55.565Z |
 | 28 | 73 | deviation | .planning/STATE.md |  | Corrected last-plan lifecycle and percentage fields after SDK reduction | fixed |  | 2026-09-11T22:28:38.628Z | 2026-09-11T22:28:55.649Z |
+| 29 | 76 | unrun-verify | demo/ledger_loop/test/ledger_loop_web/lifecycle_journeys_test.exs |  | Concurrent duplicate ACS submissions remain unautomated because ConnCase does not expose its SQL Sandbox owner PID and Sandbox.allow returned :not_found. | open |  | 2026-09-26T12:57:07.799Z |  |
 
 ````json
 [
@@ -394,6 +395,19 @@ last_updated: 2026-09-11T22:28:55.649Z
     "reason": "",
     "recorded_at": "2026-09-11T22:28:38.628Z",
     "resolved_at": "2026-09-11T22:28:55.649Z",
+    "milestone": "v1.11"
+  },
+  {
+    "id": 29,
+    "kind": "unrun-verify",
+    "phase": "76",
+    "file": "demo/ledger_loop/test/ledger_loop_web/lifecycle_journeys_test.exs",
+    "line": null,
+    "description": "Concurrent duplicate ACS submissions remain unautomated because ConnCase does not expose its SQL Sandbox owner PID and Sandbox.allow returned :not_found.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-26T12:57:07.799Z",
+    "resolved_at": null,
     "milestone": "v1.11"
   }
 ]
