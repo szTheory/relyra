@@ -55,7 +55,7 @@ duration: 11min
 completed: 2026-09-26
 status: complete
 commits: 2
-plan_head_before: 87b7cf5
+plan_head_before: 87b7cf5b72db00dfc8467767b7989086a1e20730
 ---
 
 # Phase 76 Plan 03: Tenant Trust Lifecycle Summary
@@ -143,7 +143,7 @@ JOUR-05 has passing deterministic LiveAdmin and domain integration coverage. The
 
 - Summary file exists at the planned path.
 - Task commits `a4b5589` and `05590c2` are present in Git history.
-- Measured plan commit count is 2 from `plan_head_before: 87b7cf5`.
+- Measured plan commit count is 2 from `plan_head_before: 87b7cf5b72db00dfc8467767b7989086a1e20730`.
 
 ---
 *Phase: 76-lifecycle-and-recovery-journeys*
