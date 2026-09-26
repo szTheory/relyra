@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 77
 current_phase_name: Code and Documentation Craftsmanship
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 77-01-PLAN.md
-last_updated: "2026-09-26T18:47:32.545Z"
+stopped_at: Completed 77-02-PLAN.md
+last_updated: "2026-09-26T19:07:04.075Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 77 execution started
-state_head: fe7bc57351121d49ef5733ccaf7249722766bc6c
+state_head: aee8e9ca01b55da0a6cde22e82d6c48594d1e798
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 49
-  completed_plans: 47
+  completed_plans: 48
   percent: 57
 ---
 
@@ -36,7 +36,7 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 77 (Code and Documentation Craftsmanship) — EXECUTING
 
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 3
 Next gate: Run `$gsd-execute-phase 77 --auto` to execute the three approved plans.
 
@@ -159,6 +159,7 @@ Last activity: 2026-09-26 — Phase 77 execution started
 - [Phase 76]: Keep real-provider health on an independent schedule/dispatch workflow; require exact HTTPS origins before entering credentials and persist only allowlisted status metadata.
 - [Phase 77]: Ignore quoted Markdown examples while retaining active prose and UAT rejection.
 - [Phase 77]: Keep the JTBD map current and maintainer-owned; leave adopter narratives in user-flow guides.
+- [Phase 77]: Bound signature rationale checks to source comments and @doc text, excluding executable code and policy strings.
 
 ### Baseline Findings
 
@@ -197,9 +198,9 @@ Last activity: 2026-09-26 — Phase 77 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-26T18:47:32.479Z
+**Last session:** 2026-09-26T19:07:04.034Z
 
-**Stopped at:** Completed 77-01-PLAN.md
+**Stopped at:** Completed 77-02-PLAN.md
 
 **Resume file:** None
 
@@ -251,6 +252,7 @@ Run `$gsd-discuss-phase 77` to begin the next planned phase.
 | Phase 76 P4 | 13 min | 2 tasks | 5 files |
 | Phase 76 P5 | 42 min | 2 tasks | 17 files |
 | Phase 77 P1 | 11min | 2 tasks | 3 files |
+| Phase 77 P02 | 13 min | 2 tasks | 3 files |
 
 ### Resolved Issues
 

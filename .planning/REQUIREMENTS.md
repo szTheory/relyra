@@ -42,7 +42,7 @@
 
 - [x] **QUAL-01**: Maintainer can inspect a repository-wide, severity-ranked quality inventory covering correctness, security, integration, readability, documentation, and artifacts.
 - [x] **QUAL-02**: Production code and tests use clear names and justified abstractions, with redundant comments removed and non-obvious invariants preserved.
-- [ ] **QUAL-03**: Security-sensitive cleanup is protected by characterization and adversarial tests and preserves every existing security invariant.
+- [x] **QUAL-03**: Security-sensitive cleanup is protected by characterization and adversarial tests and preserves every existing security invariant.
 - [x] **QUAL-04**: Standalone source and product documentation contain timeless rationale rather than internal phase, plan, decision-code, or GSD references.
 - [ ] **QUAL-05**: The tracked directory tree contains only intentional source, configuration, fixtures, documentation, and automation artifacts.
 - [ ] **QUAL-06**: Every critical or high-value audit finding is fixed, explicitly constrained by an approval checkpoint, or retained with a concrete rationale.
@@ -112,7 +112,7 @@
 | JOUR-06 | Phase 76 | Complete |
 | QUAL-01 | Phase 73 | Complete |
 | QUAL-02 | Phase 77 | Complete |
-| QUAL-03 | Phase 77 | Pending |
+| QUAL-03 | Phase 77 | Complete |
 | QUAL-04 | Phase 77 | Complete |
 | QUAL-05 | Phase 77 | Pending |
 | QUAL-06 | Phase 77 | Pending |

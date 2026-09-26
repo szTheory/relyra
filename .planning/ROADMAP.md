@@ -335,7 +335,7 @@ standalone documentation, with high-value findings resolved and security rationa
 5. Every critical/high baseline finding is fixed, stopped at an approval checkpoint, or
    dispositioned with concrete evidence and rationale.
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 **Wave 1**
@@ -344,7 +344,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 77-02-PLAN.md — Timeless signature rationale with unchanged crypto proof
+- [x] 77-02-PLAN.md — Timeless signature rationale with unchanged crypto proof
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -406,7 +406,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 74. Clean-Room Package Consumer | v1.11 | 4/4 | Complete    | 2026-09-25 |
 | 75. SaaS Twin Domain Realism | v1.11 | 3/3 | Complete    | 2026-09-25 |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
-| 77. Code and Documentation Craftsmanship | v1.11 | 1/3 | In Progress|  |
+| 77. Code and Documentation Craftsmanship | v1.11 | 2/3 | In Progress|  |
 | 78. CI Efficiency and Reliability | v1.11 | 0/TBD | Not started | — |
 | 79. Adopter-Ready Closeout | v1.11 | 0/TBD | Not started | — |
 
