@@ -15,6 +15,14 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     proxy up up-build up-d up-d-build down reset reseed nuke logs url open fleet keycloak doctor help
   )
 
+  test "signature rationale stays current in source prose" do
+    prose = signature_source_prose()
+
+    refute prose =~ ~r/\b(?:Phase|Plan)\s+\d+|\bD-\d+\b/
+    assert prose =~ "operator-pinned metadata fingerprints"
+    assert prose =~ "before the candidate is parsed deeply"
+  end
+
   test "Makefile exposes the canonical documented target inventory" do
     makefile = File.read!(@makefile_path)
 
@@ -1125,5 +1133,34 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
           flunk("Missing banner token: #{inspect(token)} after byte #{cursor}")
       end
     end)
+  end
+
+  defp signature_source_prose do
+    "lib/relyra/security/signature.ex"
+    |> File.read!()
+    |> String.split("\n")
+    |> Enum.reduce({false, []}, fn line, {in_doc, prose} ->
+      trimmed = String.trim_leading(line)
+
+      cond do
+        in_doc and String.contains?(line, "\"\"\"") ->
+          {false, [line | prose]}
+
+        in_doc ->
+          {true, [line | prose]}
+
+        String.starts_with?(trimmed, "@doc \"\"\"") ->
+          {true, prose}
+
+        String.starts_with?(trimmed, "#") ->
+          {false, [line | prose]}
+
+        true ->
+          {false, prose}
+      end
+    end)
+    |> elem(1)
+    |> Enum.reverse()
+    |> Enum.join("\n")
   end
 end
