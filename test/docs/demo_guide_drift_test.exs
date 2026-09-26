@@ -971,6 +971,33 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     refute guide =~ "GSD"
   end
 
+  test "JTBD gap map describes current coverage as a maintainer reference" do
+    gap_map = File.read!("docs/jtbd_gap_map.md")
+
+    assert gap_map =~ "This reference is for maintainers"
+    assert gap_map =~ "guides/jtbd_user_flows.md"
+
+    Enum.each(
+      [
+        "Phoenix SaaS adopter",
+        "Platform or auth owner",
+        "Operator, support, or SRE",
+        "Security reviewer",
+        "Customer IT admin",
+        "Custom or generic SAML adopter"
+      ],
+      fn job -> assert gap_map =~ job end
+    )
+
+    assert gap_map =~ "AUTHN-POST-01"
+    assert gap_map =~ "KMS-01"
+    assert gap_map =~ "SIGNED-META-01"
+    assert gap_map =~ "What is intentionally out of scope"
+    refute gap_map =~ "What changed since last refresh"
+    refute gap_map =~ "Last refreshed:"
+    refute Regex.match?(~r/\bPhases? \d+/, gap_map)
+  end
+
   test "assert_in_order advances beyond repeated tokens" do
     assert_in_order("repeat middle repeat", ["repeat", "middle", "repeat"])
   end
