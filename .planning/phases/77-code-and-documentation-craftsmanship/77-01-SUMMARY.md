@@ -87,10 +87,10 @@ status: complete
 
 Each task followed RED then GREEN:
 
-1. **Task 1 RED:** `f737af1` (`test`)
-2. **Task 1 GREEN:** `98e4b46` (`feat`)
-3. **Task 2 RED:** `ff3cdc6` (`test`)
-4. **Task 2 GREEN:** `fe7bc57` (`feat`)
+1. **Task 1 RED** — `f737af1` test(77-01): prove docs acceptance and adopter boundaries
+2. **Task 1 GREEN** — `98e4b46` feat(77-01): enforce active docs policy and simplify onboarding
+3. **Task 2 RED** — `ff3cdc6` test(77-01): define current maintainer JTBD coverage
+4. **Task 2 GREEN** — `fe7bc57` feat(77-01): refresh maintainer JTBD coverage map
 
 ## Files Created/Modified
 
