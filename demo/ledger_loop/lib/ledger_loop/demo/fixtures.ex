@@ -1,6 +1,6 @@
 defmodule LedgerLoop.Demo.Fixtures do
   @moduledoc """
-  Stable constants for the LedgerLoop/Northstar Health demo story.
+  Stable constants for the tenant-owned LedgerLoop demo scenarios.
   """
 
   # Demo IdP cert — sourced at build time from the committed PEM so that the
@@ -19,6 +19,15 @@ defmodule LedgerLoop.Demo.Fixtures do
   @nurse_chen_id "33333333-3333-3333-3333-333333333333"
   @admin_group_id "44444444-4444-4444-4444-444444444444"
   @clinical_group_id "55555555-5555-5555-5555-555555555555"
+  @harborline_tenant_id "12121212-1212-1212-1212-121212121212"
+  @maya_patel_id "23232323-2323-2323-2323-232323232323"
+  @luis_ortega_id "34343434-3434-3434-3434-343434343434"
+  @harborline_admin_group_id "45454545-4545-4545-4545-454545454545"
+  @harborline_ops_group_id "56565656-5656-5656-5656-565656565656"
+  @maya_membership_id "67676767-6767-6767-6767-676767676767"
+  @luis_membership_id "78787878-7878-7878-7878-787878787878"
+  @maya_identity_id "89898989-8989-8989-8989-898989898989"
+  @luis_identity_id "90909090-9090-9090-9090-909090909090"
 
   @dr_sarah_membership_id "66666666-6666-6666-6666-666666666666"
   @nurse_chen_membership_id "77777777-7777-7777-7777-777777777777"
@@ -37,6 +46,8 @@ defmodule LedgerLoop.Demo.Fixtures do
 
   @support_conn_id "dddddddd-4444-4444-4444-dddddddddddd"
   @support_conn_ulid "01H0B4Y1A2B3C4D5E6F7G8H9J3"
+  @harborline_conn_id "abababab-5555-5555-5555-abababababab"
+  @harborline_conn_ulid "01H0B4Y1A2B3C4D5E6F7G8H9J5"
 
   # Certificate IDs
   @enabled_cert_id "eeeeeeee-5555-5555-5555-eeeeeeeeeeee"
@@ -101,6 +112,20 @@ defmodule LedgerLoop.Demo.Fixtures do
         acs_url: "https://ledgerloop.example.com/sso/acs",
         idp_entity_id: "https://idp.northstar.example.com",
         idp_sso_url: "https://idp.northstar.example.com/sso",
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      },
+      %{
+        id: @harborline_conn_id,
+        connection_id: @harborline_conn_ulid,
+        display_name: "Harborline Logistics (Google Workspace)",
+        organization_id: "harborline",
+        status: :enabled,
+        provider_preset: :google_workspace,
+        sp_entity_id: "https://ledgerloop.example.com/sp",
+        acs_url: "https://ledgerloop.example.com/sso/acs",
+        idp_entity_id: "https://idp.harborline.example.com",
+        idp_sso_url: "https://idp.harborline.example.com/sso",
         inserted_at: @fixed_timestamp,
         updated_at: @fixed_timestamp
       }
@@ -203,13 +228,26 @@ defmodule LedgerLoop.Demo.Fixtures do
   end
 
   def tenant do
-    %{
-      id: @northstar_tenant_id,
-      name: "Northstar Health",
-      slug: "northstar",
-      inserted_at: @fixed_timestamp,
-      updated_at: @fixed_timestamp
-    }
+    Enum.find(tenants(), &(&1.slug == "northstar"))
+  end
+
+  def tenants do
+    [
+      %{
+        id: @northstar_tenant_id,
+        name: "Northstar Health",
+        slug: "northstar",
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      },
+      %{
+        id: @harborline_tenant_id,
+        name: "Harborline Logistics",
+        slug: "harborline",
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      }
+    ]
   end
 
   def users do
@@ -227,6 +265,22 @@ defmodule LedgerLoop.Demo.Fixtures do
         tenant_id: @northstar_tenant_id,
         name: "Nurse Chen",
         email: "chen@northstar.example.com",
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      },
+      %{
+        id: @maya_patel_id,
+        tenant_id: @harborline_tenant_id,
+        name: "Maya Patel",
+        email: "maya@harborline.example.com",
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      },
+      %{
+        id: @luis_ortega_id,
+        tenant_id: @harborline_tenant_id,
+        name: "Luis Ortega",
+        email: "luis@harborline.example.com",
         inserted_at: @fixed_timestamp,
         updated_at: @fixed_timestamp
       }
@@ -250,6 +304,22 @@ defmodule LedgerLoop.Demo.Fixtures do
         key: "clinical",
         inserted_at: @fixed_timestamp,
         updated_at: @fixed_timestamp
+      },
+      %{
+        id: @harborline_admin_group_id,
+        tenant_id: @harborline_tenant_id,
+        name: "Administrators",
+        key: "admins",
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      },
+      %{
+        id: @harborline_ops_group_id,
+        tenant_id: @harborline_tenant_id,
+        name: "Operations",
+        key: "operations",
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
       }
     ]
   end
@@ -267,6 +337,20 @@ defmodule LedgerLoop.Demo.Fixtures do
         id: @nurse_chen_membership_id,
         user_id: @nurse_chen_id,
         group_id: @clinical_group_id,
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      },
+      %{
+        id: @maya_membership_id,
+        user_id: @maya_patel_id,
+        group_id: @harborline_admin_group_id,
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      },
+      %{
+        id: @luis_membership_id,
+        user_id: @luis_ortega_id,
+        group_id: @harborline_ops_group_id,
         inserted_at: @fixed_timestamp,
         updated_at: @fixed_timestamp
       }
@@ -288,6 +372,22 @@ defmodule LedgerLoop.Demo.Fixtures do
         user_id: @nurse_chen_id,
         subject: "chen@northstar.example.com",
         issuer: "https://idp.northstar.example.com",
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      },
+      %{
+        id: @maya_identity_id,
+        user_id: @maya_patel_id,
+        subject: "maya@harborline.example.com",
+        issuer: "https://idp.harborline.example.com",
+        inserted_at: @fixed_timestamp,
+        updated_at: @fixed_timestamp
+      },
+      %{
+        id: @luis_identity_id,
+        user_id: @luis_ortega_id,
+        subject: "luis@harborline.example.com",
+        issuer: "https://idp.harborline.example.com",
         inserted_at: @fixed_timestamp,
         updated_at: @fixed_timestamp
       }

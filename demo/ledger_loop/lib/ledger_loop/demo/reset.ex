@@ -15,11 +15,10 @@ defmodule LedgerLoop.Demo.Reset do
   """
   def reset! do
     Repo.transaction(fn ->
-      # Delete existing demo data starting with tenant (cascades)
-      Repo.delete_all(from t in Tenant, where: t.id == ^Fixtures.tenant().id)
-
       # Delete Relyra data
-      connections = Repo.all(from c in Connection, where: c.organization_id == "northstar")
+      tenant_ids = Enum.map(Fixtures.tenants(), & &1.id)
+      connection_ids = Enum.map(Fixtures.relyra_connections(), & &1.id)
+      connections = Repo.all(from c in Connection, where: c.id in ^connection_ids)
       conn_ids = Enum.map(connections, & &1.id)
 
       if length(conn_ids) > 0 do
@@ -30,8 +29,11 @@ defmodule LedgerLoop.Demo.Reset do
         Repo.delete_all(from c in Connection, where: c.id in ^conn_ids)
       end
 
+      # Delete only host tenants explicitly owned by this fixture catalog.
+      Repo.delete_all(from t in Tenant, where: t.id in ^tenant_ids)
+
       # Insert fixed data
-      Repo.insert_all(Tenant, [Fixtures.tenant()])
+      Repo.insert_all(Tenant, Fixtures.tenants())
       Repo.insert_all(User, Fixtures.users())
       Repo.insert_all(Group, Fixtures.groups())
       Repo.insert_all(Membership, Fixtures.memberships())

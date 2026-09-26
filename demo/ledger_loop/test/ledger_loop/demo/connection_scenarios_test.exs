@@ -2,6 +2,7 @@ defmodule LedgerLoop.Demo.ConnectionScenariosTest do
   use LedgerLoop.DataCase, async: false
 
   alias LedgerLoop.Demo.Reset
+  alias LedgerLoop.Demo.Fixtures
   alias Relyra.Ecto.{Connection, AuditEvent}
   alias LedgerLoop.Repo
 
@@ -10,9 +11,10 @@ defmodule LedgerLoop.Demo.ConnectionScenariosTest do
     :ok
   end
 
-  test "Test 1: reset seeds exactly four scenario keys: enabled happy path, draft/missing metadata, staged-certificate rollover, and failure/support" do
+  test "Test 1: reset seeds the named tenant-owned scenarios" do
     connections = Repo.all(Connection)
-    assert length(connections) == 4
+    expected_ids = Enum.map(Fixtures.relyra_connections(), & &1.connection_id) |> Enum.sort()
+    assert Enum.map(connections, & &1.connection_id) |> Enum.sort() == expected_ids
 
     statuses = Enum.map(connections, & &1.status) |> Enum.sort()
     # We should have at least draft and enabled
@@ -21,7 +23,7 @@ defmodule LedgerLoop.Demo.ConnectionScenariosTest do
 
     connection_ids = Enum.map(connections, & &1.connection_id)
     # Check that they have stable connection_ids defined by the scenarios
-    assert length(Enum.uniq(connection_ids)) == 4
+    assert length(Enum.uniq(connection_ids)) == length(expected_ids)
   end
 
   test "Test 2: enabled scenario has an active signing certificate, attribute mappings, and group mappings queryable through Relyra Ecto schemas" do
