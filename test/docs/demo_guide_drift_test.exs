@@ -19,7 +19,8 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     prose = signature_source_prose()
 
     refute prose =~ ~r/\b(?:Phase|Plan)\s+\d+|\bD-\d+\b/
-    assert prose =~ "operator-pinned metadata fingerprints"
+    assert prose =~ "operator-pinned PEM certificates"
+    assert prose =~ "MetadataSource.metadata_trust_fingerprints"
     assert prose =~ "before the candidate is parsed deeply"
   end
 

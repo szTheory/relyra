@@ -201,7 +201,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
                Signature.verify(parsed_doc, connection(), tampered.cert_chain)
     end
 
-    test "WR-01: a newline-wrapped (64-col) SignatureValue still verifies {:ok}" do
+    test "a newline-wrapped SignatureValue still verifies {:ok}" do
       # Real IdPs (ADFS, Shibboleth, OpenSAML) line-wrap base64 at 64/76 columns.
       # The SignatureValue is a sibling of SignedInfo (NOT canonicalized for the
       # signature math), so wrapping it post-signing exercises decode_b64 alone:
