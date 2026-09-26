@@ -104,4 +104,34 @@ defmodule LedgerLoopWeb.LifecycleJourneysTest do
     chen = Repo.get_by!(User, email: "chen@northstar.example.com")
     refute Repo.exists?(from receipt in LoginReceipt, where: receipt.user_id == ^chen.id)
   end
+
+  test "an accepted assertion replay is rejected without a second host receipt" do
+    flow = LifecycleFlow.start_login(@connection_id, @issuer, @sarah_subject)
+    accepted = LifecycleFlow.post_acs(flow)
+
+    assert accepted.status == 302
+    assert Repo.aggregate(LoginReceipt, :count, :id) == 1
+    assert Repo.query!("SELECT count(*) FROM ledger_loop_relyra_replay_keys").rows == [[1]]
+
+    replay = LifecycleFlow.post_acs(flow)
+
+    assert replay.status == 400
+    assert response(replay, 400) =~ "replayed_assertion"
+    assert Repo.aggregate(LoginReceipt, :count, :id) == 1
+    assert Repo.query!("SELECT count(*) FROM ledger_loop_relyra_replay_keys").rows == [[1]]
+
+    fresh_flow = LifecycleFlow.start_login(@connection_id, @issuer, @sarah_subject)
+    fresh = LifecycleFlow.post_acs(fresh_flow)
+    assert fresh.status == 302
+    assert Repo.aggregate(LoginReceipt, :count, :id) == 2
+
+    connection = Repo.get_by!(Connection, connection_id: @connection_id)
+
+    assert Repo.exists?(
+             from event in AuditEvent,
+               where:
+                 event.connection_record_id == ^connection.id and
+                   event.domain == :login and event.action == :failed
+           )
+  end
 end
