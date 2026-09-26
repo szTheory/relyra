@@ -33,6 +33,29 @@ defmodule Relyra.RequestStore do
     dispatch_request_store(request_store(opts), :fetch_intent, [relay_state, opts])
   end
 
+  @doc false
+  @spec fetch_consumed_intent(binary(), keyword()) :: {:ok, map()} | {:error, Error.t()}
+  def fetch_consumed_intent(relay_state, opts \\ [])
+
+  def fetch_consumed_intent(relay_state, opts)
+      when is_binary(relay_state) and is_list(opts) do
+    adapter = request_store(opts)
+
+    if Code.ensure_loaded?(adapter) and function_exported?(adapter, :fetch_consumed_intent, 2) do
+      dispatch_request_store(adapter, :fetch_consumed_intent, [relay_state, opts])
+    else
+      {:error,
+       Error.new(:adapter_not_configured, "Request store cannot recover consumed intent", %{
+         adapter: inspect(adapter),
+         operation: :fetch_consumed_intent
+       })}
+    end
+  end
+
+  def fetch_consumed_intent(_relay_state, opts) do
+    {:error, adapter_not_configured(request_store(opts), :fetch_consumed_intent)}
+  end
+
   @spec consume_intent(binary(), binary(), keyword()) :: :ok | {:error, Error.t()}
   def consume_intent(relay_state, request_id, opts \\ [])
 

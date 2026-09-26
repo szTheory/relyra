@@ -53,6 +53,28 @@ defmodule Relyra.RequestStore.Ecto do
      )}
   end
 
+  @doc false
+  @spec fetch_consumed_intent(binary(), keyword()) :: {:ok, map()} | {:error, Error.t()}
+  def fetch_consumed_intent(relay_state, opts \\ [])
+
+  def fetch_consumed_intent(relay_state, opts) when is_binary(relay_state) and is_list(opts) do
+    with {:ok, repo} <- fetch_repo(opts, :fetch_consumed_intent),
+         {:ok, table} <- fetch_table(opts, :fetch_consumed_intent, repo),
+         :ok <- ensure_optional_dependency!(:fetch_consumed_intent, repo, table),
+         {:ok, intent} <- fetch_consumed_intent_record(repo, table, relay_state) do
+      {:ok, intent}
+    end
+  end
+
+  def fetch_consumed_intent(_relay_state, opts) do
+    {:error,
+     Error.new(
+       :request_intent_consumed,
+       "Relay state must be a binary",
+       error_details(opts, :fetch_consumed_intent, :invalid_relay_state)
+     )}
+  end
+
   @impl true
   @spec consume_intent(binary(), binary(), keyword()) :: :ok | {:error, Error.t()}
   def consume_intent(relay_state, request_id, opts \\ [])
@@ -159,6 +181,61 @@ defmodule Relyra.RequestStore.Ecto do
            :internal_protocol_error,
            "Failed to fetch request intent",
            repo_details(repo, table, operation, reason, %{relay_state: relay_state})
+         )}
+    end
+  end
+
+  defp fetch_consumed_intent_record(repo, table, relay_state) do
+    sql = """
+    SELECT request_id, intent, consumed_at, expires_at
+    FROM #{table}
+    WHERE relay_state = $1
+    LIMIT 1
+    """
+
+    case repo_query(repo, sql, [relay_state]) do
+      {:ok, %{rows: [[request_id, intent, consumed_at, expires_at] | _]}}
+      when is_binary(request_id) and is_map(intent) and not is_nil(consumed_at) ->
+        atomized_intent =
+          Map.new(intent, fn {key, value} ->
+            {if(is_binary(key), do: String.to_existing_atom(key), else: key), value}
+          end)
+
+        {:ok,
+         atomized_intent
+         |> Map.put_new(:request_id, request_id)
+         |> Map.put_new(:expires_at, expires_at)}
+
+      {:ok, %{rows: []}} ->
+        {:error,
+         Error.new(
+           :request_intent_not_found,
+           "Request intent was not found",
+           repo_details(repo, table, :fetch_consumed_intent, :not_found, %{
+             relay_state: relay_state
+           })
+         )}
+
+      {:ok, _unexpected_shape} ->
+        {:error,
+         Error.new(
+           :request_intent_consumed,
+           "Request intent is not consumed",
+           repo_details(
+             repo,
+             table,
+             :fetch_consumed_intent,
+             :not_consumed,
+             %{relay_state: relay_state}
+           )
+         )}
+
+      {:error, reason} ->
+        {:error,
+         Error.new(
+           :internal_protocol_error,
+           "Failed to fetch consumed request intent",
+           repo_details(repo, table, :fetch_consumed_intent, reason, %{relay_state: relay_state})
          )}
     end
   end
