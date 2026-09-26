@@ -86,6 +86,41 @@ defmodule Relyra.AdoptionEvidence do
     failure_diagnostics: "EVID-02 reports the requirement and missing deterministic seam"
   }
 
+  @evid_03_contract_entry %{
+    id: "evid-03-deterministic-canary-contract",
+    requirement: "EVID-03",
+    personas: [:sre, :security_reviewer],
+    job: "verify the external canary safety boundary",
+    expected_outcome:
+      "the scheduled canary is independent and emits safe owned evidence while ci.evidence enforces its contract",
+    evidence_kind: :security_corpus,
+    owner: "test/adoption/external_canary_contract_test.exs",
+    selector: "evidence_contract",
+    lane: "ci.evidence",
+    state: :existing,
+    fixture_owner: "isolated runner status fixtures and repository workflow sources",
+    reset_boundary: "fresh test process and temporary runner directories",
+    failure_diagnostics: "EVID-03 identifies schedule coupling, unsafe status, or missing owner"
+  }
+
+  @evid_03_scheduled_entry %{
+    id: "evid-03-scheduled-real-idp-canary",
+    requirement: "EVID-03",
+    personas: [:sre, :security_reviewer],
+    job: "inspect scheduled real-provider availability evidence",
+    expected_outcome:
+      "the managed IdP login remains a supplemental external signal with explicit recovery ownership",
+    evidence_kind: :external_canary,
+    owner: ".github/workflows/real-idp-canary.yml",
+    selector: "schedule_and_workflow_dispatch",
+    lane: "scheduled:real-idp-canary",
+    state: :existing,
+    fixture_owner: "owner-configured real IdP staging connection",
+    reset_boundary: "each scheduled or explicitly dispatched provider login",
+    failure_diagnostics:
+      "scheduled canary status names the bounded provider result, service owner, responder, and recovery reference"
+  }
+
   @baseline_entries [
                       {"qual-01-repository-baseline", "QUAL-01", [:security_reviewer],
                        "inspect a severity-ranked quality inventory"},
@@ -142,8 +177,6 @@ defmodule Relyra.AdoptionEvidence do
                       end)
 
   @planned_rows [
-    {"EVID-03", [:sre, :security_reviewer], "inspect external canary evidence", :external_canary,
-     "test/adoption/external_canary_contract_test.exs", "ci.external_idp"},
     {"PKG-01", [:developer], "install from a local Hex artifact", :package_contract,
      "test/consumer/package_install_test.exs", "ci.consumer"},
     {"PKG-02", [:developer, :security_reviewer], "prove checkout internals are inaccessible",
@@ -229,7 +262,8 @@ defmodule Relyra.AdoptionEvidence do
                    end)
 
   @entries @existing_entries ++
-             [@evid_02_entry] ++ @baseline_entries ++ @governance_entries ++ @planned_entries
+             [@evid_02_entry, @evid_03_contract_entry, @evid_03_scheduled_entry] ++
+             @baseline_entries ++ @governance_entries ++ @planned_entries
 
   def entries, do: @entries
 

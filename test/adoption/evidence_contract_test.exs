@@ -896,8 +896,8 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     entries = AdoptionEvidence.entries()
 
     for command <- [
-          "mix test test/adoption/evidence_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --exclude no_such_selector --warnings-as-errors",
-          "mix test test/adoption/evidence_contract_test.exs test/governance/milestone_scope_test.exs --only=evidence_contract --exclude=no_such_selector --warnings-as-errors"
+          "mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --exclude no_such_selector --warnings-as-errors",
+          "mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only=evidence_contract --exclude=no_such_selector --warnings-as-errors"
         ] do
       assert :ok =
                validate_repository_snapshot!(entries, %{
@@ -1910,7 +1910,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
   end
 
   defp fixture_evidence_step do
-    "cmd mix test test/adoption/evidence_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --warnings-as-errors"
+    "cmd mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --warnings-as-errors"
   end
 
   defp replace_pull_request_filter(workflow, key, patterns) do
@@ -1996,6 +1996,11 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     File.cp!(__ENV__.file, Path.join(root, "test/adoption/evidence_contract_test.exs"))
 
     File.cp!(
+      "test/adoption/external_canary_contract_test.exs",
+      Path.join(root, "test/adoption/external_canary_contract_test.exs")
+    )
+
+    File.cp!(
       "test/support/adoption_evidence.ex",
       Path.join(root, "test/support/adoption_evidence.ex")
     )
@@ -2034,6 +2039,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
         @workflow_path,
         "test/support/adoption_evidence.ex",
         "test/adoption/evidence_contract_test.exs",
+        "test/adoption/external_canary_contract_test.exs",
         "test/governance/milestone_scope_test.exs",
         "test/governance/phase_73_reconciliation_test.exs"
       ] ++ planning_paths
