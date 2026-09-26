@@ -1,20 +1,14 @@
 defmodule Relyra.Security.SignatureCryptoTest do
   @moduledoc """
-  Phase 29 Plan 03 — cryptographic XMLDSig verification of the `[candidate]`
-  arm of `verified_signed_node` (the published-hex auth-bypass site, D-01).
+  Cryptographic XMLDSig acceptance and rejection through `Signature.verify/4`.
 
-  This file owns the crypto negative controls that do NOT require a genuine
-  signer (forged / garbage / non-base64 SignatureValue, truncated / malformed
-  DigestValue, ECDSA fail-closed, malformed configured cert) PLUS a single
-  GENUINE positive smoke that proves the wiring reaches `:public_key.verify`
-  and the Reference-digest recompute (so broken wiring surfaces here, in
-  Wave 2, not Wave 3). The fuller positive control + wrong-key / tampered-NameID
-  negatives (driven by the reusable D-11 signer) and the existing-test triage
-  land in Plan 04.
+  The suite covers forged and malformed signature values, digest mismatches,
+  unsupported verification methods, malformed configured certificates, and
+  pre-crypto trust rejections. Genuine signed controls prove that valid input
+  reaches `:public_key.verify` and passes Reference digest recomputation; wrong
+  keys and post-signing changes remain rejected.
 
-  Each negative control asserts a typed `{:error, %Relyra.Error{type: ...}}`
-  and that the call RETURNS (never raises) — the auth path must fail CLOSED to a
-  typed error, never crash (Pitfalls 3 and 4).
+  Rejections use typed `Relyra.Error` values and return without raising.
   """
   use ExUnit.Case, async: true
 
@@ -29,18 +23,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
   @rsa_sha256_digest "http://www.w3.org/2001/04/xmlenc#sha256"
   @ecdsa_sha256 "http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256"
 
-  # ---------------------------------------------------------------------------
-  # Task 1 — the two new error atoms + the fail-closed PEM→pubkey helper.
-  #
-  # The helper (public_key_from_cert_chain/1) is private; it is exercised
-  # end-to-end through Signature.verify/4: a GENUINE candidate with a MALFORMED
-  # configured cert must map to :untrusted_certificate without raising (the
-  # helper's contract). A genuine candidate with the matching cert verifies
-  # {:ok, _} (proving the helper extracts a usable key) — covered by the
-  # positive smoke below.
-  # ---------------------------------------------------------------------------
-
-  describe "new error atoms (xml_error_type union, D-08)" do
+  describe "typed errors cover digest and verification-method rejection" do
     test "Relyra.Error accepts :digest_mismatch and :unsupported_signature_algorithm" do
       assert %Error{type: :digest_mismatch} = Error.new(:digest_mismatch, "x")
 
@@ -74,11 +57,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
     end
   end
 
-  # ---------------------------------------------------------------------------
-  # Task 2 — crypto negative controls (no genuine signer required).
-  # ---------------------------------------------------------------------------
-
-  describe "signature math negative controls (SIGV-01, T-29-07)" do
+  describe "signature math rejects forged and malformed values" do
     test "forged (well-formed, valid-base64) SignatureValue → :invalid_signature" do
       signed = genuine_signed_doc()
       # Replace the genuine SignatureValue with valid base64 of the right byte
@@ -99,7 +78,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
     end
   end
 
-  describe "digest recompute negative controls (SIGV-02, T-29-08, Pitfall 4)" do
+  describe "digest recomputation rejects malformed or mismatched values" do
     test "truncated DigestValue (wrong decoded length) → :digest_mismatch (no crash)" do
       signed = genuine_signed_doc()
       # A base64 that decodes to fewer than 32 bytes — must NOT crash
@@ -129,7 +108,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
     end
   end
 
-  describe "algorithm fail-closed (D-07, Pitfall 5)" do
+  describe "unsupported verification methods fail closed" do
     test "ECDSA signature method → :unsupported_signature_algorithm (before any verify)" do
       signed = genuine_signed_doc()
       # The allowlist permits ECDSA URIs (for SHA-2 strength); the digest-atom
@@ -141,7 +120,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
     end
   end
 
-  describe "malformed configured cert (D-04, Pitfall 3)" do
+  describe "malformed configured certificates fail closed" do
     test "malformed cert with a genuine candidate → :untrusted_certificate (no raise)" do
       signed = genuine_signed_doc()
 
@@ -154,7 +133,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
     end
   end
 
-  describe "pre-crypto trust gates still reject BEFORE crypto (D-01 regression)" do
+  describe "configured-certificate and KeyInfo trust gates reject before crypto" do
     test "empty cert_chain rejects before crypto (:untrusted_certificate)" do
       signed = genuine_signed_doc()
 
@@ -175,11 +154,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
     end
   end
 
-  # ---------------------------------------------------------------------------
-  # GENUINE POSITIVE SMOKE (Wave 2 — proves the wiring reaches the crypto).
-  # ---------------------------------------------------------------------------
-
-  describe "genuine positive smoke (the wiring reaches :public_key.verify + digest recompute)" do
+  describe "genuine signature passes signature and digest verification" do
     test "a genuinely-signed candidate verifies {:ok, %SignedNode{}}" do
       signed = genuine_signed_doc()
 
@@ -191,20 +166,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
     end
   end
 
-  # ---------------------------------------------------------------------------
-  # Plan 04 Task 2 — POSITIVE control + the two negatives that require a real
-  # signature, driven by the reusable D-11 signer
-  # (Relyra.TestSupport.XmldsigSigner) through the FULL verify path:
-  # PureBeam.parse_safely → select_signed_node → Signature.verify/4.
-  #
-  # The genuine signer is the ONLY input that should return {:ok}. The signer
-  # reuses FakeIdP's keypair and the verifier's C14N engine (D-11/D-12), so a
-  # green positive here proves the verifier is NOT an always-reject stub
-  # (T-29-14) while the negatives prove it still rejects wrong-key (T-29-16)
-  # and post-signing tampering (T-29-17).
-  # ---------------------------------------------------------------------------
-
-  describe "D-11 genuine signer through the full verify path (SIGV-01/02, success #3)" do
+  describe "signed responses verify only with the trusted key and unchanged content" do
     test "POSITIVE control: a genuinely-signed Response verifies {:ok, %SignedNode{}}" do
       signed = XmldsigSigner.signed_response()
       {:ok, parsed_doc} = PureBeam.parse_safely(signed.response_xml, [])
@@ -283,17 +245,9 @@ defmodule Relyra.Security.SignatureCryptoTest do
     end)
   end
 
-  # ---------------------------------------------------------------------------
-  # In-test genuine XMLDSig signer (D-11 minimal local signer).
-  #
-  # Builds a real RSA-2048 keypair + self-signed cert PEM, a referenced
-  # Assertion node, computes the REAL DigestValue over the canonicalized
-  # Assertion (via PureBeam.canonicalize, the SAME engine the verifier uses),
-  # embeds it in a SignedInfo, signs the canonicalized SignedInfo
-  # (C14N.serialize, the SAME engine), and assembles a parsed_doc whose single
-  # :signed_candidates entry carries the genuine D-02 values. This guarantees
-  # the signer and verifier canonicalize identically (D-12).
-  # ---------------------------------------------------------------------------
+  # Build a genuine XMLDSig candidate with a local keypair and certificate.
+  # The test signs canonical SignedInfo and computes the Reference digest with
+  # the same canonicalization paths used by verification.
 
   defp genuine_signed_doc do
     {priv, cert_pem} = keypair_and_cert()
@@ -320,7 +274,7 @@ defmodule Relyra.Security.SignatureCryptoTest do
     digest_value_b64 = Base.encode64(digest)
 
     # Build a SignedInfo embedding that DigestValue, then canonicalize it bare
-    # (C14N.serialize, D-03 — SignedInfo carries no enveloped-signature transform).
+    # (C14N.serialize; SignedInfo has no enveloped-signature transform).
     signed_info_xml =
       "<SignedInfo xmlns=\"http://www.w3.org/2000/09/xmldsig#\">" <>
         "<CanonicalizationMethod Algorithm=\"http://www.w3.org/2001/10/xml-exc-c14n#\"/>" <>
