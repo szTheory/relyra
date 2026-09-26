@@ -338,8 +338,16 @@ standalone documentation, with high-value findings resolved and security rationa
 **Plans:** 3 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 77-01-PLAN.md — Context-aware acceptance policy and standalone docs
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 77-02-PLAN.md — Timeless signature rationale with unchanged crypto proof
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 77-03-PLAN.md — Tracked-artifact audit and evidence-backed finding dispositions
 
 ### Phase 78: CI Efficiency and Reliability
