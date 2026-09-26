@@ -9,6 +9,16 @@ defmodule LedgerLoop.Twin.IncidentTimelineTest do
   alias Relyra.LiveAdmin.{Query, Scope}
 
   setup do
+    previous_visual_fixture = System.get_env("DEMO_TRACE_VISUAL_FIXTURE")
+    System.delete_env("DEMO_TRACE_VISUAL_FIXTURE")
+
+    on_exit(fn ->
+      case previous_visual_fixture do
+        nil -> System.delete_env("DEMO_TRACE_VISUAL_FIXTURE")
+        value -> System.put_env("DEMO_TRACE_VISUAL_FIXTURE", value)
+      end
+    end)
+
     Reset.reset!()
     :ok
   end

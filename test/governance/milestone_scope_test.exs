@@ -50,6 +50,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       {"75", "planning"} ->
         assert identity.governance_phase == "73"
 
+      {"75", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
+        assert identity.governance_phase == "75"
+
       {"74", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         assert identity.governance_phase == "74"
 
@@ -77,15 +80,24 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert identity.phase_requirements["73"] == MapSet.new(@phase_73_requirements)
     assert identity.phase_requirements["74"] == MapSet.new(@phase_74_requirements)
 
+    assert identity.phase_requirements["75"] ==
+             MapSet.new(["TWIN-01", "TWIN-02", "TWIN-03", "TWIN-04", "TWIN-05"])
+
     governed_phase_dir =
-      if identity.governance_phase == "73",
-        do: "/73-twin-contract-and-baseline/",
-        else: "/74-clean-room-package-consumer/"
+      case identity.governance_phase do
+        "73" -> "/73-twin-contract-and-baseline/"
+        "74" -> "/74-clean-room-package-consumer/"
+        "75" -> "/75-saas-twin-domain-realism/"
+      end
 
     assert Enum.all?(identity.plan_paths, &String.contains?(&1, governed_phase_dir))
 
     expected_current_plan =
-      if identity.governance_phase == "73", do: "73-33-PLAN.md", else: "74-04-PLAN.md"
+      case identity.governance_phase do
+        "73" -> "73-33-PLAN.md"
+        "74" -> "74-04-PLAN.md"
+        "75" -> "75-03-PLAN.md"
+      end
 
     assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, expected_current_plan))
 

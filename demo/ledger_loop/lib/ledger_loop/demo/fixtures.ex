@@ -12,6 +12,24 @@ defmodule LedgerLoop.Demo.Fixtures do
                                 [{:Certificate, der, :not_encrypted}] ->
                                   Base.encode16(:crypto.hash(:sha256, der))
                               end)
+  @rollover_next_cert_pem Application.app_dir(
+                            :ledger_loop,
+                            "priv/fake_idp/rollover_next_cert.pem"
+                          )
+                          |> File.read!()
+  @rollover_next_cert_fingerprint (case :public_key.pem_decode(@rollover_next_cert_pem) do
+                                     [{:Certificate, der, :not_encrypted}] ->
+                                       Base.encode16(:crypto.hash(:sha256, der))
+                                   end)
+  @rollover_retired_cert_pem Application.app_dir(
+                               :ledger_loop,
+                               "priv/fake_idp/rollover_retired_cert.pem"
+                             )
+                             |> File.read!()
+  @rollover_retired_cert_fingerprint (case :public_key.pem_decode(@rollover_retired_cert_pem) do
+                                        [{:Certificate, der, :not_encrypted}] ->
+                                          Base.encode16(:crypto.hash(:sha256, der))
+                                      end)
 
   # Stable UUIDs generated once to ensure determinism.
   @northstar_tenant_id "11111111-1111-1111-1111-111111111111"
@@ -192,8 +210,8 @@ defmodule LedgerLoop.Demo.Fixtures do
       %{
         id: @staged_active_cert_id,
         connection_record_id: @staged_conn_id,
-        fingerprint_sha256: "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
-        pem: "MOCK_PEM_NOT_REAL",
+        fingerprint_sha256: @demo_idp_cert_fingerprint,
+        pem: @demo_idp_cert_pem,
         source: "metadata",
         role: :signing,
         lifecycle_state: :active,
@@ -208,8 +226,8 @@ defmodule LedgerLoop.Demo.Fixtures do
       %{
         id: @staged_next_cert_id,
         connection_record_id: @staged_conn_id,
-        fingerprint_sha256: "8D969EEF6ECAD3C29A3A629280E686CF0C3F5D5A86AFF3CA12020C923ADC6C92",
-        pem: "MOCK_PEM_NOT_REAL_NEXT",
+        fingerprint_sha256: @rollover_next_cert_fingerprint,
+        pem: @rollover_next_cert_pem,
         source: "metadata",
         role: :signing,
         lifecycle_state: :next,
@@ -222,8 +240,8 @@ defmodule LedgerLoop.Demo.Fixtures do
       %{
         id: @retired_cert_id,
         connection_record_id: @staged_conn_id,
-        fingerprint_sha256: "A1E064701D6B4E0BC0EAB41E20D3B6D6E79E5CE023B9E516006C3C76F43A24A1",
-        pem: "MOCK_PEM_RETIRED",
+        fingerprint_sha256: @rollover_retired_cert_fingerprint,
+        pem: @rollover_retired_cert_pem,
         source: "metadata",
         role: :signing,
         lifecycle_state: :retired,
