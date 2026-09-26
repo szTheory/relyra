@@ -26,8 +26,8 @@
 - [x] **TWIN-01**: LedgerLoop represents multiple organizations with distinct users, administrators, roles, groups, and authorization outcomes.
 - [x] **TWIN-02**: LedgerLoop represents multiple credible IdP/provider and connection states without conflating tenant data.
 - [x] **TWIN-03**: LedgerLoop contains coherent metadata and certificate history covering draft, active, staged, expiring, retired, degraded, and recovered states.
-- [ ] **TWIN-04**: LedgerLoop presents a complete synthetic incident timeline from symptom through diagnosis, remediation, retry, and recovery.
-- [ ] **TWIN-05**: Twin fixtures are deterministic, resettable, comprehensible, isolated, and safe for logs, screenshots, and CI artifacts.
+- [x] **TWIN-04**: LedgerLoop presents a complete synthetic incident timeline from symptom through diagnosis, remediation, retry, and recovery.
+- [x] **TWIN-05**: Twin fixtures are deterministic, resettable, comprehensible, isolated, and safe for logs, screenshots, and CI artifacts.
 
 ### Lifecycle Journeys
 
@@ -102,8 +102,8 @@
 | TWIN-01 | Phase 75 | Complete |
 | TWIN-02 | Phase 75 | Complete |
 | TWIN-03 | Phase 75 | Complete |
-| TWIN-04 | Phase 75 | Pending |
-| TWIN-05 | Phase 75 | Pending |
+| TWIN-04 | Phase 75 | Complete |
+| TWIN-05 | Phase 75 | Complete |
 | JOUR-01 | Phase 76 | Pending |
 | JOUR-02 | Phase 76 | Pending |
 | JOUR-03 | Phase 76 | Pending |

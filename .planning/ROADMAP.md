@@ -272,7 +272,7 @@ tenants, providers, trust states, and operational history support realistic jour
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 75-03-PLAN.md
+- [x] 75-03-PLAN.md
 
 ### Phase 76: Lifecycle and Recovery Journeys
 
@@ -376,7 +376,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 |---|---|---|---|---|
 | 73. Twin Contract and Baseline | v1.11 | 34/34 | Complete    | 2026-09-25 |
 | 74. Clean-Room Package Consumer | v1.11 | 4/4 | Complete    | 2026-09-25 |
-| 75. SaaS Twin Domain Realism | v1.11 | 2/3 | In Progress|  |
+| 75. SaaS Twin Domain Realism | v1.11 | 3/3 | In Progress|  |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 0/TBD | Not started | — |
 | 77. Code and Documentation Craftsmanship | v1.11 | 0/TBD | Not started | — |
 | 78. CI Efficiency and Reliability | v1.11 | 0/TBD | Not started | — |
