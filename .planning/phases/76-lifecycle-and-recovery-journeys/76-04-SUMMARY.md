@@ -13,7 +13,7 @@ affects: [76-lifecycle-and-recovery-journeys]
 actuals:
   tokens: 5304
   tasks: 2
-  commits: 2
+  commits: 3
 tech-stack:
   added: []
   patterns:
@@ -84,8 +84,16 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Diagnose the seeded support failure and prove a repaired login; Task 2: Give the deterministic browser journey safe failure ownership** — `3ee08ff` (recovery, browser, and workflow implementation).
-2. **Task 2: Assert safe trace status workflow contract** — `2135521` (pass/fail harness and workflow metadata assertions).
+The original implementation commits predate plan-scoped commit subjects. Their hashes and the later scoped workflow regression are preserved below.
+
+## Historical Execution Commits
+
+- `3ee08ff` — recovery, browser, and workflow implementation.
+- `2135521` — pass/fail status harness and workflow ownership assertions.
+
+## Plan-Scoped Follow-Up
+
+- `2b21c38` — assert the required browser lane still runs the trace visual Playwright command.
 
 ## Files Created/Modified
 
@@ -139,4 +147,5 @@ Plan 76-04 is complete. Plan 76-05 can close the scheduled canary and mandatory 
 
 - Summary artifact classifies both deliverables as fully automated.
 - Implementation commits `3ee08ff` and `2135521` exist.
+- Plan-scoped browser workflow regression commit `2b21c38` exists and passes its status contract.
 - Recovery, browser, and status-contract owners all passed in the current execution.
