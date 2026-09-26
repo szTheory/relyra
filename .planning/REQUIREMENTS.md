@@ -36,7 +36,7 @@
 - [x] **JOUR-03**: Replaying an accepted assertion is rejected through the configured replay-store boundary.
 - [x] **JOUR-04**: Multi-tenant connection resolution, mappings, sessions, traces, and audits remain isolated across organizations.
 - [x] **JOUR-05**: A tenant administrator can progress through metadata import, connection enablement, staged certificate rollover, and recovery with co-committed audit evidence.
-- [ ] **JOUR-06**: An operator can diagnose and recover a failed login using correlated, redacted evidence without exposing assertions, certificates, credentials, or cookies.
+- [x] **JOUR-06**: An operator can diagnose and recover a failed login using correlated, redacted evidence without exposing assertions, certificates, credentials, or cookies.
 
 ### Code and Documentation Craftsmanship
 
@@ -109,7 +109,7 @@
 | JOUR-03 | Phase 76 | Complete |
 | JOUR-04 | Phase 76 | Complete |
 | JOUR-05 | Phase 76 | Complete |
-| JOUR-06 | Phase 76 | Pending |
+| JOUR-06 | Phase 76 | Complete |
 | QUAL-01 | Phase 73 | Complete |
 | QUAL-02 | Phase 77 | Pending |
 | QUAL-03 | Phase 77 | Pending |
