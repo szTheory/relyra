@@ -93,10 +93,14 @@ test("tampered FakeIdP rejection remains recoverable and its trace evidence stay
   await expect(page).toHaveURL(
     new RegExp(`/relyra/admin/connections/${supportConnectionId}/trace$`),
   );
-  await expect(page.locator("#login-trace")).toContainText(
+  const ownedSupportFailure = page
+    .locator('[data-testid^="login-trace-row-"]')
+    .filter({ hasText: "visual_fixture_long_failure_cause" })
+    .first();
+  await expect(ownedSupportFailure).toContainText(
     "visual_fixture_long_failure_cause",
   );
-  await expect(page.locator("#login-trace")).toContainText(
+  await expect(ownedSupportFailure).toContainText(
     "SAFE_LONG_KNOWN_STEP_ERROR_CODE",
   );
 });

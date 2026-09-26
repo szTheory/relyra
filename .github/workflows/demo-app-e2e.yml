@@ -69,6 +69,9 @@ jobs:
       - name: Install Node deps
         run: npm ci
 
+      - name: Verify trace visual status artifact contract
+        run: bash scripts/test_trace_visual_status_contract.sh
+
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
@@ -79,5 +82,29 @@ jobs:
 
       - name: Trace visual and failed-state browser e2e
         # The dedicated harness generates its own ephemeral Basic credentials,
-        # disables attachments, and removes its temporary Playwright output.
+        # disables attachments, removes its temporary Playwright output, and
+        # writes a fixed-schema status signal outside the Playwright directory.
+        env:
+          TRACE_VISUAL_STATUS_PATH: ${{ runner.temp }}/relyra-trace-visual-status.json
         run: npm run demo:trace-visual
+
+      - name: Upload safe trace visual status
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-app-e2e-trace-visual-status
+          path: ${{ runner.temp }}/relyra-trace-visual-status.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Summarize trace visual ownership and recovery
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            printf '### Deterministic trace visual browser result\n\n'
+            printf '| Owner role | Run status | Rerun / recovery |\n'
+            printf '| --- | --- | --- |\n'
+            printf '| `demo-app-e2e` maintainer | `%s` | `npm run demo:trace-visual` |\n' "$JOB_STATUS"
+          } >> "$GITHUB_STEP_SUMMARY"

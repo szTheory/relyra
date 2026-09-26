@@ -24,14 +24,60 @@ trace_visual_output_is_safe() {
   [[ "$canonical_parent" == "$TMP_PARENT_CANONICAL" ]]
 }
 
+trace_visual_status_path_is_safe() {
+  local candidate="${TRACE_VISUAL_STATUS_PATH:-}"
+  local runner_temp="${RUNNER_TEMP:-}"
+  local canonical_runner_temp
+
+  [[ -n "$candidate" && -n "$runner_temp" ]] || return 1
+  [[ -d "$runner_temp" && ! -L "$runner_temp" ]] || return 1
+  canonical_runner_temp="$(CDPATH='' cd -P -- "$runner_temp" && pwd)" || return 1
+  [[ "$candidate" == "$canonical_runner_temp/relyra-trace-visual-status.json" ]]
+}
+
+write_trace_visual_status() {
+  local test_status="$1"
+  local status="passed"
+  local runner_temp="${RUNNER_TEMP:-}"
+  local temporary_file
+
+  [[ "$test_status" -eq 0 ]] || status="failed"
+  [[ -d "$runner_temp" && ! -L "$runner_temp" ]] || return 1
+  temporary_file="$(umask 077; mktemp "$runner_temp/.relyra-trace-visual-status.XXXXXX")" || return 1
+
+  if ! printf '{"schema_version":1,"owner":"demo-app-e2e","status":"%s","recovery_command":"npm run demo:trace-visual"}\n' "$status" > "$temporary_file"; then
+    rm -f -- "$temporary_file"
+    return 1
+  fi
+
+  if ! mv -f -- "$temporary_file" "$TRACE_VISUAL_STATUS_PATH"; then
+    rm -f -- "$temporary_file"
+    return 1
+  fi
+}
+
 cleanup() {
-  local status="$1"
+  local original_status="$1"
+  local final_status="$original_status"
 
   trap - EXIT HUP INT TERM
+
+  if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    if trace_visual_status_path_is_safe; then
+      if ! write_trace_visual_status "$original_status"; then
+        printf '%s\n' "Trace visual status artifact could not be written to its safe workflow path." >&2
+        [[ "$final_status" -ne 0 ]] || final_status=1
+      fi
+    else
+      printf '%s\n' "Trace visual status artifact path is missing or outside RUNNER_TEMP." >&2
+      [[ "$final_status" -ne 0 ]] || final_status=1
+    fi
+  fi
+
   if trace_visual_output_is_safe "$PLAYWRIGHT_TMP_DIR"; then
     rm -rf -- "$PLAYWRIGHT_TMP_DIR"
   fi
-  exit "$status"
+  exit "$final_status"
 }
 
 trap 'cleanup $?' EXIT
