@@ -39,6 +39,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @phase_73_requirements ~w(EVID-01 EVID-02 QUAL-01 PIPE-01 GOV-01 GOV-02)
   @phase_74_requirements ~w(PKG-01 PKG-02 PKG-03 PKG-04 PKG-05 PKG-06)
   @phase_76_requirements ~w(EVID-03 JOUR-01 JOUR-02 JOUR-03 JOUR-04 JOUR-05 JOUR-06)
+  @phase_77_requirements ~w(QUAL-02 QUAL-03 QUAL-04 QUAL-05 QUAL-06)
 
   @tag :plan_73_33_task_1
   test "completed Phase 73 accepts the ordered current planning lifecycle" do
@@ -49,6 +50,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         assert identity.governance_phase == "73"
 
       {"75", "planning"} ->
+        assert identity.governance_phase == "73"
+
+      {phase, "planning"} when phase in ["76", "77"] ->
         assert identity.governance_phase == "73"
 
       {"75", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
@@ -77,6 +81,23 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         assert planning.governance_phase == "73"
         assert planning.status == "planning"
 
+        later_planning_root = governance_repository_fixture()
+        planning_state!(later_planning_root, "77")
+
+        File.cp!(
+          ".planning/phases/73-twin-contract-and-baseline/73-10-SUMMARY.md",
+          Path.join(
+            later_planning_root,
+            ".planning/phases/73-twin-contract-and-baseline/73-10-SUMMARY.md"
+          )
+        )
+
+        assert {:ok, later_planning} = validated_governance_identity(later_planning_root)
+        assert later_planning.current_phase == "77"
+        assert later_planning.governance_phase == "73"
+        assert later_planning.status == "planning"
+        assert later_planning.phase_requirements["77"] == MapSet.new(@phase_77_requirements)
+
       other ->
         flunk("unexpected actual governance lifecycle: #{inspect(other)}")
     end
@@ -88,6 +109,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              MapSet.new(["TWIN-01", "TWIN-02", "TWIN-03", "TWIN-04", "TWIN-05"])
 
     assert identity.phase_requirements["76"] == MapSet.new(@phase_76_requirements)
+    assert identity.phase_requirements["77"] == MapSet.new(@phase_77_requirements)
 
     governed_phase_dir =
       case identity.governance_phase do
@@ -192,7 +214,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
 
     assert {:ok, checked_in} = validated_governance_identity(File.cwd!())
-    assert checked_in.current_phase in ["73", "74", "75", "76"]
+    assert checked_in.current_phase in ["73", "74", "75", "76", "77"]
   end
 
   @tag :plan_73_33_task_2
@@ -284,7 +306,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Enum.all?(identity.plan_paths, &(Path.dirname(&1) == phase_dir))
 
     assert {:ok, checked_in_identity} = validated_governance_identity(File.cwd!())
-    assert checked_in_identity.current_phase in ["73", "74", "75", "76"]
+    assert checked_in_identity.current_phase in ["73", "74", "75", "76", "77"]
 
     expected_governance_phase =
       if checked_in_identity.status == "planning",
@@ -802,14 +824,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert {:ok, identity} = validated_governance_identity(File.cwd!())
 
     if identity.status == "planning" do
-      assert identity.current_phase in ["74", "75"]
+      assert identity.current_phase in ["74", "75", "76", "77"]
       assert identity.governance_phase == "73"
 
       expected_plan_count =
-        if identity.current_phase == "75" and
-             File.exists?(".planning/phases/73-twin-contract-and-baseline/73-34-SUMMARY.md"),
-           do: 34,
-           else: 33
+        if File.exists?(".planning/phases/73-twin-contract-and-baseline/73-34-SUMMARY.md"),
+          do: 34,
+          else: 33
 
       assert length(identity.plan_paths) == expected_plan_count
       assert Enum.all?(identity.plan_paths, &executed_plan?/1)
