@@ -1596,6 +1596,74 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert changed_surface_classes("test/governance/milestone_scope_test.exs", "a", "b") == []
   end
 
+  @tag :plan_77_04_task_1
+  test "signature rationale comments preserve approval classification" do
+    source = """
+    defmodule SignatureFixture do
+      @doc "Verifies a signed value."
+      @spec verify(term()) :: term()
+      def verify(value), do: value
+    end
+    """
+
+    comment_only = "# The configured certificate remains the trust source.\n" <> source
+
+    assert changed_surface_classes("lib/relyra/security/signature.ex", source, comment_only) == []
+  end
+
+  @tag :plan_77_04_task_1
+  test "signature documentation, specification, and executable changes remain posture mutations" do
+    source = """
+    defmodule SignatureFixture do
+      @doc "Verifies a signed value."
+      @spec verify(term()) :: term()
+      def verify(value), do: value
+    end
+    """
+
+    changed_sources = [
+      String.replace(source, "Verifies a signed value.", "Uses a different trust boundary."),
+      String.replace(
+        source,
+        "@spec verify(term()) :: term()",
+        "@spec verify(binary()) :: atom()"
+      ),
+      String.replace(source, "def verify(value), do: value", "def verify(_value), do: :trusted")
+    ]
+
+    for changed_source <- changed_sources do
+      assert "security_posture" in changed_surface_classes(
+               "lib/relyra/security/signature.ex",
+               source,
+               changed_source
+             )
+    end
+  end
+
+  @tag :plan_77_04_task_1
+  test "malformed signature source fails closed and other security seams stay conservative" do
+    source = "defmodule SignatureFixture do\n  def verify(value), do: value\nend\n"
+    malformed = source <> "def broken(\n"
+
+    assert "security_posture" in changed_surface_classes(
+             "lib/relyra/security/signature.ex",
+             source,
+             malformed
+           )
+
+    assert "security_posture" in changed_surface_classes(
+             "lib/relyra/security/signature.ex",
+             malformed,
+             source
+           )
+
+    assert "security_posture" in changed_surface_classes(
+             "lib/relyra/security/xml/pure_beam.ex",
+             "before",
+             "after"
+           )
+  end
+
   test "decision checkpoints authorize mutations but never satisfy acceptance" do
     clean = risky_plan_fixture("public_api")
     assert plan_scope_violations(clean) == []
