@@ -2192,6 +2192,56 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_violation(low_without_revisit, "QUAL-73-004", "Revisit Date")
   end
 
+  test "Phase 77 closures have current lane proof while critical and later ownership remain intact" do
+    baseline = File.read!(@baseline_path)
+    {_, rows} = baseline_rows(baseline)
+    findings = Map.new(rows, &{&1["Finding ID"], &1})
+
+    for {id, lanes} <- [
+          {"QUAL-73-002", ["mix ci.docs", "mix ci.security"]},
+          {"QUAL-73-003", ["mix ci.docs"]},
+          {"QUAL-73-006", ["mix ci.docs"]}
+        ] do
+      row = findings[id]
+      assert row["Blocker State"] == "resolved"
+      assert row["Reproducible Evidence"] =~ "2026-09-26"
+
+      for lane <- lanes do
+        assert row["Reproducible Evidence"] =~ "`#{lane}`"
+      end
+    end
+
+    critical = findings["RELYRA-2026-001"]
+    assert critical["Blocker State"] == "resolved"
+    assert critical["Reproducible Evidence"] =~ "adversarial and CI meta-gate proof"
+    assert critical["Disposition"] =~ "configured-certificate trust path"
+
+    later_owners = [
+      {"PIPE-73-001", "Phase 79 release owner", "Phase 79", "remote_github blocking approval",
+       "release-blocker", "Before v1.11 release"},
+      {"PIPE-73-002", "Phase 78 CI owner", "Phase 78",
+       "none unless required-check topology changes remotely", "disposition-required",
+       "Phase 78 planning"},
+      {"QUAL-73-005", "Phase 79 release owner", "Phase 79", "none", "deferred",
+       "Before v1.11 release"}
+    ]
+
+    for {id, owner, target, approval, blocker, revisit} <- later_owners do
+      row = findings[id]
+
+      assert {row["Owner"], row["Target Phase"], row["Approval Class"], row["Blocker State"],
+              row["Revisit Date"]} == {owner, target, approval, blocker, revisit}
+    end
+
+    phase_74 = File.read!(".planning/phases/74-clean-room-package-consumer/74-04-SUMMARY.md")
+    assert phase_74 =~ "scripts/check_clean_room_consumer.sh --profile full"
+
+    assert phase_74 =~
+             "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check"
+
+    assert phase_74 =~ "mix ci.evidence` — 127 tests, 0 failures"
+  end
+
   test "redaction-sensitive CI evidence rejects copied payloads and clean baseline passes" do
     baseline = File.read!(@baseline_path)
     assert baseline_violations(baseline) == []
