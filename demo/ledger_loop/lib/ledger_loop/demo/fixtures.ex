@@ -53,9 +53,22 @@ defmodule LedgerLoop.Demo.Fixtures do
   @enabled_cert_id "eeeeeeee-5555-5555-5555-eeeeeeeeeeee"
   @staged_active_cert_id "ffffffff-6666-6666-6666-ffffffffffff"
   @staged_next_cert_id "00000000-7777-7777-7777-000000000000"
+  @retired_cert_id "11111111-7777-7777-7777-111111111111"
+
+  @trust_source_id "22222222-7777-7777-7777-222222222222"
+  @trust_registered_revision_id "33333333-7777-7777-7777-333333333333"
+  @trust_failed_revision_id "44444444-7777-7777-7777-444444444444"
+  @trust_applied_revision_id "55555555-7777-7777-7777-555555555555"
+  @trust_recovered_revision_id "88888888-7777-7777-7777-888888888888"
+  @trust_failure_audit_id "66666666-7777-7777-7777-666666666666"
+  @trust_recovery_audit_id "77777777-7777-7777-7777-777777777777"
 
   # Stable UTC timestamp
   @fixed_timestamp ~U[2026-06-12 12:00:00.000000Z]
+  @trust_registered_at ~U[2026-06-12 12:05:00.000000Z]
+  @trust_applied_at ~U[2026-06-12 12:10:00.000000Z]
+  @trust_failed_at ~U[2026-06-12 12:20:00.000000Z]
+  @trust_recovered_at ~U[2026-06-12 12:30:00.000000Z]
 
   def relyra_connections do
     [
@@ -156,11 +169,13 @@ defmodule LedgerLoop.Demo.Fixtures do
         source: "metadata",
         role: :signing,
         lifecycle_state: :active,
+        not_before: ~U[2025-06-12 12:00:00.000000Z],
+        not_after: ~U[2026-07-01 12:00:00.000000Z],
         party: :idp,
         use: :signing,
-        activated_at: @fixed_timestamp,
-        inserted_at: @fixed_timestamp,
-        updated_at: @fixed_timestamp
+        activated_at: @trust_applied_at,
+        inserted_at: @trust_applied_at,
+        updated_at: @trust_applied_at
       },
       %{
         id: @staged_next_cert_id,
@@ -172,11 +187,137 @@ defmodule LedgerLoop.Demo.Fixtures do
         lifecycle_state: :next,
         party: :idp,
         use: :signing,
-        staged_at: @fixed_timestamp,
-        inserted_at: @fixed_timestamp,
-        updated_at: @fixed_timestamp
+        staged_at: @trust_recovered_at,
+        inserted_at: @trust_recovered_at,
+        updated_at: @trust_recovered_at
+      },
+      %{
+        id: @retired_cert_id,
+        connection_record_id: @staged_conn_id,
+        fingerprint_sha256: "A1E064701D6B4E0BC0EAB41E20D3B6D6E79E5CE023B9E516006C3C76F43A24A1",
+        pem: "MOCK_PEM_RETIRED",
+        source: "metadata",
+        role: :signing,
+        lifecycle_state: :retired,
+        not_before: ~U[2024-06-12 12:00:00.000000Z],
+        not_after: ~U[2025-06-12 12:00:00.000000Z],
+        retired_at: @trust_applied_at,
+        party: :idp,
+        use: :signing,
+        inserted_at: @trust_applied_at,
+        updated_at: @trust_applied_at
       }
     ]
+  end
+
+  def trust_scenario_as_of, do: @fixed_timestamp
+
+  def trust_scenario_connection_id, do: @staged_conn_id
+
+  def relyra_metadata_sources do
+    [
+      %{
+        id: @trust_source_id,
+        connection_record_id: @staged_conn_id,
+        url: "https://metadata.northstar.example.com/saml.xml",
+        kind: :remote_url,
+        registered_by: "ledgerloop_fixture",
+        registered_reason: "named_trust_history_scenario",
+        last_fetched_at: @trust_recovered_at,
+        last_outcome: :applied,
+        last_success_at: @trust_recovered_at,
+        consecutive_failure_count: 0,
+        first_failure_at: nil,
+        last_failure_error_code: nil,
+        auto_suspended_until: nil,
+        auto_suspended_reason: nil,
+        inserted_at: @trust_registered_at,
+        updated_at: @trust_recovered_at
+      }
+    ]
+  end
+
+  def relyra_metadata_revisions do
+    [
+      trust_revision(
+        @trust_registered_revision_id,
+        :registered,
+        @trust_registered_at,
+        "metadata_registered"
+      ),
+      trust_revision(
+        @trust_applied_revision_id,
+        :applied,
+        @trust_applied_at,
+        "metadata_initial_apply"
+      ),
+      trust_revision(
+        @trust_failed_revision_id,
+        :fetch_failed,
+        @trust_failed_at,
+        "metadata_transient_failure"
+      ),
+      trust_revision(
+        @trust_recovered_revision_id,
+        :applied,
+        @trust_recovered_at,
+        "metadata_recovery"
+      )
+    ]
+  end
+
+  def relyra_trust_audit_events do
+    [
+      %{
+        id: @trust_failure_audit_id,
+        connection_record_id: @staged_conn_id,
+        domain: :metadata,
+        action: :failed,
+        actor: "ledgerloop_fixture",
+        cause: "synthetic_metadata_fetch_failure",
+        correlation_id: "northstar-trust-history-20260612",
+        before_summary: %{"health" => "healthy"},
+        after_summary: %{"health" => "degraded", "revision_id" => @trust_failed_revision_id},
+        diff_summary: %{"scenario" => "northstar_trust_history", "event" => "degraded"},
+        inserted_at: @trust_failed_at
+      },
+      %{
+        id: @trust_recovery_audit_id,
+        connection_record_id: @staged_conn_id,
+        domain: :metadata,
+        action: :applied,
+        actor: "ledgerloop_fixture",
+        cause: "synthetic_metadata_recovery",
+        correlation_id: "northstar-trust-history-20260612",
+        before_summary: %{"health" => "degraded"},
+        after_summary: %{"health" => "healthy", "revision_id" => @trust_recovered_revision_id},
+        diff_summary: %{"scenario" => "northstar_trust_history", "event" => "recovered"},
+        inserted_at: @trust_recovered_at
+      }
+    ]
+  end
+
+  defp trust_revision(id, outcome, timestamp, cause) do
+    %{
+      id: id,
+      connection_record_id: @staged_conn_id,
+      metadata_source_id: @trust_source_id,
+      source_kind: :remote_url,
+      trigger: :manual_refresh,
+      outcome: outcome,
+      content_hash_sha256: nil,
+      effective_idp_entity_id: "https://idp.northstar.example.com",
+      effective_idp_sso_url: "https://idp.northstar.example.com/sso",
+      certificate_fingerprints: [],
+      trust_summary: %{
+        "scenario" => "northstar_trust_history",
+        "outcome" => Atom.to_string(outcome)
+      },
+      actor: "ledgerloop_fixture",
+      cause: cause,
+      details: %{},
+      inserted_at: timestamp
+    }
   end
 
   def relyra_attribute_mappings do

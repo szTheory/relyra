@@ -2,7 +2,7 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
   use LedgerLoop.DataCase, async: false
 
   alias LedgerLoop.Accounts.{LoginReceipt, SAMLIdentity, User}
-  alias LedgerLoop.Demo.{KeycloakProvisioner, Reset}
+  alias LedgerLoop.Demo.{Fixtures, KeycloakProvisioner, Reset}
   alias LedgerLoop.Repo
   alias Relyra.ConnectionResolver.Ecto, as: ConnectionResolver
   alias Relyra.Ecto.{AuditEvent, Certificate, Connection, MetadataRevision}
@@ -153,7 +153,10 @@ defmodule LedgerLoop.Demo.KeycloakProvisionerTest do
              )
 
     assert Repo.get_by(Connection, connection_id: KeycloakProvisioner.connection_id()) == nil
-    assert Repo.aggregate(MetadataRevision, :count, :id) == 0
+
+    assert Repo.all(MetadataRevision) |> Enum.map(& &1.id) |> Enum.sort() ==
+             Enum.map(Fixtures.relyra_metadata_revisions(), & &1.id) |> Enum.sort()
+
     assert Repo.aggregate(LoginReceipt, :count, :id) == 0
 
     assert Repo.aggregate(
