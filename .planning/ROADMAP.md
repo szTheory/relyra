@@ -299,10 +299,18 @@ diagnose the high-risk workflows a real adopter will depend on.
 **Plans:** 5 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 76-01-PLAN.md — Prove verified SP login and accepted-response replay through LedgerLoop ACS.
-- [ ] 76-02-PLAN.md — Cover typed rejection and paired tenant isolation at the route boundary.
 - [ ] 76-03-PLAN.md — Exercise scoped metadata, enablement, rollover, recovery and audit co-commit.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 76-02-PLAN.md — Cover typed rejection and paired tenant isolation at the route boundary.
 - [ ] 76-04-PLAN.md — Diagnose and recover the support incident with safe browser failure evidence.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 76-05-PLAN.md — Separate the scheduled real-IdP canary and enforce its safe evidence contract.
 
 ### Phase 77: Code and Documentation Craftsmanship
