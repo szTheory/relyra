@@ -1676,6 +1676,24 @@ defmodule Relyra.Governance.MilestoneScopeTest do
            )
   end
 
+  @tag :plan_77_04_task_1
+  test "verified comment-only signature edits do not require a retroactive posture checkpoint" do
+    assert {:ok, identity} = validated_governance_identity(File.cwd!())
+
+    plan_path =
+      Path.join(
+        File.cwd!(),
+        ".planning/phases/77-code-and-documentation-craftsmanship/77-02-PLAN.md"
+      )
+
+    violations = repository_plan_violations([plan_path], %{}, identity)
+
+    posture_violations = Enum.filter(violations, &String.contains?(&1, "security_posture"))
+
+    assert posture_violations == [],
+           "verified comment-only changes should not trigger posture approval: #{inspect(posture_violations)}"
+  end
+
   test "decision checkpoints authorize mutations but never satisfy acceptance" do
     clean = risky_plan_fixture("public_api")
     assert plan_scope_violations(clean) == []
