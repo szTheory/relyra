@@ -974,7 +974,7 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
   test "JTBD gap map describes current coverage as a maintainer reference" do
     gap_map = File.read!("docs/jtbd_gap_map.md")
 
-    assert gap_map =~ "This reference is for maintainers"
+    assert gap_map =~ "Maintainer reference."
     assert gap_map =~ "guides/jtbd_user_flows.md"
 
     Enum.each(
