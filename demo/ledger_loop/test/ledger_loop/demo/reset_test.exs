@@ -2,6 +2,7 @@ defmodule LedgerLoop.Demo.ResetTest do
   use LedgerLoop.DataCase
 
   alias LedgerLoop.Accounts.{Tenant, User, Group, Membership, SAMLIdentity, LoginReceipt}
+  alias LedgerLoop.Demo.Fixtures
   alias Relyra.Ecto.AuditEvent
   alias Relyra.LoginTrace.Export
 
@@ -101,7 +102,7 @@ defmodule LedgerLoop.Demo.ResetTest do
       assert receipts_1 == receipts_2
     end
 
-    test "default reset retains the six support trace events without the visual fixture" do
+    test "default reset retains six diagnostic steps and five incident stages without visual fixture" do
       for value <- [nil, "true"] do
         with_demo_trace_visual_fixture(value, fn ->
           LedgerLoop.Demo.Reset.reset!()
@@ -113,7 +114,12 @@ defmodule LedgerLoop.Demo.ResetTest do
                 order_by: [asc: event.inserted_at]
             )
 
-          assert length(trace_events) == 6
+          assert length(trace_events) ==
+                   length(Fixtures.relyra_support_trace_events()) +
+                     length(Fixtures.relyra_support_incident_events())
+
+          assert Enum.map(Fixtures.relyra_support_trace_events(), & &1.diff_summary["step"]) ==
+                   Fixtures.relyra_support_trace_steps()
 
           refute Enum.any?(
                    trace_events,

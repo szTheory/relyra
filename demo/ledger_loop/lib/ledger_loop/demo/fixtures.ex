@@ -62,6 +62,22 @@ defmodule LedgerLoop.Demo.Fixtures do
   @trust_recovered_revision_id "88888888-7777-7777-7777-888888888888"
   @trust_failure_audit_id "66666666-7777-7777-7777-666666666666"
   @trust_recovery_audit_id "77777777-7777-7777-7777-777777777777"
+  @support_trace_ids [
+    "10101010-8888-8888-8888-101010101010",
+    "20202020-8888-8888-8888-202020202020",
+    "30303030-8888-8888-8888-303030303030",
+    "40404040-8888-8888-8888-404040404040",
+    "50505050-8888-8888-8888-505050505050",
+    "60606060-8888-8888-8888-606060606060"
+  ]
+  @support_incident_ids [
+    "11111111-8888-8888-8888-111111111111",
+    "22222222-8888-8888-8888-222222222222",
+    "33333333-8888-8888-8888-333333333333",
+    "44444444-8888-8888-8888-444444444444",
+    "55555555-8888-8888-8888-555555555555"
+  ]
+  @support_visual_event_id "99999999-8888-8888-8888-999999999999"
 
   # Stable UTC timestamp
   @fixed_timestamp ~U[2026-06-12 12:00:00.000000Z]
@@ -69,6 +85,18 @@ defmodule LedgerLoop.Demo.Fixtures do
   @trust_applied_at ~U[2026-06-12 12:10:00.000000Z]
   @trust_failed_at ~U[2026-06-12 12:20:00.000000Z]
   @trust_recovered_at ~U[2026-06-12 12:30:00.000000Z]
+  @support_trace_started_at ~U[2026-06-12 12:50:00.000000Z]
+  @support_incident_started_at ~U[2026-06-12 13:00:00.000000Z]
+
+  @support_trace_steps [
+    "response.decode",
+    "response.validate",
+    "signature.verify",
+    "replay.check",
+    "user.map",
+    "session.establish"
+  ]
+  @support_incident_stages [:symptom, :diagnosis, :remediation, :retry, :recovery]
 
   def relyra_connections do
     [
@@ -293,6 +321,102 @@ defmodule LedgerLoop.Demo.Fixtures do
         after_summary: %{"health" => "healthy", "revision_id" => @trust_recovered_revision_id},
         diff_summary: %{"scenario" => "northstar_trust_history", "event" => "recovered"},
         inserted_at: @trust_recovered_at
+      }
+    ]
+  end
+
+  def relyra_support_trace_steps, do: @support_trace_steps
+
+  def relyra_support_incident_stages, do: @support_incident_stages
+
+  def relyra_support_trace_events do
+    Enum.zip([@support_trace_steps, @support_trace_ids, 0..5])
+    |> Enum.map(fn {step, id, index} ->
+      action = if step == "session.establish", do: :failed, else: :succeeded
+      status = if action == :failed, do: "error", else: "ok"
+
+      %{
+        id: id,
+        connection_record_id: @support_conn_id,
+        domain: :login,
+        action: action,
+        actor: "ledgerloop_fixture",
+        cause: "synthetic_support_trace",
+        correlation_id: "support-incident-northstar-20260612",
+        before_summary: %{},
+        after_summary: %{
+          "status" => status,
+          "steps" => %{
+            step => %{
+              "outcome" => status,
+              "error_code" => if(action == :failed, do: "session_rejected", else: nil),
+              "duration_ms" => 12 + index
+            }
+          }
+        },
+        diff_summary: %{
+          "kind" => "login_trace",
+          "step" => step,
+          "order" => index,
+          "status" => status
+        },
+        inserted_at: DateTime.add(@support_trace_started_at, index, :second)
+      }
+    end)
+  end
+
+  def relyra_support_incident_events do
+    Enum.zip([@support_incident_stages, @support_incident_ids, 0..4])
+    |> Enum.map(fn {stage, id, index} ->
+      %{
+        id: id,
+        connection_record_id: @support_conn_id,
+        domain: :login,
+        action: if(stage == :symptom, do: :failed, else: :succeeded),
+        actor: "ledgerloop_fixture",
+        cause: "synthetic_support_#{stage}",
+        correlation_id: "support-incident-northstar-20260612",
+        before_summary: %{"scenario" => "northstar_support_incident"},
+        after_summary: %{
+          "scenario" => "northstar_support_incident",
+          "stage" => Atom.to_string(stage)
+        },
+        diff_summary: %{
+          "kind" => "support_incident",
+          "stage" => Atom.to_string(stage),
+          "sequence" => index,
+          "trace_scenario" => "northstar_support_incident"
+        },
+        inserted_at: DateTime.add(@support_incident_started_at, index * 5, :minute)
+      }
+    end)
+  end
+
+  def relyra_support_visual_events do
+    [
+      %{
+        id: @support_visual_event_id,
+        connection_record_id: @support_conn_id,
+        domain: :login,
+        action: :failed,
+        actor: "demo_trace_visual_fixture",
+        cause:
+          "visual_fixture_long_failure_cause operator-readable deterministic support evidence for narrow trace viewport validation without protected login material",
+        correlation_id: "visual-fixture-correlation-safe-deterministic",
+        before_summary: %{},
+        after_summary: %{
+          "overall_outcome" => "error",
+          "steps" => %{
+            "response.validate" => %{
+              "outcome" => "error",
+              "error_code" =>
+                "SAFE_LONG_KNOWN_STEP_ERROR_CODE_for_deterministic_narrow_viewport_evidence_without_sensitive_payloads",
+              "duration_ms" => 17
+            }
+          }
+        },
+        diff_summary: %{"kind" => "login_trace", "fixture" => "trace_visual"},
+        inserted_at: @support_incident_started_at
       }
     ]
   end

@@ -17,7 +17,6 @@ defmodule LedgerLoop.Demo.Reset do
     MetadataRevision
   }
 
-  alias Relyra.Ecto.AuditWriter
   import Ecto.Query
 
   @doc """
@@ -75,75 +74,19 @@ defmodule LedgerLoop.Demo.Reset do
         ]
       )
 
-      Repo.insert_all(AuditEvent, Fixtures.relyra_trust_audit_events())
+      visual_events =
+        if System.get_env("DEMO_TRACE_VISUAL_FIXTURE") == "1",
+          do: Fixtures.relyra_support_visual_events(),
+          else: []
 
-      # Insert Support Failure Trace Events.
-      # AuditEvent.connection_record_id is a :binary_id FK to Relyra.Ecto.Connection.id,
-      # so use the connection's internal record id (UUID), not the public ULID connection_id.
-      support_id = Fixtures.relyra_support_scenario_record_id()
-
-      trace_steps = [
-        "response.decode",
-        "response.validate",
-        "signature.verify",
-        "replay.check",
-        "user.map",
-        "session.establish"
-      ]
-
-      for {step, index} <- Enum.with_index(trace_steps) do
-        action = if step == "session.establish", do: :failed, else: :succeeded
-
-        attrs = %{
-          connection_record_id: support_id,
-          domain: :login,
-          action: action,
-          actor: "sso_trace",
-          cause: "demo_seed",
-          correlation_id: "demo-trace-1234",
-          after_summary: %{"status" => "traced"},
-          diff_summary: %{
-            "kind" => "login_trace",
-            "step" => step,
-            "order" => index,
-            "status" => if(action == :failed, do: "error", else: "ok")
-          }
-        }
-
-        {:ok, _} = AuditWriter.append_event(Repo, attrs)
-      end
-
-      maybe_insert_trace_visual_fixture(support_id)
+      Repo.insert_all(
+        AuditEvent,
+        Fixtures.relyra_trust_audit_events() ++
+          Fixtures.relyra_support_trace_events() ++
+          Fixtures.relyra_support_incident_events() ++ visual_events
+      )
     end)
 
     :ok
-  end
-
-  defp maybe_insert_trace_visual_fixture(support_id) do
-    if System.get_env("DEMO_TRACE_VISUAL_FIXTURE") == "1" do
-      {:ok, _} =
-        AuditWriter.append_event(Repo, %{
-          connection_record_id: support_id,
-          domain: :login,
-          action: :failed,
-          actor: "demo_trace_visual_fixture",
-          cause:
-            "visual_fixture_long_failure_cause operator-readable deterministic support evidence for narrow trace viewport validation without protected login material",
-          correlation_id: "visual-fixture-correlation-safe-deterministic",
-          before_summary: %{},
-          after_summary: %{
-            "overall_outcome" => "error",
-            "steps" => %{
-              "response.validate" => %{
-                "outcome" => "error",
-                "error_code" =>
-                  "SAFE_LONG_KNOWN_STEP_ERROR_CODE_for_deterministic_narrow_viewport_evidence_without_sensitive_payloads",
-                "duration_ms" => 17
-              }
-            }
-          },
-          diff_summary: %{"kind" => "login_trace", "fixture" => "trace_visual"}
-        })
-    end
   end
 end
