@@ -3,19 +3,19 @@ gsd_state_version: "1.0"
 milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 77
-current_phase_name: code-and-documentation-craftsmanship
-current_plan: 3
-status: executing
-stopped_at: Halted 77-03 after required evidence and QA gates failed
-last_updated: "2026-09-26T20:49:34.785Z"
+current_phase_name: Code and Documentation Craftsmanship
+current_plan: 4
+status: ready_for_verification
+stopped_at: All four Phase 77 plans executed; automated phase verification is pending
+last_updated: "2026-09-26T22:09:48Z"
 last_activity: 2026-09-26
-last_activity_desc: Phase 77 execution started
-state_head: 5cf86b03a8197019bae6413d1936b90a62abed71
+last_activity_desc: Phase 77 closeout record updated; automated verification is the next gate
+state_head: b7b2e273f16330b2d5fbbc3bc6df2a8e72acea95
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 50
-  completed_plans: 49
+  completed_plans: 50
   percent: 57
 ---
 
@@ -34,15 +34,15 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 77 (Code and Documentation Craftsmanship) — READY TO EXECUTE
+Phase: 77 (Code and Documentation Craftsmanship) — READY FOR VERIFICATION
 
-Current Plan: 4
+Current Plan: 4 (77-04 complete)
 Total Plans in Phase: 4
-Next gate: Run `$gsd-execute-phase 77 --gaps-only --auto` to execute the approved gap-closure plan.
+Next gate: Complete automated verification of the Phase 77 closeout, then plan Phase 78.
 
-Status: Ready to execute
+Status: Ready for verification
 
-Last activity: 2026-09-26 — Phase 77 execution started
+Last activity: 2026-09-26 — Phase 77 closeout record updated; automated verification is the next gate
 
 ## Milestone Metrics
 
@@ -261,4 +261,4 @@ Run `$gsd-discuss-phase 77` to begin the next planned phase.
 
 ### Blockers
 
-- 77-03 halted: mix ci.evidence exits 1 on Phase 73 lifecycle and active-plan contract failures; mix qa and mix test --warnings-as-errors exit 2 on those failures plus the Phase 73 pinned manifest hash mismatch. Resolve in owning phases, then rerun gates.
+- None. The approved 77-04 follow-up resolved the prior evidence and QA blockers; automated phase verification is the remaining gate.

@@ -49,7 +49,7 @@ returns.
 - [x] **Phase 74: Clean-Room Package Consumer** — Prove a fresh Phoenix application can adopt only the files Relyra actually ships. (completed 2026-09-25)
 - [x] **Phase 75: SaaS Twin Domain Realism** — Expand LedgerLoop into a coherent multi-tenant adopter with credible humans, trust history, and incidents. (completed 2026-09-25)
 - [x] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end. (completed 2026-09-26)
-- [ ] **Phase 77: Code and Documentation Craftsmanship** — Remove high-value quality debt and temporary planning narration behind the twin's safety net.
+- [ ] **Phase 77: Code and Documentation Craftsmanship** — Remove high-value quality debt and temporary planning narration behind the twin's safety net. (All four plans executed; automated phase verification pending.)
 - [ ] **Phase 78: CI Efficiency and Reliability** — Give every gate clear ownership and improve measured CI cost without weakening independent defenses.
 - [ ] **Phase 79: Adopter-Ready Closeout** — Finish with green intentional repository state, approved GitHub hygiene, and a diminishing-returns assessment.
 
@@ -335,13 +335,13 @@ standalone documentation, with high-value findings resolved and security rationa
 5. Every critical/high baseline finding is fixed, stopped at an approval checkpoint, or
    dispositioned with concrete evidence and rationale.
 
-**Plans:** 3/4 plans executed; one gap-closure plan remains
+**Plans:** 4/4 plans executed; automated phase verification pending
 
 Plans:
 **Wave 1**
 
 - [x] 77-01-PLAN.md — Context-aware acceptance policy and standalone docs
-- [ ] 77-04-PLAN.md — Close evidence, lifecycle, and Phase 73 reconciliation blockers
+- [x] 77-04-PLAN.md — Close evidence, lifecycle, and Phase 73 reconciliation blockers
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

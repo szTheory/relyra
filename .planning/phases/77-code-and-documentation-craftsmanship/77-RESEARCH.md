@@ -351,9 +351,9 @@ These controls are project invariants, quoted in `AGENTS.md`; this phase must no
 
 ## Open Questions (RESOLVED)
 
-1. **Does current root QA still emit any golden fixture warning? — Resolved disposition: QUAL-73-004 remains open pending a successful fresh QA run.**
-   - Evidence: The historical Plan 77-03 `mix qa` run exited 2 after 942 tests with 4 failures and no warning lines (`77-03-SUMMARY.md`). A nonzero run is not green evidence and cannot close the finding.
-   - Resolution: Task 3 must refresh this disposition from its own final `mix qa` result. Close QUAL-73-004 only if a fresh run exits 0; otherwise preserve it as open/deferred and report the blocker. Do not alter golden fixtures based on the stale 2026-09-09 inventory alone.
+1. **Does current root QA still emit any golden fixture warning? — Resolved: QUAL-73-004 is closed by fresh green QA with no warning lines.**
+   - Evidence: A fresh isolated `mix qa` run on 2026-09-26 exited 0 with 947 tests, 0 failures, and 10 excluded; the log contained no `warning` or `warn` lines. The run used Elixir 1.19.5/OTP 28 and an isolated `RELYRA_TEST_DATABASE` to avoid sharing the default test database with other local work. The historical Plan 77-03 run exited 2 after 942 tests with 4 failures and no warning lines (`77-03-SUMMARY.md`), so it was not green closure evidence.
+   - Resolution: Current root QA produces no golden fixture discovery warning, and the old warning inventory is stale. No golden fixture was changed. Task 3 reruns `mix qa` after this research update and records that final status in the 77-04 summary.
 
 2. **Does the policy contract need an isolated archive fixture? — Resolved disposition: existing evidence is sufficient for QUAL-73-006 absent a concrete false positive.**
    - Evidence: Plan 77-01's quoted-versus-active fixture and the live incomplete-phase check passed `mix ci.docs`; the checker derives scope from phases marked incomplete in the roadmap (`77-01-SUMMARY.md`, `test/docs/demo_guide_drift_test.exs:901-946`).
