@@ -468,15 +468,15 @@ defmodule Relyra.Security.Signature do
 
   # Read the SignedInfo's own ds:CanonicalizationMethod InclusiveNamespaces
   # PrefixList when present (reusing the C14N.prefix_list_from_transforms/1 shape,
-  # which scans a node for an InclusiveNamespaces descendant). Empty list is the
-  # DERIVED result for the local signer (Open Q2), NOT a hardcoded default.
+  # which scans a node for an InclusiveNamespaces descendant). An absent list
+  # produces an empty list from the canonicalization parameters.
   defp signed_info_prefix_list(signed_info_node) do
     C14N.prefix_list_from_transforms(signed_info_node)
   end
 
   # Tolerate internal whitespace: real IdPs (ADFS, Shibboleth, OpenSAML stacks)
   # line-wrap <ds:SignatureValue>/<ds:DigestValue> base64 at 64/76 columns
-  # (WR-01). Without `ignore: :whitespace`, Base.decode64/1 rejects embedded
+  # Without `ignore: :whitespace`, Base.decode64/1 rejects embedded
   # newlines, yielding spurious :invalid_signature / :digest_mismatch on
   # legitimately signed material.
   defp decode_b64(value) when is_binary(value), do: Base.decode64(value, ignore: :whitespace)
