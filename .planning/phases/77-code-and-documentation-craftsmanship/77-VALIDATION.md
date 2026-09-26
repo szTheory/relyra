@@ -63,9 +63,9 @@ None. Acceptance evidence remains deterministic and automated; source review doe
 ## Validation Sign-Off
 
 - [x] All plan tasks have a focused automated verify command or a documented Wave 0 dependency.
-- [ ] Sampling continuity: no three consecutive tasks without automated verification.
+- [x] Sampling continuity: every task names an automated verification command.
 - [x] Wave 0 covers the existing framework and lane references.
-- [ ] No watch-mode flags.
+- [x] No watch-mode flags.
 - [ ] Feedback latency stays within the focused-lane target.
 - [ ] `nyquist_compliant: true` set after validation evidence passes.
 
