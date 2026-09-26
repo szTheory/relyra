@@ -1,6 +1,6 @@
 ---
 phase: 75-saas-twin-domain-realism
-verified: 2026-09-26T02:32:06Z
+verified: 2026-09-26T16:59:19Z
 status: passed
 score: 5/5
 covered_files:
@@ -30,7 +30,7 @@ covered_files:
   - demo/ledger_loop/test/twin/provider_test.exs
   - demo/ledger_loop/test/twin/reset_test.exs
   - test/support/adoption_evidence.ex
-covered_digest: "v1:sha256:248709ab5fefc60f8ee0ce1d70cdd1d028065af5a020e725903dd41d5687c1e1"
+covered_digest: "v1:sha256:dc01fefbec2526e150dc6feb441813a3f5d6cf7b3344d7a646e9cf3c9d0ce650"
 behavior_unverified: 0
 overrides_applied: 0
 decision_coverage:
@@ -43,9 +43,9 @@ decision_coverage:
 
 **Phase Goal:** LedgerLoop behaves like a small, comprehensible SaaS adopter whose people, tenants, providers, trust states, and operational history support realistic journeys.
 
-**Verified:** 2026-09-26T02:32:06Z  
+**Verified:** 2026-09-26T16:59:19Z
 **Status:** PASSED  
-**Re-verification:** No
+**Re-verification:** Refreshed after Phase 76 completion and evidence-ledger updates. Phase 75 implementation paths remain unchanged; the current demo-app lane and repository warnings gate passed.
 
 ## Goal Achievement
 
@@ -57,7 +57,7 @@ decision_coverage:
 | 2 | Connections vary by tenant, provider, readiness, and health without cross-tenant leakage or identical Northstar-only configuration. | ✓ VERIFIED | `provider_test.exs` joins each fixture connection's `organization_id` to a persisted tenant and checks the complete connection catalog. It asserts Harborline's Google Workspace identity and Northstar's draft/Entra connection. `certificate_history_test.exs` separates enabled readiness from metadata-source degradation/recovery; `reset_test.exs` preserves unrelated tenant/connection sentinels. All five twin owner tests are registered in the mandatory `ci.demo_app` evidence ledger. |
 | 3 | Metadata revisions and active, next, expiring, retired, degraded, and recovered certificate/trust states form an understandable history. | ✓ VERIFIED | `certificate_history_test.exs` queries ordered registered/applied/fetch-failed/recovered revisions for one connection/source, checks the active and last-known-good pointers reference the applied recovery revision, checks active/next/retired certificates and expiring validity against the fixture clock, and checks separate degraded/recovered audit entries and redacted row summaries. Rollover PEM fixtures are parseable certificates with DER-derived SHA-256 fingerprints. |
 | 4 | One synthetic support incident has symptom, diagnosis, remediation, retry, and recovery states with trace and audit evidence. | ✓ VERIFIED | `incident_timeline_test.exs` calls the support route, verifies its trace destination, asserts exactly the five ordered audit stages and six named login-trace steps share the incident correlation, and exercises the existing exporter to verify hashed correlation and allow-listed fields. Stored summaries are checked for protected payload markers. |
-| 5 | Reset produces the same isolated, redaction-safe story each time, with every fixture row serving a named scenario. | ✓ VERIFIED | `reset_test.exs` compares complete snapshots of every fixture-owned tenant and Relyra row across consecutive resets, checks fixture catalog ownership and safe audit summaries, and proves unrelated tenant/connection sentinels survive unchanged. Reset scopes deletes to catalog-owned IDs and reconstructs rows within a transaction. Current mandatory `mix ci.demo_app` passed 97 tests with 0 failures. |
+| 5 | Reset produces the same isolated, redaction-safe story each time, with every fixture row serving a named scenario. | ✓ VERIFIED | `reset_test.exs` compares complete snapshots of every fixture-owned tenant and Relyra row across consecutive resets, checks fixture catalog ownership and safe audit summaries, and proves unrelated tenant/connection sentinels survive unchanged. Reset scopes deletes to catalog-owned IDs and reconstructs rows within a transaction. Current mandatory `mix ci.demo_app` passed 106 tests with 0 failures. |
 
 **Score:** 5/5 roadmap truths verified; 0 behavior-unverified.
 
@@ -101,11 +101,11 @@ decision_coverage:
 
 | Behavior | Command | Result | Status |
 |---|---|---|---|
-| Tenant/provider/trust/incident/reset acceptance owners | `mix ci.demo_app` | 97 tests, 0 failures (current execution evidence) | ✓ PASS |
-| Full repository warnings gate | `mix test --warnings-as-errors` | 929 tests, 0 failures (current execution evidence) | ✓ PASS |
+| Tenant/provider/trust/incident/reset acceptance owners | `mix ci.demo_app` | 106 tests, 0 failures (current execution evidence) | ✓ PASS |
+| Full repository warnings gate | `mix test --warnings-as-errors` | 935 tests, 0 failures (10 excluded) | ✓ PASS |
 | Optional visual-fixture isolation | Incident owner with visual fixture enabled externally | Owner passed; setup clears the optional environment setting and restores it on exit | ✓ PASS |
 | Security regression lane | `mix ci.security` | Passed as standalone command (current execution evidence) | ✓ PASS |
-| Phase 73 reconciliation compatibility | `mix run -e 'Relyra.Phase73Reconciliation.validate_repository!(File.cwd!())'` and `mix ci.phase73.reconciliation` | Validation passed; replay: 1 test, 0 failures (current execution evidence) | ✓ PASS |
+| Phase 73 reconciliation compatibility | `mix ci.phase73.reconciliation` | 1 test, 0 failures (5 excluded); current proof and report replay passed. | ✓ PASS |
 
 ### Probe Execution
 
@@ -152,5 +152,5 @@ No gaps found. All five roadmap success criteria and TWIN-01 through TWIN-05 are
 
 ---
 
-_Verified: 2026-09-26T02:32:06Z_  
+_Verified: 2026-09-26T16:59:19Z_
 _Verifier: the agent (gsd-verifier)_
