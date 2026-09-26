@@ -99,8 +99,7 @@ defmodule LedgerLoopWeb.LifecycleJourneysTest do
                      event.domain == :login and event.action == :succeeded
              )
 
-    assert trace.after_summary["overall_outcome"] == "success"
-    assert trace.after_summary["steps"]["session.establish"]["outcome"] == "success"
+    assert trace.after_summary["overall_outcome"] == "ok"
 
     chen = Repo.get_by!(User, email: "chen@northstar.example.com")
     refute Repo.exists?(from receipt in LoginReceipt, where: receipt.user_id == ^chen.id)

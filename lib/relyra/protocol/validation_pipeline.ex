@@ -335,9 +335,7 @@ defmodule Relyra.Protocol.ValidationPipeline do
          opts
        ) do
     %{
-      connection_id:
-        read_field(protocol_payload, :connection_id) ||
-          expected_connection_id(request_intent, connection),
+      connection_id: expected_connection_id(request_intent, connection),
       issuer: Map.get(protocol_payload, :issuer),
       in_response_to: Map.get(protocol_payload, :in_response_to),
       signed_xml_id: signed_node.xml_id,
