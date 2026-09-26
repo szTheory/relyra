@@ -349,17 +349,15 @@ These controls are project invariants, quoted in `AGENTS.md`; this phase must no
 | A2 | The `test_ignore_filters` entry suppresses warnings for fixture candidates in the project's supported Mix version. | Summary / Pitfalls | A Mix-version behavior difference could leave warnings; confirm with normal CI output. |
 | A3 | No new package or external dependency will be needed. | Standard Stack / Environment | Adding tooling would require package legitimacy review and dependency approval. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does current root QA still emit any golden fixture warning?**
-   - What we know: The baseline reported four files on 2026-09-09; current tracked inventory includes only `relyra_snippet.exs`; the current project ignore filter covers the fixture path.
-   - What's unclear: No test/QA command was run during research, by instruction.
-   - Recommendation: Have the planner assign one deterministic run in the relevant planned validation task; if no warning appears, disposition QUAL-73-004 as already resolved with current config/output evidence and do not edit the fixture.
+1. **Does current root QA still emit any golden fixture warning? — Resolved disposition: QUAL-73-004 remains open pending a successful fresh QA run.**
+   - Evidence: The historical Plan 77-03 `mix qa` run exited 2 after 942 tests with 4 failures and no warning lines (`77-03-SUMMARY.md`). A nonzero run is not green evidence and cannot close the finding.
+   - Resolution: Task 3 must refresh this disposition from its own final `mix qa` result. Close QUAL-73-004 only if a fresh run exits 0; otherwise preserve it as open/deferred and report the blocker. Do not alter golden fixtures based on the stale 2026-09-09 inventory alone.
 
-2. **Does the policy contract need an isolated archive fixture?**
-   - What we know: The test scopes its scan to incomplete phases, and current active-phase static inspection reports no matches.
-   - What's unclear: The current live-repository test does not directly assert a completed archived phase containing quoted policy vocabulary is ignored.
-   - Recommendation: Add one small deterministic fixture characterization only if needed to close QUAL-73-006 robustly; retain its marker rejection for active incomplete phases.
+2. **Does the policy contract need an isolated archive fixture? — Resolved disposition: existing evidence is sufficient for QUAL-73-006 absent a concrete false positive.**
+   - Evidence: Plan 77-01's quoted-versus-active fixture and the live incomplete-phase check passed `mix ci.docs`; the checker derives scope from phases marked incomplete in the roadmap (`77-01-SUMMARY.md`, `test/docs/demo_guide_drift_test.exs:901-946`).
+   - Resolution and limit: This establishes the current contract's distinction between active requirements and quoted examples, so a separate completed-archive fixture is unnecessary unless a concrete false positive appears. No isolated completed-archive fixture was run; preserve that evidence limit and retain rejection of prohibited markers in active incomplete phases.
 
 ## Sources
 

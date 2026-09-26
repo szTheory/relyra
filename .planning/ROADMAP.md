@@ -335,12 +335,13 @@ standalone documentation, with high-value findings resolved and security rationa
 5. Every critical/high baseline finding is fixed, stopped at an approval checkpoint, or
    dispositioned with concrete evidence and rationale.
 
-**Plans:** 3/3 plans executed
+**Plans:** 3/4 plans executed; one gap-closure plan remains
 
 Plans:
 **Wave 1**
 
 - [x] 77-01-PLAN.md — Context-aware acceptance policy and standalone docs
+- [ ] 77-04-PLAN.md — Close evidence, lifecycle, and Phase 73 reconciliation blockers
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
