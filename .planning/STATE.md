@@ -6,16 +6,16 @@ current_phase: 77
 current_phase_name: Code and Documentation Craftsmanship
 current_plan: 3
 status: executing
-stopped_at: Completed 77-02-PLAN.md
-last_updated: "2026-09-26T19:07:04.075Z"
+stopped_at: Halted 77-03 after required evidence and QA gates failed
+last_updated: "2026-09-26T19:46:26.993Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 77 execution started
-state_head: aee8e9ca01b55da0a6cde22e82d6c48594d1e798
+state_head: 195694ab581ffa4752ebae40c09098ccc698942f
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 49
-  completed_plans: 48
+  completed_plans: 49
   percent: 57
 ---
 
@@ -198,11 +198,11 @@ Last activity: 2026-09-26 — Phase 77 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-26T19:07:04.034Z
+**Last session:** 2026-09-26T19:46:26.951Z
 
-**Stopped at:** Completed 77-02-PLAN.md
+**Stopped at:** Halted 77-03 after required evidence and QA gates failed
 
-**Resume file:** None
+**Resume file:** .planning/phases/77-code-and-documentation-craftsmanship/77-03-SUMMARY.md
 
 ## Operator Next Step
 
@@ -253,7 +253,12 @@ Run `$gsd-discuss-phase 77` to begin the next planned phase.
 | Phase 76 P5 | 42 min | 2 tasks | 17 files |
 | Phase 77 P1 | 11min | 2 tasks | 3 files |
 | Phase 77 P02 | 13 min | 2 tasks | 3 files |
+| Phase 77 P03 | 27min | 3 tasks | 2 files |
 
 ### Resolved Issues
 
 - Phoenix was upgraded from 1.8.7 to 1.8.13 in `ae1f0aa`, resolving GHSA-63mc-hw7g-86rr and GHSA-6983-jfq8-485w; `mix ci.security` passes.
+
+### Blockers
+
+- 77-03 halted: mix ci.evidence exits 1 on Phase 73 lifecycle and active-plan contract failures; mix qa and mix test --warnings-as-errors exit 2 on those failures plus the Phase 73 pinned manifest hash mismatch. Resolve in owning phases, then rerun gates.
