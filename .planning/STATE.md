@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 77
 current_phase_name: Code and Documentation Craftsmanship
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 77-05-PLAN.md
-last_updated: "2026-09-27T01:06:12.876Z"
+stopped_at: Completed 77-06-PLAN.md
+last_updated: "2026-09-27T01:38:17.037Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 77 execution started
-state_head: afd19414f25cf47eee0d0fe3f76ce2564651d21a
+state_head: 0556807b7bc835d83eb171adff0d5782082d4fea
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 51
-  completed_plans: 51
+  total_plans: 52
+  completed_plans: 52
   percent: 57
 ---
 
@@ -36,8 +36,8 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 77 (Code and Documentation Craftsmanship) — EXECUTING
 
-Current Plan: 2
-Total Plans in Phase: 5
+Current Plan: 3
+Total Plans in Phase: 6
 Next gate: Complete automated verification of the Phase 77 closeout, then plan Phase 78.
 
 Status: Ready to execute
@@ -162,6 +162,7 @@ Last activity: 2026-09-26 — Phase 77 execution started
 - [Phase 77]: Bound signature rationale checks to source comments and @doc text, excluding executable code and policy strings.
 - [Phase 77]: Only homogeneous same-character runs of sufficient length close a Markdown fence.
 - [Phase 77]: Quoted fence contents are removed before inline-code and blockquote filtering.
+- [Phase 77]: Backtick fence openers reject backticks in info strings while tilde info strings remain permissive.
 
 ### Baseline Findings
 
@@ -200,9 +201,9 @@ Last activity: 2026-09-26 — Phase 77 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-27T01:06:12.831Z
+**Last session:** 2026-09-27T01:38:16.999Z
 
-**Stopped at:** Completed 77-05-PLAN.md
+**Stopped at:** Completed 77-06-PLAN.md
 
 **Resume file:** None
 
@@ -257,6 +258,7 @@ Run `$gsd-discuss-phase 77` to begin the next planned phase.
 | Phase 77 P02 | 13 min | 2 tasks | 3 files |
 | Phase 77 P03 | 27min | 3 tasks | 2 files |
 | Phase 77 P05 | 9min | 2 tasks | 1 files |
+| Phase 77 P06 | 8min | 2 tasks | 1 files |
 
 ### Resolved Issues
 
