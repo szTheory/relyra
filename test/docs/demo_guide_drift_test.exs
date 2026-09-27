@@ -1077,11 +1077,49 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
 
   defp active_markdown_prose(markdown) do
     markdown
-    |> String.replace(~r/^ {0,3}(`{3,}|~{3,})[^\n]*\n.*?^ {0,3}\1[ \t]*$/ms, "")
+    |> strip_fenced_markdown()
     |> String.replace(~r/(`+)(?s:.*?)\1/, "")
     |> String.split("\n")
     |> Enum.reject(&Regex.match?(~r/^\s{0,3}>/, &1))
     |> Enum.join("\n")
+  end
+
+  defp strip_fenced_markdown(markdown) do
+    markdown
+    |> String.split("\n")
+    |> strip_fenced_lines(nil, [])
+    |> Enum.join("\n")
+  end
+
+  defp strip_fenced_lines([], _fence, active_lines), do: Enum.reverse(active_lines)
+
+  defp strip_fenced_lines([line | rest], nil, active_lines) do
+    case markdown_fence(line) do
+      nil -> strip_fenced_lines(rest, nil, [line | active_lines])
+      fence -> strip_fenced_lines(rest, fence, active_lines)
+    end
+  end
+
+  defp strip_fenced_lines([line | rest], {character, length} = fence, active_lines) do
+    if markdown_fence_close?(line, character, length) do
+      strip_fenced_lines(rest, nil, active_lines)
+    else
+      strip_fenced_lines(rest, fence, active_lines)
+    end
+  end
+
+  defp markdown_fence(line) do
+    case Regex.run(~r/^ {0,3}(`{3,}|~{3,})/, line, capture: :all_but_first) do
+      [fence] -> {String.first(fence), String.length(fence)}
+      _ -> nil
+    end
+  end
+
+  defp markdown_fence_close?(line, character, opening_length) do
+    case Regex.run(~r/^ {0,3}([`~]+)[ \t]*$/, line, capture: :all_but_first) do
+      [fence] -> String.first(fence) == character and String.length(fence) >= opening_length
+      _ -> false
+    end
   end
 
   defp temp_phase_dir!(suffix) do
