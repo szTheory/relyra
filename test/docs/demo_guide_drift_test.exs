@@ -1267,9 +1267,16 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
   end
 
   defp markdown_fence(line) do
-    case Regex.run(~r/^ {0,3}(`{3,}|~{3,})/, line, capture: :all_but_first) do
-      [fence] -> {String.first(fence), String.length(fence)}
-      _ -> nil
+    case Regex.run(~r/^ {0,3}(`{3,}|~{3,})(.*)$/, line, capture: :all_but_first) do
+      [fence, info] ->
+        if String.first(fence) == "`" and String.contains?(info, "`") do
+          nil
+        else
+          {String.first(fence), String.length(fence)}
+        end
+
+      _ ->
+        nil
     end
   end
 
