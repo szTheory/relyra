@@ -93,6 +93,43 @@ defmodule Relyra.AdoptionEvidence do
     failure_diagnostics: "EVID-02 reports the requirement and missing deterministic seam"
   }
 
+  @pipe_02_entry %{
+    id: "pipe-02-criterion-owner-ledger",
+    requirement: "PIPE-02",
+    personas: [:security_reviewer, :sre],
+    job: "prove every mandatory criterion has one primary owner",
+    expected_outcome:
+      "duplicate primary assignments fail and labeled defenses remain independent",
+    evidence_kind: :security_corpus,
+    owner: "test/adoption/evidence_contract_test.exs",
+    selector: "evidence_contract",
+    lane: "ci.evidence",
+    state: :existing,
+    fixture_owner: "repository evidence contract",
+    reset_boundary: "fresh test process and temporary repository fixtures",
+    failure_diagnostics: "PIPE-02 identifies the duplicate primary criterion or owner chain",
+    criterion: "one-primary-owner-per-mandatory-criterion",
+    owner_kind: :mix_exunit,
+    owner_role: :primary,
+    workflow_job: "security",
+    workflow_step: "Evidence contract"
+  }
+
+  @independent_defenses [
+    %{
+      id: "pipe-02-gate02-independent-defense",
+      requirement: "PIPE-02",
+      criterion: "gate02-c14n-independent-defense",
+      owner: "test/security/xml/corpus_security_test.exs",
+      selector: "gate02_c14n",
+      command: "mix test --only gate02_c14n --warnings-as-errors",
+      workflow_job: "security",
+      workflow_step: "GATE-02 binary gate (gate02_c14n zero regressions)",
+      owner_kind: :mix_exunit,
+      owner_role: :defense
+    }
+  ]
+
   @evid_03_contract_entry %{
     id: "evid-03-deterministic-canary-contract",
     requirement: "EVID-03",
@@ -228,8 +265,6 @@ defmodule Relyra.AdoptionEvidence do
      "test/quality/tracked_tree_test.exs", "ci.quality"},
     {"QUAL-06", [:security_reviewer], "inspect dispositions for high-value findings",
      :package_contract, "test/quality/finding_disposition_test.exs", "ci.quality"},
-    {"PIPE-02", [:sre, :security_reviewer], "prove every mandatory criterion has one owner",
-     :security_corpus, "test/ci/ownership_contract_test.exs", "ci.quality"},
     {"PIPE-03", [:sre], "verify measured safe CI parallelism", :package_contract,
      "test/ci/parallelism_contract_test.exs", "ci.quality"},
     {"PIPE-04", [:sre, :security_reviewer], "verify workflow operational hygiene",
@@ -271,6 +306,7 @@ defmodule Relyra.AdoptionEvidence do
   @entries (@existing_entries ++
               [
                 @evid_02_entry,
+                @pipe_02_entry,
                 @evid_03_contract_entry,
                 @evid_03_scheduled_entry
               ] ++
@@ -293,7 +329,7 @@ defmodule Relyra.AdoptionEvidence do
                end
 
              Map.merge(entry, %{
-               criterion: entry.id,
+               criterion: Map.get(entry, :criterion, entry.id),
                owner_kind: owner_kind,
                owner_role: :primary,
                workflow_job: workflow_job,
@@ -302,6 +338,8 @@ defmodule Relyra.AdoptionEvidence do
            end)
 
   def entries, do: @entries
+
+  def independent_defenses, do: @independent_defenses
 
   def validate_entries!(entries) when is_list(entries) and entries != [] do
     Enum.each(entries, &validate_entry!/1)
@@ -314,6 +352,22 @@ defmodule Relyra.AdoptionEvidence do
 
     if duplicate_ids != [] do
       raise ArgumentError, "duplicate evidence id(s): #{Enum.join(duplicate_ids, ", ")}"
+    end
+
+    duplicate_primary_criteria =
+      entries
+      |> Enum.filter(&(&1.owner_role == :primary))
+      |> Enum.frequencies_by(&{&1.requirement, &1.criterion})
+      |> Enum.filter(fn {_key, count} -> count > 1 end)
+      |> Enum.map(&elem(&1, 0))
+
+    if duplicate_primary_criteria != [] do
+      formatted =
+        Enum.map_join(duplicate_primary_criteria, ", ", fn {requirement, criterion} ->
+          "#{requirement}/#{criterion}"
+        end)
+
+      raise ArgumentError, "duplicate primary criterion assignment(s): #{formatted}"
     end
 
     requirements = MapSet.new(entries, & &1.requirement)

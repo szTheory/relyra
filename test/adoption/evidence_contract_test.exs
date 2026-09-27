@@ -710,6 +710,40 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     end
   end
 
+  test "PIPE-02 has one primary criterion and a separately labeled GATE-02 defense" do
+    entries = AdoptionEvidence.entries()
+    [primary] = AdoptionEvidence.deterministic_owners(entries, "PIPE-02")
+
+    assert primary.criterion == "one-primary-owner-per-mandatory-criterion"
+    assert primary.owner_role == :primary
+    assert primary.owner == "test/adoption/evidence_contract_test.exs"
+    assert primary.selector == "evidence_contract"
+    assert primary.lane == "ci.evidence"
+
+    defense = AdoptionEvidence.independent_defenses() |> List.first()
+    assert defense.owner_role == :defense
+    assert defense.requirement == "PIPE-02"
+    assert defense.owner == "test/security/xml/corpus_security_test.exs"
+    assert defense.selector == "gate02_c14n"
+    assert defense.workflow_step == "GATE-02 binary gate (gate02_c14n zero regressions)"
+
+    assert workflow_step_command(File.read!(@workflow_path), defense.workflow_step) ==
+             "mix test --only gate02_c14n --warnings-as-errors"
+  end
+
+  test "duplicate primary assignments for one criterion are rejected independently of row id" do
+    entries = AdoptionEvidence.entries()
+    [owner | _] = AdoptionEvidence.deterministic_owners(entries, "PIPE-02")
+    duplicate = %{owner | id: "pipe-02-duplicate-primary-row"}
+
+    assert_raise ArgumentError, ~r/duplicate primary criterion assignment.*PIPE-02/s, fn ->
+      AdoptionEvidence.validate_entries!(entries ++ [duplicate])
+    end
+
+    defense = Map.merge(duplicate, %{id: "pipe-02-independent-defense", owner_role: :defense})
+    assert :ok = AdoptionEvidence.validate_entries!(entries ++ [defense])
+  end
+
   test "row schema rejects unknown states and silently discarded fields with row diagnostics" do
     [row | _] = AdoptionEvidence.entries()
 
