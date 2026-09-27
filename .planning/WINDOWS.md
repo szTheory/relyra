@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 4
+open_count: 3
 waived_count: 1
-fixed_count: 26
+fixed_count: 27
 total_count: 31
-last_updated: 2026-09-27T01:08:05.033Z
+last_updated: 2026-09-27T01:09:02.253Z
 ---
 
 # Broken Windows Ledger
@@ -45,7 +45,7 @@ last_updated: 2026-09-27T01:08:05.033Z
 | 28 | 73 | deviation | .planning/STATE.md |  | Corrected last-plan lifecycle and percentage fields after SDK reduction | fixed |  | 2026-09-11T22:28:38.628Z | 2026-09-11T22:28:55.649Z |
 | 29 | 76 | unrun-verify | demo/ledger_loop/test/ledger_loop_web/lifecycle_journeys_test.exs |  | Concurrent duplicate ACS submissions remain unautomated because ConnCase does not expose its SQL Sandbox owner PID and Sandbox.allow returned :not_found. | open |  | 2026-09-26T12:57:07.799Z |  |
 | 30 | 76 | deviation | demo/ledger_loop/test/ledger_loop/demo/trust_lifecycle_test.exs |  | The shared SQL Sandbox owner connection cannot coordinate two simultaneous certificate transitions; the one-winner race remains an automation gap, while the supported stale-write hook verifies conflict rollback and retry. | open |  | 2026-09-26T13:15:00.284Z |  |
-| 31 | 77 | deviation | test/docs/demo_guide_drift_test.exs |  | The fence closer now rejects mixed backtick and tilde runs. | open |  | 2026-09-27T01:08:05.033Z |  |
+| 31 | 77 | deviation | test/docs/demo_guide_drift_test.exs |  | The fence closer now rejects mixed backtick and tilde runs. | fixed |  | 2026-09-27T01:08:05.033Z | 2026-09-27T01:09:02.253Z |
 
 ````json
 [
@@ -432,10 +432,10 @@ last_updated: 2026-09-27T01:08:05.033Z
     "file": "test/docs/demo_guide_drift_test.exs",
     "line": null,
     "description": "The fence closer now rejects mixed backtick and tilde runs.",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-09-27T01:08:05.033Z",
-    "resolved_at": null,
+    "resolved_at": "2026-09-27T01:09:02.253Z",
     "milestone": "v1.11"
   }
 ]
