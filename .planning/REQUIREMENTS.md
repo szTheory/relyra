@@ -50,10 +50,10 @@
 ### CI Quality
 
 - [x] **PIPE-01**: Maintainer can inspect current CI duration, duplication, ownership, cache behavior, and failure-mode evidence before optimization.
-- [ ] **PIPE-02**: Every mandatory acceptance criterion has one clearly named owning lane without hollow or silently skipped gates.
+- [x] **PIPE-02**: Every mandatory acceptance criterion has one clearly named owning lane without hollow or silently skipped gates.
 - [ ] **PIPE-03**: CI uses safe parallelism and caching where measurements show value while preserving independent security defenses.
 - [ ] **PIPE-04**: Workflows use consistent naming, least-privilege permissions, non-colliding concurrency, and redaction-safe artifacts.
-- [ ] **PIPE-05**: `mix qa`, warnings-as-errors tests, formatting, `mix ci.security`, consumer contracts, demo tests, and required browser journeys remain green.
+- [x] **PIPE-05**: `mix qa`, warnings-as-errors tests, formatting, `mix ci.security`, consumer contracts, demo tests, and required browser journeys remain green.
 
 ### Repository and GitHub Hygiene
 
@@ -117,10 +117,10 @@
 | QUAL-05 | Phase 77 | Complete |
 | QUAL-06 | Phase 77 | Complete |
 | PIPE-01 | Phase 73 | Complete |
-| PIPE-02 | Phase 78 | Pending |
+| PIPE-02 | Phase 78 | Complete |
 | PIPE-03 | Phase 78 | Pending |
 | PIPE-04 | Phase 78 | Pending |
-| PIPE-05 | Phase 78 | Pending |
+| PIPE-05 | Phase 78 | Complete |
 | REPO-01 | Phase 79 | Pending |
 | REPO-02 | Phase 79 | Pending |
 | REPO-03 | Phase 79 | Pending |
