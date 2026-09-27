@@ -951,6 +951,25 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert [^expected_violation] = phase_policy_violations(phase_dir)
   end
 
+  @tag :inline_code_delimiter_boundary
+  test "malformed inline code does not expose a later quoted policy marker" do
+    phase_dir = temp_phase_dir!("77-inline-code-boundary")
+    document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+    File.write!(
+      document_path,
+      """
+      An unmatched four-tick run ```` in prose precedes the report sample.
+      | 21 | Generated Phase 77 verification prose containing a malformed inline-code example does not create a false active-policy violation in the incomplete-phase scan. | ✗ FAILED | The reproduction line `A line such as ` ```elixir`invalid` is accepted as an opener even though backticks are forbidden in a backtick-fence info string; the scanner then consumes `status: human_needed` through EOF.` is malformed inline Markdown; in `active_markdown_prose/1` (lines 1239–1243), the same-run inline-code regex consumes the wrong delimiter boundary and leaves the marker visible. This is distinct from the now-fixed fence-opener case. |
+      Another quoted control: `status: human_needed`.
+      <human-check> remains active after the sample.
+      """
+    )
+
+    expected_violation = "#{document_path} contains \"<human-check>\""
+    assert [^expected_violation] = phase_policy_violations(phase_dir)
+  end
+
   test "longer Markdown closing fences keep examples quoted and resume active scanning" do
     phase_dir = temp_phase_dir!("77-long-fence")
     document_path = Path.join(phase_dir, "77-CONTEXT.md")
