@@ -421,10 +421,43 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   def deterministic_owners(entries, requirement) do
-    Enum.filter(entries, fn entry ->
-      entry.requirement == requirement and entry.state == :existing and
-        entry.evidence_kind != :external_canary and entry.owner_role == :primary
-    end)
+    owners =
+      Enum.filter(entries, fn entry ->
+        entry.requirement == requirement and entry.state == :existing and
+          entry.evidence_kind != :external_canary and entry.owner_role == :primary
+      end)
+
+    if owners == [], do: [], else: normalize_primary_owners!(owners)
+  end
+
+  def normalize_primary_owners!(owners) when is_list(owners) and owners != [] do
+    Enum.each(owners, &validate_entry!/1)
+
+    unless Enum.all?(owners, &(&1.owner_role == :primary)) do
+      raise ArgumentError, "primary owner collection contains a non-primary row"
+    end
+
+    duplicate_criteria =
+      owners
+      |> Enum.frequencies_by(&{&1.requirement, &1.criterion})
+      |> Enum.filter(fn {_key, count} -> count > 1 end)
+      |> Enum.map(&elem(&1, 0))
+
+    if duplicate_criteria != [] do
+      formatted =
+        Enum.map_join(duplicate_criteria, ", ", fn {requirement, criterion} ->
+          "#{requirement}/#{criterion}"
+        end)
+
+      raise ArgumentError, "duplicate primary criterion assignment(s): #{formatted}"
+    end
+
+    Enum.sort_by(owners, &{&1.requirement, &1.criterion})
+  end
+
+  def normalize_primary_owners!(owners) do
+    raise ArgumentError,
+          "primary owner collection must be a non-empty list, got: #{inspect(owners)}"
   end
 
   def validate_closure!(entries, completed_requirements)

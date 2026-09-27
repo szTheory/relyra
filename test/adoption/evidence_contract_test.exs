@@ -696,12 +696,14 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       AdoptionEvidence.validate_entries!([single])
     end
 
-    distinct = %{single | id: "distinct-owner-same-requirement"}
+    distinct = %{
+      single
+      | id: "distinct-owner-same-requirement",
+        criterion: "distinct-owner-same-requirement"
+    }
 
-    assert AdoptionEvidence.deterministic_owners([single, distinct], "EVID-01") == [
-             single,
-             distinct
-           ]
+    expected = Enum.sort_by([single, distinct], &{&1.requirement, &1.criterion})
+    assert AdoptionEvidence.deterministic_owners([single, distinct], "EVID-01") == expected
 
     for duplicate <- [single, Map.new(single)] do
       assert_raise ArgumentError, ~r/duplicate evidence id.*#{single.id}/, fn ->
@@ -742,6 +744,50 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     defense = Map.merge(duplicate, %{id: "pipe-02-independent-defense", owner_role: :defense})
     assert :ok = AdoptionEvidence.validate_entries!(entries ++ [defense])
+  end
+
+  test "primary owner normalization preserves adjacency and sorts canonically" do
+    [pipe_owner] = AdoptionEvidence.deterministic_owners(AdoptionEvidence.entries(), "PIPE-02")
+
+    second_criterion = %{
+      pipe_owner
+      | id: "pipe-02-second-criterion-same-lane",
+        criterion: "mandatory-lane-must-block",
+        expected_outcome: "the named workflow lane remains blocking"
+    }
+
+    normalized = AdoptionEvidence.normalize_primary_owners!([second_criterion, pipe_owner])
+
+    assert Enum.map(normalized, & &1.criterion) ==
+             Enum.sort([second_criterion.criterion, pipe_owner.criterion])
+
+    assert Enum.map(normalized, & &1.lane) == ["ci.evidence", "ci.evidence"]
+    assert length(normalized) == 2
+
+    reversed = AdoptionEvidence.normalize_primary_owners!(Enum.reverse(normalized))
+    assert reversed == normalized
+  end
+
+  test "primary owner normalization rejects nil, empty, and repeated criterion assignments" do
+    [owner | _] = AdoptionEvidence.deterministic_owners(AdoptionEvidence.entries(), "PIPE-02")
+
+    assert_raise ArgumentError, ~r/non-empty list.*nil/, fn ->
+      AdoptionEvidence.normalize_primary_owners!(nil)
+    end
+
+    assert_raise ArgumentError, ~r/non-empty list/, fn ->
+      AdoptionEvidence.normalize_primary_owners!([])
+    end
+
+    assert AdoptionEvidence.normalize_primary_owners!([owner]) == [owner]
+
+    repeated = %{owner | id: "pipe-02-repeated-primary-row"}
+
+    for collection <- [[owner, repeated], [owner, owner, repeated]] do
+      assert_raise ArgumentError, ~r/duplicate primary criterion assignment.*PIPE-02/s, fn ->
+        AdoptionEvidence.normalize_primary_owners!(collection)
+      end
+    end
   end
 
   test "row schema rejects unknown states and silently discarded fields with row diagnostics" do
