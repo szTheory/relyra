@@ -982,6 +982,147 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert [^expected_violation] = phase_policy_violations(phase_dir)
   end
 
+  test "Markdown fence boundaries keep quoted directives out and scan after valid closes" do
+    valid_fences = [
+      %{
+        name: "backtick equal",
+        opener: "```yaml",
+        content: ["status: human_needed"],
+        close: "```"
+      },
+      %{
+        name: "backtick longer",
+        opener: "```yaml",
+        content: ["status: human_needed"],
+        close: "````"
+      },
+      %{
+        name: "indented backtick with whitespace",
+        opener: "   ```yaml",
+        content: ["status: human_needed"],
+        close: "   ```` \t"
+      },
+      %{name: "tilde equal", opener: "~~~yaml", content: ["status: human_needed"], close: "~~~"},
+      %{
+        name: "tilde longer",
+        opener: "~~~yaml",
+        content: ["status: human_needed"],
+        close: "~~~~"
+      },
+      %{
+        name: "indented tilde with whitespace",
+        opener: "   ~~~yaml",
+        content: ["status: human_needed"],
+        close: "   ~~~~ \t"
+      }
+    ]
+
+    non_closing_boundaries = [
+      %{name: "shorter backtick run", opener: "````yaml", candidate: "```", close: "````"},
+      %{name: "shorter tilde run", opener: "~~~~yaml", candidate: "~~~", close: "~~~~"},
+      %{
+        name: "opposite character after backticks",
+        opener: "```yaml",
+        candidate: "~~~",
+        close: "```"
+      },
+      %{
+        name: "opposite character after tildes",
+        opener: "~~~yaml",
+        candidate: "```",
+        close: "~~~"
+      },
+      %{
+        name: "mixed run after backticks",
+        opener: "```yaml",
+        candidate: "```~~~",
+        close: "```"
+      },
+      %{
+        name: "mixed run after tildes",
+        opener: "~~~yaml",
+        candidate: "~~~```",
+        close: "~~~"
+      },
+      %{
+        name: "backtick trailing content",
+        opener: "```yaml",
+        candidate: "``` trailing",
+        close: "```"
+      },
+      %{
+        name: "tilde trailing content",
+        opener: "~~~yaml",
+        candidate: "~~~ trailing",
+        close: "~~~"
+      },
+      %{
+        name: "over-indented backtick run",
+        opener: "```yaml",
+        candidate: "    ```",
+        close: "```"
+      },
+      %{name: "over-indented tilde run", opener: "~~~yaml", candidate: "    ~~~", close: "~~~"}
+    ]
+
+    Enum.each(valid_fences, fn boundary ->
+      phase_dir = temp_phase_dir!("77-valid-" <> String.replace(boundary.name, " ", "-"))
+      document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+      File.write!(
+        document_path,
+        Enum.join(
+          [boundary.opener | boundary.content] ++
+            [boundary.close, "<human-check> active after close."],
+          "\n"
+        )
+      )
+
+      expected_violation = "#{document_path} contains \"<human-check>\""
+      assert [^expected_violation] = phase_policy_violations(phase_dir), boundary.name
+    end)
+
+    Enum.each(non_closing_boundaries, fn boundary ->
+      phase_dir = temp_phase_dir!("77-non-close-" <> String.replace(boundary.name, " ", "-"))
+      document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+      File.write!(
+        document_path,
+        Enum.join(
+          [
+            boundary.opener,
+            "status: human_needed",
+            boundary.candidate,
+            "status: human_needed",
+            boundary.close,
+            "<human-check> active after close."
+          ],
+          "\n"
+        )
+      )
+
+      expected_violation = "#{document_path} contains \"<human-check>\""
+      assert [^expected_violation] = phase_policy_violations(phase_dir), boundary.name
+    end)
+  end
+
+  test "an unclosed fence consumes policy text through end of file" do
+    phase_dir = temp_phase_dir!("77-unclosed-fence")
+    document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+    File.write!(
+      document_path,
+      """
+      ~~~yaml
+      status: human_needed
+          ~~~
+      <human-check> remains inside the unclosed fence.
+      """
+    )
+
+    assert phase_policy_violations(phase_dir) == []
+  end
+
   test "active incomplete phases still reject required UAT artifacts" do
     phase_dir = temp_phase_dir!("77-uat")
     uat_path = Path.join(phase_dir, "77-UAT.md")
