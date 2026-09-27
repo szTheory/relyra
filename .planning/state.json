@@ -31,7 +31,7 @@
     {
       "number": "78",
       "name": "CI Efficiency and Reliability",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "79",
@@ -40,9 +40,9 @@
     }
   ],
   "next": {
-    "command": "/gsd:execute-phase 78",
-    "label": "Execute Phase 78: CI Efficiency and Reliability",
-    "reason": "Seven plans in six waves passed independent review; Plan 78-01 owns the recorded lifecycle regression."
+    "command": "/gsd:debug",
+    "label": "Debug the blocker",
+    "reason": "Blocked · 1 blocker(s) — resolve before continuing"
   },
-  "updated_at": "2026-09-27T14:08:02.514Z"
+  "updated_at": "2026-09-27T16:57:46.082Z"
 }
