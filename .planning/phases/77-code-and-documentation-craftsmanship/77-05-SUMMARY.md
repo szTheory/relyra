@@ -81,6 +81,7 @@ status: complete
 - **Files modified:** `test/docs/demo_guide_drift_test.exs`
 - **Verification:** The mixed-run assertion failed before the fix and passed in the focused module and `mix ci.docs` afterward.
 - **Commit:** `afd1941`
+- **Broken-windows ledger:** `.planning/WINDOWS.md` entry 31.
 
 ## TDD Evidence
 
