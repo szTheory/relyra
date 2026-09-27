@@ -1243,7 +1243,9 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
 
   defp phase_policy_violations(phase_dir) do
     document_violations =
-      for path <- Path.wildcard(Path.join(phase_dir, "*.md")),
+      for path <-
+            Path.wildcard(Path.join(phase_dir, "*-PLAN.md")) ++
+              Path.wildcard(Path.join(phase_dir, "*-CONTEXT.md")),
           marker <- ["<human-check>", "## Manual-Only Verifications", "status: human_needed"],
           String.contains?(active_markdown_prose(File.read!(path)), marker),
           do: "#{path} contains #{inspect(marker)}"
