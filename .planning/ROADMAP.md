@@ -380,7 +380,33 @@ cost and security independence are understandable.
 4. `mix qa`, formatting, warnings-as-errors tests, `mix ci.security`, package-consumer,
    LedgerLoop, and required browser gates all pass from clean state.
 
-**Plans:** TBD
+**Plans:** 7 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 78-01-PLAN.md — Restore Phase 78 lifecycle and executable primary-lane ownership.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 78-02-PLAN.md — Measure current CI cost and apply justified safe reuse.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 78-03-PLAN.md — Prevent hollow Mix gates while preserving security independence.
+- [ ] 78-04-PLAN.md — Scope root and release workflow permissions, scheduling, and action pins.
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 78-05-PLAN.md — Preserve deterministic browser gates and separate scheduled canaries.
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 78-06-PLAN.md — Bound and redact browser and canary failure artifacts.
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 78-07-PLAN.md — Recapture source-bound proof and run the full clean-state matrix.
 
 ### Phase 79: Adopter-Ready Closeout
 

@@ -40,9 +40,9 @@
     }
   ],
   "next": {
-    "command": "/gsd:plan-phase 78",
-    "label": "Plan Phase 78: CI Efficiency and Reliability",
-    "reason": "Phase 78 discussion is complete and approved context is committed; no Phase 78 plans exist."
+    "command": "/gsd:execute-phase 78",
+    "label": "Execute Phase 78: CI Efficiency and Reliability",
+    "reason": "Seven plans in six waves passed independent review; Plan 78-01 owns the recorded lifecycle regression."
   },
-  "updated_at": "2026-09-27T13:19:46Z"
+  "updated_at": "2026-09-27T14:08:02.514Z"
 }
