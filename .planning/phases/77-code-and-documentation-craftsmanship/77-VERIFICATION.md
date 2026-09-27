@@ -1,8 +1,46 @@
 ---
 phase: 77-code-and-documentation-craftsmanship
-verified: 2026-09-27T07:29:42Z
+verified: 2026-09-27T08:01:20Z
 status: passed
 score: 21/21
+covered_files:
+  - .planning/phases/73-twin-contract-and-baseline/73-BASELINE.md
+  - .planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json
+  - .planning/phases/73-twin-contract-and-baseline/73-SECURITY.md
+  - .planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-01-PLAN.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-01-SUMMARY.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-02-PLAN.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-02-SUMMARY.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-03-PLAN.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-03-SUMMARY.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-04-PLAN.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-04-SUMMARY.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-05-PLAN.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-05-SUMMARY.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-06-PLAN.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-06-SUMMARY.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-07-PLAN.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-07-SUMMARY.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-08-PLAN.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-08-SUMMARY.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-CONTEXT.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-RESEARCH.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-REVIEW.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-SECURITY.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-UI-REVIEW.md
+  - .planning/phases/77-code-and-documentation-craftsmanship/77-VALIDATION.md
+  - docs/jtbd_gap_map.md
+  - guides/getting_started.md
+  - lib/relyra/security/signature.ex
+  - test/docs/demo_guide_drift_test.exs
+  - test/governance/milestone_scope_test.exs
+  - test/governance/phase_73_reconciliation_test.exs
+  - test/relyra/security/signature_crypto_test.exs
+  - test/security/xml/adversarial_crypto_test.exs
+  - test/support/adoption_evidence.ex
+  - test/support/phase_73_reconciliation.ex
+covered_digest: "v1:sha256:be418f07e7876db0308da456471b84b932ec9d5642ed000b1f900ef8d48086ad"
 re_verification:
   previous_status: gaps_found
   previous_score: 20/21
@@ -81,5 +119,5 @@ None. Acceptance is covered by deterministic automated evidence; no UAT gate is 
 
 ---
 
-_Verified: 2026-09-27T07:29:42Z_  
+_Verified: 2026-09-27T08:01:20Z_  
 _Verifier: Codex (inline goal-backward verification)_
