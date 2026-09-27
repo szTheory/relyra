@@ -15,7 +15,7 @@ actuals:
   tasks: 2
   commits: 2
 plan_head_before: 2b85c9b989e9884eaad4603fd4824a4bfe4fc885
-commits: 2
+commits: 3
 tech-stack:
   added: []
   patterns:
@@ -66,8 +66,9 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Reproduce policy false positives from generated evidence files** - `8309144` (test)
-2. **Task 2: Scan actionable phase contracts and exclude audit reports** - `ffeddb6` (fix)
+1. **Prior RED fixture retained from initial Plan 77-07 execution** - `2b85c9b` (test)
+2. **Task 1: Reproduce policy false positives from generated evidence files** - `8309144` (test)
+3. **Task 2: Scan actionable phase contracts and exclude audit reports** - `ffeddb6` (fix)
 
 ## Verification
 

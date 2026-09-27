@@ -54,8 +54,10 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Recognize a longer Markdown closing fence** — `30f4034` (RED test), `f63d465` (GREEN scanner).
-2. **Task 2: Lock fence boundaries into the docs lane** — `23146d9` (RED mixed-run regression), `afd1941` (GREEN homogeneous-run validation).
+1. **Task 1: Recognize a longer Markdown closing fence** — `30f4034` (RED test).
+2. **Task 1: Recognize a longer Markdown closing fence** — `f63d465` (GREEN scanner).
+3. **Task 2: Lock fence boundaries into the docs lane** — `23146d9` (RED mixed-run regression).
+4. **Task 2: Lock fence boundaries into the docs lane** — `afd1941` (GREEN homogeneous-run validation).
 
 **Plan metadata:** included with the summary, state, and roadmap close-out commit.
 
