@@ -6,11 +6,11 @@ current_phase: 78
 current_phase_name: CI Efficiency and Reliability
 current_plan: Not started
 status: planning
-stopped_at: Phase 77 complete, ready to plan Phase 78
-last_updated: "2026-09-27T08:02:11.531Z"
+stopped_at: Phase 78 context gathered (assumptions mode)
+last_updated: "2026-09-27T13:03:09.410Z"
 last_activity: 2026-09-27
 last_activity_desc: Phase 77 complete, transitioned to Phase 78
-state_head: 7d87ae0a2018a917415c3da357a5b6b38718d60f
+state_head: ab7de1c65dbdd24a46ef2edc70a31e21c3bddf9e
 progress:
   total_phases: 7
   completed_phases: 5
@@ -30,7 +30,7 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 **Last updated:** 2026-09-26
 
-**Current focus:** Phase 77 — Code and Documentation Craftsmanship
+**Current focus:** Phase 78 — CI Efficiency and Reliability
 
 ## Current Position
 
@@ -38,7 +38,7 @@ Phase: 78 — CI Efficiency and Reliability
 
 Current Plan: Not started
 Total Plans in Phase: 6
-Next gate: Complete automated verification of the Phase 77 closeout, then plan Phase 78.
+Next gate: Gather Phase 78 context and include the post-transition governance lifecycle regression in planning evidence.
 
 Status: Ready to plan
 
@@ -204,15 +204,19 @@ Last activity: 2026-09-27 — Phase 77 complete, transitioned to Phase 78
 
 ## Session Continuity
 
-**Last session:** 2026-09-27T07:58:33.008Z
+**Last session:** 2026-09-27T13:03:09.335Z
 
-**Stopped at:** Phase 77 complete, ready to plan Phase 78
+**Stopped at:** Phase 78 context gathered (assumptions mode)
 
-**Resume file:** None
+**Resume file:** .planning/phases/78-ci-efficiency-and-reliability/78-CONTEXT.md
 
 ## Operator Next Step
 
-Run `$gsd-discuss-phase 77` to begin the next planned phase.
+Run `$gsd-discuss-phase 78` to gather context for CI Efficiency and Reliability.
+
+Routing note: the GSD roadmap scan still reports Phases 73–76 as stale and may route
+generic progress back to Phase 73; Phase 77 verification is passed. Use the explicit
+Phase 78 discussion command to continue the current STATE position.
 
 ## Performance Metrics
 
@@ -269,6 +273,6 @@ Run `$gsd-discuss-phase 77` to begin the next planned phase.
 
 - Phoenix was upgraded from 1.8.7 to 1.8.13 in `ae1f0aa`, resolving GHSA-63mc-hw7g-86rr and GHSA-6983-jfq8-485w; `mix ci.security` passes.
 
-### Blockers
+## Blockers
 
-- None. The approved 77-04 follow-up resolved the prior evidence and QA blockers; automated phase verification is the remaining gate.
+- Post-transition focused test regression: ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix test test/governance/milestone_scope_test.exs --warnings-as-errors fails 4 of 81 tests because lifecycle assertions only allow current_phase through 77 while STATE is now 78. Include this baseline in Phase 78 planning; Phase 77 verification passed before the transition.
