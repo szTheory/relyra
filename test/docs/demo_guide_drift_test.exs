@@ -951,6 +951,37 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     assert [^expected_violation] = phase_policy_violations(phase_dir)
   end
 
+  test "longer Markdown closing fences keep examples quoted and resume active scanning" do
+    phase_dir = temp_phase_dir!("77-long-fence")
+    document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+    File.write!(
+      document_path,
+      """
+      ```yaml
+      An inner ``` code span cannot close the fence.
+      status: human_needed
+      ````
+      """
+    )
+
+    assert phase_policy_violations(phase_dir) == []
+
+    File.write!(
+      document_path,
+      """
+      ```yaml
+      An inner ``` code span cannot close the fence.
+      status: human_needed
+      ````
+      <human-check> active after the fence.
+      """
+    )
+
+    expected_violation = "#{document_path} contains \"<human-check>\""
+    assert [^expected_violation] = phase_policy_violations(phase_dir)
+  end
+
   test "active incomplete phases still reject required UAT artifacts" do
     phase_dir = temp_phase_dir!("77-uat")
     uat_path = Path.join(phase_dir, "77-UAT.md")
