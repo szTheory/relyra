@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 77
 current_phase_name: Code and Documentation Craftsmanship
-current_plan: 4
+current_plan: 5
 status: executing
-stopped_at: Completed 77-07-PLAN.md
-last_updated: "2026-09-27T05:33:34.796Z"
+stopped_at: Completed 77-08-PLAN.md
+last_updated: "2026-09-27T07:58:33.102Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 77 execution started
-state_head: ffeddb624140d8ebc4f1722c9d7e21bb04d027f3
+state_head: 94d009198214d3ab7ebe5fa794e6ad658d7d3ee8
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 53
-  completed_plans: 53
+  total_plans: 54
+  completed_plans: 54
   percent: 57
 ---
 
@@ -36,7 +36,7 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 77 (Code and Documentation Craftsmanship) — EXECUTING
 
-Current Plan: 4
+Current Plan: 5
 Total Plans in Phase: 6
 Next gate: Complete automated verification of the Phase 77 closeout, then plan Phase 78.
 
@@ -164,6 +164,8 @@ Last activity: 2026-09-26 — Phase 77 execution started
 - [Phase 77]: Quoted fence contents are removed before inline-code and blockquote filtering.
 - [Phase 77]: Backtick fence openers reject backticks in info strings while tilde info strings remain permissive.
 - [Phase 77]: Phase 77 Plan 07: check active policy directives in PLAN and CONTEXT inputs; retain UAT artifact rejection as an independent check.
+- [Phase 77]: Use Git-derived commit history and list every task hash on its own line for mechanical provenance checks.
+- [Phase 77]: Treat generated verification reports as audit evidence while enforcing policy on PLAN and CONTEXT inputs and rejecting required UAT artifacts.
 
 ### Baseline Findings
 
@@ -202,9 +204,9 @@ Last activity: 2026-09-26 — Phase 77 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-27T05:33:34.756Z
+**Last session:** 2026-09-27T07:58:33.008Z
 
-**Stopped at:** Completed 77-07-PLAN.md
+**Stopped at:** Completed 77-08-PLAN.md
 
 **Resume file:** None
 
@@ -261,6 +263,7 @@ Run `$gsd-discuss-phase 77` to begin the next planned phase.
 | Phase 77 P05 | 9min | 2 tasks | 1 files |
 | Phase 77 P06 | 8min | 2 tasks | 1 files |
 | Phase 77 P07 | 2min | 2 tasks | 1 files |
+| Phase 77 P08 | 1h 4m | 2 tasks | 12 files |
 
 ### Resolved Issues
 
