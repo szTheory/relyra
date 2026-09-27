@@ -74,6 +74,13 @@ jobs:
       - name: Install browser dependencies
         run: npm install
 
+      - name: Prepare demo test metadata
+        env:
+          MIX_ENV: test
+        run: |
+          mix cmd --cd demo/ledger_loop mix deps.get
+          mix cmd --cd demo/ledger_loop mix compile
+
       - name: Quality gate
         run: mix qa
 

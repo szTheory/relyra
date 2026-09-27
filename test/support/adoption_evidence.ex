@@ -1257,9 +1257,12 @@ defmodule Relyra.AdoptionEvidence do
       System.find_executable("elixir") || raise ArgumentError, "cannot locate Elixir executable"
 
     code_path_arguments =
-      project_root
-      |> Path.join("_build/test/lib/*/ebin")
-      |> Path.wildcard()
+      [project_root, Path.join(project_root, "demo/ledger_loop")]
+      |> Enum.flat_map(fn nested_root ->
+        nested_root
+        |> Path.join("_build/test/lib/*/ebin")
+        |> Path.wildcard()
+      end)
       |> Enum.flat_map(&["-pa", &1])
 
     {output, status} =

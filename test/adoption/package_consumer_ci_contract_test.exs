@@ -64,6 +64,15 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
 
     assert Enum.find_index(step_names, &(&1 == "Package consumer contracts")) >
              Enum.find_index(step_names, &(&1 == "Install dependencies"))
+
+    demo_setup = Enum.find(steps, &(get_in(&1, ["name"]) == "Prepare demo test metadata"))
+    assert demo_setup["env"]["MIX_ENV"] == "test"
+
+    assert String.trim(demo_setup["run"]) ==
+             "mix cmd --cd demo/ledger_loop mix deps.get\nmix cmd --cd demo/ledger_loop mix compile"
+
+    quality_gate_index = Enum.find_index(step_names, &(&1 == "Quality gate"))
+    assert Enum.find_index(step_names, &(&1 == "Prepare demo test metadata")) < quality_gate_index
   end
 
   test "owned cost collector records passing positive-execution receipts" do
