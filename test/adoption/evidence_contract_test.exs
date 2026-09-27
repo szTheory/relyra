@@ -59,7 +59,10 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     expected_owners =
       entries
-      |> Enum.filter(&(&1.state == :existing and &1.evidence_kind != :external_canary))
+      |> Enum.filter(
+        &(&1.state == :existing and &1.evidence_kind != :external_canary and
+            &1.owner_role == :primary)
+      )
       |> Enum.map(& &1.owner)
       |> Enum.uniq()
       |> Kernel.++(["test/governance/phase_73_reconciliation_test.exs"])
@@ -765,6 +768,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     rows = [first, second]
 
     assert AdoptionEvidence.deterministic_owners(rows, "EVID-01") == rows
+
     assert :ok = AdoptionEvidence.validate_closure!(rows, ["EVID-01"])
     assert :ok = AdoptionEvidence.validate_closure!(Enum.reverse(rows), ["EVID-01"])
   end
@@ -845,6 +849,36 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     repository_snapshot: snapshot
   } do
     entries = AdoptionEvidence.entries()
+
+    routed_entries =
+      Enum.map(entries, fn entry ->
+        if entry.lane == "ci.evidence" and entry.evidence_kind != :external_canary do
+          %{entry | workflow_job: "security", workflow_step: "Named criterion owner"}
+        else
+          entry
+        end
+      end)
+
+    routed_snapshot =
+      AdoptionEvidence.repository_snapshot!(routed_entries, File.cwd!(),
+        registered_test_tags: fn _path, _root ->
+          [%{"evidence_contract" => true, "phase_73_reconciliation_replay" => true}]
+        end
+      )
+
+    routed_workflow =
+      String.replace(
+        routed_snapshot.workflow,
+        "- name: Evidence contract",
+        "- name: Named criterion owner",
+        global: false
+      )
+
+    assert :ok =
+             validate_repository_snapshot!(routed_entries, %{
+               routed_snapshot
+               | workflow: routed_workflow
+             })
 
     mutations = [
       fn workflow ->
@@ -1894,7 +1928,12 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       state: state,
       fixture_owner: "repository",
       reset_boundary: "fresh checkout",
-      failure_diagnostics: "EVID-01 ownership seam failed"
+      failure_diagnostics: "EVID-01 ownership seam failed",
+      criterion: id,
+      owner_kind: :mix_exunit,
+      owner_role: :primary,
+      workflow_job: "security",
+      workflow_step: "Evidence contract"
     }
   end
 

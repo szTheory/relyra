@@ -13,6 +13,8 @@ defmodule Relyra.AdoptionEvidence do
   )
   @personas [:evaluator, :developer, :tenant_admin, :security_reviewer, :sre, :end_user]
   @evidence_kinds [:package_contract, :application, :browser, :external_canary, :security_corpus]
+  @owner_kinds [:mix_exunit, :browser, :shell]
+  @owner_roles [:primary, :defense]
   @states [:planned, :existing]
   @registration_cache_namespace :repository_snapshot
   @phase73_reconciliation_alias "ci.phase73.reconciliation"
@@ -32,7 +34,12 @@ defmodule Relyra.AdoptionEvidence do
     :state,
     :fixture_owner,
     :reset_boundary,
-    :failure_diagnostics
+    :failure_diagnostics,
+    :criterion,
+    :owner_kind,
+    :owner_role,
+    :workflow_job,
+    :workflow_step
   ]
 
   @existing_entries [
@@ -261,9 +268,38 @@ defmodule Relyra.AdoptionEvidence do
                      }
                    end)
 
-  @entries @existing_entries ++
-             [@evid_02_entry, @evid_03_contract_entry, @evid_03_scheduled_entry] ++
-             @baseline_entries ++ @governance_entries ++ @planned_entries
+  @entries (@existing_entries ++
+              [
+                @evid_02_entry,
+                @evid_03_contract_entry,
+                @evid_03_scheduled_entry
+              ] ++
+              @baseline_entries ++ @governance_entries ++ @planned_entries)
+           |> Enum.map(fn entry ->
+             {workflow_job, workflow_step} =
+               case entry.lane do
+                 "ci.evidence" -> {"security", "Evidence contract"}
+                 "ci.security" -> {"security", "Security lane"}
+                 "ci.fast" -> {"security", "Fast lane"}
+                 "ci.quality" -> {"security", "Quality gate"}
+                 _other -> {"security", "Evidence contract"}
+               end
+
+             owner_kind =
+               case entry.evidence_kind do
+                 :browser -> :browser
+                 :external_canary -> :shell
+                 _other -> :mix_exunit
+               end
+
+             Map.merge(entry, %{
+               criterion: entry.id,
+               owner_kind: owner_kind,
+               owner_role: :primary,
+               workflow_job: workflow_job,
+               workflow_step: workflow_step
+             })
+           end)
 
   def entries, do: @entries
 
@@ -303,7 +339,7 @@ defmodule Relyra.AdoptionEvidence do
             "evidence row #{id} has invalid fields; missing=#{inspect(MapSet.difference(expected_keys, keys) |> MapSet.to_list())} unknown=#{inspect(MapSet.difference(keys, expected_keys) |> MapSet.to_list())}"
     end
 
-    for field <- @fields -- [:personas, :evidence_kind, :state] do
+    for field <- @fields -- [:personas, :evidence_kind, :state, :owner_kind, :owner_role] do
       value = Map.get(entry, field)
 
       unless is_binary(value) and String.trim(value) != "" do
@@ -314,6 +350,8 @@ defmodule Relyra.AdoptionEvidence do
     validate_member!(id, :requirement, entry.requirement, @requirements)
     validate_member!(id, :evidence_kind, entry.evidence_kind, @evidence_kinds)
     validate_member!(id, :state, entry.state, @states)
+    validate_member!(id, :owner_kind, entry.owner_kind, @owner_kinds)
+    validate_member!(id, :owner_role, entry.owner_role, @owner_roles)
 
     unless is_list(entry.personas) and entry.personas != [] do
       raise ArgumentError, "evidence row #{id} has no personas"
@@ -331,7 +369,7 @@ defmodule Relyra.AdoptionEvidence do
   def deterministic_owners(entries, requirement) do
     Enum.filter(entries, fn entry ->
       entry.requirement == requirement and entry.state == :existing and
-        entry.evidence_kind != :external_canary
+        entry.evidence_kind != :external_canary and entry.owner_role == :primary
     end)
   end
 
@@ -435,7 +473,13 @@ defmodule Relyra.AdoptionEvidence do
       end)
 
     Enum.each(owners, &validate_owner_chain!(&1, lane_commands, snapshot.workflow))
-    validate_phase73_reconciliation_chain!(snapshot.aliases, owner_tags, snapshot.workflow)
+
+    validate_phase73_reconciliation_chain!(
+      snapshot.aliases,
+      owner_tags,
+      snapshot.workflow,
+      entries
+    )
 
     :ok
   end
@@ -446,7 +490,7 @@ defmodule Relyra.AdoptionEvidence do
       when is_binary(command) and is_list(options) do
     case command_argv!(command) do
       {"mix", ["test" | arguments]} ->
-        validate_direct_test_command!(arguments, root)
+        validate_direct_test_command!(arguments, root, options)
 
       {"mix", ["cmd", "--cd", "demo/ledger_loop", "mix", "test" | arguments]} ->
         validate_nested_test_command!(arguments, root, "demo/ledger_loop", options)
@@ -467,7 +511,11 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   defp repository_owners(entries) do
-    Enum.filter(entries, &(&1.state == :existing and &1.evidence_kind != :external_canary))
+    Enum.filter(
+      entries,
+      &(&1.state == :existing and &1.evidence_kind != :external_canary and
+          &1.owner_role == :primary)
+    )
   end
 
   defp validate_owner_alias_snapshot!(entry, aliases, owner_tags) do
@@ -503,9 +551,14 @@ defmodule Relyra.AdoptionEvidence do
             "#{entry.requirement} row #{entry.id}: alias #{entry.lane} owner #{entry.owner} has zero effective selected tests for selector #{entry.selector}"
     end
 
-    unless mandatory_security_step?(workflow, "Evidence contract", "mix #{entry.lane}") do
+    unless mandatory_workflow_step?(
+             workflow,
+             entry.workflow_job,
+             entry.workflow_step,
+             "mix #{entry.lane}"
+           ) do
       raise ArgumentError,
-            "#{entry.requirement} row #{entry.id}: workflow has no enabled blocking Evidence contract step for mix #{entry.lane} under jobs.security"
+            "#{entry.requirement} row #{entry.id}: workflow has no enabled blocking #{entry.workflow_step} step for mix #{entry.lane} under jobs.#{entry.workflow_job}"
     end
   end
 
@@ -678,7 +731,7 @@ defmodule Relyra.AdoptionEvidence do
     |> Enum.sort()
   end
 
-  defp validate_phase73_reconciliation_chain!(aliases, owner_tags, workflow) do
+  defp validate_phase73_reconciliation_chain!(aliases, owner_tags, workflow, entries) do
     expected_step =
       "cmd mix test #{@phase73_reconciliation_owner} --only #{@phase73_reconciliation_selector} --warnings-as-errors"
 
@@ -702,13 +755,19 @@ defmodule Relyra.AdoptionEvidence do
              @phase73_reconciliation_step,
              "mix #{@phase73_reconciliation_alias}"
            ) and
-             mandatory_step_follows_evidence_contract?(workflow) do
+             mandatory_step_follows_evidence_contract?(
+               workflow,
+               entries
+               |> repository_owners()
+               |> Enum.find(&(&1.lane == "ci.evidence"))
+               |> Map.fetch!(:workflow_step)
+             ) do
       raise ArgumentError,
             "EVID-02 workflow must own one unconditional blocking Phase 73 reconciliation step after Evidence contract under jobs.security"
     end
   end
 
-  defp mandatory_step_follows_evidence_contract?(workflow) do
+  defp mandatory_step_follows_evidence_contract?(workflow, evidence_step) do
     lines = String.split(workflow, "\n")
 
     step_index = fn name ->
@@ -720,7 +779,7 @@ defmodule Relyra.AdoptionEvidence do
       |> Enum.map(&elem(&1, 1))
     end
 
-    case {step_index.("Evidence contract"), step_index.(@phase73_reconciliation_step)} do
+    case {step_index.(evidence_step), step_index.(@phase73_reconciliation_step)} do
       {[evidence_index], [reconciliation_index]} -> reconciliation_index > evidence_index
       _other -> false
     end
@@ -971,27 +1030,43 @@ defmodule Relyra.AdoptionEvidence do
     end
   end
 
-  defp validate_direct_test_command!(arguments, root) do
+  defp validate_direct_test_command!(arguments, root, options \\ []) do
     parsed = parse_test_argv!(arguments)
+    planned_files = planned_files(options)
 
     owners =
       Enum.map(parsed.owner_paths, fn owner ->
-        owner_path = repository_path!(root, owner)
+        case File.lstat(Path.join(root, owner)) do
+          {:error, :enoent} ->
+            if owner in planned_files do
+              _components = repository_path_components!(owner)
+              %{path: owner, effective_count: :planned}
+            else
+              validate_existing_direct_test_owner!(owner, root, parsed)
+            end
 
-        effective_count =
-          owner_path
-          |> registered_test_tags!(root)
-          |> Enum.count(&selected_by_filters?(&1, parsed.includes, parsed.exclusions))
-
-        if effective_count == 0 do
-          raise ArgumentError,
-                "test owner #{owner} has zero selected tests: zero effective selected tests after include/exclusion filters"
+          _existing_or_other_error ->
+            validate_existing_direct_test_owner!(owner, root, parsed)
         end
-
-        %{path: owner, effective_count: effective_count}
       end)
 
     Map.put(parsed, :owners, owners)
+  end
+
+  defp validate_existing_direct_test_owner!(owner, root, parsed) do
+    owner_path = repository_path!(root, owner)
+
+    effective_count =
+      owner_path
+      |> registered_test_tags!(root)
+      |> Enum.count(&selected_by_filters?(&1, parsed.includes, parsed.exclusions))
+
+    if effective_count == 0 do
+      raise ArgumentError,
+            "test owner #{owner} has zero selected tests: zero effective selected tests after include/exclusion filters"
+    end
+
+    %{path: owner, effective_count: effective_count}
   end
 
   defp validate_nested_test_command!(arguments, root, project_directory, options) do
@@ -1577,18 +1652,24 @@ defmodule Relyra.AdoptionEvidence do
 
   defp normalize_alias_steps(_steps), do: :unsupported
 
-  defp mandatory_security_step?(workflow, step_name, command) do
+  defp mandatory_workflow_step?(workflow, job_name, step_name, command) do
     lines = String.split(workflow, "\n")
 
     with {:ok, jobs_index} <- find_line(lines, ~r/^jobs:\s*$/),
          jobs <- indented_block(lines, jobs_index, 0),
-         {:ok, security_index} <- find_line(jobs, ~r/^  security:\s*$/),
-         security <- indented_block(jobs, security_index, 2),
-         :ok <- reject_direct_property!(security, "needs", 4, "jobs.security"),
-         nil <- property_at_indent(security, "if", 4),
-         :ok <- blocking_fallibility!(security, 4, "jobs.security"),
-         {:ok, steps_index} <- find_line(security, ~r/^    steps:\s*$/),
-         steps <- indented_block(security, steps_index, 4),
+         [job_index] <-
+           jobs
+           |> Enum.with_index()
+           |> Enum.filter(fn {line, _index} ->
+             Regex.match?(~r/^  #{Regex.escape(job_name)}:\s*$/, line)
+           end)
+           |> Enum.map(&elem(&1, 1)),
+         job <- indented_block(jobs, job_index, 2),
+         :ok <- reject_direct_property!(job, "needs", 4, "jobs.#{job_name}"),
+         nil <- property_at_indent(job, "if", 4),
+         :ok <- blocking_fallibility!(job, 4, "jobs.#{job_name}"),
+         {:ok, steps_index} <- find_line(job, ~r/^    steps:\s*$/),
+         steps <- indented_block(job, steps_index, 4),
          [step] <- named_steps(steps, step_name),
          ^command <- property_at_indent(step, "run", 8),
          nil <- property_at_indent(step, "if", 8),
@@ -1598,6 +1679,9 @@ defmodule Relyra.AdoptionEvidence do
       _ -> false
     end
   end
+
+  defp mandatory_security_step?(workflow, step_name, command),
+    do: mandatory_workflow_step?(workflow, "security", step_name, command)
 
   defp find_line(lines, pattern) do
     case Enum.find_index(lines, &Regex.match?(pattern, &1)) do
