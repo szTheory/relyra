@@ -66,6 +66,104 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
              Enum.find_index(step_names, &(&1 == "Install dependencies"))
   end
 
+  test "owned cost collector records passing positive-execution receipts" do
+    output = Path.join(System.tmp_dir!(), "ci-cost-#{System.unique_integer([:positive])}.json")
+
+    on_exit(fn -> File.rm(output) end)
+
+    {result, status} =
+      System.cmd(
+        "bash",
+        [
+          "scripts/measure_ci_cost.sh",
+          "--output",
+          output,
+          "--event",
+          "fixture",
+          "--cache",
+          "cold",
+          "--command",
+          "setup:bootstrap:printf 'setup complete\\n'",
+          "--command",
+          "test:focused:printf '2 tests, 0 failures\\n'"
+        ],
+        stderr_to_stdout: true
+      )
+
+    assert status == 0, result
+    sample = output |> File.read!() |> Jason.decode!()
+    assert sample["schema"] == "relyra-ci-cost-sample"
+    assert sample["version"] == 1
+    assert sample["revision"] == String.trim(elem(System.cmd("git", ["rev-parse", "HEAD"]), 0))
+    assert sample["event"] == "fixture"
+    assert sample["cache"] == "cold"
+    assert sample["conclusion"] == "success"
+    assert sample["selected_tests"] == 2
+    assert sample["runner_ms"] >= sample["setup_ms"]
+    assert Enum.map(sample["steps"], & &1["exit_code"]) == [0, 0]
+    assert Enum.map(sample["steps"], & &1["selected_tests"]) == [0, 2]
+  end
+
+  test "setup failure preserves its exit and rejects the partial sample" do
+    output = Path.join(System.tmp_dir!(), "ci-cost-#{System.unique_integer([:positive])}.json")
+
+    on_exit(fn -> File.rm(output) end)
+
+    {result, status} =
+      System.cmd(
+        "bash",
+        [
+          "scripts/measure_ci_cost.sh",
+          "--output",
+          output,
+          "--event",
+          "fixture",
+          "--cache",
+          "none",
+          "--command",
+          "setup:broken:exit 7",
+          "--command",
+          "test:skipped:printf '1 test, 0 failures\\n'"
+        ],
+        stderr_to_stdout: true
+      )
+
+    assert status == 1, result
+    sample = output |> File.read!() |> Jason.decode!()
+    assert sample["conclusion"] == "failure"
+
+    assert sample["steps"] |> Enum.map(&{&1["conclusion"], &1["exit_code"]}) ==
+             [{"failed", 7}, {"not_run", nil}]
+
+    assert sample["selected_tests"] == 0
+  end
+
+  test "collector rejects a completed command with no selected tests" do
+    output = Path.join(System.tmp_dir!(), "ci-cost-#{System.unique_integer([:positive])}.json")
+
+    on_exit(fn -> File.rm(output) end)
+
+    {result, status} =
+      System.cmd(
+        "bash",
+        [
+          "scripts/measure_ci_cost.sh",
+          "--output",
+          output,
+          "--event",
+          "fixture",
+          "--cache",
+          "warm",
+          "--command",
+          "test:empty:printf '0 tests, 0 failures\\n'"
+        ],
+        stderr_to_stdout: true
+      )
+
+    assert status == 1, result
+    assert output |> File.read!() |> Jason.decode!() |> Map.fetch!("conclusion") == "failure"
+  end
+
   defp parse_yaml!(yaml) do
     [document] = :yamerl_constr.string(String.to_charlist(yaml))
     convert_yaml(document)
