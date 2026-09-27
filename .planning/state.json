@@ -26,7 +26,7 @@
     {
       "number": "77",
       "name": "Code and Documentation Craftsmanship",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "78",
@@ -40,9 +40,9 @@
     }
   ],
   "next": {
-    "command": "/gsd:progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 77 of 7 · 57% · executing"
+    "command": "/gsd:plan-phase 78",
+    "label": "Plan Phase 78: CI Efficiency and Reliability",
+    "reason": "Phase 78 discussion is complete and approved context is committed; no Phase 78 plans exist."
   },
-  "updated_at": "2026-09-26T18:24:35.666Z"
+  "updated_at": "2026-09-27T13:19:46Z"
 }

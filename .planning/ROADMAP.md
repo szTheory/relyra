@@ -49,7 +49,7 @@ returns.
 - [x] **Phase 74: Clean-Room Package Consumer** — Prove a fresh Phoenix application can adopt only the files Relyra actually ships. (completed 2026-09-25)
 - [x] **Phase 75: SaaS Twin Domain Realism** — Expand LedgerLoop into a coherent multi-tenant adopter with credible humans, trust history, and incidents. (completed 2026-09-25)
 - [x] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end. (completed 2026-09-26)
-- [x] **Phase 77: Code and Documentation Craftsmanship** — Remove high-value quality debt and temporary planning narration behind the twin's safety net. (All four plans executed; automated phase verification pending.) (completed 2026-09-27)
+- [x] **Phase 77: Code and Documentation Craftsmanship** — Remove high-value quality debt and temporary planning narration behind the twin's safety net. (8/8 plans complete; automated verification passed.) (completed 2026-09-27)
 - [ ] **Phase 78: CI Efficiency and Reliability** — Give every gate clear ownership and improve measured CI cost without weakening independent defenses.
 - [ ] **Phase 79: Adopter-Ready Closeout** — Finish with green intentional repository state, approved GitHub hygiene, and a diminishing-returns assessment.
 
@@ -417,7 +417,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 75. SaaS Twin Domain Realism | v1.11 | 3/3 | Complete    | 2026-09-25 |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
-| 78. CI Efficiency and Reliability | v1.11 | 0/TBD | Not started | — |
+| 78. CI Efficiency and Reliability | v1.11 | 0/TBD | Ready to plan | — |
 | 79. Adopter-Ready Closeout | v1.11 | 0/TBD | Not started | — |
 
 ---
