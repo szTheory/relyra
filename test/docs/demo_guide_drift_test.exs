@@ -1106,6 +1106,23 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     end)
   end
 
+  test "invalid backtick openers stay active while tilde info may contain backticks" do
+    invalid_backtick_dir = temp_phase_dir!("77-invalid-backtick-opener")
+    invalid_backtick_path = Path.join(invalid_backtick_dir, "77-CONTEXT.md")
+
+    valid_tilde_dir = temp_phase_dir!("77-tilde-backtick-info")
+    valid_tilde_path = Path.join(valid_tilde_dir, "77-CONTEXT.md")
+
+    File.write!(valid_tilde_path, "~~~elixir`info\nstatus: human_needed\n~~~\n")
+
+    assert phase_policy_violations(valid_tilde_dir) == []
+
+    File.write!(invalid_backtick_path, "```elixir`invalid\nstatus: human_needed\n")
+
+    expected_violation = "#{invalid_backtick_path} contains \"status: human_needed\""
+    assert [^expected_violation] = phase_policy_violations(invalid_backtick_dir)
+  end
+
   test "an unclosed fence consumes policy text through end of file" do
     phase_dir = temp_phase_dir!("77-unclosed-fence")
     document_path = Path.join(phase_dir, "77-CONTEXT.md")
