@@ -1257,7 +1257,7 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
   end
 
   defp markdown_fence_close?(line, character, opening_length) do
-    case Regex.run(~r/^ {0,3}([`~]+)[ \t]*$/, line, capture: :all_but_first) do
+    case Regex.run(~r/^ {0,3}(`{3,}|~{3,})[ \t]*$/, line, capture: :all_but_first) do
       [fence] -> String.first(fence) == character and String.length(fence) >= opening_length
       _ -> false
     end
