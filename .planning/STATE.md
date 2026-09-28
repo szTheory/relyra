@@ -4,19 +4,19 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 78
 current_phase_name: CI Efficiency and Reliability
-current_plan: 5
+current_plan: 6
 status: executing
-stopped_at: Completed 78-04-PLAN.md
-last_updated: "2026-09-28T01:39:53.093Z"
+stopped_at: Completed 78-05-PLAN.md
+last_updated: "2026-09-28T02:08:57.510Z"
 last_activity: 2026-09-28
-state_head: 12f0ba8992ccbf04354cd6a4da83ba497a69f205
+state_head: 8e9f8709076043e8516f62f5ceb2af278f287fb0
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 61
-  completed_plans: 58
+  completed_plans: 59
   percent: 71
-last_activity_desc: Phase 78 Plan 04 complete; Plan 05 ready
+last_activity_desc: Phase 78 Plan 05 complete; Plan 06 ready
 ---
 
 # Project State
@@ -36,9 +36,9 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 78 (CI Efficiency and Reliability) — EXECUTING
 
-Current Plan: 5
+Current Plan: 6
 Total Plans in Phase: 7
-Next gate: Execute Plan 78-05 — preserve deterministic browser gates and separate provider canaries.
+Next gate: Execute Plan 78-06 — bound browser and canary failure artifacts.
 
 Status: Ready to execute
 
@@ -96,6 +96,7 @@ Last activity: 2026-09-27
 - [Phase 78]: Run docs and verification suites with cmd mix test so every selected suite gets a fresh process. — Mix deduplicates bare test tasks inside aliases and can carry earlier selectors forward.
 - [Phase 78]: Keep exact security suite selectors and standalone GATE-02 as blocking independent defenses. — AST and workflow fixtures reject collapsed, omitted, disabled, or zero-test gates.
 - [Phase 78]: Use event- and workflow-qualified concurrency with PR-only cancellation — Evaluated fixtures prove a superseded PR only cancels within its own workflow while main and cross-workflow runs remain isolated.
+- [Phase 78]: Keep deterministic browser journeys as required merge evidence and isolate real-provider checks in a scheduled/manual canary. — Owned local harnesses provide repeatable acceptance; provider availability is external and must not gate pull requests or main acceptance.
 
 ### Baseline Findings
 
@@ -134,9 +135,9 @@ Last activity: 2026-09-27
 
 ## Session Continuity
 
-**Last session:** 2026-09-28T01:38:25.410Z
+**Last session:** 2026-09-28T02:08:56.870Z
 
-**Stopped at:** Completed 78-04-PLAN.md
+**Stopped at:** Completed 78-05-PLAN.md
 
 **Resume file:** None
 
@@ -217,6 +218,7 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 | Phase 78 P2 | 8h | 3 tasks | 8 files |
 | Phase 78 P3 | 21m | 2 tasks | 2 files |
 | Phase 78 P4 | 15m | 3 tasks | 7 files |
+| Phase 78 P5 | 26m | 2 tasks | 7 files |
 
 ### Resolved Issues
 
