@@ -1,5 +1,12 @@
 name: adoption-external-idp
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 on:
   pull_request:
     paths-ignore:
@@ -45,10 +52,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup BEAM
-        uses: erlef/setup-beam@v1
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
