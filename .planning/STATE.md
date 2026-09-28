@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 78
 current_phase_name: CI Efficiency and Reliability
-current_plan: 3
+current_plan: 4
 status: executing
-stopped_at: Completed 78-02-PLAN.md
-last_updated: "2026-09-28T00:56:41.944Z"
+stopped_at: Completed 78-03-PLAN.md
+last_updated: "2026-09-28T01:21:21.326Z"
 last_activity: 2026-09-28
 last_activity_desc: Phase 78 Plan 02 complete; Plan 03 ready
-state_head: 7023f93df11028a3f858ca351bb8195e9c91c922
+state_head: 489b48cd2244895f70e7ea0ea65b0c18d4276e76
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 61
-  completed_plans: 56
+  completed_plans: 57
   percent: 71
 ---
 
@@ -36,9 +36,9 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 78 (CI Efficiency and Reliability) — EXECUTING
 
-Current Plan: 3
+Current Plan: 4
 Total Plans in Phase: 7
-Next gate: Execute Plan 78-03 — make docs and verification suites execute independently while preserving security-suite process boundaries.
+Next gate: Execute Plan 78-04 — Scope root and release workflow permissions, scheduling, and action pins.
 
 Status: Ready to execute
 
@@ -74,82 +74,6 @@ Last activity: 2026-09-27 — Phase 78 execution started
   track those as explicit automation gaps.
 - Perform cleanup behind the twin's evidence and stop at diminishing returns rather than
   pursuing aesthetic purity.
-- [Phase 73]: Use a closed, test-only Elixir ledger whose planned rows remain visible but cannot satisfy deterministic closure.
-- [Phase 73]: Treat only existing non-canary rows with a real tagged test, fresh-process alias, and executable workflow command as closure evidence.
-- [Phase 73]: Treat the quality/CI baseline as inventory only; one-run timings are samples and remediation stays routed to Phases 74, 77, 78, or 79.
-- [Phase 73]: Keep live required-check repair behind remote_github approval in Phase 79 and preserve the exact desired/current context drift as a release blocker.
-- [Phase 73]: Accept baseline rows only through anchored tables, closed enums, severity rules, ownership fields, and redaction-safe evidence.
-- [Phase 73]: Require each risky mutation to have a matching plan-local blocking approval_class checkpoint before the first mutation task.
-- [Phase 73]: Require remote GitHub approval to describe one exact reversible batch with preflight, rollback, read-back, and resume signal.
-- [Phase 73]: Keep authorization separate from completion; only deterministic automated evidence can close acceptance criteria.
-- [Phase 73]: Count evidence selectors only when parsed ExUnit source associates them with real test definitions.
-- [Phase 73]: Recognize evidence workflow ownership only in the enabled blocking Evidence contract step under jobs.security.
-- [Phase 73]: Require every acceptance-bearing non-checkpoint task to own executable non-zero proof independently.
-- [Phase 73]: Task risk metadata is mandatory but governed files, entry points, and diffs independently determine approval. — Optimistic declarations cannot suppress a matching plan-local checkpoint.
-- [Phase 73]: Remote approval is one parsed reversible batch bound to the same repository, branch, checks, and captured state. — Keyword prose cannot authorize an ambiguous or non-reversible remote mutation.
-- [Phase 73]: Demand-gated identifiers are allowed only in the exact plan-level exclusion and fixture-data regions. — Task names, files, and actions have no negation or policy-prose exemption.
-- [Phase 73]: Each baseline finding requires one complete allowed repository or executable verification reference. — Arbitrary non-empty provenance prose cannot satisfy the baseline contract.
-- [Phase 73]: Model direct-test ownership as enabled include-tag intersection minus matching exclusions, rejecting an empty effective set.
-- [Phase 73]: Treat the Evidence contract as mandatory only when jobs.security has one exact unconditional step with absent or literal-false fallibility.
-- [Phase 73]: Validate task type before authorization, risk, verification, and feature-neutrality branches; only exact decision checkpoints are authorization-only.
-- [Phase 73]: Treat completed-plan task commits or explicit before/after inputs as additive changed-surface evidence, never as a PLAN exemption.
-- [Phase 73]: Retain deterministic legacy-schema checks for Plans 73-01 through 73-03 while applying the exact current contract to later plans.
-- [Phase 73]: Authorize remote batches only after each field is fully consumed by one closed operation grammar and parsed targets agree.
-- [Phase 73]: Accept baseline paths only when every root-relative component is non-symlink, the leaf is regular, and git tracks the lexical repository path.
-- [Phase 73]: Delegate baseline command evidence to the same executable non-zero owner validator used by adoption evidence.
-- [Phase 73]: Accept verification text only when one anchored ASCII grammar fully consumes uppercase environment assignments and one supported Mix argv.
-- [Phase 73]: Treat actual Mix project configuration and fresh-process ExUnit registration, rather than source-shaped tuples or macros, as ownership authority.
-- [Phase 73]: Evaluate workflow fallibility and ordered path filters independently for pull requests and main pushes across every acceptance-bearing planning artifact.
-- [Phase 73]: Governance begins only after PROJECT, ROADMAP, REQUIREMENTS, and STATE establish one agreeing active v1.11 identity with a real current-phase directory and plan frontier.
-- [Phase 73]: Only exact completed paths 73-01 through 73-03 use the legacy schema; every other plan receives the current contract regardless of removable document content.
-- [Phase 73]: Completed-plan changes come from reachable exact-scope Git commits before the unique SUMMARY-add boundary; SUMMARY hashes are equality-checked but never authoritative.
-- [Phase 73]: Remote authorization reduces fields only after exact scalar/list cardinality, closed syntax, non-empty values, and list uniqueness are established.
-- [Phase 73]: File-backed and script-backed operations share repository provenance; scripts additionally require executable index mode, working-tree blob equality, and a fixed local print-mode result.
-- [Phase 73]: Resolve each evidence lane once from actual Mix project configuration and require every command owner to retain a positive effective ExUnit selection.
-- [Phase 73]: Reject positive paths on the mandatory Evidence contract workflow and allow ignore patterns only when disjoint from all fixed and tracked Phase 73 inputs.
-- [Phase 73]: Normalize and retain every accepted branch-protection control, treating non-declared controls as exact safe invariants shared by mutation and rollback authorization.
-- [Phase 73]: Authorize script batches from indexed executable identity plus a separately tracked static JSON result, never by launching plan-selected code.
-- [Phase 73]: Always derive completed-plan commits from ordered exact-scope Git history; manifests and SUMMARY hashes may only audit that derived set for exact equality.
-- [Phase 73]: Validate each required workflow event and every direct child-key occurrence before reducing branch or path semantics.
-- [Phase 73]: Require push branches to equal the single literal main selector and forbid pull-request activity filters entirely.
-- [Phase 73]: Authorize remote mutation and rollback only through tracked complete-state gh api --input payloads; scripts and static results have no authorization role.
-- [Phase 73]: Resolve one full HEAD review endpoint and classify every reachable exact-scope commit before and after the SUMMARY-add boundary.
-- [Phase 73]: Keep SUMMARY and manifest equality audits restricted to pre-boundary tasks so claims cannot omit or authorize descendants.
-- [Phase 73]: Close CR-06 only after both Plan 73-14 focused selector owners and the mandatory evidence lane pass.
-- [Phase 73]: Treat declarative payload authorization plus exact-HEAD descendant provenance as sufficient to close CR-07 and CR-08 while retaining T-73-12 as a visible medium follow-up.
-- [Phase 73]: Capture each lexical evidence owner once through fresh ExUnit registration, then validate the immutable normalized snapshot without further discovery.
-- [Phase 73]: Reuse registered tags only for the same absolute owner path and SHA-256 source identity within one test VM; source changes always force fresh registration.
-- [Phase 73]: Reject workflow constructs outside the repository's literal, single-star, and whole-double-star subset instead of approximating GitHub matching.
-- [Phase 73]: Require component-wise lstat and exact Git-index identity for the declared lexical owner before registered-test discovery.
-- [Phase 73]: Record current review findings as open before closure evidence restores verified status.
-- [Phase 73]: Close T-73-67, T-73-70, and T-73-71 only after all four focused selectors, three unchanged sub-60-second evidence runs, and the full security lane pass.
-- [Phase 73]: A later Critical review and red mandatory lane invalidate the prior verified seal until current deterministic evidence closes the defects. — Current source and mandatory-lane output supersede earlier green evidence under D-07, D-08, and D-12.
-- [Phase 73]: Keep threats_open threshold-aware: T-73-67 is the sole blocking threat while T-73-12 and T-73-76 remain visible lower-severity follow-ups. — The configured high threshold counts blockers without erasing medium risks.
-- [Phase 73]: Treat executing, in_progress, and ready_for_verification as the only active governance lifecycle states.
-- [Phase 73]: Preserve serialized live STATE while proving ready_for_verification through a checked-in identity fixture that changes only the lifecycle field.
-- [Phase 73]: Restrict frontmatter whitespace after field colons to horizontal whitespace so empty status values cannot consume the next line.
-- [Phase 73]: Keep the registration cache ResourceId caller-independent and content-addressed; self() appears only in OTP's LockRequesterId slot. — This serializes simultaneous misses without changing the default fresh-process ExUnit authority.
-- [Phase 73]: Bind candidate governed inputs exactly to one sorted capture-time inventory before workflow reduction. — Pure snapshots cannot gain coverage by omission, substitution, escape, absolute paths, duplicates, or reordering.
-- [Phase 73]: Keep the complete unchanged mix ci.security lane mandatory and passing with no timing ceiling, while retaining all three independent sub-60-second mix ci.evidence requirements.
-- [Phase 75]: Tenant identity owns LedgerLoop fixture relationships; Northstar and Harborline remain isolated tenant/provider scenarios.
-- [Phase 75]: Keep operational metadata health distinct from active/next/retired certificate lifecycle and validity facts.
-- [Phase 75]: Scope reset by explicit fixture-owned IDs and prove unrelated tenant/connection sentinels survive.
-- [Phase 73]: Stage the exact current proof set before changing security or Nyquist disposition, then reduce both reports from that same committed evidence.
-- [Phase 73]: Count threats_open at the configured high threshold while preserving T-73-12 as a visible open medium follow-up.
-- [Phase 73]: Use a repository root outside the mutable snapshot as independent authority for both governed-input fields.
-- [Phase 73]: Require jobs.security to remain dependency-free so skipped prerequisites cannot suppress mandatory evidence.
-- [Phase 73]: Accept only fully consumed Mix test argv and model includes as ExUnit alternatives that override exclusions.
-- [Phase 73]: Consume the singular tasks region linearly and reject structural residue before semantic governance reduction.
-- [Phase 73]: Classify completion-boundary deltas outside Task Commits equality and reject every non-linear reviewed commit before path reduction.
-- [Phase 73]: Derive the canonical reconciliation identity from governed-source bytes and normalized result vectors while retaining exact output hashes and capture timings.
-- [Phase 73]: Require every recursively expanded ci.security ExUnit constituent to contribute exactly one positive summary before threat or Nyquist closure.
-- [Phase 73]: Required workflow triggers must descend from one exact top-level `on:` mapping, and final proof replay must run unconditionally in `jobs.security`.
-- [Phase 73]: Governance task children and plan-shaped descendants must be uniquely assigned before semantic approval or scope classification.
-- [Phase 73]: Bind all seven current finding closures to one recomputed proof, three bounded evidence runs, the pinned security inventory, and 64 automated task owners.
-- [Phase 73]: Treat local Mix alias and workflow changes as local configuration; only an actual SemVer major change or remote mutation path invokes those approval classes.
-- [Phase 74]: Build and unpack the local Hex artifact, then resolve the consumer dependency directly from the unpacked package.
-- [Phase 74]: Use the shipped Relyra.Testing fixture and real Phoenix ACS route; record the host receipt only after verified consumption.
-- [Phase 74]: Include Req in the full consumer profile because current Relyra source expands Req.Response structs at compile time; verify no-optional compilation separately in Plan 74-04.
 - [Phase 76]: Bind replay keys to the trusted persisted request or resolved connection; ignore the response document ConnectionId for replay scope.
 - [Phase 76]: Recover consumed request context only from the configured request-store adapter, then let the existing replay-store uniqueness constraint reject duplicates without changing behaviour callback signatures.
 - [Phase 76]: Test the supported organization-scoped LiveAdmin path, including staged-key activation required before the draft connection can be enabled.
@@ -169,6 +93,8 @@ Last activity: 2026-09-27 — Phase 78 execution started
 - [Phase 78]: Derive lifecycle membership from the active roadmap and validate all tracked Phase 78 plans.
 - [Phase 78]: Enforce primary ownership uniqueness by requirement and criterion; keep independent defenses separately labeled.
 - [Phase 78]: Remove the duplicate Fast lane from security-gates after QA and ci.fast both selected the same 960 default tests on each supported OTP version. — Three full baseline and three full candidate matrix runs passed. Candidate warm medians reduced matrix wall time by 4.83% and runner cost by 8.30%; QA, every consumer and security gate, browser smoke, and standalone GATE-02 remained enabled. Local ACT could not measure GitHub cache-service overhead, so no compiled cache was introduced.
+- [Phase 78]: Run docs and verification suites with cmd mix test so every selected suite gets a fresh process. — Mix deduplicates bare test tasks inside aliases and can carry earlier selectors forward.
+- [Phase 78]: Keep exact security suite selectors and standalone GATE-02 as blocking independent defenses. — AST and workflow fixtures reject collapsed, omitted, disabled, or zero-test gates.
 
 ### Baseline Findings
 
@@ -207,9 +133,9 @@ Last activity: 2026-09-27 — Phase 78 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-28T00:56:09.736Z
+**Last session:** 2026-09-28T01:17:22.289Z
 
-**Stopped at:** Completed 78-02-PLAN.md
+**Stopped at:** Completed 78-03-PLAN.md
 
 **Resume file:** None
 
@@ -288,6 +214,7 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 | Phase 77 P08 | 1h 4m | 2 tasks | 12 files |
 | Phase 78 P01 | 38min | 3 tasks | 3 files |
 | Phase 78 P2 | 8h | 3 tasks | 8 files |
+| Phase 78 P3 | 21m | 2 tasks | 2 files |
 
 ### Resolved Issues
 
@@ -295,4 +222,4 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 
 ## Blockers
 
-- 78-02 Task 2 cannot collect required three complete comparable baseline and candidate CI-matrix runs safely: available GitHub receipts target an older remote SHA; remote workflow dispatch is prohibited; local act host is ARM64 and is not hosted Ubuntu evidence.
+None
