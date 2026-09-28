@@ -84,9 +84,6 @@ jobs:
       - name: Quality gate
         run: mix qa
 
-      - name: Fast lane
-        run: mix ci.fast
-
       - name: Security lane
         run: mix ci.security
 

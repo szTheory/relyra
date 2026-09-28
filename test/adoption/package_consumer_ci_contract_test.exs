@@ -76,8 +76,11 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     assert Enum.find_index(step_names, &(&1 == "Prepare demo test metadata")) < quality_gate_index
   end
 
-  test "cost report records the measured topology decision" do
+  test "measured topology decision removes only the duplicated fast lane" do
+    workflow = @workflow_path |> File.read!() |> parse_yaml!()
     report = @cost_report_path |> File.read!() |> Jason.decode!()
+    steps = workflow["jobs"]["security"]["steps"]
+    step_names = Enum.map(steps, & &1["name"])
 
     assert report["schema"] == "relyra-ci-cost-decision"
     assert report["version"] == 1
@@ -85,6 +88,32 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     assert report["decision"]["reason_code"] == "qa_and_fast_select_same_tests"
     assert report["decision"]["supported_by_complete_samples"] == true
     assert report["decision"]["sample_count_per_configuration"] == 3
+
+    assert Enum.count(step_names, &(&1 == "Quality gate")) == 1
+    assert Enum.count(step_names, &(&1 == "Fast lane")) == 0
+    refute Enum.any?(steps, &(get_in(&1, ["run"]) == "mix ci.fast"))
+
+    quality_gate = Enum.find(steps, &(&1["name"] == "Quality gate"))
+    assert quality_gate["run"] == "mix qa"
+    refute Map.has_key?(quality_gate, "if")
+
+    for gate <- [
+          {"Security lane", "mix ci.security"},
+          {"Evidence contract", "mix ci.evidence"},
+          {"Phase 73 reconciliation", "mix ci.phase73.reconciliation"},
+          {"Verification lane", "mix ci.verify"},
+          {"Integration lane", "mix ci.integration"},
+          {"Demo lane", "mix ci.demo"},
+          {"Admin UI contract lane", "mix ci.admin_ui"},
+          {"Admin UI browser smoke", "npm run admin-ui:smoke"},
+          {"GATE-02 binary gate (gate02_c14n zero regressions)",
+           "mix test --only gate02_c14n --warnings-as-errors"}
+        ] do
+      [step] = Enum.filter(steps, &(&1["name"] == elem(gate, 0)))
+      assert step["run"] == elem(gate, 1)
+      refute Map.has_key?(step, "if")
+      refute Map.has_key?(step, "continue-on-error")
+    end
 
     assert_complete_cost_samples!(report)
   end
@@ -151,6 +180,100 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
 
     explicitly_unsupported = put_in(report, ["decision", "supported_by_complete_samples"], false)
     assert :unsupported_decision in cost_report_errors(explicitly_unsupported)
+  end
+
+  test "workflow mutation fixtures reject cache-only proof and missing locked install" do
+    workflow = @workflow_path |> File.read!() |> parse_yaml!()
+
+    cache_only =
+      update_security_steps(workflow, fn steps ->
+        Enum.map(steps, fn
+          %{"name" => "Package consumer contracts"} = step ->
+            Map.put(step, "run", "echo restored consumer cache")
+
+          step ->
+            step
+        end) ++
+          [
+            %{
+              "name" => "Restore cached consumer proof",
+              "uses" => "actions/cache/restore@v4",
+              "with" => %{"path" => "/tmp/consumer-cache", "key" => "fixture"}
+            }
+          ]
+      end)
+
+    assert :consumer_profile_commands in workflow_errors(cache_only)
+    assert :cross_run_cache_reuse in workflow_errors(cache_only)
+
+    missing_locked_install =
+      update_security_steps(workflow, fn steps ->
+        Enum.map(steps, fn
+          %{"name" => "Install dependencies"} = step ->
+            Map.put(step, "run", "mix local.hex --force\nmix local.rebar --force")
+
+          step ->
+            step
+        end)
+      end)
+
+    assert :locked_dependency_install in workflow_errors(missing_locked_install)
+  end
+
+  test "workflow mutation fixtures reject duplicate or skipped profiles and cross-run consumer reuse" do
+    workflow = @workflow_path |> File.read!() |> parse_yaml!()
+
+    duplicate_profile =
+      update_security_steps(workflow, fn steps ->
+        Enum.map(steps, fn
+          %{"name" => "Package consumer contracts"} = step ->
+            Map.put(
+              step,
+              "run",
+              step["run"] <> "\nscripts/check_clean_room_consumer.sh --profile full"
+            )
+
+          step ->
+            step
+        end)
+      end)
+
+    assert :consumer_profile_commands in workflow_errors(duplicate_profile)
+
+    skipped_profile =
+      update_security_steps(workflow, fn steps ->
+        Enum.map(steps, fn
+          %{"name" => "Package consumer contracts"} = step ->
+            Map.put(
+              step,
+              "run",
+              "scripts/check_clean_room_consumer.sh --profile full\nscripts/check_clean_room_consumer.sh --profile contracts"
+            )
+
+          step ->
+            step
+        end)
+      end)
+
+    assert :consumer_profile_commands in workflow_errors(skipped_profile)
+
+    cross_run_reuse =
+      update_security_steps(workflow, fn steps ->
+        steps ++
+          [
+            %{
+              "name" => "Restore consumer build",
+              "uses" => "actions/cache@v4",
+              "with" => %{
+                "path" => "_build/test",
+                "key" => "${{ runner.os }}-${{ hashFiles('mix.lock') }}",
+                "restore-keys" => "${{ runner.os }}-"
+              }
+            }
+          ]
+      end)
+
+    assert :cross_run_cache_reuse in workflow_errors(cross_run_reuse)
   end
 
   test "owned cost collector records passing positive-execution receipts" do
@@ -461,6 +584,79 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
       end
 
     %{"median_ms" => median, "min_ms" => hd(sorted), "max_ms" => List.last(sorted)}
+  end
+
+  defp workflow_errors(workflow) do
+    jobs = workflow["jobs"] || %{}
+    all_steps = Enum.flat_map(Map.values(jobs), &(&1["steps"] || []))
+    security = jobs["security"] || %{}
+    steps = security["steps"] || []
+
+    consumer_steps = Enum.filter(all_steps, &(&1["name"] == "Package consumer contracts"))
+    dependency_steps = Enum.filter(steps, &(&1["name"] == "Install dependencies"))
+
+    consumer_commands =
+      case consumer_steps do
+        [%{"run" => run} = step] when is_binary(run) ->
+          run_lines =
+            run |> String.split("\n") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+
+          owners =
+            Enum.map(@required_commands, fn command ->
+              Enum.count(all_steps, fn owner ->
+                is_binary(owner["run"]) and
+                  command in (owner["run"] |> String.split("\n") |> Enum.map(&String.trim/1))
+              end)
+            end)
+
+          run_lines == @required_commands and owners == [1, 1, 1] and
+            not Map.has_key?(step, "if") and not Map.has_key?(step, "continue-on-error")
+
+        _ ->
+          false
+      end
+
+    locked_install =
+      case dependency_steps do
+        [%{"run" => run}] when is_binary(run) ->
+          String.contains?(run, "mix deps.get") and not String.contains?(run, "--only prod")
+
+        _ ->
+          false
+      end
+
+    errors = []
+    errors = if consumer_commands, do: errors, else: [:consumer_profile_commands | errors]
+    errors = if locked_install, do: errors, else: [:locked_dependency_install | errors]
+
+    if cross_run_consumer_cache?(all_steps),
+      do: [:cross_run_cache_reuse | errors],
+      else: errors
+  end
+
+  defp cross_run_consumer_cache?(steps) do
+    Enum.any?(steps, fn step ->
+      if String.starts_with?(step["uses"] || "", "actions/cache") do
+        cache = step["with"] || %{}
+        path = cache["path"] |> List.wrap() |> Enum.join(" ") |> String.downcase()
+
+        Map.has_key?(cache, "restore-keys") or
+          Enum.any?(
+            ["_build", "/deps", "consumer", "mix_home", "hex_home"],
+            &String.contains?(path, &1)
+          )
+      else
+        false
+      end
+    end)
+  end
+
+  defp update_security_steps(workflow, update) do
+    put_in(
+      workflow,
+      ["jobs", "security", "steps"],
+      update.(get_in(workflow, ["jobs", "security", "steps"]))
+    )
   end
 
   defp parse_yaml!(yaml) do

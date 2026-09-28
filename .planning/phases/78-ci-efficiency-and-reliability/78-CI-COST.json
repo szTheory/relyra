@@ -425,7 +425,7 @@
             }
           },
           "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
-          "workflow_sha256": "d8826f8bfb4749ce402d3bd38bae5fc4b4c225eb8aa845c1b45f3b146c181ea2"
+          "workflow_sha256": "f7f57237c81f26154ac54cd9d31fc3f873b0b0551f1c58864234f52c2be342b8"
         },
         {
           "cache_state": "warm",
@@ -820,7 +820,7 @@
             }
           },
           "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
-          "workflow_sha256": "d8826f8bfb4749ce402d3bd38bae5fc4b4c225eb8aa845c1b45f3b146c181ea2"
+          "workflow_sha256": "f7f57237c81f26154ac54cd9d31fc3f873b0b0551f1c58864234f52c2be342b8"
         },
         {
           "cache_state": "warm",
@@ -1215,11 +1215,11 @@
             }
           },
           "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
-          "workflow_sha256": "d8826f8bfb4749ce402d3bd38bae5fc4b4c225eb8aa845c1b45f3b146c181ea2"
+          "workflow_sha256": "f7f57237c81f26154ac54cd9d31fc3f873b0b0551f1c58864234f52c2be342b8"
         }
       ],
       "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
-      "workflow_sha256": "d8826f8bfb4749ce402d3bd38bae5fc4b4c225eb8aa845c1b45f3b146c181ea2"
+      "workflow_sha256": "f7f57237c81f26154ac54cd9d31fc3f873b0b0551f1c58864234f52c2be342b8"
     },
     "candidate": {
       "samples": [
@@ -1598,7 +1598,7 @@
             }
           },
           "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
-          "workflow_sha256": "688c8ab7c98f16044665ab02c207a2972e4aec8f56508a9cbf73ce22e94e9520"
+          "workflow_sha256": "8c846735f5a230702071fb7b39f04e73f843d1325c156f2dceba114ec77a52df"
         },
         {
           "cache_state": "warm",
@@ -1975,7 +1975,7 @@
             }
           },
           "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
-          "workflow_sha256": "688c8ab7c98f16044665ab02c207a2972e4aec8f56508a9cbf73ce22e94e9520"
+          "workflow_sha256": "8c846735f5a230702071fb7b39f04e73f843d1325c156f2dceba114ec77a52df"
         },
         {
           "cache_state": "warm",
@@ -2352,11 +2352,11 @@
             }
           },
           "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
-          "workflow_sha256": "688c8ab7c98f16044665ab02c207a2972e4aec8f56508a9cbf73ce22e94e9520"
+          "workflow_sha256": "8c846735f5a230702071fb7b39f04e73f843d1325c156f2dceba114ec77a52df"
         }
       ],
       "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
-      "workflow_sha256": "688c8ab7c98f16044665ab02c207a2972e4aec8f56508a9cbf73ce22e94e9520"
+      "workflow_sha256": "8c846735f5a230702071fb7b39f04e73f843d1325c156f2dceba114ec77a52df"
     }
   },
   "decision": {
@@ -2384,7 +2384,7 @@
     "sample_count_per_configuration": 3,
     "supported_by_complete_samples": true
   },
-  "measured_at": "2026-09-28T00:21:04Z",
+  "measured_at": "2026-09-28T00:34:15Z",
   "measurement_context": {
     "act_version": "0.2.87",
     "cache_limits": "ACT action cache was offline; the synthetic local workflow omits setup-node npm cache-service integration. Measurements do not model hosted GitHub cache-service latency or x64 runner timings. No compiled Mix/Hex or clean-room consumer state is reused.",
@@ -2402,7 +2402,8 @@
         28
       ]
     },
-    "workflow_jobs": "security OTP 27 and OTP 28 matrix jobs run concurrently"
+    "workflow_jobs": "security OTP 27 and OTP 28 matrix jobs run concurrently",
+    "workflow_sha256_scope": "Synthetic local workflow bytes with only sample-numbered measurement output paths normalized; policy and command content remain covered by the digest."
   },
   "phase73_proof_set_id": "phase73-dd11175a6d2aa196",
   "rejected_attempts": [
