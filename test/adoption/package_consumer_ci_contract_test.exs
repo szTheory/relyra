@@ -4,6 +4,7 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
   @moduletag :package_consumer_ci_contract
 
   @workflow_path ".github/workflows/security-gates.yml"
+  @cost_report_path ".planning/phases/78-ci-efficiency-and-reliability/78-CI-COST.json"
   @required_commands [
     "scripts/check_clean_room_consumer.sh --profile full",
     "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
@@ -73,6 +74,83 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
 
     quality_gate_index = Enum.find_index(step_names, &(&1 == "Quality gate"))
     assert Enum.find_index(step_names, &(&1 == "Prepare demo test metadata")) < quality_gate_index
+  end
+
+  test "cost report records the measured topology decision" do
+    report = @cost_report_path |> File.read!() |> Jason.decode!()
+
+    assert report["schema"] == "relyra-ci-cost-decision"
+    assert report["version"] == 1
+    assert report["decision"]["action"] == "remove_fast_lane"
+    assert report["decision"]["reason_code"] == "qa_and_fast_select_same_tests"
+    assert report["decision"]["supported_by_complete_samples"] == true
+    assert report["decision"]["sample_count_per_configuration"] == 3
+
+    assert_complete_cost_samples!(report)
+  end
+
+  test "cost decision contract rejects incomplete or incomparable fixture data" do
+    report = @cost_report_path |> File.read!() |> Jason.decode!()
+
+    missing_sample =
+      update_in(report, ["configurations", "baseline", "samples"], &Enum.drop(&1, -1))
+
+    assert :sample_count in cost_report_errors(missing_sample)
+
+    inconsistent_revision =
+      update_in(
+        report,
+        ["configurations", "candidate", "samples", Access.at(0), "receipts", "28", "revision"],
+        fn _ ->
+          "0000000000000000000000000000000000000000"
+        end
+      )
+
+    assert :mixed_revision in cost_report_errors(inconsistent_revision)
+
+    mismatched_toolchain =
+      update_in(
+        report,
+        [
+          "configurations",
+          "candidate",
+          "samples",
+          Access.at(0),
+          "receipts",
+          "28",
+          "runner",
+          "otp"
+        ],
+        fn _ ->
+          26
+        end
+      )
+
+    assert :incomparable_toolchain in cost_report_errors(mismatched_toolchain)
+
+    failed_sample =
+      update_in(
+        report,
+        ["configurations", "baseline", "samples", Access.at(0), "receipts", "27", "conclusion"],
+        fn _ ->
+          "failure"
+        end
+      )
+
+    assert :failed_conclusion in cost_report_errors(failed_sample)
+
+    unsupported_decision =
+      put_in(
+        report,
+        ["statistics", "candidate", "warm", "runner_cost_ms", "median_ms"],
+        get_in(report, ["statistics", "baseline", "warm", "runner_cost_ms", "median_ms"]) + 1
+      )
+
+    assert :statistics_mismatch in cost_report_errors(unsupported_decision)
+    assert :unsupported_decision in cost_report_errors(unsupported_decision)
+
+    explicitly_unsupported = put_in(report, ["decision", "supported_by_complete_samples"], false)
+    assert :unsupported_decision in cost_report_errors(explicitly_unsupported)
   end
 
   test "owned cost collector records passing positive-execution receipts" do
@@ -171,6 +249,218 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
 
     assert status == 1, result
     assert output |> File.read!() |> Jason.decode!() |> Map.fetch!("conclusion") == "failure"
+  end
+
+  test "cost summaries preserve an equal-duration warm-run tie" do
+    assert cost_summary([1_250, 1_250]) == %{
+             "median_ms" => 1_250.0,
+             "min_ms" => 1_250,
+             "max_ms" => 1_250
+           }
+  end
+
+  defp assert_complete_cost_samples!(report) do
+    expected_cache_states = ["cold", "warm", "warm"]
+
+    expected_test_steps = [
+      "qa",
+      "security",
+      "evidence",
+      "phase73-reconciliation",
+      "verify",
+      "integration",
+      "admin-ui",
+      "gate-02"
+    ]
+
+    for configuration <- ["baseline", "candidate"] do
+      samples = get_in(report, ["configurations", configuration, "samples"])
+      assert length(samples) == 3
+      assert Enum.map(samples, & &1["cache_state"]) == expected_cache_states
+      assert samples |> Enum.map(& &1["source_revision"]) |> Enum.uniq() |> length() == 1
+      assert samples |> Enum.map(& &1["workflow_sha256"]) |> Enum.uniq() |> length() == 1
+
+      Enum.each(samples, fn sample ->
+        receipts = sample["receipts"]
+        assert Map.keys(receipts) |> Enum.sort() == ["27", "28"]
+        assert String.match?(sample["workflow_sha256"], ~r/\A[0-9a-f]{64}\z/)
+        assert sample["proof_set_id"] == report["phase73_proof_set_id"]
+
+        Enum.each(receipts, fn {otp, receipt} ->
+          assert receipt["schema"] == "relyra-ci-cost-sample"
+          assert receipt["conclusion"] == "success"
+          assert receipt["dirty"] == false
+          assert receipt["cache"] == sample["cache_state"]
+          assert receipt["selected_tests"] > 0
+          assert receipt["runner"]["elixir"] =~ "1.19.5"
+          assert receipt["runner"]["os"] == "Linux"
+          assert receipt["runner"]["architecture"] == "aarch64"
+          assert to_string(receipt["runner"]["otp"]) == otp
+          assert receipt["revision"] == sample["source_revision"]
+          assert receipt["wall_ms"] > 0
+          assert receipt["job_ms"] == receipt["wall_ms"]
+          assert receipt["runner_ms"] >= receipt["setup_ms"]
+
+          by_name = Map.new(receipt["steps"], &{&1["name"], &1})
+
+          for name <- expected_test_steps do
+            assert by_name[name]["conclusion"] == "passed"
+            assert by_name[name]["exit_code"] == 0
+            assert by_name[name]["selected_tests"] > 0
+          end
+
+          if configuration == "baseline" do
+            assert by_name["fast"]["selected_tests"] == by_name["qa"]["selected_tests"]
+          else
+            refute Map.has_key?(by_name, "fast")
+          end
+        end)
+      end)
+
+      assert_cost_statistics!(samples, get_in(report, ["statistics", configuration]))
+    end
+
+    baseline = get_in(report, ["statistics", "baseline", "warm"])
+    candidate = get_in(report, ["statistics", "candidate", "warm"])
+    assert candidate["runner_cost_ms"]["median_ms"] < baseline["runner_cost_ms"]["median_ms"]
+
+    baseline_workflow =
+      get_in(report, ["configurations", "baseline", "samples", Access.at(0), "workflow_sha256"])
+
+    candidate_workflow =
+      get_in(report, ["configurations", "candidate", "samples", Access.at(0), "workflow_sha256"])
+
+    refute baseline_workflow == candidate_workflow
+  end
+
+  defp cost_report_errors(report) do
+    errors = []
+
+    errors =
+      if report["schema"] == "relyra-ci-cost-decision", do: errors, else: [:schema | errors]
+
+    errors =
+      if report["decision"]["action"] == "remove_fast_lane",
+        do: errors,
+        else: [:decision | errors]
+
+    errors =
+      if report["decision"]["supported_by_complete_samples"] == true,
+        do: errors,
+        else: [:unsupported_decision | errors]
+
+    errors =
+      Enum.reduce(["baseline", "candidate"], errors, fn configuration, acc ->
+        samples = get_in(report, ["configurations", configuration, "samples"]) || []
+
+        if length(samples) == 3,
+          do: acc,
+          else: [:sample_count | acc]
+      end)
+
+    errors =
+      Enum.reduce(["baseline", "candidate"], errors, fn configuration, acc ->
+        samples = get_in(report, ["configurations", configuration, "samples"]) || []
+
+        if samples |> Enum.map(& &1["source_revision"]) |> Enum.uniq() |> length() == 1,
+          do: acc,
+          else: [:mixed_revision | acc]
+      end)
+
+    errors =
+      Enum.reduce(["baseline", "candidate"], errors, fn configuration, acc ->
+        samples = get_in(report, ["configurations", configuration, "samples"]) || []
+        statistics = get_in(report, ["statistics", configuration]) || %{}
+
+        try do
+          assert_cost_statistics!(samples, statistics)
+          acc
+        rescue
+          ExUnit.AssertionError -> [:statistics_mismatch | acc]
+        end
+      end)
+
+    baseline_median =
+      get_in(report, ["statistics", "baseline", "warm", "runner_cost_ms", "median_ms"])
+
+    candidate_median =
+      get_in(report, ["statistics", "candidate", "warm", "runner_cost_ms", "median_ms"])
+
+    errors =
+      if report["decision"]["supported_by_complete_samples"] == true and
+           is_number(baseline_median) and is_number(candidate_median) and
+           candidate_median < baseline_median,
+         do: errors,
+         else: [:unsupported_decision | errors]
+
+    Enum.reduce(["baseline", "candidate"], errors, fn configuration, acc ->
+      samples = get_in(report, ["configurations", configuration, "samples"]) || []
+
+      Enum.reduce(samples, acc, fn sample, sample_errors ->
+        receipts = sample["receipts"] || %{}
+        expected_cache = sample["cache_state"]
+
+        sample_errors =
+          if Enum.sort(Map.keys(receipts)) == ["27", "28"] and
+               Enum.all?(receipts, fn {_otp, receipt} ->
+                 receipt["conclusion"] == "success" and receipt["cache"] == expected_cache
+               end),
+             do: sample_errors,
+             else: [:failed_conclusion | sample_errors]
+
+        sample_errors =
+          if Enum.all?(receipts, fn {otp, receipt} ->
+               receipt["revision"] == sample["source_revision"] and
+                 to_string(receipt["runner"]["otp"]) == otp
+             end),
+             do: sample_errors,
+             else: [:mixed_revision | sample_errors]
+
+        sample_errors =
+          if Enum.all?(receipts, fn {otp, receipt} ->
+               to_string(receipt["runner"]["otp"]) == otp and
+                 receipt["runner"]["elixir"] =~ "1.19.5"
+             end),
+             do: sample_errors,
+             else: [:incomparable_toolchain | sample_errors]
+
+        sample_errors
+      end)
+    end)
+  end
+
+  defp assert_cost_statistics!(samples, statistics) do
+    for cache_state <- ["cold", "warm"] do
+      selected = Enum.filter(samples, &(&1["cache_state"] == cache_state))
+      walls = Enum.map(selected, &matrix_cost(&1, "wall_ms"))
+      runner_costs = Enum.map(selected, &matrix_cost(&1, "runner_ms"))
+
+      assert statistics[cache_state]["sample_count"] == length(selected)
+      assert statistics[cache_state]["matrix_wall_ms"] == cost_summary(walls)
+      assert statistics[cache_state]["runner_cost_ms"] == cost_summary(runner_costs)
+    end
+  end
+
+  defp matrix_cost(sample, "wall_ms") do
+    sample["receipts"] |> Map.values() |> Enum.map(& &1["wall_ms"]) |> Enum.max()
+  end
+
+  defp matrix_cost(sample, "runner_ms") do
+    sample["receipts"] |> Map.values() |> Enum.map(& &1["runner_ms"]) |> Enum.sum()
+  end
+
+  defp cost_summary(values) do
+    sorted = Enum.sort(values)
+    middle = div(length(sorted), 2)
+
+    median =
+      if rem(length(sorted), 2) == 1 do
+        Enum.at(sorted, middle)
+      else
+        (Enum.at(sorted, middle - 1) + Enum.at(sorted, middle)) / 2
+      end
+
+    %{"median_ms" => median, "min_ms" => hd(sorted), "max_ms" => List.last(sorted)}
   end
 
   defp parse_yaml!(yaml) do
