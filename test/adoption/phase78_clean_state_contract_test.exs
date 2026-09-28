@@ -452,6 +452,18 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert source_digest!(root) == before
   end
 
+  test "cold producer bounds captured logs without limiting command file writes" do
+    producer = File.read!("scripts/check_phase78_clean_state.sh")
+
+    assert producer =~ "readonly MAX_OUTPUT_BYTES=16777216"
+    assert producer =~ "run_bounded_command()"
+    assert producer =~ "observed > limit"
+    refute producer =~ "ulimit -f"
+    assert producer =~ ~s(export DOCKER_CONFIG="$run_root/home/.docker")
+    assert producer =~ "cli-plugins/docker-compose"
+    assert producer =~ "docker compose version"
+  end
+
   test "the assembler requires matching frozen sources and produces one ordered OTP receipt" do
     root = Path.join(System.tmp_dir!(), "phase78-assembly-#{System.unique_integer([:positive])}")
     File.mkdir_p!(root)

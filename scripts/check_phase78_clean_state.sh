@@ -137,6 +137,8 @@ if ! git -C "$source_root" rev-parse --verify HEAD >/dev/null 2>&1 ||
   exit 65
 fi
 source_commit="$(git -C "$source_root" rev-parse HEAD)"
+host_home="${HOME:-/tmp}"
+host_docker_config="${DOCKER_CONFIG:-$host_home/.docker}"
 case "$output_path" in "$source_root"/*) echo "phase78 clean-state: output must be outside the source checkout" >&2; exit 65 ;; esac
 if [[ -e "$output_path" || -L "$output_path" ]]; then
   echo "phase78 clean-state: refusing to replace an existing output file" >&2
@@ -197,6 +199,7 @@ fi
 
 export HOME="$run_root/home" XDG_CONFIG_HOME="$run_root/home/.config" XDG_CACHE_HOME="$run_root/home/.cache"
 export MIX_HOME="$run_root/mix-home" HEX_HOME="$run_root/hex-home" MIX_ARCHIVES="$run_root/mix-archives"
+export DOCKER_CONFIG="$run_root/home/.docker"
 export NPM_CONFIG_CACHE="$run_root/npm-cache" PLAYWRIGHT_BROWSERS_PATH="$run_root/playwright-browsers"
 export TMPDIR="$run_root/tmp" RUNNER_TEMP="$run_root/runner-temp"
 export FLEET_PROXY_STATUS_PATH="$RUNNER_TEMP/relyra-fleet-proxy-status.json"
@@ -205,7 +208,28 @@ export MIX_ENV=test CI=true GITHUB_ACTIONS=true RELYRA_XML_STRATEGY=pure_beam
 export PGHOST=127.0.0.1 PGPORT=0 PGUSER=postgres PGPASSWORD=postgres RELYRA_TEST_DATABASE=relyra_phase78_clean_state
 export ASDF_ELIXIR_VERSION="${ASDF_ELIXIR_VERSION:-1.19.5-otp-$otp}"
 if [[ "$otp" == "27" ]]; then export ASDF_ERLANG_VERSION="${ASDF_ERLANG_VERSION:-27.3.4.15}"; else export ASDF_ERLANG_VERSION="${ASDF_ERLANG_VERSION:-28.4.1}"; fi
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"
+mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$DOCKER_CONFIG/cli-plugins"
+
+compose_candidates=(
+  "$host_docker_config/cli-plugins/docker-compose"
+  "$host_home/.docker/cli-plugins/docker-compose"
+  "/usr/local/lib/docker/cli-plugins/docker-compose"
+  "/usr/lib/docker/cli-plugins/docker-compose"
+  "/usr/libexec/docker/cli-plugins/docker-compose"
+  "/Applications/Docker.app/Contents/Resources/cli-plugins/docker-compose"
+)
+for candidate in "${compose_candidates[@]}"; do
+  if [[ -x "$candidate" ]]; then
+    compose_plugin="$(python3 - "$candidate" <<'PY'
+import os
+import sys
+print(os.path.realpath(sys.argv[1]))
+PY
+)"
+    ln -s "$compose_plugin" "$DOCKER_CONFIG/cli-plugins/docker-compose"
+    break
+  fi
+done
 
 db_container="relyra-phase78-db-$run_id"
 if docker container inspect "$db_container" >/dev/null 2>&1; then
@@ -225,6 +249,58 @@ timestamp() {
 now_ns() { python3 -c 'import time; print(time.time_ns())'; }
 sha256_file() {
   if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'; else shasum -a 256 "$1" | awk '{print $1}'; fi
+}
+run_bounded_command() {
+  local log_path="$1" overflow_path="$2" command_text="$3"
+  python3 - "$workspace" "$log_path" "$overflow_path" "$MAX_OUTPUT_BYTES" "$command_text" <<'PY'
+from collections import deque
+import os
+import subprocess
+import sys
+
+workspace, log_path, overflow_path, limit_raw, command = sys.argv[1:]
+limit = int(limit_raw)
+process = subprocess.Popen(
+    ["bash", "-c", command],
+    cwd=workspace,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+)
+chunks = deque()
+retained = 0
+observed = 0
+while True:
+    chunk = process.stdout.read(65536)
+    if not chunk:
+        break
+    observed += len(chunk)
+    chunks.append(chunk)
+    retained += len(chunk)
+    while retained > limit:
+        excess = retained - limit
+        first = chunks[0]
+        if len(first) <= excess:
+            chunks.popleft()
+            retained -= len(first)
+        else:
+            chunks[0] = first[excess:]
+            retained -= excess
+
+with open(log_path, "wb") as stream:
+    for chunk in chunks:
+        stream.write(chunk)
+
+if observed > limit:
+    with open(overflow_path, "w", encoding="ascii") as stream:
+        stream.write(f"{observed}\n")
+else:
+    try:
+        os.unlink(overflow_path)
+    except FileNotFoundError:
+        pass
+
+sys.exit(process.wait())
+PY
 }
 
 record_result() {
@@ -253,18 +329,20 @@ PY
 }
 
 run_setup() {
-  local name="$1" command_text="$2" log_path start_epoch end_epoch started completed status bytes digest
+  local name="$1" command_text="$2" log_path overflow_path start_epoch end_epoch started completed status bytes digest
   setup_count=$((setup_count + 1))
   log_path="$logs/setup-$setup_count.log"
+  overflow_path="$log_path.overflow"
   start_epoch="$(now_ns)"
   started="$(timestamp)"
-  (cd "$workspace" && ulimit -f 32768 && bash -c "$command_text") >"$log_path" 2>&1
+  : >"$log_path"
+  run_bounded_command "$log_path" "$overflow_path" "$command_text"
   status=$?
   end_epoch="$(now_ns)"
   completed="$(timestamp)"
   bytes="$(wc -c <"$log_path" | tr -d '[:space:]')"
   digest="$(sha256_file "$log_path")"
-  if (( bytes > MAX_OUTPUT_BYTES )); then status=1; fi
+  if (( bytes > MAX_OUTPUT_BYTES )) || [[ -f "$overflow_path" ]]; then status=1; fi
   record_result "$setup_jsonl" "$name" setup null "$started" "$completed" \
     "$(((end_epoch - start_epoch) / 1000000))" "$status" "$bytes" "$digest" "$command_text"
   printf 'phase78 clean-state: setup %s exit=%s bytes=%s\n' "$name" "$status" "$bytes"
@@ -273,10 +351,12 @@ run_setup() {
 
 run_command() {
   local index="$1" name="$2" evidence_kind="$3" command_text="$4"
-  local log_path="$logs/command-$index.log" start_epoch end_epoch started completed status bytes digest evidence_count
+  local log_path="$logs/command-$index.log" overflow_path="$logs/command-$index.log.overflow"
+  local start_epoch end_epoch started completed status bytes digest evidence_count
   start_epoch="$(now_ns)"
   started="$(timestamp)"
-  (cd "$workspace" && ulimit -f 32768 && bash -c "$command_text") >"$log_path" 2>&1
+  : >"$log_path"
+  run_bounded_command "$log_path" "$overflow_path" "$command_text"
   status=$?
   end_epoch="$(now_ns)"
   completed="$(timestamp)"
@@ -298,7 +378,7 @@ else:
     print("null")
 PY
 )"
-  if (( bytes > MAX_OUTPUT_BYTES )); then status=1; fi
+  if (( bytes > MAX_OUTPUT_BYTES )) || [[ -f "$overflow_path" ]]; then status=1; fi
   if [[ "$evidence_kind" != none && ( -z "$evidence_count" || "$evidence_count" == 0 ) ]]; then status=1; fi
   record_result "$commands_jsonl" "$name" "$evidence_kind" "$evidence_count" \
     "$started" "$completed" "$(((end_epoch - start_epoch) / 1000000))" \
@@ -341,7 +421,7 @@ actual_otp="$(elixir -e 'IO.write(:erlang.system_info(:otp_release))' 2>/dev/nul
 actual_elixir="$(elixir -e 'IO.write(System.version())' 2>/dev/null || true)"
 if [[ "$actual_otp" == "$otp" && "$actual_elixir" == 1.19.5 ]]; then
   run_setup 'verified toolchain' \
-    "elixir -e 'IO.write(System.version() <> \"/\" <> to_string(:erlang.system_info(:otp_release)))'"
+    "elixir -e 'IO.write(System.version() <> \"/\" <> to_string(:erlang.system_info(:otp_release)))' && docker compose version"
 else
   run_setup "unsupported Elixir/OTP requested $otp found $actual_elixir/$actual_otp" 'false'
 fi
