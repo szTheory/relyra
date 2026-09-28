@@ -299,7 +299,10 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
 
   test "contract probe exercises missing config and provider failure without invoking npx" do
     temp =
-      Path.join(System.tmp_dir!(), "relyra-canary-contract-#{System.unique_integer([:positive])}")
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-canary-contract-#{System.pid()}-#{System.unique_integer([:positive])}"
+      )
 
     bin = Path.join(temp, "bin")
     runner_temp = Path.join(temp, "runner-temp")
