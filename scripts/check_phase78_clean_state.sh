@@ -200,6 +200,7 @@ fi
 export HOME="$run_root/home" XDG_CONFIG_HOME="$run_root/home/.config" XDG_CACHE_HOME="$run_root/home/.cache"
 export MIX_HOME="$run_root/mix-home" HEX_HOME="$run_root/hex-home" MIX_ARCHIVES="$run_root/mix-archives"
 export DOCKER_CONFIG="$run_root/home/.docker"
+export DOCKER_BUILDKIT=1
 export NPM_CONFIG_CACHE="$run_root/npm-cache" PLAYWRIGHT_BROWSERS_PATH="$run_root/playwright-browsers"
 export TMPDIR="$run_root/tmp" RUNNER_TEMP="$run_root/runner-temp"
 export FLEET_PROXY_STATUS_PATH="$RUNNER_TEMP/relyra-fleet-proxy-status.json"
@@ -227,6 +228,27 @@ print(os.path.realpath(sys.argv[1]))
 PY
 )"
     ln -s "$compose_plugin" "$DOCKER_CONFIG/cli-plugins/docker-compose"
+    break
+  fi
+done
+
+buildx_candidates=(
+  "$host_docker_config/cli-plugins/docker-buildx"
+  "$host_home/.docker/cli-plugins/docker-buildx"
+  "/usr/local/lib/docker/cli-plugins/docker-buildx"
+  "/usr/lib/docker/cli-plugins/docker-buildx"
+  "/usr/libexec/docker/cli-plugins/docker-buildx"
+  "/Applications/Docker.app/Contents/Resources/cli-plugins/docker-buildx"
+)
+for candidate in "${buildx_candidates[@]}"; do
+  if [[ -x "$candidate" ]]; then
+    buildx_plugin="$(python3 - "$candidate" <<'PY'
+import os
+import sys
+print(os.path.realpath(sys.argv[1]))
+PY
+)"
+    ln -s "$buildx_plugin" "$DOCKER_CONFIG/cli-plugins/docker-buildx"
     break
   fi
 done
@@ -351,12 +373,20 @@ run_setup() {
 
 run_command() {
   local index="$1" name="$2" evidence_kind="$3" command_text="$4"
+  local execution_text="$command_text"
   local log_path="$logs/command-$index.log" overflow_path="$logs/command-$index.log.overflow"
   local start_epoch end_epoch started completed status bytes digest evidence_count
+
+  case "$name" in
+    'npm run admin-ui:smoke'|'npm run demo:fake-idp'|'npm run demo:trace-visual'|'npm run demo:fleet-proxy'|'npm run demo:keycloak-proxy')
+      execution_text="MIX_ENV=dev $command_text"
+      ;;
+  esac
+
   start_epoch="$(now_ns)"
   started="$(timestamp)"
   : >"$log_path"
-  run_bounded_command "$log_path" "$overflow_path" "$command_text"
+  run_bounded_command "$log_path" "$overflow_path" "$execution_text"
   status=$?
   end_epoch="$(now_ns)"
   completed="$(timestamp)"
@@ -382,7 +412,7 @@ PY
   if [[ "$evidence_kind" != none && ( -z "$evidence_count" || "$evidence_count" == 0 ) ]]; then status=1; fi
   record_result "$commands_jsonl" "$name" "$evidence_kind" "$evidence_count" \
     "$started" "$completed" "$(((end_epoch - start_epoch) / 1000000))" \
-    "$status" "$bytes" "$digest" "$command_text"
+    "$status" "$bytes" "$digest" "$execution_text"
   printf 'phase78 clean-state: command %02d/22 %s exit=%s evidence=%s bytes=%s\n' \
     "$index" "$name" "$status" "$evidence_count" "$bytes"
   [[ -f "$FLEET_PROXY_STATUS_PATH" ]] && rm -f -- "$FLEET_PROXY_STATUS_PATH"
@@ -421,7 +451,7 @@ actual_otp="$(elixir -e 'IO.write(:erlang.system_info(:otp_release))' 2>/dev/nul
 actual_elixir="$(elixir -e 'IO.write(System.version())' 2>/dev/null || true)"
 if [[ "$actual_otp" == "$otp" && "$actual_elixir" == 1.19.5 ]]; then
   run_setup 'verified toolchain' \
-    "elixir -e 'IO.write(System.version() <> \"/\" <> to_string(:erlang.system_info(:otp_release)))' && docker compose version"
+    "elixir -e 'IO.write(System.version() <> \"/\" <> to_string(:erlang.system_info(:otp_release)))' && docker compose version && docker buildx version"
 else
   run_setup "unsupported Elixir/OTP requested $otp found $actual_elixir/$actual_otp" 'false'
 fi

@@ -460,8 +460,11 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert producer =~ "observed > limit"
     refute producer =~ "ulimit -f"
     assert producer =~ ~s(export DOCKER_CONFIG="$run_root/home/.docker")
+    assert producer =~ "export DOCKER_BUILDKIT=1"
     assert producer =~ "cli-plugins/docker-compose"
-    assert producer =~ "docker compose version"
+    assert producer =~ "cli-plugins/docker-buildx"
+    assert producer =~ "docker compose version && docker buildx version"
+    assert producer =~ "execution_text=\"MIX_ENV=dev $command_text\""
   end
 
   test "the assembler requires matching frozen sources and produces one ordered OTP receipt" do
