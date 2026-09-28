@@ -317,6 +317,15 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     path = System.get_env("PATH") || "/usr/bin:/bin"
     probe_path = "#{bin}:#{path}"
 
+    tool_resolution_env =
+      ["ASDF_DATA_DIR", "ASDF_NODEJS_VERSION"]
+      |> Enum.flat_map(fn name ->
+        case System.get_env(name) do
+          nil -> []
+          value -> ["#{name}=#{value}"]
+        end
+      end)
+
     {syntax_output, syntax_exit} =
       System.cmd("bash", ["-n", @runner_path], cd: File.cwd!(), stderr_to_stdout: true)
 
@@ -330,11 +339,14 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
           "PATH=#{probe_path}",
           "HOME=#{System.user_home!()}",
           "RUNNER_TEMP=#{runner_temp}",
-          "CANARY_NPX_MARKER=#{marker}",
-          "bash",
-          @runner_path,
-          "--contract-probe"
-        ],
+          "CANARY_NPX_MARKER=#{marker}"
+        ] ++
+          tool_resolution_env ++
+          [
+            "bash",
+            @runner_path,
+            "--contract-probe"
+          ],
         cd: File.cwd!(),
         stderr_to_stdout: true
       )
