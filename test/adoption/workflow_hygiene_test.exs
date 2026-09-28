@@ -20,7 +20,10 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
   }
 
   @job_contracts %{
-    ".github/workflows/security-gates.yml" => %{"security" => nil},
+    ".github/workflows/security-gates.yml" => %{
+      "security" => nil,
+      "phase78-clean-state" => "Phase 78 cold-state receipt"
+    },
     ".github/workflows/demo-app-ci.yml" => %{"demo-app" => nil},
     ".github/workflows/adoption-external-idp.yml" => %{"keycloak" => nil},
     ".github/workflows/planning-pr-checks.yml" => %{
@@ -36,7 +39,9 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
   }
 
   @job_permissions %{
-    ".github/workflows/security-gates.yml" => %{},
+    ".github/workflows/security-gates.yml" => %{
+      "phase78-clean-state" => %{"contents" => "read"}
+    },
     ".github/workflows/demo-app-ci.yml" => %{},
     ".github/workflows/adoption-external-idp.yml" => %{},
     ".github/workflows/planning-pr-checks.yml" => %{
@@ -61,9 +66,9 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
 
   @action_pin_expectations %{
     ".github/workflows/security-gates.yml" => [
-      {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 1},
-      {"actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020", "v7.0.0", 1},
-      {"erlef/setup-beam", "54075bcc5e249e4758d363f27d099f55d843f124", "v1.24.1", 1}
+      {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 2},
+      {"actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020", "v7.0.0", 2},
+      {"erlef/setup-beam", "54075bcc5e249e4758d363f27d099f55d843f124", "v1.24.1", 3}
     ],
     ".github/workflows/demo-app-ci.yml" => [
       {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 1},
