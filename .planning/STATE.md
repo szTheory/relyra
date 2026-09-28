@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 78
 current_phase_name: CI Efficiency and Reliability
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: "Checkpoint: Phase 78 Plan 02 Task 2 requires comparable owned runner evidence"
-last_updated: "2026-09-27T16:57:46.884Z"
-last_activity: 2026-09-27
-last_activity_desc: Phase 78 execution started
-state_head: 70f728ba9002462b336d35c7f15204bbef806070
+stopped_at: Completed 78-02-PLAN.md
+last_updated: "2026-09-28T00:56:41.944Z"
+last_activity: 2026-09-28
+last_activity_desc: Phase 78 Plan 02 complete; Plan 03 ready
+state_head: 7023f93df11028a3f858ca351bb8195e9c91c922
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 61
-  completed_plans: 55
+  completed_plans: 56
   percent: 71
 ---
 
@@ -36,11 +36,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 78 (CI Efficiency and Reliability) — EXECUTING
 
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 7
-Next gate: Continue Plan 78-02 Task 2 when comparable owned Ubuntu runner evidence is available; Task 1 is committed as `70f728b`.
+Next gate: Execute Plan 78-03 — make docs and verification suites execute independently while preserving security-suite process boundaries.
 
-Status: Executing Phase 78 — checkpoint at Plan 78-02 Task 2
+Status: Ready to execute
 
 Last activity: 2026-09-27 — Phase 78 execution started
 
@@ -168,6 +168,7 @@ Last activity: 2026-09-27 — Phase 78 execution started
 - [Phase 77]: Treat generated verification reports as audit evidence while enforcing policy on PLAN and CONTEXT inputs and rejecting required UAT artifacts.
 - [Phase 78]: Derive lifecycle membership from the active roadmap and validate all tracked Phase 78 plans.
 - [Phase 78]: Enforce primary ownership uniqueness by requirement and criterion; keep independent defenses separately labeled.
+- [Phase 78]: Remove the duplicate Fast lane from security-gates after QA and ci.fast both selected the same 960 default tests on each supported OTP version. — Three full baseline and three full candidate matrix runs passed. Candidate warm medians reduced matrix wall time by 4.83% and runner cost by 8.30%; QA, every consumer and security gate, browser smoke, and standalone GATE-02 remained enabled. Local ACT could not measure GitHub cache-service overhead, so no compiled cache was introduced.
 
 ### Baseline Findings
 
@@ -206,9 +207,9 @@ Last activity: 2026-09-27 — Phase 78 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-27T16:57:46.766Z
+**Last session:** 2026-09-28T00:56:09.736Z
 
-**Stopped at:** Checkpoint: Phase 78 Plan 02 Task 2 requires comparable owned runner evidence
+**Stopped at:** Completed 78-02-PLAN.md
 
 **Resume file:** None
 
@@ -286,6 +287,7 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 | Phase 77 P07 | 2min | 2 tasks | 1 files |
 | Phase 77 P08 | 1h 4m | 2 tasks | 12 files |
 | Phase 78 P01 | 38min | 3 tasks | 3 files |
+| Phase 78 P2 | 8h | 3 tasks | 8 files |
 
 ### Resolved Issues
 
