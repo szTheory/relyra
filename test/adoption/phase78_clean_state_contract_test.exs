@@ -37,6 +37,7 @@ defmodule Relyra.Phase78CleanStateReceiptContract do
     "mix deps.get --check-locked",
     "owned PostgreSQL service",
     "owned PostgreSQL readiness",
+    "LedgerLoop test metadata",
     "verified toolchain",
     "npx playwright install chromium"
   ]
@@ -595,6 +596,7 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
       "mix deps.get --check-locked",
       "owned PostgreSQL service",
       "owned PostgreSQL readiness",
+      "LedgerLoop test metadata",
       "verified toolchain",
       "npx playwright install chromium"
     ]

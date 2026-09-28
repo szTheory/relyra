@@ -341,10 +341,12 @@ actual_otp="$(elixir -e 'IO.write(:erlang.system_info(:otp_release))' 2>/dev/nul
 actual_elixir="$(elixir -e 'IO.write(System.version())' 2>/dev/null || true)"
 if [[ "$actual_otp" == "$otp" && "$actual_elixir" == 1.19.5 ]]; then
   run_setup 'verified toolchain' \
-    "elixir -e 'IO.write(System.version() <> \"/\" <> :erlang.system_info(:otp_release))'"
+    "elixir -e 'IO.write(System.version() <> \"/\" <> to_string(:erlang.system_info(:otp_release)))'"
 else
   run_setup "unsupported Elixir/OTP requested $otp found $actual_elixir/$actual_otp" 'false'
 fi
+run_setup 'LedgerLoop test metadata' \
+  'mix cmd --cd demo/ledger_loop mix deps.get && mix cmd --cd demo/ledger_loop mix compile'
 
 manifest_names=(
   'mix format --check-formatted'
