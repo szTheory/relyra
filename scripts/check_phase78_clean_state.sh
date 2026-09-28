@@ -152,6 +152,7 @@ done
 run_id="$(od -An -N8 -tx1 /dev/urandom | tr -d '[:space:]')"
 [[ "$run_id" =~ ^[a-f0-9]{16}$ ]] || { echo "phase78 clean-state: could not create a run ID" >&2; exit 70; }
 tmp_parent="${TMPDIR:-/tmp}"
+tmp_parent="$(CDPATH='' cd -P -- "$tmp_parent" && pwd)" || exit 70
 run_root="$(umask 077; mktemp -d "$tmp_parent/relyra-phase78-cold-$run_id.XXXXXX")" || exit 70
 run_root="$(CDPATH='' cd -P -- "$run_root" && pwd)"
 [[ "$run_root" == "$tmp_parent"/relyra-phase78-cold-"$run_id".* ]] || { echo "phase78 clean-state: unsafe temporary workspace" >&2; exit 70; }
