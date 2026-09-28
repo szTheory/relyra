@@ -20,13 +20,13 @@ WORKFLOW_PATH="$ROOT_DIR/.github/workflows/demo-app-e2e.yml"
 assert_workflow_contract() {
   grep -Fq 'name: Trace visual and failed-state browser e2e' "$WORKFLOW_PATH"
   grep -Fq 'run: npm run demo:trace-visual' "$WORKFLOW_PATH"
-  grep -Fq 'uses: actions/upload-artifact@v4' "$WORKFLOW_PATH"
+  grep -Fq 'uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1' "$WORKFLOW_PATH"
   grep -Fq 'name: demo-app-e2e-trace-visual-status' "$WORKFLOW_PATH"
-  grep -Fq 'path: ${{ runner.temp }}/relyra-trace-visual-status.json' "$WORKFLOW_PATH"
+  grep -Fq "path: \${{ runner.temp }}/relyra-trace-visual-status.json" "$WORKFLOW_PATH"
   grep -Fq 'if-no-files-found: error' "$WORKFLOW_PATH"
   grep -Fq 'retention-days: 7' "$WORKFLOW_PATH"
-  grep -Fq '`demo-app-e2e` maintainer' "$WORKFLOW_PATH"
-  grep -Fq '`npm run demo:trace-visual`' "$WORKFLOW_PATH"
+  grep -Fq "\\\`demo-app-e2e\\\` maintainer" "$WORKFLOW_PATH"
+  grep -Fq "\\\`npm run demo:trace-visual\\\`" "$WORKFLOW_PATH"
 }
 
 cat > "$FAKE_BIN/npx" <<'FAKE_NPX'
