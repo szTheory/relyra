@@ -45,18 +45,50 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run hermetic fleet proxy E2E
+        env:
+          FLEET_PROXY_STATUS_PATH: ${{ runner.temp }}/relyra-fleet-proxy-status.json
         run: npm run demo:fleet-proxy
 
-      - name: Upload fleet proxy diagnostics
-        if: ${{ always() }}
+      - name: Require bounded Fleet status receipt
+        id: fleet_status_guard
+        if: always()
+        env:
+          FLEET_PROXY_STATUS_PATH: ${{ runner.temp }}/relyra-fleet-proxy-status.json
+        run: |
+          if [[ ! -f "$FLEET_PROXY_STATUS_PATH" || -L "$FLEET_PROXY_STATUS_PATH" ]]; then
+            echo "::error::fleet_proxy_status_missing: required bounded receipt was not produced."
+            exit 1
+          fi
+          status_bytes="$(wc -c < "$FLEET_PROXY_STATUS_PATH")"
+          if (( status_bytes == 0 || status_bytes > 512 )); then
+            echo "::error::fleet_proxy_status_invalid: receipt must be between 1 and 512 bytes."
+            exit 1
+          fi
+          jq -e '
+            keys == ["checks_failed", "checks_passed", "failure_category", "outcome", "owner", "phase", "run_id", "schema_version"] and
+            .schema_version == 1 and .owner == "fleet-proxy-e2e" and
+            (.run_id | test("^[a-f0-9]{16}$")) and
+            (.phase | IN("setup", "solo", "proxy", "fleet", "complete")) and
+            (.outcome | IN("passed", "failed", "cancelled")) and
+            (.failure_category | IN("none", "setup", "assertion", "timeout", "cancelled")) and
+            (.checks_passed | type == "number" and . >= 0 and . <= 12) and
+            (.checks_failed | type == "number" and . >= 0 and . <= 1) and
+            ((.outcome == "passed" and .failure_category == "none" and .phase == "complete" and .checks_failed == 0) or
+             (.outcome == "failed" and .failure_category != "none" and .phase != "complete" and .checks_failed == 1) or
+             (.outcome == "cancelled" and .failure_category == "cancelled" and .phase != "complete" and .checks_failed == 1))
+          ' "$FLEET_PROXY_STATUS_PATH" >/dev/null || {
+            echo "::error::fleet_proxy_status_invalid: receipt does not match the bounded Fleet schema."
+            exit 1
+          }
+
+      - name: Upload safe Fleet status
+        if: ${{ always() && steps.fleet_status_guard.conclusion == 'success' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: fleet-proxy-e2e-${{ github.run_id }}
-          path: |
-            playwright-report/fleet-proxy-*/**
-            test-results/**
-          if-no-files-found: ignore
-          retention-days: 7
+          name: fleet-proxy-e2e-${{ github.job }}-${{ strategy.job-index || 0 }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/relyra-fleet-proxy-status.json
+          if-no-files-found: error
+          retention-days: 3
 
   rulestead-main-canary:
     name: rulestead-main-canary
@@ -80,13 +112,46 @@ jobs:
       - name: Run Rulestead coexistence canary
         env:
           RULESTEAD_DIR: ${{ github.workspace }}/rulestead
+          RULESTEAD_CANARY_STATUS_PATH: ${{ runner.temp }}/relyra-rulestead-canary-status.json
         run: ./scripts/test_rulestead_proxy_canary.sh
 
-      - name: Upload canary diagnostics
-        if: ${{ always() }}
+      - name: Require bounded canary status receipt
+        id: canary_status_guard
+        if: always()
+        env:
+          RULESTEAD_CANARY_STATUS_PATH: ${{ runner.temp }}/relyra-rulestead-canary-status.json
+        run: |
+          if [[ ! -f "$RULESTEAD_CANARY_STATUS_PATH" || -L "$RULESTEAD_CANARY_STATUS_PATH" ]]; then
+            echo "::error::rulestead_canary_status_missing: required bounded receipt was not produced."
+            exit 1
+          fi
+          status_bytes="$(wc -c < "$RULESTEAD_CANARY_STATUS_PATH")"
+          if (( status_bytes == 0 || status_bytes > 512 )); then
+            echo "::error::rulestead_canary_status_invalid: receipt must be between 1 and 512 bytes."
+            exit 1
+          fi
+          jq -e '
+            keys == ["checks_failed", "checks_passed", "failure_category", "outcome", "owner", "phase", "run_id", "schema_version"] and
+            .schema_version == 1 and .owner == "rulestead-main-canary" and
+            (.run_id | test("^[a-f0-9]{16}$")) and
+            (.phase | IN("setup", "proxy", "relyra", "rulestead", "complete")) and
+            (.outcome | IN("passed", "failed", "cancelled")) and
+            (.failure_category | IN("none", "setup", "assertion", "timeout", "cancelled")) and
+            (.checks_passed | type == "number" and . >= 0 and . <= 12) and
+            (.checks_failed | type == "number" and . >= 0 and . <= 1) and
+            ((.outcome == "passed" and .failure_category == "none" and .phase == "complete" and .checks_failed == 0) or
+             (.outcome == "failed" and .failure_category != "none" and .phase != "complete" and .checks_failed == 1) or
+             (.outcome == "cancelled" and .failure_category == "cancelled" and .phase != "complete" and .checks_failed == 1))
+          ' "$RULESTEAD_CANARY_STATUS_PATH" >/dev/null || {
+            echo "::error::rulestead_canary_status_invalid: receipt does not match the bounded canary schema."
+            exit 1
+          }
+
+      - name: Upload safe canary status
+        if: ${{ always() && steps.canary_status_guard.conclusion == 'success' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: rulestead-main-canary-${{ github.run_id }}
-          path: playwright-report/rulestead-canary/**
-          if-no-files-found: ignore
-          retention-days: 7
+          name: rulestead-main-canary-${{ github.job }}-${{ strategy.job-index || 0 }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/relyra-rulestead-canary-status.json
+          if-no-files-found: error
+          retention-days: 3

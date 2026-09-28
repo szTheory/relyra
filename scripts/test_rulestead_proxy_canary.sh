@@ -3,16 +3,18 @@ set -euo pipefail
 
 ROOT_DIR="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
 RULESTEAD_DIR="${RULESTEAD_DIR:-$ROOT_DIR/rulestead}"
-ARTIFACT_DIR="${RULESTEAD_CANARY_ARTIFACT_DIR:-playwright-report/rulestead-canary}"
 PROXY_NETWORK="proxy"
-RULESTEAD_PROJECT="relyra-rulestead-canary"
-FLEET_COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.proxy.yml)
-PROXY_COMPOSE=(docker compose -f docker/traefik/compose.yml)
-PROXY_WAS_RUNNING=false
-NETWORK_WAS_PRESENT=false
+RUN_SUFFIX="${GITHUB_RUN_ID:-local}-a${GITHUB_RUN_ATTEMPT:-1}-p$$"
+RULESTEAD_PROJECT="relyra-rulestead-canary-$RUN_SUFFIX"
+FLEET_PROJECT="relyra-rulestead-fleet-$RUN_SUFFIX"
+PROXY_PROJECT="relyra-rulestead-proxy-$RUN_SUFFIX"
+PROXY_OWNED=true
+STATUS_PATH="${RULESTEAD_CANARY_STATUS_PATH:-}"
+STATUS_PHASE="setup"
+STATUS_CHECKS_PASSED=0
+NETWORK_CREATED=false
 
 cd "$ROOT_DIR"
-mkdir -p "$ARTIFACT_DIR"
 
 log() {
   printf '[rulestead-canary] %s\n' "$*"
@@ -24,6 +26,91 @@ rulestead_compose() {
     COMPOSE_PROJECT_NAME="$RULESTEAD_PROJECT" \
       docker compose -f docker-compose.yml -f docker-compose.proxy.yml "$@"
   )
+}
+
+fleet_compose() {
+  COMPOSE_PROJECT_NAME="$FLEET_PROJECT" \
+    DEMO_PROXY_NETWORK="$PROXY_NETWORK" \
+    docker compose -f docker-compose.yml -f docker-compose.proxy.yml "$@"
+}
+
+proxy_compose() {
+  COMPOSE_PROJECT_NAME="$PROXY_PROJECT" \
+    DEMO_PROXY_NETWORK="$PROXY_NETWORK" \
+    docker compose -f docker/traefik/compose.yml "$@"
+}
+
+status_path_is_safe() {
+  local runner_temp="${RUNNER_TEMP:-}"
+  local canonical_runner_temp
+
+  [[ -n "$STATUS_PATH" && -n "$runner_temp" ]] || return 1
+  [[ -d "$runner_temp" && ! -L "$runner_temp" ]] || return 1
+  canonical_runner_temp="$(CDPATH='' cd -P -- "$runner_temp" && pwd)" || return 1
+  [[ "$STATUS_PATH" == "$canonical_runner_temp/relyra-rulestead-canary-status.json" ]]
+}
+
+write_status() {
+  local original_status="$1"
+  local outcome="passed"
+  local failure_category="none"
+  local checks_failed=0
+  local run_id
+  local temporary_file
+  local byte_count
+
+  [[ "$original_status" -eq 0 ]] || checks_failed=1
+
+  case "$original_status" in
+    0)
+      ;;
+    130|143)
+      outcome="cancelled"
+      failure_category="cancelled"
+      ;;
+    124)
+      outcome="failed"
+      failure_category="timeout"
+      ;;
+    *)
+      outcome="failed"
+      if [[ "$STATUS_PHASE" == "setup" ]]; then
+        failure_category="setup"
+      else
+        failure_category="assertion"
+      fi
+      ;;
+  esac
+
+  [[ "${GITHUB_ACTIONS:-}" == "true" ]] || return 0
+  status_path_is_safe || return 1
+  [[ "$STATUS_PHASE" =~ ^(setup|proxy|relyra|rulestead|complete)$ ]] || return 1
+  [[ "$STATUS_CHECKS_PASSED" =~ ^[0-9]{1,2}$ ]] || return 1
+  (( STATUS_CHECKS_PASSED <= 12 )) || return 1
+
+  run_id="$(od -An -N8 -tx1 /dev/urandom | tr -d '[:space:]')" || return 1
+  [[ "$run_id" =~ ^[a-f0-9]{16}$ ]] || return 1
+  temporary_file="$(umask 077; mktemp "$RUNNER_TEMP/.relyra-rulestead-canary-status.XXXXXX")" || return 1
+
+  if ! printf '{"schema_version":1,"owner":"rulestead-main-canary","run_id":"%s","phase":"%s","outcome":"%s","failure_category":"%s","checks_passed":%s,"checks_failed":%s}\n' \
+    "$run_id" "$STATUS_PHASE" "$outcome" "$failure_category" \
+    "$STATUS_CHECKS_PASSED" "$checks_failed" >"$temporary_file"; then
+    rm -f -- "$temporary_file"
+    return 1
+  fi
+
+  byte_count="$(wc -c <"$temporary_file")" || {
+    rm -f -- "$temporary_file"
+    return 1
+  }
+  (( byte_count > 0 && byte_count <= 512 )) || {
+    rm -f -- "$temporary_file"
+    return 1
+  }
+  if ! mv -f -- "$temporary_file" "$STATUS_PATH"; then
+    rm -f -- "$temporary_file"
+    return 1
+  fi
 }
 
 wait_for_health() {
@@ -62,80 +149,82 @@ wait_for_route() {
   return 1
 }
 
-capture_diagnostics() {
-  docker ps -a >"$ARTIFACT_DIR/docker-ps.log" 2>&1 || true
-  docker network inspect "$PROXY_NETWORK" >"$ARTIFACT_DIR/proxy-network.log" 2>&1 || true
-  "${FLEET_COMPOSE[@]}" logs --no-color >"$ARTIFACT_DIR/relyra.log" 2>&1 || true
-  "${PROXY_COMPOSE[@]}" logs --no-color >"$ARTIFACT_DIR/traefik.log" 2>&1 || true
-  rulestead_compose logs --no-color >"$ARTIFACT_DIR/rulestead.log" 2>&1 || true
-}
-
 cleanup() {
-  local status=$?
-  trap - EXIT INT TERM
+  local status="$1"
+  local final_status="$status"
 
-  if [[ "$status" -ne 0 ]]; then
-    capture_diagnostics
-  fi
+  trap - EXIT HUP INT TERM
 
   rulestead_compose down --remove-orphans --volumes >/dev/null 2>&1 || true
-  "${FLEET_COMPOSE[@]}" down --remove-orphans >/dev/null 2>&1 || true
+  fleet_compose down --remove-orphans >/dev/null 2>&1 || true
 
-  if [[ "$PROXY_WAS_RUNNING" == "false" ]]; then
-    "${PROXY_COMPOSE[@]}" down --remove-orphans >/dev/null 2>&1 || true
+  if [[ "$PROXY_OWNED" == "true" ]]; then
+    proxy_compose down --remove-orphans >/dev/null 2>&1 || true
   fi
 
-  if [[ "$NETWORK_WAS_PRESENT" == "false" ]]; then
+  if [[ "$NETWORK_CREATED" == "true" ]]; then
     docker network rm "$PROXY_NETWORK" >/dev/null 2>&1 || true
+  fi
+
+  if [[ "$status" -eq 0 ]]; then
+    STATUS_PHASE="complete"
+  fi
+
+  if ! write_status "$status"; then
+    printf '%s\n' "rulestead_canary_status_receipt_write_failed: bounded status receipt could not be written." >&2
+    [[ "$final_status" -ne 0 ]] || final_status=1
   fi
 
   if [[ "$status" -eq 0 ]]; then
     log "Relyra and Rulestead main coexistence assertions passed"
   else
-    log "failed; diagnostics saved under $ARTIFACT_DIR"
+    log "failed; bounded status receipt records phase $STATUS_PHASE"
   fi
 
-  exit "$status"
+  exit "$final_status"
 }
-trap cleanup EXIT INT TERM
+trap 'cleanup $?' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  if ! status_path_is_safe; then
+    printf '%s\n' "rulestead_canary_status_path_invalid: required status path is outside RUNNER_TEMP." >&2
+    exit 1
+  fi
+  rm -f -- "$STATUS_PATH"
+fi
 
 if [[ ! -x "$RULESTEAD_DIR/scripts/demo/proxy-up.sh" ]]; then
   log "Rulestead checkout not found at $RULESTEAD_DIR"
   exit 1
 fi
 
-if [[ -n "$(docker compose ps -aq 2>/dev/null)" ]]; then
-  log "refusing to reuse an active relyra-demo project"
-  exit 1
+if COMPOSE_PROJECT_NAME=dev_proxy docker compose -f docker/traefik/compose.yml ps -q traefik 2>/dev/null | grep -q .; then
+  PROXY_PROJECT="dev_proxy"
+  PROXY_OWNED=false
 fi
 
-if [[ -n "$(rulestead_compose ps -aq 2>/dev/null)" ]]; then
-  log "refusing to reuse the Rulestead canary project"
-  exit 1
-fi
-
-if [[ -n "$("${PROXY_COMPOSE[@]}" ps -q traefik 2>/dev/null)" ]]; then
-  PROXY_WAS_RUNNING=true
-fi
-
-if docker network inspect "$PROXY_NETWORK" >/dev/null 2>&1; then
-  NETWORK_WAS_PRESENT=true
-else
+if ! docker network inspect "$PROXY_NETWORK" >/dev/null 2>&1; then
   docker network create "$PROXY_NETWORK" >/dev/null
+  NETWORK_CREATED=true
 fi
 
 log "starting Relyra with the shared proxy"
-"${PROXY_COMPOSE[@]}" up -d
-proxy_id="$("${PROXY_COMPOSE[@]}" ps -q traefik)"
+STATUS_PHASE="proxy"
+proxy_compose up -d
+proxy_id="$(proxy_compose ps -q traefik)"
 [[ -n "$proxy_id" ]]
-"${FLEET_COMPOSE[@]}" up -d --build --wait
+STATUS_PHASE="relyra"
+fleet_compose up -d --build --wait
 
 log "starting the checked-out Rulestead main demo against the same proxy"
 (
   cd "$RULESTEAD_DIR"
   COMPOSE_PROJECT_NAME="$RULESTEAD_PROJECT" \
   DEMO_PROXY_NETWORK="$PROXY_NETWORK" \
-  DEMO_PROXY_PROJECT_NAME=dev_proxy \
+  DEMO_PROXY_PROJECT_NAME="$PROXY_PROJECT" \
   DEMO_PROXY_HTTP_PORT=80 \
   DEMO_HOST_SLUG=local \
     scripts/demo/proxy-up.sh
@@ -144,14 +233,16 @@ log "starting the checked-out Rulestead main demo against the same proxy"
 wait_for_health backend
 wait_for_health frontend
 wait_for_route relyra.localhost /setup/sso "SSO Setup"
+STATUS_CHECKS_PASSED=4
+STATUS_PHASE="rulestead"
 wait_for_route rulestead.localhost / "Rulestead"
 wait_for_route fleetdesk.rulestead.localhost / "FleetDesk"
 
 log "stopping only Relyra and proving Rulestead remains routed"
-"${FLEET_COMPOSE[@]}" down --remove-orphans
+fleet_compose down --remove-orphans --volumes
 wait_for_route rulestead.localhost / "Rulestead"
 wait_for_route fleetdesk.rulestead.localhost / "FleetDesk"
 [[ "$(docker inspect --format '{{.State.Running}}' "$proxy_id")" == "true" ]]
 docker network inspect "$PROXY_NETWORK" >/dev/null
 
-capture_diagnostics
+STATUS_CHECKS_PASSED=8

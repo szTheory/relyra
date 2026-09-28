@@ -11,6 +11,8 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
   @playwright_config_path "playwright.real-idp.config.mjs"
   @demo_workflow_path ".github/workflows/demo-app-e2e.yml"
   @keycloak_workflow_path ".github/workflows/keycloak-proxy-e2e.yml"
+  @fleet_proxy_workflow_path ".github/workflows/fleet-proxy-e2e.yml"
+  @rulestead_canary_runner_path "scripts/test_rulestead_proxy_canary.sh"
 
   @action_pin_expectations %{
     @keycloak_workflow_path => [
@@ -21,6 +23,11 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
       {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 1},
       {"actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020", "v7.0.0", 1},
       {"actions/upload-artifact", "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "v7.0.1", 1}
+    ],
+    @fleet_proxy_workflow_path => [
+      {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 3},
+      {"actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020", "v7.0.0", 1},
+      {"actions/upload-artifact", "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "v7.0.1", 2}
     ]
   }
 
@@ -104,6 +111,123 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     for {path, _expected_pins} <- @action_pin_expectations do
       assert :ok = validate_action_pins!(path, File.read!(path))
     end
+  end
+
+  test "Rulestead canary uploads only a fixed safe receipt and preserves its separate owner" do
+    workflow = load_yaml!(@fleet_proxy_workflow_path)
+    job = workflow["jobs"]["rulestead-main-canary"]
+    steps = job["steps"]
+    runner = File.read!(@rulestead_canary_runner_path)
+    upload = Enum.find(steps, &(&1["name"] == "Upload safe canary status"))
+    validation = Enum.find(steps, &(&1["name"] == "Require bounded canary status receipt"))
+
+    assert job["if"] =~ "github.event_name == 'schedule'"
+    assert job["if"] =~ "inputs.run_rulestead_canary"
+
+    assert upload["with"]["path"] ==
+             "${{ runner.temp }}/relyra-rulestead-canary-status.json"
+
+    assert upload["with"]["if-no-files-found"] == "error"
+    assert upload["with"]["retention-days"] == 3
+
+    assert upload["if"] ==
+             "${{ always() && steps.canary_status_guard.conclusion == 'success' }}"
+
+    assert upload["with"]["name"] =~ "${{ github.job }}"
+    assert upload["with"]["name"] =~ "${{ strategy.job-index || 0 }}"
+    assert upload["with"]["name"] =~ "${{ github.run_attempt }}"
+    assert validation["run"] =~ "rulestead_canary_status_missing"
+    assert validation["run"] =~ "status_bytes > 512"
+    assert validation["id"] == "canary_status_guard"
+
+    refute File.read!(@fleet_proxy_workflow_path) =~
+             ~r/playwright-report\/|test-results\/|path:\s*\|/
+
+    refute runner =~ "logs --no-color"
+    refute runner =~ "capture_diagnostics"
+    assert runner =~ "checks_failed"
+    assert runner =~ "byte_count <= 512"
+    assert runner =~ "trap 'exit 143' TERM"
+    assert runner =~ "NETWORK_CREATED=true"
+
+    assert :ok =
+             validate_action_pins!(
+               @fleet_proxy_workflow_path,
+               File.read!(@fleet_proxy_workflow_path)
+             )
+  end
+
+  test "Rulestead canary success, failure, and setup failure serialize only bounded status fields" do
+    temp = temp_dir!("relyra-rulestead-canary-status")
+    on_exit(fn -> File.rm_rf!(temp) end)
+    {runner_temp, status_path} = status_paths!(temp, "relyra-rulestead-canary-status.json")
+    bin = Path.join(temp, "bin")
+    rulesstead = Path.join(temp, "rulestead")
+    File.mkdir_p!(Path.join(bin, "scripts"))
+    File.mkdir_p!(Path.join(rulesstead, "scripts/demo"))
+
+    proxy_up = Path.join(rulesstead, "scripts/demo/proxy-up.sh")
+    File.write!(proxy_up, "#!/usr/bin/env bash\nexit 0\n")
+    File.chmod!(proxy_up, 0o700)
+
+    write_canary_stubs!(bin)
+    canary_env = canary_test_env(temp, bin, runner_temp, status_path, rulesstead)
+
+    {success_output, success_exit} =
+      System.cmd("bash", [@rulestead_canary_runner_path],
+        cd: File.cwd!(),
+        env: canary_env,
+        stderr_to_stdout: true
+      )
+
+    assert success_exit == 0, success_output
+    success = assert_safe_canary_status!(status_path)
+    assert success["phase"] == "complete"
+    assert success["outcome"] == "passed"
+    assert success["failure_category"] == "none"
+    assert success["checks_passed"] == 8
+    assert_no_sensitive_canary_data!(File.read!(status_path))
+    docker_calls = File.read!(Path.join(temp, "docker-calls.log"))
+    refute docker_calls =~ ~r/^dev_proxy\|.* down/m
+    assert docker_calls =~ "relyra-rulestead-canary-"
+
+    {failure_output, failure_exit} =
+      System.cmd("bash", [@rulestead_canary_runner_path],
+        cd: File.cwd!(),
+        env:
+          List.keystore(
+            canary_env,
+            "CANARY_FAKE_DOCKER_FAIL",
+            0,
+            {"CANARY_FAKE_DOCKER_FAIL", "1"}
+          ),
+        stderr_to_stdout: true
+      )
+
+    assert failure_exit == 42, failure_output
+    failure = assert_safe_canary_status!(status_path)
+    assert failure["phase"] == "relyra"
+    assert failure["outcome"] == "failed"
+    assert failure["failure_category"] == "assertion"
+    assert failure["checks_failed"] == 1
+    assert_no_sensitive_canary_data!(File.read!(status_path))
+
+    missing_rulesstead = Path.join(temp, "missing-rulestead")
+
+    {setup_output, setup_exit} =
+      System.cmd("bash", [@rulestead_canary_runner_path],
+        cd: File.cwd!(),
+        env: List.keystore(canary_env, "RULESTEAD_DIR", 0, {"RULESTEAD_DIR", missing_rulesstead}),
+        stderr_to_stdout: true
+      )
+
+    assert setup_exit == 1, setup_output
+    setup = assert_safe_canary_status!(status_path)
+    assert setup["phase"] == "setup"
+    assert setup["outcome"] == "failed"
+    assert setup["failure_category"] == "setup"
+    assert setup["checks_passed"] == 0
+    assert_no_sensitive_canary_data!(File.read!(status_path))
   end
 
   test "canary and browser gate mutations reject trigger leakage, skips, collisions, and pin mismatches" do
@@ -228,6 +352,124 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     assert Enum.count(String.split(Enum.at(evidence_alias, 1), "\n"), fn line ->
              String.contains?(line, "cmd mix test")
            end) == 1
+  end
+
+  defp temp_dir!(prefix) do
+    temp = Path.join(System.tmp_dir!(), "#{prefix}-#{System.unique_integer([:positive])}")
+    File.mkdir_p!(temp)
+    temp
+  end
+
+  defp status_paths!(temp, status_name) do
+    unresolved_runner_temp = Path.join(temp, "runner-temp")
+    File.mkdir_p!(unresolved_runner_temp)
+    {runner_temp, 0} = System.cmd("pwd", [], cd: unresolved_runner_temp)
+    runner_temp = String.trim(runner_temp)
+    {runner_temp, Path.join(runner_temp, status_name)}
+  end
+
+  defp write_canary_stubs!(bin) do
+    docker = Path.join(bin, "docker")
+    curl = Path.join(bin, "curl")
+    sleep = Path.join(bin, "sleep")
+
+    File.write!(
+      docker,
+      """
+      #!/usr/bin/env bash
+      printf '%s|%s\\n' "${COMPOSE_PROJECT_NAME:-none}" "$*" >>"$CANARY_DOCKER_CALLS"
+      printf '%s\\n' ASSERTION_SENTINEL CERTIFICATE_SENTINEL PASSWORD_SENTINEL COOKIE_SENTINEL UNEXPECTED_ATTACHMENT_SENTINEL >&2
+      if [[ "${CANARY_FAKE_DOCKER_FAIL:-0}" == "1" && "$*" == *"up -d --build --wait"* ]]; then
+        exit 42
+      fi
+      case "$*" in
+        *"ps -q traefik"*) printf '%s\\n' proxy-id ;;
+        *"ps -q backend"*) printf '%s\\n' backend-id ;;
+        *"ps -q frontend"*) printf '%s\\n' frontend-id ;;
+        *"inspect --format {{if .State.Health}}"*) printf '%s\\n' healthy ;;
+        *"inspect --format {{.State.Running}}"*) printf '%s\\n' true ;;
+      esac
+      exit 0
+      """
+    )
+
+    File.write!(
+      curl,
+      """
+      #!/usr/bin/env bash
+      url=""
+      for argument in "$@"; do
+        case "$argument" in http://*) url="$argument" ;; esac
+      done
+      case "$url" in
+        *fleetdesk*) printf '%s\\n' FleetDesk ;;
+        *rulestead*) printf '%s\\n' Rulestead ;;
+        *relyra*) printf '%s\\n' "SSO Setup" ;;
+      esac
+      """
+    )
+
+    File.write!(sleep, "#!/usr/bin/env bash\nexit 0\n")
+    Enum.each([docker, curl, sleep], &File.chmod!(&1, 0o700))
+  end
+
+  defp canary_test_env(temp, bin, runner_temp, status_path, rulesstead) do
+    path = System.get_env("PATH") || "/usr/bin:/bin"
+
+    [
+      {"PATH", "#{bin}:#{path}"},
+      {"GITHUB_ACTIONS", "true"},
+      {"RUNNER_TEMP", runner_temp},
+      {"RULESTEAD_CANARY_STATUS_PATH", status_path},
+      {"RULESTEAD_DIR", rulesstead},
+      {"CANARY_DOCKER_CALLS", Path.join(temp, "docker-calls.log")},
+      {"CANARY_FAKE_DOCKER_FAIL", "0"},
+      {"ASSERTION_SENTINEL", "ASSERTION_SENTINEL"},
+      {"CERTIFICATE_SENTINEL", "CERTIFICATE_SENTINEL"},
+      {"PGPASSWORD", "PASSWORD_SENTINEL"},
+      {"COOKIE_SENTINEL", "COOKIE_SENTINEL"},
+      {"UNEXPECTED_ATTACHMENT_SENTINEL", "UNEXPECTED_ATTACHMENT_SENTINEL"}
+    ]
+  end
+
+  defp assert_safe_canary_status!(path) do
+    status_bytes = File.read!(path)
+    assert byte_size(status_bytes) in 1..512
+    status = Jason.decode!(status_bytes)
+
+    assert Map.keys(status) |> Enum.sort() ==
+             [
+               "checks_failed",
+               "checks_passed",
+               "failure_category",
+               "outcome",
+               "owner",
+               "phase",
+               "run_id",
+               "schema_version"
+             ]
+
+    assert status["schema_version"] == 1
+    assert status["owner"] == "rulestead-main-canary"
+    assert status["run_id"] =~ ~r/\A[a-f0-9]{16}\z/
+    assert status["phase"] in ["setup", "proxy", "relyra", "rulestead", "complete"]
+    assert status["outcome"] in ["passed", "failed", "cancelled"]
+    assert status["failure_category"] in ["none", "setup", "assertion", "timeout", "cancelled"]
+    assert status["checks_passed"] in 0..12
+    assert status["checks_failed"] in 0..1
+    status
+  end
+
+  defp assert_no_sensitive_canary_data!(status_bytes) do
+    for sentinel <- [
+          "ASSERTION_SENTINEL",
+          "CERTIFICATE_SENTINEL",
+          "PASSWORD_SENTINEL",
+          "COOKIE_SENTINEL",
+          "UNEXPECTED_ATTACHMENT_SENTINEL"
+        ] do
+      refute String.contains?(status_bytes, sentinel)
+    end
   end
 
   defp index(source, fragment) do

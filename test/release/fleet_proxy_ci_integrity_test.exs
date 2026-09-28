@@ -16,6 +16,16 @@ defmodule Relyra.FleetProxyCIIntegrityTest do
 
   @demo_path ".github/workflows/demo-app-e2e.yml"
   @fleet_path ".github/workflows/fleet-proxy-e2e.yml"
+  @fleet_script "scripts/test_fleet_proxy_e2e.sh"
+  @fleet_playwright_config "playwright.fleet-proxy.config.mjs"
+  @trace_script "scripts/test_trace_visual_e2e.sh"
+  @status_sentinels [
+    "ASSERTION_SENTINEL",
+    "CERTIFICATE_SENTINEL",
+    "PASSWORD_SENTINEL",
+    "COOKIE_SENTINEL",
+    "UNEXPECTED_ATTACHMENT_SENTINEL"
+  ]
 
   @action_pins %{
     @demo_path => [
@@ -140,6 +150,175 @@ defmodule Relyra.FleetProxyCIIntegrityTest do
     end
   end
 
+  test "browser uploads select only fixed-schema bounded receipts" do
+    fleet = load_yaml!(@fleet_path)
+    fleet_steps = fleet["jobs"]["fleet-proxy-e2e"]["steps"]
+    fleet_upload = Enum.find(fleet_steps, &(&1["name"] == "Upload safe Fleet status"))
+
+    fleet_validate =
+      Enum.find(fleet_steps, &(&1["name"] == "Require bounded Fleet status receipt"))
+
+    canary_upload =
+      Enum.find(
+        fleet["jobs"]["rulestead-main-canary"]["steps"],
+        &(&1["name"] == "Upload safe canary status")
+      )
+
+    canary_validate =
+      Enum.find(
+        fleet["jobs"]["rulestead-main-canary"]["steps"],
+        &(&1["name"] == "Require bounded canary status receipt")
+      )
+
+    assert fleet_upload["with"]["path"] ==
+             "${{ runner.temp }}/relyra-fleet-proxy-status.json"
+
+    assert canary_upload["with"]["path"] ==
+             "${{ runner.temp }}/relyra-rulestead-canary-status.json"
+
+    for {upload, verify_step, owner, guard_id} <- [
+          {fleet_upload, fleet_validate, "fleet-proxy-e2e", "fleet_status_guard"},
+          {canary_upload, canary_validate, "rulestead-main-canary", "canary_status_guard"}
+        ] do
+      assert verify_step["id"] == guard_id
+      assert upload["if"] == "${{ always() && steps.#{guard_id}.conclusion == 'success' }}"
+      assert upload["with"]["if-no-files-found"] == "error"
+      assert upload["with"]["retention-days"] == 3
+      assert upload["with"]["name"] =~ "${{ github.job }}"
+      assert upload["with"]["name"] =~ "${{ strategy.job-index || 0 }}"
+      assert upload["with"]["name"] =~ "${{ github.run_attempt }}"
+      assert verify_step["if"] == "always()"
+      assert verify_step["run"] =~ "status_bytes > 512"
+      assert verify_step["run"] =~ owner
+      assert verify_step["run"] =~ "status_missing"
+      refute verify_step["run"] =~ "cat \"$"
+    end
+
+    refute File.read!(@fleet_path) =~ ~r/playwright-report\/|test-results\//
+
+    demo = load_yaml!(@demo_path)
+    demo_steps = demo["jobs"]["fake-idp-e2e"]["steps"]
+    trace_upload = Enum.find(demo_steps, &(&1["name"] == "Upload safe trace visual status"))
+
+    trace_validate =
+      Enum.find(demo_steps, &(&1["name"] == "Require bounded trace visual status receipt"))
+
+    assert trace_upload["with"]["path"] ==
+             "${{ runner.temp }}/relyra-trace-visual-status.json"
+
+    assert trace_upload["with"]["if-no-files-found"] == "error"
+    assert trace_upload["with"]["retention-days"] == 3
+
+    assert trace_upload["if"] ==
+             "${{ always() && steps.trace_status_guard.conclusion == 'success' }}"
+
+    assert trace_validate["id"] == "trace_status_guard"
+    assert trace_validate["run"] =~ "trace_visual_status_missing"
+    assert trace_validate["run"] =~ "status_bytes > 512"
+
+    artifact_fixture = temp_dir!("relyra-status-artifact-selection")
+    on_exit(fn -> File.rm_rf!(artifact_fixture) end)
+    {artifact_dir, _unused_status_path} = status_paths!(artifact_fixture, "fixture.json")
+    unexpected_attachment = Path.join(artifact_dir, "unexpected-attachment.zip")
+    File.write!(unexpected_attachment, "UNEXPECTED_ATTACHMENT_SENTINEL")
+
+    for upload_path <- [
+          fleet_upload["with"]["path"],
+          canary_upload["with"]["path"],
+          trace_upload["with"]["path"]
+        ] do
+      selected_path = String.replace(upload_path, "${{ runner.temp }}", artifact_dir)
+      File.write!(selected_path, "bounded status fixture")
+      assert Path.wildcard(selected_path) == [selected_path]
+      refute unexpected_attachment in Path.wildcard(selected_path)
+    end
+  end
+
+  test "Fleet producer writes a bounded setup receipt and preserves the original failure" do
+    temp = temp_dir!("relyra-fleet-status-failure")
+    on_exit(fn -> File.rm_rf!(temp) end)
+    {runner_temp, status_path} = status_paths!(temp, "relyra-fleet-proxy-status.json")
+    bin = Path.join(temp, "bin")
+    docker = Path.join(bin, "docker")
+    File.mkdir_p!(bin)
+
+    File.write!(
+      docker,
+      "#!/usr/bin/env bash\nprintf '%s\\n' ASSERTION_SENTINEL CERTIFICATE_SENTINEL PASSWORD_SENTINEL COOKIE_SENTINEL UNEXPECTED_ATTACHMENT_SENTINEL >&2\nexit 42\n"
+    )
+
+    File.chmod!(docker, 0o700)
+
+    {output, exit_code} =
+      System.cmd("bash", [@fleet_script],
+        cd: File.cwd!(),
+        env: fleet_test_env(temp, bin, runner_temp, status_path),
+        stderr_to_stdout: true
+      )
+
+    assert exit_code == 42, output
+    status = assert_safe_status!(status_path, "fleet-proxy-e2e")
+    assert status["phase"] == "setup"
+    assert status["outcome"] == "failed"
+    assert status["failure_category"] == "setup"
+    assert status["checks_failed"] == 1
+    assert status["checks_passed"] == 0
+    refute_contains_sentinels!(File.read!(status_path))
+  end
+
+  test "Fleet producer emits a bounded cancellation receipt without changing its exit" do
+    temp = temp_dir!("relyra-fleet-status-cancel")
+    on_exit(fn -> File.rm_rf!(temp) end)
+    {runner_temp, status_path} = status_paths!(temp, "relyra-fleet-proxy-status.json")
+    bin = Path.join(temp, "bin")
+    docker = Path.join(bin, "docker")
+    marker = Path.join(temp, "docker-started")
+    File.mkdir_p!(bin)
+
+    File.write!(
+      docker,
+      "#!/usr/bin/env bash\nif [[ ! -e \"$FLEET_FAKE_DOCKER_MARKER\" ]]; then printf '%s\\n' \"$BASHPID\" >\"$FLEET_FAKE_DOCKER_MARKER\"; exec sleep 30; fi\nexit 42\n"
+    )
+
+    File.chmod!(docker, 0o700)
+
+    wrapper = """
+    bash #{inspect(Path.expand(@fleet_script))} >/dev/null 2>&1 &
+    child=$!
+    for _attempt in $(seq 1 100); do
+      [[ -s "$FLEET_FAKE_DOCKER_MARKER" ]] && break
+      sleep 0.05
+    done
+    if [[ ! -s "$FLEET_FAKE_DOCKER_MARKER" ]]; then
+      kill -TERM "$child" 2>/dev/null || true
+      wait "$child" 2>/dev/null || true
+      exit 90
+    fi
+    docker_pid="$(cat "$FLEET_FAKE_DOCKER_MARKER")"
+    kill -TERM "$child" "$docker_pid" 2>/dev/null || true
+    if wait "$child"; then child_status=0; else child_status="$?"; fi
+    printf 'CHILD_STATUS=%s\\n' "$child_status"
+    """
+
+    {output, exit_code} =
+      System.cmd("bash", ["-c", wrapper],
+        cd: File.cwd!(),
+        env:
+          fleet_test_env(temp, bin, runner_temp, status_path) ++
+            [{"FLEET_FAKE_DOCKER_MARKER", marker}],
+        stderr_to_stdout: true
+      )
+
+    assert exit_code == 0, output
+    assert output =~ "CHILD_STATUS=143"
+    status = assert_safe_status!(status_path, "fleet-proxy-e2e")
+    assert status["phase"] == "setup"
+    assert status["outcome"] == "cancelled"
+    assert status["failure_category"] == "cancelled"
+    assert status["checks_failed"] == 1
+    refute_contains_sentinels!(File.read!(status_path))
+  end
+
   test "hermetic fixture and harness retain pinned lifecycle assertions" do
     fixture = File.read!("test/integration/fleet-proxy-sibling.compose.yml")
     harness = File.read!("scripts/test_fleet_proxy_e2e.sh")
@@ -152,11 +331,36 @@ defmodule Relyra.FleetProxyCIIntegrityTest do
     assert harness =~ "proxy_id_first"
     assert harness =~ "proxy_id_second"
     assert harness =~ "sibling.localhost"
-    assert harness =~ ~s("${FLEET_COMPOSE[@]}" down --remove-orphans)
+    assert harness =~ "fleet_compose down --remove-orphans"
     assert harness =~ "docker network inspect"
+    assert harness =~ "relyra-fleet-solo-$RUN_SUFFIX"
+    assert harness =~ "PROXY_OWNED"
+    assert harness =~ "NETWORK_CREATED=true"
+    assert harness =~ ~s(if [[ "$NETWORK_CREATED" == "true" ]])
+    refute harness =~ "logs --no-color"
+    refute harness =~ "capture_diagnostics"
+    refute harness =~ "playwright-report/"
+    assert harness =~ "checks_failed"
+    assert harness =~ "byte_count <= 512"
+    assert harness =~ "relyra-fleet-proxy-status.json"
+    assert harness =~ "trap 'exit 143' TERM"
+    assert harness =~ "fleet_compose down --remove-orphans"
     assert browser =~ "liveSockets"
     assert browser =~ "setSelectionRange"
     assert browser =~ "horizontallyAccessible"
+
+    playwright = File.read!(@fleet_playwright_config)
+    assert playwright =~ ~s(trace: "off")
+    assert playwright =~ ~s(screenshot: "off")
+    assert playwright =~ ~s(video: "off")
+    assert playwright =~ "retries: 0"
+    refute playwright =~ "html"
+
+    trace = File.read!(@trace_script)
+    assert trace =~ "checks_failed"
+    assert trace =~ "failure_category"
+    assert trace =~ "byte_count <= 512"
+    assert trace =~ "trace_visual_status_receipt_write_failed"
   end
 
   test "all required-check consumers stay synchronized" do
@@ -174,6 +378,82 @@ defmodule Relyra.FleetProxyCIIntegrityTest do
     for check <- @required_checks do
       assert json =~ check
     end
+  end
+
+  defp temp_dir!(prefix) do
+    temp = Path.join(System.tmp_dir!(), "#{prefix}-#{System.unique_integer([:positive])}")
+    File.mkdir_p!(temp)
+    temp
+  end
+
+  defp status_paths!(temp, status_name) do
+    unresolved_runner_temp = Path.join(temp, "runner-temp")
+    File.mkdir_p!(unresolved_runner_temp)
+
+    {runner_temp, 0} = System.cmd("pwd", [], cd: unresolved_runner_temp)
+    runner_temp = String.trim(runner_temp)
+    {runner_temp, Path.join(runner_temp, status_name)}
+  end
+
+  defp fleet_test_env(temp, bin, runner_temp, status_path) do
+    path = System.get_env("PATH") || "/usr/bin:/bin"
+
+    [
+      {"PATH", "#{bin}:#{path}"},
+      {"GITHUB_ACTIONS", "true"},
+      {"RUNNER_TEMP", runner_temp},
+      {"FLEET_PROXY_STATUS_PATH", status_path},
+      {"FLEET_FAKE_DOCKER_MARKER", Path.join(temp, "docker-started")},
+      {"ASSERTION_SENTINEL", "ASSERTION_SENTINEL"},
+      {"CERTIFICATE_SENTINEL", "CERTIFICATE_SENTINEL"},
+      {"PGPASSWORD", "PASSWORD_SENTINEL"},
+      {"COOKIE_SENTINEL", "COOKIE_SENTINEL"},
+      {"UNEXPECTED_ATTACHMENT_SENTINEL", "UNEXPECTED_ATTACHMENT_SENTINEL"}
+    ]
+  end
+
+  defp assert_safe_status!(path, owner) do
+    status_bytes = File.read!(path)
+    assert byte_size(status_bytes) in 1..512
+
+    status = Jason.decode!(status_bytes)
+
+    assert Map.keys(status) |> Enum.sort() ==
+             [
+               "checks_failed",
+               "checks_passed",
+               "failure_category",
+               "outcome",
+               "owner",
+               "phase",
+               "run_id",
+               "schema_version"
+             ]
+
+    assert status["schema_version"] == 1
+    assert status["owner"] == owner
+    assert status["run_id"] =~ ~r/\A[a-f0-9]{16}\z/
+
+    assert status["phase"] in [
+             "setup",
+             "solo",
+             "proxy",
+             "fleet",
+             "relyra",
+             "rulestead",
+             "browser",
+             "complete"
+           ]
+
+    assert status["outcome"] in ["passed", "failed", "cancelled"]
+    assert status["failure_category"] in ["none", "setup", "assertion", "timeout", "cancelled"]
+    assert status["checks_passed"] in 0..12
+    assert status["checks_failed"] in 0..1
+    status
+  end
+
+  defp refute_contains_sentinels!(status_bytes) do
+    refute Enum.any?(@status_sentinels, &String.contains?(status_bytes, &1))
   end
 
   defp validate_required_workflow!(path, workflow) do
