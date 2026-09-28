@@ -261,6 +261,45 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     assert_raise ArgumentError, ~r/unsupported runner/, fn ->
       validate_runners!(path, unsupported_runner)
     end
+
+    release_path = ".github/workflows/release-please.yml"
+    release_source = File.read!(release_path)
+
+    current_release_pin =
+      "uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0"
+
+    former_release_pin =
+      String.replace(
+        release_source,
+        current_release_pin,
+        "uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1"
+      )
+
+    assert_raise ArgumentError, ~r/verified release pin/, fn ->
+      validate_action_pins!(release_path, former_release_pin)
+    end
+
+    mutable_release_reference =
+      String.replace(
+        release_source,
+        current_release_pin,
+        "uses: googleapis/release-please-action@v5.0.0"
+      )
+
+    assert_raise ArgumentError, ~r/verified release pin/, fn ->
+      validate_action_pins!(release_path, mutable_release_reference)
+    end
+
+    mismatched_release_label =
+      String.replace(
+        release_source,
+        current_release_pin,
+        "uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v4.4.1"
+      )
+
+    assert_raise ArgumentError, ~r/verified release pin/, fn ->
+      validate_action_pins!(release_path, mismatched_release_label)
+    end
   end
 
   defp load_workflows! do
