@@ -132,3 +132,7 @@ Plan 78-04 can proceed. It owns workflow permission scope, concurrency isolation
 ---
 *Phase: 78-ci-efficiency-and-reliability*
 *Completed: 2026-09-28*
+
+## Governance Provenance Reconciliation
+
+The original implementation is preserved in `37a2200` (`ci(test)`). This follow-up records the completed plan under its plan-scoped history identity so the Phase 73 governance replay can verify the exact implementation boundary.
