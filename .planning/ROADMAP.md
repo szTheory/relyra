@@ -380,7 +380,7 @@ cost and security independence are understandable.
 4. `mix qa`, formatting, warnings-as-errors tests, `mix ci.security`, package-consumer,
    LedgerLoop, and required browser gates all pass from clean state.
 
-**Plans:** 3/7 plans executed
+**Plans:** 4/7 plans executed
 
 Plans:
 **Wave 1**
@@ -394,7 +394,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 78-03-PLAN.md — Prevent hollow Mix gates while preserving security independence.
-- [ ] 78-04-PLAN.md — Scope root and release workflow permissions, scheduling, and action pins.
+- [x] 78-04-PLAN.md — Scope root and release workflow permissions, scheduling, and action pins.
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -443,7 +443,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 75. SaaS Twin Domain Realism | v1.11 | 3/3 | Complete    | 2026-09-25 |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
-| 78. CI Efficiency and Reliability | v1.11 | 3/7 | In Progress|  |
+| 78. CI Efficiency and Reliability | v1.11 | 4/7 | In Progress|  |
 | 79. Adopter-Ready Closeout | v1.11 | 0/TBD | Not started | — |
 
 ---

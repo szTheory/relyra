@@ -4,19 +4,19 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 78
 current_phase_name: CI Efficiency and Reliability
-current_plan: 4
+current_plan: 5
 status: executing
-stopped_at: Completed 78-03-PLAN.md
-last_updated: "2026-09-28T01:21:21.326Z"
+stopped_at: Completed 78-04-PLAN.md
+last_updated: "2026-09-28T01:39:53.093Z"
 last_activity: 2026-09-28
-last_activity_desc: Phase 78 Plan 02 complete; Plan 03 ready
-state_head: 489b48cd2244895f70e7ea0ea65b0c18d4276e76
+state_head: 12f0ba8992ccbf04354cd6a4da83ba497a69f205
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 61
-  completed_plans: 57
+  completed_plans: 58
   percent: 71
+last_activity_desc: Phase 78 Plan 04 complete; Plan 05 ready
 ---
 
 # Project State
@@ -36,13 +36,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 78 (CI Efficiency and Reliability) — EXECUTING
 
-Current Plan: 4
+Current Plan: 5
 Total Plans in Phase: 7
-Next gate: Execute Plan 78-04 — Scope root and release workflow permissions, scheduling, and action pins.
+Next gate: Execute Plan 78-05 — preserve deterministic browser gates and separate provider canaries.
 
 Status: Ready to execute
 
-Last activity: 2026-09-27 — Phase 78 execution started
+Last activity: 2026-09-27
 
 ## Milestone Metrics
 
@@ -95,6 +95,7 @@ Last activity: 2026-09-27 — Phase 78 execution started
 - [Phase 78]: Remove the duplicate Fast lane from security-gates after QA and ci.fast both selected the same 960 default tests on each supported OTP version. — Three full baseline and three full candidate matrix runs passed. Candidate warm medians reduced matrix wall time by 4.83% and runner cost by 8.30%; QA, every consumer and security gate, browser smoke, and standalone GATE-02 remained enabled. Local ACT could not measure GitHub cache-service overhead, so no compiled cache was introduced.
 - [Phase 78]: Run docs and verification suites with cmd mix test so every selected suite gets a fresh process. — Mix deduplicates bare test tasks inside aliases and can carry earlier selectors forward.
 - [Phase 78]: Keep exact security suite selectors and standalone GATE-02 as blocking independent defenses. — AST and workflow fixtures reject collapsed, omitted, disabled, or zero-test gates.
+- [Phase 78]: Use event- and workflow-qualified concurrency with PR-only cancellation — Evaluated fixtures prove a superseded PR only cancels within its own workflow while main and cross-workflow runs remain isolated.
 
 ### Baseline Findings
 
@@ -133,9 +134,9 @@ Last activity: 2026-09-27 — Phase 78 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-28T01:17:22.289Z
+**Last session:** 2026-09-28T01:38:25.410Z
 
-**Stopped at:** Completed 78-03-PLAN.md
+**Stopped at:** Completed 78-04-PLAN.md
 
 **Resume file:** None
 
@@ -215,6 +216,7 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 | Phase 78 P01 | 38min | 3 tasks | 3 files |
 | Phase 78 P2 | 8h | 3 tasks | 8 files |
 | Phase 78 P3 | 21m | 2 tasks | 2 files |
+| Phase 78 P4 | 15m | 3 tasks | 7 files |
 
 ### Resolved Issues
 

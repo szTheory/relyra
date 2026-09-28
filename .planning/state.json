@@ -40,9 +40,9 @@
     }
   ],
   "next": {
-    "command": "/gsd:debug",
-    "label": "Debug the blocker",
-    "reason": "Blocked · 1 blocker(s) — resolve before continuing"
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 78 of 7 · 71% · executing"
   },
-  "updated_at": "2026-09-28T01:15:46.872Z"
+  "updated_at": "2026-09-28T01:36:49.017Z"
 }
