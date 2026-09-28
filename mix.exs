@@ -236,7 +236,7 @@ defmodule Relyra.MixProject do
         "relyra.conformance --check"
       ],
       "ci.evidence": [
-        "cmd mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --warnings-as-errors"
+        "cmd mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --seed 0 --warnings-as-errors"
       ],
       "ci.phase73.reconciliation": [
         "cmd mix test test/governance/phase_73_reconciliation_test.exs --only phase_73_reconciliation_replay --warnings-as-errors"

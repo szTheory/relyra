@@ -362,7 +362,7 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     [evidence_alias] = Regex.scan(~r/"ci\.evidence": \[(.*?)\n      \]/s, mix_file)
 
     assert Enum.at(evidence_alias, 1) =~
-             "cmd mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --warnings-as-errors"
+             "cmd mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --seed 0 --warnings-as-errors"
 
     assert Enum.count(String.split(Enum.at(evidence_alias, 1), "\n"), fn line ->
              String.contains?(line, "cmd mix test")

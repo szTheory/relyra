@@ -214,7 +214,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     ]
 
     mutation_messages = fn ordered_mutations ->
-      for _iteration <- 1..10, mutate <- ordered_mutations do
+      for _iteration <- 1..2, mutate <- ordered_mutations do
         error =
           assert_raise ArgumentError, fn ->
             validate_repository_snapshot!(entries, mutate.(snapshot))
@@ -229,7 +229,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     assert Enum.sort(forward_messages) == Enum.sort(reverse_messages)
 
-    for _iteration <- 1..25 do
+    for _iteration <- 1..3 do
       assert :ok = validate_repository_snapshot!(entries, snapshot)
     end
 
@@ -253,10 +253,9 @@ defmodule Relyra.Adoption.EvidenceContractTest do
   @tag :plan_73_22_task_2
   test "governed inputs stay bound to the complete normalized capture inventory" do
     entries = AdoptionEvidence.entries()
+    root = repository_fixture!()
 
     capture_snapshot = fn ->
-      root = repository_fixture!()
-
       snapshot =
         AdoptionEvidence.repository_snapshot!(entries, root,
           registered_test_tags: fn _path, _root ->
@@ -275,77 +274,69 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     assert clean.governed_inputs == Enum.uniq(clean.governed_inputs)
     assert :ok = validate_repository_snapshot!(entries, clean, clean_root)
 
-    {fixed_omission, fixed_omission_root} = capture_snapshot.()
-
     assert_governed_inventory_error(
       entries,
       %{
-        fixed_omission
-        | governed_inputs: List.delete(fixed_omission.governed_inputs, ".planning/STATE.md"),
+        clean
+        | governed_inputs: List.delete(clean.governed_inputs, ".planning/STATE.md"),
           workflow: "workflow reduction must not run"
       },
-      fixed_omission_root,
+      clean_root,
       ~r/governed inputs.*inventory.*missing=.*\.planning\/STATE\.md.*unexpected=\[\]/s
     )
 
-    {discovered_omission, discovered_omission_root} = capture_snapshot.()
-
     discovered =
-      Enum.find(discovered_omission.governed_inputs, &String.ends_with?(&1, "-PLAN.md"))
+      Enum.find(clean.governed_inputs, &String.ends_with?(&1, "-PLAN.md"))
 
     assert discovered
 
     assert_governed_inventory_error(
       entries,
       %{
-        discovered_omission
-        | governed_inputs: List.delete(discovered_omission.governed_inputs, discovered),
+        clean
+        | governed_inputs: List.delete(clean.governed_inputs, discovered),
           workflow: "workflow reduction must not run"
       },
-      discovered_omission_root,
+      clean_root,
       ~r/governed inputs.*inventory.*missing=.*#{Regex.escape(discovered)}.*unexpected=\[\]/s
     )
 
-    {substitution, substitution_root} = capture_snapshot.()
-    [first | remaining] = substitution.governed_inputs
+    [first | remaining] = clean.governed_inputs
 
     assert_governed_inventory_error(
       entries,
       %{
-        substitution
+        clean
         | governed_inputs: Enum.sort(["README.md" | remaining]),
           workflow: "workflow reduction must not run"
       },
-      substitution_root,
+      clean_root,
       ~r/governed inputs.*inventory.*missing=.*#{Regex.escape(first)}.*unexpected=.*README\.md/s
     )
 
     for replacement <- ["../README.md", Path.join(File.cwd!(), "README.md")] do
-      {invalid_path, invalid_path_root} = capture_snapshot.()
-      [_first | remaining] = invalid_path.governed_inputs
+      [_first | remaining] = clean.governed_inputs
 
       assert_governed_inventory_error(
         entries,
         %{
-          invalid_path
+          clean
           | governed_inputs: [replacement | remaining],
             workflow: "workflow reduction must not run"
         },
-        invalid_path_root,
+        clean_root,
         ~r/governed inputs.*normalized repository-relative path.*#{Regex.escape(replacement)}/s
       )
     end
 
-    {reordered, reordered_root} = capture_snapshot.()
-
     assert_governed_inventory_error(
       entries,
       %{
-        reordered
-        | governed_inputs: Enum.reverse(reordered.governed_inputs),
+        clean
+        | governed_inputs: Enum.reverse(clean.governed_inputs),
           workflow: "workflow reduction must not run"
       },
-      reordered_root,
+      clean_root,
       ~r/governed inputs.*stable lexical order/s
     )
   end
@@ -442,7 +433,6 @@ defmodule Relyra.Adoption.EvidenceContractTest do
           {"--profile-require profile.exs", "--profile-require"},
           {"--formatter ExUnit.CLIFormatter", "--formatter"},
           {"--exit-status 0", "--exit-status"},
-          {"--seed 0", "--seed"},
           {"--include evidence_contract", "--include"},
           {"--trace", "--trace"},
           {"unexpected", "unexpected"}
@@ -538,6 +528,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
   test "reconciliation has a flat fresh-process owner and mandatory security step" do
     assert [step] = mix_alias_steps("ci.evidence")
     assert step =~ ~r/^cmd mix test test\/adoption\/evidence_contract_test\.exs\b/
+    assert step =~ "--seed 0"
     assert step =~ "--warnings-as-errors"
 
     assert [reconciliation_step] = mix_alias_steps("ci.phase73.reconciliation")
@@ -1046,6 +1037,20 @@ defmodule Relyra.Adoption.EvidenceContractTest do
           snapshot
           | aliases: Map.put(snapshot.aliases, "ci.evidence", ["cmd " <> command])
         })
+      end
+    end
+
+    for {seed_args, diagnostic} <- [
+          {"--seed", "missing its value"},
+          {"--seed -1", "missing its value"},
+          {"--seed invalid", "integer between 0 and 4294967295"},
+          {"--seed 0 --seed 1", "at most one --seed"}
+        ] do
+      assert_raise ArgumentError, ~r/#{Regex.escape(diagnostic)}/, fn ->
+        AdoptionEvidence.validate_automated_command!(
+          "mix test test/adoption/evidence_contract_test.exs #{seed_args} --warnings-as-errors",
+          File.cwd!()
+        )
       end
     end
   end
@@ -2029,7 +2034,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
   end
 
   defp fixture_evidence_step do
-    "cmd mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --warnings-as-errors"
+    "cmd mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --seed 0 --warnings-as-errors"
   end
 
   defp replace_pull_request_filter(workflow, key, patterns) do

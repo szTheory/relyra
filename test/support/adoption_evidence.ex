@@ -1370,8 +1370,8 @@ defmodule Relyra.AdoptionEvidence do
   end
 
   defp parse_test_argv!(arguments) when is_list(arguments) do
-    {owner_paths, warning_count, includes, exclusions} =
-      consume_test_argv!(arguments, [], 0, [], [])
+    {owner_paths, warning_count, includes, exclusions, seed_count} =
+      consume_test_argv!(arguments, [], 0, [], [], 0)
 
     case warning_count do
       0 ->
@@ -1397,6 +1397,10 @@ defmodule Relyra.AdoptionEvidence do
     reject_duplicate_filters!(includes, "--only")
     reject_duplicate_filters!(exclusions, "--exclude")
 
+    if seed_count > 1 do
+      raise ArgumentError, "direct test command must contain at most one --seed"
+    end
+
     %{
       owner_paths: owner_paths,
       includes: Enum.reverse(includes),
@@ -1408,20 +1412,63 @@ defmodule Relyra.AdoptionEvidence do
     raise ArgumentError, "direct test arguments must be a list, got: #{inspect(arguments)}"
   end
 
-  defp consume_test_argv!([], owner_paths, warning_count, includes, exclusions),
-    do: {owner_paths, warning_count, includes, exclusions}
+  defp consume_test_argv!([], owner_paths, warning_count, includes, exclusions, seed_count),
+    do: {owner_paths, warning_count, includes, exclusions, seed_count}
 
   defp consume_test_argv!(
          ["--warnings-as-errors" | rest],
          owner_paths,
          warning_count,
          includes,
-         exclusions
+         exclusions,
+         seed_count
        ) do
-    consume_test_argv!(rest, owner_paths, warning_count + 1, includes, exclusions)
+    consume_test_argv!(rest, owner_paths, warning_count + 1, includes, exclusions, seed_count)
   end
 
-  defp consume_test_argv!([option | rest], owner_paths, warning_count, includes, exclusions)
+  defp consume_test_argv!(
+         ["--seed" | rest],
+         owner_paths,
+         warning_count,
+         includes,
+         exclusions,
+         seed_count
+       ) do
+    case rest do
+      [value | remaining] ->
+        if String.starts_with?(value, "-") do
+          raise ArgumentError, "direct test command --seed is missing its value"
+        end
+
+        case Integer.parse(value) do
+          {seed, ""} when seed >= 0 and seed <= 4_294_967_295 ->
+            consume_test_argv!(
+              remaining,
+              owner_paths,
+              warning_count,
+              includes,
+              exclusions,
+              seed_count + 1
+            )
+
+          _other ->
+            raise ArgumentError,
+                  "direct test command --seed must be an integer between 0 and 4294967295"
+        end
+
+      _other ->
+        raise ArgumentError, "direct test command --seed is missing its value"
+    end
+  end
+
+  defp consume_test_argv!(
+         [option | rest],
+         owner_paths,
+         warning_count,
+         includes,
+         exclusions,
+         seed_count
+       )
        when option in ["--only", "--exclude"] do
     case rest do
       [value | remaining] when value != "" ->
@@ -1437,7 +1484,8 @@ defmodule Relyra.AdoptionEvidence do
             owner_paths,
             warning_count,
             [filter | includes],
-            exclusions
+            exclusions,
+            seed_count
           )
         else
           consume_test_argv!(
@@ -1445,7 +1493,8 @@ defmodule Relyra.AdoptionEvidence do
             owner_paths,
             warning_count,
             includes,
-            [filter | exclusions]
+            [filter | exclusions],
+            seed_count
           )
         end
 
@@ -1454,7 +1503,14 @@ defmodule Relyra.AdoptionEvidence do
     end
   end
 
-  defp consume_test_argv!([argument | rest], owner_paths, warning_count, includes, exclusions) do
+  defp consume_test_argv!(
+         [argument | rest],
+         owner_paths,
+         warning_count,
+         includes,
+         exclusions,
+         seed_count
+       ) do
     cond do
       String.starts_with?(argument, "--only=") ->
         value = String.replace_prefix(argument, "--only=", "")
@@ -1464,7 +1520,8 @@ defmodule Relyra.AdoptionEvidence do
           owner_paths,
           warning_count,
           [parse_filter!("--only", value) | includes],
-          exclusions
+          exclusions,
+          seed_count
         )
 
       String.starts_with?(argument, "--exclude=") ->
@@ -1475,7 +1532,8 @@ defmodule Relyra.AdoptionEvidence do
           owner_paths,
           warning_count,
           includes,
-          [parse_filter!("--exclude", value) | exclusions]
+          [parse_filter!("--exclude", value) | exclusions],
+          seed_count
         )
 
       String.starts_with?(argument, "-") ->
@@ -1487,7 +1545,8 @@ defmodule Relyra.AdoptionEvidence do
           [argument | owner_paths],
           warning_count,
           includes,
-          exclusions
+          exclusions,
+          seed_count
         )
 
       true ->
