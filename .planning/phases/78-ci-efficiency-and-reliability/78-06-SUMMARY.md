@@ -159,3 +159,7 @@ None. No live provider credentials were needed.
 ---
 *Phase: 78-ci-efficiency-and-reliability*
 *Completed: 2026-09-28*
+
+## Governance Provenance Reconciliation
+
+The original implementation is preserved in `7a5b284` (`fix(ci)`). This follow-up records the completed plan under its plan-scoped history identity so the Phase 73 governance replay can verify the exact implementation boundary.
