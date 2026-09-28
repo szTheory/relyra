@@ -226,8 +226,8 @@ defmodule Relyra.MixProject do
         "cmd mix test test/docs/logout_recipe_drift_test.exs --warnings-as-errors",
         "cmd test -f demo/ledger_loop/README.md",
         "cmd mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors",
-        "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
-        "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs test/testing_demo_test.exs --warnings-as-errors",
+        "cmd mix test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
+        "cmd mix test test/mix/relyra_install_test.exs test/test_support_demo_test.exs test/testing_demo_test.exs --warnings-as-errors",
         "relyra.batteries_included --check"
       ],
       "ci.conformance": [
@@ -277,7 +277,7 @@ defmodule Relyra.MixProject do
       ],
       "ci.verify": [
         "ci.docs",
-        "test test/relyra/ecto/audit_hardening_test.exs test/relyra/ecto/connection_record_test.exs test/relyra/ecto/metadata_apply_test.exs test/relyra/ecto/certificate_inventory_transition_test.exs test/relyra/ecto/mapping_commands_test.exs test/relyra/ecto/ecto_connection_resolver_test.exs test/relyra/connection_snapshot_test.exs test/relyra/user_mapper/default_attribute_test.exs --warnings-as-errors"
+        "cmd mix test test/relyra/ecto/audit_hardening_test.exs test/relyra/ecto/connection_record_test.exs test/relyra/ecto/metadata_apply_test.exs test/relyra/ecto/certificate_inventory_transition_test.exs test/relyra/ecto/mapping_commands_test.exs test/relyra/ecto/ecto_connection_resolver_test.exs test/relyra/connection_snapshot_test.exs test/relyra/user_mapper/default_attribute_test.exs --warnings-as-errors"
       ],
       "ci.integration": [
         "test test/adoption test/security/xml/integration_smoke_test.exs test/mix/tasks/verify_release_parity_test.exs --only integration --warnings-as-errors"
