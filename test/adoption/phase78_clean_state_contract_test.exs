@@ -66,7 +66,7 @@ defmodule Relyra.Phase78CleanStateReceiptContract do
 
     proof = receipt["phase73"]
     exact_keys!(proof, ~w(proof_set_id proof_sha256 source_digest), "Phase 73 proof identity")
-    require!(valid_hash?(proof["source_digest"]), "Phase 73 source digest is invalid")
+    require!(valid_phase73_digest?(proof["source_digest"]), "Phase 73 source digest is invalid")
 
     require!(
       Regex.match?(~r/^phase73-[0-9a-f]{16}$/, proof["proof_set_id"] || ""),
@@ -345,6 +345,10 @@ defmodule Relyra.Phase78CleanStateReceiptContract do
     do: require!(valid_timestamp?(value), "#{label} must be UTC ISO-8601")
 
   defp valid_hash?(value), do: is_binary(value) and Regex.match?(~r/^[a-f0-9]{64}$/, value)
+
+  defp valid_phase73_digest?(value),
+    do: is_binary(value) and Regex.match?(~r/^(?:sha256:)?[a-f0-9]{64}$/, value)
+
   defp valid_git_id?(value), do: is_binary(value) and Regex.match?(~r/^[a-f0-9]{40}$/, value)
   defp require!(true, _message), do: :ok
   defp require!(false, message), do: raise(ArgumentError, message)
