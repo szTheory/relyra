@@ -82,7 +82,7 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
       {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 2},
       {"actions/cache", "55cc8345863c7cc4c66a329aec7e433d2d1c52a9", "v6.1.0", 1},
       {"erlef/setup-beam", "54075bcc5e249e4758d363f27d099f55d843f124", "v1.24.1", 1},
-      {"googleapis/release-please-action", "5c625bfb5d1ff62eadeeb3772007f7f66fdcf071", "v4.4.1",
+      {"googleapis/release-please-action", "45996ed1f6d02564a971a2fa1b5860e934307cf7", "v5.0.0",
        1}
     ]
   }
