@@ -4,19 +4,19 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 78
 current_phase_name: CI Efficiency and Reliability
-current_plan: 6
+current_plan: 7
 status: executing
-stopped_at: Completed 78-05-PLAN.md
-last_updated: "2026-09-28T02:08:57.510Z"
+stopped_at: Completed 78-06-PLAN.md
+last_updated: "2026-09-28T02:54:11.114Z"
 last_activity: 2026-09-28
-state_head: 8e9f8709076043e8516f62f5ceb2af278f287fb0
+state_head: af666d8b3cfcf56c85cd0999478bff475e1ffcd8
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 61
-  completed_plans: 59
+  completed_plans: 60
   percent: 71
-last_activity_desc: Phase 78 Plan 05 complete; Plan 06 ready
+last_activity_desc: Phase 78 Plan 06 complete; Plan 07 ready
 ---
 
 # Project State
@@ -36,9 +36,9 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 78 (CI Efficiency and Reliability) — EXECUTING
 
-Current Plan: 6
+Current Plan: 7
 Total Plans in Phase: 7
-Next gate: Execute Plan 78-06 — bound browser and canary failure artifacts.
+Next gate: Execute Plan 78-07 — establish source-bound cold CI evidence and recapture the Phase 73 proof after governed source commits.
 
 Status: Ready to execute
 
@@ -97,6 +97,7 @@ Last activity: 2026-09-27
 - [Phase 78]: Keep exact security suite selectors and standalone GATE-02 as blocking independent defenses. — AST and workflow fixtures reject collapsed, omitted, disabled, or zero-test gates.
 - [Phase 78]: Use event- and workflow-qualified concurrency with PR-only cancellation — Evaluated fixtures prove a superseded PR only cancels within its own workflow while main and cross-workflow runs remain isolated.
 - [Phase 78]: Keep deterministic browser journeys as required merge evidence and isolate real-provider checks in a scheduled/manual canary. — Owned local harnesses provide repeatable acceptance; provider availability is external and must not gate pull requests or main acceptance.
+- [Phase 78]: Use exact bounded receipts for browser and canary artifacts. — Exact paths, closed fields, workflow validation, and owned cleanup prevent diagnostics or shared resources from leaking into merge artifacts.
 
 ### Baseline Findings
 
@@ -135,24 +136,21 @@ Last activity: 2026-09-27
 
 ## Session Continuity
 
-**Last session:** 2026-09-28T02:08:56.870Z
+**Last session:** 2026-09-28T02:54:09.474Z
 
-**Stopped at:** Completed 78-05-PLAN.md
+**Stopped at:** Completed 78-06-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Continue Phase 78 from Plan 78-02 Task 2. Plan 78-01 and Plan 78-02 Task 1 are
-complete; Task 1 committed `70f728b` and generated an intermediate Phase 73 proof.
-Task 2 needs three complete comparable baseline and candidate CI-matrix runs.
-Available GitHub receipts target an older source revision, remote workflow dispatch
-is outside this plan's boundary, and the local ARM64 `act` runner failed while
-checking the PostgreSQL service. Obtain comparable owned Ubuntu runner evidence
-before making a topology decision or starting dependent plans 78-03 through 78-07.
-Research, pattern mapping, task validation, structural probes, and independent plan
-review are complete. Do not repeat discussion or planning. Phase 77 remains the
-latest fully verified phase, with 8/8 summaries and passed verification.
+Continue Phase 78 with Plan 78-07. Plans 78-01 through 78-06 are complete. Plan 07
+must build the acyclic cold-state producer and separate mandatory receipt owner,
+verify the full command manifest on OTP 27 and 28, then recapture the Phase 73 proof
+after all governed source commits and embed the same canonical proof in both reports.
+Keep the real receipt check excluded from producer aliases and blocking in its own
+PR/main workflow step. Phase verification and milestone closeout follow only after
+Plan 07 evidence and its final full-lane checks pass.
 
 Routing note: the GSD roadmap scan still reports Phases 73–76 as stale and may route
 generic progress back to Phase 73. All 54 existing plans have matching summaries;
@@ -219,6 +217,7 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 | Phase 78 P3 | 21m | 2 tasks | 2 files |
 | Phase 78 P4 | 15m | 3 tasks | 7 files |
 | Phase 78 P5 | 26m | 2 tasks | 7 files |
+| Phase 78 P6 | 43m | 3 tasks | 9 files |
 
 ### Resolved Issues
 

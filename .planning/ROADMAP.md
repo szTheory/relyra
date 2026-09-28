@@ -380,7 +380,7 @@ cost and security independence are understandable.
 4. `mix qa`, formatting, warnings-as-errors tests, `mix ci.security`, package-consumer,
    LedgerLoop, and required browser gates all pass from clean state.
 
-**Plans:** 5/7 plans executed
+**Plans:** 6/7 plans executed
 
 Plans:
 **Wave 1**
@@ -402,7 +402,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 78-06-PLAN.md — Bound and redact browser and canary failure artifacts.
+- [x] 78-06-PLAN.md — Bound and redact browser and canary failure artifacts.
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
@@ -443,7 +443,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 75. SaaS Twin Domain Realism | v1.11 | 3/3 | Complete    | 2026-09-25 |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
-| 78. CI Efficiency and Reliability | v1.11 | 5/7 | In Progress|  |
+| 78. CI Efficiency and Reliability | v1.11 | 6/7 | In Progress|  |
 | 79. Adopter-Ready Closeout | v1.11 | 0/TBD | Not started | — |
 
 ---
