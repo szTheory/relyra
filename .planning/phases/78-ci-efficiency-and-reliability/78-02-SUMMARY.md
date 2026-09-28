@@ -114,8 +114,10 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Build the cost collector and capture the baseline proof** — `70f728b` (`test`)
-2. **Task 2: Repair fresh-run demo metadata and record comparable costs** — `dd0e304` (`fix`), `fee1063` (`docs`), `72f8dbe` (`test`)
+1. **Task 1: Build the cost collector and capture the baseline proof** — `70f728ba9002462b336d35c7f15204bbef806070`
+2. **Task 2: Record the measured CI topology decision** — `72f8dbe59323ad83ee334f500db53f49fd499281`
+3. **Task 3: Remove the redundant Fast lane** — `0037e477c1f74bcf4b280421e3769cad4b71eace`
+4. **Plan metadata: record completion state** — `b90b0a8e26bf9978eae120870295ec6ec1138224`
 3. **Task 3: Apply the measured topology and refresh governed proof** — `0037e47` (`ci`)
 
 ## Files Created/Modified
