@@ -66,6 +66,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
                  &String.contains?(&1, "/77-code-and-documentation-craftsmanship/")
                )
 
+      {"79", "planning"} ->
+        assert identity.governance_phase == "78"
+
+        expected_plans =
+          for plan <- 1..9 do
+            "78-#{plan |> Integer.to_string() |> String.pad_leading(2, "0")}-PLAN.md"
+          end
+
+        assert Enum.map(identity.plan_paths, &Path.basename/1) == expected_plans
+
+        assert Enum.all?(
+                 identity.plan_paths,
+                 &String.contains?(&1, "/78-ci-efficiency-and-reliability/")
+               )
+
       {"77", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         assert identity.governance_phase == "77"
 
@@ -80,7 +95,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       {"78", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         assert identity.governance_phase == "78"
-        assert length(identity.plan_paths) == 8
+        assert length(identity.plan_paths) == 9
 
       {"73", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         planning_root = governance_repository_fixture()
@@ -129,6 +144,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert identity.phase_requirements["76"] == MapSet.new(@phase_76_requirements)
     assert identity.phase_requirements["77"] == MapSet.new(@phase_77_requirements)
     assert identity.phase_requirements["78"] == MapSet.new(@phase_78_requirements)
+    assert identity.phase_requirements["79"] == MapSet.new(~w(REPO-01 REPO-02 REPO-03 EXIT-01))
 
     governed_phase_dir =
       case identity.governance_phase do
@@ -257,7 +273,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       assert active.current_phase == "78"
       assert active.governance_phase == "78"
       assert active.status == status
-      assert length(active.plan_paths) == 8
+      assert length(active.plan_paths) == 9
     end
 
     malformed_controls = [
@@ -289,6 +305,81 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       assert {:error, violations} = validated_governance_identity(invalid_root)
       assert violations != [], "expected Phase 78 #{name} transition to fail closed"
     end
+  end
+
+  test "Phase 79 planning inherits all Phase 78 plans and rejects broken governance" do
+    root = governance_repository_fixture()
+    planning_state!(root, "79")
+
+    assert {:ok, planning} = validated_governance_identity(root)
+    assert planning.current_phase == "79"
+    assert planning.governance_phase == "78"
+    assert planning.status == "planning"
+    assert planning.phase_requirements["78"] == MapSet.new(@phase_78_requirements)
+
+    expected_plans =
+      for plan <- 1..9 do
+        "78-#{plan |> Integer.to_string() |> String.pad_leading(2, "0")}-PLAN.md"
+      end
+
+    assert Enum.map(planning.plan_paths, &Path.basename/1) == expected_plans
+
+    skipped_predecessor = governance_repository_fixture()
+    planning_state!(skipped_predecessor, "79")
+
+    mutate_file(skipped_predecessor, ".planning/ROADMAP.md", fn roadmap ->
+      String.replace(roadmap, "- [x] **Phase 78:", "- [ ] **Phase 78:")
+    end)
+
+    assert {:error, predecessor_violations} = validated_governance_identity(skipped_predecessor)
+    assert predecessor_violations != []
+
+    malformed_metadata = governance_repository_fixture()
+    planning_state!(malformed_metadata, "79")
+
+    malformed_plan_path =
+      Path.join([
+        malformed_metadata,
+        ".planning/phases/78-ci-efficiency-and-reliability/78-09-PLAN.md"
+      ])
+
+    mutate_file(
+      malformed_metadata,
+      Path.relative_to(malformed_plan_path, malformed_metadata),
+      fn plan ->
+        Regex.replace(~r/\s*<risk_metadata>.*?<\/risk_metadata>/s, plan, "", global: false)
+      end
+    )
+
+    assert {:ok, malformed_identity} = validated_governance_identity(malformed_metadata)
+
+    malformed_violations =
+      repository_plan_violations(malformed_identity.plan_paths, %{}, malformed_identity)
+
+    assert Enum.any?(malformed_violations, &(&1 =~ "risk_metadata"))
+
+    missing_scope = governance_repository_fixture()
+    planning_state!(missing_scope, "79")
+
+    missing_scope_path =
+      Path.join([
+        missing_scope,
+        ".planning/phases/78-ci-efficiency-and-reliability/78-09-PLAN.md"
+      ])
+
+    mutate_file(missing_scope, Path.relative_to(missing_scope_path, missing_scope), fn plan ->
+      Regex.replace(~r/<scope_assertions>.*?<\/scope_assertions>/s, plan, "", global: false)
+    end)
+
+    assert {:ok, missing_scope_identity} = validated_governance_identity(missing_scope)
+
+    missing_scope_violations =
+      repository_plan_violations(missing_scope_identity.plan_paths, %{}, missing_scope_identity)
+
+    assert Enum.any?(
+             missing_scope_violations,
+             &(&1 =~ "scope_assertions must appear exactly once")
+           )
   end
 
   @tag :plan_73_33_task_2
@@ -383,9 +474,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert checked_in_identity.current_phase in Map.keys(checked_in_identity.phase_requirements)
 
     expected_governance_phase =
-      if checked_in_identity.status == "planning",
-        do: "73",
-        else: checked_in_identity.current_phase
+      case {checked_in_identity.current_phase, checked_in_identity.status} do
+        {"79", "planning"} -> "78"
+        {_phase, "planning"} -> "73"
+        {phase, _status} -> phase
+      end
 
     assert checked_in_identity.governance_phase == expected_governance_phase
 
@@ -897,7 +990,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   test "active v1.11 plans declare scope and stop before every risky mutation" do
     assert {:ok, identity} = validated_governance_identity(File.cwd!())
 
-    if identity.status == "planning" do
+    if identity.status == "planning" and identity.governance_phase == "73" do
       assert identity.current_phase in ["74", "75", "76", "77"]
       assert identity.governance_phase == "73"
 
@@ -3717,9 +3810,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp validate_governance_paths(root, project, roadmap, state) do
     governance_phase =
-      if state.status == "planning" and state.current_phase != "78",
-        do: "73",
-        else: state.current_phase
+      case {state.status, state.current_phase} do
+        {"planning", "79"} -> "78"
+        {"planning", "78"} -> "78"
+        {"planning", _phase} -> "73"
+        {_status, phase} -> phase
+      end
 
     phase_entry = Enum.find(roadmap.phase_entries, &(Enum.at(&1, 1) == governance_phase))
 
