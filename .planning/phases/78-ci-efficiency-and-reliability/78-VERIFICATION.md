@@ -1,8 +1,8 @@
 ---
 phase: 78-ci-efficiency-and-reliability
-verified: 2026-09-29T02:23:47Z
+verified: 2026-09-29T04:55:54Z
 status: gaps_found
-score: 40/42 must-haves verified
+score: 46/47 must-haves verified
 covered_files:
   - .github/workflows/adoption-external-idp.yml
   - .github/workflows/demo-app-ci.yml
@@ -39,6 +39,8 @@ covered_files:
   - .planning/phases/78-ci-efficiency-and-reliability/78-07-SUMMARY.md
   - .planning/phases/78-ci-efficiency-and-reliability/78-08-PLAN.md
   - .planning/phases/78-ci-efficiency-and-reliability/78-08-SUMMARY.md
+  - .planning/phases/78-ci-efficiency-and-reliability/78-09-PLAN.md
+  - .planning/phases/78-ci-efficiency-and-reliability/78-09-SUMMARY.md
   - .planning/phases/78-ci-efficiency-and-reliability/78-CI-COST.json
   - .planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json
   - .planning/phases/78-ci-efficiency-and-reliability/78-CONTEXT.md
@@ -70,40 +72,47 @@ covered_files:
   - test/security/ci_gate_integrity_test.exs
   - test/support/adoption_evidence.ex
   - test/test_helper.exs
-covered_digest: "v1:sha256:a867d62d027285550a97ceb8fcac2bf16447088fb4d310b7d52aaca4c5b3c549"
+covered_digest: "v2:sha256:22b6763fa8769348782e19efae3f1049d0c0a4b8c00cfad354587b75521733e5"
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
   previous_status: gaps_found
-  previous_score: 36/38
+  previous_score: 40/42
   gaps_closed:
     - "Workflows use current official action releases with compatible immutable pins."
-  gaps_remaining: []
+    - "The Phase 78 clean-state matrix remains green after the tracked transition to Phase 79 planning."
+  gaps_remaining:
+    - "The Phase 78 post-Plan09 completion trackers and final receipt still need reconciliation."
   regressions: []
 decision_coverage:
   honored: 12
   total: 12
   not_honored: []
 gaps:
-  - truth: "The Phase 78 clean-state matrix remains green after the tracked transition to Phase 79 planning."
-    reason: "At source commit 4d77b46, mix test and mix qa each failed two lifecycle assertions because the Phase 73 governance test does not recognize {current_phase: 79, status: planning}; Phase 73 replay then failed when it reran the same contract."
+  - truth: "The final Phase 78 receipt binds the post-Plan09 completion trackers and all nine plans are recorded complete."
+    status: partial
+    reason: "The source-bound OTP 27/28 receipt passes against c674abec, but ROADMAP.md still reports 8/9 plans and leaves 78-09 unchecked; STATE.md still directs work to Plan 78-07. The required post-verification phase.complete 78 tracker reconciliation has not run yet, so a resulting tracked-source change would invalidate this receipt digest."
     artifacts:
-      - test/governance/milestone_scope_test.exs
-      - .planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json
-      - .planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json
+      - path: .planning/ROADMAP.md
+        issue: "Phase 78 says 8/9 plans complete and 78-09 is unchecked."
+      - path: .planning/STATE.md
+        issue: "Current position is Phase 79, but the operator next-step still says to continue Phase 78 Plan 78-07."
+      - path: .planning/state.json
+        issue: "Completion summary still reflects the tracker state from before Plan 78-09 closeout."
+      - path: .planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json
+        issue: "The receipt binds c674abec and the current source digest, but not the pending post-Plan09 tracker reconciliation."
     missing:
-      - "Cover Phase 79 planning as governance_phase 78, with the completed Phase 78 plan set, in the lifecycle contract."
-      - "Apply the early-milestone planning assertions only while governance_phase is 73; keep later governance plans checked for scope and risk metadata."
-      - "Refresh the Phase 73 proof and regenerate both 22-command OTP matrices against the final committed source."
+      - "Run phase.complete 78 after this verifier report and reconcile the Phase 78 9/9 plan and Phase 79 state trackers."
+      - "If tracked operational-source bytes change, rerun both 22-command OTP matrices, replace the receipt, then rerun independent verification and the receipt owner."
 human_verification: []
 ---
 
 # Phase 78: CI Efficiency and Reliability — Verification Report
 
 **Phase Goal:** Required evidence runs in clearly named, reliable, efficient CI lanes whose cost and security independence are understandable.
-**Verified:** 2026-09-29T02:23:47Z
+**Verified:** 2026-09-29T04:55:54Z
 **Status:** gaps_found
-**Re-verification:** Yes — after Plan 78-08 gap closure
+**Re-verification:** Yes — after Plan 78-09 implementation; tracker closeout remains pending
 
 ## Goal Achievement
 
@@ -111,20 +120,20 @@ human_verification: []
 
 | # | Observable truth | Status | Evidence |
 |---|---|---|---|
-| 1 | Every mandatory requirement has exactly one named owning lane, intentional independent security defenses are documented, and hollow or skipped Mix gates are prohibited. | ✓ VERIFIED | The executable owner ledger and normalization live in `test/support/adoption_evidence.ex`; mutation and lifecycle tests are in `test/adoption/evidence_contract_test.exs` and `test/governance/milestone_scope_test.exs`. The blocking lanes are parsed from workflow YAML. The committed receipt records positive results for `mix ci.evidence` (150), `mix ci.security` (71), and the separate command inventories. |
+| 1 | Every mandatory requirement has exactly one named owning lane, intentional independent security defenses are documented, and hollow or skipped Mix gates are prohibited. | ✓ VERIFIED | The executable owner ledger and normalization live in `test/support/adoption_evidence.ex`; mutation and lifecycle tests are in `test/adoption/evidence_contract_test.exs` and `test/governance/milestone_scope_test.exs`. The blocking lanes are parsed from workflow YAML. The committed receipt records positive results for `mix ci.evidence` (151), `mix ci.security` (71), and the separate command inventories. |
 | 2 | Measured safe parallelism, caching, and setup reuse reduce or justify CI duration without checkout leakage, stale consumer state, or cache trust. | ✓ VERIFIED | `78-CI-COST.json` contains three complete baseline and three complete candidate observations on OTP 27/28. Removing the duplicated Fast lane reduced warm matrix wall time 4.83% and runner cost 8.30%; cold reductions were 24.13% and 23.92%. The report explicitly rejects a compiled cache because hosted cache-service benefit was not measured. Consumer profiles remain isolated and all locked installs run in the cold matrix. |
 | 3 | Workflows use least-privilege permissions, non-colliding concurrency, clear names, current actions, and redaction-safe failure artifacts. | ✓ VERIFIED | `.github/workflows/release-please.yml:37` now pins `googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0`; both contracts assert the exact release identity. Upstream identifies v5.0.0 as Latest, published 2026-04-22, and its signed tag resolves to the pinned SHA; the v5.0.0 action manifest uses Node 24. Focused tests and actionlint with ShellCheck pass. [Official v5.0.0 release](https://github.com/googleapis/release-please-action/releases/tag/v5.0.0), [v5.0.0 action manifest](https://github.com/googleapis/release-please-action/blob/v5.0.0/action.yml). |
-| 4 | Formatting, warnings-as-errors tests, `mix qa`, security, package-consumer, LedgerLoop, and required browser gates pass from the completed phase state. | ✗ FAILED | The final-source cold run at `4d77b46` fails two lifecycle assertions in `mix test` and `mix qa`; the Phase 73 replay fails when it reruns the same assertion. The pre-closeout matrix passed, but the Phase 79 planning transition is not yet accepted by the governance contract. |
+| 4 | Formatting, warnings-as-errors tests, `mix qa`, security, package-consumer, LedgerLoop, and required browser gates pass from the completed phase state. | ✓ VERIFIED | Receipt `78-CLEAN-STATE-RECEIPT.json` binds both isolated runs to source `c674abec27b59f93d0b049ba56250f69cbc847ca`, digest `235550be320e0c2a5b545c4f52bbffb13cc62d5314bbec1f5b6226f2beea7f2b`, and 1,108 tracked operational files. OTP 27 and OTP 28 each report 22/22 commands with zero nonzero exits, including Phase 73 replay, consumers, LedgerLoop, browser journeys, and actionlint; the live receipt owner passes against the current checkout. |
 
-**Roadmap score:** 3/4 verified.
+**Roadmap score:** 4/4 verified.
 
 ### Plan Must-Have Coverage
 
-The prior 34 Plan 78-01 through 78-07 truths received regression checks. The carried-forward D-09 failure was fully rechecked, and all four Plan 78-08 truths were checked against source, tests, workflow lint, and the pre-closeout receipt. Plan score: 37/38; combined roadmap and plan score: 40/42.
+The previous 38 Plan 78-01 through 78-08 truths received regression checks. The carried-forward Phase 79 lifecycle failure is closed by the new test and final matrix. Four of Plan 78-09's five truths are verified; its final receipt/tracker truth remains partial because the post-verification `phase.complete 78` update is pending. Plan score: 42/43; combined roadmap and plan score: 46/47.
 
 | Plan truth | Status | Evidence |
 |---|---|---|
-| 78-01 D-12: Phase lifecycle identities and malformed transitions | ✗ FAILED | Existing tests reject the valid completed-Phase-78 to Phase-79-planning state: they do not handle `{current_phase: 79, status: planning}` and still constrain the active planning phase to 74–77. |
+| 78-01 D-12: Phase lifecycle identities and malformed transitions | ✓ VERIFIED | `milestone_scope_test.exs:48` now accepts the actual `{current_phase: 79, status: planning}` state as governance Phase 78 and requires all nine Phase 78 plan paths; the focused test passes. |
 | 78-01 D-01: One primary owner per mandatory criterion; defenses remain separately labeled | ✓ VERIFIED | `AdoptionEvidence` owns normalization and closure checks; `mix ci.evidence` has positive receipt evidence. |
 | 78-01 D-02: Owner points to a real selector/harness and an unconditional blocking workflow step | ✓ VERIFIED | Owner resolver and parsed workflow tests check the named step, command, selector, and positive count; final security workflow contains the independent owners. |
 | 78-01 PIPE-02: Adjacent same-criterion duplicates fail while distinct criteria sharing a lane remain separate | ✓ VERIFIED | `test/adoption/evidence_contract_test.exs` includes adjacent and shared-lane fixtures. |
@@ -137,7 +146,7 @@ The prior 34 Plan 78-01 through 78-07 truths received regression checks. The car
 | 78-02 D-03/D-12: Intermediate source-bound proof precedes measurement | ✓ VERIFIED | Cost observations bind a proof identity and revision; Phase 73 source-bound proof/reconciliation is validated by the final receipt owner. |
 | 78-03 D-02: Docs and verify suites run independently with positive process results | ✓ VERIFIED | `mix.exs` uses fresh `cmd mix test` invocations; the receipt records 117 positive verify tests and `mix ci.verify` success. |
 | 78-03 D-06: Security suites remain fresh processes and standalone GATE-02 remains independent | ✓ VERIFIED | The security alias retains `cmd mix test` boundaries, and `.github/workflows/security-gates.yml` has a separate blocking GATE-02 command. The cold security lane reports 71 positive tests/checks. |
-| 78-03 D-06: Integrity tests reject suite collapse, selector inheritance, omissions, and zero tests | ✓ VERIFIED | `test/security/ci_gate_integrity_test.exs` contains mutation assertions; the 994-test suite and security/evidence lanes pass. |
+| 78-03 D-06: Integrity tests reject suite collapse, selector inheritance, omissions, and zero tests | ✓ VERIFIED | `test/security/ci_gate_integrity_test.exs` contains mutation assertions; the full warnings-as-errors suite and security/evidence lanes pass. |
 | 78-04 D-08: Clear stable names, least-privilege permissions, and isolated event concurrency | ✓ VERIFIED | Parsed YAML checks in `test/adoption/workflow_hygiene_test.exs` exercise PR/main/cross-workflow cases; actionlint passes in the cold receipt. |
 | 78-04 D-09: Changed pins are current official releases with matching literal contracts | ✓ VERIFIED | The v5.0.0 upstream release resolves to `45996ed1f6d02564a971a2fa1b5860e934307cf7`; workflow-hygiene and release-hardening contracts require that exact SHA and label. The current release-please workflow passes actionlint with ShellCheck. |
 | 78-04 D-11: Changes are local and remote branch protection remains Phase 79 scope | ✓ VERIFIED | The phase changes are tracked repository files; no remote GitHub mutation is in the workflow or receipt. Plan 78-04 deliberately leaves live required checks to Phase 79. |
@@ -152,8 +161,8 @@ The prior 34 Plan 78-01 through 78-07 truths received regression checks. The car
 | 78-06 D-10: Setup failure/cancellation leaves safe status or a typed missing-receipt failure while preserving the original failure | ✓ VERIFIED | Trace and Fleet shell contracts exercise success, setup failure, assertion failure, and cancellation; the status guard remains blocking. |
 | 78-06 D-09: Trace status contract agrees with upload-artifact pin | ✓ VERIFIED | `scripts/test_trace_visual_status_contract.sh` checks the v7.0.1 action literal; official upload-artifact v7.0.1 is the current release. |
 | 78-06 PIPE-04: Unexpected diagnostics cannot enter artifacts by directory placement alone | ✓ VERIFIED | Tests assert exact receipt paths and reject unexpected attachments; workflows upload only validated status files. |
-| 78-07 D-12: Frozen cold producer plus separate owner rejects stale/empty/failed/shared evidence | ✓ VERIFIED | Both refreshed isolated runs bind to source `b762734843f4df76338b6ab9099960ae655cc0e4`, digest `50cc53edd4eaa7ed9683bedf965313c1c0657decafb7fae551fb1b70bdec06aa`, separate run/workspace/runner IDs, and 22 command results each. The real owner test passed and recomputed the current source digest, commit ancestry, and proof identity. |
-| 78-07 Phase 73 proof is current, identical in both reports, and replayed | ✓ VERIFIED | Both receipt runs bind to proof `phase73-b0522b1b3ca40f35`, bytes SHA-256 `3662d29aaebdfcd5269eb94842843e1231b2b4175eb9f5e932cc300e6c5c7de9`, and source digest `sha256:3c646362b072c3c5f613858c64fe8ab0f2b550da9a8296ecf4855bd36ba47821`. The real receipt-owner test validates proof bytes, identity, and repository reconciliation. |
+| 78-07 D-12: Frozen cold producer plus separate owner rejects stale/empty/failed/shared evidence | ✓ VERIFIED | Both current isolated runs bind to source `c674abec27b59f93d0b049ba56250f69cbc847ca`, digest `235550be320e0c2a5b545c4f52bbffb13cc62d5314bbec1f5b6226f2beea7f2b`, distinct run/workspace/runner IDs, and 22 command results each. The live owner test passed and recomputed the current source digest, commit ancestry, and proof identity. |
+| 78-07 Phase 73 proof is current, identical in both reports, and replayed | ✓ VERIFIED | Both receipt runs bind to proof `phase73-098ef9c4fb32ec31`, bytes SHA-256 `93e9cd2e3fe3c77aa2e769b89ec41f32a301f3d87c94212c54055966a44aa376`, and source digest `sha256:c95aa360c9c0d7619928ee78f50f999777db4cb7a8d2edb76a235ceff693079b`. `mix ci.phase73.reconciliation` exits 0 in both cold runs; the receipt owner validates proof bytes, identity, and repository reconciliation. |
 | 78-07 D-01/D-02: Final ownership and independent defenses remain mandatory/non-hollow | ✓ VERIFIED | Positive evidence receipts and workflow/alias contracts show independent security, evidence, standalone GATE-02, consumer, demo, and browser owners. |
 | 78-07 D-03 through D-06: Final cold evidence includes cost decisions, isolated consumers, locked installs, and independent processes | ✓ VERIFIED | Both 22-command runs pass the consumer profiles, fresh security/evidence/reconciliation/verify/integration lanes, and locked setup commands. |
 | 78-07 D-07 through D-11: Final workflow evidence keeps browser gates, canaries, scope, artifacts, and immutable pin contracts | ✓ VERIFIED | Receipt has positive browser journeys and actionlint; safe-receipt and workflow-contract tests prove exact upload ownership and pin/SHA consistency. The updated Release Please action is also covered by the Plan 78-08 exact-current-pin contracts. |
@@ -161,7 +170,12 @@ The prior 34 Plan 78-01 through 78-07 truths received regression checks. The car
 | 78-08 D-09: Release Please v5.0.0 uses the verified immutable commit and both literal contracts agree | ✓ VERIFIED | Workflow, `workflow_hygiene_test.exs`, and `release_hardening_test.exs` agree on SHA `45996ed1f6d02564a971a2fa1b5860e934307cf7` and label `v5.0.0`; upstream release page identifies the same signed release commit. |
 | 78-08 D-09: Node 24 compatibility and release job inputs, outputs, permissions, triggers, and publish gate remain intact | ✓ VERIFIED | Upstream v5.0.0 manifest declares Node 24; the plan-implementation diff shows only the action `uses` line changed. The existing `ubuntu-latest` runner, inputs, outputs, permissions, triggers, and `release_created` publish condition remain present. |
 | 78-08 PIPE-04: Stale, mutable, or mismatched Release Please pins fail tests and changed workflow passes lint | ✓ VERIFIED | The in-memory mutation test rejects v4.4.1, mutable `v5.0.0`, and a wrong version label. Focused workflow/release tests passed (11 tests, 0 failures); `actionlint -shellcheck /opt/homebrew/bin/shellcheck .github/workflows/release-please.yml` exited 0. |
-| 78-08 D-12: Governance accepts all eight Phase 78 plans and exact Git-derived summary provenance | ✓ VERIFIED | `milestone_scope_test.exs` now expects eight tracked plan paths and validates exact ordered task commits in both completed-plan summaries. The named governance module passed (82 tests, 0 failures); both cold runs and the receipt owner validate the resulting source. |
+| 78-08 D-12: Governance accepts the completed Phase 78 plan set and exact Git-derived summary provenance | ✓ VERIFIED | Governance checks retain exact ordered task-commit provenance; the focused Phase 79 lifecycle checks and full cold suites pass after extending the plan inventory to nine. |
+| 78-09 D-12 / PIPE-05: Phase 79 planning resolves to governance Phase 78 and validates all nine plans | ✓ VERIFIED | The actual Phase79 planning identity test at `milestone_scope_test.exs:48` and the explicit Phase79 negative-control test at `:310` each pass; the latter checks skipped predecessor, malformed metadata, and missing scope rejection. |
+| 78-09 D-12: Phase 73-only planning assertions remain scoped to governance Phase 73; later ordered transitions stay fail-closed | ✓ VERIFIED | `validate_governance_paths/4` maps Phase79 planning to governance Phase78 and limits early planning membership checks to Phase73; the 83-test governance suite and both complete matrices pass. |
+| 78-09 D-12: Refreshed Phase 73 proof and identical report blocks replay against governed source | ✓ VERIFIED | Proof `phase73-098ef9c4fb32ec31` has SHA-256 `93e9cd2e3fe3c77aa2e769b89ec41f32a301f3d87c94212c54055966a44aa376`; both append-only reports contain that identity/digest, and both receipt runs record a passing `mix ci.phase73.reconciliation`. |
+| 78-09 D-12: Verification-report digest exclusion is path-bounded and other tracked-source edits remain covered | ✓ VERIFIED | The mutation contract changes a generated report beneath `.planning/phases/` without changing digest/count, while a same-suffix report outside that tree and operational files change the digest; the 22-command cold suites pass. |
+| 78-09 D-12 / PIPE-05: Final receipt reflects post-Plan09 completion trackers and remains valid after verifier rewrite | ⚠️ PARTIAL | Current receipt and live owner pass for source `c674abec` and the current digest, but ROADMAP remains at 8/9 with Plan09 unchecked and STATE's operator-next-step still points to Plan07. The post-verification phase completion and any required refreshed matrix/receipt have not yet run. |
 
 ## Required Artifacts
 
@@ -174,6 +188,9 @@ The prior 34 Plan 78-01 through 78-07 truths received regression checks. The car
 | Browser/canary receipts: `scripts/test_fleet_proxy_e2e.sh`, `scripts/test_rulestead_proxy_canary.sh`, `scripts/test_trace_visual_e2e.sh`, status-contract script, Playwright config, associated tests/workflows | ✓ VERIFIED | Producers emit bounded allowlisted output; test fixtures cover failure, cancellation, sensitive data, and exact upload paths. |
 | Cold owner: `scripts/check_phase78_clean_state.sh`, `test/adoption/phase78_clean_state_contract_test.exs`, receipt, `mix.exs`, test helper | ✓ VERIFIED | Producer is substantive, isolated and source-frozen; owner is a distinct selector with negative fixtures and is mandatory in PR/main workflow. |
 | Phase 73 proof artifacts: `73-RECONCILIATION-PROOF.json`, `73-SECURITY.md`, `73-VALIDATION.md` | ✓ VERIFIED | Receipt owner verifies proof bytes/id/source digest and repository consistency; both reports carry the replayed proof block. |
+| Phase 79 lifecycle: `test/governance/milestone_scope_test.exs` | ✓ VERIFIED | The actual Phase79 planning state maps to governance Phase78 and enumerates all nine plans; dedicated positive and malformed-transition tests are active and pass. The file is selected by root Mix test lanes. |
+| Generated-report digest boundary: `scripts/check_phase78_clean_state.sh`, `test/adoption/phase78_clean_state_contract_test.exs` | ✓ VERIFIED | The producer excludes only generated phase reports beneath `.planning/phases/`; the contract mutation test confirms outside reports and operational inputs remain digest-covered. The owner and full cold lanes exercise this contract. |
+| Post-Plan09 tracker/receipt state | ⚠️ PARTIAL | Implementation and current receipt are substantive and wired, but the roadmap/state reconciliation has not occurred; see the single tracked gap above. |
 
 ## Key Link Verification
 
@@ -187,6 +204,8 @@ The prior 34 Plan 78-01 through 78-07 truths received regression checks. The car
 | Browser/Compose producer | Uploaded artifact | Validated exact runner-temp receipt paths | ✓ FLOWING | No broad logs, screenshots, traces, or unexpected files enter upload selections; receipts remain bounded. |
 | Cold source digest | Receipt owner | Frozen clone → 22 commands → receipt assembly → separate mandatory selector | ✓ FLOWING | Current owner test independently passed and recomputed source/proof identity. |
 | Final proof | SECURITY/VALIDATION reports and replay | Canonical proof block and Phase 73 reconciliation | ✓ FLOWING | Receipt proof hash and owner validation match the committed proof. |
+| Phase 79 lifecycle | STATE + ROADMAP + REQUIREMENTS | `validated_governance_identity` → governance Phase78 → nine tracked Phase78 plan paths | ✓ FLOWING | Focused lifecycle test passes against the actual Phase79 planning state, and the full root suite is green in both cold runs. |
+| Cold receipt source digest | Final completion trackers | Producer manifest includes tracked planning source while excluding only bounded generated reports | ⚠️ PARTIAL | Current receipt owner validates current bytes; the planned post-Plan09 tracker update may change those bytes and requires both matrices to be refreshed. |
 
 ## Data-Flow Trace (Level 4)
 
@@ -200,10 +219,11 @@ The prior 34 Plan 78-01 through 78-07 truths received regression checks. The car
 
 | Behavior | Command/evidence | Result | Status |
 |---|---|---|---|
-| Mandatory selector accepts the current committed receipt and proof | `env ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 ERL_FLAGS='+S 2:2' mix ci.phase78.receipt` | 1 real selector test, 0 failures; independently validates repository source digest, receipt ancestor, proof bytes/id and Phase 73 repository proof. | ✓ PASS |
-| Frozen source passes complete supported matrix | Committed `78-CLEAN-STATE-RECEIPT.json`; source `b762734843f4df76338b6ab9099960ae655cc0e4`, digest `50cc53edd4eaa7ed9683bedf965313c1c0657decafb7fae551fb1b70bdec06aa` | OTP 27 and 28 each: 22/22 commands, 0 nonzero exits, current Phase 73 proof, 1,112 tracked source files. | ✓ PASS |
+| Mandatory selector accepts the current committed receipt and proof | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.phase78.receipt` | Verifier rerun: 1 real selector test, 0 failures; validates current source digest, receipt ancestry, proof bytes/id and Phase 73 repository proof. | ✓ PASS |
+| Frozen source passes complete supported matrix | Committed `78-CLEAN-STATE-RECEIPT.json`; source `c674abec27b59f93d0b049ba56250f69cbc847ca`, digest `235550be320e0c2a5b545c4f52bbffb13cc62d5314bbec1f5b6226f2beea7f2b` | OTP 27 and 28 each: 22/22 commands, 0 nonzero exits, current Phase 73 proof, 1,108 tracked operational files. Receipt owner passed against the current checkout. | ✓ PASS |
 | Release Please pin and mutation contracts | `mix test test/adoption/workflow_hygiene_test.exs test/release/release_hardening_test.exs --warnings-as-errors` | 11 tests, 0 failures; `actionlint -shellcheck /opt/homebrew/bin/shellcheck .github/workflows/release-please.yml` exited 0. | ✓ PASS |
-| Eight-plan lifecycle and completed-plan provenance | `mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | 82 tests, 0 failures; lifecycle assertions accept eight plans and plan-scoped task commit provenance passes. | ✓ PASS |
+| Actual Phase 79 lifecycle identity | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix test test/governance/milestone_scope_test.exs:48 --warnings-as-errors` | 1 test, 0 failures; actual `{current_phase: 79, status: planning}` maps to governance Phase78 and all nine plan paths. | ✓ PASS |
+| Phase 79 lifecycle negative controls | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix test test/governance/milestone_scope_test.exs:310 --warnings-as-errors` | 1 test, 0 failures; rejects skipped predecessor, malformed plan risk metadata, and missing scope. | ✓ PASS |
 | Performance topology decision is backed by complete measurements | `78-CI-COST.json` | Three complete samples per baseline/candidate; warm wall-time reduction 4.83%, runner-cost reduction 8.30%, with security and GATE-02 retained. | ✓ PASS |
 
 ## Probe Execution
@@ -215,9 +235,9 @@ No Phase 78 plan declares a `probe-*.sh`; `find scripts -path '*/tests/probe-*.s
 | Requirement | Source plan(s) | Status | Evidence |
 |---|---|---|---|
 | PIPE-02 | 78-01, 78-03, 78-07 | ✓ SATISFIED | Executable criterion ledger, unique owner resolver, fresh Mix process contracts, and positive mandatory lane evidence. |
-| PIPE-03 | 78-02, 78-03, 78-07 | ✓ SATISFIED | Six complete comparable measurements justify removing duplicate Fast work and rejecting an unmeasured compiled cache; independent security gates remain green. REQUIREMENTS.md still has its unchecked tracker box. |
-| PIPE-04 | 78-04, 78-05, 78-06, 78-07, 78-08 | ✓ SATISFIED | Permissions, event-qualified concurrency, redaction-safe artifacts, current immutable pins, and drift rejection are covered by implementation and deterministic contracts. REQUIREMENTS.md still has its unchecked tracker box. |
-| PIPE-05 | 78-01, 78-02, 78-05, 78-06, 78-07 | ✓ SATISFIED | The full clean receipt passes root QA/tests/security, consumer profiles, demos, required browser journeys and actionlint, with a separate non-hollow receipt owner. |
+| PIPE-03 | 78-02, 78-03, 78-07 | ✓ SATISFIED | Six complete comparable measurements justify removing duplicate Fast work and rejecting an unmeasured compiled cache; independent security gates remain green. REQUIREMENTS.md marks it complete. |
+| PIPE-04 | 78-04, 78-05, 78-06, 78-07, 78-08 | ✓ SATISFIED | Permissions, event-qualified concurrency, redaction-safe artifacts, current immutable pins, and drift rejection are covered by implementation and deterministic contracts. REQUIREMENTS.md marks it complete. |
+| PIPE-05 | 78-01, 78-02, 78-05, 78-06, 78-07, 78-09 | ✓ SATISFIED | The full clean receipt passes root QA/tests/security, consumer profiles, demos, required browser journeys and actionlint; Plan09 adds Phase79 lifecycle and proof/digest coverage, with a separate non-hollow receipt owner. |
 
 ## Test Quality Audit
 
@@ -243,13 +263,13 @@ N/A — CI and workflow tooling phase with no end-user surface. All acceptance c
 
 ## Gaps Summary
 
-The Release Please pin gap is closed by the verified v5.0.0 SHA, exact contracts, negative mutation cases, and workflow lint. The pre-closeout receipt validated both OTP matrices, but the final matrix after `gsd_run query phase.complete 78` exposed a governance regression: the Phase 73 lifecycle tests reject the valid Phase 79 planning state and cause two direct failures plus a dependent Phase 73 replay failure. A focused gap-closure plan must add deterministic Phase 79 lifecycle coverage, refresh the governed Phase 73 proof, and rerun both complete OTP matrices.
+Plan09 closes the observed Phase79 governance regression: the lifecycle contract now maps Phase79 planning to governance Phase78, validates all nine plan paths, and keeps Phase73-only checks scoped to Phase73. The new focused tests pass; both complete cold matrices pass 22/22 commands against one source and proof identity, and the live receipt owner accepts that receipt. One tracked closeout remains: ROADMAP is still 8/9 with Plan09 unchecked and STATE's operator-next-step points to Plan07. Run `phase.complete 78` after this report; if it changes tracked operational-source bytes, refresh both matrices and the receipt, then rerun verification and the receipt owner.
 
 ### Advisory (New Scope, Unevidenced)
 
-No unevidenced new-scope anti-pattern findings. The stale roadmap/requirements tracker fields above are directly observable documentation inconsistencies, recorded for follow-up without changing the verified CI acceptance result.
+No unevidenced new-scope anti-pattern findings. The incomplete Phase78 plan count and stale STATE operator-next-step are direct tracked evidence and remain in the single structured gap; REQUIREMENTS.md itself marks PIPE-02 through PIPE-05 complete.
 
 ---
 
-_Verified: 2026-09-29T02:00:58Z_  
+_Verified: 2026-09-29T04:55:54Z_
 _Verifier: gsd-verifier_
