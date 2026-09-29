@@ -37,7 +37,12 @@ cat > "$FAKE_BIN/npx" <<'FAKE_NPX'
 printf '%s\n' "${TRACE_VISUAL_SENTINELS:-}" >&2
 
 if [[ -n "${TRACE_VISUAL_BLOCK_MARKER:-}" ]]; then
-  printf '%s\n' "$BASHPID" >"$TRACE_VISUAL_BLOCK_MARKER"
+  marker_tmp="$(mktemp "${TRACE_VISUAL_BLOCK_MARKER}.XXXXXX")"
+  if ! printf '%s\n' "$BASHPID" >"$marker_tmp" ||
+    ! mv -f -- "$marker_tmp" "$TRACE_VISUAL_BLOCK_MARKER"; then
+    rm -f -- "$marker_tmp"
+    exit 1
+  fi
   while [[ ! -e "${TRACE_VISUAL_RELEASE:-}" ]]; do
     sleep 0.05
   done
@@ -143,12 +148,18 @@ env \
   TRACE_VISUAL_RELEASE="$RELEASE_MARKER" \
   bash "$ROOT_DIR/scripts/test_trace_visual_e2e.sh" >"$CONTRACT_TMP_DIR/cancel.log" 2>&1 &
 trace_pid=$!
+npx_pid=''
 for _attempt in $(seq 1 100); do
-  [[ -f "$BLOCK_MARKER" ]] && break
+  if [[ -s "$BLOCK_MARKER" ]]; then
+    candidate_pid="$(cat -- "$BLOCK_MARKER")"
+    if [[ "$candidate_pid" =~ ^[0-9]+$ ]]; then
+      npx_pid="$candidate_pid"
+      break
+    fi
+  fi
   sleep 0.05
 done
-[[ -f "$BLOCK_MARKER" ]]
-npx_pid="$(cat -- "$BLOCK_MARKER")"
+[[ "$npx_pid" =~ ^[0-9]+$ ]]
 kill -TERM "$trace_pid" "$npx_pid" 2>/dev/null || true
 if wait "$trace_pid"; then
   cancel_status=0
