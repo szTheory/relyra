@@ -73,44 +73,44 @@
     "73-34-01",
     "73-34-02"
   ],
-  "captured_at": "2026-09-29T00:08:39Z",
+  "captured_at": "2026-09-29T02:47:11Z",
   "evidence_runs": [
     {
       "command": "mix ci.evidence",
-      "duration_ms": 34882,
+      "duration_ms": 38874,
       "exit_code": 0,
-      "output_sha256": "c81261be13f10393e051b6e539193a925fcf72b386c10235c6a990dce1a00f87",
+      "output_sha256": "dc683e52f245e61455a05fbfcbf7cb40cf680c2af57a5cc0017f865ebad2aab5",
       "summaries": [
         {
           "excluded": 0,
           "failures": 0,
-          "tests": 150
+          "tests": 151
         }
       ]
     },
     {
       "command": "mix ci.evidence",
-      "duration_ms": 28556,
+      "duration_ms": 36484,
       "exit_code": 0,
-      "output_sha256": "58182dd94a3946b6633fb9d62ca38786ada8a1e93a5d22bca2c7b870c5cf885e",
+      "output_sha256": "16424103aa2bfd16c62148493c1bf6502de14a6303d57ec565ce318787f62d38",
       "summaries": [
         {
           "excluded": 0,
           "failures": 0,
-          "tests": 150
+          "tests": 151
         }
       ]
     },
     {
       "command": "mix ci.evidence",
-      "duration_ms": 30322,
+      "duration_ms": 38805,
       "exit_code": 0,
-      "output_sha256": "4e13f380a2421be5d0c0382569e6e6f66f6e677abefdac20a1a1d28ce6676d12",
+      "output_sha256": "cf12e3a72e7471ad8a99a21240194186f7741f501432f6b6ddef2e0456e3bf68",
       "summaries": [
         {
           "excluded": 0,
           "failures": 0,
-          "tests": 150
+          "tests": 151
         }
       ]
     }
@@ -118,12 +118,12 @@
   "focused": [
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_24_task_1 --warnings-as-errors",
-      "duration_ms": 4648,
+      "duration_ms": 6051,
       "exit_code": 0,
-      "output_sha256": "dcea4b6e59dd77fe176364dd748a17775b2a4f39c2d6703c158296b42380473f",
+      "output_sha256": "5e490657c0e4fe433980b16d4475ca8b019cdf461b5cac92ee0b34da8e3a640e",
       "summaries": [
         {
-          "excluded": 81,
+          "excluded": 82,
           "failures": 0,
           "tests": 1
         }
@@ -131,9 +131,9 @@
     },
     {
       "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_2 --warnings-as-errors",
-      "duration_ms": 3504,
+      "duration_ms": 3968,
       "exit_code": 0,
-      "output_sha256": "8d19bb19f06618becd3105fd0a3d3186d481b2aed8b7520227cef5fdcdc16427",
+      "output_sha256": "499f7b99de8a43efe7fc5c426347073c6f1e539b17a27b6d23bd9dc4f67b5a60",
       "summaries": [
         {
           "excluded": 57,
@@ -144,9 +144,9 @@
     },
     {
       "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_24_task_3 --warnings-as-errors",
-      "duration_ms": 5299,
+      "duration_ms": 5748,
       "exit_code": 0,
-      "output_sha256": "d6930bc0e132efbcbbdf315aab7a850d0deca5a8f2c5e7d9dece81a0098449cb",
+      "output_sha256": "ad0c0230ac58662a7eefad5e46ead2221b8f41d56596afbd86ec059e0cf15d21",
       "summaries": [
         {
           "excluded": 56,
@@ -157,12 +157,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_1 --warnings-as-errors",
-      "duration_ms": 15789,
+      "duration_ms": 14742,
       "exit_code": 0,
-      "output_sha256": "b4731c4bc3c71905685532fbf3e304604cc511b1eee6ccb8c8ec86c9b0955fe9",
+      "output_sha256": "006906d4fad2bb3e0f576ac63704b7d4888501022a513ed6cdb6d76f3a92a446",
       "summaries": [
         {
-          "excluded": 79,
+          "excluded": 80,
           "failures": 0,
           "tests": 3
         }
@@ -170,12 +170,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_25_task_2 --warnings-as-errors",
-      "duration_ms": 10727,
+      "duration_ms": 8145,
       "exit_code": 0,
-      "output_sha256": "f74d28cb2f9831dabb2e84733211e33ab229e2a38c68cb546f9fc4d573caa947",
+      "output_sha256": "b01c0db16e83376ea842326b0a238f9bffff61d7382d2b921968ef12fec932c4",
       "summaries": [
         {
-          "excluded": 80,
+          "excluded": 81,
           "failures": 0,
           "tests": 2
         }
@@ -183,9 +183,9 @@
     },
     {
       "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_27_task_1 --warnings-as-errors",
-      "duration_ms": 2060,
+      "duration_ms": 2279,
       "exit_code": 0,
-      "output_sha256": "4e5748b730ac83ad53447482bd1ecc93b2b0107708b45d114f07454992c38777",
+      "output_sha256": "1731092a94f042d8f96449fb37c5ad61a99f2aa5ba3cd124351d748507afd9d6",
       "summaries": [
         {
           "excluded": 5,
@@ -196,9 +196,9 @@
     },
     {
       "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_27_task_2 --warnings-as-errors",
-      "duration_ms": 1647,
+      "duration_ms": 2052,
       "exit_code": 0,
-      "output_sha256": "95767b76d8c0e976590198723dd2bfdc4ef759f66373853a1bef3257b97cf059",
+      "output_sha256": "dab6f0f64be982ae9e7a11d56041b212cca78eafb6a915edca299c39d7a372ea",
       "summaries": [
         {
           "excluded": 5,
@@ -209,9 +209,9 @@
     },
     {
       "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_28_task_1 --warnings-as-errors",
-      "duration_ms": 1986,
+      "duration_ms": 2180,
       "exit_code": 0,
-      "output_sha256": "f3823f1cbce03b44a396ee41bb63dc6ac07f6859bdf3ce3dd25fbd9cb924fad0",
+      "output_sha256": "1ab434b51da5b7ff268c9051f49762ae56b29e3e75a7085a2ebff17b71b03d4e",
       "summaries": [
         {
           "excluded": 58,
@@ -222,9 +222,9 @@
     },
     {
       "command": "mix test test/adoption/evidence_contract_test.exs --only plan_73_28_task_2 --warnings-as-errors",
-      "duration_ms": 1825,
+      "duration_ms": 2055,
       "exit_code": 0,
-      "output_sha256": "afe958be8681add1985afa4d2274d2ec42fa0d67727c1e0fad94cc19cd83033d",
+      "output_sha256": "8fbbc2b5c4b806e1b53b6cd47d8c473b408083199a83d7a0917bb9a2b49a5289",
       "summaries": [
         {
           "excluded": 57,
@@ -235,12 +235,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_29_task_1 --warnings-as-errors",
-      "duration_ms": 6922,
+      "duration_ms": 6670,
       "exit_code": 0,
-      "output_sha256": "7a8d2c06d92e96f1b7a8e6af4d4b200e13151a2f67eea4e0ab3168f86bd5ff6e",
+      "output_sha256": "a0b971c5788fef0804c21744b57da9ed6e7b59b93b20427fce8029214d8540fc",
       "summaries": [
         {
-          "excluded": 79,
+          "excluded": 80,
           "failures": 0,
           "tests": 3
         }
@@ -248,12 +248,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_29_task_2 --warnings-as-errors",
-      "duration_ms": 8715,
+      "duration_ms": 7548,
       "exit_code": 0,
-      "output_sha256": "6c82e0bc0b4980dede37d7126fa28244efeae0fc1f4a123ef14552f3d1f99dcd",
+      "output_sha256": "375c8bc1592703d0dff4a078d613c8bc65ae4b496794012afe19b4e1bd3c680c",
       "summaries": [
         {
-          "excluded": 81,
+          "excluded": 82,
           "failures": 0,
           "tests": 1
         }
@@ -261,9 +261,9 @@
     },
     {
       "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_1 --warnings-as-errors",
-      "duration_ms": 1557,
+      "duration_ms": 1696,
       "exit_code": 0,
-      "output_sha256": "ac433c181218483ce7431070fe88f02dd039b157d5c4e9228aeb5544b289f873",
+      "output_sha256": "1893eaf30cabc41ae6ccd216c7e10bcda458803fbd01c28d09e9b5f1c7529674",
       "summaries": [
         {
           "excluded": 5,
@@ -274,9 +274,9 @@
     },
     {
       "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_30_task_2 --warnings-as-errors",
-      "duration_ms": 1593,
+      "duration_ms": 1385,
       "exit_code": 0,
-      "output_sha256": "fa65f05f2bef3c1702af5ab476ffd3304606d6e82b0ded1717862ae636a400c4",
+      "output_sha256": "19571dfffde3c65fb9f1f64a9c1e4894d869166023869e1bb662c97013486d75",
       "summaries": [
         {
           "excluded": 5,
@@ -287,12 +287,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_31_task_1 --warnings-as-errors",
-      "duration_ms": 3956,
+      "duration_ms": 3846,
       "exit_code": 0,
-      "output_sha256": "85cd598d62be3b096bbd3351f0d1d649583403600e988c683750bd18aedcf847",
+      "output_sha256": "42baa89cd2d9c8aa2f22a36a330e2203f349072c4ecb5420dc7ae3a4b49896f6",
       "summaries": [
         {
-          "excluded": 81,
+          "excluded": 82,
           "failures": 0,
           "tests": 1
         }
@@ -300,12 +300,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_31_task_2 --warnings-as-errors",
-      "duration_ms": 10425,
+      "duration_ms": 8552,
       "exit_code": 0,
-      "output_sha256": "1fb368901a1558d8090bf11e3656410c63ba903ab9c2e0455013ea154d68cb8c",
+      "output_sha256": "ebb98b8b4d34d05386532fe800188a9a300c9db625f89b6edfbc94b94c2297b4",
       "summaries": [
         {
-          "excluded": 81,
+          "excluded": 82,
           "failures": 0,
           "tests": 1
         }
@@ -313,12 +313,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_32_task_1 --warnings-as-errors",
-      "duration_ms": 9988,
+      "duration_ms": 9732,
       "exit_code": 0,
-      "output_sha256": "04b0cca631a94329923b6d6058a0a4b7853fb5135d60638ccab66fede316f454",
+      "output_sha256": "1e4bfeff19fc4b472b360faa0c23d180608f39aa03b7ac43406332c2dfa661ae",
       "summaries": [
         {
-          "excluded": 81,
+          "excluded": 82,
           "failures": 0,
           "tests": 1
         }
@@ -326,12 +326,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_32_task_2 --warnings-as-errors",
-      "duration_ms": 4032,
+      "duration_ms": 3548,
       "exit_code": 0,
-      "output_sha256": "955e3482be538729b1d61b3a3eefe7461593ce8675d74b9a6a1e7420ed4d4c42",
+      "output_sha256": "e0ce2354b9332ab78a5f5b594384057342676a3c9d0e99bdca102f59033980ed",
       "summaries": [
         {
-          "excluded": 81,
+          "excluded": 82,
           "failures": 0,
           "tests": 1
         }
@@ -339,12 +339,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_33_task_1 --warnings-as-errors",
-      "duration_ms": 3760,
+      "duration_ms": 3591,
       "exit_code": 0,
-      "output_sha256": "f3b1076cd061e9ff093962842909c269de4bd2f672bf18c130aa5f96c5b1f7b7",
+      "output_sha256": "56ab8ffabc08479c622ba3c5a8abd6ea102fb30d9026444c234d9b171f4a7b58",
       "summaries": [
         {
-          "excluded": 81,
+          "excluded": 82,
           "failures": 0,
           "tests": 1
         }
@@ -352,12 +352,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_33_task_2 --warnings-as-errors",
-      "duration_ms": 4593,
+      "duration_ms": 3667,
       "exit_code": 0,
-      "output_sha256": "7afbef077beaabc40391a707a277d29eac9363f9aacda9393389c6bd8595d353",
+      "output_sha256": "6aae03a925449edae538d5943956db4ff6fc10f8914c3ec68ac1cabe81b80362",
       "summaries": [
         {
-          "excluded": 81,
+          "excluded": 82,
           "failures": 0,
           "tests": 1
         }
@@ -365,12 +365,12 @@
     },
     {
       "command": "mix test test/governance/milestone_scope_test.exs --only plan_73_34_task_1 --warnings-as-errors",
-      "duration_ms": 4426,
+      "duration_ms": 3752,
       "exit_code": 0,
-      "output_sha256": "5002fd23001740ae7de91d7a3e9db57ea4082f6d8a2c969c7c09828a98eaea88",
+      "output_sha256": "dc961c272cfb1aa0e047fab6269ebb75a6d4bdf64ac399c555389b175f2cb73f",
       "summaries": [
         {
-          "excluded": 81,
+          "excluded": 82,
           "failures": 0,
           "tests": 1
         }
@@ -378,9 +378,9 @@
     },
     {
       "command": "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_34_task_2 --warnings-as-errors",
-      "duration_ms": 1904,
+      "duration_ms": 1515,
       "exit_code": 0,
-      "output_sha256": "e7f88bc423f7d2d3122ea103cd46d544634636696424fb2a06d98313393e1a4b",
+      "output_sha256": "c2a8ea056a7aa4f66e1c86521e947a4fda61d7fcf17107d5de33af74f3e7ec9e",
       "summaries": [
         {
           "excluded": 5,
@@ -473,7 +473,7 @@
     },
     {
       "path": "test/governance/milestone_scope_test.exs",
-      "sha256": "dd6be1d4fbb8c21175cc47ecae8be57fb6317d68788735a0ecdc68c50a7fc850"
+      "sha256": "c8fe980d7d1d3c29ce1255c68cd8df567ffd402aefe98725f49121663f090b59"
     },
     {
       "path": "test/governance/phase_73_reconciliation_test.exs",
@@ -488,13 +488,13 @@
       "sha256": "52a5945850ec98d512db13bc0d66f8ef72c912bc7436220b58e5b6e92171975a"
     }
   ],
-  "proof_set_id": "phase73-b0522b1b3ca40f35",
+  "proof_set_id": "phase73-098ef9c4fb32ec31",
   "schema": "phase73-reconciliation-proof",
   "security": {
     "command": "mix ci.security",
-    "duration_ms": 105877,
+    "duration_ms": 103544,
     "exit_code": 0,
-    "output_sha256": "b27e41a144177abd7a30dc5c3caa48167300d393fc67c3a834082cb3e569ab77",
+    "output_sha256": "d1fcdccfceb73aa32826913e5657985f204bbd713e314d6e3dc0e5ea46d41891",
     "summaries": [
       {
         "excluded": 0,
@@ -669,6 +669,6 @@
       }
     }
   ],
-  "source_digest": "sha256:3c646362b072c3c5f613858c64fe8ab0f2b550da9a8296ecf4855bd36ba47821",
+  "source_digest": "sha256:c95aa360c9c0d7619928ee78f50f999777db4cb7a8d2edb76a235ceff693079b",
   "version": 1
 }
