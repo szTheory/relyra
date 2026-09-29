@@ -38,7 +38,7 @@ printf '%s\n' "${TRACE_VISUAL_SENTINELS:-}" >&2
 
 if [[ -n "${TRACE_VISUAL_BLOCK_MARKER:-}" ]]; then
   marker_tmp="$(mktemp "${TRACE_VISUAL_BLOCK_MARKER}.XXXXXX")"
-  if ! printf '%s\n' "$BASHPID" >"$marker_tmp" ||
+  if ! printf '%s\n' "$$" >"$marker_tmp" ||
     ! mv -f -- "$marker_tmp" "$TRACE_VISUAL_BLOCK_MARKER"; then
     rm -f -- "$marker_tmp"
     exit 1
