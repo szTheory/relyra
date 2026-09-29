@@ -438,7 +438,14 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 5. A residual-risk report shows that every remaining idea is low-value, demand-gated,
    approval-blocked, or more costly to maintain than the risk it would retire.
 
-**Plans:** TBD
+**Plans:** 0/2 plans executed
+**Wave 1**
+
+- [ ] 79-01-PLAN.md
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 79-02-PLAN.md
 
 ## Progress
 
@@ -452,7 +459,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
 | 78. CI Efficiency and Reliability | v1.11 | 9/9 | Complete    | 2026-09-29 |
-| 79. Adopter-Ready Closeout | v1.11 | 0/TBD | Not started | — |
+| 79. Adopter-Ready Closeout | v1.11 | 0/2 | Planned    |  |
 
 ---
 

@@ -366,11 +366,13 @@ This phase has no SAML product-path changes. Security concerns are operational a
 ## Open Questions
 
 1. **What exact GitHub state and candidate remote batch will exist when Phase 79 executes?**
+   - Planning resolution: **RESOLVED** — Plan `79-01-PLAN.md` Tasks 1 and 3 collect fresh, timestamped read-only state; Plan `79-02-PLAN.md` Task 2 can propose an exact batch only from that state. Phase 73's values remain historical. The actual live GitHub state is still unknown until Phase 79 execution.
    - What we know: Phase 73 recorded a branch-protection discrepancy on 2026-09-09 and named a possible owner-controlled repair. [VERIFIED: `.planning/phases/73-twin-contract-and-baseline/73-BASELINE.md:20-22, 45-49`]
    - What's unclear: Current open PRs/issues, branch refs, disabled workflows, required checks, and protection state; none were queried during research by instruction.
    - Recommendation: Re-inventory read-only after the Phase 79 plan is active. Any exact batch must be built from those observations and await its own explicit approval.
 
 2. **Does the current governance test already cover the selected inventory report schema?**
+   - Planning resolution: **RESOLVED** — Plan `79-01-PLAN.md` Task 1 inspects `test/governance/milestone_scope_test.exs` before edits, then Tasks 1 and 2 add only missing deterministic fixtures for the selected report schema, pagination, timestamp, workflow state, and main-SHA behavior in the existing `mix ci.evidence` owner.
    - What we know: The existing test owns baseline/artifact governance and exact-batch checks; `mix ci.evidence` includes it. [VERIFIED: `mix.exs:238-240`; `.github/workflows/security-gates.yml:97-104`]
    - What's unclear: Coverage for a new Phase 79 report schema, pagination errors, timestamps, and main-SHA linkage was not exhaustively audited during this domain research.
    - Recommendation: Inspect the exact behaviors during planning and create only the fixture/test deltas needed for deterministic coverage.
