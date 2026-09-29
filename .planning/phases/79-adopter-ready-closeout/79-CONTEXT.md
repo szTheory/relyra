@@ -1,31 +1,44 @@
 # Phase 79: Adopter-Ready Closeout - Context
 
-**Gathered:** 2026-09-29 (assumptions mode)
+**Gathered:** 2026-09-29 (research-augmented assumptions mode)
 **Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
 
-Close the v1.11 milestone by proving repository and collaboration hygiene, recording current GitHub and required-CI state, enforcing explicit approval for any shared remote mutation, and assessing remaining risks against adopter value and maintenance cost. The phase does not add product or SAML protocol capability.
+Close v1.11 with an intentional repository and worktree state, a current and reviewable GitHub collaboration inventory, exact-source evidence that the mandatory CI surface on `main` is green, and a residual-risk account below the milestone's diminishing-returns line. Keep the work feature-neutral. Any new remote GitHub mutation remains behind an exact, explicitly approved batch.
+
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
+### Repository State and Artifact Ownership
+- **D-01:** Assess tracked changes, relevant untracked and ignored generated/scratch artifacts, and every registered worktree. Record the owner and disposition for each candidate artifact or worktree that affects the clean-state claim. Do not equate “untracked” or “ignored” with “disposable.”
+- **D-02:** Use an ownership-aware, read-only inventory before cleanup. Preserve known maintainer-owned `.tool-versions`; do not run blanket cleanup such as `git clean -x`, remove a worktree, or prune worktrees as an inventory step. Remove only an item confirmed obsolete and within the approved local cleanup scope. If ownership is unknown, leave the item intact and report the unresolved disposition.
+- **D-03:** Define “intentionally clean” in the closeout evidence: user-owned local configuration may remain when identified and preserved; generated or scratch artifacts may remain only with an explicit owner/disposition or a documented reason. Include ignored build/cache locations in a bounded, project-relevant check rather than enumerating every ignored cache file.
+
 ### GitHub Inventory and Mutation Boundary
-- **D-01:** Build a fresh, timestamped, read-only inventory of pull requests, issues, local and remote branches, required checks, workflow health, and branch protection before proposing any remote change. The Phase 73 snapshot is a lead to revalidate, not current state or current authorization.
+- **D-04:** Build a fresh, read-only inventory covering pull requests, issues, local and remote branches, workflow health, required checks, and branch-protection state. Record collection time, repository/ref and commit SHA, evidence source, pagination/completeness, and access failures so a partial query cannot look like a complete inventory.
+- **D-05:** Distinguish the branch-protection contexts from the complete mandatory CI surface. The configured required-check list is one input to readiness, not proof that every required workflow or lane ran successfully.
+- **D-06:** Any proposed Phase 79 remote close, label, comment, merge, deletion, or protection mutation must be an exact, reviewable batch. Bind approval to the target and current/desired state, affected checks/items, reason, least-privilege operation, preflight, rollback, read-back, and resume signal. Refresh the relevant state immediately before applying; if it changed, stop and obtain renewed approval. Read-only inventory requires no approval.
+- **D-07:** Inventory `.github/workflows/branch-protection-drift.yml` as inherited owner policy. Do not count it as approval for a new Phase 79 mutation, and do not invoke, modify, or disable it as part of closeout without its own exact approval. A previously committed automation path does not approve a different repair batch.
 
-### Repository and Worktree Cleanliness
-- **D-02:** Classify tracked changes, untracked artifacts, and registered worktrees by ownership before declaring the repository clean. Preserve user-owned configuration such as .tool-versions; neither deleting every untracked path nor relying only on the Phase 78 receipt proves cleanliness.
+### Main Readiness and External Canaries
+- **D-08:** Bind readiness claims to the current protected `main` SHA and the exact source each evidence item proves. Check the complete mandatory-lane ownership inventory and current results for that SHA; report the branch-protection required contexts separately. Reuse the Phase 78 clean-state receipt only if its source commit/digest and proof scope match the readiness claim. Re-run expensive deterministic evidence when relevant source, workflow, dependency, or toolchain inputs changed, evidence is missing/failed/stale, or release-tag proof requires it; do not repeat a green matrix solely to refresh an unchanged result.
+- **D-09:** Report scheduled or external-provider canaries separately from deterministic release readiness. If a canary incident exists, include its run/ref/time, safe evidence, diagnosis, owner or next action, and why it does or does not affect deterministic readiness. External availability must not become a manual-only merge gate.
 
-### Main CI and External Canaries
-- **D-03:** Base readiness on current required checks for the relevant main commit. Report external-provider canaries separately from deterministic merge gates; a historical receipt or a run on a dirty local checkout does not establish current main readiness.
+### Residual Risk and Maintainer Experience
+- **D-10:** Give every remaining idea or finding one evidence-backed disposition from the Phase 79 categories: low-value, demand-gated, approval-blocked, or more costly to maintain than the risk it retires. Include impact/severity, supporting evidence, adopter demand or trigger, maintenance burden, owner, approval boundary, and revisit condition/date. Carry forward the Phase 73 severity vocabulary and blocker rule: High/Critical items remain blockers until resolved; remaining Medium and lower items stay visible with an explicit disposition rather than being silently dropped.
+- **D-11:** Present a concise, redaction-safe closeout dossier for the maintainer/release owner: first answer whether the repository and `main` are ready; then link the exact evidence, list any approval-bound batch, separate canary status, and show the residual-risk dispositions. Use plain Markdown headings and tables with user-facing labels; do not build a dashboard or expose implementation details that do not help the maintainer decide what to do.
+- **D-12:** Use the current brandbook's calm, exact, transparent, operator-friendly, open-source-serious voice for report copy. The visual design system is not applicable to this repository/CI closeout; preserve its accessibility and clarity principles in the report's structure and wording without introducing visual UI work.
 
-### Residual-Risk Inventory
-- **D-04:** Revalidate the Phase 73 findings against current evidence and include existing deferred items and open cross-phase windows, including the Phase 76 concurrency automation gaps. Assess each remaining item against adopter value, demand, approval boundaries, and maintenance cost; an open window is not automatically a blocker.
+### the agent's Discretion
+- Select the smallest complete read-only query set and a bounded report structure that covers the locked inventory fields, provenance, pagination, and exact-SHA evidence.
+- Reconcile the Phase 78 receipt with current `main` and workflow evidence before deciding whether any expensive matrix needs a fresh run; do not claim a receipt proves a different source.
+- Add deterministic CI contract coverage only where Phase 79 implementation introduces a new recurring behavior; do not create human-only completion evidence or duplicate the Phase 78 mandatory gates.
+- Use existing Phase 73 remote-batch and risk-disposition conventions where they fit this boundary. Generic prompt recommendations remain subordinate to current `AGENTS.md`, roadmap, and later phase decisions; in particular, manual `mix hex.publish` remains prohibited.
 
-### the Agent's Discretion
-- Select the read-only evidence sources, report structure, and deterministic checks needed to establish these decisions. Keep evidence current, bounded, and redaction-safe. Any remote mutation still needs its own exact batch and explicit approval before it occurs.
 </decisions>
 
 <canonical_refs>
@@ -33,57 +46,82 @@ Close the v1.11 milestone by proving repository and collaboration hygiene, recor
 
 **Downstream agents MUST read these before planning or implementing.**
 
-- .planning/ROADMAP.md — Phase 79 boundary and success criteria.
-- .planning/REQUIREMENTS.md — REPO-01, REPO-02, REPO-03, and EXIT-01 acceptance criteria.
-- .planning/PROJECT.md — v1.11 goal, feature-neutral scope, and demand-gated candidates.
-- .planning/STATE.md — accumulated decisions, current status, known deferred items, and session state.
-- .planning/WINDOWS.md — open cross-phase automation gaps to revalidate for closeout.
-- .planning/phases/73-twin-contract-and-baseline/73-CONTEXT.md — baseline and remote-approval contracts.
-- .planning/phases/73-twin-contract-and-baseline/73-BASELINE.md — dated findings, old GitHub observation, and candidate remote batch; revalidate before use.
-- .planning/phases/77-code-and-documentation-craftsmanship/77-CONTEXT.md — ownership-aware artifact cleanup and finding disposition.
-- .planning/phases/78-ci-efficiency-and-reliability/78-CONTEXT.md — mandatory lane and canary boundaries.
-- .planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json — source-bound Phase 78 evidence, not proof of current main state.
-- .planning/phases/78-ci-efficiency-and-reliability/78-VERIFICATION.md — completed Phase 78 verification.
-- docs/relyra-milestone-roadmap-guide.txt — durable milestone closeout guidance.
-- scripts/check_phase78_clean_state.sh — prior clean-state evidence approach.
-- scripts/setup_branch_protection.sh — branch-protection intent and owner-controlled apply path; do not run as a read-only inventory.
-- .github/workflows/branch-protection-drift.yml — owner-controlled branch-protection workflow.
-- .github/workflows/security-gates.yml — required deterministic security lanes.
-- test/governance/milestone_scope_test.exs — tracked-artifact ownership and exact-batch approval governance.
+### Phase Scope and Project Guardrails
+- `.planning/ROADMAP.md` §Phase 79 — closeout goal, requirements, and success criteria.
+- `.planning/REQUIREMENTS.md` §Repository and GitHub Hygiene, §Governance and Exit — REPO-01..03 and EXIT-01.
+- `.planning/PROJECT.md` — v1.11 scope, security invariants, demand-gated items, and shared GitHub approval boundary.
+- `.planning/STATE.md` — current position, maintainer-owned `.tool-versions`, milestone decisions, and existing state; read current content because workspace state may change.
+- `AGENTS.md` — project-specific permissions, automation requirements, and prohibition on manual Hex publishing.
 
-No separate Phase 79 SPEC or ADR exists; its requirements and prior approval contracts are captured in the references above.
+### Existing Closeout, CI, and Governance Evidence
+- `.planning/phases/78-ci-efficiency-and-reliability/78-CONTEXT.md` — locked CI ownership, exact security processes, canary separation, and deferred remote settings.
+- `.planning/phases/78-ci-efficiency-and-reliability/78-VALIDATION.md` — Phase 78's validation and evidence boundary.
+- `.planning/phases/73-twin-contract-and-baseline/73-CONTEXT.md` — source-bound baseline, severity/disposition, ownership, and exact remote approval contract.
+- `.planning/phases/73-twin-contract-and-baseline/73-BASELINE.md` — dated inventory shape and severity/blocker vocabulary; historical live values are not current.
+- `.planning/phases/73-twin-contract-and-baseline/73-SECURITY.md` — threshold-aware risk register and disposition history.
+- `test/governance/phase_73_reconciliation_test.exs` and `test/governance/milestone_scope_test.exs` — executable governance, evidence ownership, and remote-batch contracts.
+- `scripts/check_phase78_clean_state.sh` — source-bound receipt and isolated clean-state evidence pattern.
+- `scripts/setup_branch_protection.sh` and `.github/workflows/branch-protection-drift.yml` — desired protection state and existing scheduled owner-controlled write path.
+- `mix.exs` and the Phase 78 required workflow files — named CI lane definitions and current workflow ownership; recheck live status for the current `main` SHA.
+
+### Project Research and Maintainer Experience
+- `prompts/elixir-oss-lib-ci-cd-best-practices-deep-research.md` — Elixir OSS CI/release practices; apply selectively and validate against current Relyra decisions.
+- `prompts/elixir-opensource-libs-best-practices-deep-research.md` — Hex/library DX and maintenance principles relevant to a release/maintainer workflow.
+- `prompts/relyra-engineering-dna-from-prior-libs.md` — lessons from Sigra, Kiln, Lockspire, and other sibling libraries, including CI-as-spec, named lanes, and release evidence.
+- `brandbook/README.md` and `brandbook/notes/decision-log.md` — current voice and canonical design decisions. The old `prompts/relyra-brand-book.md` is not the design source of truth.
+
+### Authoritative External References
+- [Git status](https://git-scm.com/docs/git-status), [Git clean](https://git-scm.com/docs/git-clean), [Git worktree](https://git-scm.com/docs/git-worktree), and [Git ignore](https://git-scm.com/docs/gitignore) — inventory and cleanup semantics.
+- [GitHub protected branches REST API](https://docs.github.com/en/rest/branches/branch-protection), [fine-grained token permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens), and [Actions secure use](https://docs.github.com/en/actions/reference/security/secure-use) — read/write permissions and least privilege.
+- [GitHub REST pagination](https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api), [workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows), and [merge queues](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue?apiVersion=2022-11-28) — inventory completeness and SHA/event freshness.
+- [Hex publishing guide](https://hex.pm/docs/publish) — consumer-package proof and release artifact expectations; does not supersede Relyra's no-manual-publish rule.
+- [Phoenix `.gitignore`](https://github.com/phoenixframework/phoenix/blob/main/.gitignore) — a mature Elixir project's targeted generated-artifact exclusions.
+
 </canonical_refs>
 
 <code_context>
 ## Existing Code Insights
 
 ### Reusable Assets
-- The Phase 73 baseline provides a structured finding inventory with severity, evidence, owner, approval class, disposition, and revisit point.
-- The Phase 78 clean-state script and receipt provide a source-bound deterministic proof pattern that can inform current readiness evidence.
-- The branch-protection script exposes expected configuration separately from its owner-controlled mutation path.
-- The governance test owns artifact classification and remote-batch authorization contracts.
+- `scripts/check_phase78_clean_state.sh` — source commit/digest binding, isolated temporary checkout, bounded receipt schema, and owned cleanup; reuse its evidence discipline where current Phase 79 source matches.
+- `test/governance/phase_73_reconciliation_test.exs` — exact-scope provenance and deterministic remote-batch validation patterns.
+- `test/governance/milestone_scope_test.exs` — source-bound lifecycle, worktree/artifact ownership, and mutation approval contracts.
+- `scripts/setup_branch_protection.sh` — declared required checks and protection payload for comparison with live read-only state.
+- `.github/workflows/branch-protection-drift.yml` — existing scheduled/manual protection reassertion path; inventory it as existing policy, separate from new Phase 79 approval.
+- `mix.exs` plus Phase 78 workflow integrity tests — named mandatory lane and criterion-ownership evidence.
 
 ### Established Patterns
-- Acceptance evidence is deterministic and tied to an executable owner; historical or source-text-only evidence is insufficient.
-- CI security suites run in fresh Mix processes, with independent defenses retained.
-- Provider checks remain external canaries; deterministic browser and merge evidence has owned failure handling.
-- Remote GitHub authorization and acceptance are separate. Any mutation is plan-local, exact, reversible, and checked by post-mutation read-back.
-- Repository cleanup preserves unrelated user-owned state and removes files only when evidence establishes that they are obsolete or duplicate.
+- Phase 78 keeps mandatory deterministic browser evidence in CI and external IdP/provider checks as scheduled canaries.
+- CI proof is split into named owners; `mix ci.security` suites run in separate fresh processes and standalone GATE-02 stays independent.
+- Phase 73 governance binds remote mutation proposals to exact targets/payloads and source evidence; script invocation alone is not authorization for a new batch.
+- Phase 78's closeout runner uses isolated paths and a receipt tied to committed source; caches and canary success do not substitute for mandatory evidence.
+- Mature Git practice distinguishes tracked changes, untracked paths, ignored paths, and registered worktrees; Phoenix uses narrow ignore rules, while blanket cleanup can destroy local state.
 
 ### Integration Points
-- Read-only Git and GitHub inventory connects local tracked/untracked paths and registered worktrees with live collaboration state and branch-protection data.
-- Current main readiness connects the latest main commit, its required workflow checks, and the Phase 78 deterministic CI evidence; scheduled canaries remain separately reported.
-- Residual-risk disposition connects the Phase 73 baseline, Phase 77 ownership, Phase 78 verification, STATE.md deferred items, and WINDOWS.md automation gaps.
+- Read-only local state comes from Git status/worktree inventories; current collaboration state comes from GitHub API/workflow data; current mandatory evidence comes from the Phase 78 lane map and source-bound receipt.
+- The closeout dossier connects live branch protection to configured checks, each check to a current `main` SHA, external canaries to a separate incident account, and every remaining risk to a disposition and revisit condition.
+- If implementation adds a recurring contract, wire deterministic checks into the existing mandatory CI ownership model rather than introducing a human completion gate.
+
 </code_context>
 
 <specifics>
 ## Specific Ideas
 
-Use fresh read-only GitHub observations. Treat the 2026-09-09 Phase 73 protection snapshot only as a pointer to revalidate. Keep the Phase 78 receipt as dated proof for its source commit, not a substitute for checking current main.
+- User requested broad, research-backed analysis of every decision area, including pros/cons, tradeoffs, ecosystem conventions, successful examples and footguns, architecture/security/reliability/release-engineering viewpoints, and developer/maintainer experience. User directed the agent to consider all areas and follow the coherent recommendations without another choice round.
+- The relevant JTBD is the maintainer/release owner deciding whether v1.11 can close safely: know what is clean, what is current on GitHub, whether the exact `main` revision has required deterministic proof, which external incidents need diagnosis, and what residual work is truly worth carrying.
+- This phase has no application UI/API design. Make the human-facing inventory/report concise, scannable, evidence-linked, redaction-safe, and clear about what needs action or approval.
+- Apply only relevant findings from `prompts/`; current project decisions and `AGENTS.md` override generic or stale examples. Use the latest `brandbook/` voice if copy conventions matter.
+
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-No new ideas were raised. Existing demand-gated and future requirements remain governed by PROJECT.md and STATE.md; this phase evaluates their disposition without expanding its boundary.
+None raised. Visual dashboard work, unrelated CI expansion, and new SAML protocol capabilities are outside this phase boundary.
+
 </deferred>
+
+---
+
+*Phase: 79-adopter-ready-closeout*
+*Context gathered: 2026-09-29*
