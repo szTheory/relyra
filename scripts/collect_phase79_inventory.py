@@ -70,6 +70,13 @@ def gh_read(repo: str, endpoint: str, page: int, fixture: dict | None) -> tuple[
         item = fixture.get("github", {}).get(fixture_key)
         if item is None:
             raise CollectionError(f"fixture is missing GitHub response: {fixture_key}")
+        sequence = item.get("responses") if isinstance(item, dict) else None
+        if isinstance(sequence, list):
+            calls = fixture.setdefault("_call_counts", {})
+            call_key = f"{endpoint}?{page}"
+            index = calls.get(call_key, 0)
+            calls[call_key] = index + 1
+            item = sequence[min(index, len(sequence) - 1)]
         return int(item.get("status", 200)), item.get("body"), bool(item.get("next", False))
     url = f"repos/{repo}/{endpoint}"
     separator = "&" if "?" in url else "?"
@@ -84,6 +91,13 @@ def gh_read(repo: str, endpoint: str, page: int, fixture: dict | None) -> tuple[
     # gh writes API errors to stderr and exits nonzero. Keep only a bounded status label.
     if completed.returncode:
         text = completed.stderr.lower()
+        headers, _discarded = split_http_response(completed.stdout)
+        try:
+            http_status = int(headers.get(":status", "0"))
+        except ValueError:
+            http_status = 0
+        if http_status:
+            return http_status, None, False
         if "401" in text or "authentication" in text:
             return 401, None, False
         if "403" in text or "forbidden" in text:
@@ -130,11 +144,13 @@ def page_source(repo: str, endpoint: str, fixture: dict | None) -> dict:
     for page in range(1, 51):
         status, body, has_next = gh_read(repo, endpoint, page, fixture)
         if status != 200:
+            pages.append({"number": page, "item_count": 0, "status": status, "continuation": False})
             return {
-                "endpoint": endpoint, "page_count": len(pages), "pages": pages,
+                "endpoint": endpoint, "page_count": page, "pages": pages,
                 "item_count": len(rows), "access_status": access_status(status),
-                "completeness": "incomplete", "items": [],
+                "completeness": "incomplete", "failure_status": status, "items": [],
             }
+        reported_total = body.get("total_count") if isinstance(body, dict) else None
         if isinstance(body, dict):
             list_field = next((field for field in ("workflows", "workflow_runs", "check_runs") if isinstance(body.get(field), list)), None)
             if list_field is None:
@@ -145,16 +161,16 @@ def page_source(repo: str, endpoint: str, fixture: dict | None) -> dict:
         if len(rows) + len(body) > MAX_ITEMS:
             raise CollectionError(f"GitHub list exceeds item bound: {endpoint}")
         rows.extend(body)
-        pages.append({"number": page, "item_count": len(body), "status": status})
+        pages.append({"number": page, "item_count": len(body), "status": status, "continuation": has_next})
         if not has_next:
             return {
                 "endpoint": endpoint, "page_count": len(pages), "pages": pages,
-                "item_count": len(rows), "access_status": "allowed",
+                "item_count": len(rows), "total_count": reported_total if reported_total is not None else len(rows), "access_status": "allowed",
                 "completeness": "complete", "items": rows,
             }
     return {
         "endpoint": endpoint, "page_count": len(pages), "pages": pages,
-        "item_count": len(rows), "access_status": "allowed",
+        "item_count": len(rows), "total_count": len(rows), "access_status": "allowed",
         "completeness": "incomplete", "items": [],
     }
 
@@ -175,6 +191,7 @@ def workflow_item(row: object) -> dict:
     item = only(row, ALLOWED_WORKFLOW_FIELDS)
     state = str(item.get("state", "")).lower()
     item["state"] = "active" if state == "active" else "disabled" if state == "disabled_inactivity" else "unknown"
+    item["html_url"] = safe_github_url(item.get("html_url"))
     return item
 
 
@@ -220,7 +237,7 @@ def parse_worktrees(value: str) -> list[dict]:
             else:
                 fields[line] = True
         if fields:
-            result.append({"path": fields.get("worktree"), "head": fields.get("HEAD"), "branch": fields.get("branch"), "detached": bool(fields.get("detached")), "owner": "repository maintainer", "disposition": "preserve and inspect"})
+            result.append({"path": fields.get("worktree"), "head": fields.get("HEAD"), "branch": fields.get("branch"), "detached": bool(fields.get("detached")), "owner": "unknown", "disposition": "preserve; confirm owner before any cleanup"})
     return result
 
 
@@ -244,16 +261,49 @@ def repository_from_remote(value: str) -> str:
     return path[:-4] if path.endswith(".git") else path
 
 
+def safe_github_url(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    parsed = urlparse(value)
+    if parsed.scheme == "https" and (parsed.hostname == "github.com" or parsed.hostname.endswith(".github.com")):
+        return value[:2048]
+    return None
+
+
+def compact_pull_request(row: object) -> dict:
+    if not isinstance(row, dict):
+        return {}
+    base = row.get("base") if isinstance(row.get("base"), dict) else {}
+    head = row.get("head") if isinstance(row.get("head"), dict) else {}
+    result = only(row, ("number", "state", "title", "draft", "updated_at"))
+    result.update({"html_url": safe_github_url(row.get("html_url")), "base_ref": base.get("ref"), "head_ref": head.get("ref"), "base_sha": base.get("sha"), "head_sha": head.get("sha")})
+    return result
+
+
+def compact_issue(row: object) -> dict:
+    if not isinstance(row, dict):
+        return {}
+    labels = row.get("labels") if isinstance(row.get("labels"), list) else []
+    result = only(row, ("number", "state", "title", "updated_at"))
+    result.update({"html_url": safe_github_url(row.get("html_url")), "labels": [label.get("name") for label in labels if isinstance(label, dict) and isinstance(label.get("name"), str)]})
+    return result
+
+
 def raw_single(repo: str, endpoint: str, fixture: dict | None) -> tuple[dict, int]:
     status, body, _ = gh_read(repo, endpoint, 1, fixture)
     return (body if isinstance(body, dict) else {}), status
 
 
-def lane_owners(root: pathlib.Path) -> dict[str, list[str]]:
+def lane_owners(root: pathlib.Path, fixture: dict | None = None) -> dict[str, list[str]]:
     """Map executable mandatory-lane references to tracked workflow owners."""
     workflow_dir = root / ".github/workflows"
     contents = {}
-    for path in sorted(workflow_dir.glob("*.yml")) + sorted(workflow_dir.glob("*.yaml")):
+    try:
+        tracked = command(["git", "ls-files", "-z", ".github/workflows"], cwd=root, fixture=fixture).split("\0")
+    except (OSError, subprocess.SubprocessError, CollectionError):
+        tracked = []
+    for relative in sorted(path for path in tracked if path.endswith((".yml", ".yaml"))):
+        path = root / relative
         if not path.is_file() or path.is_symlink():
             continue
         contents[path.name] = path.read_text(encoding="utf-8", errors="replace")
@@ -280,14 +330,21 @@ def lane_owners(root: pathlib.Path) -> dict[str, list[str]]:
     return result
 
 
-def classify_lane(name: str, checks: list, statuses: list, sha: str) -> dict:
+def classify_lane(name: str, checks: list, statuses: list, sha: str, owners: list | None = None, runs: list | None = None) -> dict:
     records = [r for r in checks if isinstance(r, dict) and r.get("head_sha") == sha and r.get("name") == name]
     records += [r for r in statuses if isinstance(r, dict) and r.get("sha", sha) == sha and r.get("context") == name]
+    if not records:
+        owner_paths = {pathlib.PurePosixPath(owner).name for owner in owners or [] if owner.endswith((".yml", ".yaml"))}
+        records = [run for run in runs or [] if isinstance(run, dict) and run.get("head_sha") == sha and pathlib.PurePosixPath(str(run.get("path", ""))).name in owner_paths]
     if not records:
         return {"state": "absent", "sha": sha, "evidence_count": 0}
     states = []
     for row in records:
-        conclusion = str(row.get("conclusion") or row.get("state") or row.get("status") or "").lower()
+        raw_conclusion = row.get("conclusion") or row.get("state")
+        if raw_conclusion is None and str(row.get("status", "")).lower() == "completed":
+            states.append("unknown")
+            continue
+        conclusion = str(raw_conclusion or row.get("status") or "").lower()
         if conclusion in {"success", "successful", "completed"}:
             states.append("passed")
         elif conclusion in {"failure", "failed", "timed_out", "action_required", "error"}:
@@ -302,39 +359,88 @@ def classify_lane(name: str, checks: list, statuses: list, sha: str) -> dict:
     return {"state": state, "sha": sha, "evidence_count": len(records)}
 
 
+def unknown_field_errors(value: object, allowed: set[str], label: str) -> list[str]:
+    if not isinstance(value, dict):
+        return [f"{label} is not an object"]
+    unknown = set(value) - allowed
+    return [f"{label} has unallowlisted fields: {', '.join(sorted(unknown))}"] if unknown else []
+
+
 def validate_receipt(receipt: dict) -> list[str]:
-    errors = []
+    errors = unknown_field_errors(receipt, {"schema", "version", "observed_at", "repository", "observation", "collection", "sources", "local", "github"}, "receipt")
     if receipt.get("schema") != SCHEMA or receipt.get("version") != VERSION:
         errors.append("unsupported schema or version")
     observed = receipt.get("observed_at", "")
     try:
-        dt.datetime.fromisoformat(observed.replace("Z", "+00:00"))
+        parsed = dt.datetime.fromisoformat(observed.replace("Z", "+00:00"))
+        if parsed.utcoffset() != dt.timedelta(0):
+            errors.append("observation timestamp is not UTC")
     except (ValueError, AttributeError):
         errors.append("invalid UTC observation timestamp")
     if not observed.endswith("Z"):
         errors.append("observation timestamp is not UTC")
     repo = receipt.get("repository", {})
+    errors.extend(unknown_field_errors(repo, {"name", "source"}, "repository"))
     if not repo.get("name"):
         errors.append("missing repository identity")
     observation = receipt.get("observation", {})
+    errors.extend(unknown_field_errors(observation, {"ref", "main_sha", "source", "revalidated_sha", "revalidation_source"}, "observation"))
     sha = observation.get("main_sha", "")
-    if not re.fullmatch(r"[0-9a-f]{40}", sha or ""):
-        errors.append("missing or invalid observed main SHA")
+    if observation.get("ref") != "refs/heads/main" or not re.fullmatch(r"[0-9a-f]{40}", sha or ""):
+        errors.append("missing or invalid observed main SHA/ref")
+    collection = receipt.get("collection", {})
+    errors.extend(unknown_field_errors(collection, {"complete", "readiness", "gaps", "github_access"}, "collection"))
+    claimed_complete = collection.get("complete") is True
+    if claimed_complete and collection.get("readiness") != "green":
+        errors.append("complete receipt cannot have a non-green readiness label")
+    if not claimed_complete and (collection.get("readiness") == "green" or not collection.get("gaps")):
+        errors.append("incomplete receipt must retain explicit gaps and cannot read as green")
     sources = receipt.get("sources", {})
-    claimed_complete = receipt.get("collection", {}).get("complete") is True
     if not sources:
         errors.append("missing source provenance")
     for name, source in sources.items():
+        errors.extend(unknown_field_errors(source, {"endpoint", "page_count", "pages", "item_count", "total_count", "access_status", "completeness", "failure_status", "sha"}, f"source {name}"))
         if not source.get("endpoint") or not source.get("access_status"):
             errors.append(f"source {name} lacks endpoint or access status")
-        if claimed_complete and (source.get("completeness") != "complete" or not source.get("page_count")):
-            errors.append(f"source {name} is incomplete")
-        if source.get("page_count") != len(source.get("pages", [])):
+        if claimed_complete and (source.get("completeness") != "complete" or not source.get("page_count") or source.get("access_status") != "allowed"):
+            errors.append(f"source {name} is incomplete or inaccessible")
+        pages = source.get("pages", [])
+        if source.get("page_count") != len(pages):
             errors.append(f"source {name} has inconsistent page count")
-        page_numbers = [p.get("number") for p in source.get("pages", [])]
+        for page in pages:
+            errors.extend(unknown_field_errors(page, {"number", "item_count", "status", "continuation"}, f"source {name} page"))
+        page_numbers = [p.get("number") for p in pages]
         if page_numbers != list(range(1, len(page_numbers) + 1)):
             errors.append(f"source {name} has missing or duplicate pages")
+        if claimed_complete and source.get("total_count") is not None and source.get("item_count") != source.get("total_count"):
+            errors.append(f"source {name} item count does not match total")
     github = receipt.get("github", {})
+    errors.extend(unknown_field_errors(github, {"pull_requests", "issues", "remote_branches", "workflows", "workflow_runs", "check_runs", "statuses", "branch_protection", "mandatory_lanes", "canaries"}, "github"))
+    collection_fields = {
+        "pull_requests": {"number", "state", "title", "draft", "updated_at", "html_url", "base_ref", "head_ref", "base_sha", "head_sha"},
+        "issues": {"number", "state", "title", "updated_at", "html_url", "labels"},
+        "remote_branches": {"name", "sha", "protected"},
+        "workflows": {"id", "name", "path", "state", "html_url", "created_at", "updated_at"},
+        "workflow_runs": {"id", "name", "workflow_id", "path", "event", "status", "conclusion", "head_branch", "head_sha", "run_started_at", "updated_at", "html_url"},
+        "check_runs": {"name", "status", "conclusion", "head_sha", "started_at", "completed_at", "html_url"},
+        "statuses": {"context", "state", "description", "target_url", "created_at", "updated_at", "sha"},
+    }
+    for name, allowed in collection_fields.items():
+        for row in github.get(name, []):
+            errors.extend(unknown_field_errors(row, allowed, f"github {name}"))
+    for row in github.get("canaries", []):
+        errors.extend(unknown_field_errors(row, {"run_id", "name", "ref", "sha", "observed_at", "status", "source"}, "github canary"))
+    local = receipt.get("local", {})
+    errors.extend(unknown_field_errors(local, {"tracked_path_count", "tracked_edits", "untracked_paths", "ignored_generated_candidates", "worktrees", "branches"}, "local"))
+    for local_collection, allowed in {
+        "tracked_edits": {"path", "git_state", "owner", "disposition"},
+        "untracked_paths": {"path", "git_state", "owner", "disposition"},
+        "ignored_generated_candidates": {"path", "owner", "disposition"},
+        "worktrees": {"path", "head", "branch", "detached", "owner", "disposition"},
+        "branches": {"name", "sha"},
+    }.items():
+        for row in local.get(local_collection, []):
+            errors.extend(unknown_field_errors(row, allowed, f"local {local_collection}"))
     for row in github.get("check_runs", []):
         if claimed_complete and row.get("head_sha") != sha:
             errors.append("check run is not bound to observed main SHA")
@@ -342,16 +448,34 @@ def validate_receipt(receipt: dict) -> list[str]:
         lane = github.get("mandatory_lanes", {}).get(name)
         if not lane or lane.get("state") not in LANE_STATES:
             errors.append(f"mandatory lane missing or unrecognized: {name}")
-        elif claimed_complete and lane.get("sha") != sha:
-            errors.append(f"mandatory lane is not bound to observed main SHA: {name}")
+        else:
+            errors.extend(unknown_field_errors(lane, {"state", "sha", "evidence_count", "owners"}, f"mandatory lane {name}"))
+            if claimed_complete and (lane.get("sha") != sha or lane.get("state") != "passed" or not lane.get("owners")):
+                errors.append(f"mandatory lane is not completely green on observed main SHA: {name}")
     for workflow in github.get("workflows", []):
         if claimed_complete and workflow.get("state") not in {"active", "disabled"}:
             errors.append("workflow state is absent or unrecognized")
-    encoded = json.dumps(receipt, separators=(",", ":")).encode()
-    if len(encoded) > MAX_OUTPUT_BYTES:
-        errors.append("receipt exceeds output bound")
-    if "gho_" in encoded.decode("utf-8", "ignore") or "Authorization:" in encoded.decode("utf-8", "ignore"):
+    protection = github.get("branch_protection", {})
+    errors.extend(unknown_field_errors(protection, {"access_status", "required_contexts", "expected_contexts", "context_match", "context_results"}, "branch protection"))
+    if claimed_complete:
+        if collection.get("readiness") != "green" or collection.get("gaps"):
+            errors.append("complete receipt must be green and gap-free")
+        if observation.get("revalidated_sha") != sha:
+            errors.append("main ref changed during collection")
+        if protection.get("access_status") != "allowed" or protection.get("context_match") is not True:
+            errors.append("branch protection is inaccessible or differs from expected contexts")
+        context_results = protection.get("context_results", {})
+        for context, result in context_results.items():
+            errors.extend(unknown_field_errors(result, {"state", "sha", "evidence_count"}, f"protection context {context}"))
+            if result.get("state") != "passed" or result.get("sha") != sha:
+                errors.append(f"required protection context is not green on observed main SHA: {context}")
+        if set(context_results) != set(protection.get("required_contexts", [])):
+            errors.append("required protection context observations are incomplete")
+    sensitive = re.compile(r"(?:gh[pousr]_[A-Za-z0-9_]{16,}|github_pat_[A-Za-z0-9_]+|authorization\s*:|cookie\s*:|password\s*=|BEGIN (?:RSA )?PRIVATE KEY)", re.IGNORECASE)
+    if sensitive.search(json.dumps(receipt, sort_keys=True)):
         errors.append("receipt contains sensitive data")
+    if len(json.dumps(receipt, separators=(",", ":")).encode()) > MAX_OUTPUT_BYTES:
+        errors.append("receipt exceeds output bound")
     return errors
 
 
@@ -371,7 +495,7 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         "issues": "issues?state=all",
         "remote_branches": "branches",
         "workflows": "actions/workflows",
-        "workflow_runs": "actions/runs?per_page=100",
+        "workflow_runs": f"actions/runs?head_sha={main_sha}",
         "check_runs": f"commits/{main_sha}/check-runs",
         "statuses": f"commits/{main_sha}/status",
     }
@@ -381,22 +505,29 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         if name == "statuses":
             body, status = raw_single(repo, endpoint, fixture)
             items = body.get("statuses", []) if status == 200 else []
-            source = {"endpoint": endpoint, "page_count": 1 if status == 200 else 0, "pages": [{"number": 1, "item_count": len(items), "status": status}] if status == 200 else [], "item_count": len(items), "access_status": "allowed" if status == 200 else access_status(status), "completeness": "complete" if status == 200 else "incomplete", "items": items}
+            source = {"endpoint": endpoint, "page_count": 1 if status == 200 else 0, "pages": [{"number": 1, "item_count": len(items), "status": status, "continuation": False}] if status == 200 else [], "item_count": len(items), "access_status": "allowed" if status == 200 else access_status(status), "completeness": "complete" if status == 200 else "incomplete", "failure_status": status if status != 200 else None, "sha": main_sha, "items": items}
         else:
             source = page_source(repo, endpoint, fixture)
         sources[name] = {key: value for key, value in source.items() if key != "items"}
         rows[name] = source.get("items", [])
-    sources["main_ref"] = {"endpoint": "git/ref/heads/main", "page_count": 1 if main_status == 200 else 0, "pages": [{"number": 1, "item_count": 1, "status": main_status}] if main_status == 200 else [], "item_count": 1 if main_status == 200 else 0, "access_status": "allowed" if main_status == 200 else access_status(main_status), "completeness": "complete" if main_status == 200 else "incomplete"}
+    sources["main_ref"] = {"endpoint": "git/ref/heads/main", "page_count": 1 if main_status == 200 else 0, "pages": [{"number": 1, "item_count": 1, "status": main_status, "continuation": False}] if main_status == 200 else [], "item_count": 1 if main_status == 200 else 0, "access_status": "allowed" if main_status == 200 else access_status(main_status), "completeness": "complete" if main_status == 200 else "incomplete", "failure_status": main_status if main_status != 200 else None}
     protection, protection_status = raw_single(repo, "branches/main/protection", fixture)
-    sources["branch_protection"] = {"endpoint": "branches/main/protection", "page_count": 1 if protection_status == 200 else 0, "pages": [{"number": 1, "item_count": 1, "status": protection_status}] if protection_status == 200 else [], "item_count": 1 if protection_status == 200 else 0, "access_status": "allowed" if protection_status == 200 else access_status(protection_status), "completeness": "complete" if protection_status == 200 else "incomplete"}
+    sources["branch_protection"] = {"endpoint": "branches/main/protection", "page_count": 1 if protection_status == 200 else 0, "pages": [{"number": 1, "item_count": 1, "status": protection_status, "continuation": False}] if protection_status == 200 else [], "item_count": 1 if protection_status == 200 else 0, "access_status": "allowed" if protection_status == 200 else access_status(protection_status), "completeness": "complete" if protection_status == 200 else "incomplete", "failure_status": protection_status if protection_status != 200 else None}
+    sources["check_runs"]["sha"] = main_sha
     expected = json.loads(command(["scripts/setup_branch_protection.sh", "--print-expected-json"], cwd=root, fixture=fixture))
     contexts = protection.get("required_status_checks", {}).get("contexts", []) if protection_status == 200 else []
     check_response, check_status = raw_single(repo, f"commits/{main_sha}/check-runs", fixture)
     checks = check_response.get("check_runs", []) if check_status == 200 else []
     statuses = rows.get("statuses", [])
-    lanes = lane_owners(root)
+    lanes = lane_owners(root, fixture)
     required_contexts = expected.get("required_status_checks", {}).get("contexts", [])
-    lane_results = {name: {**classify_lane(name, checks, statuses, main_sha), "owners": lanes.get(name, [])} for name in REQUIRED_LANES}
+    workflow_runs = rows.get("workflow_runs", [])
+    if workflow_runs and isinstance(workflow_runs[0], dict) and "workflow_runs" in workflow_runs[0]:
+        workflow_runs = workflow_runs[0]["workflow_runs"]
+    lane_results = {
+        name: {**classify_lane(name, checks, statuses, main_sha, lanes.get(name, []), workflow_runs), "owners": lanes.get(name, [])}
+        for name in REQUIRED_LANES
+    }
     second_main, second_status = raw_single(repo, "git/ref/heads/main", fixture)
     second_sha = str(second_main.get("object", {}).get("sha", "")) if second_status == 200 else ""
     gaps = []
@@ -411,22 +542,27 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         gaps.append("one or more mandatory lanes lack a workflow owner")
     if any(lane["state"] != "passed" for lane in lane_results.values()):
         gaps.append("one or more mandatory lanes are not green on observed main SHA")
-    context_states = {name: classify_lane(name, checks, statuses, main_sha)["state"] for name in required_contexts}
+    context_results = {name: classify_lane(name, checks, statuses, main_sha) for name in required_contexts}
     issue_rows = [row for row in rows["issues"] if isinstance(row, dict) and "pull_request" not in row]
-    workflow_runs = rows["workflow_runs"]
-    if workflow_runs and isinstance(workflow_runs[0], dict) and "workflow_runs" in workflow_runs[0]:
-        workflow_runs = workflow_runs[0]["workflow_runs"]
+    if any(item.get("state") == "unknown" for item in [workflow_item(row) for row in rows["workflows"] if isinstance(row, dict)]):
+        gaps.append("workflow catalog contains an absent or unrecognized state")
+    if any(result["state"] != "passed" for result in context_results.values()):
+        gaps.append("one or more branch-protection contexts lack passing current-main evidence")
+    canaries = [
+        {"run_id": row.get("id"), "name": row.get("name"), "ref": row.get("head_branch"), "sha": row.get("head_sha"), "observed_at": row.get("updated_at"), "status": row.get("conclusion") or row.get("status"), "source": "GitHub Actions workflow run"}
+        for row in workflow_runs if isinstance(row, dict) and any(word in str(row.get("name", "") + row.get("path", "")).lower() for word in ("canary", "rulestead", "real-idp"))
+    ]
     github = {
-        "pull_requests": [only(row, ("number", "state", "title", "html_url", "base", "head", "draft", "updated_at")) for row in rows["pull_requests"]],
-        "issues": [only(row, ("number", "state", "title", "html_url", "labels", "updated_at")) for row in issue_rows],
-        "remote_branches": [only(row, ("name", "commit", "protected")) for row in rows["remote_branches"]],
+        "pull_requests": [compact_pull_request(row) for row in rows["pull_requests"]],
+        "issues": [compact_issue(row) for row in issue_rows],
+        "remote_branches": [{"name": row.get("name"), "sha": row.get("commit", {}).get("sha") if isinstance(row.get("commit"), dict) else None, "protected": row.get("protected")} for row in rows["remote_branches"] if isinstance(row, dict)],
         "workflows": [workflow_item(row) for row in rows["workflows"] if isinstance(row, dict)],
-        "workflow_runs": [only(row, ("id", "name", "event", "status", "conclusion", "head_branch", "head_sha", "run_started_at", "updated_at", "html_url")) for row in workflow_runs if isinstance(row, dict)],
-        "check_runs": [only(row, ("name", "status", "conclusion", "head_sha", "started_at", "completed_at", "html_url")) for row in checks if isinstance(row, dict)],
-        "statuses": [only(row, ("context", "state", "description", "target_url", "created_at", "updated_at", "sha")) for row in statuses if isinstance(row, dict)],
-        "branch_protection": {"access_status": "allowed" if protection_status == 200 else access_status(protection_status), "required_contexts": sorted(contexts), "expected_contexts": sorted(required_contexts), "context_match": sorted(contexts) == sorted(required_contexts)},
+        "workflow_runs": [{**only(row, ("id", "name", "workflow_id", "path", "event", "status", "conclusion", "head_branch", "head_sha", "run_started_at", "updated_at")), "html_url": safe_github_url(row.get("html_url"))} for row in workflow_runs if isinstance(row, dict)],
+        "check_runs": [{**only(row, ("name", "status", "conclusion", "head_sha", "started_at", "completed_at")), "html_url": safe_github_url(row.get("html_url"))} for row in checks if isinstance(row, dict)],
+        "statuses": [{**only(row, ("context", "state", "description", "created_at", "updated_at", "sha")), "target_url": safe_github_url(row.get("target_url"))} for row in statuses if isinstance(row, dict)],
+        "branch_protection": {"access_status": "allowed" if protection_status == 200 else access_status(protection_status), "required_contexts": sorted(contexts), "expected_contexts": sorted(required_contexts), "context_match": sorted(contexts) == sorted(required_contexts), "context_results": context_results},
         "mandatory_lanes": lane_results,
-        "canaries": [],
+        "canaries": canaries,
     }
     if not github["branch_protection"]["context_match"]:
         gaps.append("live required contexts differ from repository expected contexts")

@@ -2620,6 +2620,117 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "active"))
     assert Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "disabled"))
+    refute receipt |> Jason.encode!() |> String.contains?("discard")
+    assert Enum.all?(receipt["github"]["pull_requests"], &(not Map.has_key?(&1, "base")))
+    assert length(receipt["github"]["issues"]) == 1
+    assert receipt["github"]["canaries"] != []
+  end
+
+  test "Phase 79 collector keeps incomplete evidence unknown and rejects tampered provenance" do
+    root = File.cwd!()
+
+    temporary =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-phase79-negative-#{System.unique_integer([:positive])}"
+      )
+
+    File.mkdir_p!(temporary)
+    on_exit(fn -> File.rm_rf!(temporary) end)
+    sha = String.duplicate("b", 40)
+    fixture = phase79_fixture(sha)
+    changed_sha = String.duplicate("c", 40)
+
+    changed_ref_fixture =
+      put_in(fixture, ["github", "git/ref/heads/main?page=1"], %{
+        "responses" => [
+          %{"body" => %{"object" => %{"sha" => sha}}},
+          %{"body" => %{"object" => %{"sha" => changed_sha}}}
+        ]
+      })
+
+    denied_protection_fixture =
+      put_in(fixture, ["github", "branches/main/protection?page=1", "status"], 403)
+
+    truncated_fixture =
+      fixture
+      |> put_in(["github", "pulls?state=all?page=1", "next"], true)
+      |> put_in(["github", "pulls?state=all?page=2"], %{"status" => 429, "body" => nil})
+
+    unknown_workflow_fixture =
+      update_in(
+        fixture,
+        ["github", "actions/workflows?page=1", "body", "workflows", Access.at(0)],
+        fn workflow ->
+          Map.delete(workflow, "state")
+        end
+      )
+
+    empty_lane_fixture =
+      put_in(fixture, ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"], [])
+
+    for {name, candidate} <- [
+          {"changed-ref", changed_ref_fixture},
+          {"denied-protection", denied_protection_fixture},
+          {"truncated-pages", truncated_fixture},
+          {"unknown-workflow", unknown_workflow_fixture},
+          {"empty-lane", empty_lane_fixture}
+        ] do
+      fixture_path = Path.join(temporary, "#{name}.json")
+      output_path = Path.join(temporary, "#{name}-inventory.json")
+      File.write!(fixture_path, Jason.encode!(candidate))
+      script = Path.join(root, "scripts/collect_phase79_inventory.py")
+
+      assert {_, 0} =
+               System.cmd("python3", [script, "--fixture", fixture_path, "--output", output_path],
+                 cd: root,
+                 stderr_to_stdout: true
+               )
+
+      receipt = output_path |> File.read!() |> Jason.decode!()
+      refute receipt["collection"]["complete"]
+      refute receipt["collection"]["readiness"] == "green"
+      assert receipt["collection"]["gaps"] != []
+
+      if name == "unknown-workflow",
+        do: assert(Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "unknown")))
+    end
+
+    fixture_path = Path.join(temporary, "tampered-fixture.json")
+    output_path = Path.join(temporary, "tampered-inventory.json")
+    File.write!(fixture_path, Jason.encode!(fixture))
+    script = Path.join(root, "scripts/collect_phase79_inventory.py")
+
+    assert {_, 0} =
+             System.cmd("python3", [script, "--fixture", fixture_path, "--output", output_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    receipt = output_path |> File.read!() |> Jason.decode!()
+
+    malformed =
+      update_in(receipt, ["sources", "pull_requests"], fn source ->
+        Map.put(source, "pages", source["pages"] ++ [hd(source["pages"])])
+        |> Map.put("page_count", 2)
+      end)
+
+    tampered =
+      malformed
+      |> put_in(["github", "check_runs", Access.at(0), "head_sha"], changed_sha)
+      |> put_in(["github", "workflows", Access.at(0), "token"], "unallowlisted")
+
+    File.write!(output_path, Jason.encode!(tampered))
+
+    assert {verification, 1} =
+             System.cmd("python3", [script, "--verify", output_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert verification =~ "missing or duplicate pages"
+    assert verification =~ "check run is not bound"
+    assert verification =~ "unallowlisted fields"
   end
 
   defp phase79_fixture(sha) do
@@ -2628,6 +2739,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "stdout" => "?? .tool-versions\u0000"
       },
       "git ls-files -z" => %{"stdout" => "mix.exs\u0000"},
+      "git ls-files -z .github/workflows" => %{
+        "stdout" =>
+          ".github/workflows/security-gates.yml\u0000.github/workflows/demo-app-ci.yml\u0000.github/workflows/demo-app-e2e.yml\u0000.github/workflows/fleet-proxy-e2e.yml\u0000"
+      },
       "git worktree list --porcelain" => %{
         "stdout" => "worktree /repo\nHEAD #{sha}\nbranch refs/heads/main\n"
       },
@@ -2681,8 +2796,32 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     github = %{
       "git/ref/heads/main?page=1" => %{"body" => %{"object" => %{"sha" => sha}}},
-      "pulls?state=all?page=1" => %{"body" => []},
-      "issues?state=all?page=1" => %{"body" => []},
+      "pulls?state=all?page=1" => %{
+        "body" => [
+          %{
+            "number" => 42,
+            "state" => "open",
+            "title" => "Fixture PR",
+            "html_url" => "https://github.com/szTheory/relyra/pull/42",
+            "base" => %{"ref" => "main", "sha" => sha, "repo" => %{"token" => "discard"}},
+            "head" => %{"ref" => "topic", "sha" => sha, "user" => %{"email" => "discard"}}
+          }
+        ]
+      },
+      "issues?state=all?page=1" => %{
+        "body" => [
+          %{
+            "number" => 8,
+            "state" => "open",
+            "title" => "Fixture issue",
+            "html_url" => "https://github.com/szTheory/relyra/issues/8",
+            "labels" => [
+              %{"name" => "triage", "url" => "https://github.com/label", "color" => "fff"}
+            ]
+          },
+          %{"number" => 9, "state" => "open", "pull_request" => %{"url" => "discard"}}
+        ]
+      },
       "branches?page=1" => %{"body" => []},
       "actions/workflows?page=1" => %{
         "body" => %{
@@ -2703,7 +2842,24 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           ]
         }
       },
-      "actions/runs?per_page=100?page=1" => %{"body" => %{"workflow_runs" => []}},
+      "actions/runs?head_sha=#{sha}?page=1" => %{
+        "body" => %{
+          "workflow_runs" => [
+            %{
+              "id" => 55,
+              "name" => "real-idp-canary",
+              "workflow_id" => 9,
+              "path" => ".github/workflows/real-idp-canary.yml",
+              "head_branch" => "main",
+              "head_sha" => sha,
+              "status" => "completed",
+              "conclusion" => "success",
+              "updated_at" => "2026-09-29T00:00:00Z",
+              "html_url" => "https://github.com/szTheory/relyra/actions/runs/55"
+            }
+          ]
+        }
+      },
       "commits/#{sha}/check-runs?page=1" => %{"body" => %{"check_runs" => checks}},
       "commits/#{sha}/status?page=1" => %{
         "body" => %{"statuses" => Enum.map(contexts, &%{"context" => &1, "state" => "success"})}
