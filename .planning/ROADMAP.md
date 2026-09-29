@@ -380,7 +380,7 @@ cost and security independence are understandable.
 4. `mix qa`, formatting, warnings-as-errors tests, `mix ci.security`, package-consumer,
    LedgerLoop, and required browser gates all pass from clean state.
 
-**Plans:** 8/8 plans complete
+**Plans:** 8/9 plans complete
 
 Plans:
 **Wave 1**
@@ -411,6 +411,10 @@ Plans:
 **Wave 7** *(verification gap closure)*
 
 - [x] 78-08-PLAN.md — Pin the current Release Please action and close the goal-verification gap.
+
+**Wave 8** *(post-transition verification gap closure; blocked on Plan 78-08)*
+
+- [ ] 78-09-PLAN.md — Accept Phase 79 planning under Phase 78 governance and refresh the source-bound proof and cold matrix.
 
 ### Phase 79: Adopter-Ready Closeout
 
@@ -447,7 +451,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 75. SaaS Twin Domain Realism | v1.11 | 3/3 | Complete    | 2026-09-25 |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
-| 78. CI Efficiency and Reliability | v1.11 | 8/8 | Complete    | 2026-09-28 |
+| 78. CI Efficiency and Reliability | v1.11 | 8/9 | Complete    | 2026-09-28 |
 | 79. Adopter-Ready Closeout | v1.11 | 0/TBD | Not started | — |
 
 ---
