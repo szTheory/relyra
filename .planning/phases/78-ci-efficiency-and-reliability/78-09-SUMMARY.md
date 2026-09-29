@@ -71,20 +71,20 @@ coverage:
         status: pass
     human_judgment: false
 metrics:
-  duration: "15h23m+ (lower bound from first task commit; initial start time was not captured)"
+  duration: "16h53m+ (lower bound from first task commit; initial start time was not captured)"
   completed: 2026-09-29
 status: complete
 ---
 
 # Phase 78 Plan 09: Phase 79 Lifecycle and Clean-State Receipt Summary
 
-**Phase 79 governance coverage, the Phase 73 proof, and both source-bound OTP cold matrices pass against final source `28cf229`.**
+**Phase 79 governance coverage, the Phase 73 proof, and both source-bound OTP cold matrices pass against the final post-completion source `7bc19dc`.**
 
 ## Performance
 
-- **Duration:** At least 15 hours 23 minutes from the first task commit; initial execution start time was not captured.
+- **Duration:** At least 16 hours 53 minutes from the first task commit; initial execution start time was not captured.
 - **Started:** 2026-09-28T22:39:38-04:00 (first committed task; execution began earlier).
-- **Completed:** 2026-09-29T14:03:06-04:00 (final source-bound receipt owner and summary self-check passed).
+- **Completed:** 2026-09-29T15:33:11-04:00 (post-phase.complete OTP 27/28 matrices and receipt owner passed).
 - **Tasks:** 3
 - **Files modified:** 9 plan-scoped source and evidence files, plus this summary.
 
@@ -94,20 +94,20 @@ status: complete
 - Captured Phase 73 proof `phase73-098ef9c4fb32ec31` from the governed source, appended identical proof blocks to both reports, and passed `mix ci.phase73.reconciliation`.
 - Bounded the source-digest exclusion to generated `*-VERIFICATION.md` paths under `.planning/phases/`. The contract proves a phase report mutation leaves both digest and file count unchanged while a same-suffix path outside that directory changes the digest.
 - Fixed the trace cancellation contract after command 21 exposed a PID publication race and the cold macOS runner revealed that Bash 3.2 does not define `BASHPID`. The marker now publishes atomically, the consumer waits for a numeric PID, and the fake `npx` uses portable `$$`.
-- Ran the full 22-command cold manifest on OTP 27 and OTP 28, serially, against final source commit `28cf2295600a2d5dfc47e5efe7031a7f012faefb`. Both runs passed all commands and positive-evidence checks across 1,108 tracked operational files.
-- Assembled and committed the replacement receipt as `aceea5a`; `mix ci.phase78.receipt` passed against the actual tracked receipt (1 test, 0 failures).
+- Ran the full 22-command cold manifest on OTP 27 and OTP 28, serially, against the post-phase.complete source commit `7bc19dcf01c94771e165c1ccf6feff7b7e69f0d8`. Each run passed all commands, including 18 positive-evidence commands, across 1,108 tracked operational files.
+- Assembled and committed the final replacement receipt as `ee86790`; `mix ci.phase78.receipt` passed against the actual tracked receipt (1 test, 0 failures).
 
 ## Source and Proof Identity
 
-- **Matrix source commit:** `28cf2295600a2d5dfc47e5efe7031a7f012faefb`
-- **Operational source digest:** `951cfd35ebd16b13cd9422980fc13c2adf6fc7e83451d2734ebf497596faac7a`
+- **Matrix source commit:** `7bc19dcf01c94771e165c1ccf6feff7b7e69f0d8`
+- **Operational source digest:** `7d747d5a2b90dbb53cb41acb33c5ca0b1a5dfdd48127bfbfa7e4b9221031df5e`
 - **Tracked operational files:** 1,108
 - **Phase 73 proof ID:** `phase73-098ef9c4fb32ec31`
 - **Phase 73 source digest:** `sha256:c95aa360c9c0d7619928ee78f50f999777db4cb7a8d2edb76a235ceff693079b`
 - **Phase 73 proof SHA-256:** `93e9cd2e3fe3c77aa2e769b89ec41f32a301f3d87c94212c54055966a44aa376`
 - **OTP 27:** 22/22 commands passed; all required evidence counts were positive.
 - **OTP 28:** 22/22 commands passed; all required evidence counts were positive.
-- **Receipt commit:** `aceea5a` — `mix ci.phase78.receipt` passed against the committed replacement receipt (1 test, 0 failures).
+- **Receipt commit:** `ee86790` — `mix ci.phase78.receipt` passed against the committed post-completion receipt (1 test, 0 failures).
 
 ## Task Commits
 
@@ -132,7 +132,9 @@ status: complete
 - `8c50e8e` — committed the corrected completion trackers.
 - `22135f7` — atomically published the trace cancellation PID marker after command 21 exposed the redirection race.
 - `28cf229` — used portable `$$` because Bash 3.2 does not define `BASHPID`.
-- `aceea5a` — committed the final OTP27/OTP28 receipt for source `28cf229`.
+- `7bc19dc` — recorded the canonical `phase.complete` tracker updates before the post-completion matrix.
+- `aceea5a` — committed an earlier OTP27/OTP28 receipt for source `28cf229`, superseded after phase completion.
+- `ee86790` — committed the final OTP27/OTP28 receipt for source `7bc19dc`.
 
 ## Files Created/Modified
 
