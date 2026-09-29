@@ -420,7 +420,7 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert length(rest) == 1
   end
 
-  test "the operational source digest covers tracked project files except generated receipts and summaries" do
+  test "the operational source digest excludes only generated phase reports, receipts, and summaries" do
     root = fixture_repository!()
     on_exit(fn -> File.rm_rf!(root) end)
     before = source_digest!(root)
@@ -436,8 +436,10 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
       ".planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json",
       ".planning/phases/73-twin-contract-and-baseline/73-SECURITY.md",
       ".planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md",
+      ".planning/REQUIREMENTS.md",
       ".planning/STATE.md",
       ".planning/ROADMAP.md",
+      ".planning/state.json",
       ".planning/phases/78-fixture/78-01-PLAN.md"
     ]
 
@@ -446,6 +448,15 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
       assert source_digest!(root) != before, "manifest omitted #{path}"
       File.write!(Path.join(root, path), "fixture: #{path}\n")
     end
+
+    phase_report = ".planning/phases/78-fixture/78-VERIFICATION.md"
+    File.write!(Path.join(root, phase_report), "updated generated verification\n")
+    assert source_digest!(root) == before
+
+    outside_report = "docs/78-VERIFICATION.md"
+    File.write!(Path.join(root, outside_report), "updated operational report\n")
+    refute source_digest!(root) == before
+    File.write!(Path.join(root, outside_report), "fixture: #{outside_report}\n")
 
     File.write!(
       Path.join(root, ".planning/phases/78-fixture/78-01-SUMMARY.md"),
@@ -657,8 +668,8 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
   defp source_digest!(root) do
     script = Path.expand("scripts/check_phase78_clean_state.sh")
     {output, 0} = System.cmd("bash", [script, "--source-digest", root])
-    [digest, _count] = String.split(String.trim(output), "\n")
-    digest
+    [digest, count] = String.split(String.trim(output), "\n")
+    {digest, String.to_integer(count)}
   end
 
   defp fixture_repository! do
@@ -678,8 +689,12 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
       ".planning/phases/73-twin-contract-and-baseline/73-SECURITY.md",
       ".planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md",
       ".planning/phases/78-fixture/78-01-SUMMARY.md",
+      ".planning/phases/78-fixture/78-VERIFICATION.md",
+      "docs/78-VERIFICATION.md",
+      ".planning/REQUIREMENTS.md",
       ".planning/STATE.md",
       ".planning/ROADMAP.md",
+      ".planning/state.json",
       ".planning/phases/78-fixture/78-01-PLAN.md",
       ".planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json"
     ]

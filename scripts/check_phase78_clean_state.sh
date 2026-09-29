@@ -28,7 +28,11 @@ for raw in tracked:
     if not raw:
         continue
     path = raw.decode("utf-8")
-    if path == receipt or os.path.basename(path).endswith("-SUMMARY.md"):
+    basename = os.path.basename(path)
+    generated_phase_verification = (
+        path.startswith(".planning/phases/") and basename.endswith("-VERIFICATION.md")
+    )
+    if path == receipt or basename.endswith("-SUMMARY.md") or generated_phase_verification:
         continue
     full = os.path.join(root, path)
     if not os.path.isfile(full):
