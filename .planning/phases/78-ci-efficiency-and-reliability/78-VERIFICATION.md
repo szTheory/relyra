@@ -1,8 +1,8 @@
 ---
 phase: 78-ci-efficiency-and-reliability
-verified: 2026-09-29T02:00:58Z
-status: passed
-score: 42/42 must-haves verified
+verified: 2026-09-29T02:23:47Z
+status: gaps_found
+score: 40/42 must-haves verified
 covered_files:
   - .github/workflows/adoption-external-idp.yml
   - .github/workflows/demo-app-ci.yml
@@ -84,13 +84,25 @@ decision_coverage:
   honored: 12
   total: 12
   not_honored: []
+gaps:
+  - truth: "The Phase 78 clean-state matrix remains green after the tracked transition to Phase 79 planning."
+    reason: "At source commit 4d77b46, mix test and mix qa each failed two lifecycle assertions because the Phase 73 governance test does not recognize {current_phase: 79, status: planning}; Phase 73 replay then failed when it reran the same contract."
+    artifacts:
+      - test/governance/milestone_scope_test.exs
+      - .planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json
+      - .planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json
+    missing:
+      - "Cover Phase 79 planning as governance_phase 78, with the completed Phase 78 plan set, in the lifecycle contract."
+      - "Apply the early-milestone planning assertions only while governance_phase is 73; keep later governance plans checked for scope and risk metadata."
+      - "Refresh the Phase 73 proof and regenerate both 22-command OTP matrices against the final committed source."
+human_verification: []
 ---
 
 # Phase 78: CI Efficiency and Reliability — Verification Report
 
 **Phase Goal:** Required evidence runs in clearly named, reliable, efficient CI lanes whose cost and security independence are understandable.
-**Verified:** 2026-09-29T02:00:58Z
-**Status:** passed
+**Verified:** 2026-09-29T02:23:47Z
+**Status:** gaps_found
 **Re-verification:** Yes — after Plan 78-08 gap closure
 
 ## Goal Achievement
@@ -102,17 +114,17 @@ decision_coverage:
 | 1 | Every mandatory requirement has exactly one named owning lane, intentional independent security defenses are documented, and hollow or skipped Mix gates are prohibited. | ✓ VERIFIED | The executable owner ledger and normalization live in `test/support/adoption_evidence.ex`; mutation and lifecycle tests are in `test/adoption/evidence_contract_test.exs` and `test/governance/milestone_scope_test.exs`. The blocking lanes are parsed from workflow YAML. The committed receipt records positive results for `mix ci.evidence` (150), `mix ci.security` (71), and the separate command inventories. |
 | 2 | Measured safe parallelism, caching, and setup reuse reduce or justify CI duration without checkout leakage, stale consumer state, or cache trust. | ✓ VERIFIED | `78-CI-COST.json` contains three complete baseline and three complete candidate observations on OTP 27/28. Removing the duplicated Fast lane reduced warm matrix wall time 4.83% and runner cost 8.30%; cold reductions were 24.13% and 23.92%. The report explicitly rejects a compiled cache because hosted cache-service benefit was not measured. Consumer profiles remain isolated and all locked installs run in the cold matrix. |
 | 3 | Workflows use least-privilege permissions, non-colliding concurrency, clear names, current actions, and redaction-safe failure artifacts. | ✓ VERIFIED | `.github/workflows/release-please.yml:37` now pins `googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0`; both contracts assert the exact release identity. Upstream identifies v5.0.0 as Latest, published 2026-04-22, and its signed tag resolves to the pinned SHA; the v5.0.0 action manifest uses Node 24. Focused tests and actionlint with ShellCheck pass. [Official v5.0.0 release](https://github.com/googleapis/release-please-action/releases/tag/v5.0.0), [v5.0.0 action manifest](https://github.com/googleapis/release-please-action/blob/v5.0.0/action.yml). |
-| 4 | Formatting, warnings-as-errors tests, `mix qa`, security, package-consumer, LedgerLoop, and required browser gates pass from clean state. | ✓ VERIFIED | The committed `78-CLEAN-STATE-RECEIPT.json` records both OTP 27 and OTP 28 runs as passed, each with all 22 manifest commands at exit 0. Each run has 994 full tests, 994 QA tests, 71 security checks, 150 evidence tests, 117 verify tests, 9 integration tests, all three isolated consumer profiles, both 106-test demo suites, and positive admin UI, Fake IdP, trace, Fleet, and Keycloak browser results. |
+| 4 | Formatting, warnings-as-errors tests, `mix qa`, security, package-consumer, LedgerLoop, and required browser gates pass from the completed phase state. | ✗ FAILED | The final-source cold run at `4d77b46` fails two lifecycle assertions in `mix test` and `mix qa`; the Phase 73 replay fails when it reruns the same assertion. The pre-closeout matrix passed, but the Phase 79 planning transition is not yet accepted by the governance contract. |
 
-**Roadmap score:** 4/4 verified.
+**Roadmap score:** 3/4 verified.
 
 ### Plan Must-Have Coverage
 
-The prior 34 Plan 78-01 through 78-07 truths received regression checks. The carried-forward D-09 failure was fully rechecked, and all four Plan 78-08 truths were checked against source, tests, workflow lint, and the refreshed receipt. Plan score: 38/38; combined roadmap and plan score: 42/42.
+The prior 34 Plan 78-01 through 78-07 truths received regression checks. The carried-forward D-09 failure was fully rechecked, and all four Plan 78-08 truths were checked against source, tests, workflow lint, and the pre-closeout receipt. Plan score: 37/38; combined roadmap and plan score: 40/42.
 
 | Plan truth | Status | Evidence |
 |---|---|---|
-| 78-01 D-12: Phase lifecycle identities and malformed transitions | ✓ VERIFIED | `test/governance/milestone_scope_test.exs` exercises active roadmap membership and rejects skipped, duplicate, and malformed transitions; the executable tests are part of the passing QA receipt. |
+| 78-01 D-12: Phase lifecycle identities and malformed transitions | ✗ FAILED | Existing tests reject the valid completed-Phase-78 to Phase-79-planning state: they do not handle `{current_phase: 79, status: planning}` and still constrain the active planning phase to 74–77. |
 | 78-01 D-01: One primary owner per mandatory criterion; defenses remain separately labeled | ✓ VERIFIED | `AdoptionEvidence` owns normalization and closure checks; `mix ci.evidence` has positive receipt evidence. |
 | 78-01 D-02: Owner points to a real selector/harness and an unconditional blocking workflow step | ✓ VERIFIED | Owner resolver and parsed workflow tests check the named step, command, selector, and positive count; final security workflow contains the independent owners. |
 | 78-01 PIPE-02: Adjacent same-criterion duplicates fail while distinct criteria sharing a lane remain separate | ✓ VERIFIED | `test/adoption/evidence_contract_test.exs` includes adjacent and shared-lane fixtures. |
@@ -231,7 +243,7 @@ N/A — CI and workflow tooling phase with no end-user surface. All acceptance c
 
 ## Gaps Summary
 
-No blocking gaps remain. The carried-forward current-action pin gap is closed by the verified Release Please v5.0.0 SHA, exact contracts, negative mutation cases, and workflow lint. The committed receipt and mandatory receipt owner validate both 22-command OTP matrices against one source digest and the refreshed Phase 73 proof. During re-verification, `gsd_run query phase.complete 78` advanced the roadmap, requirement traceability, and state to Phase 79; closeout reconciled the roadmap's explicit 78-08 plan entry and the Phase 79 state-body details before the final source-bound matrix is regenerated.
+The Release Please pin gap is closed by the verified v5.0.0 SHA, exact contracts, negative mutation cases, and workflow lint. The pre-closeout receipt validated both OTP matrices, but the final matrix after `gsd_run query phase.complete 78` exposed a governance regression: the Phase 73 lifecycle tests reject the valid Phase 79 planning state and cause two direct failures plus a dependent Phase 73 replay failure. A focused gap-closure plan must add deterministic Phase 79 lifecycle coverage, refresh the governed Phase 73 proof, and rerun both complete OTP matrices.
 
 ### Advisory (New Scope, Unevidenced)
 
