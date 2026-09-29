@@ -50,7 +50,7 @@ returns.
 - [x] **Phase 75: SaaS Twin Domain Realism** — Expand LedgerLoop into a coherent multi-tenant adopter with credible humans, trust history, and incidents. (completed 2026-09-25)
 - [x] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end. (completed 2026-09-26)
 - [x] **Phase 77: Code and Documentation Craftsmanship** — Remove high-value quality debt and temporary planning narration behind the twin's safety net. (8/8 plans complete; automated verification passed.) (completed 2026-09-27)
-- [ ] **Phase 78: CI Efficiency and Reliability** — Give every gate clear ownership and improve measured CI cost without weakening independent defenses.
+- [x] **Phase 78: CI Efficiency and Reliability** — Give every gate clear ownership and improve measured CI cost without weakening independent defenses. (completed 2026-09-28)
 - [ ] **Phase 79: Adopter-Ready Closeout** — Finish with green intentional repository state, approved GitHub hygiene, and a diminishing-returns assessment.
 
 ## Phase Details
@@ -380,7 +380,7 @@ cost and security independence are understandable.
 4. `mix qa`, formatting, warnings-as-errors tests, `mix ci.security`, package-consumer,
    LedgerLoop, and required browser gates all pass from clean state.
 
-**Plans:** 6/7 plans executed
+**Plans:** 8/8 plans complete
 
 Plans:
 **Wave 1**
@@ -406,7 +406,11 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 78-07-PLAN.md — Recapture source-bound proof and run the full clean-state matrix.
+- [x] 78-07-PLAN.md — Recapture source-bound proof and run the full clean-state matrix.
+
+**Wave 7** *(verification gap closure)*
+
+- [x] 78-08-PLAN.md — Pin the current Release Please action and close the goal-verification gap.
 
 ### Phase 79: Adopter-Ready Closeout
 
@@ -443,7 +447,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 75. SaaS Twin Domain Realism | v1.11 | 3/3 | Complete    | 2026-09-25 |
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
-| 78. CI Efficiency and Reliability | v1.11 | 6/7 | In Progress|  |
+| 78. CI Efficiency and Reliability | v1.11 | 8/8 | Complete    | 2026-09-28 |
 | 79. Adopter-Ready Closeout | v1.11 | 0/TBD | Not started | — |
 
 ---

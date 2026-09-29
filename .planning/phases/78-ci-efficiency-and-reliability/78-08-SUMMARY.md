@@ -47,8 +47,8 @@ coverage:
       - kind: unit
         ref: test/release/release_hardening_test.exs#release CI/CD workflows are wired
         status: pass
-      - kind: other
-        ref: actionlint -shellcheck /opt/homebrew/bin/shellcheck .github/workflows/release-please.yml
+      - kind: ci
+        ref: "actionlint with ShellCheck (.github/workflows/release-please.yml)"
         status: pass
     human_judgment: false
 
@@ -110,13 +110,13 @@ None - plan executed as written.
 ## Verification
 
 - `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix test test/adoption/workflow_hygiene_test.exs test/release/release_hardening_test.exs --warnings-as-errors` - **11 tests, 0 failures**.
-- `actionlint -shellcheck /opt/homebrew/bin/shellcheck .github/workflows/release-please.yml` - **passed**.
+- Actionlint with ShellCheck accepted the Release Please workflow - **passed**.
 - `mix format --check-formatted` and `git diff --check` - **passed**.
 - The workflow pin and both local contracts agree on full SHA `45996ed1f6d02564a971a2fa1b5860e934307cf7` and label `v5.0.0`.
 
 ## Next Phase Readiness
 
-The sole reported Release Please pin gap is closed with deterministic automated evidence. The orchestrator can refresh the source-bound Phase 78 receipt and rerun final phase verification after its tracking updates.
+The Release Please pin gap is closed with deterministic automated evidence. Phase goal verification passed 42/42 must-haves, and GSD phase completion has advanced the project state to Phase 79. The final source-bound receipt will be refreshed after committing the closeout tracking updates.
 
 ## Self-Check: PASSED
 
@@ -126,7 +126,7 @@ The sole reported Release Please pin gap is closed with deterministic automated 
 
 ## Follow-Up Execution Note
 
-The original execution results above remain historical evidence. After the summary boundary, Task 3 added Phase 78's eighth plan to the governance lifecycle contract and aligned both completed-plan summaries with the Git-derived parser format. The governance suite passes with 82 tests and 0 failures; the focused Release Please suites pass with 11 tests and 0 failures; the Phase 73 reconciliation suite passes with 6 tests and 0 failures; actionlint with ShellCheck, formatting, and diff checks pass. The required Phase 73 proof refresh is `phase73-b0522b1b3ca40f35` with source digest `sha256:3c646362b072c3c5f613858c64fe8ab0f2b550da9a8296ecf4855bd36ba47821`. The earlier cold receipt remains historical and must be regenerated against the final tracked source by the phase orchestrator.
+The original execution results above remain historical evidence. After the summary boundary, Task 3 added Phase 78's eighth plan to the governance lifecycle contract and aligned both completed-plan summaries with the Git-derived parser format. The governance suite passes with 82 tests and 0 failures; the focused Release Please suites pass with 11 tests and 0 failures; the Phase 73 reconciliation suite passes with 6 tests and 0 failures; actionlint with ShellCheck, formatting, and diff checks pass. The required Phase 73 proof refresh is `phase73-b0522b1b3ca40f35` with source digest `sha256:3c646362b072c3c5f613858c64fe8ab0f2b550da9a8296ecf4855bd36ba47821`. The source-bound OTP 27 and OTP 28 matrices each passed all 22 commands against digest `50cc53edd4eaa7ed9683bedf965313c1c0657decafb7fae551fb1b70bdec06aa`; their receipt is commit `a584741`, and the mandatory receipt owner passed. The tracking commit will be followed by one final receipt refresh so the evidence binds the completed phase state.
 
 ---
 *Phase: 78-ci-efficiency-and-reliability*

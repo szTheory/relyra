@@ -31,7 +31,7 @@
     {
       "number": "78",
       "name": "CI Efficiency and Reliability",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "79",
@@ -41,8 +41,8 @@
   ],
   "next": {
     "command": "/gsd:progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 78 of 7 · 71% · executing"
+    "label": "Advance to the next step (plan phase 79)",
+    "reason": "Phase 79 of 7 — needs a plan"
   },
-  "updated_at": "2026-09-28T02:51:29.117Z"
+  "updated_at": "2026-09-29T02:01:42.735Z"
 }
