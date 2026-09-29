@@ -78,8 +78,14 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Pin Release Please v5.0.0 through the workflow and both contracts** - `304dd4c` (`fix`)
-2. **Task 2: Prove stale Release Please pins fail and lint the changed workflow** - `c79785e` (`test`)
+1. **Plan: Prepare Release Please pin gap closure** — `f2d853bb3a00575409f26b163b02c8aaf736adbf`
+2. **Task 1: Pin Release Please v5.0.0 through the workflow and both contracts** — `304dd4c78626a685ace4ef020ef944d11a2d23cd`
+3. **Task 2: Prove stale Release Please pins fail and lint the changed workflow** — `c79785e2328105a7c901ab518cd8d3be143d1290`
+
+## Supporting Commits
+
+- `08351a517496abf0109d47aeb928e5602b2c2cff` revised this plan after the original summary boundary `d11fa36a8d3de45035d17b3c969e5b0b2a40bc4c`; it is a descendant and stays outside the parser-owned Task Commits list.
+- `588a8b727ba128d0ee1ccb5cdb8786e4f1c068d4` implements Task 3 after that original boundary.
 
 ## Files Created/Modified
 
@@ -115,8 +121,12 @@ The sole reported Release Please pin gap is closed with deterministic automated 
 ## Self-Check: PASSED
 
 - Summary file exists.
-- Task commits `304dd4c` and `c79785e` exist in repository history.
+- Pre-boundary task commits `f2d853bb3a00575409f26b163b02c8aaf736adbf`, `304dd4c78626a685ace4ef020ef944d11a2d23cd`, and `c79785e2328105a7c901ab518cd8d3be143d1290` exist in repository history.
 - Scoped diff is clean under `git diff --check`.
+
+## Follow-Up Execution Note
+
+The original execution results above remain historical evidence. After the summary boundary, Task 3 added Phase 78's eighth plan to the governance lifecycle contract and aligned both completed-plan summaries with the Git-derived parser format. The governance suite passes with 82 tests and 0 failures; the focused Release Please suites pass with 11 tests and 0 failures; the Phase 73 reconciliation suite passes with 6 tests and 0 failures; actionlint with ShellCheck, formatting, and diff checks pass. The required Phase 73 proof refresh is `phase73-b0522b1b3ca40f35` with source digest `sha256:3c646362b072c3c5f613858c64fe8ab0f2b550da9a8296ecf4855bd36ba47821`. The earlier cold receipt remains historical and must be regenerated against the final tracked source by the phase orchestrator.
 
 ---
 *Phase: 78-ci-efficiency-and-reliability*
