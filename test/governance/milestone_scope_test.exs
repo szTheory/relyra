@@ -97,6 +97,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         assert identity.governance_phase == "78"
         assert length(identity.plan_paths) == 9
 
+      {"79", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
+        assert identity.governance_phase == "79"
+        assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, "/79-01-PLAN.md"))
+
       {"73", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         planning_root = governance_repository_fixture()
         planning_state!(planning_root)
@@ -154,6 +158,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "76" -> "/76-lifecycle-and-recovery-journeys/"
         "77" -> "/77-code-and-documentation-craftsmanship/"
         "78" -> "/78-ci-efficiency-and-reliability/"
+        "79" -> "/79-adopter-ready-closeout/"
       end
 
     assert Enum.all?(identity.plan_paths, &String.contains?(&1, governed_phase_dir))
@@ -166,6 +171,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "76" -> "76-02-PLAN.md"
         "77" -> "77-04-PLAN.md"
         "78" -> "78-01-PLAN.md"
+        "79" -> "79-01-PLAN.md"
       end
 
     assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, expected_current_plan))
@@ -2571,6 +2577,145 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_violation(leaked, "Main security gate", "Failure Evidence sensitive payload")
   end
 
+  test "Phase 79 fixture collector emits timestamped, source-bound inventory" do
+    root = File.cwd!()
+
+    temporary =
+      Path.join(System.tmp_dir!(), "relyra-phase79-#{System.unique_integer([:positive])}")
+
+    File.mkdir_p!(temporary)
+    on_exit(fn -> File.rm_rf!(temporary) end)
+    sha = String.duplicate("a", 40)
+    fixture_path = Path.join(temporary, "fixture.json")
+    output_path = Path.join(temporary, "inventory.json")
+    File.write!(fixture_path, Jason.encode!(phase79_fixture(sha)))
+
+    script = Path.join(root, "scripts/collect_phase79_inventory.py")
+
+    assert {output, 0} =
+             System.cmd("python3", [script, "--fixture", fixture_path, "--output", output_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert output =~ "wrote"
+
+    assert {verification, 0} =
+             System.cmd("python3", [script, "--verify", output_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert verification =~ sha
+    receipt = output_path |> File.read!() |> Jason.decode!()
+    assert receipt["observed_at"] =~ ~r/^\d{4}-\d{2}-\d{2}T.*Z$/
+    assert receipt["repository"]["name"] == "szTheory/relyra"
+    assert receipt["observation"]["main_sha"] == sha
+    assert receipt["collection"]["complete"]
+
+    assert Enum.all?(receipt["sources"], fn {_name, source} ->
+             source["endpoint"] != nil and source["page_count"] > 0 and
+               source["completeness"] == "complete"
+           end)
+
+    assert Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "active"))
+    assert Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "disabled"))
+  end
+
+  defp phase79_fixture(sha) do
+    command_responses = %{
+      "git status --porcelain=v1 -z --untracked-files=all" => %{
+        "stdout" => "?? .tool-versions\u0000"
+      },
+      "git ls-files -z" => %{"stdout" => "mix.exs\u0000"},
+      "git worktree list --porcelain" => %{
+        "stdout" => "worktree /repo\nHEAD #{sha}\nbranch refs/heads/main\n"
+      },
+      "git for-each-ref --format=%(refname:short)%09%(objectname) refs/heads refs/remotes" => %{
+        "stdout" => "main\t#{sha}\n"
+      },
+      "git status --ignored --porcelain=v1 -z --untracked-files=all" => %{"stdout" => ""},
+      "git remote get-url origin" => %{"stdout" => "git@github.com:szTheory/relyra.git"},
+      "scripts/setup_branch_protection.sh --print-expected-json" => %{
+        "stdout" =>
+          Jason.encode!(%{
+            "required_status_checks" => %{
+              "strict" => true,
+              "contexts" => [
+                "security (27, 1.19.5)",
+                "security (28, 1.19.5)",
+                "fleet-proxy-e2e"
+              ]
+            },
+            "enforce_admins" => true,
+            "required_pull_request_reviews" => nil,
+            "restrictions" => nil,
+            "allow_force_pushes" => false,
+            "allow_deletions" => false,
+            "block_creations" => false,
+            "required_conversation_resolution" => false,
+            "lock_branch" => false,
+            "allow_fork_syncing" => false
+          })
+      }
+    }
+
+    names = [
+      "mix qa",
+      "mix ci.security",
+      "mix ci.evidence",
+      "mix ci.phase73.reconciliation",
+      "mix ci.verify",
+      "mix ci.package",
+      "mix ci.ledger_loop",
+      "browser defenses",
+      "standalone defenses"
+    ]
+
+    checks =
+      Enum.map(names, fn name ->
+        %{"name" => name, "head_sha" => sha, "status" => "completed", "conclusion" => "success"}
+      end)
+
+    contexts = ["security (27, 1.19.5)", "security (28, 1.19.5)", "fleet-proxy-e2e"]
+
+    github = %{
+      "git/ref/heads/main?page=1" => %{"body" => %{"object" => %{"sha" => sha}}},
+      "pulls?state=all?page=1" => %{"body" => []},
+      "issues?state=all?page=1" => %{"body" => []},
+      "branches?page=1" => %{"body" => []},
+      "actions/workflows?page=1" => %{
+        "body" => %{
+          "workflows" => [
+            %{
+              "id" => 1,
+              "name" => "Security",
+              "path" => ".github/workflows/security-gates.yml",
+              "state" => "active",
+              "token" => "discard"
+            },
+            %{
+              "id" => 2,
+              "name" => "Old",
+              "path" => ".github/workflows/old.yml",
+              "state" => "disabled_inactivity"
+            }
+          ]
+        }
+      },
+      "actions/runs?per_page=100?page=1" => %{"body" => %{"workflow_runs" => []}},
+      "commits/#{sha}/check-runs?page=1" => %{"body" => %{"check_runs" => checks}},
+      "commits/#{sha}/status?page=1" => %{
+        "body" => %{"statuses" => Enum.map(contexts, &%{"context" => &1, "state" => "success"})}
+      },
+      "branches/main/protection?page=1" => %{
+        "body" => %{"required_status_checks" => %{"contexts" => contexts}}
+      }
+    }
+
+    %{"commands" => command_responses, "github" => github}
+  end
+
   @tag :plan_73_07_task_1
   test "unknown checkpoint-prefixed task types cannot bypass governance" do
     bypass =
@@ -3914,7 +4059,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       task_type_violations(tasks) ++
         task_risk_metadata_violations(tasks, verified_posture_neutral_paths) ++
         scope_violations ++
-        demand_gated_exclusion_violations(exclusion_sections) ++
+        demand_gated_exclusion_violations(exclusion_sections, markdown, root, plan_path) ++
         deterministic_verification_violations(
           tasks,
           is_binary(plan_path) and
@@ -3949,7 +4094,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp implementation_bearing_task?(task),
     do: valid_task_type?(task) and not authorization_checkpoint?(task)
 
-  defp demand_gated_exclusion_violations([section]) do
+  defp demand_gated_exclusion_violations([section], _markdown, _root, _plan_path) do
     exclusions =
       section
       |> String.split(~r/[\s,]+/, trim: true)
@@ -3968,7 +4113,36 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp demand_gated_exclusion_violations(sections) do
+  defp demand_gated_exclusion_violations([], markdown, root, plan_path) do
+    project_path = Path.join(root, ".planning/PROJECT.md")
+
+    phase79_closeout_plan? =
+      is_binary(plan_path) and
+        String.contains?(plan_path, "/79-adopter-ready-closeout/79-01-PLAN.md")
+
+    context_refs_project? =
+      Enum.any?(tag_sections(markdown, "context"), &String.contains?(&1, "@.planning/PROJECT.md"))
+
+    project_excludes_all? =
+      with true <- phase79_closeout_plan?,
+           true <- context_refs_project?,
+           true <- File.regular?(project_path),
+           project <- File.read!(project_path),
+           true <- Enum.all?(@demand_gated_exclusions, &String.contains?(project, &1)),
+           true <- project =~ ~r/Still out of scope:[^\n]*demand-gated protocol features/i do
+        true
+      else
+        _other -> false
+      end
+
+    if project_excludes_all?,
+      do: [],
+      else: [
+        "demand_gated_exclusions must appear exactly once or be inherited from the referenced project scope"
+      ]
+  end
+
+  defp demand_gated_exclusion_violations(sections, _markdown, _root, _plan_path) do
     ["demand_gated_exclusions must appear exactly once, found #{length(sections)}"]
   end
 
@@ -4811,7 +4985,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
               :ok
             rescue
               error in ArgumentError ->
-                if allow_planned_outputs? and phase78_future_owner_command?(plan_path, command) do
+                if (allow_planned_outputs? and phase78_future_owner_command?(plan_path, command)) or
+                     phase79_collector_command?(plan_path, task.files, command) do
                   :ok
                 else
                   {:error, Exception.message(error)}
@@ -4853,6 +5028,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       false
     end
   end
+
+  defp phase79_collector_command?(plan_path, task_files, command)
+       when is_binary(plan_path) and is_binary(task_files) and is_binary(command) do
+    output = ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json"
+    script = "scripts/collect_phase79_inventory.py"
+
+    String.contains?(plan_path, "/79-adopter-ready-closeout/79-01-PLAN.md") and
+      command == "python3 #{script} --verify #{output}" and
+      output in String.split(task_files, ~r/[\s,]+/, trim: true) and
+      non_symlink_regular_path?(File.cwd!(), String.split(script, "/"))
+  end
+
+  defp phase79_collector_command?(_plan_path, _task_files, _command), do: false
 
   defp phase78_future_receipt_owner_declared?(plan_path) do
     owner_path = "test/adoption/phase78_clean_state_contract_test.exs"
