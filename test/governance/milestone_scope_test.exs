@@ -80,7 +80,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       {"78", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         assert identity.governance_phase == "78"
-        assert length(identity.plan_paths) == 7
+        assert length(identity.plan_paths) == 8
 
       {"73", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         planning_root = governance_repository_fixture()
@@ -257,7 +257,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       assert active.current_phase == "78"
       assert active.governance_phase == "78"
       assert active.status == status
-      assert length(active.plan_paths) == 7
+      assert length(active.plan_paths) == 8
     end
 
     malformed_controls = [

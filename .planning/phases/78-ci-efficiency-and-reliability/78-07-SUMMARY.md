@@ -122,38 +122,26 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Build the source-bound producer and mandatory receipt owner**
+1. **Task 1: Recapture Phase 73 reconciliation proof** — `8e3b9cc39976e00d6eecac0205af867713dfb047`
+2. **Task 2: Canonicalize cold workspace temp root** — `a8d2d9c91d338ad4c671d6ecc688dc174ae0f954`
+3. **Task 3: Refresh proof after producer fix** — `f2d7316d15c0ae138512cc0555a7cf352e5c0ba2`
+4. **Task 4: Prepare fresh LedgerLoop test metadata** — `8eaebec074e7091fe8781bfe72696e28305edba6`
+5. **Task 5: Refresh proof after LedgerLoop setup** — `120a0621ca59496a0518fb5fddad212b31f23583`
+6. **Task 6: Stabilize clean-state test contracts** — `46e6b25d8b9162bed0cead35db93bd03a7da17b2`
+7. **Task 7: Refresh proof after test fixes** — `6bf60bf782211d60e9a4c0b3651eb1075c166f81`
+8. **Task 8: Preserve isolated Node shim resolution** — `59a3d6098ae85dec0baa6abaa59e95a24a70f1ba`
+9. **Task 9: Refresh proof after ASDF fix** — `df1f7b1b25f5fa8285001c8d4163bef8c58b46fa`
+10. **Task 10: Preserve tools in isolated cold runner** — `d52a9a5939249d4462b27dc9130aadf0d0994f89`
+11. **Task 11: Make LedgerLoop cold checks deterministic** — `c739b7ff7b5f296ee5b86f2e97cd81cdb2e11988`
+12. **Task 12: Refresh Phase 73 reconciliation proof** — `d89aa65d6aab6fda7946cb6725ae92775adf5b94`
+13. **Task 13: Refresh Phase 73 reconciliation proof** — `545e216d7c63e2188c402b056ab4640b9094377c`
+14. **Task 14: Refresh proof after reset test fix** — `cbe0b38d39cb837b0b22ffa836d5f2fd8bb7aa59`
+15. **Task 15: Record final cold CI matrix** — `70b3a8389dea8c992efea40696a064e3fe3bd4ba`
+16. **Task 16: Accept canonical Phase 73 digests** — `2bb5281d9b35686098e4630cb8983b0a799931a9`
+17. **Task 17: Refresh proof for digest validator** — `38265b8a12a12c44dcfafe9950eb273365f2e96f`
+18. **Task 18: Record validated cold matrix** — `095283a672d8591e3fc5ef4f1512c4dc764dd775`
 
-   - `c2564d84a8c5d2c612d8778b7c404f6d54162349` — require cold source-bound receipt
-   - `a8d2d9c91d338ad4c671d6ecc688dc174ae0f954` — canonicalize cold workspace temp root
-   - `8eaebec074e7091fe8781bfe72696e28305edba6` — prepare fresh LedgerLoop test metadata
-   - `46e6b25d8b9162bed0cead35db93bd03a7da17b2` — stabilize clean-state test contracts
-   - `59a3d6098ae85dec0baa6abaa59e95a24a70f1ba` — preserve isolated Node shim resolution
-   - `d52a9a5939249d4462b27dc9130aadf0d0994f89` — preserve tools in isolated cold runner
-
-2. **Task 2: Capture and replay final Phase 73 proof**
-
-   - `8e3b9cc39976e00d6eecac0205af867713dfb047` — initial final-source proof capture
-   - `f2d7316d15c0ae138512cc0555a7cf352e5c0ba2` — refresh proof after producer fix
-   - `120a0621ca59496a0518fb5fddad212b31f23583` — refresh proof after LedgerLoop setup
-   - `6bf60bf782211d60e9a4c0b3651eb1075c166f81` — refresh proof after contract fixes
-   - `df1f7b1b25f5fa8285001c8d4163bef8c58b46fa` — refresh proof after ASDF fix
-   - `c739b7ff7b5f296ee5b86f2e97cd81cdb2e11988` — stabilize LedgerLoop cold checks
-   - `93d088bbf2dfec7c1c7fc67e342f8b1442a72fc7` — stabilize evidence contract execution
-   - `d89aa65d6aab6fda7946cb6725ae92775adf5b94` — refresh Phase 73 reconciliation proof
-   - `5c60db8aeacbcb739038338a62915d4e00658b9e` — align cold producer environments
-   - `545e216d7c63e2188c402b056ab4640b9094377c` — refresh Phase 73 proof
-   - `c36ad4d4bae378131f82212cc5b0189bef31ee37` — compare LedgerLoop reset rows in stable order
-   - `cbe0b38d39cb837b0b22ffa836d5f2fd8bb7aa59` — refresh proof after reset test fix
-   - `2bb5281d9b35686098e4630cb8983b0a799931a9` — accept canonical Phase 73 digests
-   - `38265b8a12a12c44dcfafe9950eb273365f2e96f` — refresh proof for digest validator
-
-3. **Task 3: Run the cold matrix and mandatory receipt owner**
-
-   - `70b3a8389dea8c992efea40696a064e3fe3bd4ba` — provisional receipt, superseded after the owner exposed the digest-prefix mismatch
-   - `095283a672d8591e3fc5ef4f1512c4dc764dd775` — validated OTP 27/28 receipt
-
-Supporting proof refresh commits created during Tasks 1–3 are listed above under Task 2. The current receipt records source commit `38265b8a12a12c44dcfafe9950eb273365f2e96f`, source digest `2fc6137a4128bf31460883c6d061739367e85e5813460366eda1f00d0b0ccd4d`, and Phase 73 proof `phase73-b634149892e68a9e` (`ce739537248e3607f6a76df572cb4312eda8e2f97a95fc2d30a7c23ee4a65b55`).
+The receipt records source commit `38265b8a12a12c44dcfafe9950eb273365f2e96f`, source digest `2fc6137a4128bf31460883c6d061739367e85e5813460366eda1f00d0b0ccd4d`, and Phase 73 proof `phase73-b634149892e68a9e` (`ce739537248e3607f6a76df572cb4312eda8e2f97a95fc2d30a7c23ee4a65b55`).
 
 ## Files Created/Modified
 
