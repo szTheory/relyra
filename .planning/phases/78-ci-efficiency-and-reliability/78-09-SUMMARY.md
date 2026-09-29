@@ -14,7 +14,7 @@ affects: [phase-79, phase-73-reconciliation, ci-clean-state, governance]
 actuals:
   tokens: 26112
   tasks: 3
-  commits: 10
+  commits: 12
 plan_head_before: 14143152bedf68dce677f89776e59547dab5dd76
 tech-stack:
   added: []
@@ -70,7 +70,7 @@ coverage:
         status: pass
     human_judgment: false
 metrics:
-  duration: "2h+ (lower bound from first task commit; initial start time was not captured)"
+  duration: "5h36m+ (lower bound from first task commit; initial start time was not captured)"
   completed: 2026-09-29
 status: complete
 ---
@@ -81,9 +81,9 @@ status: complete
 
 ## Performance
 
-- **Duration:** At least 2 hours from the first task commit; initial execution start time was not captured.
+- **Duration:** At least 5 hours 36 minutes from the first task commit; initial execution start time was not captured.
 - **Started:** 2026-09-28T22:39:38-04:00 (first committed task; execution began earlier).
-- **Completed:** 2026-09-29T00:43:18-04:00 (initial receipt owner passed; tracker closeout follows in the parent workflow).
+- **Completed:** 2026-09-29T04:15:48-04:00 (final source-bound receipt owner passed).
 - **Tasks:** 3
 - **Files modified:** 8 plan-scoped source and evidence files, plus this summary.
 
@@ -92,19 +92,20 @@ status: complete
 - Extended the governance lifecycle contract to accept Phase 79 planning through Phase 78, require all nine tracked Phase 78 plans, and retain Phase 73 semantics and malformed or skipped-transition rejection coverage. The focused governance module passed 83 tests.
 - Captured Phase 73 proof `phase73-098ef9c4fb32ec31` from the governed source, appended identical proof blocks to both reports, and passed `mix ci.phase73.reconciliation`.
 - Bounded the source-digest exclusion to generated `*-VERIFICATION.md` paths under `.planning/phases/`. The contract proves a phase report mutation leaves both digest and file count unchanged while a same-suffix path outside that directory changes the digest.
-- Ran the full 22-command cold manifest on OTP 27 and OTP 28, serially, against source commit `c674abec27b59f93d0b049ba56250f69cbc847ca`. Both runs passed all commands and positive-evidence checks across 1,108 tracked operational files.
-- Assembled and committed the receipt; `mix ci.phase78.receipt` passed against the actual tracked receipt (1 test, 0 failures).
+- Ran the full 22-command cold manifest on OTP 27 and OTP 28, serially, against the post-completion source commit `bc20deb85a06cc7676b5f140efac0a96a8eb07e4`. Both runs passed all commands and positive-evidence checks across 1,108 tracked operational files.
+- Assembled and committed the replacement receipt as `bb22e7e`; `mix ci.phase78.receipt` passed against the actual tracked receipt (1 test, 0 failures).
 
 ## Source and Proof Identity
 
-- **Matrix source commit:** `c674abec27b59f93d0b049ba56250f69cbc847ca`
-- **Operational source digest:** `235550be320e0c2a5b545c4f52bbffb13cc62d5314bbec1f5b6226f2beea7f2b`
+- **Matrix source commit:** `bc20deb85a06cc7676b5f140efac0a96a8eb07e4`
+- **Operational source digest:** `2418bbc8eedb06495b4f1419e1813951e838d20481694d62cbaa68fb6144831e`
 - **Tracked operational files:** 1,108
 - **Phase 73 proof ID:** `phase73-098ef9c4fb32ec31`
 - **Phase 73 source digest:** `sha256:c95aa360c9c0d7619928ee78f50f999777db4cb7a8d2edb76a235ceff693079b`
 - **Phase 73 proof SHA-256:** `93e9cd2e3fe3c77aa2e769b89ec41f32a301f3d87c94212c54055966a44aa376`
 - **OTP 27:** 22/22 commands passed; all required evidence counts were positive.
 - **OTP 28:** 22/22 commands passed; all required evidence counts were positive.
+- **Receipt owner:** `mix ci.phase78.receipt` passed against the committed replacement receipt (1 test, 0 failures).
 
 ## Task Commits
 
@@ -117,7 +118,13 @@ status: complete
 7. **Task 3 evidence: Interim Phase 78 gap report** — `c674abe` (`docs(78-09): record interim Phase 78 gap audit`)
 8. **Task 3 evidence: Combined OTP receipt** — `305b2a4` (`docs(78-09): record final OTP 27 and 28 clean matrix`)
 
-**Measured plan commit count:** 10 commits from ledger base `14143152bedf68dce677f89776e59547dab5dd76` at this summary revision.
+**Measured plan commit count:** 12 commits from ledger base `14143152bedf68dce677f89776e59547dab5dd76` at this summary revision.
+
+## Final Closeout Commits
+
+- `8e80fc0` — reconciled completion trackers before the final-source matrix.
+- `bc20deb` — repaired the ordered summary provenance after the first final-source diagnostic exposed the omitted plan amendments.
+- `bb22e7e` — committed the replacement receipt for both passing 22-command matrices.
 
 ## Files Created/Modified
 
@@ -137,11 +144,19 @@ status: complete
 
 ## Deviations from Plan
 
-None. The initial default-sandbox OTP 27 attempt could not launch Chromium because macOS denied `org.chromium.Chromium.MachPortRendezvousServer` registration (permission error 1100). The full OTP 27 and OTP 28 matrices were rerun with elevated execution; all browser and non-browser commands passed.
+**1. [Rule 1 - Bug] Repaired summary commit provenance after the diagnostic matrix caught an incomplete Task Commits list.**
+- **Found during:** Final-source cold matrix.
+- **Issue:** The three approved plan-amendment commits appeared outside the ordered `Task Commits` section, so governance provenance validation rejected the summary.
+- **Fix:** Added all eight pre-summary commits in Git-derived order and recorded the persisted plan base and measured count.
+- **Files modified:** `.planning/phases/78-ci-efficiency-and-reliability/78-09-SUMMARY.md`.
+- **Commit:** `bc20deb`.
+
+The initial default-sandbox OTP 27 attempt could not launch Chromium because macOS denied `org.chromium.Chromium.MachPortRendezvousServer` registration (permission error 1100). The complete final-source OTP 27 and OTP 28 matrices were run with elevated execution; all browser and non-browser commands passed.
 
 ## Issues Encountered
 
-- **Chromium sandbox restriction:** The first OTP 27 run failed browser commands 16–20 before tests could launch. The retained logs showed Mach service registration permission denial. The elevated full OTP 27 rerun passed all five browser lanes, and the elevated full OTP 28 run passed all five as well.
+- **Chromium sandbox restriction:** The first OTP 27 run failed browser commands 16–20 before tests could launch. The retained logs showed Mach service registration permission denial. The elevated final-source OTP 27 rerun passed all five browser lanes, and the elevated final-source OTP 28 run passed all five as well.
+- **Summary provenance assertion:** The first final-source OTP 27 diagnostic exposed the missing amendment hashes. After repairing the summary, the full OTP 27 and OTP 28 matrices each passed all 22 commands.
 
 ## User Setup Required
 
@@ -149,8 +164,8 @@ None.
 
 ## Next Phase Readiness
 
-- Phase 79 planning now passes the Phase 78 governance lifecycle contract, including plan scope and risk validation.
-- The parent closeout workflow will finalize `78-VERIFICATION.md` and run `gsd_run query phase.complete 78`. If those tracker changes alter operational-source bytes, both full cold matrices must be rerun and the receipt replaced; the generated verification report itself is excluded by the tested path boundary.
+- The completion tracker records Phase 78 Plan 09 checked and 9/9 complete, with Phase 79 as the current planning phase.
+- The final receipt binds the post-completion tracker source, current Phase 73 proof, and both passing OTP matrices. The generated verification report can be finalized without changing the operational digest because its bounded exclusion is mutation-tested.
 
 ---
 *Phase: 78-ci-efficiency-and-reliability*
@@ -159,5 +174,5 @@ None.
 ## Self-Check: PASSED
 
 - Summary file exists at the planned path.
-- All five execution commits and three plan-review commits listed above exist.
+- All eight ordered pre-summary commits and the final closeout commits listed above exist.
 - `gsd_run query verify-summary` passed with no errors.
