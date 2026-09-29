@@ -380,7 +380,7 @@ cost and security independence are understandable.
 4. `mix qa`, formatting, warnings-as-errors tests, `mix ci.security`, package-consumer,
    LedgerLoop, and required browser gates all pass from clean state.
 
-**Plans:** 9/9 plans executed
+**Plans:** 9/9 plans complete
 
 Plans:
 **Wave 1**
