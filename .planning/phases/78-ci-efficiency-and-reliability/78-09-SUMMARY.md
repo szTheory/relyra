@@ -14,7 +14,8 @@ affects: [phase-79, phase-73-reconciliation, ci-clean-state, governance]
 actuals:
   tokens: 26112
   tasks: 3
-  commits: 8
+  commits: 10
+plan_head_before: 14143152bedf68dce677f89776e59547dab5dd76
 tech-stack:
   added: []
   patterns:
@@ -109,13 +110,14 @@ status: complete
 
 1. **Task 1: Phase 79 planning lifecycle coverage** — `9b4d31e` (`test(78-09): cover Phase 79 planning lifecycle`)
 2. **Task 2: Phase 73 proof and report refresh** — `f62e189` (`docs(78-09): refresh Phase 73 reconciliation proof`)
-3. **Task 3: Digest boundary and mutation coverage** — `2242e2c` (`fix(78-09): bound generated report digest exclusion`)
-4. **Task 3 evidence: Interim Phase 78 gap report** — `c674abe` (`docs(78-09): record interim Phase 78 gap audit`)
-5. **Task 3 evidence: Combined OTP receipt** — `305b2a4` (`docs(78-09): record final OTP 27 and 28 clean matrix`)
+3. **Plan review amendment: exclude generated verification reports from the digest cycle** — `d6379f8` (`docs(78-09): bound verification report digest cycle`)
+4. **Plan review amendment: bind the receipt to completion trackers** — `79810ce` (`docs(78-09): bind final receipt to completion trackers`)
+5. **Plan review amendment: use the supported phase completion command** — `324395f` (`docs(78-09): use supported phase completion command`)
+6. **Task 3: Digest boundary and mutation coverage** — `2242e2c` (`fix(78-09): bound generated report digest exclusion`)
+7. **Task 3 evidence: Interim Phase 78 gap report** — `c674abe` (`docs(78-09): record interim Phase 78 gap audit`)
+8. **Task 3 evidence: Combined OTP receipt** — `305b2a4` (`docs(78-09): record final OTP 27 and 28 clean matrix`)
 
-**Plan review amendments:** `d6379f8`, `79810ce`, `324395f`.
-
-**Measured plan commit count:** 8 commits from ledger base `14143152bedf68dce677f89776e59547dab5dd76` before this summary commit.
+**Measured plan commit count:** 10 commits from ledger base `14143152bedf68dce677f89776e59547dab5dd76` at this summary revision.
 
 ## Files Created/Modified
 
