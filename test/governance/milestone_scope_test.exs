@@ -2694,7 +2694,44 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       if name == "unknown-workflow",
         do: assert(Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "unknown")))
+
+      if name == "empty-lane",
+        do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "absent")
     end
+
+    paginated_lane_fixture =
+      fixture
+      |> put_in(["github", "commits/#{sha}/check-runs?page=1", "next"], true)
+      |> put_in(["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"], [])
+      |> put_in(["github", "commits/#{sha}/check-runs?page=2"], %{
+        "body" => %{
+          "check_runs" => [
+            %{
+              "name" => "mix ci.security",
+              "head_sha" => sha,
+              "status" => "completed",
+              "conclusion" => "success"
+            }
+          ]
+        }
+      })
+
+    paginated_path = Path.join(temporary, "paginated-lane-fixture.json")
+    paginated_output = Path.join(temporary, "paginated-lane-inventory.json")
+    File.write!(paginated_path, Jason.encode!(paginated_lane_fixture))
+    script = Path.join(root, "scripts/collect_phase79_inventory.py")
+
+    assert {_, 0} =
+             System.cmd(
+               "python3",
+               [script, "--fixture", paginated_path, "--output", paginated_output],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    paginated_receipt = paginated_output |> File.read!() |> Jason.decode!()
+    assert paginated_receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "passed"
+    assert paginated_receipt["sources"]["check_runs"]["page_count"] == 2
 
     fixture_path = Path.join(temporary, "tampered-fixture.json")
     output_path = Path.join(temporary, "tampered-inventory.json")

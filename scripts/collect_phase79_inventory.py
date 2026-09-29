@@ -210,12 +210,22 @@ def local_inventory(root: pathlib.Path, fixture: dict | None) -> dict:
         if path:
             items.append({"path": path, "git_state": state, "owner": "maintainer" if path == ".tool-versions" else "unknown", "disposition": "preserve; no cleanup authority"})
     candidates = []
+    seen_candidate_roots = set()
     for record in ignored_text.split("\0"):
         if not record.startswith("!! "):
             continue
         path = record[3:]
-        if path and (path.startswith(("_build/", "deps/", "node_modules/", "tmp")) or "/tmp" in path):
-            candidates.append({"path": path, "owner": "unknown", "disposition": "inspect only; no cleanup authority"})
+        if not path:
+            continue
+        root = next((prefix.rstrip("/") for prefix in ("_build/", "deps/", "node_modules/") if path.startswith(prefix)), None)
+        if root:
+            if root in seen_candidate_roots:
+                continue
+            seen_candidate_roots.add(root)
+            path = root + "/"
+        elif not (path.startswith("tmp") or "/tmp" in path):
+            continue
+        candidates.append({"path": path, "owner": "unknown", "disposition": "inspect only; no cleanup authority"})
     return {
         "tracked_path_count": len(tracked_paths),
         "tracked_edits": [item for item in items if item["path"] in tracked_paths],
@@ -310,8 +320,8 @@ def lane_owners(root: pathlib.Path, fixture: dict | None = None) -> dict[str, li
     aliases = ("mix qa", "mix ci.security", "mix ci.evidence", "mix ci.phase73.reconciliation", "mix ci.verify")
     result = {}
     for lane in aliases:
-        owners = [name for name, text in contents.items() if lane in text]
-        result[lane] = owners
+        command_pattern = re.compile(r"(?m)^\s*run:\s*" + re.escape(lane) + r"\s*$")
+        result[lane] = [name for name, text in contents.items() if command_pattern.search(text)]
     mix_file = (root / "mix.exs").read_text(encoding="utf-8", errors="replace") if (root / "mix.exs").is_file() else ""
     mix_aliases = {
         "mix qa": r'"qa"\s*=>',
@@ -323,10 +333,10 @@ def lane_owners(root: pathlib.Path, fixture: dict | None = None) -> dict[str, li
     for lane, pattern in mix_aliases.items():
         if re.search(pattern, mix_file):
             result[lane] = sorted(set(result[lane] + ["mix.exs"]))
-    result["mix ci.package"] = [name for name, text in contents.items() if "check_clean_room_consumer.sh" in text or "ci.package" in text]
-    result["mix ci.ledger_loop"] = [name for name, text in contents.items() if "demo/ledger_loop" in text or "ledger_loop" in text]
-    result["browser defenses"] = [name for name, text in contents.items() if "playwright" in text.lower() or "browser" in text.lower()]
-    result["standalone defenses"] = [name for name, text in contents.items() if "GATE-02" in text or "check_ci_gate_integrity" in text]
+    result["mix ci.package"] = [name for name, text in contents.items() if re.search(r"(?m)^\s*scripts/check_clean_room_consumer\.sh\s+--profile\s+", text)]
+    result["mix ci.ledger_loop"] = [name for name, text in contents.items() if "mix cmd --cd demo/ledger_loop mix deps.get" in text and "run: mix ci.demo" in text]
+    result["browser defenses"] = [name for name, text in contents.items() if "run: npx playwright install" in text and "run: npm run admin-ui:smoke" in text]
+    result["standalone defenses"] = [name for name, text in contents.items() if re.search(r"(?m)^\s*run:\s*mix test --only gate02_c14n --warnings-as-errors\s*$", text)]
     return result
 
 
@@ -335,7 +345,13 @@ def classify_lane(name: str, checks: list, statuses: list, sha: str, owners: lis
     records += [r for r in statuses if isinstance(r, dict) and r.get("sha", sha) == sha and r.get("context") == name]
     if not records:
         owner_paths = {pathlib.PurePosixPath(owner).name for owner in owners or [] if owner.endswith((".yml", ".yaml"))}
-        records = [run for run in runs or [] if isinstance(run, dict) and run.get("head_sha") == sha and pathlib.PurePosixPath(str(run.get("path", ""))).name in owner_paths]
+        records = [
+            run for run in runs or []
+            if isinstance(run, dict)
+            and run.get("head_sha") == sha
+            and pathlib.PurePosixPath(str(run.get("path", ""))).name in owner_paths
+            and str(run.get("status", "")).lower() == "completed"
+        ]
     if not records:
         return {"state": "absent", "sha": sha, "evidence_count": 0}
     states = []
@@ -516,8 +532,7 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
     sources["check_runs"]["sha"] = main_sha
     expected = json.loads(command(["scripts/setup_branch_protection.sh", "--print-expected-json"], cwd=root, fixture=fixture))
     contexts = protection.get("required_status_checks", {}).get("contexts", []) if protection_status == 200 else []
-    check_response, check_status = raw_single(repo, f"commits/{main_sha}/check-runs", fixture)
-    checks = check_response.get("check_runs", []) if check_status == 200 else []
+    checks = rows.get("check_runs", [])
     statuses = rows.get("statuses", [])
     lanes = lane_owners(root, fixture)
     required_contexts = expected.get("required_status_checks", {}).get("contexts", [])
