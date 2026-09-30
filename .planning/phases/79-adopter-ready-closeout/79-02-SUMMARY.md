@@ -14,7 +14,7 @@ affects: [phase-79, release-readiness, governance]
 actuals:
   tokens: 29966
   tasks: 3
-  commits: 20
+  commits: 21
   plan_head_before: 0e1a98cb1d0b38c45053a0203e11f696e5af7020
 tech-stack:
   added: []
@@ -101,6 +101,7 @@ status: complete
 - Refreshed the final read-only inventory after review fixes. It binds the post-review local tree to `szTheory/relyra@refs/heads/main`, SHA `c786a9890f2f99f0dd98f89a1d9713db7c486837`. All nine mandatory lanes remain absent; readiness remains unknown and release blocked. The canary observations remain separate.
 - Added deterministic checks for artifact identity, Phase 79 ownership of six scoped paths, and preservation of unknown-owner paths. No GitHub writes or branch-protection drift workflow changes were made.
 - Added an explicit six-path ownership allowlist to the collector so the final local inventory can identify Phase 79 outputs while preserving unknown owners and maintainer-owned `.tool-versions`.
+- Fixed both final-review warnings by making the ownership disposition stage-neutral and exercising all six allowlisted paths plus unknown and maintainer controls. The independent re-review is clean.
 
 ## Task Commits
 
@@ -110,6 +111,8 @@ status: complete
 4. **Task 3: Refreshed source-bound closeout artifacts** — `c0ab689` (`docs`)
 
 Plan scope repairs were committed separately: `23862a9` added the governance test to Task 3’s file list, and `f14a70d` added `79-VALIDATION.md` before updating that map. Review fixes were committed as `16f006f`, `ff79afb`, `e9d97f6`, `070970d`, `e63bab5`, and `dff2f76`; `34b771f` records the code-review fixes, `798bce6` refreshes Phase 73 proof provenance, and `ec38d1b` adds the exact Phase 79 local-owner classifier and fixture.
+
+The post-review correctness follow-up is `36c71c6` (`fix(79): keep local ownership disposition current`).
 
 ## Files Created/Modified
 
@@ -126,7 +129,7 @@ Plan scope repairs were committed separately: `23862a9` added the governance tes
 
 - Missing current-main mandatory lane evidence prevents a green readiness claim even when local verification passes.
 - External canary observations do not substitute for mandatory deterministic lanes.
-- The Phase 79 artifact paths are known-owned and pending at the inventory observation; that classification grants no deletion authority.
+- The six Phase 79 artifact paths are known-owned when modified and carry a stage-neutral preserve disposition; ownership grants no cleanup authority.
 - A remote discrepancy remains an observation until a separately approved change is revalidated and proven by automated read-back.
 
 ## Deviations from Plan
@@ -161,16 +164,24 @@ Task 3’s `<files>` declaration initially omitted `test/governance/milestone_sc
 - **Fix:** Added an exact six-path allowlist with deterministic fixture coverage for Phase 79 ownership and `.tool-versions` maintainer ownership. Re-captured the proof after this governed test change.
 - **Verification:** Proof `phase73-61008885a6735b8d` captured 21 focused owners, three evidence runs, and 13 security constituents. `mix ci.phase73.reconciliation` passed (1 test, 0 failures, 5 excluded; 582.6 seconds); `mix test --warnings-as-errors` passed (999 tests, 0 failures, 11 excluded; 590.1 seconds); standalone `mix ci.evidence` passed (155 tests, 0 failures; 24.9 seconds). The original `STATE.md` bytes were restored after each lifecycle wrapper.
 
+**4. [Rule 3 - Blocking] Refreshed proof after final code-review warning fixes**
+
+- **Found during:** Independent review of the final ownership classifier.
+- **Issue:** The fixed Task 3 disposition could become stale, and the classifier fixture covered only one of six allowlisted paths.
+- **Fix:** Changed the disposition to the stage-neutral preserve contract and extended the fixture to all six paths, one unknown tracked edit, and the existing `.tool-versions` maintainer case. Refreshed the canonical proof and append-only reports through the supported capture path.
+- **Verification:** Proof `phase73-a98cf8e53a4630fb` captured 21 focused owners, three evidence vectors under 60 seconds, and 13 security constituents. The mandatory reconciliation replay passed (1 test, 0 failures, 5 excluded; 637.5 seconds); the full suite passed (999 tests, 0 failures, 11 excluded; 639.7 seconds). The independent code review is clean.
+- **Committed in:** `36c71c6` for the classifier and fixture; refreshed proof/report files are included in the final provenance commit.
+
 The existing Phase 78 cold-state receipt remains historical and was not rewritten or used as current-source OTP 27/28 evidence. It is stale against the latest Phase 73 proof identity; this phase did not rerun its compatibility matrices.
 
-**Total deviations:** 3 blocking provenance refreshes, 2 narrow plan-scope corrections, six review-driven collector fixes, and one deterministic ownership-classification correction.
+**Total deviations:** 4 blocking provenance refreshes, 2 narrow plan-scope corrections, six review-driven collector fixes, and one deterministic ownership-classification correction.
 **Impact on plan:** Preserved the declared scope and restored source-bound regression evidence; no product behavior or remote state changed.
 
-The final fixture replay exposed a closeout-specific ownership classification gap: the local collector preserved all tracked changes as unknown, while the deterministic closeout contract requires the six declared Phase 79 outputs to be identified as Phase 79-owned. The collector now uses an exact path allowlist and the fixture asserts both that classification and maintainer ownership for `.tool-versions`.
+The final review exposed two classifier gaps: a task-stage-specific disposition and incomplete fixture coverage. The collector now uses a stage-neutral preserve disposition, while the fixture exercises every Phase 79-owned path, unknown tracked paths, and maintainer-owned `.tool-versions`.
 
 ## Issues Encountered
 
-The final proof is `phase73-61008885a6735b8d`, captured at `2026-09-30T09:00:43Z` with source digest `sha256:6af5a3441562ebc7a28e0ce1e087050b5c8bec4d492f61d020a0949ab0153fbd`. The inventory preserves unknown-owner paths and keeps `.tool-versions` maintainer-owned.
+The final proof is `phase73-a98cf8e53a4630fb`, captured at `2026-09-30T09:57:51Z` with source digest `sha256:81b5e39017eb02f384b813c5ca64492cc7d8fa8c2227014d32c9ca369f412df6`. The inventory preserves unknown-owner paths and keeps `.tool-versions` maintainer-owned.
 
 ## User Setup Required
 
@@ -183,7 +194,7 @@ Plan 79-02 is complete. Phase 79 release readiness remains blocked: the inventor
 ## Self-Check: PASSED
 
 - Created summary file exists at `.planning/phases/79-adopter-ready-closeout/79-02-SUMMARY.md`.
-- Plan ledger base is `0e1a98cb1d0b38c45053a0203e11f696e5af7020`; 20 commits were measured through the local-owner classifier commit `ec38d1b`.
+- Plan ledger base is `0e1a98cb1d0b38c45053a0203e11f696e5af7020`; 21 commits were measured through the final ownership-classifier correction `36c71c6`.
 - Task and deviation commits listed above are present in Git history.
 
 ---

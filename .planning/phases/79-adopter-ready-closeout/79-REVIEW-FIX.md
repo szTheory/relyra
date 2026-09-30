@@ -1,16 +1,16 @@
 ---
 phase: 79-adopter-ready-closeout
-fixed_at: 2026-09-30T05:41:29Z
+fixed_at: 2026-09-30T09:37:36Z
 review_path: .planning/phases/79-adopter-ready-closeout/79-REVIEW.md
-iteration: 3
+iteration: 4
 findings_in_scope: 3
 fixed: 3
 skipped: 0
 status: all_fixed
-followup_findings: 3
-followup_fixed: 3
+followup_findings: 5
+followup_fixed: 5
 final_review_status: clean
-final_fix_commit: dff2f76
+final_fix_commit: 36c71c6
 ---
 
 # Phase 79: Code Review Fix Report
