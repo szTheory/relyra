@@ -223,6 +223,12 @@ def local_inventory(root: pathlib.Path, fixture: dict | None) -> dict:
                 continue
             seen_candidate_roots.add(root)
             path = root + "/"
+        elif path.startswith("tmp/"):
+            root = "tmp"
+            if root in seen_candidate_roots:
+                continue
+            seen_candidate_roots.add(root)
+            path = "tmp/"
         elif not (path.startswith("tmp") or "/tmp" in path):
             continue
         candidates.append({"path": path, "owner": "unknown", "disposition": "inspect only; no cleanup authority"})
@@ -317,11 +323,15 @@ def lane_owners(root: pathlib.Path, fixture: dict | None = None) -> dict[str, li
         if not path.is_file() or path.is_symlink():
             continue
         contents[path.name] = path.read_text(encoding="utf-8", errors="replace")
+    # The security-gates workflow is the canonical mandatory CI owner. Release
+    # workflows also run some aliases, but those runs do not establish the
+    # protected-main lane contract.
+    security_workflow = contents.get("security-gates.yml", "")
     aliases = ("mix qa", "mix ci.security", "mix ci.evidence", "mix ci.phase73.reconciliation", "mix ci.verify")
     result = {}
     for lane in aliases:
         command_pattern = re.compile(r"(?m)^\s*run:\s*" + re.escape(lane) + r"\s*$")
-        result[lane] = [name for name, text in contents.items() if command_pattern.search(text)]
+        result[lane] = ["security-gates.yml"] if command_pattern.search(security_workflow) else []
     mix_file = (root / "mix.exs").read_text(encoding="utf-8", errors="replace") if (root / "mix.exs").is_file() else ""
     mix_aliases = {
         "mix qa": r'"qa"\s*=>',
@@ -333,10 +343,10 @@ def lane_owners(root: pathlib.Path, fixture: dict | None = None) -> dict[str, li
     for lane, pattern in mix_aliases.items():
         if re.search(pattern, mix_file):
             result[lane] = sorted(set(result[lane] + ["mix.exs"]))
-    result["mix ci.package"] = [name for name, text in contents.items() if re.search(r"(?m)^\s*scripts/check_clean_room_consumer\.sh\s+--profile\s+", text)]
-    result["mix ci.ledger_loop"] = [name for name, text in contents.items() if "mix cmd --cd demo/ledger_loop mix deps.get" in text and "run: mix ci.demo" in text]
-    result["browser defenses"] = [name for name, text in contents.items() if "run: npx playwright install" in text and "run: npm run admin-ui:smoke" in text]
-    result["standalone defenses"] = [name for name, text in contents.items() if re.search(r"(?m)^\s*run:\s*mix test --only gate02_c14n --warnings-as-errors\s*$", text)]
+    result["mix ci.package"] = ["security-gates.yml"] if re.search(r"(?m)^\s*scripts/check_clean_room_consumer\.sh\s+--profile\s+", security_workflow) else []
+    result["mix ci.ledger_loop"] = ["security-gates.yml"] if "mix cmd --cd demo/ledger_loop mix deps.get" in security_workflow and "run: mix ci.demo" in security_workflow else []
+    result["browser defenses"] = ["security-gates.yml"] if "run: npx playwright install" in security_workflow and "run: npm run admin-ui:smoke" in security_workflow else []
+    result["standalone defenses"] = ["security-gates.yml"] if re.search(r"(?m)^\s*run:\s*mix test --only gate02_c14n --warnings-as-errors\s*$", security_workflow) else []
     return result
 
 

@@ -2620,6 +2620,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "active"))
     assert Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "disabled"))
+
+    assert "security-gates.yml" in receipt["github"]["mandatory_lanes"]["mix ci.security"][
+             "owners"
+           ]
+
+    refute "publish-hex.yml" in receipt["github"]["mandatory_lanes"]["mix ci.security"]["owners"]
+    refute "release-please.yml" in receipt["github"]["mandatory_lanes"]["mix qa"]["owners"]
     refute receipt |> Jason.encode!() |> String.contains?("discard")
     assert Enum.all?(receipt["github"]["pull_requests"], &(not Map.has_key?(&1, "base")))
     assert length(receipt["github"]["issues"]) == 1
@@ -2667,7 +2674,32 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       )
 
     empty_lane_fixture =
-      put_in(fixture, ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"], [])
+      fixture
+      |> put_in(["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"], [])
+      |> update_in(
+        ["github", "actions/runs?head_sha=#{sha}?page=1", "body", "workflow_runs"],
+        fn runs ->
+          runs ++
+            [
+              %{
+                "id" => 56,
+                "name" => "Publish to Hex.pm",
+                "path" => ".github/workflows/publish-hex.yml",
+                "head_sha" => sha,
+                "status" => "completed",
+                "conclusion" => "success"
+              },
+              %{
+                "id" => 57,
+                "name" => "Release Please",
+                "path" => ".github/workflows/release-please.yml",
+                "head_sha" => sha,
+                "status" => "completed",
+                "conclusion" => "success"
+              }
+            ]
+        end
+      )
 
     for {name, candidate} <- [
           {"changed-ref", changed_ref_fixture},
