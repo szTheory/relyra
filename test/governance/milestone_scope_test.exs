@@ -3007,6 +3007,80 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         end
       )
 
+    later_failed_run_fixture =
+      update_in(
+        fixture,
+        ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"],
+        fn checks ->
+          checks ++
+            [
+              %{
+                "id" => 601,
+                "name" => "security (27, 1.19.5)",
+                "head_sha" => sha,
+                "check_suite_id" => 102,
+                "status" => "completed",
+                "conclusion" => "failure"
+              },
+              %{
+                "id" => 602,
+                "name" => "security (28, 1.19.5)",
+                "head_sha" => sha,
+                "check_suite_id" => 102,
+                "status" => "completed",
+                "conclusion" => "success"
+              }
+            ]
+        end
+      )
+      |> update_in(
+        ["github", "actions/runs?head_sha=#{sha}?page=1", "body", "workflow_runs"],
+        fn runs ->
+          runs ++
+            [
+              %{
+                "id" => 58,
+                "name" => "Security Gates",
+                "workflow_id" => 1,
+                "path" => ".github/workflows/security-gates.yml",
+                "head_branch" => "main",
+                "head_sha" => sha,
+                "check_suite_id" => 102,
+                "run_attempt" => 1,
+                "run_started_at" => "2026-09-30T01:00:00Z",
+                "status" => "completed",
+                "conclusion" => "failure",
+                "updated_at" => "2026-09-30T01:10:00Z"
+              }
+            ]
+        end
+      )
+      |> put_in(
+        ["github", "actions/runs/58/jobs?filter=latest?page=1"],
+        %{
+          "body" => %{
+            "jobs" => [
+              %{
+                "id" => 6011,
+                "name" => "security (27, 1.19.5)",
+                "head_sha" => sha,
+                "status" => "completed",
+                "conclusion" => "failure",
+                "check_run_url" => "https://api.github.com/repos/szTheory/relyra/check-runs/601"
+              },
+              %{
+                "id" => 6012,
+                "name" => "security (28, 1.19.5)",
+                "head_sha" => sha,
+                "status" => "completed",
+                "conclusion" => "success",
+                "check_run_url" => "https://api.github.com/repos/szTheory/relyra/check-runs/602"
+              }
+            ]
+          }
+        }
+      )
+
     for {name, candidate} <- [
           {"changed-ref", changed_ref_fixture},
           {"denied-protection", denied_protection_fixture},
@@ -3014,7 +3088,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           {"unknown-workflow", unknown_workflow_fixture},
           {"empty-lane", empty_lane_fixture},
           {"non-owner-collision", non_owner_collision_fixture},
-          {"aggregate-only", aggregate_only_fixture}
+          {"aggregate-only", aggregate_only_fixture},
+          {"later-failed-run", later_failed_run_fixture}
         ] do
       fixture_path = Path.join(temporary, "#{name}.json")
       output_path = Path.join(temporary, "#{name}-inventory.json")
@@ -3036,10 +3111,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         do: assert(Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "unknown")))
 
       if name == "empty-lane",
-        do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "absent")
+        do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "unknown")
 
       if name in ["non-owner-collision", "aggregate-only"],
-        do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "absent")
+        do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "unknown")
+
+      if name == "later-failed-run",
+        do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "failed")
     end
 
     foreign_context_collision =
@@ -3047,13 +3125,15 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         fixture,
         ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"],
         fn checks ->
-          Enum.reject(checks, &(&1["name"] == "fleet-proxy-e2e")) ++
+          Enum.map(checks, fn check ->
+            if check["id"] == 90, do: Map.put(check, "conclusion", "failure"), else: check
+          end) ++
             [
               %{
                 "id" => 202,
                 "name" => "fleet-proxy-e2e",
                 "head_sha" => sha,
-                "check_suite_id" => 202,
+                "check_suite_id" => 101,
                 "status" => "completed",
                 "conclusion" => "success"
               }
@@ -3063,14 +3143,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       |> update_in(
         ["github", "actions/runs?head_sha=#{sha}?page=1", "body", "workflow_runs"],
         fn runs ->
-          Enum.reject(runs, &(&1["id"] == 57)) ++
+          runs ++
             [
               %{
                 "id" => 202,
                 "name" => "Demo app CI",
                 "path" => ".github/workflows/demo-app-ci.yml",
                 "head_sha" => sha,
-                "check_suite_id" => 202,
+                "check_suite_id" => 101,
+                "run_attempt" => 1,
+                "run_started_at" => "2026-09-29T00:07:00Z",
                 "status" => "completed",
                 "conclusion" => "success"
               }
@@ -3114,8 +3196,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       receipt = output_path |> File.read!() |> Jason.decode!()
       refute receipt["collection"]["complete"]
 
+      expected_state = if name == "foreign-context-collision", do: "failed", else: "absent"
+
       assert receipt["github"]["branch_protection"]["context_results"]["fleet-proxy-e2e"]["state"] ==
-               "absent"
+               expected_state
     end
 
     for {name, origin} <- [
@@ -3145,15 +3229,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "body" => %{
           "check_runs" => [
             %{
-              "id" => 82,
+              "id" => 81,
               "name" => "security (27, 1.19.5)",
               "head_sha" => sha,
               "check_suite_id" => 100,
+              "run_attempt" => 1,
+              "run_started_at" => "2026-09-29T00:00:00Z",
               "status" => "completed",
               "conclusion" => "success"
             },
             %{
-              "id" => 83,
+              "id" => 82,
               "name" => "security (28, 1.19.5)",
               "head_sha" => sha,
               "check_suite_id" => 100,
@@ -3221,6 +3307,32 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              )
 
     receipt = output_path |> File.read!() |> Jason.decode!()
+
+    referenced_check_id =
+      receipt["github"]["mandatory_lanes"]["mix ci.security"]["evidence"]
+      |> hd()
+      |> Map.fetch!("check_run_id")
+
+    failed_check_receipt =
+      update_in(receipt, ["github", "check_runs"], fn checks ->
+        Enum.map(checks, fn check ->
+          if check["id"] == referenced_check_id do
+            check |> Map.put("status", "completed") |> Map.put("conclusion", "failure")
+          else
+            check
+          end
+        end)
+      end)
+
+    File.write!(output_path, Jason.encode!(failed_check_receipt))
+
+    assert {failed_check_verification, 1} =
+             System.cmd("python3", [script, "--verify", output_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert failed_check_verification =~ "passing state references a non-passing check run"
 
     malformed =
       update_in(receipt, ["sources", "pull_requests"], fn source ->
@@ -3400,6 +3512,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
               "head_branch" => "main",
               "head_sha" => sha,
               "check_suite_id" => 100,
+              "run_attempt" => 1,
+              "run_started_at" => "2026-09-29T00:00:00Z",
               "status" => "completed",
               "conclusion" => "success",
               "updated_at" => "2026-09-29T00:00:00Z"
@@ -3412,6 +3526,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
               "head_branch" => "main",
               "head_sha" => sha,
               "check_suite_id" => 101,
+              "run_attempt" => 1,
+              "run_started_at" => "2026-09-29T00:05:00Z",
               "status" => "completed",
               "conclusion" => "success",
               "updated_at" => "2026-09-29T00:00:00Z"
@@ -3432,6 +3548,42 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         }
       },
       "commits/#{sha}/check-runs?page=1" => %{"body" => %{"check_runs" => checks}},
+      "actions/runs/56/jobs?filter=latest?page=1" => %{
+        "body" => %{
+          "jobs" => [
+            %{
+              "id" => 501,
+              "name" => "security (27, 1.19.5)",
+              "head_sha" => sha,
+              "status" => "completed",
+              "conclusion" => "success",
+              "check_run_url" => "https://api.github.com/repos/szTheory/relyra/check-runs/81"
+            },
+            %{
+              "id" => 502,
+              "name" => "security (28, 1.19.5)",
+              "head_sha" => sha,
+              "status" => "completed",
+              "conclusion" => "success",
+              "check_run_url" => "https://api.github.com/repos/szTheory/relyra/check-runs/82"
+            }
+          ]
+        }
+      },
+      "actions/runs/57/jobs?filter=latest?page=1" => %{
+        "body" => %{
+          "jobs" => [
+            %{
+              "id" => 503,
+              "name" => "fleet-proxy-e2e",
+              "head_sha" => sha,
+              "status" => "completed",
+              "conclusion" => "success",
+              "check_run_url" => "https://api.github.com/repos/szTheory/relyra/check-runs/90"
+            }
+          ]
+        }
+      },
       "commits/#{sha}/status?page=1" => %{
         "body" => %{
           "statuses" => []
