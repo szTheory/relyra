@@ -89,10 +89,10 @@ Each planned task was committed atomically. Three follow-up task-scoped fixes ad
 
 1. **Task 1: Read-only closeout collector and fixture contract** - `1231fcb` (`feat`)
 2. **Task 2: Fail-closed evidence contracts** - `0b39570` (`fix`)
-3. **Task 3: Current inventory and ownership report** - `9f71d84` (`docs`)
-4. **Task 1 follow-up: Complete pagination and lane binding** - `968a26b` (`fix`)
-5. **Task 1 follow-up: Canonical mandatory lane ownership** - `4092b73` (`fix`)
-6. **Task 1 follow-up: Preserve check-run canary evidence separately** - `96a7961` (`fix`)
+3. **Task 1 follow-up: Complete pagination and lane binding** - `968a26b` (`fix`)
+4. **Task 1 follow-up: Canonical mandatory lane ownership** - `4092b73` (`fix`)
+5. **Task 1 follow-up: Preserve check-run canary evidence separately** - `96a7961` (`fix`)
+6. **Task 3: Current inventory and ownership report** - `9f71d84` (`docs`)
 
 ## Files Created/Modified
 
