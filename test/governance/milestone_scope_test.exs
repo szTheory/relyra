@@ -2588,6 +2588,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     closeout = File.read!(".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md")
     remote_batch = File.read!(".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md")
+    inventory_report = File.read!(".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md")
 
     {_, baseline} = baseline_rows(File.read!(@baseline_path))
     state_items = phase79_state_deferred_ids(File.read!(".planning/STATE.md"))
@@ -2598,8 +2599,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert phase79_risk_violations(risks, expected_ids, identity) == []
     assert phase79_remote_batch_violations(remote_batch, identity) == []
 
+    assert inventory_report =~ identity["repository"]
+    assert inventory_report =~ identity["ref"]
+    assert inventory_report =~ identity["main_sha"]
+    assert inventory_report =~ identity["observed_at"]
+
     assert closeout =~ "## Release readiness: BLOCKED"
+    assert closeout =~ identity["repository"]
+    assert closeout =~ identity["ref"]
     assert closeout =~ identity["main_sha"]
+    assert closeout =~ identity["observed_at"]
     assert closeout =~ "[79-INVENTORY.json](79-INVENTORY.json)"
     assert closeout =~ "[79-RISKS.json](79-RISKS.json)"
     assert closeout =~ "[79-REMOTE-BATCH.md](79-REMOTE-BATCH.md)"
