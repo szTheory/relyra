@@ -438,7 +438,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 5. A residual-risk report shows that every remaining idea is low-value, demand-gated,
    approval-blocked, or more costly to maintain than the risk it would retire.
 
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 **Wave 1**
 
 - [x] 79-01-PLAN.md
@@ -449,7 +449,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 **Wave 3** *(gap closure; blocked on Wave 2 completion)*
 
-- [ ] 79-03-PLAN.md — Capture complete protection state, refresh the source-bound closeout, and prepare an exact, unexecuted remote batch.
+- [x] 79-03-PLAN.md — Capture complete protection state, refresh the source-bound closeout, and prepare an exact, unexecuted remote batch.
 
 **Wave 4** *(gap closure; blocked on Wave 3 completion)*
 
@@ -471,7 +471,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
 | 78. CI Efficiency and Reliability | v1.11 | 9/9 | Complete    | 2026-09-29 |
-| 79. Adopter-Ready Closeout | v1.11 | 2/2 | In Progress|  |
+| 79. Adopter-Ready Closeout | v1.11 | 3/5 | In Progress|  |
 
 ---
 

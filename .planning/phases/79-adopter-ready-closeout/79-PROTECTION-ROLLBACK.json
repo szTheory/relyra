@@ -1,0 +1,36 @@
+{
+  "observed_top_level_fields": [
+    "allow_deletions",
+    "allow_force_pushes",
+    "allow_fork_syncing",
+    "block_creations",
+    "enforce_admins",
+    "lock_branch",
+    "required_conversation_resolution",
+    "required_linear_history",
+    "required_signatures",
+    "required_status_checks",
+    "url"
+  ],
+  "payload_available": false,
+  "reason": "The captured GET omitted required settings, so the complete current resource and an exact reversible PUT body cannot be established.",
+  "required_missing_settings": [
+    "required_pull_request_reviews",
+    "restrictions"
+  ],
+  "rollback_payload": null,
+  "schema": "phase79-protection-rollback",
+  "source_capture_errors": [
+    "branch protection response is missing settings: required_pull_request_reviews, restrictions"
+  ],
+  "source_capture_status": "incomplete",
+  "source_endpoint": "branches/main/protection",
+  "status": "blocked",
+  "target": {
+    "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+    "observed_at": "2026-09-30T16:51:05Z",
+    "ref": "refs/heads/main",
+    "repository": "szTheory/relyra"
+  },
+  "version": 1
+}

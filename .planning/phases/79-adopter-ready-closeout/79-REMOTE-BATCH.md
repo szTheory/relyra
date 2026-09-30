@@ -1,4 +1,4 @@
-# Remote Batch: No Action Proposed
+# Phase 79 Remote Batch: No Action Proposed
 
 **Status:** no mutation proposed; no command was executed.
 
@@ -6,27 +6,22 @@
 
 - **Target repository:** `szTheory/relyra`
 - **Target ref/resource:** `refs/heads/main` branch protection
-- **Observed at:** `2026-09-30T10:42:30Z`
+- **Observed at:** `2026-09-30T16:51:05Z`
 - **Observed main SHA:** `c786a9890f2f99f0dd98f89a1d9713db7c486837`
-- **Captured required contexts:** `security (27, 1.19.5)`, `security (28, 1.19.5)`
-- **Repository expected contexts:** `security (27, 1.19.5)`, `security (28, 1.19.5)`, `fleet-proxy-e2e`
-- **Discrepancy:** the live set omits `fleet-proxy-e2e`; the two security contexts have no passing evidence on the observed main SHA.
+- **Main ref revalidation:** `c786a9890f2f99f0dd98f89a1d9713db7c486837`
+- **Protection endpoint:** `branches/main/protection` (GET allowed)
+- **Capture status:** `incomplete`
+- **Observed configuration fields:** `allow_deletions`, `allow_force_pushes`, `allow_fork_syncing`, `block_creations`, `enforce_admins`, `lock_branch`, `required_conversation_resolution`, `required_linear_history`, `required_signatures`, `required_status_checks`, `url`
+- **Missing required settings:** `required_pull_request_reviews`, `restrictions`
+- **Capture errors:** branch protection response is missing settings: required_pull_request_reviews, restrictions
+- **Partial observed required contexts:** `security (27, 1.19.5)`, `security (28, 1.19.5)`
+- **Repository expected contexts:** `fleet-proxy-e2e`, `security (27, 1.19.5)`, `security (28, 1.19.5)`
+- **Mandatory lanes:** all nine have no passing evidence on this SHA.
 
 ## Why there is no proposal
 
-The read-only inventory establishes the context discrepancy, but it does not capture the
-complete branch-protection resource needed to construct and roll back a whole-resource
-update exactly. The Phase 73 dated candidate is historical and is not treated as current
-state. No exact reversible batch can be formed from the current bounded receipt. Obtain a
-fresh full read-only resource capture in a separately scoped plan before drafting any
-proposal.
+The protection GET is readable but incomplete: it omits `required_pull_request_reviews` and `restrictions`. The partial context list does not establish the complete protection policy. The exact project-expected configuration candidate is in `79-PROTECTION-DESIRED.json` (SHA-256 `4e2ae3133764813c1c9adf6a90b050561696f78dec7ffae920bd61306eb53f1e`); it is local reference material only and is not an executable whole-resource payload under this incomplete capture. `79-PROTECTION-ROLLBACK.json` (record SHA-256 `3167344226ea9df5aab02fd300860815a4bd7056d78fa0fe1776919800a9355a`) explicitly contains no rollback payload. The current state therefore cannot be restored exactly, and the target-bound batch hash and resume signal cannot safely be offered. No approval is requested.
 
 ## Authorization boundary
 
-This record is evidence only. It grants no permission to update branch protection, enable
-or dispatch a workflow, or use the inherited protection automation. A future mutation
-requires a separate exact plan naming the captured current state, desired state, least-
-privilege operation, rollback, immediate same-target preflight, read-back assertion, and
-target-bound resume signal. If any captured state changes, that proposal expires and
-requires renewed explicit `remote_github` approval. Approval authorizes one write; only
-automated read-back proves its postcondition.
+This record is evidence only. No GitHub write or workflow dispatch was prepared or executed; it grants no permission to mutate the target. The Phase 79 decision checkpoint must omit the approve option until a complete resource, desired payload, captured rollback payload, immediate preflight, expiry rule, and read-back assertion can be verified. Any later approved write requires automated read-back that proves its postcondition. Approval alone is not proof; automated read-back proves its postcondition. This record does not invoke the branch-protection-drift workflow or an apply path.

@@ -2,6 +2,8 @@
   "collection": {
     "complete": false,
     "gaps": [
+      "branch_protection collection incomplete (allowed)",
+      "branch protection configuration capture is incomplete",
       "one or more mandatory lanes are not green on observed main SHA",
       "one or more branch-protection contexts lack passing current-main evidence",
       "live required contexts differ from repository expected contexts"
@@ -12,6 +14,10 @@
   "github": {
     "branch_protection": {
       "access_status": "allowed",
+      "capture_errors": [
+        "branch protection response is missing settings: required_pull_request_reviews, restrictions"
+      ],
+      "capture_status": "incomplete",
       "context_match": false,
       "context_results": {
         "fleet-proxy-e2e": {
@@ -66,10 +72,25 @@
         "security (27, 1.19.5)",
         "security (28, 1.19.5)"
       ],
+      "observed_fields": [
+        "allow_deletions",
+        "allow_force_pushes",
+        "allow_fork_syncing",
+        "block_creations",
+        "enforce_admins",
+        "lock_branch",
+        "required_conversation_resolution",
+        "required_linear_history",
+        "required_signatures",
+        "required_status_checks",
+        "url"
+      ],
       "required_contexts": [
         "security (27, 1.19.5)",
         "security (28, 1.19.5)"
-      ]
+      ],
+      "resource": null,
+      "source_endpoint": "branches/main/protection"
     },
     "canaries": [
       {
@@ -3428,7 +3449,7 @@
       },
       {
         "name": "gsd/phase-73-gap-closure",
-        "sha": "619d44286c71c34e20fd28bd51e3ba1958409706"
+        "sha": "0849442550f4b9753acef8a059ccb028f91ad27c"
       },
       {
         "name": "keep/pat-free-release-note",
@@ -3539,9 +3560,15 @@
         "git_state": " M",
         "owner": "phase-79",
         "path": ".planning/phases/79-adopter-ready-closeout/79-RISKS.json"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "gsd-workflow",
+        "path": ".planning/state.json"
       }
     ],
-    "tracked_path_count": 1307,
+    "tracked_path_count": 1310,
     "untracked_paths": [
       {
         "disposition": "preserve; no cleanup authority",
@@ -3554,6 +3581,18 @@
         "git_state": "??",
         "owner": "unknown",
         "path": ".planning/milestone.lock"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": "??",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": "??",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json"
       },
       {
         "disposition": "preserve; no cleanup authority",
@@ -3619,6 +3658,12 @@
         "disposition": "preserve; no cleanup authority",
         "git_state": "??",
         "owner": "unknown",
+        "path": "scripts/__pycache__/collect_phase79_inventory.cpython-314.pyc"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": "??",
+        "owner": "unknown",
         "path": "tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/CHECKSUM"
       },
       {
@@ -3645,7 +3690,7 @@
         "branch": "refs/heads/gsd/phase-73-gap-closure",
         "detached": false,
         "disposition": "preserve; confirm owner before any cleanup",
-        "head": "619d44286c71c34e20fd28bd51e3ba1958409706",
+        "head": "0849442550f4b9753acef8a059ccb028f91ad27c",
         "owner": "unknown",
         "path": "/Users/jon/projects/relyra"
       }
@@ -3657,7 +3702,7 @@
     "revalidated_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
     "source": "GET repos/szTheory/relyra/git/ref/heads/main"
   },
-  "observed_at": "2026-09-30T10:42:30Z",
+  "observed_at": "2026-09-30T16:51:05Z",
   "repository": {
     "name": "szTheory/relyra",
     "source": "git remote origin"
@@ -3666,7 +3711,7 @@
   "sources": {
     "branch_protection": {
       "access_status": "allowed",
-      "completeness": "complete",
+      "completeness": "incomplete",
       "endpoint": "branches/main/protection",
       "failure_status": null,
       "item_count": 1,
@@ -3833,5 +3878,5 @@
       "total_count": 14
     }
   },
-  "version": 1
+  "version": 2
 }

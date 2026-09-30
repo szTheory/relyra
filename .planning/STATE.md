@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 79
 current_phase_name: Adopter-Ready Closeout
-current_plan: 1
+current_plan: 2
 status: executing
-stopped_at: Completed 79-02-PLAN.md
-last_updated: "2026-09-30T15:57:56.408Z"
+stopped_at: Completed 79-03-PLAN.md
+last_updated: "2026-09-30T17:26:25.041Z"
 last_activity: 2026-09-30
 last_activity_desc: Phase 79 execution started
-state_head: 89765cfcdd5a27d573bf6c2cb0a95d303ae29355
+state_head: 0849442550f4b9753acef8a059ccb028f91ad27c
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 68
-  completed_plans: 65
+  completed_plans: 66
   percent: 86
 ---
 
@@ -36,11 +36,11 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 79 (Adopter-Ready Closeout) — EXECUTING
 
-Current Plan: 1
+Current Plan: 2
 Total Plans in Phase: 5
 Next gate: Automated verification of the Phase 79 closeout and its release-readiness boundary.
 
-Status: Executing Phase 79
+Status: Ready to execute
 
 Last activity: 2026-09-30 — Phase 79 execution started
 
@@ -105,6 +105,9 @@ Last activity: 2026-09-30 — Phase 79 execution started
 - [Phase 79]: Keep any GitHub mutation behind a separate exact plan, explicit approval, immediate revalidation, and automated read-back.
 - [Phase 79]: Preserve unknown-owner paths; Phase 79 ownership classification does not grant cleanup authority.
 - [Phase 79]: Keep external canary observations separate from deterministic main-SHA readiness.
+- [Phase 79]: Treat omitted required protection settings as incomplete evidence.
+
+Do not prepare a remote approval batch until the full source and rollback are available. — The current read-only GET omitted required_pull_request_reviews and restrictions. Assuming defaults would not prove the writable current state or an exact rollback, and would weaken the fail-closed receipt contract.
 
 ### Baseline Findings
 
@@ -143,9 +146,9 @@ Last activity: 2026-09-30 — Phase 79 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-09-30T02:43:45.310Z
+**Last session:** 2026-09-30T17:26:24.970Z
 
-**Stopped at:** Completed 79-02-PLAN.md
+**Stopped at:** Completed 79-03-PLAN.md
 
 **Resume file:** None
 
@@ -225,6 +228,7 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 | Phase 78 P6 | 43m | 3 tasks | 9 files |
 | Phase 79 P01 | 48min | 3 tasks | 4 files |
 | Phase 79 P02 | 97min | 3 tasks | 11 files |
+| Phase 79 P3 | 58min | 3 tasks | 9 files |
 
 ### Resolved Issues
 

@@ -6,7 +6,7 @@
     "repository": "szTheory/relyra",
     "ref": "refs/heads/main",
     "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-    "observed_at": "2026-09-30T10:42:30Z"
+    "observed_at": "2026-09-30T16:51:05Z"
   },
   "items": [
     {
@@ -26,14 +26,14 @@
     {
       "id": "PIPE-73-001",
       "source": "73-BASELINE.md; current 79-INVENTORY.json branch_protection and mandatory_lanes",
-      "evidence": "Observed live required contexts omit expected fleet-proxy-e2e; all nine mandatory lanes are absent on c786a9890f2f99f0dd98f89a1d9713db7c486837.",
+      "evidence": "On szTheory/relyra refs/heads/main at c786a9890f2f99f0dd98f89a1d9713db7c486837 (2026-09-30T16:51:05Z), all nine mandatory lane results are absent. The branch-protection GET was allowed but incomplete: required_pull_request_reviews and restrictions were omitted, so the complete required-context set and safe rollback payload cannot be established. No exact remote batch is ready for approval.",
       "owner": "Phase 79 release owner",
       "severity": "High",
       "status": "release-blocker",
       "adopter_impact": "The protected-main contract and complete current-main readiness cannot be established.",
       "demand_or_trigger": "Before v1.11 release and after any required-check topology change.",
-      "maintenance_cost": "Read-only refresh now; a separate exact approved plan and automated read-back for any repair.",
-      "approval_boundary": "remote_github blocking approval in a separate plan; inventory approval is not write authorization.",
+      "maintenance_cost": "Keep the source-bound read-only receipt current; obtain a complete configuration response before drafting any reversible update.",
+      "approval_boundary": "Do not seek remote_github approval until complete current state, exact desired state, and a verified rollback payload are available; any later write requires the separate blocking approval gate.",
       "open_disposition": "approval-blocked",
       "revisit": "Before v1.11 release, after a fresh current-main inventory."
     },
@@ -138,7 +138,7 @@
     {
       "id": "QUAL-73-005",
       "source": "73-BASELINE.md; current 79-INVENTORY.json local state",
-      "evidence": "Tracked edits, untracked paths, ignored candidates, and registered worktrees are explicitly inventoried; .tool-versions is maintainer-owned and preserved, unknown ownership remains untouched.",
+      "evidence": "Current szTheory/relyra inventory at 2026-09-30T16:51:05Z records 6 tracked edits, 19 untracked paths, 4 ignored candidates, and 1 registered worktree; .tool-versions is maintainer-owned and unknown-owner paths remain preserved.",
       "owner": "Phase 79 release owner; unknown paths remain with their owners",
       "severity": "Informational",
       "status": "resolved",
