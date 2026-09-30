@@ -363,58 +363,102 @@ def lane_owners(root: pathlib.Path, fixture: dict | None = None) -> dict[str, li
     return result
 
 
-def classify_lane(name: str, checks: list, statuses: list, sha: str, owners: list | None = None, runs: list | None = None) -> dict:
-    if owners is not None:
-        # Mandatory lane evidence must be a check from the exact owner workflow
-        # run. A same-named check from another workflow, a commit status, or a
-        # successful aggregate workflow conclusion cannot prove this lane ran.
-        owner_paths = {
-            pathlib.PurePosixPath(owner).name
-            for owner in owners
-            if owner.endswith((".yml", ".yaml"))
-        }
-        owner_suites = {
-            run.get("check_suite_id")
-            for run in runs or []
-            if isinstance(run, dict)
-            and run.get("head_sha") == sha
-            and pathlib.PurePosixPath(str(run.get("path", ""))).name in owner_paths
-            and run.get("check_suite_id") is not None
-        }
-        records = [
-            check for check in checks
-            if isinstance(check, dict)
-            and check.get("head_sha") == sha
-            and check.get("name") == name
-            and check.get("check_suite_id") in owner_suites
-        ]
-    else:
-        records = [r for r in checks if isinstance(r, dict) and r.get("head_sha") == sha and r.get("name") == name]
-        records += [r for r in statuses if isinstance(r, dict) and r.get("sha", sha) == sha and r.get("context") == name]
-    if not records:
+def protection_context_owners(name: str) -> list[str]:
+    """Bind configured protection contexts to the workflow that emits each job check."""
+    owners = {
+        "security (27, 1.19.5)": ["security-gates.yml"],
+        "security (28, 1.19.5)": ["security-gates.yml"],
+        "fleet-proxy-e2e": ["fleet-proxy-e2e.yml"],
+    }
+    return owners.get(name, [])
+
+
+def classify_lane(name: str, checks: list, statuses: list, sha: str, owners: list | None = None, runs: list | None = None, required_check_names: list[str] | None = None) -> dict:
+    # Every accepted observation is tied to a known workflow path, a current-SHA
+    # successful workflow run, its exact check suite, and the job check name that
+    # GitHub exposes. Job steps such as `mix ci.security` do not create checks.
+    owner_paths = {
+        pathlib.PurePosixPath(owner).name
+        for owner in owners or []
+        if owner.endswith((".yml", ".yaml"))
+    }
+    if not owner_paths:
         return {"state": "absent", "sha": sha, "evidence_count": 0}
-    states = []
-    for row in records:
-        raw_conclusion = row.get("conclusion") or row.get("state")
-        if owners is not None and str(row.get("status", "")).lower() != "completed":
-            states.append("pending" if str(row.get("status", "")).lower() in {"queued", "in_progress", "requested", "waiting"} else "unknown")
+
+    required_checks = {
+        "security-gates.yml": ["security (27, 1.19.5)", "security (28, 1.19.5)"],
+        "fleet-proxy-e2e.yml": ["fleet-proxy-e2e"],
+    }
+    expected_names = sorted(set(required_check_names or [
+        check_name
+        for path in owner_paths
+        for check_name in required_checks.get(path, [])
+    ]))
+    if not expected_names:
+        return {"state": "absent", "sha": sha, "evidence_count": 0, "owners": sorted(owner_paths), "check_names": []}
+
+    eligible_runs = [
+        run for run in runs or []
+        if isinstance(run, dict)
+        and run.get("head_sha") == sha
+        and pathlib.PurePosixPath(str(run.get("path", ""))).name in owner_paths
+    ]
+    suites = {
+        run.get("check_suite_id")
+        for run in eligible_runs
+        if run.get("check_suite_id") is not None
+    }
+    checks_by_suite_name: dict[tuple[object, str], list[dict]] = {}
+    for check in checks:
+        if (isinstance(check, dict) and check.get("head_sha") == sha
+                and check.get("name") in expected_names and check.get("check_suite_id") in suites):
+            checks_by_suite_name.setdefault((check.get("check_suite_id"), check["name"]), []).append(check)
+
+    evidence_count = sum(len(rows) for rows in checks_by_suite_name.values())
+    if not evidence_count:
+        return {"state": "absent", "sha": sha, "evidence_count": 0, "owners": sorted(owner_paths), "check_names": expected_names}
+
+    def check_state(row: dict) -> str:
+        status = str(row.get("status", "")).lower()
+        conclusion = str(row.get("conclusion") or "").lower()
+        if status != "completed":
+            return "pending" if status in {"queued", "in_progress", "requested", "waiting"} else "unknown"
+        if conclusion in {"success", "successful"}:
+            return "passed"
+        if conclusion in {"failure", "failed", "timed_out", "action_required", "error", "cancelled"}:
+            return "failed"
+        if conclusion == "skipped":
+            return "skipped"
+        return "unknown"
+
+    for suite in suites:
+        run_rows = [run for run in eligible_runs if run.get("check_suite_id") == suite]
+        if not any(run.get("status") == "completed" and run.get("conclusion") == "success" for run in run_rows):
             continue
-        if raw_conclusion is None and str(row.get("status", "")).lower() == "completed":
-            states.append("unknown")
-            continue
-        conclusion = str(raw_conclusion or row.get("status") or "").lower()
-        if conclusion in {"success", "successful", "completed"}:
-            states.append("passed")
-        elif conclusion in {"failure", "failed", "timed_out", "action_required", "error"}:
-            states.append("failed")
-        elif conclusion in {"pending", "queued", "in_progress", "requested", "waiting"}:
-            states.append("pending")
-        elif conclusion == "skipped":
-            states.append("skipped")
-        else:
-            states.append("unknown")
-    state = "failed" if "failed" in states else "pending" if "pending" in states else "unknown" if "unknown" in states else "skipped" if all(s == "skipped" for s in states) else "passed"
-    return {"state": state, "sha": sha, "evidence_count": len(records)}
+        states = []
+        selected = []
+        for check_name in expected_names:
+            rows = checks_by_suite_name.get((suite, check_name), [])
+            selected_row = rows[-1] if rows else None
+            states.append("absent" if selected_row is None else check_state(selected_row))
+            if selected_row is not None:
+                owner_run = next((run for run in run_rows if run.get("status") == "completed" and run.get("conclusion") == "success"), None)
+                selected.append({
+                    "check_run_id": selected_row.get("id"),
+                    "check_name": check_name,
+                    "check_suite_id": suite,
+                    "workflow_run_id": owner_run.get("id") if owner_run else None,
+                    "workflow_path": owner_run.get("path") if owner_run else None,
+                })
+        if states and all(state == "passed" for state in states):
+            return {"state": "passed", "sha": sha, "evidence_count": evidence_count,
+                    "owners": sorted(owner_paths), "check_names": expected_names, "evidence": selected}
+
+    all_states = [check_state(row) for rows in checks_by_suite_name.values() for row in rows]
+    state = ("failed" if "failed" in all_states else "pending" if "pending" in all_states
+             else "unknown" if "unknown" in all_states else "absent")
+    return {"state": state, "sha": sha, "evidence_count": evidence_count,
+            "owners": sorted(owner_paths), "check_names": expected_names, "evidence": []}
 
 
 def unknown_field_errors(value: object, allowed: set[str], label: str) -> list[str]:
@@ -424,18 +468,79 @@ def unknown_field_errors(value: object, allowed: set[str], label: str) -> list[s
     return [f"{label} has unallowlisted fields: {', '.join(sorted(unknown))}"] if unknown else []
 
 
-def validate_receipt(receipt: dict) -> list[str]:
+def object_or_empty(value: object, label: str, errors: list[str]) -> dict:
+    if not isinstance(value, dict):
+        errors.append(f"{label} is not an object")
+        return {}
+    return value
+
+
+def object_rows_or_empty(value: object, label: str, errors: list[str]) -> list[dict]:
+    if not isinstance(value, list):
+        errors.append(f"{label} is not an array")
+        return []
+    rows = []
+    for index, row in enumerate(value):
+        if isinstance(row, dict):
+            rows.append(row)
+        else:
+            errors.append(f"{label}[{index}] is not an object")
+    return rows
+
+
+def validate_evidence_binding(result: dict, sha: str, checks: list[dict], runs: list[dict], label: str, expected_owners: list[str], expected_names: list[str], errors: list[str]) -> None:
+    if result.get("owners") != expected_owners or result.get("check_names") != expected_names:
+        errors.append(f"{label} has unexpected evidence owners or check names")
+    workflow_owners = {
+        pathlib.PurePosixPath(owner).name
+        for owner in expected_owners
+        if owner.endswith((".yml", ".yaml"))
+    }
+    evidence = object_rows_or_empty(result.get("evidence", []), f"{label} evidence", errors)
+    result["evidence"] = evidence
+    names_seen = set()
+    for item in evidence:
+        errors.extend(unknown_field_errors(item, {"check_run_id", "check_name", "check_suite_id", "workflow_run_id", "workflow_path"}, f"{label} evidence item"))
+        check = next((row for row in checks if row.get("id") == item.get("check_run_id")), None)
+        run = next((row for row in runs if row.get("id") == item.get("workflow_run_id")), None)
+        if (check is None or check.get("head_sha") != sha
+                or check.get("name") != item.get("check_name")
+                or check.get("check_suite_id") != item.get("check_suite_id")):
+            errors.append(f"{label} evidence does not match a current-SHA check run")
+            continue
+        if (run is None or run.get("head_sha") != sha
+                or run.get("check_suite_id") != item.get("check_suite_id")
+                or run.get("path") != item.get("workflow_path")
+                or pathlib.PurePosixPath(str(run.get("path", ""))).name not in workflow_owners
+                or run.get("status") != "completed" or run.get("conclusion") != "success"):
+            errors.append(f"{label} evidence is not linked to a successful owner workflow run")
+        check_name = item.get("check_name")
+        if isinstance(check_name, str):
+            names_seen.add(check_name)
+        else:
+            errors.append(f"{label} evidence has a malformed check name")
+    if result.get("state") == "passed" and names_seen != set(expected_names):
+        errors.append(f"{label} passing state lacks each required owner job check")
+
+
+def validate_receipt(receipt: object) -> list[str]:
+    if not isinstance(receipt, dict):
+        return ["receipt is not an object"]
     errors = unknown_field_errors(receipt, {"schema", "version", "observed_at", "repository", "observation", "collection", "sources", "local", "github"}, "receipt")
+    for key in ("repository", "observation", "collection", "sources", "local", "github"):
+        receipt[key] = object_or_empty(receipt.get(key, {}), key, errors)
     if receipt.get("schema") != SCHEMA or receipt.get("version") != VERSION:
         errors.append("unsupported schema or version")
     observed = receipt.get("observed_at", "")
     try:
+        if not isinstance(observed, str):
+            raise ValueError
         parsed = dt.datetime.fromisoformat(observed.replace("Z", "+00:00"))
         if parsed.utcoffset() != dt.timedelta(0):
             errors.append("observation timestamp is not UTC")
     except (ValueError, AttributeError):
         errors.append("invalid UTC observation timestamp")
-    if not observed.endswith("Z"):
+    if not isinstance(observed, str) or not observed.endswith("Z"):
         errors.append("observation timestamp is not UTC")
     repo = receipt.get("repository", {})
     errors.extend(unknown_field_errors(repo, {"name", "source"}, "repository"))
@@ -444,7 +549,7 @@ def validate_receipt(receipt: dict) -> list[str]:
     observation = receipt.get("observation", {})
     errors.extend(unknown_field_errors(observation, {"ref", "main_sha", "source", "revalidated_sha", "revalidation_source"}, "observation"))
     sha = observation.get("main_sha", "")
-    if observation.get("ref") != "refs/heads/main" or not re.fullmatch(r"[0-9a-f]{40}", sha or ""):
+    if observation.get("ref") != "refs/heads/main" or not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
         errors.append("missing or invalid observed main SHA/ref")
     collection = receipt.get("collection", {})
     errors.extend(unknown_field_errors(collection, {"complete", "readiness", "gaps", "github_access"}, "collection"))
@@ -456,13 +561,16 @@ def validate_receipt(receipt: dict) -> list[str]:
     sources = receipt.get("sources", {})
     if not sources:
         errors.append("missing source provenance")
-    for name, source in sources.items():
+    for name, source in list(sources.items()):
+        source = object_or_empty(source, f"source {name}", errors)
+        sources[name] = source
         errors.extend(unknown_field_errors(source, {"endpoint", "page_count", "pages", "item_count", "total_count", "access_status", "completeness", "failure_status", "sha"}, f"source {name}"))
         if not source.get("endpoint") or not source.get("access_status"):
             errors.append(f"source {name} lacks endpoint or access status")
         if claimed_complete and (source.get("completeness") != "complete" or not source.get("page_count") or source.get("access_status") != "allowed"):
             errors.append(f"source {name} is incomplete or inaccessible")
-        pages = source.get("pages", [])
+        pages = object_rows_or_empty(source.get("pages", []), f"source {name} pages", errors)
+        source["pages"] = pages
         if source.get("page_count") != len(pages):
             errors.append(f"source {name} has inconsistent page count")
         for page in pages:
@@ -474,6 +582,8 @@ def validate_receipt(receipt: dict) -> list[str]:
             errors.append(f"source {name} item count does not match total")
     github = receipt.get("github", {})
     errors.extend(unknown_field_errors(github, {"pull_requests", "issues", "remote_branches", "workflows", "workflow_runs", "check_runs", "statuses", "branch_protection", "mandatory_lanes", "canaries"}, "github"))
+    github["mandatory_lanes"] = object_or_empty(github.get("mandatory_lanes", {}), "mandatory lanes", errors)
+    github["branch_protection"] = object_or_empty(github.get("branch_protection", {}), "branch protection", errors)
     collection_fields = {
         "pull_requests": {"number", "state", "title", "draft", "updated_at", "html_url", "base_ref", "head_ref", "base_sha", "head_sha"},
         "issues": {"number", "state", "title", "updated_at", "html_url", "labels"},
@@ -484,8 +594,11 @@ def validate_receipt(receipt: dict) -> list[str]:
         "statuses": {"context", "state", "description", "target_url", "created_at", "updated_at", "sha"},
     }
     for name, allowed in collection_fields.items():
-        for row in github.get(name, []):
+        rows = object_rows_or_empty(github.get(name, []), f"github {name}", errors)
+        github[name] = rows
+        for row in rows:
             errors.extend(unknown_field_errors(row, allowed, f"github {name}"))
+    github["canaries"] = object_rows_or_empty(github.get("canaries", []), "github canaries", errors)
     for row in github.get("canaries", []):
         errors.extend(unknown_field_errors(row, {"run_id", "name", "ref", "sha", "observed_at", "status", "source"}, "github canary"))
     local = receipt.get("local", {})
@@ -497,24 +610,70 @@ def validate_receipt(receipt: dict) -> list[str]:
         "worktrees": {"path", "head", "branch", "detached", "owner", "disposition"},
         "branches": {"name", "sha"},
     }.items():
-        for row in local.get(local_collection, []):
+        rows = object_rows_or_empty(local.get(local_collection, []), f"local {local_collection}", errors)
+        local[local_collection] = rows
+        for row in rows:
             errors.extend(unknown_field_errors(row, allowed, f"local {local_collection}"))
     for row in github.get("check_runs", []):
         if claimed_complete and row.get("head_sha") != sha:
             errors.append("check run is not bound to observed main SHA")
     for name in REQUIRED_LANES:
         lane = github.get("mandatory_lanes", {}).get(name)
-        if not lane or lane.get("state") not in LANE_STATES:
+        if not isinstance(lane, dict):
+            errors.append(f"mandatory lane missing or unrecognized: {name}")
+            continue
+        if not isinstance(lane.get("state"), str) or lane.get("state") not in LANE_STATES:
             errors.append(f"mandatory lane missing or unrecognized: {name}")
         else:
-            errors.extend(unknown_field_errors(lane, {"state", "sha", "evidence_count", "owners"}, f"mandatory lane {name}"))
+            lane = object_or_empty(lane, f"mandatory lane {name}", errors)
+            github["mandatory_lanes"][name] = lane
+            errors.extend(unknown_field_errors(lane, {"state", "sha", "evidence_count", "owners", "check_names", "evidence"}, f"mandatory lane {name}"))
+            lane_owners_value = lane.get("owners", [])
+            if not isinstance(lane_owners_value, list) or not all(isinstance(owner, str) for owner in lane_owners_value):
+                errors.append(f"mandatory lane owners are malformed: {name}")
+                lane_owners_value = []
+            workflow_owner_names = sorted({
+                pathlib.PurePosixPath(owner).name
+                for owner in lane_owners_value
+                if owner.endswith((".yml", ".yaml"))
+            })
+            required_names = sorted({
+                check_name
+                for owner in workflow_owner_names
+                for check_name in {
+                    "security-gates.yml": ["security (27, 1.19.5)", "security (28, 1.19.5)"],
+                    "fleet-proxy-e2e.yml": ["fleet-proxy-e2e"],
+                }.get(owner, [])
+            })
+            validate_evidence_binding(
+                lane, sha, github.get("check_runs", []), github.get("workflow_runs", []),
+                f"mandatory lane {name}", lane_owners_value, required_names, errors,
+            )
             if claimed_complete and (lane.get("sha") != sha or lane.get("state") != "passed" or not lane.get("owners")):
                 errors.append(f"mandatory lane is not completely green on observed main SHA: {name}")
     for workflow in github.get("workflows", []):
-        if claimed_complete and workflow.get("state") not in {"active", "disabled"}:
+        if claimed_complete and (not isinstance(workflow.get("state"), str) or workflow.get("state") not in {"active", "disabled"}):
             errors.append("workflow state is absent or unrecognized")
     protection = github.get("branch_protection", {})
     errors.extend(unknown_field_errors(protection, {"access_status", "required_contexts", "expected_contexts", "context_match", "context_results"}, "branch protection"))
+    protection["context_results"] = object_or_empty(protection.get("context_results", {}), "protection context results", errors)
+    required_contexts_value = protection.get("required_contexts", [])
+    if not isinstance(required_contexts_value, list) or not all(isinstance(context, str) for context in required_contexts_value):
+        errors.append("branch protection required contexts is not an array")
+        required_contexts_value = []
+    protection["required_contexts"] = required_contexts_value
+    context_results = protection.get("context_results", {})
+    for context, result in list(context_results.items()):
+        result = object_or_empty(result, f"protection context {context}", errors)
+        context_results[context] = result
+        errors.extend(unknown_field_errors(result, {"state", "sha", "evidence_count", "owners", "check_names", "evidence"}, f"protection context {context}"))
+        expected_owners = protection_context_owners(context)
+        validate_evidence_binding(
+            result, sha, github.get("check_runs", []), github.get("workflow_runs", []),
+            f"protection context {context}", expected_owners, [context], errors,
+        )
+        if result.get("state") == "passed" and result.get("sha") != sha:
+            errors.append(f"required protection context is not green on observed main SHA: {context}")
     if claimed_complete:
         if collection.get("readiness") != "green" or collection.get("gaps"):
             errors.append("complete receipt must be green and gap-free")
@@ -522,9 +681,7 @@ def validate_receipt(receipt: dict) -> list[str]:
             errors.append("main ref changed during collection")
         if protection.get("access_status") != "allowed" or protection.get("context_match") is not True:
             errors.append("branch protection is inaccessible or differs from expected contexts")
-        context_results = protection.get("context_results", {})
         for context, result in context_results.items():
-            errors.extend(unknown_field_errors(result, {"state", "sha", "evidence_count"}, f"protection context {context}"))
             if result.get("state") != "passed" or result.get("sha") != sha:
                 errors.append(f"required protection context is not green on observed main SHA: {context}")
         if set(context_results) != set(protection.get("required_contexts", [])):
@@ -594,7 +751,13 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         gaps.append("one or more mandatory lanes lack a workflow owner")
     if any(lane["state"] != "passed" for lane in lane_results.values()):
         gaps.append("one or more mandatory lanes are not green on observed main SHA")
-    context_results = {name: classify_lane(name, checks, statuses, main_sha) for name in required_contexts}
+    context_results = {
+        name: classify_lane(
+            name, checks, statuses, main_sha, protection_context_owners(name), workflow_runs,
+            required_check_names=[name],
+        )
+        for name in required_contexts
+    }
     issue_rows = [row for row in rows["issues"] if isinstance(row, dict) and "pull_request" not in row]
     if any(item.get("state") == "unknown" for item in [workflow_item(row) for row in rows["workflows"] if isinstance(row, dict)]):
         gaps.append("workflow catalog contains an absent or unrecognized state")

@@ -2867,6 +2867,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "active"))
     assert Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "disabled"))
 
+    assert Enum.any?(receipt["github"]["check_runs"], &(&1["name"] == "security (27, 1.19.5)"))
+    assert Enum.any?(receipt["github"]["check_runs"], &(&1["name"] == "security (28, 1.19.5)"))
+    assert receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "passed"
+
+    assert receipt["github"]["branch_protection"]["context_results"]["fleet-proxy-e2e"]["state"] ==
+             "passed"
+
     assert "security-gates.yml" in receipt["github"]["mandatory_lanes"]["mix ci.security"][
              "owners"
            ]
@@ -2954,10 +2961,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         fixture,
         ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"],
         fn checks ->
-          Enum.reject(checks, &(&1["name"] == "mix ci.security")) ++
+          Enum.reject(checks, &(&1["name"] in ["security (27, 1.19.5)", "security (28, 1.19.5)"])) ++
             [
               %{
-                "name" => "mix ci.security",
+                "name" => "security (27, 1.19.5)",
+                "head_sha" => sha,
+                "check_suite_id" => 200,
+                "status" => "completed",
+                "conclusion" => "success"
+              },
+              %{
+                "name" => "security (28, 1.19.5)",
                 "head_sha" => sha,
                 "check_suite_id" => 200,
                 "status" => "completed",
@@ -2989,7 +3003,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         fixture,
         ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"],
         fn checks ->
-          Enum.reject(checks, &(&1["name"] == "mix ci.security"))
+          Enum.reject(checks, &(&1["name"] in ["security (27, 1.19.5)", "security (28, 1.19.5)"]))
         end
       )
 
@@ -3028,6 +3042,82 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "absent")
     end
 
+    foreign_context_collision =
+      update_in(
+        fixture,
+        ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"],
+        fn checks ->
+          Enum.reject(checks, &(&1["name"] == "fleet-proxy-e2e")) ++
+            [
+              %{
+                "id" => 202,
+                "name" => "fleet-proxy-e2e",
+                "head_sha" => sha,
+                "check_suite_id" => 202,
+                "status" => "completed",
+                "conclusion" => "success"
+              }
+            ]
+        end
+      )
+      |> update_in(
+        ["github", "actions/runs?head_sha=#{sha}?page=1", "body", "workflow_runs"],
+        fn runs ->
+          Enum.reject(runs, &(&1["id"] == 57)) ++
+            [
+              %{
+                "id" => 202,
+                "name" => "Demo app CI",
+                "path" => ".github/workflows/demo-app-ci.yml",
+                "head_sha" => sha,
+                "check_suite_id" => 202,
+                "status" => "completed",
+                "conclusion" => "success"
+              }
+            ]
+        end
+      )
+      |> put_in(
+        ["github", "commits/#{sha}/status?page=1", "body", "statuses"],
+        [%{"context" => "fleet-proxy-e2e", "state" => "success", "sha" => sha}]
+      )
+
+    status_context_collision =
+      update_in(
+        fixture,
+        ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"],
+        &Enum.reject(&1, fn check -> check["name"] == "fleet-proxy-e2e" end)
+      )
+      |> update_in(
+        ["github", "actions/runs?head_sha=#{sha}?page=1", "body", "workflow_runs"],
+        &Enum.reject(&1, fn run -> run["id"] == 57 end)
+      )
+      |> put_in(
+        ["github", "commits/#{sha}/status?page=1", "body", "statuses"],
+        [%{"context" => "fleet-proxy-e2e", "state" => "success", "sha" => sha}]
+      )
+
+    for {name, candidate} <- [
+          {"foreign-context-collision", foreign_context_collision},
+          {"status-context-collision", status_context_collision}
+        ] do
+      fixture_path = Path.join(temporary, "#{name}.json")
+      output_path = Path.join(temporary, "#{name}-inventory.json")
+      File.write!(fixture_path, Jason.encode!(candidate))
+
+      assert {_, 0} =
+               System.cmd("python3", [script, "--fixture", fixture_path, "--output", output_path],
+                 cd: root,
+                 stderr_to_stdout: true
+               )
+
+      receipt = output_path |> File.read!() |> Jason.decode!()
+      refute receipt["collection"]["complete"]
+
+      assert receipt["github"]["branch_protection"]["context_results"]["fleet-proxy-e2e"]["state"] ==
+               "absent"
+    end
+
     for {name, origin} <- [
           {"unapproved-https", "https://gitlab.example/szTheory/relyra.git"},
           {"unapproved-ssh", "git@gitlab.example:szTheory/relyra.git"}
@@ -3055,7 +3145,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         "body" => %{
           "check_runs" => [
             %{
-              "name" => "mix ci.security",
+              "id" => 82,
+              "name" => "security (27, 1.19.5)",
+              "head_sha" => sha,
+              "check_suite_id" => 100,
+              "status" => "completed",
+              "conclusion" => "success"
+            },
+            %{
+              "id" => 83,
+              "name" => "security (28, 1.19.5)",
               "head_sha" => sha,
               "check_suite_id" => 100,
               "status" => "completed",
@@ -3145,6 +3244,25 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert verification =~ "missing or duplicate pages"
     assert verification =~ "check run is not bound"
     assert verification =~ "unallowlisted fields"
+
+    malformed_receipts = [
+      {"top-level-array", []},
+      {"repository-string", Map.put(tampered, "repository", "szTheory/relyra")},
+      {"observation-array", Map.put(tampered, "observation", ["main", sha])}
+    ]
+
+    for {_name, malformed_receipt} <- malformed_receipts do
+      File.write!(output_path, Jason.encode!(malformed_receipt))
+
+      assert {malformed_output, 1} =
+               System.cmd("python3", [script, "--verify", output_path],
+                 cd: root,
+                 stderr_to_stdout: true
+               )
+
+      assert malformed_output =~ "invalid inventory"
+      refute malformed_output =~ "Traceback"
+    end
   end
 
   defp phase79_fixture(sha) do
@@ -3189,38 +3307,37 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       }
     }
 
-    names = [
-      "mix qa",
-      "mix ci.security",
-      "mix ci.evidence",
-      "mix ci.phase73.reconciliation",
-      "mix ci.verify",
-      "mix ci.package",
-      "mix ci.ledger_loop",
-      "browser defenses",
-      "standalone defenses"
-    ]
-
     checks =
-      Enum.map(names, fn name ->
+      ["security (27, 1.19.5)", "security (28, 1.19.5)"]
+      |> Enum.with_index(1)
+      |> Enum.map(fn {name, index} ->
         %{
+          "id" => 80 + index,
           "name" => name,
           "head_sha" => sha,
           "check_suite_id" => 100,
           "status" => "completed",
           "conclusion" => "success"
         }
-      end) ++
-        [
-          %{
-            "id" => 90,
-            "name" => "real-idp-canary",
-            "head_sha" => sha,
-            "status" => "completed",
-            "conclusion" => "success",
-            "completed_at" => "2026-09-29T00:00:00Z"
-          }
-        ]
+      end)
+      |> Kernel.++([
+        %{
+          "id" => 90,
+          "name" => "fleet-proxy-e2e",
+          "head_sha" => sha,
+          "check_suite_id" => 101,
+          "status" => "completed",
+          "conclusion" => "success"
+        },
+        %{
+          "id" => 91,
+          "name" => "real-idp-canary",
+          "head_sha" => sha,
+          "status" => "completed",
+          "conclusion" => "success",
+          "completed_at" => "2026-09-29T00:00:00Z"
+        }
+      ])
 
     contexts = ["security (27, 1.19.5)", "security (28, 1.19.5)", "fleet-proxy-e2e"]
 
@@ -3288,6 +3405,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
               "updated_at" => "2026-09-29T00:00:00Z"
             },
             %{
+              "id" => 57,
+              "name" => "fleet-proxy-e2e",
+              "workflow_id" => 4,
+              "path" => ".github/workflows/fleet-proxy-e2e.yml",
+              "head_branch" => "main",
+              "head_sha" => sha,
+              "check_suite_id" => 101,
+              "status" => "completed",
+              "conclusion" => "success",
+              "updated_at" => "2026-09-29T00:00:00Z"
+            },
+            %{
               "id" => 55,
               "name" => "real-idp-canary",
               "workflow_id" => 9,
@@ -3305,8 +3434,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       "commits/#{sha}/check-runs?page=1" => %{"body" => %{"check_runs" => checks}},
       "commits/#{sha}/status?page=1" => %{
         "body" => %{
-          "statuses" =>
-            Enum.map(contexts, &%{"context" => &1, "state" => "success", "sha" => sha})
+          "statuses" => []
         }
       },
       "branches/main/protection?page=1" => %{
