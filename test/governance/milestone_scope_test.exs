@@ -2577,6 +2577,140 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_violation(leaked, "Main security gate", "Failure Evidence sensitive payload")
   end
 
+  test "Phase 79 risk ledger covers every retained, deferred, and open-window item" do
+    inventory =
+      File.read!(".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json")
+      |> Jason.decode!()
+
+    risks =
+      File.read!(".planning/phases/79-adopter-ready-closeout/79-RISKS.json")
+      |> Jason.decode!()
+
+    closeout = File.read!(".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md")
+    remote_batch = File.read!(".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md")
+
+    {_, baseline} = baseline_rows(File.read!(@baseline_path))
+    state_items = phase79_state_deferred_ids(File.read!(".planning/STATE.md"))
+    window_items = phase79_open_window_ids(File.read!(".planning/WINDOWS.md"))
+    expected_ids = Enum.map(baseline, & &1["Finding ID"]) ++ state_items ++ window_items
+    identity = phase79_inventory_identity(inventory)
+
+    assert phase79_risk_violations(risks, expected_ids, identity) == []
+    assert phase79_remote_batch_violations(remote_batch, identity) == []
+
+    assert closeout =~ "## Release readiness: BLOCKED"
+    assert closeout =~ identity["main_sha"]
+    assert closeout =~ "[79-INVENTORY.json](79-INVENTORY.json)"
+    assert closeout =~ "[79-RISKS.json](79-RISKS.json)"
+    assert closeout =~ "[79-REMOTE-BATCH.md](79-REMOTE-BATCH.md)"
+    assert closeout =~ "all nine mandatory lanes are absent"
+    assert closeout =~ "canary"
+
+    assert risks["items"]
+           |> Enum.any?(&(&1["id"] == "PIPE-73-001" and &1["status"] == "release-blocker"))
+  end
+
+  test "Phase 79 risk and remote-batch contracts reject incomplete or stale evidence" do
+    inventory =
+      File.read!(".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json")
+      |> Jason.decode!()
+
+    risks =
+      File.read!(".planning/phases/79-adopter-ready-closeout/79-RISKS.json")
+      |> Jason.decode!()
+
+    batch = File.read!(".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md")
+    {_, baseline} = baseline_rows(File.read!(@baseline_path))
+
+    expected_ids =
+      Enum.map(baseline, & &1["Finding ID"]) ++
+        phase79_state_deferred_ids(File.read!(".planning/STATE.md")) ++
+        phase79_open_window_ids(File.read!(".planning/WINDOWS.md"))
+
+    identity = phase79_inventory_identity(inventory)
+    missing_owner = put_in(risks, ["items", Access.at(0), "owner"], "")
+    missing_source = put_in(risks, ["items", Access.at(0), "source"], "")
+
+    omitted_window =
+      update_in(risks["items"], &Enum.reject(&1, fn item -> item["id"] == "WINDOW-29" end))
+
+    stale_source = put_in(risks, ["inventory_source", "main_sha"], String.duplicate("0", 40))
+
+    for {candidate, expected_error} <- [
+          {missing_owner, "owner"},
+          {missing_source, "source"},
+          {omitted_window, "membership"},
+          {stale_source, "inventory identity"}
+        ] do
+      violations = phase79_risk_violations(candidate, expected_ids, identity)
+      assert Enum.any?(violations, &String.contains?(&1, expected_error)), inspect(violations)
+    end
+
+    altered_target = String.replace(batch, "szTheory/relyra", "other/repository", global: false)
+
+    missing_reason =
+      Regex.replace(
+        ~r/## Why there is no proposal.*?## Authorization boundary/s,
+        batch,
+        "## Why there is no proposal\n\n## Authorization boundary"
+      )
+
+    assert Enum.any?(phase79_remote_batch_violations(altered_target, identity), &(&1 =~ "target"))
+    assert Enum.any?(phase79_remote_batch_violations(missing_reason, identity), &(&1 =~ "reason"))
+
+    proposal = """
+    **Status:** exact proposal; not executed.
+    - Target repository: `szTheory/relyra`
+    - Target ref/resource: `refs/heads/main` branch protection
+    - Observed main SHA: `#{identity["main_sha"]}`
+    - Observed at: `#{identity["observed_at"]}`
+    - Captured current state: `security (27, 1.19.5)`, `security (28, 1.19.5)`
+    - Desired state: add `fleet-proxy-e2e`
+    - Affected identifiers: `fleet-proxy-e2e`
+    - Reason and least-privilege operation: add the missing required context only
+    - Preflight command: `gh api repos/szTheory/relyra/branches/main/protection`
+    - Proposed operation (not executed): exact payload in a separate plan
+    - Rollback: restore the exact captured current state
+    - Read-back assertion: query protection and compare exact fields
+    - Resume signal: approval bound to this target and payload
+    - Explicit approval: required in a separate plan
+    """
+
+    assert phase79_remote_batch_violations(proposal, identity) == []
+
+    for {incomplete, expected_error} <- [
+          {String.replace(proposal, "- Rollback: restore the exact captured current state\n", "",
+             global: false
+           ), "rollback"},
+          {String.replace(
+             proposal,
+             "- Read-back assertion: query protection and compare exact fields\n",
+             "",
+             global: false
+           ), "read-back"},
+          {String.replace(
+             proposal,
+             "- Proposed operation (not executed): exact payload in a separate plan\n",
+             "",
+             global: false
+           ), "operation"},
+          {String.replace(
+             proposal,
+             "- Explicit approval: required in a separate plan\n",
+             "- Explicit approval: acceptance evidence\n",
+             global: false
+           ), "approval"}
+        ] do
+      violations = phase79_remote_batch_violations(incomplete, identity)
+      assert Enum.any?(violations, &String.contains?(&1, expected_error)), inspect(violations)
+    end
+
+    stale_target =
+      String.replace(proposal, "refs/heads/main", "refs/heads/release", global: false)
+
+    assert Enum.any?(phase79_remote_batch_violations(stale_target, identity), &(&1 =~ "target"))
+  end
+
   test "Phase 79 fixture collector emits timestamped, source-bound inventory" do
     root = File.cwd!()
 
@@ -6823,6 +6957,218 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           []
       end
     end)
+  end
+
+  defp phase79_inventory_identity(inventory) do
+    %{
+      "repository" => inventory["repository"]["name"],
+      "ref" => inventory["observation"]["ref"],
+      "main_sha" => inventory["observation"]["main_sha"],
+      "observed_at" => inventory["observed_at"]
+    }
+  end
+
+  defp phase79_state_deferred_ids(state) do
+    state
+    |> String.split("\n")
+    |> Enum.flat_map(fn line ->
+      case String.split(line, "|", trim: true) do
+        [id, status] when id not in ["Item", "---"] and status != "Status" ->
+          id = String.trim(id)
+
+          case id do
+            "Hosted external twin" -> ["HOSTED-TWIN"]
+            "Exhaustive compatibility matrix" -> ["COMPATIBILITY-MATRIX"]
+            id -> if(Regex.match?(~r/^[A-Z][A-Z0-9-]+$/, id), do: [id], else: [])
+          end
+
+        _ ->
+          []
+      end
+    end)
+  end
+
+  defp phase79_open_window_ids(windows) do
+    windows
+    |> String.split("\n")
+    |> Enum.flat_map(fn line ->
+      case line |> String.split("|") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == "")) do
+        [id, _phase, _kind, _file, _description, "open" | _] ->
+          ["WINDOW-#{String.trim(id)}"]
+
+        _ ->
+          []
+      end
+    end)
+  end
+
+  defp phase79_risk_violations(ledger, expected_ids, identity) do
+    required_fields =
+      ~w(id source evidence owner severity status adopter_impact demand_or_trigger maintenance_cost approval_boundary open_disposition revisit)
+
+    allowed_severities = ~w(Critical High Medium Low Informational)
+    allowed_statuses = ~w(release-blocker disposition-required deferred resolved)
+
+    allowed_open_dispositions =
+      ~w(low-value demand-gated approval-blocked more-costly-than-retired-risk)
+
+    items = ledger["items"] || []
+    ids = Enum.map(items, & &1["id"])
+
+    identity_errors =
+      if ledger["inventory_source"] == %{
+           "path" => ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
+           "repository" => identity["repository"],
+           "ref" => identity["ref"],
+           "main_sha" => identity["main_sha"],
+           "observed_at" => identity["observed_at"]
+         } do
+        []
+      else
+        ["risk ledger inventory identity does not match current inventory"]
+      end
+
+    field_errors =
+      Enum.flat_map(items, fn item ->
+        id = item["id"] || "<missing-id>"
+
+        missing =
+          Enum.flat_map(required_fields, fn field ->
+            value = item[field]
+
+            if is_binary(value) and String.trim(value) == "",
+              do: ["#{id} missing #{field}"],
+              else: []
+          end)
+
+        status_errors =
+          cond do
+            item["severity"] not in allowed_severities ->
+              ["#{id} invalid severity"]
+
+            item["status"] not in allowed_statuses ->
+              ["#{id} invalid status"]
+
+            item["severity"] in ["Critical", "High"] and
+                item["status"] not in ["release-blocker", "resolved"] ->
+              ["#{id} high/critical finding is not blocked until resolved"]
+
+            item["severity"] == "Medium" and item["status"] != "resolved" and
+                item["status"] != "disposition-required" ->
+              ["#{id} medium finding requires written disposition"]
+
+            item["severity"] in ["Low", "Informational"] and item["status"] != "resolved" and
+                item["status"] not in ["deferred", "disposition-required"] ->
+              ["#{id} low/informational item needs an owner and revisit"]
+
+            item["status"] == "resolved" and item["open_disposition"] != nil ->
+              ["#{id} resolved item has an open disposition"]
+
+            item["status"] != "resolved" and
+                item["open_disposition"] not in allowed_open_dispositions ->
+              ["#{id} open disposition is missing or invalid"]
+
+            true ->
+              []
+          end
+
+        missing ++ status_errors
+      end)
+
+    membership_errors =
+      cond do
+        length(ids) != length(Enum.uniq(ids)) ->
+          ["risk ledger membership contains duplicate IDs"]
+
+        MapSet.new(ids) != MapSet.new(expected_ids) ->
+          ["risk ledger membership differs from retained/deferred/window sources"]
+
+        true ->
+          []
+      end
+
+    schema_errors =
+      if ledger["schema"] == "phase79-risk-ledger" and ledger["version"] == 1 and
+           is_list(ledger["items"]) do
+        []
+      else
+        ["risk ledger schema is unsupported"]
+      end
+
+    identity_errors ++ schema_errors ++ field_errors ++ membership_errors
+  end
+
+  defp phase79_remote_batch_violations(markdown, identity) do
+    no_action = String.contains?(markdown, "**Status:** no mutation proposed")
+
+    identity_errors =
+      Enum.flat_map(
+        [identity["repository"], identity["ref"], identity["main_sha"], identity["observed_at"]],
+        fn value ->
+          if is_binary(value) and String.contains?(markdown, value),
+            do: [],
+            else: ["remote batch target/source identity is stale"]
+        end
+      )
+
+    if no_action do
+      reason =
+        Regex.run(~r/## Why there is no proposal\s+(.+?)\s+## Authorization boundary/s, markdown,
+          capture: :all_but_first
+        )
+
+      reason_errors =
+        if reason && String.trim(hd(reason)) != "",
+          do: [],
+          else: ["no-action record lacks a reason"]
+
+      execution_errors =
+        if String.contains?(markdown, "no command was executed") and
+             String.contains?(markdown, "automated read-back proves its postcondition") do
+          []
+        else
+          ["no-action record lacks execution/approval boundary"]
+        end
+
+      identity_errors ++ reason_errors ++ execution_errors
+    else
+      fields = [
+        {"- Target repository:", "target"},
+        {"- Target ref/resource:", "target"},
+        {"- Captured current state:", "current state"},
+        {"- Desired state:", "desired state"},
+        {"- Affected identifiers:", "affected identifiers"},
+        {"- Reason and least-privilege operation:", "operation"},
+        {"- Preflight command:", "preflight"},
+        {"- Proposed operation (not executed):", "operation"},
+        {"- Rollback:", "rollback"},
+        {"- Read-back assertion:", "read-back"},
+        {"- Resume signal:", "resume signal"},
+        {"- Explicit approval:", "approval"}
+      ]
+
+      proposal_errors =
+        Enum.flat_map(fields, fn {label, error} ->
+          case Regex.run(Regex.compile!(Regex.escape(label) <> "\\s*(.+)"), markdown,
+                 capture: :all_but_first
+               ) do
+            [value] ->
+              if(String.trim(value) == "", do: ["remote proposal missing #{error}"], else: [])
+
+            _ ->
+              ["remote proposal missing #{error}"]
+          end
+        end)
+
+      proposal_errors =
+        proposal_errors ++
+          if String.contains?(markdown, "approval is acceptance") or
+               String.contains?(markdown, "approval: acceptance evidence"),
+             do: ["approval cannot be used as acceptance"],
+             else: []
+
+      identity_errors ++ proposal_errors
+    end
   end
 
   defp sensitive_payload_violations(rows) do
