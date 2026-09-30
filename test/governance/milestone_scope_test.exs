@@ -2616,7 +2616,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert Enum.all?(tracked_edits, fn item ->
              item["owner"] == "phase-79" and
-               item["disposition"] == "pending Task 3 commit; no cleanup authority"
+               item["disposition"] == "preserve; no cleanup authority"
            end)
 
     assert phase79_risk_violations(risks, expected_ids, identity) == []
@@ -2859,10 +2859,28 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert receipt["observation"]["main_sha"] == sha
     assert receipt["collection"]["complete"]
 
+    owned_paths = [
+      ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md",
+      ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
+      ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md",
+      ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md",
+      ".planning/phases/79-adopter-ready-closeout/79-RISKS.json",
+      ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md"
+    ]
+
+    classified_owned =
+      Enum.filter(receipt["local"]["tracked_edits"], &(&1["path"] in owned_paths))
+
+    assert Enum.map(classified_owned, & &1["path"]) |> Enum.sort() == Enum.sort(owned_paths)
+
+    assert Enum.all?(classified_owned, fn item ->
+             item["owner"] == "phase-79" and
+               item["disposition"] == "preserve; no cleanup authority"
+           end)
+
     assert Enum.any?(receipt["local"]["tracked_edits"], fn item ->
-             item["path"] == ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md" and
-               item["owner"] == "phase-79" and
-               item["disposition"] == "pending Task 3 commit; no cleanup authority"
+             item["path"] == "README.md" and item["owner"] == "unknown" and
+               item["disposition"] == "preserve; no cleanup authority"
            end)
 
     assert Enum.any?(receipt["local"]["untracked_paths"], fn item ->
@@ -3434,10 +3452,23 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     command_responses = %{
       "git status --porcelain=v1 -z --untracked-files=all" => %{
         "stdout" =>
-          " M .planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md\u0000?? .tool-versions\u0000"
+          " M .planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md\u0000" <>
+            " M .planning/phases/79-adopter-ready-closeout/79-INVENTORY.json\u0000" <>
+            " M .planning/phases/79-adopter-ready-closeout/79-INVENTORY.md\u0000" <>
+            " M .planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md\u0000" <>
+            " M .planning/phases/79-adopter-ready-closeout/79-RISKS.json\u0000" <>
+            " M .planning/phases/79-adopter-ready-closeout/79-VALIDATION.md\u0000" <>
+            " M README.md\u0000?? .tool-versions\u0000"
       },
       "git ls-files -z" => %{
-        "stdout" => "mix.exs\u0000.planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md\u0000"
+        "stdout" =>
+          "mix.exs\u0000README.md\u0000" <>
+            ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md\u0000" <>
+            ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json\u0000" <>
+            ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md\u0000" <>
+            ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md\u0000" <>
+            ".planning/phases/79-adopter-ready-closeout/79-RISKS.json\u0000" <>
+            ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md\u0000"
       },
       "git ls-files -z .github/workflows" => %{
         "stdout" =>

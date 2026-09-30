@@ -90,3 +90,19 @@ The final Phase 79 evidence replay exposed an ownership-classification gap after
 - **Applied fix:** Added an exact six-path allowlist for Phase 79 outputs. Other paths remain `unknown`, and `.tool-versions` remains `maintainer`-owned. Extended the fixture to assert both classifications.
 - **Verification:** Focused collector fixture passed (1 test, 0 failures); the Phase 73 proof was recaptured and replayed; `mix test --warnings-as-errors` passed (999 tests, 0 failures, 11 excluded).
 - **Scope:** This is a deterministic contract correction discovered during final execution, separate from the three review findings above.
+
+## Final re-review follow-up
+
+The final review at `2026-09-30T09:33:46Z` found two warnings in the Phase 79 ownership classifier. Both were fixed and independently re-reviewed clean at `2026-09-30T09:37:36Z`.
+
+### WR-01: Phase 79 disposition becomes stale after Task 3
+
+- **Files modified:** `scripts/collect_phase79_inventory.py`, `test/governance/milestone_scope_test.exs`
+- **Applied fix:** Replaced the task-stage-specific disposition with `preserve; no cleanup authority` for the exact Phase 79 path allowlist.
+- **Verification:** The focused fixture passed; the Phase 79 inventory fixture now asserts the state-neutral disposition.
+
+### WR-02: Fixture only exercises one of the six allowlisted paths
+
+- **Files modified:** `test/governance/milestone_scope_test.exs`
+- **Applied fix:** Added all six allowlisted paths to the fixture's porcelain and tracked-path inputs, asserted every path is classified as `phase-79`, retained the `.tool-versions` maintainer check, and added a dirty `README.md` unknown-owner check.
+- **Verification:** The focused fixture passed; the independent final review confirmed all six paths and both ownership controls.

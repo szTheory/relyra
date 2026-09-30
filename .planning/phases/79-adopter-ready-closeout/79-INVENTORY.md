@@ -52,15 +52,15 @@ The separate canary section contains 34 successful `rulestead-main-canary` obser
 
 ## Local paths and worktree disposition
 
-The five modified closeout outputs below are Phase 79-owned and pending Task 3 commit. Their disposition grants no cleanup authority. `79-VALIDATION.md` is committed and records the automated validation results.
+The five modified closeout outputs below are Phase 79-owned and preserved without cleanup authority. `79-VALIDATION.md` is committed and records the automated validation results.
 
 | Path | Git state | Owner | Disposition |
 | --- | --- | --- | --- |
-| `.planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
-| `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.json` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
-| `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
-| `.planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
-| `.planning/phases/79-adopter-ready-closeout/79-RISKS.json` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md` | modified | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.json` | modified | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.md` | modified | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md` | modified | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-RISKS.json` | modified | phase-79 | preserve; no cleanup authority |
 
 Untracked paths, all preserved with no cleanup authority:
 

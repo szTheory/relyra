@@ -3511,31 +3511,31 @@
     ],
     "tracked_edits": [
       {
-        "disposition": "pending Task 3 commit; no cleanup authority",
+        "disposition": "preserve; no cleanup authority",
         "git_state": " M",
         "owner": "phase-79",
         "path": ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md"
       },
       {
-        "disposition": "pending Task 3 commit; no cleanup authority",
+        "disposition": "preserve; no cleanup authority",
         "git_state": " M",
         "owner": "phase-79",
         "path": ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json"
       },
       {
-        "disposition": "pending Task 3 commit; no cleanup authority",
+        "disposition": "preserve; no cleanup authority",
         "git_state": " M",
         "owner": "phase-79",
         "path": ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md"
       },
       {
-        "disposition": "pending Task 3 commit; no cleanup authority",
+        "disposition": "preserve; no cleanup authority",
         "git_state": " M",
         "owner": "phase-79",
         "path": ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md"
       },
       {
-        "disposition": "pending Task 3 commit; no cleanup authority",
+        "disposition": "preserve; no cleanup authority",
         "git_state": " M",
         "owner": "phase-79",
         "path": ".planning/phases/79-adopter-ready-closeout/79-RISKS.json"

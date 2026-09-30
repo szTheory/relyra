@@ -218,7 +218,7 @@ def local_inventory(root: pathlib.Path, fixture: dict | None) -> dict:
         if path:
             if path in PHASE79_OWNED_LOCAL_PATHS:
                 owner = "phase-79"
-                disposition = "pending Task 3 commit; no cleanup authority"
+                disposition = "preserve; no cleanup authority"
             else:
                 owner = "maintainer" if path == ".tool-versions" else "unknown"
                 disposition = "preserve; no cleanup authority"
