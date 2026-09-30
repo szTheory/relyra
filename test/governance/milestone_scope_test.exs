@@ -3082,6 +3082,34 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert paginated_receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "passed"
     assert paginated_receipt["sources"]["check_runs"]["page_count"] == 2
 
+    paginated_status_fixture =
+      fixture
+      |> put_in(["github", "commits/#{sha}/status?page=1", "next"], true)
+      |> put_in(["github", "commits/#{sha}/status?page=2"], %{
+        "body" => %{
+          "statuses" => [%{"context" => "later-page-check", "state" => "success", "sha" => sha}]
+        }
+      })
+
+    paginated_status_path = Path.join(temporary, "paginated-status-fixture.json")
+    paginated_status_output = Path.join(temporary, "paginated-status-inventory.json")
+    File.write!(paginated_status_path, Jason.encode!(paginated_status_fixture))
+
+    assert {_, 0} =
+             System.cmd(
+               "python3",
+               [script, "--fixture", paginated_status_path, "--output", paginated_status_output],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    status_receipt = paginated_status_output |> File.read!() |> Jason.decode!()
+    status_source = status_receipt["sources"]["statuses"]
+    assert status_source["page_count"] == 2
+    assert status_source["pages"] |> Enum.map(& &1["continuation"]) == [true, false]
+    assert status_source["completeness"] == "complete"
+    assert Enum.any?(status_receipt["github"]["statuses"], &(&1["context"] == "later-page-check"))
+
     fixture_path = Path.join(temporary, "tampered-fixture.json")
     output_path = Path.join(temporary, "tampered-inventory.json")
     File.write!(fixture_path, Jason.encode!(fixture))
@@ -3276,7 +3304,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       },
       "commits/#{sha}/check-runs?page=1" => %{"body" => %{"check_runs" => checks}},
       "commits/#{sha}/status?page=1" => %{
-        "body" => %{"statuses" => Enum.map(contexts, &%{"context" => &1, "state" => "success"})}
+        "body" => %{
+          "statuses" =>
+            Enum.map(contexts, &%{"context" => &1, "state" => "success", "sha" => sha})
+        }
       },
       "branches/main/protection?page=1" => %{
         "body" => %{"required_status_checks" => %{"contexts" => contexts}}

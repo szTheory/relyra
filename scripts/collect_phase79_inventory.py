@@ -152,7 +152,7 @@ def page_source(repo: str, endpoint: str, fixture: dict | None) -> dict:
             }
         reported_total = body.get("total_count") if isinstance(body, dict) else None
         if isinstance(body, dict):
-            list_field = next((field for field in ("workflows", "workflow_runs", "check_runs") if isinstance(body.get(field), list)), None)
+            list_field = next((field for field in ("workflows", "workflow_runs", "check_runs", "statuses") if isinstance(body.get(field), list)), None)
             if list_field is None:
                 raise CollectionError(f"GitHub list response is not an array: {endpoint}")
             body = body[list_field]
@@ -559,19 +559,14 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
     }
     rows = {}
     for name, endpoint in endpoints.items():
-        # Single-object endpoints are normalized to a one-page list for common provenance.
-        if name == "statuses":
-            body, status = raw_single(repo, endpoint, fixture)
-            items = body.get("statuses", []) if status == 200 else []
-            source = {"endpoint": endpoint, "page_count": 1 if status == 200 else 0, "pages": [{"number": 1, "item_count": len(items), "status": status, "continuation": False}] if status == 200 else [], "item_count": len(items), "access_status": "allowed" if status == 200 else access_status(status), "completeness": "complete" if status == 200 else "incomplete", "failure_status": status if status != 200 else None, "sha": main_sha, "items": items}
-        else:
-            source = page_source(repo, endpoint, fixture)
+        source = page_source(repo, endpoint, fixture)
         sources[name] = {key: value for key, value in source.items() if key != "items"}
         rows[name] = source.get("items", [])
     sources["main_ref"] = {"endpoint": "git/ref/heads/main", "page_count": 1 if main_status == 200 else 0, "pages": [{"number": 1, "item_count": 1, "status": main_status, "continuation": False}] if main_status == 200 else [], "item_count": 1 if main_status == 200 else 0, "access_status": "allowed" if main_status == 200 else access_status(main_status), "completeness": "complete" if main_status == 200 else "incomplete", "failure_status": main_status if main_status != 200 else None}
     protection, protection_status = raw_single(repo, "branches/main/protection", fixture)
     sources["branch_protection"] = {"endpoint": "branches/main/protection", "page_count": 1 if protection_status == 200 else 0, "pages": [{"number": 1, "item_count": 1, "status": protection_status, "continuation": False}] if protection_status == 200 else [], "item_count": 1 if protection_status == 200 else 0, "access_status": "allowed" if protection_status == 200 else access_status(protection_status), "completeness": "complete" if protection_status == 200 else "incomplete", "failure_status": protection_status if protection_status != 200 else None}
     sources["check_runs"]["sha"] = main_sha
+    sources["statuses"]["sha"] = main_sha
     expected = json.loads(command(["scripts/setup_branch_protection.sh", "--print-expected-json"], cwd=root, fixture=fixture))
     contexts = protection.get("required_status_checks", {}).get("contexts", []) if protection_status == 200 else []
     checks = rows.get("check_runs", [])
