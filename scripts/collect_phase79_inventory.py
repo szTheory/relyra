@@ -16,9 +16,61 @@ from urllib.parse import urlparse
 
 
 SCHEMA = "phase79-inventory"
-VERSION = 1
+VERSION = 2
 MAX_OUTPUT_BYTES = 8 * 1024 * 1024
 MAX_ITEMS = 5000
+BRANCH_PROTECTION_ENDPOINT = "branches/main/protection"
+PROTECTION_CONFIGURATION_FIELDS = {
+    "required_status_checks",
+    "enforce_admins",
+    "required_pull_request_reviews",
+    "restrictions",
+    "required_signatures",
+    "required_linear_history",
+    "allow_force_pushes",
+    "allow_deletions",
+    "block_creations",
+    "required_conversation_resolution",
+    "lock_branch",
+    "allow_fork_syncing",
+}
+PROTECTION_TOPLEVEL_METADATA_FIELDS = {
+    "url",
+    "html_url",
+    "protection_url",
+    "node_id",
+    "created_at",
+    "updated_at",
+}
+PROTECTION_NESTED_METADATA_FIELDS = {
+    "url",
+    "html_url",
+    "contexts_url",
+    "users_url",
+    "teams_url",
+    "apps_url",
+}
+PROTECTION_ACTOR_METADATA_FIELDS = {
+    "node_id",
+    "type",
+    "site_admin",
+    "gravatar_id",
+    "avatar_url",
+    "description",
+    "privacy",
+    "notification_setting",
+    "permission",
+    "owner",
+    "events",
+    "permissions",
+    "external_url",
+    "created_at",
+    "updated_at",
+}
+SENSITIVE_VALUE_RE = re.compile(
+    r"(?:gh[pousr]_[A-Za-z0-9_]{16,}|github_pat_[A-Za-z0-9_]+|authorization\s*:|cookie\s*:|password\s*=|BEGIN (?:RSA )?PRIVATE KEY)",
+    re.IGNORECASE,
+)
 ALLOWED_WORKFLOW_FIELDS = (
     "id", "name", "path", "state", "html_url", "created_at", "updated_at"
 )
@@ -116,6 +168,8 @@ def gh_read(repo: str, endpoint: str, page: int, fixture: dict | None) -> tuple[
             return 429, None, False
         return 0, None, False
     headers, body = split_http_response(completed.stdout)
+    if len(body.encode("utf-8")) > MAX_OUTPUT_BYTES:
+        return 598, None, False
     try:
         parsed = json.loads(body)
     except json.JSONDecodeError as exc:
@@ -353,6 +407,170 @@ def compact_issue(row: object) -> dict:
 def raw_single(repo: str, endpoint: str, fixture: dict | None) -> tuple[dict, int]:
     status, body, _ = gh_read(repo, endpoint, 1, fixture)
     return (body if isinstance(body, dict) else {}), status
+
+
+def strip_protection_metadata(value: object, *, root: bool = False, actor: bool = False) -> object:
+    """Keep protection settings and actor identifiers; omit API/profile metadata."""
+    if isinstance(value, dict):
+        cleaned = {}
+        for key, child in value.items():
+            if not isinstance(key, str):
+                continue
+            metadata_fields = PROTECTION_NESTED_METADATA_FIELDS
+            if root:
+                metadata_fields = metadata_fields | PROTECTION_TOPLEVEL_METADATA_FIELDS
+            if actor:
+                metadata_fields = metadata_fields | PROTECTION_ACTOR_METADATA_FIELDS
+            if key in metadata_fields:
+                continue
+            cleaned[key] = strip_protection_metadata(
+                child,
+                actor=key in {"users", "teams", "apps"} and isinstance(child, list),
+            )
+        return cleaned
+    if isinstance(value, list):
+        return [strip_protection_metadata(child, actor=actor) for child in value]
+    return value
+
+
+def protection_resource_errors(resource: object) -> list[str]:
+    """Validate the configuration-bearing portion of GitHub's protection response."""
+    errors = []
+    if not isinstance(resource, dict):
+        return ["branch protection resource is not an object"]
+    if set(resource) != PROTECTION_CONFIGURATION_FIELDS:
+        missing = sorted(PROTECTION_CONFIGURATION_FIELDS - set(resource))
+        extra = sorted(set(resource) - PROTECTION_CONFIGURATION_FIELDS)
+        if missing:
+            errors.append("branch protection resource is incomplete (missing settings: " + ", ".join(missing) + ")")
+        if extra:
+            errors.append("branch protection resource has unmodeled settings: " + ", ".join(extra))
+
+    checks = resource.get("required_status_checks")
+    if not isinstance(checks, dict) or set(checks) != {"strict", "contexts", "checks"}:
+        errors.append("branch protection required_status_checks is incomplete or malformed")
+    else:
+        contexts = checks.get("contexts")
+        check_rows = checks.get("checks")
+        if type(checks.get("strict")) is not bool:
+            errors.append("branch protection strict setting is malformed")
+        if not isinstance(contexts, list) or not all(isinstance(item, str) and item for item in contexts):
+            errors.append("branch protection contexts are malformed")
+            contexts = []
+        if not isinstance(check_rows, list):
+            errors.append("branch protection check-app associations are malformed")
+            check_rows = []
+        associated_contexts = []
+        for row in check_rows:
+            if not isinstance(row, dict) or set(row) != {"context", "app_id"}:
+                errors.append("branch protection check-app association is incomplete")
+                continue
+            if not isinstance(row.get("context"), str) or not row["context"]:
+                errors.append("branch protection check-app context is malformed")
+            app_id = row.get("app_id")
+            if app_id is not None and (type(app_id) is not int or app_id < -1):
+                errors.append("branch protection check-app id is malformed")
+            associated_contexts.append(row.get("context"))
+        if sorted(contexts) != sorted(associated_contexts):
+            errors.append("branch protection contexts do not match check-app associations")
+
+    enabled_fields = PROTECTION_CONFIGURATION_FIELDS - {
+        "required_status_checks",
+        "required_pull_request_reviews",
+        "restrictions",
+    }
+    for name in sorted(enabled_fields):
+        setting = resource.get(name)
+        if not isinstance(setting, dict) or set(setting) != {"enabled"} or type(setting.get("enabled")) is not bool:
+            errors.append(f"branch protection {name} setting is incomplete or malformed")
+
+    def validate_actor_rows(rows: object, label: str) -> None:
+        if not isinstance(rows, list):
+            errors.append(f"branch protection {label} restrictions are malformed")
+            return
+        for row in rows:
+            if not isinstance(row, dict) or not row or not set(row) <= {"id", "login", "name", "slug"}:
+                errors.append(f"branch protection {label} restriction is incomplete or unmodeled")
+                continue
+            if "id" in row and (type(row["id"]) is not int or row["id"] < 0):
+                errors.append(f"branch protection {label} restriction id is malformed")
+            if any(not isinstance(row[key], str) or not row[key] for key in ("login", "name", "slug") if key in row):
+                errors.append(f"branch protection {label} restriction identity is malformed")
+
+    def validate_restrictions(value: object, label: str) -> None:
+        if value is None:
+            return
+        if not isinstance(value, dict) or set(value) != {"users", "teams", "apps"}:
+            errors.append(f"branch protection {label} settings are incomplete or unmodeled")
+            return
+        for kind in ("users", "teams", "apps"):
+            validate_actor_rows(value.get(kind), f"{label} {kind}")
+
+    reviews = resource.get("required_pull_request_reviews")
+    if reviews is not None:
+        review_fields = {
+            "dismiss_stale_reviews",
+            "require_code_owner_reviews",
+            "required_approving_review_count",
+            "require_last_push_approval",
+            "dismissal_restrictions",
+        }
+        if not isinstance(reviews, dict) or set(reviews) != review_fields:
+            errors.append("branch protection review rules are incomplete or unmodeled")
+        else:
+            for field in ("dismiss_stale_reviews", "require_code_owner_reviews", "require_last_push_approval"):
+                if type(reviews.get(field)) is not bool:
+                    errors.append(f"branch protection review rule {field} is malformed")
+            count = reviews.get("required_approving_review_count")
+            if type(count) is not int or count < 0:
+                errors.append("branch protection required approval count is malformed")
+            validate_restrictions(reviews.get("dismissal_restrictions"), "dismissal")
+
+    validate_restrictions(resource.get("restrictions"), "push")
+    if SENSITIVE_VALUE_RE.search(json.dumps(resource, sort_keys=True)):
+        errors.append("branch protection resource contains a secret-shaped value")
+    return errors
+
+
+def capture_protection_resource(body: object, status: int) -> dict:
+    observed_fields = sorted(key for key in body if isinstance(key, str)) if isinstance(body, dict) else []
+    errors = []
+    resource = None
+    if status != 200:
+        if status == 598:
+            errors.append("branch protection response exceeded the 8 MiB receipt bound")
+        else:
+            errors.append(f"branch protection GET unavailable (HTTP {status})")
+    elif not isinstance(body, dict):
+        errors.append("branch protection response is not an object")
+    else:
+        try:
+            raw_size = len(json.dumps(body, separators=(",", ":")).encode("utf-8"))
+        except (TypeError, ValueError):
+            raw_size = MAX_OUTPUT_BYTES + 1
+        if raw_size > MAX_OUTPUT_BYTES:
+            errors.append("branch protection response exceeded the 8 MiB receipt bound")
+        elif SENSITIVE_VALUE_RE.search(json.dumps(body, sort_keys=True)):
+            errors.append("branch protection response contains a secret-shaped value")
+        else:
+            known_response_fields = PROTECTION_CONFIGURATION_FIELDS | PROTECTION_TOPLEVEL_METADATA_FIELDS
+            unknown = sorted(set(body) - known_response_fields)
+            missing = sorted(PROTECTION_CONFIGURATION_FIELDS - set(body))
+            if unknown:
+                errors.append("branch protection response has unmodeled fields: " + ", ".join(unknown))
+            if missing:
+                errors.append("branch protection response is missing settings: " + ", ".join(missing))
+            if not errors:
+                candidate = strip_protection_metadata(body, root=True)
+                errors.extend(protection_resource_errors(candidate))
+                if not errors:
+                    resource = candidate
+    return {
+        "capture_status": "complete" if resource is not None else "incomplete",
+        "observed_fields": observed_fields,
+        "resource": resource,
+        "capture_errors": errors,
+    }
 
 
 def lane_owners(root: pathlib.Path, fixture: dict | None = None) -> dict[str, list[str]]:
@@ -793,13 +1011,70 @@ def validate_receipt(receipt: object) -> list[str]:
         if claimed_complete and (not isinstance(workflow.get("state"), str) or workflow.get("state") not in {"active", "disabled"}):
             errors.append("workflow state is absent or unrecognized")
     protection = github.get("branch_protection", {})
-    errors.extend(unknown_field_errors(protection, {"access_status", "required_contexts", "expected_contexts", "context_match", "context_results"}, "branch protection"))
+    errors.extend(unknown_field_errors(protection, {
+        "access_status", "required_contexts", "expected_contexts", "context_match", "context_results",
+        "capture_status", "capture_errors", "observed_fields", "resource", "source_endpoint",
+    }, "branch protection"))
+    protection_source = sources.get("branch_protection", {})
+    if protection.get("source_endpoint") != BRANCH_PROTECTION_ENDPOINT or protection_source.get("endpoint") != BRANCH_PROTECTION_ENDPOINT:
+        errors.append("branch protection source endpoint is missing or mismatched")
+    if protection.get("access_status") != protection_source.get("access_status"):
+        errors.append("branch protection access status does not match its source record")
+    observed_fields = protection.get("observed_fields", [])
+    if not isinstance(observed_fields, list) or not all(isinstance(field, str) for field in observed_fields):
+        errors.append("branch protection observed fields are malformed")
+        observed_fields = []
+    if observed_fields != sorted(set(observed_fields)):
+        errors.append("branch protection observed fields are not unique and sorted")
+    capture_errors = protection.get("capture_errors", [])
+    if not isinstance(capture_errors, list) or not all(isinstance(message, str) and message for message in capture_errors):
+        errors.append("branch protection capture errors are malformed")
+        capture_errors = []
+    capture_status = protection.get("capture_status")
+    if capture_status not in {"complete", "incomplete"}:
+        errors.append("branch protection capture status is missing or unrecognized")
+    if capture_status == "complete":
+        resource = protection.get("resource")
+        errors.extend(protection_resource_errors(resource))
+        allowed_response_fields = PROTECTION_CONFIGURATION_FIELDS | PROTECTION_TOPLEVEL_METADATA_FIELDS
+        if not PROTECTION_CONFIGURATION_FIELDS <= set(observed_fields) or not set(observed_fields) <= allowed_response_fields:
+            errors.append("branch protection observed fields do not prove a complete modeled response")
+        if capture_errors:
+            errors.append("complete branch protection capture retains capture errors")
+        if protection_source.get("completeness") != "complete":
+            errors.append("complete branch protection capture has an incomplete source record")
+        if isinstance(resource, dict):
+            required_status_checks = resource.get("required_status_checks")
+            actual_contexts = (
+                required_status_checks.get("contexts")
+                if isinstance(required_status_checks, dict)
+                else None
+            )
+            if not isinstance(actual_contexts, list) or sorted(actual_contexts) != sorted(
+                protection.get("required_contexts", [])
+            ):
+                errors.append("branch protection resource contexts do not match the inventory")
+    else:
+        if protection.get("resource") is not None or not capture_errors:
+            errors.append("incomplete branch protection capture must name its failure and omit the resource")
+        if protection_source.get("completeness") != "incomplete":
+            errors.append("incomplete branch protection capture has a complete source record")
+        if claimed_complete:
+            errors.append("complete inventory cannot contain an incomplete branch protection capture")
     protection["context_results"] = object_or_empty(protection.get("context_results", {}), "protection context results", errors)
     required_contexts_value = protection.get("required_contexts", [])
     if not isinstance(required_contexts_value, list) or not all(isinstance(context, str) for context in required_contexts_value):
         errors.append("branch protection required contexts is not an array")
         required_contexts_value = []
     protection["required_contexts"] = required_contexts_value
+    expected_contexts_value = protection.get("expected_contexts", [])
+    if not isinstance(expected_contexts_value, list) or not all(isinstance(context, str) for context in expected_contexts_value):
+        errors.append("branch protection expected contexts is not an array")
+        expected_contexts_value = []
+    if type(protection.get("context_match")) is not bool or protection.get("context_match") != (
+        sorted(required_contexts_value) == sorted(expected_contexts_value)
+    ):
+        errors.append("branch protection context match does not reflect observed and expected contexts")
     context_results = protection.get("context_results", {})
     for context, result in list(context_results.items()):
         result = object_or_empty(result, f"protection context {context}", errors)
@@ -824,8 +1099,7 @@ def validate_receipt(receipt: object) -> list[str]:
                 errors.append(f"required protection context is not green on observed main SHA: {context}")
         if set(context_results) != set(protection.get("required_contexts", [])):
             errors.append("required protection context observations are incomplete")
-    sensitive = re.compile(r"(?:gh[pousr]_[A-Za-z0-9_]{16,}|github_pat_[A-Za-z0-9_]+|authorization\s*:|cookie\s*:|password\s*=|BEGIN (?:RSA )?PRIVATE KEY)", re.IGNORECASE)
-    if sensitive.search(json.dumps(receipt, sort_keys=True)):
+    if SENSITIVE_VALUE_RE.search(json.dumps(receipt, sort_keys=True)):
         errors.append("receipt contains sensitive data")
     if len(json.dumps(receipt, separators=(",", ":")).encode()) > MAX_OUTPUT_BYTES:
         errors.append("receipt exceeds output bound")
@@ -858,12 +1132,24 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         sources[name] = {key: value for key, value in source.items() if key != "items"}
         rows[name] = source.get("items", [])
     sources["main_ref"] = {"endpoint": "git/ref/heads/main", "page_count": 1 if main_status == 200 else 0, "pages": [{"number": 1, "item_count": 1, "status": main_status, "continuation": False}] if main_status == 200 else [], "item_count": 1 if main_status == 200 else 0, "access_status": "allowed" if main_status == 200 else access_status(main_status), "completeness": "complete" if main_status == 200 else "incomplete", "failure_status": main_status if main_status != 200 else None}
-    protection, protection_status = raw_single(repo, "branches/main/protection", fixture)
-    sources["branch_protection"] = {"endpoint": "branches/main/protection", "page_count": 1 if protection_status == 200 else 0, "pages": [{"number": 1, "item_count": 1, "status": protection_status, "continuation": False}] if protection_status == 200 else [], "item_count": 1 if protection_status == 200 else 0, "access_status": "allowed" if protection_status == 200 else access_status(protection_status), "completeness": "complete" if protection_status == 200 else "incomplete", "failure_status": protection_status if protection_status != 200 else None}
+    protection, protection_status = raw_single(repo, BRANCH_PROTECTION_ENDPOINT, fixture)
+    protection_capture = capture_protection_resource(protection, protection_status)
+    protection_access = "allowed" if protection_status == 200 else access_status(protection_status)
+    protection_complete = protection_capture["capture_status"] == "complete"
+    sources["branch_protection"] = {
+        "endpoint": BRANCH_PROTECTION_ENDPOINT,
+        "page_count": 1 if protection_status == 200 else 0,
+        "pages": [{"number": 1, "item_count": 1, "status": protection_status, "continuation": False}] if protection_status == 200 else [],
+        "item_count": 1 if protection_status == 200 else 0,
+        "access_status": protection_access,
+        "completeness": "complete" if protection_complete else "incomplete",
+        "failure_status": protection_status if protection_status != 200 else None,
+    }
     sources["check_runs"]["sha"] = main_sha
     sources["statuses"]["sha"] = main_sha
     expected = json.loads(command(["scripts/setup_branch_protection.sh", "--print-expected-json"], cwd=root, fixture=fixture))
-    contexts = protection.get("required_status_checks", {}).get("contexts", []) if protection_status == 200 else []
+    raw_contexts = protection.get("required_status_checks", {}).get("contexts", []) if protection_status == 200 else []
+    contexts = raw_contexts if isinstance(raw_contexts, list) and all(isinstance(item, str) for item in raw_contexts) else []
     checks = rows.get("check_runs", [])
     statuses = rows.get("statuses", [])
     lanes = lane_owners(root, fixture)
@@ -897,6 +1183,8 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         gaps.append("latest owner workflow run or attempt is ambiguous for observed main SHA")
     if protection_status != 200:
         gaps.append(f"branch protection inaccessible ({access_status(protection_status)})")
+    if not protection_complete:
+        gaps.append("branch protection configuration capture is incomplete")
     if any(not lane["owners"] for lane in lane_results.values()):
         gaps.append("one or more mandatory lanes lack a workflow owner")
     if any(lane["state"] != "passed" for lane in lane_results.values()):
@@ -931,7 +1219,18 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         "check_runs": [{**only(row, ("id", "name", "status", "conclusion", "head_sha", "check_suite_id", "started_at", "completed_at")), "html_url": safe_github_url(row.get("html_url"))} for row in checks if isinstance(row, dict)],
         "workflow_jobs": workflow_jobs,
         "statuses": [{**only(row, ("context", "state", "description", "created_at", "updated_at", "sha")), "target_url": safe_github_url(row.get("target_url"))} for row in statuses if isinstance(row, dict)],
-        "branch_protection": {"access_status": "allowed" if protection_status == 200 else access_status(protection_status), "required_contexts": sorted(contexts), "expected_contexts": sorted(required_contexts), "context_match": sorted(contexts) == sorted(required_contexts), "context_results": context_results},
+        "branch_protection": {
+            "access_status": protection_access,
+            "required_contexts": sorted(contexts),
+            "expected_contexts": sorted(required_contexts),
+            "context_match": sorted(contexts) == sorted(required_contexts),
+            "context_results": context_results,
+            "capture_status": protection_capture["capture_status"],
+            "capture_errors": protection_capture["capture_errors"],
+            "observed_fields": protection_capture["observed_fields"],
+            "resource": protection_capture["resource"],
+            "source_endpoint": BRANCH_PROTECTION_ENDPOINT,
+        },
         "mandatory_lanes": lane_results,
         "canaries": canaries,
     }
@@ -939,7 +1238,7 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         gaps.append("live required contexts differ from repository expected contexts")
     if github["branch_protection"]["access_status"] != "allowed":
         gaps.append("branch protection access denied")
-    return {
+    receipt = {
         "schema": SCHEMA, "version": VERSION, "observed_at": utc_now(),
         "repository": {"name": repo, "source": "git remote origin"},
         "observation": {"ref": "refs/heads/main", "main_sha": main_sha, "source": f"GET repos/{repo}/git/ref/heads/main", "revalidated_sha": second_sha},
@@ -948,6 +1247,21 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         "local": local,
         "github": github,
     }
+    if len(json.dumps(receipt, separators=(",", ":")).encode("utf-8")) > MAX_OUTPUT_BYTES:
+        branch_protection = receipt["github"]["branch_protection"]
+        if branch_protection["resource"] is not None:
+            branch_protection["resource"] = None
+            branch_protection["capture_status"] = "incomplete"
+            branch_protection["capture_errors"].append(
+                "complete branch protection resource would exceed the 8 MiB receipt bound"
+            )
+            receipt["sources"]["branch_protection"]["completeness"] = "incomplete"
+            receipt["collection"]["complete"] = False
+            receipt["collection"]["readiness"] = "unknown"
+            receipt["collection"]["gaps"].append(
+                "branch protection configuration capture is incomplete"
+            )
+    return receipt
 
 
 def atomic_write(path: pathlib.Path, payload: dict) -> None:

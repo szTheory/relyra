@@ -689,6 +689,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   @tag :plan_73_10_task_2
   test "summary hashes are an exact audit cross-check and never select reviewed changes" do
+    assert summary_task_commits("""
+           ## Task Commits
+
+           1. **Task 3: Artifact identity and owner assertions** — `4b91adb`, `d0eae82` (`test`)
+           """) == ["4b91adb", "d0eae82"]
+
     for {variant, diagnostic} <- [
           {:omitted, "omitted"},
           {:duplicate, "duplicate"},
@@ -2868,11 +2874,28 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert protection["observed_fields"] == Enum.sort(["url" | Map.keys(protection_resource)])
     assert protection_resource["required_status_checks"]["strict"]
 
-    assert protection_resource["required_status_checks"]["contexts"] ==
+    assert Enum.sort(protection_resource["required_status_checks"]["contexts"]) ==
              protection["required_contexts"]
 
-    assert protection_resource["required_status_checks"]["checks"] ==
-             Enum.map(protection["required_contexts"], &%{"context" => &1, "app_id" => nil})
+    assert Enum.sort_by(protection_resource["required_status_checks"]["checks"], & &1["context"]) ==
+             Enum.map(protection["required_contexts"], fn context ->
+               app_id =
+                 case context do
+                   "security (27, 1.19.5)" -> 123
+                   "security (28, 1.19.5)" -> 124
+                   "fleet-proxy-e2e" -> 125
+                 end
+
+               %{"context" => context, "app_id" => app_id}
+             end)
+
+    assert Enum.find(protection_resource["required_status_checks"]["checks"], fn check ->
+             check["context"] == "security (27, 1.19.5)"
+           end)["app_id"] == 123
+
+    assert Enum.find(protection_resource["required_status_checks"]["checks"], fn check ->
+             check["context"] == "security (28, 1.19.5)"
+           end)["app_id"] == 124
 
     assert protection_resource["enforce_admins"] == %{"enabled" => true}
 
@@ -2884,6 +2907,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert protection_resource["restrictions"]["teams"] ==
              [%{"id" => 6, "slug" => "security", "name" => "Security Team"}]
+
+    refute Jason.encode!(protection_resource) =~ "avatars.example"
 
     assert receipt["sources"]["branch_protection"]["completeness"] == "complete"
 
@@ -3000,6 +3025,32 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         fixture,
         ["github", "branches/main/protection?page=1", "body", "future_policy"],
         %{"enabled" => true}
+      )
+
+    unknown_nested_protection_setting_fixture =
+      put_in(
+        fixture,
+        [
+          "github",
+          "branches/main/protection?page=1",
+          "body",
+          "required_status_checks",
+          "future_setting_url"
+        ],
+        "https://example.invalid/future-policy"
+      )
+
+    oversized_protection_fixture =
+      put_in(
+        fixture,
+        ["github", "branches/main/protection?page=1", "body", "restrictions", "teams"],
+        [
+          %{
+            "id" => 7,
+            "slug" => "oversized",
+            "name" => String.duplicate("x", 8 * 1024 * 1024 + 1)
+          }
+        ]
       )
 
     truncated_fixture =
@@ -3174,6 +3225,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           {"denied-protection", denied_protection_fixture},
           {"missing-protection-setting", missing_protection_setting_fixture},
           {"unknown-protection-setting", unknown_protection_setting_fixture},
+          {"unknown-nested-protection-setting", unknown_nested_protection_setting_fixture},
+          {"oversized-protection", oversized_protection_fixture},
           {"truncated-pages", truncated_fixture},
           {"unknown-workflow", unknown_workflow_fixture},
           {"empty-lane", empty_lane_fixture},
@@ -3197,10 +3250,23 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       refute receipt["collection"]["readiness"] == "green"
       assert receipt["collection"]["gaps"] != []
 
-      if name in ["missing-protection-setting", "unknown-protection-setting"] do
+      if name in [
+           "missing-protection-setting",
+           "unknown-protection-setting",
+           "unknown-nested-protection-setting"
+         ] do
         assert receipt["github"]["branch_protection"]["capture_status"] == "incomplete"
         assert receipt["sources"]["branch_protection"]["completeness"] == "incomplete"
         assert receipt["github"]["branch_protection"]["resource"] == nil
+      end
+
+      if name == "oversized-protection" do
+        assert receipt["github"]["branch_protection"]["capture_status"] == "incomplete"
+
+        assert Enum.any?(
+                 receipt["github"]["branch_protection"]["capture_errors"],
+                 &(&1 =~ "8 MiB")
+               )
       end
 
       if name == "unknown-workflow",
@@ -3754,7 +3820,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             "contexts" => contexts,
             "contexts_url" =>
               "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_status_checks/contexts",
-            "checks" => Enum.map(contexts, &%{"context" => &1, "app_id" => nil})
+            "checks" =>
+              contexts
+              |> Enum.with_index(123)
+              |> Enum.map(fn {context, app_id} -> %{"context" => context, "app_id" => app_id} end)
           },
           "enforce_admins" => %{
             "url" =>
@@ -6826,9 +6895,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp summary_task_commits(summary) do
     case Regex.run(~r/^## Task Commits\s*(.*?)(?=^## |\z)/ms, summary, capture: :all_but_first) do
       [section] ->
-        ~r/^\d+\.\s+\*\*[^\n]+?\*\*\s+[—-]\s+`([0-9a-f]{7,40})`/mu
+        ~r/^\d+\.\s+\*\*[^\n]+?\*\*\s+[—-]\s+([^\n]+)/mu
         |> Regex.scan(section, capture: :all_but_first)
-        |> Enum.map(fn [commit] -> commit end)
+        |> Enum.flat_map(fn [claims] ->
+          Regex.scan(~r/`([0-9a-f]{7,40})`/, claims, capture: :all_but_first)
+          |> Enum.map(fn [commit] -> commit end)
+        end)
 
       nil ->
         []
