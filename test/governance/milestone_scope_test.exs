@@ -2894,6 +2894,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     sha = String.duplicate("b", 40)
     fixture = phase79_fixture(sha)
     changed_sha = String.duplicate("c", 40)
+    script = Path.join(root, "scripts/collect_phase79_inventory.py")
 
     changed_ref_fixture =
       put_in(fixture, ["github", "git/ref/heads/main?page=1"], %{
@@ -3025,6 +3026,25 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       if name in ["non-owner-collision", "aggregate-only"],
         do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "absent")
+    end
+
+    for {name, origin} <- [
+          {"unapproved-https", "https://gitlab.example/szTheory/relyra.git"},
+          {"unapproved-ssh", "git@gitlab.example:szTheory/relyra.git"}
+        ] do
+      candidate = put_in(fixture, ["commands", "git remote get-url origin", "stdout"], origin)
+      fixture_path = Path.join(temporary, "#{name}.json")
+      output_path = Path.join(temporary, "#{name}-inventory.json")
+      File.write!(fixture_path, Jason.encode!(candidate))
+
+      assert {output, 1} =
+               System.cmd("python3", [script, "--fixture", fixture_path, "--output", output_path],
+                 cd: root,
+                 stderr_to_stdout: true
+               )
+
+      assert output =~ "origin host is not an approved GitHub host"
+      refute File.exists?(output_path)
     end
 
     paginated_lane_fixture =

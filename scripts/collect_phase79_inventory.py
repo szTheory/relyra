@@ -268,13 +268,26 @@ def parse_branches(value: str) -> list[dict]:
 
 def repository_from_remote(value: str) -> str:
     value = value.strip()
+    host = None
+    path = ""
     if value.startswith("git@"):
-        match = re.match(r"git@[^:]+:(.+?)(?:\.git)?$", value)
+        match = re.fullmatch(r"git@([^:/?#]+):([^?#]+)", value)
         if match:
-            return match.group(1)
-    parsed = urlparse(value)
-    path = parsed.path.lstrip("/")
-    return path[:-4] if path.endswith(".git") else path
+            host, path = match.groups()
+    else:
+        parsed = urlparse(value)
+        if parsed.scheme == "https" and parsed.username is None and parsed.password is None and parsed.port in (None, 443):
+            host, path = parsed.hostname, parsed.path.lstrip("/")
+        elif parsed.scheme == "ssh" and parsed.username == "git" and parsed.password is None and parsed.port in (None, 22):
+            host, path = parsed.hostname, parsed.path.lstrip("/")
+        if parsed.query or parsed.fragment:
+            host = None
+    if host is None or host.lower() != "github.com":
+        raise CollectionError("origin host is not an approved GitHub host (github.com)")
+    path = path[:-4] if path.endswith(".git") else path
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", path):
+        raise CollectionError("could not identify GitHub repository from origin")
+    return path
 
 
 def safe_github_url(value: object) -> str | None:
