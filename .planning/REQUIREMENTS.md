@@ -57,9 +57,9 @@
 
 ### Repository and GitHub Hygiene
 
-- [ ] **REPO-01**: Main, tracked files, and registered worktrees end in an intentional clean state with no unexplained generated or scratch artifacts.
-- [ ] **REPO-02**: Maintainer can inspect a current inventory of pull requests, issues, branches, workflow health, and branch-protection state.
-- [ ] **REPO-03**: Remote GitHub mutations are presented as an exact batch and performed only after explicit approval.
+- [x] **REPO-01**: Main, tracked files, and registered worktrees end in an intentional clean state with no unexplained generated or scratch artifacts.
+- [x] **REPO-02**: Maintainer can inspect a current inventory of pull requests, issues, branches, workflow health, and branch-protection state.
+- [x] **REPO-03**: Remote GitHub mutations are presented as an exact batch and performed only after explicit approval.
 
 ### Governance and Exit
 
@@ -121,9 +121,9 @@
 | PIPE-03 | Phase 78 | Complete |
 | PIPE-04 | Phase 78 | Complete |
 | PIPE-05 | Phase 78 | Complete |
-| REPO-01 | Phase 79 | Pending |
-| REPO-02 | Phase 79 | Pending |
-| REPO-03 | Phase 79 | Pending |
+| REPO-01 | Phase 79 | Complete |
+| REPO-02 | Phase 79 | Complete |
+| REPO-03 | Phase 79 | Complete |
 | GOV-01 | Phase 73 | Complete |
 | GOV-02 | Phase 73 | Complete |
 | EXIT-01 | Phase 79 | Pending |
