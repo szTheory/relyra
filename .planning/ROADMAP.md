@@ -438,7 +438,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 5. A residual-risk report shows that every remaining idea is low-value, demand-gated,
    approval-blocked, or more costly to maintain than the risk it would retire.
 
-**Plans:** 2/4 plans executed
+**Plans:** 2/5 plans executed
 **Wave 1**
 
 - [x] 79-01-PLAN.md
@@ -449,11 +449,15 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 **Wave 3** *(gap closure; blocked on Wave 2 completion)*
 
-- [ ] 79-03-PLAN.md — Capture complete protection state and prepare an exact, unexecuted remote batch for missing main evidence.
+- [ ] 79-03-PLAN.md — Capture complete protection state, refresh the source-bound closeout, and prepare an exact, unexecuted remote batch.
 
-**Wave 4** *(gap closure; blocked on Wave 3 completion and exact remote approval)*
+**Wave 4** *(gap closure; blocked on Wave 3 completion)*
 
-- [ ] 79-04-PLAN.md — Gate the exact batch on explicit approval, then verify current-main CI and protection by automated read-back.
+- [ ] 79-04-PLAN.md — Verify the exact batch in mandatory CI and reconcile local source-bound proof.
+
+**Wave 5** *(gap closure; blocked on Wave 4 completion and exact remote approval)*
+
+- [ ] 79-05-PLAN.md — Gate the exact batch on explicit approval, then verify current-main CI and protection by automated read-back.
 
 ## Progress
 
