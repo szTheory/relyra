@@ -19,7 +19,7 @@ created: "2026-09-29"
 |----------|-------|
 | **Framework** | ExUnit |
 | **Config file** | mix.exs; .github/workflows/security-gates.yml |
-| **Quick run command** | mix ci.evidence |
+| **Quick run command** | `mix ci.evidence` |
 | **Full suite command** | mix qa; mix test --warnings-as-errors; mix ci.security; mix format --check-formatted |
 | **Estimated runtime** | Re-measure in the active Phase 79 CI run; not established by current Phase 78 evidence |
 
@@ -38,24 +38,23 @@ created: "2026-09-29"
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| TBD | TBD | TBD | REPO-01 | — | Preserve user-owned paths; reject unexplained cleanup or clean-state claims | contract | mix ci.evidence | Existing owner: test/governance/milestone_scope_test.exs; inspect coverage | ⬜ pending |
-| TBD | TBD | TBD | REPO-02 | — | Reject incomplete, stale, mismatched-SHA, or unredacted inventory evidence | contract | mix ci.evidence | Add only missing deterministic fixtures | ⬜ pending |
-| TBD | TBD | TBD | REPO-03 | T-79-01 | Prevent mutation without one exact plan-local approval and matching read-back | governance contract | mix ci.evidence | Existing exact-batch owner: test/governance/milestone_scope_test.exs | ⬜ pending |
-| TBD | TBD | TBD | EXIT-01 | — | Require evidence, owner, disposition, and revisit point for every residual risk | contract | mix ci.evidence | Inspect existing baseline validator and add only missing coverage | ⬜ pending |
+| 79-02-T1 | 79-02 | 2 | REPO-01, EXIT-01 | T-79-08, T-79-09 | Bind closeout risks to inventory; require every Phase 73 finding, STATE deferred item, and open WINDOWS item with owner, evidence, severity, disposition, and revisit | contract | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | `test/governance/milestone_scope_test.exs` risk-ledger owner | ✅ passed, 87 tests, 0 failures |
+| 79-02-T2 | 79-02 | 2 | REPO-03, EXIT-01 | T-79-06, T-79-07, T-79-08 | Keep no-action records inert; bind proposed payload, approval, rollback, immediate preflight, and automated read-back to one target | contract | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence` | `test/governance/milestone_scope_test.exs` risk/remote contract owner | ✅ passed, 155 tests, 0 failures |
+| 79-02-T3 | 79-02 | 2 | REPO-02, REPO-03, EXIT-01 | T-79-06, T-79-07, T-79-09 | Refresh source identity after local commits; keep incomplete main evidence and any changed proposal visibly blocked | contract | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence` | Inventory collector and risk/closeout governance owner | ⬜ pending |
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] Inspect current REPO-01/02/03 and EXIT-01 coverage in test/governance/milestone_scope_test.exs; add deterministic fixtures only for gaps in the chosen Phase 79 report contract.
-- [ ] Keep new contract checks in the existing mandatory mix ci.evidence lane.
-- [ ] Do not probe shared GitHub credentials or current state as part of local fixtures; refresh live state only through the active plan's read-only inventory task.
+- [x] Inspect current REPO-01/02/03 and EXIT-01 coverage in test/governance/milestone_scope_test.exs; add deterministic fixtures only for gaps in the chosen Phase 79 report contract.
+- [x] Keep new contract checks in the existing mandatory `mix ci.evidence` lane.
+- [x] Do not probe shared GitHub credentials or current state as part of local fixtures; refresh live state only through the active plan's read-only inventory task.
 
 ---
 
-## Manual-Only Verifications
+## External Evidence Boundaries
 
-All phase acceptance behavior must have deterministic automated evidence. Live GitHub state is collected as timestamped external evidence during execution, not a manual-only acceptance test. The explicit approval checkpoint authorizes a proposed write; automated preflight and read-back establish mutation postconditions.
+All acceptance behavior is checked by deterministic automation. The inventory collector records live GitHub observations as timestamped source evidence; they are not substituted by manual review or used as acceptance. A future explicit approval could authorize one separately planned write, while same-target preflight and automated read-back would prove its postcondition. No write is performed by this phase.
 
 ---
 
@@ -68,4 +67,8 @@ All phase acceptance behavior must have deterministic automated evidence. Live G
 - [ ] Feedback latency measured and below 30 seconds for focused checks
 - [ ] nyquist_compliant: true set in frontmatter after validation
 
-**Approval:** pending
+**Validation owner:** `test/governance/milestone_scope_test.exs`, selected by the mandatory fresh-process `mix ci.evidence` lane.
+
+**Open evidence gaps:** the current main-SHA inventory has no passing evidence for its nine mandatory lanes, and two Phase 76 concurrency windows remain unautomated. Both remain explicit closeout risks; neither is accepted through manual review or converted into a green release claim.
+
+**Approval:** not applicable; this is an automated validation map, not a human acceptance gate.

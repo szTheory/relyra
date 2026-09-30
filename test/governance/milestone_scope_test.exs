@@ -2630,17 +2630,50 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     identity = phase79_inventory_identity(inventory)
     missing_owner = put_in(risks, ["items", Access.at(0), "owner"], "")
     missing_source = put_in(risks, ["items", Access.at(0), "source"], "")
+    missing_severity = put_in(risks, ["items", Access.at(0), "severity"], "")
+    missing_evidence = put_in(risks, ["items", Access.at(0), "evidence"], "")
+    missing_status = put_in(risks, ["items", Access.at(0), "status"], "")
+    missing_impact = put_in(risks, ["items", Access.at(0), "adopter_impact"], "")
+    missing_demand = put_in(risks, ["items", Access.at(0), "demand_or_trigger"], "")
+    missing_cost = put_in(risks, ["items", Access.at(0), "maintenance_cost"], "")
+    missing_approval = put_in(risks, ["items", Access.at(0), "approval_boundary"], "")
+    missing_revisit = put_in(risks, ["items", Access.at(0), "revisit"], "")
 
     omitted_window =
       update_in(risks["items"], &Enum.reject(&1, fn item -> item["id"] == "WINDOW-29" end))
 
+    omitted_baseline =
+      update_in(risks["items"], &Enum.reject(&1, fn item -> item["id"] == "QUAL-73-001" end))
+
+    omitted_deferred =
+      update_in(risks["items"], &Enum.reject(&1, fn item -> item["id"] == "AUTHN-POST-01" end))
+
     stale_source = put_in(risks, ["inventory_source", "main_sha"], String.duplicate("0", 40))
+    high_not_blocking = put_in(risks, ["items", Access.at(1), "status"], "deferred")
+
+    medium_not_disposed =
+      put_in(risks, ["items", Access.at(-2), "status"], "deferred")
+
+    missing_open_disposition = put_in(risks, ["items", Access.at(1), "open_disposition"], nil)
 
     for {candidate, expected_error} <- [
           {missing_owner, "owner"},
           {missing_source, "source"},
+          {missing_severity, "severity"},
+          {missing_evidence, "evidence"},
+          {missing_status, "status"},
+          {missing_impact, "adopter_impact"},
+          {missing_demand, "demand_or_trigger"},
+          {missing_cost, "maintenance_cost"},
+          {missing_approval, "approval_boundary"},
+          {missing_revisit, "revisit"},
           {omitted_window, "membership"},
-          {stale_source, "inventory identity"}
+          {omitted_baseline, "membership"},
+          {omitted_deferred, "membership"},
+          {stale_source, "inventory identity"},
+          {high_not_blocking, "not blocked"},
+          {medium_not_disposed, "written disposition"},
+          {missing_open_disposition, "open disposition"}
         ] do
       violations = phase79_risk_violations(candidate, expected_ids, identity)
       assert Enum.any?(violations, &String.contains?(&1, expected_error)), inspect(violations)
@@ -2658,28 +2691,61 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Enum.any?(phase79_remote_batch_violations(altered_target, identity), &(&1 =~ "target"))
     assert Enum.any?(phase79_remote_batch_violations(missing_reason, identity), &(&1 =~ "reason"))
 
+    payload = ~s({"required_status_checks":{"contexts":["fixture-context"]}})
+    payload_digest = :crypto.hash(:sha256, payload) |> Base.encode16(case: :lower)
+
     proposal = """
     **Status:** exact proposal; not executed.
-    - Target repository: `szTheory/relyra`
-    - Target ref/resource: `refs/heads/main` branch protection
+    - Target repository: `#{identity["repository"]}`
+    - Target ref/resource: `#{identity["ref"]}` branch protection
     - Observed main SHA: `#{identity["main_sha"]}`
     - Observed at: `#{identity["observed_at"]}`
-    - Captured current state: `security (27, 1.19.5)`, `security (28, 1.19.5)`
-    - Desired state: add `fleet-proxy-e2e`
-    - Affected identifiers: `fleet-proxy-e2e`
-    - Reason and least-privilege operation: add the missing required context only
-    - Preflight command: `gh api repos/szTheory/relyra/branches/main/protection`
-    - Proposed operation (not executed): exact payload in a separate plan
-    - Rollback: restore the exact captured current state
+    - Captured current state: `{"required_status_checks":{"contexts":["current-context"]}}`
+    - Desired state: `#{payload}`
+    - Affected identifiers: `fixture-context`
+    - Reason and least-privilege operation: add only the named fixture context
+    - Read-only preflight: read-only query of the target and compare its current state
+    - Proposed operation (not executed): apply the exact payload below in a separate plan
+    - Exact payload JSON: `#{payload}`
+    - Payload SHA-256: `#{payload_digest}`
+    - Rollback: restore the exact captured current state above
     - Read-back assertion: query protection and compare exact fields
-    - Resume signal: approval bound to this target and payload
-    - Explicit approval: required in a separate plan
+    - Resume signal: approval bound to `#{identity["repository"]}` `#{identity["ref"]}` and payload sha256 `#{payload_digest}`
+    - Explicit approval: required in a separate plan after immediate same-target revalidation; if state differs, expire and renew approval
     """
 
     assert phase79_remote_batch_violations(proposal, identity) == []
 
+    altered_payload = ~s({"required_status_checks":{"contexts":["other-context"]}})
+
+    stale_payload =
+      String.replace(
+        proposal,
+        "- Exact payload JSON: `#{payload}`",
+        "- Exact payload JSON: `#{altered_payload}`",
+        global: false
+      )
+
+    assert Enum.any?(phase79_remote_batch_violations(stale_payload, identity), &(&1 =~ "payload"))
+
+    stale_resume_target =
+      String.replace(
+        proposal,
+        "`#{identity["repository"]}` `#{identity["ref"]}` and payload sha256",
+        "`#{identity["repository"]}` `refs/heads/release` and payload sha256",
+        global: false
+      )
+
+    assert Enum.any?(
+             phase79_remote_batch_violations(stale_resume_target, identity),
+             &(&1 =~ "payload")
+           )
+
     for {incomplete, expected_error} <- [
-          {String.replace(proposal, "- Rollback: restore the exact captured current state\n", "",
+          {String.replace(
+             proposal,
+             "- Rollback: restore the exact captured current state above\n",
+             "",
              global: false
            ), "rollback"},
           {String.replace(
@@ -2690,13 +2756,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
            ), "read-back"},
           {String.replace(
              proposal,
-             "- Proposed operation (not executed): exact payload in a separate plan\n",
+             "- Exact payload JSON: `#{payload}`\n",
+             "",
+             global: false
+           ), "payload"},
+          {String.replace(
+             proposal,
+             "- Proposed operation (not executed): apply the exact payload below in a separate plan\n",
              "",
              global: false
            ), "operation"},
           {String.replace(
              proposal,
-             "- Explicit approval: required in a separate plan\n",
+             "- Explicit approval: required in a separate plan after immediate same-target revalidation; if state differs, expire and renew approval\n",
              "- Explicit approval: acceptance evidence\n",
              global: false
            ), "approval"}
@@ -2706,9 +2778,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
 
     stale_target =
-      String.replace(proposal, "refs/heads/main", "refs/heads/release", global: false)
+      String.replace(
+        proposal,
+        "- Target ref/resource: `#{identity["ref"]}` branch protection",
+        "- Target ref/resource: `refs/heads/release` branch protection",
+        global: false
+      )
 
     assert Enum.any?(phase79_remote_batch_violations(stale_target, identity), &(&1 =~ "target"))
+
+    malformed_no_action = String.replace(batch, "no mutation proposed", "mutation proposed")
+    assert phase79_remote_batch_violations(malformed_no_action, identity) != []
   end
 
   test "Phase 79 fixture collector emits timestamped, source-bound inventory" do
@@ -7099,19 +7179,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp phase79_remote_batch_violations(markdown, identity) do
-    no_action = String.contains?(markdown, "**Status:** no mutation proposed")
-
-    identity_errors =
-      Enum.flat_map(
-        [identity["repository"], identity["ref"], identity["main_sha"], identity["observed_at"]],
-        fn value ->
-          if is_binary(value) and String.contains?(markdown, value),
-            do: [],
-            else: ["remote batch target/source identity is stale"]
-        end
-      )
-
-    if no_action do
+    if String.contains?(markdown, "**Status:** no mutation proposed") do
       reason =
         Regex.run(~r/## Why there is no proposal\s+(.+?)\s+## Authorization boundary/s, markdown,
           capture: :all_but_first
@@ -7124,23 +7192,53 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       execution_errors =
         if String.contains?(markdown, "no command was executed") and
-             String.contains?(markdown, "automated read-back proves its postcondition") do
+             String.contains?(markdown, "automated read-back proves its postcondition") and
+             String.contains?(markdown, "grants no permission") do
           []
         else
           ["no-action record lacks execution/approval boundary"]
         end
 
-      identity_errors ++ reason_errors ++ execution_errors
+      identity_errors =
+        phase79_remote_identity_errors(markdown, identity, [
+          {"- **Target repository:**", "repository", :equal},
+          {"- **Target ref/resource:**", "ref", :prefix},
+          {"- **Observed main SHA:**", "main_sha", :equal},
+          {"- **Observed at:**", "observed_at", :equal}
+        ])
+
+      status_errors =
+        if String.contains?(
+             markdown,
+             "**Status:** no mutation proposed; no command was executed."
+           ),
+           do: [],
+           else: ["no-action status must state that no mutation was proposed or executed"]
+
+      contradictory_action_errors =
+        if String.contains?(markdown, "Proposed operation") or
+             String.contains?(markdown, "exact proposal; not executed") do
+          ["no-action record contains a proposed mutation"]
+        else
+          []
+        end
+
+      identity_errors ++
+        status_errors ++ reason_errors ++ execution_errors ++ contradictory_action_errors
     else
       fields = [
         {"- Target repository:", "target"},
         {"- Target ref/resource:", "target"},
+        {"- Observed main SHA:", "source identity"},
+        {"- Observed at:", "source identity"},
         {"- Captured current state:", "current state"},
         {"- Desired state:", "desired state"},
         {"- Affected identifiers:", "affected identifiers"},
         {"- Reason and least-privilege operation:", "operation"},
-        {"- Preflight command:", "preflight"},
+        {"- Read-only preflight:", "preflight"},
         {"- Proposed operation (not executed):", "operation"},
+        {"- Exact payload JSON:", "payload"},
+        {"- Payload SHA-256:", "payload"},
         {"- Rollback:", "rollback"},
         {"- Read-back assertion:", "read-back"},
         {"- Resume signal:", "resume signal"},
@@ -7149,27 +7247,124 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       proposal_errors =
         Enum.flat_map(fields, fn {label, error} ->
-          case Regex.run(Regex.compile!(Regex.escape(label) <> "\\s*(.+)"), markdown,
-                 capture: :all_but_first
-               ) do
-            [value] ->
-              if(String.trim(value) == "", do: ["remote proposal missing #{error}"], else: [])
-
-            _ ->
+          case phase79_remote_field(markdown, label) do
+            nil ->
               ["remote proposal missing #{error}"]
+
+            value ->
+              if(String.trim(value) == "", do: ["remote proposal missing #{error}"], else: [])
           end
         end)
+
+      identity_errors =
+        phase79_remote_identity_errors(markdown, identity, [
+          {"- Target repository:", "repository", :equal},
+          {"- Target ref/resource:", "ref", :prefix},
+          {"- Observed main SHA:", "main_sha", :equal},
+          {"- Observed at:", "observed_at", :equal}
+        ])
+
+      desired = phase79_remote_field(markdown, "- Desired state:") |> phase79_unwrap_code()
+      payload = phase79_remote_field(markdown, "- Exact payload JSON:") |> phase79_unwrap_code()
+
+      payload_digest =
+        phase79_remote_field(markdown, "- Payload SHA-256:") |> phase79_unwrap_code()
+
+      resume = phase79_remote_field(markdown, "- Resume signal:") || ""
+      approval = phase79_remote_field(markdown, "- Explicit approval:") || ""
+      rollback = phase79_remote_field(markdown, "- Rollback:") || ""
+      preflight = phase79_remote_field(markdown, "- Read-only preflight:") || ""
+      read_back = phase79_remote_field(markdown, "- Read-back assertion:") || ""
+
+      payload_binding_errors =
+        cond do
+          not is_binary(payload) or payload == "" ->
+            ["remote proposal missing payload"]
+
+          desired != payload ->
+            ["remote proposal desired state differs from exact payload"]
+
+          match?({:error, _}, Jason.decode(payload)) ->
+            ["remote proposal payload is not valid JSON"]
+
+          true ->
+            expected_digest = :crypto.hash(:sha256, payload) |> Base.encode16(case: :lower)
+
+            if(payload_digest == expected_digest,
+              do: [],
+              else: ["remote proposal payload digest does not match its exact payload"]
+            ) ++
+              if String.contains?(resume, expected_digest) and
+                   String.contains?(resume, identity["repository"]) and
+                   String.contains?(resume, identity["ref"]),
+                 do: [],
+                 else: ["remote proposal resume signal is not bound to target and payload"]
+        end
+
+      state_control_errors =
+        if(String.contains?(rollback, "captured current state"),
+          do: [],
+          else: ["remote proposal rollback does not restore captured current state"]
+        ) ++
+          if(
+            String.contains?(preflight, "read-only") and String.contains?(preflight, "query") and
+              String.contains?(preflight, "compare"),
+            do: [],
+            else: ["remote proposal preflight is not a read-only state comparison"]
+          ) ++
+          if(String.contains?(read_back, "query") and String.contains?(read_back, "compare"),
+            do: [],
+            else: ["remote proposal lacks automated read-back"]
+          ) ++
+          if String.contains?(approval, "separate plan") and
+               String.contains?(approval, "immediate same-target revalidation") and
+               String.contains?(approval, "expire") and String.contains?(approval, "renew"),
+             do: [],
+             else: ["remote proposal approval is not target-bound and state-expiring"]
 
       proposal_errors =
         proposal_errors ++
           if String.contains?(markdown, "approval is acceptance") or
-               String.contains?(markdown, "approval: acceptance evidence"),
+               String.contains?(markdown, "approval: acceptance evidence") or
+               String.contains?(approval, "acceptance"),
              do: ["approval cannot be used as acceptance"],
              else: []
 
-      identity_errors ++ proposal_errors
+      status_errors =
+        if String.contains?(markdown, "**Status:** exact proposal; not executed."),
+          do: [],
+          else: ["remote proposal status must remain exact and unexecuted"]
+
+      identity_errors ++
+        proposal_errors ++ status_errors ++ payload_binding_errors ++ state_control_errors
     end
   end
+
+  defp phase79_remote_identity_errors(markdown, identity, fields) do
+    Enum.flat_map(fields, fn {label, identity_key, match_kind} ->
+      value = phase79_remote_field(markdown, label) || ""
+      expected = identity[identity_key]
+      normalized = String.trim(value, "`")
+
+      matches? =
+        case match_kind do
+          :equal -> normalized == expected
+          :prefix -> String.starts_with?(normalized, expected)
+        end
+
+      if matches?, do: [], else: ["remote batch target/source identity is stale"]
+    end)
+  end
+
+  defp phase79_remote_field(markdown, label) do
+    case Regex.run(~r/^#{Regex.escape(label)}\s*(.+)$/m, markdown, capture: :all_but_first) do
+      [value] -> String.trim(value)
+      _ -> nil
+    end
+  end
+
+  defp phase79_unwrap_code(nil), do: nil
+  defp phase79_unwrap_code(value), do: String.trim(value, "`")
 
   defp sensitive_payload_violations(rows) do
     sensitive =
