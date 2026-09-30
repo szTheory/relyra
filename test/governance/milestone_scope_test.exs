@@ -2859,6 +2859,52 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert receipt["observation"]["main_sha"] == sha
     assert receipt["collection"]["complete"]
 
+    protection = receipt["github"]["branch_protection"]
+    protection_resource = protection["resource"]
+
+    assert protection["capture_status"] == "complete"
+    assert protection["source_endpoint"] == "branches/main/protection"
+    assert protection["capture_errors"] == []
+    assert protection["observed_fields"] == Enum.sort(["url" | Map.keys(protection_resource)])
+    assert protection_resource["required_status_checks"]["strict"]
+
+    assert protection_resource["required_status_checks"]["contexts"] ==
+             protection["required_contexts"]
+
+    assert protection_resource["required_status_checks"]["checks"] ==
+             Enum.map(protection["required_contexts"], &%{"context" => &1, "app_id" => nil})
+
+    assert protection_resource["enforce_admins"] == %{"enabled" => true}
+
+    assert protection_resource["required_pull_request_reviews"]["required_approving_review_count"] ==
+             1
+
+    assert protection_resource["required_pull_request_reviews"]["dismissal_restrictions"]["users"] ==
+             [%{"id" => 5, "login" => "maintainer"}]
+
+    assert protection_resource["restrictions"]["teams"] ==
+             [%{"id" => 6, "slug" => "security", "name" => "Security Team"}]
+
+    assert receipt["sources"]["branch_protection"]["completeness"] == "complete"
+
+    tampered_protection =
+      put_in(
+        receipt,
+        ["github", "branch_protection", "resource"],
+        Map.delete(protection_resource, "allow_deletions")
+      )
+
+    tampered_path = Path.join(temporary, "tampered-protection.json")
+    File.write!(tampered_path, Jason.encode!(tampered_protection))
+
+    assert {tampered_output, 1} =
+             System.cmd("python3", [script, "--verify", tampered_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert tampered_output =~ "branch protection resource is incomplete"
+
     owned_paths = [
       ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md",
       ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
@@ -2941,6 +2987,20 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     denied_protection_fixture =
       put_in(fixture, ["github", "branches/main/protection?page=1", "status"], 403)
+
+    missing_protection_setting_fixture =
+      update_in(
+        fixture,
+        ["github", "branches/main/protection?page=1", "body"],
+        &Map.delete(&1, "allow_fork_syncing")
+      )
+
+    unknown_protection_setting_fixture =
+      put_in(
+        fixture,
+        ["github", "branches/main/protection?page=1", "body", "future_policy"],
+        %{"enabled" => true}
+      )
 
     truncated_fixture =
       fixture
@@ -3112,6 +3172,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     for {name, candidate} <- [
           {"changed-ref", changed_ref_fixture},
           {"denied-protection", denied_protection_fixture},
+          {"missing-protection-setting", missing_protection_setting_fixture},
+          {"unknown-protection-setting", unknown_protection_setting_fixture},
           {"truncated-pages", truncated_fixture},
           {"unknown-workflow", unknown_workflow_fixture},
           {"empty-lane", empty_lane_fixture},
@@ -3134,6 +3196,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       refute receipt["collection"]["complete"]
       refute receipt["collection"]["readiness"] == "green"
       assert receipt["collection"]["gaps"] != []
+
+      if name in ["missing-protection-setting", "unknown-protection-setting"] do
+        assert receipt["github"]["branch_protection"]["capture_status"] == "incomplete"
+        assert receipt["sources"]["branch_protection"]["completeness"] == "incomplete"
+        assert receipt["github"]["branch_protection"]["resource"] == nil
+      end
 
       if name == "unknown-workflow",
         do: assert(Enum.any?(receipt["github"]["workflows"], &(&1["state"] == "unknown")))
@@ -3677,7 +3745,71 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         }
       },
       "branches/main/protection?page=1" => %{
-        "body" => %{"required_status_checks" => %{"contexts" => contexts}}
+        "body" => %{
+          "url" => "https://api.github.com/repos/szTheory/relyra/branches/main/protection",
+          "required_status_checks" => %{
+            "url" =>
+              "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_status_checks",
+            "strict" => true,
+            "contexts" => contexts,
+            "contexts_url" =>
+              "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_status_checks/contexts",
+            "checks" => Enum.map(contexts, &%{"context" => &1, "app_id" => nil})
+          },
+          "enforce_admins" => %{
+            "url" =>
+              "https://api.github.com/repos/szTheory/relyra/branches/main/protection/enforce_admins",
+            "enabled" => true
+          },
+          "required_pull_request_reviews" => %{
+            "url" =>
+              "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_pull_request_reviews",
+            "dismiss_stale_reviews" => true,
+            "require_code_owner_reviews" => false,
+            "required_approving_review_count" => 1,
+            "require_last_push_approval" => false,
+            "dismissal_restrictions" => %{
+              "users_url" =>
+                "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_pull_request_reviews/dismissal_restrictions/users",
+              "users" => [
+                %{
+                  "id" => 5,
+                  "login" => "maintainer",
+                  "avatar_url" => "https://avatars.example/maintainer.png",
+                  "html_url" => "https://github.com/maintainer"
+                }
+              ],
+              "teams" => [],
+              "apps" => []
+            }
+          },
+          "restrictions" => %{
+            "teams_url" =>
+              "https://api.github.com/repos/szTheory/relyra/branches/main/protection/restrictions/teams",
+            "users" => [],
+            "teams" => [
+              %{
+                "id" => 6,
+                "slug" => "security",
+                "name" => "Security Team",
+                "url" => "https://api.github.com/teams/6"
+              }
+            ],
+            "apps" => []
+          },
+          "required_signatures" => %{
+            "url" =>
+              "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_signatures",
+            "enabled" => false
+          },
+          "required_linear_history" => %{"enabled" => false},
+          "allow_force_pushes" => %{"enabled" => false},
+          "allow_deletions" => %{"enabled" => false},
+          "block_creations" => %{"enabled" => false},
+          "required_conversation_resolution" => %{"enabled" => false},
+          "lock_branch" => %{"enabled" => false},
+          "allow_fork_syncing" => %{"enabled" => false}
+        }
       }
     }
 
