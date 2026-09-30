@@ -438,7 +438,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 5. A residual-risk report shows that every remaining idea is low-value, demand-gated,
    approval-blocked, or more costly to maintain than the risk it would retire.
 
-**Plans:** 2/2 plans executed
+**Plans:** 2/3 plans executed
 **Wave 1**
 
 - [x] 79-01-PLAN.md
@@ -446,6 +446,10 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 79-02-PLAN.md
+
+**Wave 3** *(gap closure; blocked on Wave 2 completion)*
+
+- [ ] 79-03-PLAN.md — Refresh complete protection-resource and protected-main CI evidence; preserve a blocked verdict if live gates remain absent.
 
 ## Progress
 
