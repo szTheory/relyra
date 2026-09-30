@@ -98,8 +98,9 @@ status: complete
 
 - Built a residual-risk ledger covering Phase 73 findings, deferred items, and open cross-phase windows with evidence, ownership, severity, demand/cost disposition, approval boundary, and revisit conditions.
 - Recorded a no-mutation remote state and kept future writes behind a separate exact plan, explicit approval, immediate same-target revalidation, rollback, and automated read-back.
-- Refreshed the final read-only inventory after review fixes. It binds the local tree at `798bce6a19266e527973856771eb3ccb79cdba4a` to `szTheory/relyra@refs/heads/main`, SHA `c786a9890f2f99f0dd98f89a1d9713db7c486837`. All nine mandatory lanes remain absent; readiness remains unknown and release blocked. The canary observations remain separate.
+- Refreshed the final read-only inventory after review fixes. It binds the post-review local tree to `szTheory/relyra@refs/heads/main`, SHA `c786a9890f2f99f0dd98f89a1d9713db7c486837`. All nine mandatory lanes remain absent; readiness remains unknown and release blocked. The canary observations remain separate.
 - Added deterministic checks for artifact identity, Phase 79 ownership of six scoped paths, and preservation of unknown-owner paths. No GitHub writes or branch-protection drift workflow changes were made.
+- Added an explicit six-path ownership allowlist to the collector so the final local inventory can identify Phase 79 outputs while preserving unknown owners and maintainer-owned `.tool-versions`.
 
 ## Task Commits
 
@@ -157,6 +158,8 @@ The existing Phase 78 cold-state receipt remains historical and was not rewritte
 
 **Total deviations:** 2 blocking provenance repairs plus 2 narrow plan-scope corrections and six review-driven collector fixes.
 **Impact on plan:** Preserved the declared scope and restored source-bound regression evidence; no product behavior or remote state changed.
+
+The final fixture replay exposed a closeout-specific ownership classification gap: the local collector preserved all tracked changes as unknown, while the deterministic closeout contract requires the six declared Phase 79 outputs to be identified as Phase 79-owned. The collector now uses an exact path allowlist and the fixture asserts both that classification and maintainer ownership for `.tool-versions`.
 
 ## Issues Encountered
 

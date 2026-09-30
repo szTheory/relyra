@@ -2859,6 +2859,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert receipt["observation"]["main_sha"] == sha
     assert receipt["collection"]["complete"]
 
+    assert Enum.any?(receipt["local"]["tracked_edits"], fn item ->
+             item["path"] == ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md" and
+               item["owner"] == "phase-79" and
+               item["disposition"] == "pending Task 3 commit; no cleanup authority"
+           end)
+
+    assert Enum.any?(receipt["local"]["untracked_paths"], fn item ->
+             item["path"] == ".tool-versions" and item["owner"] == "maintainer"
+           end)
+
     assert Enum.all?(receipt["sources"], fn {_name, source} ->
              source["endpoint"] != nil and source["page_count"] > 0 and
                source["completeness"] == "complete"
@@ -3423,9 +3433,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp phase79_fixture(sha) do
     command_responses = %{
       "git status --porcelain=v1 -z --untracked-files=all" => %{
-        "stdout" => "?? .tool-versions\u0000"
+        "stdout" =>
+          " M .planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md\u0000?? .tool-versions\u0000"
       },
-      "git ls-files -z" => %{"stdout" => "mix.exs\u0000"},
+      "git ls-files -z" => %{
+        "stdout" => "mix.exs\u0000.planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md\u0000"
+      },
       "git ls-files -z .github/workflows" => %{
         "stdout" =>
           ".github/workflows/security-gates.yml\u0000.github/workflows/demo-app-ci.yml\u0000.github/workflows/demo-app-e2e.yml\u0000.github/workflows/fleet-proxy-e2e.yml\u0000"

@@ -28,6 +28,14 @@ REQUIRED_LANES = (
     "mix ci.verify", "mix ci.package", "mix ci.ledger_loop", "browser defenses",
     "standalone defenses",
 )
+PHASE79_OWNED_LOCAL_PATHS = {
+    ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md",
+    ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
+    ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md",
+    ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md",
+    ".planning/phases/79-adopter-ready-closeout/79-RISKS.json",
+    ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md",
+}
 
 
 class CollectionError(Exception):
@@ -208,7 +216,13 @@ def local_inventory(root: pathlib.Path, fixture: dict | None) -> dict:
             continue
         state, path = record[:2], record[3:]
         if path:
-            items.append({"path": path, "git_state": state, "owner": "maintainer" if path == ".tool-versions" else "unknown", "disposition": "preserve; no cleanup authority"})
+            if path in PHASE79_OWNED_LOCAL_PATHS:
+                owner = "phase-79"
+                disposition = "pending Task 3 commit; no cleanup authority"
+            else:
+                owner = "maintainer" if path == ".tool-versions" else "unknown"
+                disposition = "preserve; no cleanup authority"
+            items.append({"path": path, "git_state": state, "owner": owner, "disposition": disposition})
     candidates = []
     seen_candidate_roots = set()
     for record in ignored_text.split("\0"):
