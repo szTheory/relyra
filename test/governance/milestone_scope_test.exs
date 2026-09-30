@@ -2949,6 +2949,22 @@ defmodule Relyra.Governance.MilestoneScopeTest do
                item["disposition"] == "preserve; no cleanup authority"
            end)
 
+    phase79_payloads = [
+      ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json",
+      ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json"
+    ]
+
+    classified_payloads =
+      Enum.filter(receipt["local"]["untracked_paths"], &(&1["path"] in phase79_payloads))
+
+    assert Enum.map(classified_payloads, & &1["path"]) |> Enum.sort() ==
+             Enum.sort(phase79_payloads)
+
+    assert Enum.all?(classified_payloads, fn item ->
+             item["owner"] == "phase-79" and
+               item["disposition"] == "preserve; no cleanup authority"
+           end)
+
     assert Enum.any?(receipt["local"]["tracked_edits"], fn item ->
              item["path"] == "README.md" and item["owner"] == "unknown" and
                item["disposition"] == "preserve; no cleanup authority"
@@ -3592,7 +3608,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             " M .planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md\u0000" <>
             " M .planning/phases/79-adopter-ready-closeout/79-RISKS.json\u0000" <>
             " M .planning/phases/79-adopter-ready-closeout/79-VALIDATION.md\u0000" <>
-            " M README.md\u0000?? .tool-versions\u0000"
+            " M README.md\u0000?? .tool-versions\u0000" <>
+            "?? .planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json\u0000" <>
+            "?? .planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json\u0000"
       },
       "git ls-files -z" => %{
         "stdout" =>

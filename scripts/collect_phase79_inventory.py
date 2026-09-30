@@ -84,6 +84,8 @@ PHASE79_OWNED_LOCAL_PATHS = {
     ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md",
     ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
     ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md",
+    ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json",
+    ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json",
     ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md",
     ".planning/phases/79-adopter-ready-closeout/79-RISKS.json",
     ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md",
