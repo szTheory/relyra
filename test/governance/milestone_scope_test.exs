@@ -3204,7 +3204,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     for {name, origin} <- [
           {"unapproved-https", "https://gitlab.example/szTheory/relyra.git"},
-          {"unapproved-ssh", "git@gitlab.example:szTheory/relyra.git"}
+          {"unapproved-ssh", "git@gitlab.example:szTheory/relyra.git"},
+          {"malformed-port", "https://github.com:bad/szTheory/relyra.git"},
+          {"malformed-host", "https://[github.com/szTheory/relyra.git"}
         ] do
       candidate = put_in(fixture, ["commands", "git remote get-url origin", "stdout"], origin)
       fixture_path = Path.join(temporary, "#{name}.json")
@@ -3220,6 +3222,47 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       assert output =~ "origin host is not an approved GitHub host"
       refute File.exists?(output_path)
     end
+
+    credential_url_fixture =
+      put_in(
+        fixture,
+        ["github", "commits/#{sha}/status?page=1", "body", "statuses"],
+        [
+          %{
+            "context" => "external-userinfo",
+            "state" => "success",
+            "sha" => sha,
+            "target_url" => "https://reader:secret@github.com/szTheory/relyra/check"
+          },
+          %{
+            "context" => "external-query",
+            "state" => "success",
+            "sha" => sha,
+            "target_url" => "https://github.com/szTheory/relyra/check?access_token=query-secret"
+          }
+        ]
+      )
+
+    credential_url_path = Path.join(temporary, "credential-url-fixture.json")
+    credential_url_output = Path.join(temporary, "credential-url-inventory.json")
+    File.write!(credential_url_path, Jason.encode!(credential_url_fixture))
+
+    assert {_, 0} =
+             System.cmd(
+               "python3",
+               [script, "--fixture", credential_url_path, "--output", credential_url_output],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    credential_url_receipt = credential_url_output |> File.read!() |> Jason.decode!()
+    encoded_credential_url_receipt = Jason.encode!(credential_url_receipt)
+    refute encoded_credential_url_receipt =~ "reader:secret"
+    refute encoded_credential_url_receipt =~ "query-secret"
+
+    assert Enum.all?(credential_url_receipt["github"]["statuses"], fn status ->
+             status["target_url"] == nil
+           end)
 
     paginated_lane_fixture =
       fixture
@@ -3508,7 +3551,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
               "id" => 56,
               "name" => "Security Gates",
               "workflow_id" => 1,
-              "path" => ".github/workflows/security-gates.yml",
+              "path" => ".github/workflows/security-gates.yml@refs/heads/main",
               "head_branch" => "main",
               "head_sha" => sha,
               "check_suite_id" => 100,
@@ -3522,7 +3565,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
               "id" => 57,
               "name" => "fleet-proxy-e2e",
               "workflow_id" => 4,
-              "path" => ".github/workflows/fleet-proxy-e2e.yml",
+              "path" => ".github/workflows/fleet-proxy-e2e.yml@refs/heads/main",
               "head_branch" => "main",
               "head_sha" => sha,
               "check_suite_id" => 101,

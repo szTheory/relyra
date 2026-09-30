@@ -275,13 +275,17 @@ def repository_from_remote(value: str) -> str:
         if match:
             host, path = match.groups()
     else:
-        parsed = urlparse(value)
-        if parsed.scheme == "https" and parsed.username is None and parsed.password is None and parsed.port in (None, 443):
-            host, path = parsed.hostname, parsed.path.lstrip("/")
-        elif parsed.scheme == "ssh" and parsed.username == "git" and parsed.password is None and parsed.port in (None, 22):
-            host, path = parsed.hostname, parsed.path.lstrip("/")
-        if parsed.query or parsed.fragment:
-            host = None
+        try:
+            parsed = urlparse(value)
+            port = parsed.port
+            if parsed.scheme == "https" and parsed.username is None and parsed.password is None and port in (None, 443):
+                host, path = parsed.hostname, parsed.path.lstrip("/")
+            elif parsed.scheme == "ssh" and parsed.username == "git" and parsed.password is None and port in (None, 22):
+                host, path = parsed.hostname, parsed.path.lstrip("/")
+            if parsed.query or parsed.fragment:
+                host = None
+        except ValueError:
+            raise CollectionError("origin host is not an approved GitHub host (github.com)") from None
     if host is None or host.lower() != "github.com":
         raise CollectionError("origin host is not an approved GitHub host (github.com)")
     path = path[:-4] if path.endswith(".git") else path
@@ -293,8 +297,22 @@ def repository_from_remote(value: str) -> str:
 def safe_github_url(value: object) -> str | None:
     if not isinstance(value, str):
         return None
-    parsed = urlparse(value)
-    if parsed.scheme == "https" and (parsed.hostname == "github.com" or parsed.hostname.endswith(".github.com")):
+    try:
+        parsed = urlparse(value)
+        hostname = parsed.hostname
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme == "https"
+        and parsed.username is None
+        and parsed.password is None
+        and not parsed.query
+        and not parsed.fragment
+        and port in (None, 443)
+        and isinstance(hostname, str)
+        and (hostname == "github.com" or hostname.endswith(".github.com"))
+    ):
         return value[:2048]
     return None
 
@@ -373,6 +391,16 @@ def protection_context_owners(name: str) -> list[str]:
     return owners.get(name, [])
 
 
+def workflow_path_name(value: object) -> str:
+    """Normalize GitHub's workflow path, which may include an @ref suffix."""
+    if not isinstance(value, str):
+        return ""
+    path, separator, ref = value.rpartition("@")
+    if separator and ref and pathlib.PurePosixPath(path).suffix.lower() in {".yml", ".yaml"}:
+        value = path
+    return pathlib.PurePosixPath(value).name
+
+
 def select_latest_owner_runs(sha: str, owners: set[str], runs: list) -> tuple[dict[str, dict], set[str]]:
     """Select one unambiguous latest run per workflow owner for the observed SHA."""
     candidates: dict[str, list[tuple[dt.datetime, int, dict]]] = {owner: [] for owner in owners}
@@ -380,7 +408,7 @@ def select_latest_owner_runs(sha: str, owners: set[str], runs: list) -> tuple[di
     for run in runs:
         if not isinstance(run, dict) or run.get("head_sha") != sha:
             continue
-        owner = pathlib.PurePosixPath(str(run.get("path", ""))).name
+        owner = workflow_path_name(run.get("path"))
         if owner not in owners:
             continue
         attempt = run.get("run_attempt")
@@ -446,7 +474,7 @@ def classify_lane(name: str, checks: list, statuses: list, sha: str, owners: lis
     # for the selected workflow run. Check-suite IDs are shared across Actions
     # workflows and therefore do not establish workflow ownership.
     owner_paths = {
-        pathlib.PurePosixPath(owner).name
+        workflow_path_name(owner)
         for owner in owners or []
         if owner.endswith((".yml", ".yaml"))
     }
@@ -467,7 +495,7 @@ def classify_lane(name: str, checks: list, statuses: list, sha: str, owners: lis
     ambiguous_owners = ambiguous_owners or set()
     if owner_paths & ambiguous_owners:
         return {"state": "unknown", "sha": sha, "evidence_count": 0, "owners": sorted(owner_paths), "check_names": expected_names, "evidence": []}
-    selected_runs = [run for run in (runs or []) if pathlib.PurePosixPath(str(run.get("path", ""))).name in owner_paths]
+    selected_runs = [run for run in (runs or []) if workflow_path_name(run.get("path")) in owner_paths]
     if not selected_runs:
         return {"state": "absent", "sha": sha, "evidence_count": 0, "owners": sorted(owner_paths), "check_names": expected_names, "evidence": []}
 
@@ -561,7 +589,7 @@ def validate_evidence_binding(result: dict, sha: str, checks: list[dict], runs: 
     if result.get("owners") != expected_owners or result.get("check_names") != expected_names:
         errors.append(f"{label} has unexpected evidence owners or check names")
     workflow_owners = {
-        pathlib.PurePosixPath(owner).name
+        workflow_path_name(owner)
         for owner in expected_owners
         if owner.endswith((".yml", ".yaml"))
     }
@@ -587,7 +615,7 @@ def validate_evidence_binding(result: dict, sha: str, checks: list[dict], runs: 
                 errors.append(f"{label} workflow path does not match its evidence")
             if run.get("run_attempt") != item.get("run_attempt"):
                 errors.append(f"{label} workflow attempt does not match its evidence")
-            if pathlib.PurePosixPath(str(run.get("path", ""))).name not in workflow_owners:
+            if workflow_path_name(run.get("path")) not in workflow_owners:
                 errors.append(f"{label} workflow run is not owned by the configured workflow")
             if result.get("state") == "passed" and (
                 run.get("status") != "completed"
@@ -729,7 +757,7 @@ def validate_receipt(receipt: object) -> list[str]:
                 errors.append(f"mandatory lane owners are malformed: {name}")
                 lane_owners_value = []
             workflow_owner_names = sorted({
-                pathlib.PurePosixPath(owner).name
+                workflow_path_name(owner)
                 for owner in lane_owners_value
                 if owner.endswith((".yml", ".yaml"))
             })
@@ -830,7 +858,7 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
     if workflow_runs and isinstance(workflow_runs[0], dict) and "workflow_runs" in workflow_runs[0]:
         workflow_runs = workflow_runs[0]["workflow_runs"]
     owner_paths = {
-        pathlib.PurePosixPath(owner).name
+        workflow_path_name(owner)
         for owner_list in list(lanes.values()) + [protection_context_owners(context) for context in required_contexts]
         for owner in owner_list
         if owner.endswith((".yml", ".yaml"))
