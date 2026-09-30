@@ -3,7 +3,7 @@
 ## Release readiness: BLOCKED
 
 The current protected-main observation is `szTheory/relyra@refs/heads/main` at
-`c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed at `2026-09-30T01:41:35Z`.
+`c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed at `2026-09-30T09:27:02Z`.
 Readiness remains unknown and release is blocked: all nine mandatory lanes are absent
 on that SHA, two live-required security contexts lack passing evidence, and live branch
 protection omits the expected `fleet-proxy-e2e` context. Local validation cannot replace
@@ -27,8 +27,8 @@ pending, not green.
 
 ## External canaries
 
-The inventory records 33 successful `rulestead-main-canary` observations; the newest is
-run `109289682580` at `2026-09-29T06:48:46Z` for the observed main SHA. No incident is
+The inventory records 34 successful `rulestead-main-canary` observations; the newest is
+run `109772782212` at `2026-09-30T06:48:55Z` for the observed main SHA. No incident is
 recorded in this bounded receipt. These external checks remain separate from deterministic
 readiness and do not satisfy a mandatory lane.
 

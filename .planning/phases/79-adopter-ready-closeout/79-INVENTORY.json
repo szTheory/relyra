@@ -15,17 +15,48 @@
       "context_match": false,
       "context_results": {
         "fleet-proxy-e2e": {
-          "evidence_count": 33,
+          "check_names": [
+            "fleet-proxy-e2e"
+          ],
+          "evidence": [
+            {
+              "check_name": "fleet-proxy-e2e",
+              "check_run_id": 109772781960,
+              "check_suite_id": null,
+              "run_attempt": 1,
+              "workflow_job_id": 109772781960,
+              "workflow_path": ".github/workflows/fleet-proxy-e2e.yml",
+              "workflow_run_id": 36679875791
+            }
+          ],
+          "evidence_count": 1,
+          "owners": [
+            "fleet-proxy-e2e.yml"
+          ],
           "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
           "state": "passed"
         },
         "security (27, 1.19.5)": {
+          "check_names": [
+            "security (27, 1.19.5)"
+          ],
+          "evidence": [],
           "evidence_count": 0,
+          "owners": [
+            "security-gates.yml"
+          ],
           "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
           "state": "absent"
         },
         "security (28, 1.19.5)": {
+          "check_names": [
+            "security (28, 1.19.5)"
+          ],
+          "evidence": [],
           "evidence_count": 0,
+          "owners": [
+            "security-gates.yml"
+          ],
           "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
           "state": "absent"
         }
@@ -41,6 +72,15 @@
       ]
     },
     "canaries": [
+      {
+        "name": "rulestead-main-canary",
+        "observed_at": "2026-09-30T06:48:55Z",
+        "ref": null,
+        "run_id": 109772782212,
+        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "source": "GitHub Actions check run",
+        "status": "success"
+      },
       {
         "name": "rulestead-main-canary",
         "observed_at": "2026-09-29T06:48:46Z",
@@ -340,6 +380,36 @@
       }
     ],
     "check_runs": [
+      {
+        "completed_at": "2026-09-30T07:04:54Z",
+        "conclusion": "success",
+        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/36681462517/job/109777611731",
+        "id": 109777611731,
+        "name": "keycloak-proxy-e2e",
+        "started_at": "2026-09-30T07:02:32Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-09-30T06:48:55Z",
+        "conclusion": "success",
+        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/36679875791/job/109772782212",
+        "id": 109772782212,
+        "name": "rulestead-main-canary",
+        "started_at": "2026-09-30T06:45:11Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-09-30T06:47:59Z",
+        "conclusion": "success",
+        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/36679875791/job/109772781960",
+        "id": 109772781960,
+        "name": "fleet-proxy-e2e",
+        "started_at": "2026-09-30T06:45:11Z",
+        "status": "completed"
+      },
       {
         "completed_at": "2026-09-29T07:05:13Z",
         "conclusion": "success",
@@ -1354,6 +1424,11 @@
     "issues": [],
     "mandatory_lanes": {
       "browser defenses": {
+        "check_names": [
+          "security (27, 1.19.5)",
+          "security (28, 1.19.5)"
+        ],
+        "evidence": [],
         "evidence_count": 0,
         "owners": [
           "security-gates.yml"
@@ -1362,6 +1437,11 @@
         "state": "absent"
       },
       "mix ci.evidence": {
+        "check_names": [
+          "security (27, 1.19.5)",
+          "security (28, 1.19.5)"
+        ],
+        "evidence": [],
         "evidence_count": 0,
         "owners": [
           "security-gates.yml"
@@ -1370,6 +1450,11 @@
         "state": "absent"
       },
       "mix ci.ledger_loop": {
+        "check_names": [
+          "security (27, 1.19.5)",
+          "security (28, 1.19.5)"
+        ],
+        "evidence": [],
         "evidence_count": 0,
         "owners": [
           "security-gates.yml"
@@ -1378,6 +1463,11 @@
         "state": "absent"
       },
       "mix ci.package": {
+        "check_names": [
+          "security (27, 1.19.5)",
+          "security (28, 1.19.5)"
+        ],
+        "evidence": [],
         "evidence_count": 0,
         "owners": [
           "security-gates.yml"
@@ -1386,6 +1476,11 @@
         "state": "absent"
       },
       "mix ci.phase73.reconciliation": {
+        "check_names": [
+          "security (27, 1.19.5)",
+          "security (28, 1.19.5)"
+        ],
+        "evidence": [],
         "evidence_count": 0,
         "owners": [
           "security-gates.yml"
@@ -1394,6 +1489,11 @@
         "state": "absent"
       },
       "mix ci.security": {
+        "check_names": [
+          "security (27, 1.19.5)",
+          "security (28, 1.19.5)"
+        ],
+        "evidence": [],
         "evidence_count": 0,
         "owners": [
           "security-gates.yml"
@@ -1402,6 +1502,11 @@
         "state": "absent"
       },
       "mix ci.verify": {
+        "check_names": [
+          "security (27, 1.19.5)",
+          "security (28, 1.19.5)"
+        ],
+        "evidence": [],
         "evidence_count": 0,
         "owners": [
           "security-gates.yml"
@@ -1410,6 +1515,11 @@
         "state": "absent"
       },
       "mix qa": {
+        "check_names": [
+          "security (27, 1.19.5)",
+          "security (28, 1.19.5)"
+        ],
+        "evidence": [],
         "evidence_count": 0,
         "owners": [
           "security-gates.yml"
@@ -1418,6 +1528,11 @@
         "state": "absent"
       },
       "standalone defenses": {
+        "check_names": [
+          "security (27, 1.19.5)",
+          "security (28, 1.19.5)"
+        ],
+        "evidence": [],
         "evidence_count": 0,
         "owners": [
           "security-gates.yml"
@@ -2002,8 +2117,69 @@
       }
     ],
     "statuses": [],
+    "workflow_jobs": [
+      {
+        "check_run_id": 109772781960,
+        "completed_at": "2026-09-30T06:47:59Z",
+        "conclusion": "success",
+        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "id": 109772781960,
+        "name": "fleet-proxy-e2e",
+        "run_attempt": 1,
+        "run_id": 36679875791,
+        "started_at": "2026-09-30T06:45:11Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/fleet-proxy-e2e.yml"
+      },
+      {
+        "check_run_id": 109772782212,
+        "completed_at": "2026-09-30T06:48:55Z",
+        "conclusion": "success",
+        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "id": 109772782212,
+        "name": "rulestead-main-canary",
+        "run_attempt": 1,
+        "run_id": 36679875791,
+        "started_at": "2026-09-30T06:45:11Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/fleet-proxy-e2e.yml"
+      }
+    ],
     "workflow_runs": [
       {
+        "check_suite_id": 99339410726,
+        "conclusion": "success",
+        "event": "schedule",
+        "head_branch": "main",
+        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/36681462517",
+        "id": 36681462517,
+        "name": "keycloak-proxy-e2e",
+        "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
+        "run_started_at": "2026-09-30T07:02:30Z",
+        "status": "completed",
+        "updated_at": "2026-09-30T07:04:55Z",
+        "workflow_id": 344269450
+      },
+      {
+        "check_suite_id": 99335107041,
+        "conclusion": "success",
+        "event": "schedule",
+        "head_branch": "main",
+        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/36679875791",
+        "id": 36679875791,
+        "name": "fleet-proxy-e2e",
+        "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
+        "run_started_at": "2026-09-30T06:45:08Z",
+        "status": "completed",
+        "updated_at": "2026-09-30T06:48:56Z",
+        "workflow_id": 344269448
+      },
+      {
+        "check_suite_id": 98929355191,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2012,12 +2188,14 @@
         "id": 36534341395,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-29T07:02:45Z",
         "status": "completed",
         "updated_at": "2026-09-29T07:05:13Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 98924813722,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2026,12 +2204,14 @@
         "id": 36532687270,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-29T06:44:46Z",
         "status": "completed",
         "updated_at": "2026-09-29T06:48:47Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 98530954716,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2040,12 +2220,14 @@
         "id": 36390496866,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-28T07:13:34Z",
         "status": "completed",
         "updated_at": "2026-09-28T07:16:17Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 98526972806,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2054,12 +2236,14 @@
         "id": 36389026450,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-28T06:57:01Z",
         "status": "completed",
         "updated_at": "2026-09-28T07:01:00Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 98298964729,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2068,12 +2252,14 @@
         "id": 36301647052,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-27T06:57:54Z",
         "status": "completed",
         "updated_at": "2026-09-27T07:00:21Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 98296840939,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2082,12 +2268,14 @@
         "id": 36300806701,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-27T06:40:47Z",
         "status": "completed",
         "updated_at": "2026-09-27T06:44:35Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 98101097685,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2096,12 +2284,14 @@
         "id": 36225219500,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-26T06:55:43Z",
         "status": "completed",
         "updated_at": "2026-09-26T06:58:08Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 98098982202,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2110,12 +2300,14 @@
         "id": 36224387010,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-26T06:38:56Z",
         "status": "completed",
         "updated_at": "2026-09-26T06:43:20Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 97772106715,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2124,12 +2316,14 @@
         "id": 36105445993,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-25T06:59:57Z",
         "status": "completed",
         "updated_at": "2026-09-25T07:02:24Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 97768609384,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2138,12 +2332,14 @@
         "id": 36104126482,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-25T06:43:02Z",
         "status": "completed",
         "updated_at": "2026-09-25T06:46:06Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 97392571804,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2152,12 +2348,14 @@
         "id": 35967184919,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-24T06:59:04Z",
         "status": "completed",
         "updated_at": "2026-09-24T07:01:41Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 97388841214,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2166,12 +2364,14 @@
         "id": 35965785851,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-24T06:42:20Z",
         "status": "completed",
         "updated_at": "2026-09-24T06:46:21Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 97013732710,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2180,12 +2380,14 @@
         "id": 35829329849,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-23T06:58:47Z",
         "status": "completed",
         "updated_at": "2026-09-23T07:01:41Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 97010093645,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2194,12 +2396,14 @@
         "id": 35827988179,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-23T06:42:08Z",
         "status": "completed",
         "updated_at": "2026-09-23T06:46:26Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 96647682354,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2208,12 +2412,14 @@
         "id": 35697322413,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-22T06:58:49Z",
         "status": "completed",
         "updated_at": "2026-09-22T07:01:20Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 96644085627,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2222,12 +2428,14 @@
         "id": 35695994880,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-22T06:41:40Z",
         "status": "completed",
         "updated_at": "2026-09-22T06:45:48Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 96304004431,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2236,12 +2444,14 @@
         "id": 35571443256,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-21T07:07:19Z",
         "status": "completed",
         "updated_at": "2026-09-21T07:09:55Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 96301059036,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2250,12 +2460,14 @@
         "id": 35570339981,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-21T06:52:30Z",
         "status": "completed",
         "updated_at": "2026-09-21T06:56:05Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 96113771670,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2264,12 +2476,14 @@
         "id": 35495427945,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-20T06:54:00Z",
         "status": "completed",
         "updated_at": "2026-09-20T06:56:21Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 96112059315,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2278,12 +2492,14 @@
         "id": 35494719634,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-20T06:37:40Z",
         "status": "completed",
         "updated_at": "2026-09-20T06:41:44Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 95944904693,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2292,12 +2508,14 @@
         "id": 35427821544,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-19T06:53:13Z",
         "status": "completed",
         "updated_at": "2026-09-19T06:55:26Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 95943138593,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2306,12 +2524,14 @@
         "id": 35427107517,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-19T06:37:27Z",
         "status": "completed",
         "updated_at": "2026-09-19T06:41:08Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 95647594771,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2320,12 +2540,14 @@
         "id": 35317132118,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-18T06:56:57Z",
         "status": "completed",
         "updated_at": "2026-09-18T06:59:26Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 95644437657,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2334,12 +2556,14 @@
         "id": 35315938931,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-18T06:40:56Z",
         "status": "completed",
         "updated_at": "2026-09-18T06:44:58Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 95306432684,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2348,12 +2572,14 @@
         "id": 35192282408,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-17T06:58:44Z",
         "status": "completed",
         "updated_at": "2026-09-17T07:01:09Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 95303022410,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2362,12 +2588,14 @@
         "id": 35191010240,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-17T06:42:18Z",
         "status": "completed",
         "updated_at": "2026-09-17T06:45:59Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 94960291461,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2376,12 +2604,14 @@
         "id": 35066190412,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-16T06:58:19Z",
         "status": "completed",
         "updated_at": "2026-09-16T07:00:50Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 94956910037,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2390,12 +2620,14 @@
         "id": 35064922677,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-16T06:42:10Z",
         "status": "completed",
         "updated_at": "2026-09-16T06:45:56Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 94612303932,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2404,12 +2636,14 @@
         "id": 34939335489,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-15T06:57:49Z",
         "status": "completed",
         "updated_at": "2026-09-15T07:00:06Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 94609097283,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2418,12 +2652,14 @@
         "id": 34938127188,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-15T06:42:11Z",
         "status": "completed",
         "updated_at": "2026-09-15T06:46:13Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 94281344754,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2432,12 +2668,14 @@
         "id": 34816234603,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-14T07:05:31Z",
         "status": "completed",
         "updated_at": "2026-09-14T07:08:02Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 94278733562,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2446,12 +2684,14 @@
         "id": 34815216703,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-14T06:51:31Z",
         "status": "completed",
         "updated_at": "2026-09-14T06:55:40Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 94101626738,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2460,12 +2700,14 @@
         "id": 34743946059,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-13T06:55:26Z",
         "status": "completed",
         "updated_at": "2026-09-13T06:57:52Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 94100201797,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2474,12 +2716,14 @@
         "id": 34743344925,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-13T06:40:57Z",
         "status": "completed",
         "updated_at": "2026-09-13T06:44:25Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 93940814112,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2488,12 +2732,14 @@
         "id": 34679220733,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-12T06:51:37Z",
         "status": "completed",
         "updated_at": "2026-09-12T06:54:03Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 93939217757,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2502,12 +2748,14 @@
         "id": 34678566838,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-12T06:36:23Z",
         "status": "completed",
         "updated_at": "2026-09-12T06:40:12Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 93652840775,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2516,12 +2764,14 @@
         "id": 34572055805,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-11T06:55:52Z",
         "status": "completed",
         "updated_at": "2026-09-11T06:58:23Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 93649821576,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2530,12 +2780,14 @@
         "id": 34570896297,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-11T06:39:55Z",
         "status": "completed",
         "updated_at": "2026-09-11T06:43:45Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 93316081673,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2544,12 +2796,14 @@
         "id": 34447516810,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-10T06:56:30Z",
         "status": "completed",
         "updated_at": "2026-09-10T06:58:54Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 93312813243,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2558,12 +2812,14 @@
         "id": 34446267675,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-10T06:40:29Z",
         "status": "completed",
         "updated_at": "2026-09-10T06:44:24Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 92972969414,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2572,12 +2828,14 @@
         "id": 34321377185,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-09T06:56:21Z",
         "status": "completed",
         "updated_at": "2026-09-09T06:58:41Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 92969795709,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2586,12 +2844,14 @@
         "id": 34320178480,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-09T06:40:59Z",
         "status": "completed",
         "updated_at": "2026-09-09T06:45:05Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 92632875860,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2600,12 +2860,14 @@
         "id": 34196887307,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-08T06:56:03Z",
         "status": "completed",
         "updated_at": "2026-09-08T06:58:32Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 92629685325,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2614,12 +2876,14 @@
         "id": 34195690679,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-08T06:40:20Z",
         "status": "completed",
         "updated_at": "2026-09-08T06:43:44Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 92360533356,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2628,12 +2892,14 @@
         "id": 34093662672,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-07T07:04:09Z",
         "status": "completed",
         "updated_at": "2026-09-07T07:06:47Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 92357802569,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2642,12 +2908,14 @@
         "id": 34092632651,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-07T06:50:40Z",
         "status": "completed",
         "updated_at": "2026-09-07T06:54:29Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 92171907808,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2656,12 +2924,14 @@
         "id": 34017577804,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-06T06:51:05Z",
         "status": "completed",
         "updated_at": "2026-09-06T06:53:27Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 92170358835,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2670,12 +2940,14 @@
         "id": 34016921152,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-06T06:36:13Z",
         "status": "completed",
         "updated_at": "2026-09-06T06:40:09Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 92007513605,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2684,12 +2956,14 @@
         "id": 33950913480,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-05T06:50:26Z",
         "status": "completed",
         "updated_at": "2026-09-05T06:52:37Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 92005920689,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2698,12 +2972,14 @@
         "id": 33950252775,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-05T06:35:51Z",
         "status": "completed",
         "updated_at": "2026-09-05T06:39:46Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 91727107809,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2712,12 +2988,14 @@
         "id": 33846473892,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-04T06:56:17Z",
         "status": "completed",
         "updated_at": "2026-09-04T07:05:46Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 91724041006,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2726,12 +3004,14 @@
         "id": 33845334741,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-04T06:40:16Z",
         "status": "completed",
         "updated_at": "2026-09-04T06:48:55Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 91395925063,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2740,12 +3020,14 @@
         "id": 33725570555,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-03T06:56:00Z",
         "status": "completed",
         "updated_at": "2026-09-03T06:58:29Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 91392857838,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2754,12 +3036,14 @@
         "id": 33724398926,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-03T06:41:28Z",
         "status": "completed",
         "updated_at": "2026-09-03T06:45:14Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 91052671059,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2768,12 +3052,14 @@
         "id": 33601238190,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-02T06:57:41Z",
         "status": "completed",
         "updated_at": "2026-09-02T07:00:02Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 91050069122,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2782,12 +3068,14 @@
         "id": 33600266873,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-02T06:45:10Z",
         "status": "completed",
         "updated_at": "2026-09-02T06:48:59Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 90718554458,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2796,12 +3084,14 @@
         "id": 33479794729,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-01T06:56:29Z",
         "status": "completed",
         "updated_at": "2026-09-01T06:59:16Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 90715797089,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2810,12 +3100,14 @@
         "id": 33478767859,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-09-01T06:42:26Z",
         "status": "completed",
         "updated_at": "2026-09-01T06:46:25Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 90408622657,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2824,12 +3116,14 @@
         "id": 33366628964,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-31T07:02:24Z",
         "status": "completed",
         "updated_at": "2026-08-31T07:05:35Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 90406296630,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2838,12 +3132,14 @@
         "id": 33365771089,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-31T06:49:48Z",
         "status": "completed",
         "updated_at": "2026-08-31T06:53:39Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 90234225698,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2852,12 +3148,14 @@
         "id": 33297824701,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-30T06:50:27Z",
         "status": "completed",
         "updated_at": "2026-08-30T06:52:54Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 90232889333,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2866,12 +3164,14 @@
         "id": 33297272796,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-30T06:36:11Z",
         "status": "completed",
         "updated_at": "2026-08-30T06:40:09Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 90085459653,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2880,12 +3180,14 @@
         "id": 33239384891,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-29T06:49:07Z",
         "status": "completed",
         "updated_at": "2026-08-29T06:51:41Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 90084046012,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2894,12 +3196,14 @@
         "id": 33238816522,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-29T06:35:04Z",
         "status": "completed",
         "updated_at": "2026-08-29T06:38:58Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 89867784628,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2908,12 +3212,14 @@
         "id": 33162021362,
         "name": "keycloak-proxy-e2e",
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-28T10:05:32Z",
         "status": "completed",
         "updated_at": "2026-08-28T10:07:54Z",
         "workflow_id": 344269450
       },
       {
+        "check_suite_id": 89860132227,
         "conclusion": "success",
         "event": "schedule",
         "head_branch": "main",
@@ -2922,12 +3228,14 @@
         "id": 33159343704,
         "name": "fleet-proxy-e2e",
         "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-28T09:26:02Z",
         "status": "completed",
         "updated_at": "2026-08-28T09:29:48Z",
         "workflow_id": 344269448
       },
       {
+        "check_suite_id": 89802697431,
         "conclusion": null,
         "event": "workflow_dispatch",
         "head_branch": "main",
@@ -2936,12 +3244,14 @@
         "id": 33138812802,
         "name": "CVE Advisory Check",
         "path": ".github/workflows/cve-advisory-check.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-28T03:24:51Z",
         "status": "queued",
         "updated_at": "2026-08-28T03:24:51Z",
         "workflow_id": 284961546
       },
       {
+        "check_suite_id": 89802187860,
         "conclusion": null,
         "event": "workflow_dispatch",
         "head_branch": "main",
@@ -2950,12 +3260,14 @@
         "id": 33138627961,
         "name": "CVE Advisory Check",
         "path": ".github/workflows/cve-advisory-check.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-28T03:21:06Z",
         "status": "queued",
         "updated_at": "2026-08-28T03:21:06Z",
         "workflow_id": 284961546
       },
       {
+        "check_suite_id": 89801503627,
         "conclusion": "success",
         "event": "workflow_dispatch",
         "head_branch": "main",
@@ -2964,6 +3276,7 @@
         "id": 33138378827,
         "name": "Release Please",
         "path": ".github/workflows/release-please.yml",
+        "run_attempt": 1,
         "run_started_at": "2026-08-28T03:16:06Z",
         "status": "completed",
         "updated_at": "2026-08-28T03:20:46Z",
@@ -3115,7 +3428,7 @@
       },
       {
         "name": "gsd/phase-73-gap-closure",
-        "sha": "d0eae82ad2184f896dd9b75455044dd1d20c0b8f"
+        "sha": "b403f9bc02019056cad36566bf8afe9012f9f985"
       },
       {
         "name": "keep/pat-free-release-note",
@@ -3226,15 +3539,9 @@
         "git_state": " M",
         "owner": "phase-79",
         "path": ".planning/phases/79-adopter-ready-closeout/79-RISKS.json"
-      },
-      {
-        "disposition": "pending Task 3 commit; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md"
       }
     ],
-    "tracked_path_count": 1304,
+    "tracked_path_count": 1307,
     "untracked_paths": [
       {
         "disposition": "preserve; no cleanup authority",
@@ -3338,7 +3645,7 @@
         "branch": "refs/heads/gsd/phase-73-gap-closure",
         "detached": false,
         "disposition": "preserve; confirm owner before any cleanup",
-        "head": "d0eae82ad2184f896dd9b75455044dd1d20c0b8f",
+        "head": "b403f9bc02019056cad36566bf8afe9012f9f985",
         "owner": "unknown",
         "path": "/Users/jon/projects/relyra"
       }
@@ -3350,7 +3657,7 @@
     "revalidated_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
     "source": "GET repos/szTheory/relyra/git/ref/heads/main"
   },
-  "observed_at": "2026-09-30T01:41:35Z",
+  "observed_at": "2026-09-30T09:27:02Z",
   "repository": {
     "name": "szTheory/relyra",
     "source": "git remote origin"
@@ -3377,7 +3684,7 @@
       "access_status": "allowed",
       "completeness": "complete",
       "endpoint": "commits/c786a9890f2f99f0dd98f89a1d9713db7c486837/check-runs",
-      "item_count": 101,
+      "item_count": 104,
       "page_count": 2,
       "pages": [
         {
@@ -3388,13 +3695,13 @@
         },
         {
           "continuation": false,
-          "item_count": 1,
+          "item_count": 4,
           "number": 2,
           "status": 200
         }
       ],
       "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-      "total_count": 101
+      "total_count": 104
     },
     "issues": {
       "access_status": "allowed",
@@ -3464,7 +3771,6 @@
       "access_status": "allowed",
       "completeness": "complete",
       "endpoint": "commits/c786a9890f2f99f0dd98f89a1d9713db7c486837/status",
-      "failure_status": null,
       "item_count": 0,
       "page_count": 1,
       "pages": [
@@ -3475,23 +3781,40 @@
           "status": 200
         }
       ],
-      "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837"
+      "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+      "total_count": 0
+    },
+    "workflow_jobs_run_36679875791": {
+      "access_status": "allowed",
+      "completeness": "complete",
+      "endpoint": "actions/runs/36679875791/jobs?filter=latest",
+      "item_count": 2,
+      "page_count": 1,
+      "pages": [
+        {
+          "continuation": false,
+          "item_count": 2,
+          "number": 1,
+          "status": 200
+        }
+      ],
+      "total_count": 2
     },
     "workflow_runs": {
       "access_status": "allowed",
       "completeness": "complete",
       "endpoint": "actions/runs?head_sha=c786a9890f2f99f0dd98f89a1d9713db7c486837",
-      "item_count": 69,
+      "item_count": 71,
       "page_count": 1,
       "pages": [
         {
           "continuation": false,
-          "item_count": 69,
+          "item_count": 71,
           "number": 1,
           "status": 200
         }
       ],
-      "total_count": 69
+      "total_count": 71
     },
     "workflows": {
       "access_status": "allowed",

@@ -1,26 +1,26 @@
 # Phase 79 Closeout Inventory
 
-**Observed:** 2026-09-30T01:41:35Z
+**Observed:** 2026-09-30T09:27:02Z
 **Repository:** `szTheory/relyra`  
 **Ref / SHA:** `refs/heads/main` / `c786a9890f2f99f0dd98f89a1d9713db7c486837`  
-**Readiness:** **unknown** — all configured GitHub sources were read, but current-main mandatory lane evidence is absent and live branch protection differs from the expected context list. Details are recorded in [79-INVENTORY.json](79-INVENTORY.json).
+**Readiness:** **unknown** — the read-only sources completed, but mandatory current-main lane evidence is absent and live branch protection differs from the expected context list. Details are recorded in [79-INVENTORY.json](79-INVENTORY.json).
 
 ## Evidence gaps
 
 - All nine mandatory lanes have no matching current-main evidence on the observed SHA.
 - Both live required security contexts have no matching check or status evidence on that SHA.
-- Live protection requires `security (27, 1.19.5)` and `security (28, 1.19.5)`. The repository's expected list also includes `fleet-proxy-e2e`; `context_match` is false. The fleet context has 33 passing check records but is not currently listed by live protection.
-- The collector re-read `main` and observed the same SHA. All nine GitHub sources completed with access allowed; there were no pagination or access errors.
+- Live protection requires `security (27, 1.19.5)` and `security (28, 1.19.5)`. The expected list also includes `fleet-proxy-e2e`; `context_match` is false. `fleet-proxy-e2e` has one passing owner-workflow check record but is not currently a required protection context.
+- The collector re-read `main` and observed the same SHA. All 10 GitHub sources completed with access allowed; there were no pagination or access errors.
 
 ## GitHub snapshot
 
-The collector observed 43 pull requests, all closed, and zero non-PR issues. It observed 11 remote branches, including protected `main` at the captured SHA. The detailed local and remote branch rows are in `github.remote_branches` and `local.branches` in the JSON receipt.
+The collector observed 43 pull requests (43 closed), 0 non-PR issues, and 11 remote branches, including protected `main` at the captured SHA. Detailed local and remote branch rows are in `github.remote_branches` and `local.branches` in the JSON receipt.
 
 | Source | Observation |
 | --- | --- |
-| Workflow catalog | 14 total: 13 active, 1 disabled (`Branch Protection Apply`) |
-| Workflow runs for observed SHA | 69 total: 67 completed successfully, 2 queued |
-| Check runs | 101 rows across 2 pages; all are bound to the observed SHA |
+| Workflow catalog | 14 total: 13 active, 1 disabled |
+| Workflow runs for observed SHA | 71 total: 69 completed successfully, 2 queued |
+| Check runs | 104 rows across 2 pages; all are bound to the observed SHA |
 | Commit statuses | 0 rows |
 | Branch protection | Read allowed; required/expected contexts differ as described above |
 
@@ -30,30 +30,29 @@ Every listed lane is owned by `.github/workflows/security-gates.yml`. Release wo
 
 | Lane | Owner | State | SHA-bound evidence |
 | --- | --- | --- | ---: |
-| `mix qa` | `security-gates.yml` | absent | 0 |
-| `mix ci.security` | `security-gates.yml` | absent | 0 |
-| `mix ci.evidence` | `security-gates.yml` | absent | 0 |
-| `mix ci.phase73.reconciliation` | `security-gates.yml` | absent | 0 |
-| `mix ci.verify` | `security-gates.yml` | absent | 0 |
-| `mix ci.package` | `security-gates.yml` | absent | 0 |
-| `mix ci.ledger_loop` | `security-gates.yml` | absent | 0 |
 | `browser defenses` | `security-gates.yml` | absent | 0 |
+| `mix ci.evidence` | `security-gates.yml` | absent | 0 |
+| `mix ci.ledger_loop` | `security-gates.yml` | absent | 0 |
+| `mix ci.package` | `security-gates.yml` | absent | 0 |
+| `mix ci.phase73.reconciliation` | `security-gates.yml` | absent | 0 |
+| `mix ci.security` | `security-gates.yml` | absent | 0 |
+| `mix ci.verify` | `security-gates.yml` | absent | 0 |
+| `mix qa` | `security-gates.yml` | absent | 0 |
 | `standalone defenses` | `security-gates.yml` | absent | 0 |
 
 ## Protection contexts and canaries
 
 | Context | Live required? | Expected? | Current-SHA state |
 | --- | --- | --- | --- |
-| `security (27, 1.19.5)` | yes | yes | absent |
-| `security (28, 1.19.5)` | yes | yes | absent |
-| `fleet-proxy-e2e` | no | yes | passed; 33 check records |
+| `fleet-proxy-e2e` | no | yes | passed; 1 matching check record(s) |
+| `security (27, 1.19.5)` | yes | yes | absent; 0 matching check record(s) |
+| `security (28, 1.19.5)` | yes | yes | absent; 0 matching check record(s) |
 
-The separate canary section contains 33 successful `rulestead-main-canary` check records on the observed SHA. Its newest record is `2026-09-29T06:48:46Z`. These records are external canary observations, not mandatory lane evidence.
+The separate canary section contains 34 successful `rulestead-main-canary` observations on the observed SHA. The newest is run `109772782212` at `2026-09-30T06:48:55Z`. These records are external canary observations, not mandatory lane evidence.
 
 ## Local paths and worktree disposition
 
-The five closeout outputs and `79-VALIDATION.md` below are Phase 79-owned and pending
-Task 3 commit. Their disposition grants no cleanup authority.
+The five modified closeout outputs below are Phase 79-owned and pending Task 3 commit. Their disposition grants no cleanup authority. `79-VALIDATION.md` is committed and records the automated validation results.
 
 | Path | Git state | Owner | Disposition |
 | --- | --- | --- | --- |
@@ -62,7 +61,6 @@ Task 3 commit. Their disposition grants no cleanup authority.
 | `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
 | `.planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
 | `.planning/phases/79-adopter-ready-closeout/79-RISKS.json` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
-| `.planning/phases/79-adopter-ready-closeout/79-VALIDATION.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
 
 Untracked paths, all preserved with no cleanup authority:
 
@@ -85,8 +83,9 @@ Untracked paths, all preserved with no cleanup authority:
 | `tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/contents.tar.gz` | unknown | preserve; no cleanup authority |
 | `tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/metadata.config` | unknown | preserve; no cleanup authority |
 
-Ignored generated candidates are `_build/`, `deps/`, `node_modules/`, and `tmp/`. Each is owned by unknown; disposition is inspect only, with no cleanup authority. The registered worktree is `/Users/jon/projects/relyra`, branch `gsd/phase-73-gap-closure`, HEAD `d0eae82ad2184f896dd9b75455044dd1d20c0b8f`; owner is unknown and disposition is preserve until confirmed.
+Ignored generated candidates are listed in the receipt and remain inspect-only with no cleanup authority. The registered worktree is
+`/Users/jon/projects/relyra`, branch `gsd/phase-73-gap-closure`, HEAD `b403f9bc02019056cad36566bf8afe9012f9f985`; owner is unknown and disposition is preserve until confirmed.
 
 ## Verification
 
-`python3 scripts/collect_phase79_inventory.py --verify .planning/phases/79-adopter-ready-closeout/79-INVENTORY.json` passed and reported `unknown` readiness for the captured SHA. The fresh observation revalidated main at the same SHA, and all nine GitHub sources completed with access allowed. It does not authorize GitHub writes or local cleanup.
+`python3 scripts/collect_phase79_inventory.py --verify .planning/phases/79-adopter-ready-closeout/79-INVENTORY.json` passed. The fresh observation revalidated main at the same SHA and retained `unknown` readiness because mandatory lane and protection evidence is incomplete. It does not authorize GitHub writes or local cleanup.
