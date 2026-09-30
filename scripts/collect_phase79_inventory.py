@@ -351,22 +351,41 @@ def lane_owners(root: pathlib.Path, fixture: dict | None = None) -> dict[str, li
 
 
 def classify_lane(name: str, checks: list, statuses: list, sha: str, owners: list | None = None, runs: list | None = None) -> dict:
-    records = [r for r in checks if isinstance(r, dict) and r.get("head_sha") == sha and r.get("name") == name]
-    records += [r for r in statuses if isinstance(r, dict) and r.get("sha", sha) == sha and r.get("context") == name]
-    if not records:
-        owner_paths = {pathlib.PurePosixPath(owner).name for owner in owners or [] if owner.endswith((".yml", ".yaml"))}
-        records = [
-            run for run in runs or []
+    if owners is not None:
+        # Mandatory lane evidence must be a check from the exact owner workflow
+        # run. A same-named check from another workflow, a commit status, or a
+        # successful aggregate workflow conclusion cannot prove this lane ran.
+        owner_paths = {
+            pathlib.PurePosixPath(owner).name
+            for owner in owners
+            if owner.endswith((".yml", ".yaml"))
+        }
+        owner_suites = {
+            run.get("check_suite_id")
+            for run in runs or []
             if isinstance(run, dict)
             and run.get("head_sha") == sha
             and pathlib.PurePosixPath(str(run.get("path", ""))).name in owner_paths
-            and str(run.get("status", "")).lower() == "completed"
+            and run.get("check_suite_id") is not None
+        }
+        records = [
+            check for check in checks
+            if isinstance(check, dict)
+            and check.get("head_sha") == sha
+            and check.get("name") == name
+            and check.get("check_suite_id") in owner_suites
         ]
+    else:
+        records = [r for r in checks if isinstance(r, dict) and r.get("head_sha") == sha and r.get("name") == name]
+        records += [r for r in statuses if isinstance(r, dict) and r.get("sha", sha) == sha and r.get("context") == name]
     if not records:
         return {"state": "absent", "sha": sha, "evidence_count": 0}
     states = []
     for row in records:
         raw_conclusion = row.get("conclusion") or row.get("state")
+        if owners is not None and str(row.get("status", "")).lower() != "completed":
+            states.append("pending" if str(row.get("status", "")).lower() in {"queued", "in_progress", "requested", "waiting"} else "unknown")
+            continue
         if raw_conclusion is None and str(row.get("status", "")).lower() == "completed":
             states.append("unknown")
             continue
@@ -447,8 +466,8 @@ def validate_receipt(receipt: dict) -> list[str]:
         "issues": {"number", "state", "title", "updated_at", "html_url", "labels"},
         "remote_branches": {"name", "sha", "protected"},
         "workflows": {"id", "name", "path", "state", "html_url", "created_at", "updated_at"},
-        "workflow_runs": {"id", "name", "workflow_id", "path", "event", "status", "conclusion", "head_branch", "head_sha", "run_started_at", "updated_at", "html_url"},
-        "check_runs": {"id", "name", "status", "conclusion", "head_sha", "started_at", "completed_at", "html_url"},
+        "workflow_runs": {"id", "name", "workflow_id", "path", "event", "status", "conclusion", "head_branch", "head_sha", "check_suite_id", "run_started_at", "updated_at", "html_url"},
+        "check_runs": {"id", "name", "status", "conclusion", "head_sha", "check_suite_id", "started_at", "completed_at", "html_url"},
         "statuses": {"context", "state", "description", "target_url", "created_at", "updated_at", "sha"},
     }
     for name, allowed in collection_fields.items():
@@ -587,8 +606,8 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         "issues": [compact_issue(row) for row in issue_rows],
         "remote_branches": [{"name": row.get("name"), "sha": row.get("commit", {}).get("sha") if isinstance(row.get("commit"), dict) else None, "protected": row.get("protected")} for row in rows["remote_branches"] if isinstance(row, dict)],
         "workflows": [workflow_item(row) for row in rows["workflows"] if isinstance(row, dict)],
-        "workflow_runs": [{**only(row, ("id", "name", "workflow_id", "path", "event", "status", "conclusion", "head_branch", "head_sha", "run_started_at", "updated_at")), "html_url": safe_github_url(row.get("html_url"))} for row in workflow_runs if isinstance(row, dict)],
-        "check_runs": [{**only(row, ("id", "name", "status", "conclusion", "head_sha", "started_at", "completed_at")), "html_url": safe_github_url(row.get("html_url"))} for row in checks if isinstance(row, dict)],
+        "workflow_runs": [{**only(row, ("id", "name", "workflow_id", "path", "event", "status", "conclusion", "head_branch", "head_sha", "check_suite_id", "run_started_at", "updated_at")), "html_url": safe_github_url(row.get("html_url"))} for row in workflow_runs if isinstance(row, dict)],
+        "check_runs": [{**only(row, ("id", "name", "status", "conclusion", "head_sha", "check_suite_id", "started_at", "completed_at")), "html_url": safe_github_url(row.get("html_url"))} for row in checks if isinstance(row, dict)],
         "statuses": [{**only(row, ("context", "state", "description", "created_at", "updated_at", "sha")), "target_url": safe_github_url(row.get("target_url"))} for row in statuses if isinstance(row, dict)],
         "branch_protection": {"access_status": "allowed" if protection_status == 200 else access_status(protection_status), "required_contexts": sorted(contexts), "expected_contexts": sorted(required_contexts), "context_match": sorted(contexts) == sorted(required_contexts), "context_results": context_results},
         "mandatory_lanes": lane_results,

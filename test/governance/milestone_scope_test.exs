@@ -2948,12 +2948,58 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         end
       )
 
+    non_owner_collision_fixture =
+      update_in(
+        fixture,
+        ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"],
+        fn checks ->
+          Enum.reject(checks, &(&1["name"] == "mix ci.security")) ++
+            [
+              %{
+                "name" => "mix ci.security",
+                "head_sha" => sha,
+                "check_suite_id" => 200,
+                "status" => "completed",
+                "conclusion" => "success"
+              }
+            ]
+        end
+      )
+      |> update_in(
+        ["github", "actions/runs?head_sha=#{sha}?page=1", "body", "workflow_runs"],
+        fn runs ->
+          runs ++
+            [
+              %{
+                "id" => 200,
+                "name" => "Security",
+                "path" => ".github/workflows/release-please.yml",
+                "head_sha" => sha,
+                "check_suite_id" => 200,
+                "status" => "completed",
+                "conclusion" => "success"
+              }
+            ]
+        end
+      )
+
+    aggregate_only_fixture =
+      update_in(
+        fixture,
+        ["github", "commits/#{sha}/check-runs?page=1", "body", "check_runs"],
+        fn checks ->
+          Enum.reject(checks, &(&1["name"] == "mix ci.security"))
+        end
+      )
+
     for {name, candidate} <- [
           {"changed-ref", changed_ref_fixture},
           {"denied-protection", denied_protection_fixture},
           {"truncated-pages", truncated_fixture},
           {"unknown-workflow", unknown_workflow_fixture},
-          {"empty-lane", empty_lane_fixture}
+          {"empty-lane", empty_lane_fixture},
+          {"non-owner-collision", non_owner_collision_fixture},
+          {"aggregate-only", aggregate_only_fixture}
         ] do
       fixture_path = Path.join(temporary, "#{name}.json")
       output_path = Path.join(temporary, "#{name}-inventory.json")
@@ -2976,6 +3022,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       if name == "empty-lane",
         do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "absent")
+
+      if name in ["non-owner-collision", "aggregate-only"],
+        do: assert(receipt["github"]["mandatory_lanes"]["mix ci.security"]["state"] == "absent")
     end
 
     paginated_lane_fixture =
@@ -2988,6 +3037,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             %{
               "name" => "mix ci.security",
               "head_sha" => sha,
+              "check_suite_id" => 100,
               "status" => "completed",
               "conclusion" => "success"
             }
@@ -3105,7 +3155,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     checks =
       Enum.map(names, fn name ->
-        %{"name" => name, "head_sha" => sha, "status" => "completed", "conclusion" => "success"}
+        %{
+          "name" => name,
+          "head_sha" => sha,
+          "check_suite_id" => 100,
+          "status" => "completed",
+          "conclusion" => "success"
+        }
       end) ++
         [
           %{
@@ -3171,6 +3227,18 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       "actions/runs?head_sha=#{sha}?page=1" => %{
         "body" => %{
           "workflow_runs" => [
+            %{
+              "id" => 56,
+              "name" => "Security Gates",
+              "workflow_id" => 1,
+              "path" => ".github/workflows/security-gates.yml",
+              "head_branch" => "main",
+              "head_sha" => sha,
+              "check_suite_id" => 100,
+              "status" => "completed",
+              "conclusion" => "success",
+              "updated_at" => "2026-09-29T00:00:00Z"
+            },
             %{
               "id" => 55,
               "name" => "real-idp-canary",
