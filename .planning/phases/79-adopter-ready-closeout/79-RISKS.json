@@ -6,7 +6,7 @@
     "repository": "szTheory/relyra",
     "ref": "refs/heads/main",
     "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-    "observed_at": "2026-09-30T00:05:01Z"
+    "observed_at": "2026-09-30T01:41:35Z"
   },
   "items": [
     {"id":"QUAL-73-001","source":"73-BASELINE.md; Phase 74 full clean-room consumer proof","evidence":"scripts/check_clean_room_consumer.sh --profile full and --profile minimal --concurrency-check are recorded in 74-04-SUMMARY.md; original private-fixture gap is resolved.","owner":"Phase 74 package-consumer owner","severity":"High","status":"resolved","adopter_impact":"Package boundary is now exercised from an unpacked local Hex artifact.","demand_or_trigger":"Revisit if the package consumer or published artifact boundary changes.","maintenance_cost":"Keep the existing consumer lane and fixture current.","approval_boundary":"public_api/default_tightening/security_posture/semver_major changes require their existing approval gates.","open_disposition":null,"revisit":"At package-consumer or release-artifact changes."},

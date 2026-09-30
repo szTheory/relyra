@@ -3,7 +3,7 @@
 ## Release readiness: BLOCKED
 
 The current protected-main observation is `szTheory/relyra@refs/heads/main` at
-`c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed at `2026-09-30T00:05:01Z`.
+`c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed at `2026-09-30T01:41:35Z`.
 Readiness remains unknown and release is blocked: all nine mandatory lanes are absent
 on that SHA, two live-required security contexts lack passing evidence, and live branch
 protection omits the expected `fleet-proxy-e2e` context. Local validation cannot replace
@@ -13,8 +13,9 @@ current-main evidence.
 
 See [79-INVENTORY.md](79-INVENTORY.md) and [79-INVENTORY.json](79-INVENTORY.json) for the
 bounded local, worktree, branch, and GitHub observations. `.tool-versions` is maintainer-
-owned. Unknown-owner paths and the registered worktree are preserved; the inventory
-does not grant cleanup authority.
+owned. The five closeout outputs and `79-VALIDATION.md` are Phase 79-owned and pending
+Task 3 commit; their disposition grants no cleanup authority. Other unknown-owner paths
+and the registered worktree are preserved.
 
 ## Main CI evidence
 
@@ -45,4 +46,3 @@ revisit conditions; neither is converted into a manual acceptance gate.
 [79-REMOTE-BATCH.md](79-REMOTE-BATCH.md) records why no remote mutation is proposed from
 this receipt. Any future settings change needs its own exact plan, explicit
 `remote_github` approval, immediate same-target revalidation, and automated read-back.
-

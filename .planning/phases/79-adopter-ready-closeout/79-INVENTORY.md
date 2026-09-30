@@ -1,9 +1,9 @@
 # Phase 79 Closeout Inventory
 
-**Observed:** 2026-09-30T00:05:01Z  
+**Observed:** 2026-09-30T01:41:35Z
 **Repository:** `szTheory/relyra`  
 **Ref / SHA:** `refs/heads/main` / `c786a9890f2f99f0dd98f89a1d9713db7c486837`  
-**Readiness:** **unknown** — the inventory is complete as an observation, but current-main mandatory lane evidence is absent and live branch protection differs from the expected context list. Details are recorded in [79-INVENTORY.json](79-INVENTORY.json).
+**Readiness:** **unknown** — all configured GitHub sources were read, but current-main mandatory lane evidence is absent and live branch protection differs from the expected context list. Details are recorded in [79-INVENTORY.json](79-INVENTORY.json).
 
 ## Evidence gaps
 
@@ -52,12 +52,17 @@ The separate canary section contains 33 successful `rulestead-main-canary` check
 
 ## Local paths and worktree disposition
 
-Tracked edits, all preserved with unknown owner and no cleanup authority:
+The five closeout outputs and `79-VALIDATION.md` below are Phase 79-owned and pending
+Task 3 commit. Their disposition grants no cleanup authority.
 
 | Path | Git state | Owner | Disposition |
 | --- | --- | --- | --- |
-| `.planning/STATE.md` | modified | unknown | preserve; no cleanup authority |
-| `.planning/state.json` | modified | unknown | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.json` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-RISKS.json` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-VALIDATION.md` | modified | phase-79 | pending Task 3 commit; no cleanup authority |
 
 Untracked paths, all preserved with no cleanup authority:
 
@@ -80,8 +85,8 @@ Untracked paths, all preserved with no cleanup authority:
 | `tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/contents.tar.gz` | unknown | preserve; no cleanup authority |
 | `tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/metadata.config` | unknown | preserve; no cleanup authority |
 
-Ignored generated candidates are `_build/`, `deps/`, `node_modules/`, and `tmp/`. Each is owned by unknown; disposition is inspect only, with no cleanup authority. The registered worktree is `/Users/jon/projects/relyra`, branch `gsd/phase-73-gap-closure`, HEAD `96a79616b451595ee5ab66783c46157f9c6ca7fd`; owner is unknown and disposition is preserve until confirmed.
+Ignored generated candidates are `_build/`, `deps/`, `node_modules/`, and `tmp/`. Each is owned by unknown; disposition is inspect only, with no cleanup authority. The registered worktree is `/Users/jon/projects/relyra`, branch `gsd/phase-73-gap-closure`, HEAD `d0eae82ad2184f896dd9b75455044dd1d20c0b8f`; owner is unknown and disposition is preserve until confirmed.
 
 ## Verification
 
-`python3 scripts/collect_phase79_inventory.py --verify .planning/phases/79-adopter-ready-closeout/79-INVENTORY.json` passed and reported `unknown` readiness for the captured SHA. The observation does not authorize GitHub writes or local cleanup.
+`python3 scripts/collect_phase79_inventory.py --verify .planning/phases/79-adopter-ready-closeout/79-INVENTORY.json` passed and reported `unknown` readiness for the captured SHA. The fresh observation revalidated main at the same SHA, and all nine GitHub sources completed with access allowed. It does not authorize GitHub writes or local cleanup.

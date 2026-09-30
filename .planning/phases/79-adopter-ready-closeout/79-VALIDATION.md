@@ -40,7 +40,7 @@ created: "2026-09-29"
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 79-02-T1 | 79-02 | 2 | REPO-01, EXIT-01 | T-79-08, T-79-09 | Bind closeout risks to inventory; require every Phase 73 finding, STATE deferred item, and open WINDOWS item with owner, evidence, severity, disposition, and revisit | contract | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix test test/governance/milestone_scope_test.exs --warnings-as-errors` | `test/governance/milestone_scope_test.exs` risk-ledger owner | ✅ passed, 87 tests, 0 failures |
 | 79-02-T2 | 79-02 | 2 | REPO-03, EXIT-01 | T-79-06, T-79-07, T-79-08 | Keep no-action records inert; bind proposed payload, approval, rollback, immediate preflight, and automated read-back to one target | contract | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence` | `test/governance/milestone_scope_test.exs` risk/remote contract owner | ✅ passed, 155 tests, 0 failures |
-| 79-02-T3 | 79-02 | 2 | REPO-02, REPO-03, EXIT-01 | T-79-06, T-79-07, T-79-09 | Refresh source identity after local commits; keep incomplete main evidence and any changed proposal visibly blocked | contract | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence` | Inventory collector and risk/closeout governance owner | ⬜ pending |
+| 79-02-T3 | 79-02 | 2 | REPO-02, REPO-03, EXIT-01 | T-79-06, T-79-07, T-79-09 | Bind all five closeout outputs to the refreshed inventory identity; classify scoped tracked edits as Phase 79-owned and pending Task 3 commit; preserve unknown paths and keep incomplete main evidence blocked | contract | `ASDF_ELIXIR_VERSION=1.19.5-otp-28 ASDF_ERLANG_VERSION=28.4.1 mix ci.evidence` | Inventory collector and governance assertions for artifact identity and tracked-edit ownership | ✅ passed, 155 tests, 0 failures |
 
 ---
 
@@ -60,15 +60,17 @@ All acceptance behavior is checked by deterministic automation. The inventory co
 
 ## Validation Sign-Off
 
-- [ ] All tasks have automated verification or an explicit Wave 0 dependency
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verification
-- [ ] Wave 0 covers all missing references
-- [ ] No watch-mode flags
+- [x] All tasks have automated verification or an explicit Wave 0 dependency
+- [x] Sampling continuity: no 3 consecutive tasks without automated verification
+- [x] Wave 0 covers all missing references
+- [x] No watch-mode flags
 - [ ] Feedback latency measured and below 30 seconds for focused checks
 - [ ] nyquist_compliant: true set in frontmatter after validation
 
 **Validation owner:** `test/governance/milestone_scope_test.exs`, selected by the mandatory fresh-process `mix ci.evidence` lane.
 
 **Open evidence gaps:** the current main-SHA inventory has no passing evidence for its nine mandatory lanes, and two Phase 76 concurrency windows remain unautomated. Both remain explicit closeout risks; neither is accepted through manual review or converted into a green release claim.
+
+**Sampling observation:** the latest `mix ci.evidence` run completed 155 tests in 32.5 seconds, above the 30-second target; focused checks remain available for faster iteration.
 
 **Approval:** not applicable; this is an automated validation map, not a human acceptance gate.

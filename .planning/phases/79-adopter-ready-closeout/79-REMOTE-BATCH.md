@@ -6,7 +6,7 @@
 
 - **Target repository:** `szTheory/relyra`
 - **Target ref/resource:** `refs/heads/main` branch protection
-- **Observed at:** `2026-09-30T00:05:01Z`
+- **Observed at:** `2026-09-30T01:41:35Z`
 - **Observed main SHA:** `c786a9890f2f99f0dd98f89a1d9713db7c486837`
 - **Captured required contexts:** `security (27, 1.19.5)`, `security (28, 1.19.5)`
 - **Repository expected contexts:** `security (27, 1.19.5)`, `security (28, 1.19.5)`, `fleet-proxy-e2e`
@@ -30,4 +30,3 @@ privilege operation, rollback, immediate same-target preflight, read-back assert
 target-bound resume signal. If any captured state changes, that proposal expires and
 requires renewed explicit `remote_github` approval. Approval authorizes one write; only
 automated read-back proves its postcondition.
-
