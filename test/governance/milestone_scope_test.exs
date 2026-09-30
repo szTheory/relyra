@@ -2617,12 +2617,20 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert Enum.all?(tracked_paths, fn path ->
              path in phase79_owned_artifacts or
+               path == ".planning/state.json" or
                path == ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md"
            end)
 
     assert Enum.all?(tracked_edits, fn item ->
-             item["owner"] == "phase-79" and
+             expected_owner =
+               if item["path"] == ".planning/state.json", do: "gsd-workflow", else: "phase-79"
+
+             item["owner"] == expected_owner and
                item["disposition"] == "preserve; no cleanup authority"
+           end)
+
+    assert Enum.any?(tracked_edits, fn item ->
+             item["path"] == ".planning/state.json" and item["owner"] == "gsd-workflow"
            end)
 
     assert phase79_risk_violations(risks, expected_ids, identity) == []
@@ -2864,6 +2872,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert receipt["repository"]["name"] == "szTheory/relyra"
     assert receipt["observation"]["main_sha"] == sha
     assert receipt["collection"]["complete"]
+
+    assert Enum.any?(receipt["local"]["tracked_edits"], fn item ->
+             item["path"] == ".planning/state.json" and item["owner"] == "gsd-workflow" and
+               item["disposition"] == "preserve; no cleanup authority"
+           end)
 
     protection = receipt["github"]["branch_protection"]
     protection_resource = protection["resource"]
@@ -3602,7 +3615,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     command_responses = %{
       "git status --porcelain=v1 -z --untracked-files=all" => %{
         "stdout" =>
-          " M .planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md\u0000" <>
+          " M .planning/state.json\u0000" <>
+            " M .planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md\u0000" <>
             " M .planning/phases/79-adopter-ready-closeout/79-INVENTORY.json\u0000" <>
             " M .planning/phases/79-adopter-ready-closeout/79-INVENTORY.md\u0000" <>
             " M .planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md\u0000" <>
@@ -3614,7 +3628,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       },
       "git ls-files -z" => %{
         "stdout" =>
-          "mix.exs\u0000README.md\u0000" <>
+          "mix.exs\u0000README.md\u0000.planning/state.json\u0000" <>
             ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md\u0000" <>
             ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json\u0000" <>
             ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md\u0000" <>

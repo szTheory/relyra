@@ -275,6 +275,9 @@ def local_inventory(root: pathlib.Path, fixture: dict | None) -> dict:
             if path in PHASE79_OWNED_LOCAL_PATHS:
                 owner = "phase-79"
                 disposition = "preserve; no cleanup authority"
+            elif path == ".planning/state.json":
+                owner = "gsd-workflow"
+                disposition = "preserve; no cleanup authority"
             else:
                 owner = "maintainer" if path == ".tool-versions" else "unknown"
                 disposition = "preserve; no cleanup authority"
