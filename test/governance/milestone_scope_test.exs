@@ -2596,6 +2596,29 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     expected_ids = Enum.map(baseline, & &1["Finding ID"]) ++ state_items ++ window_items
     identity = phase79_inventory_identity(inventory)
 
+    phase79_owned_artifacts = [
+      ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md",
+      ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
+      ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md",
+      ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md",
+      ".planning/phases/79-adopter-ready-closeout/79-RISKS.json"
+    ]
+
+    tracked_edits = inventory["local"]["tracked_edits"]
+    tracked_paths = Enum.map(tracked_edits, & &1["path"])
+
+    assert Enum.all?(phase79_owned_artifacts, &(&1 in tracked_paths))
+
+    assert Enum.all?(tracked_paths, fn path ->
+             path in phase79_owned_artifacts or
+               path == ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md"
+           end)
+
+    assert Enum.all?(tracked_edits, fn item ->
+             item["owner"] == "phase-79" and
+               item["disposition"] == "pending Task 3 commit; no cleanup authority"
+           end)
+
     assert phase79_risk_violations(risks, expected_ids, identity) == []
     assert phase79_remote_batch_violations(remote_batch, identity) == []
 
