@@ -14,7 +14,7 @@ affects: [phase-79, release-readiness, governance]
 actuals:
   tokens: 29966
   tasks: 3
-  commits: 8
+  commits: 18
   plan_head_before: 0e1a98cb1d0b38c45053a0203e11f696e5af7020
 tech-stack:
   added: []
@@ -92,13 +92,13 @@ status: complete
 - **Started:** 2026-09-30T01:02:59Z
 - **Completed:** 2026-09-30T02:40:10Z
 - **Tasks:** 3
-- **Files modified:** 11, including the separately authorized Phase 73 provenance repair
+- **Files modified:** 20 across plan execution, review fixes, and source-bound provenance refresh
 
 ## Accomplishments
 
 - Built a residual-risk ledger covering Phase 73 findings, deferred items, and open cross-phase windows with evidence, ownership, severity, demand/cost disposition, approval boundary, and revisit conditions.
 - Recorded a no-mutation remote state and kept future writes behind a separate exact plan, explicit approval, immediate same-target revalidation, rollback, and automated read-back.
-- Refreshed the inventory and closeout to one observation (`2026-09-30T01:41:35Z`, `szTheory/relyra@main`, SHA `c786a9890f2f99f0dd98f89a1d9713db7c486837`). All nine mandatory lanes were absent; readiness remains unknown and release blocked. The 33 canary observations remain separate.
+- Refreshed the final read-only inventory after review fixes. It binds the local tree at `798bce6a19266e527973856771eb3ccb79cdba4a` to `szTheory/relyra@refs/heads/main`, SHA `c786a9890f2f99f0dd98f89a1d9713db7c486837`. All nine mandatory lanes remain absent; readiness remains unknown and release blocked. The canary observations remain separate.
 - Added deterministic checks for artifact identity, Phase 79 ownership of six scoped paths, and preservation of unknown-owner paths. No GitHub writes or branch-protection drift workflow changes were made.
 
 ## Task Commits
@@ -108,7 +108,7 @@ status: complete
 3. **Task 3: Artifact identity and owner assertions** — `4b91adb`, `d0eae82` (`test`)
 4. **Task 3: Refreshed source-bound closeout artifacts** — `c0ab689` (`docs`)
 
-Plan scope repairs were committed separately: `23862a9` added the governance test to Task 3’s file list, and `f14a70d` added `79-VALIDATION.md` before updating that map.
+Plan scope repairs were committed separately: `23862a9` added the governance test to Task 3’s file list, and `f14a70d` added `79-VALIDATION.md` before updating that map. Review fixes were committed as `16f006f`, `ff79afb`, `e9d97f6`, `070970d`, `e63bab5`, and `dff2f76`; `34b771f` records the clean final review, and `798bce6` refreshes Phase 73 proof provenance for the reviewed source.
 
 ## Files Created/Modified
 
@@ -118,6 +118,7 @@ Plan scope repairs were committed separately: `23862a9` added the governance tes
 - `79-INVENTORY.json` and `79-INVENTORY.md` — final read-only snapshot and ownership rationale.
 - `79-VALIDATION.md` — automated task evidence map and open evidence gaps.
 - `test/governance/milestone_scope_test.exs` — deterministic risk, remote-boundary, artifact-identity, and ownership contracts.
+- `scripts/collect_phase79_inventory.py`, its governance coverage, and the Phase 79 review report/fix ledger — source-bound evidence corrections from code review.
 - The Phase 73 proof/report files and Phase 78 receipt — narrowly refreshed dependent provenance; details below.
 
 ## Decisions Made
@@ -144,7 +145,17 @@ Task 3’s `<files>` declaration initially omitted `test/governance/milestone_sc
 - **Verification:** `mix ci.phase73.reconciliation` — 1 test, 0 failures (5 excluded), 531.1 seconds. `mix test --warnings-as-errors` — 999 tests, 0 failures (11 excluded), 474.4 seconds. `mix ci.evidence` — 155 tests, 0 failures.
 - **Committed in:** `50b2e9d` (`docs(provenance): refresh Phase 73 proof evidence`).
 
-**Total deviations:** 1 blocking provenance repair plus 2 narrow plan-scope corrections.
+**2. [Rule 3 - Blocking] Re-captured Phase 73 proof after code-review fixes changed governed source**
+
+- **Found during:** Final source-bound review and full regression verification.
+- **Issue:** The reviewed inventory collector and governance fixtures changed Phase 73 governed-source inputs again, so the previous proof could not represent the final tree.
+- **Fix:** Re-captured the proof through the supported capture path, refreshed the current embedded proof and closure blocks, then replayed the dedicated reconciliation and full regression lanes. The state lifecycle wrapper temporarily selected `planning` because the Phase 73 capture/replay governance rejects `verifying`; it restored the exact original `STATE.md` bytes in `finally`.
+- **Verification:** `mix ci.phase73.reconciliation` — 1 test, 0 failures (5 excluded); `mix test --warnings-as-errors` — 999 tests, 0 failures (11 excluded); `mix ci.evidence` — 155 tests, 0 failures; `mix format --check-formatted`, inventory verifier, and repository proof validator passed.
+- **Committed in:** `798bce6` (`docs(provenance): refresh Phase 73 proof for Phase 79 source`).
+
+The existing Phase 78 cold-state receipt remains historical and was not rewritten or used as current-source OTP 27/28 evidence. It is stale against the latest Phase 73 proof identity; this phase did not rerun its compatibility matrices.
+
+**Total deviations:** 2 blocking provenance repairs plus 2 narrow plan-scope corrections and six review-driven collector fixes.
 **Impact on plan:** Preserved the declared scope and restored source-bound regression evidence; no product behavior or remote state changed.
 
 ## Issues Encountered
@@ -157,12 +168,12 @@ None.
 
 ## Next Phase Readiness
 
-Plan 79-02 is complete. Phase 79 release readiness remains blocked: the inventory shows nine mandatory lanes absent on the observed main SHA, two live-required security contexts lack passing evidence, and the expected `fleet-proxy-e2e` protection context is missing. The closeout gives the next boundary: refresh read-only main evidence, then use a separately approved and automatically verified plan for any remote correction.
+Plan 79-02 is complete. Phase 79 release readiness remains blocked: the inventory shows nine mandatory lanes absent on the observed main SHA, two live-required security contexts lack passing evidence, and the expected `fleet-proxy-e2e` protection context is missing. The final observation preserves unknown-owner paths and `.tool-versions`; it authorizes no GitHub writes or local cleanup. The closeout gives the next boundary: refresh read-only main evidence, then use a separately approved and automatically verified plan for any remote correction.
 
 ## Self-Check: PASSED
 
 - Created summary file exists at `.planning/phases/79-adopter-ready-closeout/79-02-SUMMARY.md`.
-- Plan ledger base is `0e1a98cb1d0b38c45053a0203e11f696e5af7020`; 8 commits were measured from that base through the provenance repair commit.
+- Plan ledger base is `0e1a98cb1d0b38c45053a0203e11f696e5af7020`; 18 commits were measured from that base through the final proof refresh.
 - Task and deviation commits listed above are present in Git history.
 
 ---
