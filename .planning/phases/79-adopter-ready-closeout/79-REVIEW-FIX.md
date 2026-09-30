@@ -79,5 +79,14 @@ The final re-review at `2026-09-30T06:19:07Z` found two blockers and one warning
 
 _Fixed: 2026-09-30T05:41:29Z_  
 _Fixer: the agent (gsd-code-fixer)_  
-_Iteration: 3_
+_Iteration: 3_  
 _Final follow-up: `dff2f76`; independent re-review clean_
+
+## Post-review inventory ownership contract correction
+
+The final Phase 79 evidence replay exposed an ownership-classification gap after the clean review above: the collector labeled all modified tracked files `unknown`, while the closeout contract requires the six explicitly scoped Phase 79 outputs to be identified as phase-owned.
+
+- **Commit:** `ec38d1b`
+- **Applied fix:** Added an exact six-path allowlist for Phase 79 outputs. Other paths remain `unknown`, and `.tool-versions` remains `maintainer`-owned. Extended the fixture to assert both classifications.
+- **Verification:** Focused collector fixture passed (1 test, 0 failures); the Phase 73 proof was recaptured and replayed; `mix test --warnings-as-errors` passed (999 tests, 0 failures, 11 excluded).
+- **Scope:** This is a deterministic contract correction discovered during final execution, separate from the three review findings above.

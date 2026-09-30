@@ -14,7 +14,7 @@ affects: [phase-79, release-readiness, governance]
 actuals:
   tokens: 29966
   tasks: 3
-  commits: 18
+  commits: 20
   plan_head_before: 0e1a98cb1d0b38c45053a0203e11f696e5af7020
 tech-stack:
   added: []
@@ -109,7 +109,7 @@ status: complete
 3. **Task 3: Artifact identity and owner assertions** — `4b91adb`, `d0eae82` (`test`)
 4. **Task 3: Refreshed source-bound closeout artifacts** — `c0ab689` (`docs`)
 
-Plan scope repairs were committed separately: `23862a9` added the governance test to Task 3’s file list, and `f14a70d` added `79-VALIDATION.md` before updating that map. Review fixes were committed as `16f006f`, `ff79afb`, `e9d97f6`, `070970d`, `e63bab5`, and `dff2f76`; `34b771f` records the clean final review, and `798bce6` refreshes Phase 73 proof provenance for the reviewed source.
+Plan scope repairs were committed separately: `23862a9` added the governance test to Task 3’s file list, and `f14a70d` added `79-VALIDATION.md` before updating that map. Review fixes were committed as `16f006f`, `ff79afb`, `e9d97f6`, `070970d`, `e63bab5`, and `dff2f76`; `34b771f` records the code-review fixes, `798bce6` refreshes Phase 73 proof provenance, and `ec38d1b` adds the exact Phase 79 local-owner classifier and fixture.
 
 ## Files Created/Modified
 
@@ -154,16 +154,23 @@ Task 3’s `<files>` declaration initially omitted `test/governance/milestone_sc
 - **Verification:** `mix ci.phase73.reconciliation` — 1 test, 0 failures (5 excluded); `mix test --warnings-as-errors` — 999 tests, 0 failures (11 excluded); `mix ci.evidence` — 155 tests, 0 failures; `mix format --check-formatted`, inventory verifier, and repository proof validator passed.
 - **Committed in:** `798bce6` (`docs(provenance): refresh Phase 73 proof for Phase 79 source`).
 
+**3. [Rule 3 - Blocking] Refreshed proof after the final local-owner fixture correction**
+
+- **Found during:** Final inventory contract replay.
+- **Issue:** The closeout contract requires its six explicitly scoped outputs to be identified as Phase 79-owned when modified. The collector had conservatively classified all tracked edits as unknown, causing the evidence lane to reject the inventory.
+- **Fix:** Added an exact six-path allowlist with deterministic fixture coverage for Phase 79 ownership and `.tool-versions` maintainer ownership. Re-captured the proof after this governed test change.
+- **Verification:** Proof `phase73-61008885a6735b8d` captured 21 focused owners, three evidence runs, and 13 security constituents. `mix ci.phase73.reconciliation` passed (1 test, 0 failures, 5 excluded; 582.6 seconds); `mix test --warnings-as-errors` passed (999 tests, 0 failures, 11 excluded; 590.1 seconds); standalone `mix ci.evidence` passed (155 tests, 0 failures; 24.9 seconds). The original `STATE.md` bytes were restored after each lifecycle wrapper.
+
 The existing Phase 78 cold-state receipt remains historical and was not rewritten or used as current-source OTP 27/28 evidence. It is stale against the latest Phase 73 proof identity; this phase did not rerun its compatibility matrices.
 
-**Total deviations:** 2 blocking provenance repairs plus 2 narrow plan-scope corrections and six review-driven collector fixes.
+**Total deviations:** 3 blocking provenance refreshes, 2 narrow plan-scope corrections, six review-driven collector fixes, and one deterministic ownership-classification correction.
 **Impact on plan:** Preserved the declared scope and restored source-bound regression evidence; no product behavior or remote state changed.
 
 The final fixture replay exposed a closeout-specific ownership classification gap: the local collector preserved all tracked changes as unknown, while the deterministic closeout contract requires the six declared Phase 79 outputs to be identified as Phase 79-owned. The collector now uses an exact path allowlist and the fixture asserts both that classification and maintainer ownership for `.tool-versions`.
 
 ## Issues Encountered
 
-The first full regression run found one stale Phase 73 governed-source hash after the authorized governance fixture updates. The supported proof capture/replay path refreshed that identity and dependent evidence, after which both the dedicated replay and full warnings-as-errors suite passed.
+The final proof is `phase73-61008885a6735b8d`, captured at `2026-09-30T09:00:43Z` with source digest `sha256:6af5a3441562ebc7a28e0ce1e087050b5c8bec4d492f61d020a0949ab0153fbd`. The inventory preserves unknown-owner paths and keeps `.tool-versions` maintainer-owned.
 
 ## User Setup Required
 
@@ -176,7 +183,7 @@ Plan 79-02 is complete. Phase 79 release readiness remains blocked: the inventor
 ## Self-Check: PASSED
 
 - Created summary file exists at `.planning/phases/79-adopter-ready-closeout/79-02-SUMMARY.md`.
-- Plan ledger base is `0e1a98cb1d0b38c45053a0203e11f696e5af7020`; 18 commits were measured from that base through the final proof refresh.
+- Plan ledger base is `0e1a98cb1d0b38c45053a0203e11f696e5af7020`; 20 commits were measured through the local-owner classifier commit `ec38d1b`.
 - Task and deviation commits listed above are present in Git history.
 
 ---
