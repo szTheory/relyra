@@ -2595,6 +2595,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     closeout = File.read!(".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md")
     remote_batch = File.read!(".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md")
     inventory_report = File.read!(".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md")
+    desired_path = ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json"
+    rollback_path = ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json"
+    desired_bytes = File.read!(desired_path)
+    rollback_bytes = File.read!(rollback_path)
+    rollback = Jason.decode!(rollback_bytes)
+
+    assert {expected_desired, 0} =
+             System.cmd("bash", ["scripts/setup_branch_protection.sh", "--print-expected-json"],
+               cd: File.cwd!(),
+               stderr_to_stdout: true
+             )
+
+    assert desired_bytes == expected_desired
 
     {_, baseline} = baseline_rows(File.read!(@baseline_path))
     state_items = phase79_state_deferred_ids(File.read!(".planning/STATE.md"))
@@ -2635,6 +2648,65 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert phase79_risk_violations(risks, expected_ids, identity) == []
     assert phase79_remote_batch_violations(remote_batch, identity) == []
+
+    assert phase79_blocked_remote_violations(
+             remote_batch,
+             inventory,
+             desired_bytes,
+             rollback,
+             rollback_bytes
+           ) == []
+
+    desired_digest = :crypto.hash(:sha256, desired_bytes) |> Base.encode16(case: :lower)
+
+    tampered_desired_digest =
+      String.replace(remote_batch, desired_digest, String.duplicate("0", 64))
+
+    assert phase79_blocked_remote_violations(
+             tampered_desired_digest,
+             inventory,
+             desired_bytes,
+             rollback,
+             rollback_bytes
+           ) != []
+
+    forged_rollback =
+      rollback
+      |> Map.put("payload_available", true)
+      |> Map.put("rollback_payload", %{"allow_deletions" => true})
+
+    assert phase79_blocked_remote_violations(
+             remote_batch,
+             inventory,
+             desired_bytes,
+             forged_rollback,
+             rollback_bytes
+           ) != []
+
+    unauthorized_batch =
+      String.replace(
+        remote_batch,
+        "No GitHub write or workflow dispatch was prepared",
+        "gh api -X PUT"
+      )
+
+    assert phase79_blocked_remote_violations(
+             unauthorized_batch,
+             inventory,
+             desired_bytes,
+             rollback,
+             rollback_bytes
+           ) != []
+
+    stale_batch = String.replace(remote_batch, identity["main_sha"], String.duplicate("f", 40))
+
+    assert phase79_blocked_remote_violations(
+             stale_batch,
+             inventory,
+             desired_bytes,
+             rollback,
+             rollback_bytes
+           ) != []
 
     assert inventory_report =~ identity["repository"]
     assert inventory_report =~ identity["ref"]
@@ -8092,6 +8164,86 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       identity_errors ++
         proposal_errors ++ status_errors ++ payload_binding_errors ++ state_control_errors
     end
+  end
+
+  defp phase79_blocked_remote_violations(
+         markdown,
+         inventory,
+         desired_bytes,
+         rollback,
+         rollback_bytes
+       ) do
+    identity = phase79_inventory_identity(inventory)
+    protection = get_in(inventory, ["github", "branch_protection"]) || %{}
+    missing_settings = ["required_pull_request_reviews", "restrictions"]
+    desired_digest = :crypto.hash(:sha256, desired_bytes) |> Base.encode16(case: :lower)
+    rollback_digest = :crypto.hash(:sha256, rollback_bytes) |> Base.encode16(case: :lower)
+
+    capture_errors =
+      if protection["capture_status"] == "incomplete" and protection["resource"] == nil and
+           protection["capture_errors"] == [
+             "branch protection response is missing settings: required_pull_request_reviews, restrictions"
+           ],
+         do: [],
+         else: ["inventory does not prove the current protection resource is incomplete"]
+
+    rollback_errors =
+      if rollback["schema"] == "phase79-protection-rollback" and rollback["version"] == 1 and
+           rollback["status"] == "blocked" and rollback["payload_available"] == false and
+           rollback["rollback_payload"] == nil and
+           rollback["source_capture_status"] == "incomplete" and
+           rollback["required_missing_settings"] == missing_settings and
+           rollback["target"] == identity and
+           rollback["source_endpoint"] == "branches/main/protection" and
+           rollback["source_capture_errors"] == protection["capture_errors"] and
+           Jason.decode!(rollback_bytes) == rollback,
+         do: [],
+         else: [
+           "rollback record does not bind the incomplete capture without an executable payload"
+         ]
+
+    missing_setting_errors =
+      if MapSet.new(protection["capture_errors"] || []) ==
+           MapSet.new([
+             "branch protection response is missing settings: required_pull_request_reviews, restrictions"
+           ]) and
+           MapSet.new(rollback["required_missing_settings"] || []) == MapSet.new(missing_settings),
+         do: [],
+         else: ["missing protection settings are not consistently recorded"]
+
+    desired_errors =
+      if String.contains?(markdown, "79-PROTECTION-DESIRED.json") and
+           String.contains?(markdown, "SHA-256 `#{desired_digest}`"),
+         do: [],
+         else: ["no-action record is not bound to the exact desired reference bytes"]
+
+    rollback_hash_errors =
+      if String.contains?(markdown, "79-PROTECTION-ROLLBACK.json") and
+           String.contains?(markdown, "record SHA-256 `#{rollback_digest}`"),
+         do: [],
+         else: ["no-action record is not bound to the exact rollback record bytes"]
+
+    action_markers = [
+      "gh api -X PUT",
+      "gh workflow run",
+      "workflow_dispatch",
+      "- Proposed operation",
+      "- Exact payload JSON:",
+      "- Explicit approval:",
+      "approve remote_github"
+    ]
+
+    action_errors =
+      Enum.flat_map(action_markers, fn marker ->
+        if String.contains?(markdown, marker),
+          do: ["no-action record contains executable or approval content: #{marker}"],
+          else: []
+      end)
+
+    phase79_remote_batch_violations(markdown, identity) ++
+      capture_errors ++
+      rollback_errors ++
+      missing_setting_errors ++ desired_errors ++ rollback_hash_errors ++ action_errors
   end
 
   defp phase79_remote_identity_errors(markdown, identity, fields) do
