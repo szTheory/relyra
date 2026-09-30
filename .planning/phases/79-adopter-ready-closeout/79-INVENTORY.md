@@ -1,6 +1,6 @@
 # Phase 79 Closeout Inventory
 
-**Observed:** 2026-09-30T09:27:02Z
+**Observed:** 2026-09-30T10:42:30Z
 **Repository:** `szTheory/relyra`  
 **Ref / SHA:** `refs/heads/main` / `c786a9890f2f99f0dd98f89a1d9713db7c486837`  
 **Readiness:** **unknown** — the read-only sources completed, but mandatory current-main lane evidence is absent and live branch protection differs from the expected context list. Details are recorded in [79-INVENTORY.json](79-INVENTORY.json).
@@ -84,7 +84,7 @@ Untracked paths, all preserved with no cleanup authority:
 | `tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/metadata.config` | unknown | preserve; no cleanup authority |
 
 Ignored generated candidates are listed in the receipt and remain inspect-only with no cleanup authority. The registered worktree is
-`/Users/jon/projects/relyra`, branch `gsd/phase-73-gap-closure`, HEAD `b403f9bc02019056cad36566bf8afe9012f9f985`; owner is unknown and disposition is preserve until confirmed.
+`/Users/jon/projects/relyra`, branch `gsd/phase-73-gap-closure`, HEAD `619d44286c71c34e20fd28bd51e3ba1958409706`; owner is unknown and disposition is preserve until confirmed.
 
 ## Verification
 

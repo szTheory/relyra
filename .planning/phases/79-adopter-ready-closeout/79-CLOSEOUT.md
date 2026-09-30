@@ -3,7 +3,7 @@
 ## Release readiness: BLOCKED
 
 The current protected-main observation is `szTheory/relyra@refs/heads/main` at
-`c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed at `2026-09-30T09:27:02Z`.
+`c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed at `2026-09-30T10:42:30Z`.
 Readiness remains unknown and release is blocked: all nine mandatory lanes are absent
 on that SHA, two live-required security contexts lack passing evidence, and live branch
 protection omits the expected `fleet-proxy-e2e` context. Local validation cannot replace
@@ -13,8 +13,8 @@ current-main evidence.
 
 See [79-INVENTORY.md](79-INVENTORY.md) and [79-INVENTORY.json](79-INVENTORY.json) for the
 bounded local, worktree, branch, and GitHub observations. `.tool-versions` is maintainer-
-owned. The five closeout outputs and `79-VALIDATION.md` are Phase 79-owned and pending
-Task 3 commit; their disposition grants no cleanup authority. Other unknown-owner paths
+owned. The five modified closeout outputs are Phase 79-owned with a stage-neutral preserve
+disposition and no cleanup authority. `79-VALIDATION.md` is committed. Other unknown-owner paths
 and the registered worktree are preserved.
 
 ## Main CI evidence

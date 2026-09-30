@@ -6,7 +6,7 @@
 
 - **Target repository:** `szTheory/relyra`
 - **Target ref/resource:** `refs/heads/main` branch protection
-- **Observed at:** `2026-09-30T09:27:02Z`
+- **Observed at:** `2026-09-30T10:42:30Z`
 - **Observed main SHA:** `c786a9890f2f99f0dd98f89a1d9713db7c486837`
 - **Captured required contexts:** `security (27, 1.19.5)`, `security (28, 1.19.5)`
 - **Repository expected contexts:** `security (27, 1.19.5)`, `security (28, 1.19.5)`, `fleet-proxy-e2e`
