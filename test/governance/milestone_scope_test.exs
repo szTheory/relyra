@@ -2631,6 +2631,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Enum.all?(receipt["github"]["pull_requests"], &(not Map.has_key?(&1, "base")))
     assert length(receipt["github"]["issues"]) == 1
     assert receipt["github"]["canaries"] != []
+    assert Enum.any?(receipt["github"]["canaries"], &(&1["source"] == "GitHub Actions check run"))
   end
 
   test "Phase 79 collector keeps incomplete evidence unknown and rejects tampered provenance" do
@@ -2859,7 +2860,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     checks =
       Enum.map(names, fn name ->
         %{"name" => name, "head_sha" => sha, "status" => "completed", "conclusion" => "success"}
-      end)
+      end) ++
+        [
+          %{
+            "id" => 90,
+            "name" => "real-idp-canary",
+            "head_sha" => sha,
+            "status" => "completed",
+            "conclusion" => "success",
+            "completed_at" => "2026-09-29T00:00:00Z"
+          }
+        ]
 
     contexts = ["security (27, 1.19.5)", "security (28, 1.19.5)", "fleet-proxy-e2e"]
 

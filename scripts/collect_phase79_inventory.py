@@ -448,7 +448,7 @@ def validate_receipt(receipt: dict) -> list[str]:
         "remote_branches": {"name", "sha", "protected"},
         "workflows": {"id", "name", "path", "state", "html_url", "created_at", "updated_at"},
         "workflow_runs": {"id", "name", "workflow_id", "path", "event", "status", "conclusion", "head_branch", "head_sha", "run_started_at", "updated_at", "html_url"},
-        "check_runs": {"name", "status", "conclusion", "head_sha", "started_at", "completed_at", "html_url"},
+        "check_runs": {"id", "name", "status", "conclusion", "head_sha", "started_at", "completed_at", "html_url"},
         "statuses": {"context", "state", "description", "target_url", "created_at", "updated_at", "sha"},
     }
     for name, allowed in collection_fields.items():
@@ -573,17 +573,22 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         gaps.append("workflow catalog contains an absent or unrecognized state")
     if any(result["state"] != "passed" for result in context_results.values()):
         gaps.append("one or more branch-protection contexts lack passing current-main evidence")
+    canary_terms = ("canary", "rulestead", "real-idp")
     canaries = [
         {"run_id": row.get("id"), "name": row.get("name"), "ref": row.get("head_branch"), "sha": row.get("head_sha"), "observed_at": row.get("updated_at"), "status": row.get("conclusion") or row.get("status"), "source": "GitHub Actions workflow run"}
-        for row in workflow_runs if isinstance(row, dict) and any(word in str(row.get("name", "") + row.get("path", "")).lower() for word in ("canary", "rulestead", "real-idp"))
+        for row in workflow_runs if isinstance(row, dict) and any(word in str(row.get("name", "") + row.get("path", "")).lower() for word in canary_terms)
     ]
+    canaries.extend(
+        {"run_id": row.get("id"), "name": row.get("name"), "ref": None, "sha": row.get("head_sha"), "observed_at": row.get("completed_at") or row.get("started_at"), "status": row.get("conclusion") or row.get("status"), "source": "GitHub Actions check run"}
+        for row in checks if isinstance(row, dict) and any(word in str(row.get("name", "")).lower() for word in canary_terms)
+    )
     github = {
         "pull_requests": [compact_pull_request(row) for row in rows["pull_requests"]],
         "issues": [compact_issue(row) for row in issue_rows],
         "remote_branches": [{"name": row.get("name"), "sha": row.get("commit", {}).get("sha") if isinstance(row.get("commit"), dict) else None, "protected": row.get("protected")} for row in rows["remote_branches"] if isinstance(row, dict)],
         "workflows": [workflow_item(row) for row in rows["workflows"] if isinstance(row, dict)],
         "workflow_runs": [{**only(row, ("id", "name", "workflow_id", "path", "event", "status", "conclusion", "head_branch", "head_sha", "run_started_at", "updated_at")), "html_url": safe_github_url(row.get("html_url"))} for row in workflow_runs if isinstance(row, dict)],
-        "check_runs": [{**only(row, ("name", "status", "conclusion", "head_sha", "started_at", "completed_at")), "html_url": safe_github_url(row.get("html_url"))} for row in checks if isinstance(row, dict)],
+        "check_runs": [{**only(row, ("id", "name", "status", "conclusion", "head_sha", "started_at", "completed_at")), "html_url": safe_github_url(row.get("html_url"))} for row in checks if isinstance(row, dict)],
         "statuses": [{**only(row, ("context", "state", "description", "created_at", "updated_at", "sha")), "target_url": safe_github_url(row.get("target_url"))} for row in statuses if isinstance(row, dict)],
         "branch_protection": {"access_status": "allowed" if protection_status == 200 else access_status(protection_status), "required_contexts": sorted(contexts), "expected_contexts": sorted(required_contexts), "context_match": sorted(contexts) == sorted(required_contexts), "context_results": context_results},
         "mandatory_lanes": lane_results,
