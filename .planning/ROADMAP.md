@@ -438,7 +438,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 5. A residual-risk report shows that every remaining idea is low-value, demand-gated,
    approval-blocked, or more costly to maintain than the risk it would retire.
 
-**Plans:** 6/6 plans executed
+**Plans:** 6/12 plans executed; 6 gap-closure plans pending
 **Wave 1**
 
 - [x] 79-01-PLAN.md
@@ -463,6 +463,30 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 - [x] 79-06-PLAN.md — Re-capture and reconcile protection sources; produce only a verified inert batch or an explicit no-action blocker. Any remote mutation requires a separate exact-batch approval plan.
 
+**Wave 7** *(gap closure; exact local publication proposal)*
+
+- [ ] 79-07-PLAN.md — Prove original milestone commit ancestry and prepare an inert, exact publication and transaction contract.
+
+**Wave 8** *(gap closure; separate approval for PR proposal)*
+
+- [ ] 79-08-PLAN.md — Publish only the approved exact candidate branch and PR; read back both targets.
+
+**Wave 9** *(gap closure; separate approval for protected-main merge)*
+
+- [ ] 79-09-PLAN.md — Verify PR CI, approve a history-preserving normal merge, and read back main tree and provenance.
+
+**Wave 10** *(gap closure; final-main CI, independent of protection-source agreement)*
+
+- [ ] 79-10-PLAN.md — Prove nine mandatory lanes and fleet context on final main; conditionally approve exact CI-only dispatch.
+
+**Wave 11** *(gap closure; external policy-source prerequisite)*
+
+- [ ] 79-11-PLAN.md — After policy-owner/provider source agreement, preserve approved protection snapshots and verify separate post-state read-back.
+
+**Wave 12** *(gap closure; final evidence gate)*
+
+- [ ] 79-12-PLAN.md — Close only after same-SHA CI, complete protection, ownership, and residual-risk evidence pass.
+
 ## Progress
 
 **Execution order:** 73 → 74 → 75 → 76 → 77 → 78 → 79
@@ -475,7 +499,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
 | 78. CI Efficiency and Reliability | v1.11 | 9/9 | Complete    | 2026-09-29 |
-| 79. Adopter-Ready Closeout | v1.11 | 6/6 | In Progress|  |
+| 79. Adopter-Ready Closeout | v1.11 | 6/12 | In Progress|  |
 
 ---
 

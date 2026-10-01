@@ -93,6 +93,19 @@ All acceptance behavior is checked by deterministic automation. The inventory co
 
 **Approval:** not applicable; this is an automated validation map, not a human acceptance gate.
 
+## Pending gap-plan evidence map (79-07–79-12)
+
+These entries are pending execution. Approval checkpoints authorize exact remote actions; they do not verify behavior. The Phase 79 actual-artifact governance owner must accept both legitimate blocked and complete closeout states from deterministic fixtures before the publication source freezes, while rejecting conflicting or fabricated evidence. A failed or missing live result remains an open automation/external-state gap.
+
+| Task | Plan | Requirement | Automated evidence | Immediate nonzero / missing-output signal | Status |
+|---|---|---|---|---|---|
+| 79-07-T1/T2 | 79-07 | REPO-01/03, EXIT-01 | `mix ci.evidence` fixtures for original commit ancestry, simulated normal-merge topology, transaction identities, and actual-artifact blocked/ready states; `mix ci.phase73.reconciliation` after governed test edit | Unclassified commit/path, lost summary/task ancestry, forged ready state, REST/GraphQL conflict, stale proof, or missing receipt | pending |
+| 79-07-T3, 79-08-T1/T3 | 79-07/08 | REPO-01/03 | Publication verifier plus `verify_phase79_transaction.py --stage publication|pr-preflight|pr-result` live read-back; mandatory CI fixtures for target/head/base/tree, approval digest and partial writes | Changed source/base/tree, stale approval, extra operation, absent PR or partial push/PR state | pending |
+| 79-09-T1/T3 | 79-09 | REPO-03, EXIT-01 | `verify_phase79_transaction.py --stage merge-preflight|merge-result`, local QA/security/format gates, isolated main-topology provenance proof | Missing/failed PR check, moved head/base, unavailable normal merge, wrong main parents/tree, lost completed-plan provenance | pending |
+| 79-10-T1/T3 | 79-10 | REPO-02/03, EXIT-01 | Existing inventory verifier plus `verify_phase79_transaction.py --stage ci-preflight|ci-result` on all nine lanes and fleet; 79-07 mandatory CI fixtures prove absent-current-main-run preflight passes only with exact enabled canonical workflow/ref/SHA/action pending packet, absent final result fails, and matching post-dispatch owner run/job/check result passes | Missing-run preparation rejected despite valid packet; missing/failed lane or fleet result accepted as final; ambiguous or mismatched identity, wrong dispatch approval/ref/SHA, or mismatched publication/merge/CI receipt | pending |
+| 79-11-T1/T3 | 79-11 | REPO-02/03, EXIT-01 | Existing builder `--verify` against immutable approved capture/inventory/desired/rollback/batch before and after mutation; separate post-state read via `verify_phase79_transaction.py --stage protection-result` | REST/GraphQL conflict, changed approved snapshot bytes, null rollback, non-fleet delta, wrong post-state, or partial write called complete | pending; external policy-owner/provider prerequisite |
+| 79-12-T1/T2 | 79-12 | REPO-01/02/03, EXIT-01 | `verify_phase79_transaction.py --stage closeout` joins publication/PR/merge/CI/protection receipts and post-state, plus `mix ci.evidence`, Phase 73 reconciliation, full test/security/format/QA and final live main SHA read | Stale proof, incomplete risk, moved main, changed pre-state, receipt identity mismatch, nonzero gate or missing final evidence | pending |
+
 
 ## Plan 79-05 evidence update
 

@@ -4,19 +4,19 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 79
 current_phase_name: Adopter-Ready Closeout
-current_plan: 6
-status: executing
-stopped_at: Completed 79-06-PLAN.md
-last_updated: "2026-10-01T12:18:34.596Z"
+current_plan: 7
+status: Ready to execute
+stopped_at: Phase 79 gap plans 07–12 verified; next 79-07-PLAN.md
+last_updated: "2026-10-01T17:50:20.111Z"
 last_activity: 2026-10-01
-last_activity_desc: Phase 79 execution started
-state_head: f476efa63b50dbe16ddb6bdaa8e511c245d739f9
+state_head: eed7e76937e5c47e5afbf947e3a39e9033a8986f
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 69
+  total_plans: 75
   completed_plans: 69
   percent: 86
+last_activity_desc: Phase 79 gap plans 07–12 passed independent planning checks
 ---
 
 # Project State
@@ -28,21 +28,21 @@ See `.planning/PROJECT.md`.
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection —
 never a silent compromise. Trust mutations are durable, attributable, and reviewable.
 
-**Last updated:** 2026-09-30
+**Last updated:** 2026-10-01
 
 **Current focus:** Phase 79 — Adopter-Ready Closeout
 
 ## Current Position
 
-Phase: 79 (Adopter-Ready Closeout) — BLOCKED
+Phase: 79 (Adopter-Ready Closeout) — READY TO EXECUTE
 
-Current Plan: 6 (complete)
-Total Plans in Phase: 6
-Next gate: The GitHub policy owner must resolve the REST/GraphQL review-setting conflict. Then repeat read-only capture and inventory; all nine mandatory lanes must pass on the same main SHA before preparing any separate exact-action plan.
+Current Plan: 7
+Total Plans in Phase: 12
+Next gate: Execute 79-07 to prepare and verify the exact source publication and transaction contracts. Plans 79-08–11 require separate approval of each concrete remote batch. Plan 79-11 additionally requires machine-proven protection-source agreement before any writable payload.
 
-Status: Blocked on external source disagreement and missing current-main CI evidence.
+Status: Ready to execute
 
-Last activity: 2026-10-01 — Plan 79-06 completed; Phase 79 remains blocked.
+Last activity: 2026-10-01
 
 ## Milestone Metrics
 
@@ -151,16 +151,29 @@ Do not prepare a remote approval batch until the full source and rollback are av
 
 ## Session Continuity
 
-**Last session:** 2026-10-01T12:17:17.859Z
+**Last session:** 2026-10-01T17:48:44.687Z
 
-**Stopped at:** Completed 79-06-PLAN.md
+**Stopped at:** Phase 79 gap plans 07–12 verified; next 79-07-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Phase 79 Plans 01 through 06 are complete, and ROADMAP.md records 6/6 plans. The fresh
-read-only capture at main SHA c786a9890f2f99f0dd98f89a1d9713db7c486837 still conflicts:
+Phase 79 Plans 01 through 06 are complete, and ROADMAP.md records 6/12 plans executed.
+The six new gap plans 79-07 through 79-12 passed structural, command-contract,
+requirement/decision coverage, and independent planning checks. Research was skipped
+for gap planning. No implementation or remote mutation occurred during planning.
+
+Run `$gsd-execute-phase 79 --gaps-only`, beginning with 79-07. The sequence prepares
+a history-preserving publication candidate and deterministic transaction validators,
+separately approves PR publication and normal merge, proves final-main CI, then
+reconciles protection and closes only on passing source-bound evidence. Missing CI
+runs can produce a pending dispatch proposal; final CI acceptance requires every
+passing run/job/check identity. Approved protection evidence and rollback remain
+immutable, with separate post-change observations.
+
+Release readiness remains blocked. The captured main SHA
+c786a9890f2f99f0dd98f89a1d9713db7c486837 still has a protection-source conflict:
 REST reports `required_approving_review_count=1`, while GraphQL reports
 `requiredApprovingReviewCount=null` and `requiresApprovingReviews=false`. The parent
 protection response also omits `required_pull_request_reviews` and `restrictions`; the
@@ -168,10 +181,11 @@ capture has no writable resource and the desired/rollback payloads are null. All
 mandatory lanes lack passing evidence on that SHA, so readiness remains unknown. No
 approval was inferred, and no remote write or workflow dispatch occurred.
 
-Exact next action: the GitHub policy owner resolves the source discrepancy and complete
-protection state; then perform a new read-only capture and inventory. Proceed only when
-the sources agree and all nine mandatory lanes pass for the same current main SHA. Any
-later GitHub operation requires a separate exact plan and approval gate.
+The GitHub policy owner/provider must resolve the source disagreement before 79-11
+can prepare an exact protection correction and rollback. This external prerequisite
+does not prevent 79-07's local preparation or the separately approved CI path. Every
+remote batch still needs its own exact approval, immediate preflight, and automated
+read-back; those approvals do not prove readiness.
 
 Carryover records: `.planning/WINDOWS.md` retains two Phase 76 concurrency automation
 gaps and the documented advisory waiver. The archival verification audit reports five
@@ -246,5 +260,9 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 
 ## Blockers
 
-- Phase 79 release readiness remains blocked: the 2026-09-30 main inventory shows all nine mandatory lanes absent, two live-required security contexts without passing evidence, and missing fleet-proxy-e2e protection context; refresh main evidence and separately plan any authorized remote correction.
-- Phase 79 closeout remains blocked: fresh capture at main SHA c786a9890f2f99f0dd98f89a1d9713db7c486837 still shows REST required_approving_review_count=1 versus GraphQL requiredApprovingReviewCount=null and requiresApprovingReviews=false; nine mandatory lanes lack passing evidence. Resolve source discrepancy, then recapture read-only evidence on the same current-main SHA before any separate exact-action plan.
+None for starting Plan 79-07's local preparation.
+
+## Release Readiness Prerequisites
+
+- Plans 79-07–10 must publish the reviewed milestone history through separately approved actions and prove all nine mandatory lanes plus fleet-proxy-e2e on the resulting current main SHA. Old-main, PR, local fixture, and canary success cannot substitute for final-main evidence.
+- Plan 79-11 requires the GitHub policy owner/provider to resolve REST required_approving_review_count=1 versus GraphQL requiredApprovingReviewCount=null and requiresApprovingReviews=false, with a complete writable protection observation. Only then may an exact protection delta and rollback be approved; Plan 79-12 requires automated read-back and green same-SHA evidence before completion.
