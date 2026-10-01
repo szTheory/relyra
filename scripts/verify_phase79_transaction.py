@@ -1020,7 +1020,7 @@ def verify_ci_result(phase_dir: pathlib.Path, fixture_dir: pathlib.Path | None) 
             responses = dispatch_fixture.get("responses")
             if not isinstance(responses, list) or len(responses) != len(requests):
                 raise TransactionError("fixture dispatch response set is incomplete")
-            for request, response in zip(requests, responses, strict=True):
+            for request, response in zip(requests, responses):
                 if (
                     not isinstance(response, dict)
                     or response.get("workflow_id") != request.get("workflow_id")
@@ -1910,7 +1910,7 @@ def stage_closeout(phase_dir: pathlib.Path, fixture_dir: pathlib.Path | None) ->
                 not isinstance(response, dict)
                 or response.get("workflow_id") != request.get("workflow_id")
                 or not (response.get("accepted") is True or response.get("status_code") == 204)
-                for request, response in zip(requests, responses, strict=False)
+                for request, response in zip(requests, responses)
             )
             or not isinstance(run_identities, list)
             or len(run_identities) != len(expected_run_paths)
