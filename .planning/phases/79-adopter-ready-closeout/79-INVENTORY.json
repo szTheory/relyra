@@ -3449,7 +3449,7 @@
       },
       {
         "name": "gsd/phase-73-gap-closure",
-        "sha": "aa22364d4b19184fe35f65d5c0396e6b79dcc495"
+        "sha": "9145e7b92df8f7ae7ba70c9091ff116494e21270"
       },
       {
         "name": "keep/pat-free-release-note",
@@ -3534,11 +3534,119 @@
       {
         "disposition": "preserve; no cleanup authority",
         "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/ROADMAP.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "gsd-workflow",
+        "path": ".planning/STATE.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/73-twin-contract-and-baseline/73-SECURITY.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-04-SUMMARY.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-05-PLAN.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-RISKS.json"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
         "owner": "gsd-workflow",
         "path": ".planning/state.json"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": "scripts/collect_phase79_inventory.py"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": " M",
+        "owner": "phase-79",
+        "path": "test/governance/milestone_scope_test.exs"
       }
     ],
-    "tracked_path_count": 1318,
+    "tracked_path_count": 1315,
     "untracked_paths": [
       {
         "disposition": "preserve; no cleanup authority",
@@ -3557,6 +3665,18 @@
         "git_state": "??",
         "owner": "phase-79",
         "path": ".planning/phases/79-adopter-ready-closeout/79-05-SUMMARY.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": "??",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-06-PLAN.md"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": "??",
+        "owner": "phase-79",
+        "path": ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json"
       },
       {
         "disposition": "preserve; no cleanup authority",
@@ -3633,6 +3753,12 @@
       {
         "disposition": "preserve; no cleanup authority",
         "git_state": "??",
+        "owner": "phase-79",
+        "path": "scripts/capture_phase79_protection.py"
+      },
+      {
+        "disposition": "preserve; no cleanup authority",
+        "git_state": "??",
         "owner": "unknown",
         "path": "tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/CHECKSUM"
       },
@@ -3660,7 +3786,7 @@
         "branch": "refs/heads/gsd/phase-73-gap-closure",
         "detached": false,
         "disposition": "preserve; confirm owner before any cleanup",
-        "head": "aa22364d4b19184fe35f65d5c0396e6b79dcc495",
+        "head": "9145e7b92df8f7ae7ba70c9091ff116494e21270",
         "owner": "unknown",
         "path": "/Users/jon/projects/relyra"
       }
@@ -3672,7 +3798,7 @@
     "revalidated_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
     "source": "GET repos/szTheory/relyra/git/ref/heads/main"
   },
-  "observed_at": "2026-10-01T01:51:05Z",
+  "observed_at": "2026-10-01T01:43:45Z",
   "repository": {
     "name": "szTheory/relyra",
     "source": "git remote origin"

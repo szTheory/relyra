@@ -1,6 +1,6 @@
 # Phase 79 Closeout Inventory
 
-**Observed:** 2026-10-01T01:51:05Z
+**Observed:** 2026-10-01T01:43:45Z
 **Repository:** `szTheory/relyra`
 **Ref / SHA:** `refs/heads/main` / `c786a9890f2f99f0dd98f89a1d9713db7c486837`
 **Readiness:** **unknown** — release remains blocked while required same-SHA evidence is absent and protection settings conflict. See [79-INVENTORY.json](79-INVENTORY.json).
@@ -55,13 +55,31 @@ The separate canary list contains 34 observations. These records remain separate
 
 ## Local paths and worktree disposition
 
-The receipt observed 1 tracked edits, 19 untracked paths, 4 bounded ignored candidates, and 1 registered worktree(s). All retain a preserve/no-cleanup disposition.
+The receipt observed 19 tracked edits, 22 untracked paths, 4 bounded ignored candidates, and 1 registered worktree(s). All retain a preserve/no-cleanup disposition.
 
 ### Tracked edits
 
 | Path | Owner | Disposition |
 | --- | --- | --- |
+| `.planning/ROADMAP.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/STATE.md` | gsd-workflow | preserve; no cleanup authority |
+| `.planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/73-twin-contract-and-baseline/73-SECURITY.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-04-SUMMARY.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-05-PLAN.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.json` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-RISKS.json` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-VALIDATION.md` | phase-79 | preserve; no cleanup authority |
 | `.planning/state.json` | gsd-workflow | preserve; no cleanup authority |
+| `scripts/collect_phase79_inventory.py` | phase-79 | preserve; no cleanup authority |
+| `test/governance/milestone_scope_test.exs` | phase-79 | preserve; no cleanup authority |
 
 ### Untracked paths
 
@@ -70,6 +88,8 @@ The receipt observed 1 tracked edits, 19 untracked paths, 4 bounded ignored cand
 | `.gsd/dispatch-isolation-sentinel.json` | unknown | preserve; no cleanup authority |
 | `.planning/milestone.lock` | unknown | preserve; no cleanup authority |
 | `.planning/phases/79-adopter-ready-closeout/79-05-SUMMARY.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-06-PLAN.md` | phase-79 | preserve; no cleanup authority |
+| `.planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json` | phase-79 | preserve; no cleanup authority |
 | `.planning/research/.cache/37ff52e086866494f11f61caccefe2f2b775b5ea7e8406bbbbce3170c6eb5f7d.json` | unknown | preserve; no cleanup authority |
 | `.planning/research/.cache/3ce76252e6ac3857577da8040e2a2ec15089e09f6776cf32788db99d3c2adeff.json` | unknown | preserve; no cleanup authority |
 | `.planning/research/.cache/4ab0b34aeedba5bed1649d99aeb0dfbfb3479cd2ebc3d7ec33a9a813abdb57fb.json` | unknown | preserve; no cleanup authority |
@@ -82,6 +102,7 @@ The receipt observed 1 tracked edits, 19 untracked paths, 4 bounded ignored cand
 | `.tool-versions` | maintainer | preserve; no cleanup authority |
 | `scripts/__pycache__/capture_phase79_protection.cpython-314.pyc` | unknown | preserve; no cleanup authority |
 | `scripts/__pycache__/collect_phase79_inventory.cpython-314.pyc` | unknown | preserve; no cleanup authority |
+| `scripts/capture_phase79_protection.py` | phase-79 | preserve; no cleanup authority |
 | `tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/CHECKSUM` | unknown | preserve; no cleanup authority |
 | `tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/VERSION` | unknown | preserve; no cleanup authority |
 | `tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/contents.tar.gz` | unknown | preserve; no cleanup authority |
@@ -100,4 +121,4 @@ The receipt observed 1 tracked edits, 19 untracked paths, 4 bounded ignored cand
 
 | Path | Branch | HEAD |
 | --- | --- | --- |
-| `/Users/jon/projects/relyra` | `refs/heads/gsd/phase-73-gap-closure` | `aa22364d4b19184fe35f65d5c0396e6b79dcc495` |
+| `/Users/jon/projects/relyra` | `refs/heads/gsd/phase-73-gap-closure` | `9145e7b92df8f7ae7ba70c9091ff116494e21270` |
