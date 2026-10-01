@@ -3929,6 +3929,229 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert invalid =~ "capture source digest" or invalid =~ "capture resource"
   end
 
+  test "Phase 79 batch builder emits exact deltas only from consistent evidence" do
+    root = File.cwd!()
+
+    temporary =
+      Path.join(System.tmp_dir!(), "relyra-phase79-batch-#{System.unique_integer([:positive])}")
+
+    File.mkdir_p!(temporary)
+    on_exit(fn -> File.rm_rf!(temporary) end)
+    sha = String.duplicate("a", 40)
+    inventory_fixture = Path.join(temporary, "inventory-fixture.json")
+    inventory_path = Path.join(temporary, "inventory.json")
+    capture_fixture_path = Path.join(temporary, "capture-fixture.json")
+    capture_path = Path.join(temporary, "capture.json")
+    inventory_script = Path.join(root, "scripts/collect_phase79_inventory.py")
+    capture_script = Path.join(root, "scripts/capture_phase79_protection.py")
+    builder = Path.join(root, "scripts/prepare_phase79_batch.py")
+    File.write!(inventory_fixture, Jason.encode!(phase79_fixture(sha)))
+
+    assert {_inventory_output, 0} =
+             System.cmd(
+               "python3",
+               [inventory_script, "--fixture", inventory_fixture, "--output", inventory_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    inventory = inventory_path |> File.read!() |> Jason.decode!()
+    capture_fixture = phase79_protection_fixture(sha)
+    File.write!(capture_fixture_path, Jason.encode!(capture_fixture))
+
+    assert {_capture_output, 0} =
+             System.cmd(
+               "python3",
+               [capture_script, "--fixture", capture_fixture_path, "--output", capture_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    capture_receipt = capture_path |> File.read!() |> Jason.decode!()
+    current_contexts = capture_receipt["resource"]["required_status_checks"]["contexts"]
+
+    inventory_resource =
+      capture_receipt["resource"]
+      |> Enum.map(fn {key, value} ->
+        if key in ~w(allow_deletions allow_force_pushes allow_fork_syncing block_creations enforce_admins lock_branch required_conversation_resolution required_linear_history required_signatures) and
+             is_boolean(value) do
+          {key, %{"enabled" => value}}
+        else
+          {key, value}
+        end
+      end)
+      |> Map.new()
+      |> update_in(["required_pull_request_reviews"], fn reviews ->
+        if is_map(reviews),
+          do: Map.delete(reviews, "bypass_pull_request_allowances"),
+          else: reviews
+      end)
+
+    inventory =
+      inventory
+      |> put_in(["github", "branch_protection", "resource"], inventory_resource)
+      |> put_in(["github", "branch_protection", "required_contexts"], current_contexts)
+      |> put_in(["github", "branch_protection", "context_match"], false)
+      |> put_in(["collection", "complete"], false)
+      |> put_in(["collection", "readiness"], "unknown")
+      |> update_in(
+        ["collection", "gaps"],
+        &Enum.uniq(["live required contexts differ from repository expected contexts" | &1])
+      )
+      |> put_in(
+        ["github", "branch_protection", "observed_fields"],
+        Enum.sort(["url" | Map.keys(inventory_resource)])
+      )
+
+    File.write!(inventory_path, Jason.encode!(inventory))
+
+    # Keep this fixture honest under the production inventory validator.
+    assert {_verify_inventory, 0} =
+             System.cmd("python3", [inventory_script, "--verify", inventory_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    output_dir = Path.join(temporary, "artifacts")
+    args = ["--capture", capture_path, "--inventory", inventory_path, "--output-dir", output_dir]
+
+    assert {builder_output, 0} =
+             System.cmd("python3", [builder | args], cd: root, stderr_to_stdout: true)
+
+    assert builder_output =~ "wrote Phase 79 batch artifacts: complete"
+
+    desired =
+      Path.join(output_dir, "79-PROTECTION-DESIRED.json") |> File.read!() |> Jason.decode!()
+
+    rollback =
+      Path.join(output_dir, "79-PROTECTION-ROLLBACK.json") |> File.read!() |> Jason.decode!()
+
+    batch_path = Path.join(output_dir, "79-REMOTE-BATCH.md")
+
+    assert desired["desired_payload"]["required_status_checks"]["contexts"] ==
+             (current_contexts ++ ["fleet-proxy-e2e"]) |> Enum.sort()
+
+    assert rollback["rollback_payload"] == capture_receipt["writable_payload"]
+    assert batch_path |> File.read!() =~ "no remote operation was executed"
+
+    assert {verify_output, 0} =
+             System.cmd("python3", [builder | args ++ ["--verify"]],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert verify_output =~ "valid Phase 79 batch artifacts: complete"
+
+    conflict_fixture =
+      put_in(
+        capture_fixture,
+        [
+          "graphql",
+          "protection",
+          "body",
+          "data",
+          "repository",
+          "ref",
+          "branchProtectionRule",
+          "requiredApprovingReviewCount"
+        ],
+        nil
+      )
+      |> put_in(
+        [
+          "graphql",
+          "protection",
+          "body",
+          "data",
+          "repository",
+          "ref",
+          "branchProtectionRule",
+          "requiresApprovingReviews"
+        ],
+        false
+      )
+
+    conflict_fixture_path = Path.join(temporary, "conflict-fixture.json")
+    conflict_capture_path = Path.join(temporary, "conflict-capture.json")
+    conflict_output = Path.join(temporary, "conflict-artifacts")
+    File.write!(conflict_fixture_path, Jason.encode!(conflict_fixture))
+
+    assert {_conflict_output, 0} =
+             System.cmd(
+               "python3",
+               [
+                 capture_script,
+                 "--fixture",
+                 conflict_fixture_path,
+                 "--output",
+                 conflict_capture_path
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert {_blocked_output, 0} =
+             System.cmd(
+               "python3",
+               [
+                 builder,
+                 "--capture",
+                 conflict_capture_path,
+                 "--inventory",
+                 inventory_path,
+                 "--output-dir",
+                 conflict_output
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    blocked =
+      Path.join(conflict_output, "79-PROTECTION-DESIRED.json") |> File.read!() |> Jason.decode!()
+
+    assert blocked["desired_payload"] == nil
+    assert blocked["payload_available"] == false
+
+    assert Path.join(conflict_output, "79-PROTECTION-ROLLBACK.json")
+           |> File.read!()
+           |> Jason.decode!()
+           |> Map.get("rollback_payload") == nil
+
+    assert Path.join(conflict_output, "79-REMOTE-BATCH.md") |> File.read!() =~
+             "No Action Proposed"
+
+    tampered_capture = Map.put(capture_receipt, "unexpected", true)
+    tampered_path = Path.join(temporary, "tampered-capture.json")
+    File.write!(tampered_path, Jason.encode!(tampered_capture))
+
+    assert {_tamper_output, 0} =
+             System.cmd(
+               "python3",
+               [
+                 builder,
+                 "--capture",
+                 tampered_path,
+                 "--inventory",
+                 inventory_path,
+                 "--output-dir",
+                 Path.join(temporary, "tampered-artifacts")
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    tampered_desired = Path.join(output_dir, "79-PROTECTION-DESIRED.json")
+    File.write!(tampered_desired, "{}")
+
+    assert {altered_output, 1} =
+             System.cmd("python3", [builder | args ++ ["--verify"]],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert altered_output =~ "altered, or stale"
+  end
+
   defp phase79_protection_fixture(sha) do
     statuses = ["security (27, 1.19.5)", "security (28, 1.19.5)"]
 
