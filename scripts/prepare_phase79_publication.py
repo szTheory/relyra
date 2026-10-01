@@ -47,7 +47,7 @@ def json_bytes(value: Any) -> bytes:
     return (json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode()
 
 
-def git(root: pathlib.Path, *args: str, timeout: int = 120) -> str:
+def git(root: pathlib.Path, *args: str, timeout: int = 120, preserve_output: bool = False) -> str:
     try:
         result = subprocess.run(
             ["git", *args], cwd=root, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -58,7 +58,7 @@ def git(root: pathlib.Path, *args: str, timeout: int = 120) -> str:
         raise PublicationError(f"git command could not complete: {args[0]} ({exc})") from exc
     if result.returncode:
         raise PublicationError(f"git {args[0]} failed: {result.stdout[-3000:].strip()}")
-    return result.stdout.strip()
+    return result.stdout if preserve_output else result.stdout.strip()
 
 
 def git_blob_bytes(root: pathlib.Path, revision: str, path: str) -> bytes:
@@ -268,7 +268,10 @@ def commit_manifest(root: pathlib.Path, base_sha: str, source_sha: str, allowed:
 
 
 def worktree_inventory(root: pathlib.Path) -> dict[str, Any]:
-    raw = git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all")
+    raw = git(
+        root, "status", "--porcelain=v1", "-z", "--untracked-files=all",
+        preserve_output=True,
+    )
     records = [item for item in raw.split("\0") if item]
     tracked: list[dict[str, str]] = []
     untracked: list[str] = []

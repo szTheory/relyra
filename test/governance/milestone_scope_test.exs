@@ -3012,6 +3012,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     File.mkdir_p!(Path.dirname(phase_plan))
     File.write!(phase_plan, "---\nfiles_modified:\n  - governed.txt\n---\n# source plan\n")
     File.write!(Path.join(temporary, "governed.txt"), "in source tree\n")
+    File.write!(Path.join(temporary, ".planning/STATE.md"), "state source\n")
+    File.write!(Path.join(temporary, ".planning/state.json"), "state json source\n")
 
     on_exit(fn -> File.rm_rf!(temporary) end)
 
@@ -3032,13 +3034,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       "---\nfiles_modified:\n  - governed.txt\n  - worktree-only.txt\n---\n# uncommitted edit\n"
     )
 
+    File.write!(Path.join(temporary, ".planning/STATE.md"), "state edit\n")
+    File.write!(Path.join(temporary, ".planning/state.json"), "state json edit\n")
+
     python = """
     import importlib.util, json, pathlib, sys
     spec = importlib.util.spec_from_file_location("publication", sys.argv[1])
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     allowed, _owners = module.planned_paths(pathlib.Path(sys.argv[2]), sys.argv[3])
-    print(json.dumps({"governed": "governed.txt" in allowed, "worktree_only": "worktree-only.txt" in allowed}))
+    inventory = module.worktree_inventory(pathlib.Path(sys.argv[2]))
+    print(json.dumps({
+        "governed": "governed.txt" in allowed,
+        "worktree_only": "worktree-only.txt" in allowed,
+        "tracked_paths": sorted(item["path"] for item in inventory["tracked_dirty"]),
+    }))
     """
 
     assert {output, 0} =
@@ -3055,7 +3065,15 @@ defmodule Relyra.Governance.MilestoneScopeTest do
                stderr_to_stdout: true
              )
 
-    assert Jason.decode!(String.trim(output)) == %{"governed" => true, "worktree_only" => false}
+    assert Jason.decode!(String.trim(output)) == %{
+             "governed" => true,
+             "worktree_only" => false,
+             "tracked_paths" => [
+               ".planning/STATE.md",
+               ".planning/phases/73-contract/73-01-PLAN.md",
+               ".planning/state.json"
+             ]
+           }
 
     phase_dir = Path.join(temporary, "phase")
     File.mkdir_p!(phase_dir)
