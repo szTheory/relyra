@@ -2622,16 +2622,14 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     phase79_owned_artifacts = [
       ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md",
       ".planning/ROADMAP.md",
-      ".planning/phases/79-adopter-ready-closeout/79-04-SUMMARY.md",
-      ".planning/phases/79-adopter-ready-closeout/79-05-PLAN.md",
       ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
       ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md",
+      ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json",
       ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json",
       ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json",
       ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md",
       ".planning/phases/79-adopter-ready-closeout/79-RISKS.json",
-      "scripts/collect_phase79_inventory.py",
-      "test/governance/milestone_scope_test.exs"
+      ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md"
     ]
 
     proof_owned_paths = [
@@ -2644,7 +2642,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     tracked_edits = inventory["local"]["tracked_edits"]
     tracked_paths = Enum.map(tracked_edits, & &1["path"])
 
-    assert Enum.all?(phase79_owned_artifacts, &(&1 in tracked_paths))
+    expected_current_edits = Enum.reject(phase79_owned_artifacts, &(&1 == ".planning/ROADMAP.md"))
+    assert Enum.all?(expected_current_edits, &(&1 in tracked_paths))
 
     assert Enum.all?(tracked_paths, fn path ->
              path in phase79_owned_artifacts or path in proof_owned_paths or
@@ -4139,6 +4138,79 @@ defmodule Relyra.Governance.MilestoneScopeTest do
                cd: root,
                stderr_to_stdout: true
              )
+
+    assert_blocked = fn name, capture_input, inventory_input ->
+      destination = Path.join(temporary, "#{name}-artifacts")
+
+      assert {_output, 0} =
+               System.cmd(
+                 "python3",
+                 [
+                   builder,
+                   "--capture",
+                   capture_input,
+                   "--inventory",
+                   inventory_input,
+                   "--output-dir",
+                   destination
+                 ],
+                 cd: root,
+                 stderr_to_stdout: true
+               )
+
+      desired =
+        Path.join(destination, "79-PROTECTION-DESIRED.json") |> File.read!() |> Jason.decode!()
+
+      assert desired["payload_available"] == false
+      assert desired["desired_payload"] == nil
+    end
+
+    ref_drift_capture = Map.put(capture_receipt, "main_sha", String.duplicate("b", 40))
+    ref_drift_path = Path.join(temporary, "ref-drift-capture.json")
+    File.write!(ref_drift_path, Jason.encode!(ref_drift_capture))
+    assert_blocked.("ref-drift", ref_drift_path, inventory_path)
+
+    stale_inventory =
+      put_in(inventory, ["observation", "main_sha"], String.duplicate("b", 40))
+
+    stale_inventory_path = Path.join(temporary, "stale-inventory.json")
+    File.write!(stale_inventory_path, Jason.encode!(stale_inventory))
+    assert_blocked.("stale-inventory", capture_path, stale_inventory_path)
+
+    missing_app_fixture =
+      put_in(
+        capture_fixture,
+        [
+          "rest",
+          "commits/#{sha}/check-runs?page=1",
+          "body",
+          "check_runs",
+          Access.at(0),
+          "app",
+          "id"
+        ],
+        nil
+      )
+
+    missing_app_fixture_path = Path.join(temporary, "missing-app-fixture.json")
+    missing_app_capture_path = Path.join(temporary, "missing-app-capture.json")
+    File.write!(missing_app_fixture_path, Jason.encode!(missing_app_fixture))
+
+    assert {_missing_app_output, 0} =
+             System.cmd(
+               "python3",
+               [
+                 capture_script,
+                 "--fixture",
+                 missing_app_fixture_path,
+                 "--output",
+                 missing_app_capture_path
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert_blocked.("missing-app", missing_app_capture_path, inventory_path)
 
     tampered_desired = Path.join(output_dir, "79-PROTECTION-DESIRED.json")
     File.write!(tampered_desired, "{}")

@@ -161,11 +161,13 @@ def artifacts(capture: dict, capture_bytes: bytes, inventory: dict, inventory_by
         validation_errors.append("inventory and composite capture status disagree")
     if capture.get("resource") is not None and protection.get("resource") != inventory_projection(capture["resource"]):
         validation_errors.append("inventory and composite capture resources disagree")
-    if protection.get("capture_errors") != capture.get("capture_errors"):
-        validation_errors.append("inventory and composite capture errors disagree")
 
     complete = not validation_errors and capture.get("capture_status") == "complete"
-    reason = "; ".join(validation_errors) if validation_errors else "; ".join(capture.get("capture_errors", []))
+    inventory_errors = protection.get("capture_errors", [])
+    reason_parts = validation_errors + list(capture.get("capture_errors", []))
+    if inventory_errors and inventory_errors != capture.get("capture_errors", []):
+        reason_parts.extend(f"inventory REST observation: {item}" for item in inventory_errors)
+    reason = "; ".join(dict.fromkeys(reason_parts))
     if not reason and not complete:
         reason = "composite protection capture is incomplete"
 
@@ -183,15 +185,27 @@ def artifacts(capture: dict, capture_bytes: bytes, inventory: dict, inventory_by
         "source_capture_path": "79-PROTECTION-CAPTURE.json",
         "source_capture_sha256": capture_sha,
         "source_capture_digest": capture.get("source_digest"),
+        "source_capture_status": capture.get("capture_status"),
+        "source_capture_errors": capture.get("capture_errors", []),
         "source_inventory_path": "79-INVENTORY.json",
         "source_inventory_sha256": inventory_sha,
+        "source_inventory_capture_errors": inventory_errors,
         "target": {key: observed[key] for key in ("repository", "ref", "main_sha", "observed_at")},
     }
+    rest_approval = capture.get("sources", {}).get("review_subresource", {}).get("configuration", {}).get("required_approving_review_count")
+    graphql_rule = capture.get("sources", {}).get("graphql", {}).get("branch_protection", {}).get("rule", {})
+    missing_settings = sorted(
+        {"required_pull_request_reviews", "restrictions"}
+        - set(capture.get("sources", {}).get("parent_protection", {}).get("configuration", {}))
+    )
     desired = {
         "schema": "phase79-protection-desired", "version": 1, "status": output_status,
         "payload_available": complete, "desired_payload": desired_payload,
         "expected_delta": {"status_check_context": EXPECTED_CHECK,
                            "app_id_source": "current-SHA fleet-proxy-e2e check run"},
+        "observed_rest_approval_count": rest_approval,
+        "observed_graphql_approval_count": graphql_rule.get("requiredApprovingReviewCount"),
+        "observed_graphql_requires_approving_reviews": graphql_rule.get("requiresApprovingReviews"),
         "reason": None if complete else reason,
         **base,
     }
@@ -199,6 +213,7 @@ def artifacts(capture: dict, capture_bytes: bytes, inventory: dict, inventory_by
         "schema": "phase79-protection-rollback", "version": 1, "status": output_status,
         "payload_available": complete, "rollback_payload": rollback_payload,
         "source_endpoint": "composite protection capture", "reason": None if complete else reason,
+        "required_missing_settings": missing_settings,
         **base,
     }
     desired_bytes, rollback_bytes = encoded(desired), encoded(rollback)
@@ -246,7 +261,7 @@ This batch is inert. It contains no approval, dispatch instruction, or authoriza
 
 ## Authorization boundary
 
-No GitHub write or workflow dispatch was prepared or executed. This record grants no permission to mutate the target. Any later operation needs a complete source-consistent capture and inventory, exact payload and rollback hashes, a distinct target-and-hash approval checkpoint, immediate preflight, and automated read-back.
+No GitHub write or workflow dispatch was prepared or executed. This record grants no permission to mutate the target. Any later operation needs a complete source-consistent capture and inventory, exact payload and rollback hashes, a distinct target-and-hash approval checkpoint, immediate preflight, and automated read-back that proves its postcondition.
 """
     return {OUTPUTS["desired"]: desired_bytes, OUTPUTS["rollback"]: rollback_bytes,
             OUTPUTS["batch"]: batch.encode()}
