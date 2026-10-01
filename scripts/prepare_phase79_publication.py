@@ -21,6 +21,7 @@ from typing import Any
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PHASE_DIR = ROOT / ".planning/phases/79-adopter-ready-closeout"
 REPOSITORY = "szTheory/relyra"
+MAIN_BRANCH = "main"
 MAIN_REF = "refs/heads/main"
 WORKFLOWS = [".github/workflows/security-gates.yml", ".github/workflows/fleet-proxy-e2e.yml"]
 EVIDENCE_NAMES = {
