@@ -101,6 +101,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         assert identity.governance_phase == "79"
         assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, "/79-01-PLAN.md"))
 
+      {"79", "Ready to execute"} ->
+        assert identity.governance_phase == "79"
+        assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, "/79-01-PLAN.md"))
+
       {"73", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         planning_root = governance_repository_fixture()
         planning_state!(planning_root)
@@ -330,6 +334,15 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert Enum.map(planning.plan_paths, &Path.basename/1) == expected_plans
 
+    ready_to_execute = governance_repository_fixture()
+    state_for_phase!(ready_to_execute, "79", "executing")
+    replace_state_status!(ready_to_execute, "status: Ready to execute")
+
+    assert {:ok, active} = validated_governance_identity(ready_to_execute)
+    assert active.current_phase == "79"
+    assert active.governance_phase == "79"
+    assert active.status == "Ready to execute"
+
     skipped_predecessor = governance_repository_fixture()
     planning_state!(skipped_predecessor, "79")
 
@@ -492,7 +505,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              "executing",
              "in_progress",
              "ready_for_verification",
-             "planning"
+             "planning",
+             "Ready to execute"
            ]
 
     assert checked_in_identity.phase_requirements["73"] == MapSet.new(@phase_73_requirements)
@@ -5844,6 +5858,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       File.cp!(path, Path.join(phase78_dir, Path.basename(path)))
     end
 
+    phase79_dir = Path.join(root, ".planning/phases/79-adopter-ready-closeout")
+    File.mkdir_p!(phase79_dir)
+
+    for path <- Path.wildcard(".planning/phases/79-adopter-ready-closeout/79-*-PLAN.md") do
+      File.cp!(path, Path.join(phase79_dir, Path.basename(path)))
+    end
+
     mutate_file(root, ".planning/STATE.md", fn state ->
       state
       |> then(&Regex.replace(~r/^current_phase: .*$/m, &1, "current_phase: 73"))
@@ -6391,7 +6412,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     case fields do
       %{"milestone" => [milestone], "current_phase" => [phase], "status" => [status]}
-      when status in ["executing", "in_progress", "ready_for_verification", "planning"] ->
+      when status in [
+             "executing",
+             "in_progress",
+             "ready_for_verification",
+             "planning",
+             "Ready to execute"
+           ] ->
         {:ok, %{milestone_version: milestone, current_phase: phase, status: status}}
 
       _other ->
@@ -6455,7 +6482,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             length(pending) == 1 and Enum.map(pending, &Enum.at(&1, 1)) == [state.current_phase] and
               Enum.all?(prior, &(hd(&1) == "x"))
 
-          status when status in ["executing", "in_progress", "ready_for_verification"] ->
+          status
+          when status in [
+                 "executing",
+                 "in_progress",
+                 "ready_for_verification",
+                 "Ready to execute"
+               ] ->
             case Enum.at(through_current, -1) do
               [" ", phase, _name] ->
                 phase == state.current_phase and Enum.all?(prior, &(hd(&1) == "x"))

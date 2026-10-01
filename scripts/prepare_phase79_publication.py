@@ -328,6 +328,13 @@ def simulate_merge(root: pathlib.Path, remote: str, base_sha: str, source_sha: s
         deps = ROOT / "deps"
         if deps.exists() and not (checkout / "deps").exists():
             (checkout / "deps").symlink_to(deps, target_is_directory=True)
+
+        nested_demo_deps = ROOT / "demo" / "ledger_loop" / "deps"
+        nested_demo_checkout = checkout / "demo" / "ledger_loop"
+        if nested_demo_deps.exists() and not (nested_demo_checkout / "deps").exists():
+            (nested_demo_checkout / "deps").symlink_to(
+                nested_demo_deps, target_is_directory=True
+            )
         env = {
             "ASDF_ELIXIR_VERSION": "1.19.5-otp-28",
             "ASDF_ERLANG_VERSION": "28.4.1",
