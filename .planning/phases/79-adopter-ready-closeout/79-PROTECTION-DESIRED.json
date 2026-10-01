@@ -8,19 +8,24 @@
   "observed_graphql_requires_approving_reviews": false,
   "observed_rest_approval_count": 1,
   "payload_available": false,
-  "reason": "REST and GraphQL explicitly disagree about the required approval count; no desired protection payload is safe to generate.",
+  "reason": "GraphQL approval settings conflict with the REST review subresource; inventory REST observation: branch protection response is missing settings: required_pull_request_reviews, restrictions",
   "schema": "phase79-protection-desired",
-  "source_capture_digest": "86cd985a122acd911db7aa13c10894ce1f9db50912af43b108c8d227ddfde777",
+  "source_capture_digest": "abbfcd7bb34aed797d9ecb91414e2075f193ce929d4eb6eb50849440370e296a",
   "source_capture_errors": [
     "GraphQL approval settings conflict with the REST review subresource"
   ],
   "source_capture_path": "79-PROTECTION-CAPTURE.json",
-  "source_capture_sha256": "6a66b5df7f1e7e9010aa2a095b15d376a625f2be14b456ad5b6617e0b70c48fa",
+  "source_capture_sha256": "933243f5dc3d01b9a0673e9270c7abdc6d6185ee2512190c7b7854014580e908",
   "source_capture_status": "incomplete",
+  "source_inventory_capture_errors": [
+    "branch protection response is missing settings: required_pull_request_reviews, restrictions"
+  ],
+  "source_inventory_path": "79-INVENTORY.json",
+  "source_inventory_sha256": "f6633e69eadf3b80d707372bb7347f50a25bec1b47c5ec8ba78d8cfbccaa3d12",
   "status": "blocked",
   "target": {
     "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-    "observed_at": "2026-10-01T01:43:45Z",
+    "observed_at": "2026-10-01T12:07:59Z",
     "ref": "refs/heads/main",
     "repository": "szTheory/relyra"
   },

@@ -4,19 +4,19 @@
   ],
   "capture_status": "incomplete",
   "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-  "observed_at": "2026-10-01T01:38:05Z",
+  "observed_at": "2026-10-01T12:07:52Z",
   "ref": "refs/heads/main",
   "repository": "szTheory/relyra",
   "resource": null,
   "schema": "phase79-protection-capture",
-  "source_digest": "86cd985a122acd911db7aa13c10894ce1f9db50912af43b108c8d227ddfde777",
+  "source_digest": "abbfcd7bb34aed797d9ecb91414e2075f193ce929d4eb6eb50849440370e296a",
   "sources": {
     "fleet_check_run": {
       "app_ids": [
         15368
       ],
       "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-      "matching_count": 34,
+      "matching_count": 35,
       "pages": [
         {
           "continuation": true,
@@ -26,7 +26,7 @@
         },
         {
           "continuation": false,
-          "item_count": 4,
+          "item_count": 7,
           "number": 2,
           "status": 200
         }
