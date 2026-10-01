@@ -20,7 +20,7 @@ tech-stack:
   patterns: [fail-closed evidence builder, same-SHA hash-bound local artifacts]
 key-files:
   created: [scripts/prepare_phase79_batch.py]
-  modified: [test/governance/milestone_scope_test.exs, .planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json, .planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json, .planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json, .planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md, .planning/phases/79-adopter-ready-closeout/79-INVENTORY.json, .planning/phases/79-adopter-ready-closeout/79-INVENTORY.md, .planning/phases/79-adopter-ready-closeout/79-RISKS.json, .planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md, .planning/phases/79-adopter-ready-closeout/79-VALIDATION.md, .planning/STATE.md, .planning/ROADMAP.md]
+  modified: [test/governance/milestone_scope_test.exs, .planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json, .planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json, .planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json, .planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md, .planning/phases/79-adopter-ready-closeout/79-INVENTORY.json, .planning/phases/79-adopter-ready-closeout/79-INVENTORY.md, .planning/phases/79-adopter-ready-closeout/79-RISKS.json, .planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md, .planning/phases/79-adopter-ready-closeout/79-VALIDATION.md, .planning/STATE.md, .planning/ROADMAP.md, scripts/prepare_phase79_batch.py, .planning/phases/79-adopter-ready-closeout/79-REVIEW.md, .planning/phases/79-adopter-ready-closeout/79-VERIFICATION.md, .planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json, .planning/phases/73-twin-contract-and-baseline/73-SECURITY.md, .planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md]
 key-decisions:
   - "Require REST and GraphQL agreement for a writable protection payload; preserve conflicts as blocked records."
   - "Keep readiness unknown until all mandatory lanes have passing evidence on the captured main SHA."
@@ -76,22 +76,27 @@ commits: 3
 
 ## Task Commits
 
-Each task was committed atomically:
+The full ordered plan-scope history before the summary boundary is:
 
-1. **Task 1: Build deterministic fail-closed batch generation** - `4caaff3` (`feat`)
-2. **Task 2: Re-capture live evidence and leave the next action explicit** - `6ecf0c4` (`docs`)
+1. **Plan frontmatter repair required to expose the declared wave and dependency** — `d3d7c49` (`docs`)
+2. **Task 1: Build deterministic fail-closed batch generation** — `4caaff3` (`feat`)
+3. **Task 1 correction preserving independent blocker details and evidence ownership** — `f476efa` (`fix`)
+4. **Task 2: Re-capture live evidence and leave the next action explicit** — `6ecf0c4` (`docs`)
 
-The Task 1 correction commit `f476efa` is documented under deviations.
+The task correction is also documented under deviations. The summary boundary commit is excluded from this ordered task list.
 
 ## Files Created/Modified
 
-- `scripts/prepare_phase79_batch.py` - Local-only validation and deterministic inert batch generation.
-- `test/governance/milestone_scope_test.exs` - Positive and negative builder fixtures in the mandatory evidence lane.
+- `scripts/prepare_phase79_batch.py` - Local-only validation and deterministic inert batch generation, including strict error-free capture, positive non-boolean app IDs, and controlled malformed-input rejection.
+- `test/governance/milestone_scope_test.exs` - Positive exact-delta assertion and negative builder fixtures in the mandatory evidence lane.
 - `.planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json` - Fresh composite read-only capture.
 - `.planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json` and `79-PROTECTION-ROLLBACK.json` - Blocked records with no payload.
 - `.planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md` - Verified no-action record.
 - `.planning/phases/79-adopter-ready-closeout/79-INVENTORY.json` and `79-INVENTORY.md` - Same-SHA GitHub and local inventory.
 - `.planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md`, `79-RISKS.json`, and `79-VALIDATION.md` - Refreshed closeout and evidence notes.
+- `.planning/phases/79-adopter-ready-closeout/79-REVIEW.md` - Clean standard code review after the post-wave fixes.
+- `.planning/phases/79-adopter-ready-closeout/79-VERIFICATION.md` - Goal-backward phase verification, 8/9 truths verified, with the external main-CI/protection gap retained.
+- `.planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json`, `73-SECURITY.md`, and `73-VALIDATION.md` - Refreshed source-bound proof and append-only final reconciliation sections.
 
 ## Verified Evidence and Current Blocker
 
@@ -123,6 +128,16 @@ The Task 1 correction commit `f476efa` is documented under deviations.
 
 **Total deviations:** 1 auto-fixed (Rule 1)
 **Impact on plan:** Kept the fail-closed outcome and preserved provenance without expanding into any remote action.
+
+### Post-wave test-gate repair
+
+The configured post-wave `mix test --warnings-as-errors` gate first found two governance failures: the Task Commits list omitted the plan-frontmatter repair and Task 1 correction commits, and the Phase 73 source-bound proof still carried the previous digest for `test/governance/milestone_scope_test.exs`. The provenance list was corrected, and the canonical Phase 73 capture plus both append-only reports were refreshed under proof `phase73-0b6dfc7bc9eb56fc` (source digest `sha256:bde2503f1305644b97afd0b0fec0d9fc4efe7098de6ec43766a321d1b61190c5`). The three recorded `mix ci.evidence` runs passed 157 tests each in 41.6s, 47.5s, and 43.9s, under the unchanged 60s guard. `mix ci.phase73.reconciliation` passed (1 test, 0 failures), and the full `mix test --warnings-as-errors` gate passed (1,001 tests, 0 failures).
+
+The code review found and the fixes closed four fail-closed/input-validation issues: captures marked complete with errors, Python booleans accepted as integer app IDs, malformed nested values escaping as tracebacks, and malformed UTF-8 input escaping the CLI rejection path. Fixture assertions now prove blocked tampered/error captures produce null desired and rollback payloads plus a no-action batch, reject invalid app IDs and malformed encodings without artifacts, and compare the entire successful desired object with rollback plus only the required check. The standard re-review is clean. `mix format --check-formatted` passed. No test policy, proof guard, or acceptance criterion was weakened.
+
+**Post-wave repair commits:** `766ed48` contains the builder and fixture fixes; `f89b6e8` records the clean standard code review. The refreshed proof and append-only Phase 73 reports, plus this gate record, are committed separately after phase verification.
+
+Phase verification is `gaps_found` (8/9 truths). Plan 79-06’s local fail-closed behavior is verified, but Phase 79 remains blocked because all nine mandatory CI lanes are absent on captured main SHA `c786a9890f2f99f0dd98f89a1d9713db7c486837`, REST and GraphQL disagree on review requirements, and the parent protection response omits writable settings. The verifier records the required external next step; no new gap plan or remote action is included in this wave.
 
 ## Issues Encountered
 
