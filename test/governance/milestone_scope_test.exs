@@ -4312,6 +4312,79 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert altered_output =~ "altered, or stale"
   end
 
+  @tag :phase79_ci_preflight
+  test "Phase 79 CI preflight records absent current-main evidence as pending" do
+    root = File.cwd!()
+    unique = System.unique_integer([:positive])
+    temporary = Path.join(System.tmp_dir!(), "relyra-phase79-ci-preflight-#{unique}")
+    phase_dir = Path.join(temporary, "phase")
+    fixture_dir = Path.join(temporary, "fixtures")
+    File.mkdir_p!(phase_dir)
+    File.mkdir_p!(fixture_dir)
+    on_exit(fn -> File.rm_rf!(temporary) end)
+
+    sha = String.duplicate("a", 40)
+
+    fixture = %{
+      "repository" => "szTheory/relyra",
+      "ref" => "refs/heads/main",
+      "main_sha" => sha,
+      "enabled_workflows" => [
+        %{"path" => ".github/workflows/security-gates.yml", "state" => "active"},
+        %{"path" => ".github/workflows/fleet-proxy-e2e.yml", "state" => "active"}
+      ],
+      "workflow_runs" => [],
+      "check_runs" => [],
+      "fleet_context" => %{"name" => "fleet-proxy-e2e", "sha" => sha, "state" => "absent"}
+    }
+
+    File.write!(Path.join(fixture_dir, "ci-preflight.json"), Jason.encode!(fixture))
+
+    script = Path.join(root, "scripts/verify_phase79_transaction.py")
+
+    {output, status} =
+      System.cmd(
+        "python3",
+        [
+          script,
+          "--stage",
+          "ci-preflight",
+          "--phase-dir",
+          phase_dir,
+          "--fixture-dir",
+          fixture_dir
+        ],
+        cd: root,
+        stderr_to_stdout: true
+      )
+
+    assert status == 0, "expected an inert pending CI packet, got exit #{status}: #{output}"
+    assert output =~ "pending"
+
+    packet =
+      Path.join(phase_dir, "79-CI-DISPATCH-PACKET.json")
+      |> File.read!()
+      |> Jason.decode!()
+
+    assert packet["status"] == "pending"
+
+    assert packet["target"] == %{
+             "repository" => "szTheory/relyra",
+             "ref" => "refs/heads/main",
+             "sha" => sha
+           }
+
+    assert packet["dispatch"]["action"] == "workflow_dispatch"
+
+    assert packet["dispatch"]["workflows"] == [
+             ".github/workflows/security-gates.yml",
+             ".github/workflows/fleet-proxy-e2e.yml"
+           ]
+
+    refute packet["dispatch"]["performed"]
+    assert packet["missing_owner_runs"] == []
+  end
+
   defp phase79_protection_fixture(sha) do
     statuses = ["security (27, 1.19.5)", "security (28, 1.19.5)"]
 
