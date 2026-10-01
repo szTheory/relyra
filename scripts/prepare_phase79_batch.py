@@ -66,7 +66,7 @@ def read_json(path: pathlib.Path, label: str) -> tuple[Any, bytes]:
     try:
         raw = path.read_bytes()
         value = json.loads(raw)
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise BuilderError(f"invalid {label} JSON: {exc}") from exc
     if not isinstance(value, dict):
         raise BuilderError(f"{label} must be a JSON object")
@@ -162,7 +162,11 @@ def artifacts(capture: dict, capture_bytes: bytes, inventory: dict, inventory_by
     if capture.get("resource") is not None and protection.get("resource") != inventory_projection(capture["resource"]):
         validation_errors.append("inventory and composite capture resources disagree")
 
-    complete = not validation_errors and capture.get("capture_status") == "complete"
+    complete = (
+        not validation_errors
+        and capture.get("capture_status") == "complete"
+        and capture.get("capture_errors") == []
+    )
     inventory_errors = protection.get("capture_errors", [])
     reason_parts = validation_errors + list(capture.get("capture_errors", []))
     if inventory_errors and inventory_errors != capture.get("capture_errors", []):
@@ -173,7 +177,12 @@ def artifacts(capture: dict, capture_bytes: bytes, inventory: dict, inventory_by
 
     resource = capture.get("writable_payload") if complete else None
     app_ids = capture.get("sources", {}).get("fleet_check_run", {}).get("app_ids", [])
-    if complete and (not isinstance(app_ids, list) or len(app_ids) != 1 or not isinstance(app_ids[0], int)):
+    if complete and (
+        not isinstance(app_ids, list)
+        or len(app_ids) != 1
+        or type(app_ids[0]) is not int
+        or app_ids[0] <= 0
+    ):
         complete = False
         resource = None
         reason = "current-SHA fleet-proxy-e2e GitHub App association is missing or ambiguous"
@@ -302,7 +311,10 @@ def main() -> int:
     try:
         capture, capture_bytes = read_json(args.capture, "protection capture")
         inventory, inventory_bytes = read_json(args.inventory, "inventory")
-        expected = artifacts(capture, capture_bytes, inventory, inventory_bytes)
+        try:
+            expected = artifacts(capture, capture_bytes, inventory, inventory_bytes)
+        except (AttributeError, IndexError, KeyError, TypeError) as exc:
+            raise BuilderError("malformed capture or inventory shape") from exc
         if args.verify:
             for name, content in expected.items():
                 actual_path = args.output_dir / name

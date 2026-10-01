@@ -4027,10 +4027,26 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     batch_path = Path.join(output_dir, "79-REMOTE-BATCH.md")
 
-    assert desired["desired_payload"]["required_status_checks"]["contexts"] ==
-             (current_contexts ++ ["fleet-proxy-e2e"]) |> Enum.sort()
-
     assert rollback["rollback_payload"] == capture_receipt["writable_payload"]
+
+    rollback_payload = rollback["rollback_payload"]
+    app_id = capture_receipt["sources"]["fleet_check_run"]["app_ids"] |> hd()
+
+    expected_desired =
+      Map.update!(rollback_payload, "required_status_checks", fn required_checks ->
+        required_checks
+        |> Map.update!("checks", fn checks ->
+          Enum.sort_by(
+            checks ++ [%{"app_id" => app_id, "context" => "fleet-proxy-e2e"}],
+            & &1["context"]
+          )
+        end)
+        |> Map.update!("contexts", fn contexts ->
+          Enum.sort(contexts ++ ["fleet-proxy-e2e"])
+        end)
+      end)
+
+    assert desired["desired_payload"] == expected_desired
     assert batch_path |> File.read!() =~ "no remote operation was executed"
 
     assert {verify_output, 0} =
@@ -4119,26 +4135,6 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Path.join(conflict_output, "79-REMOTE-BATCH.md") |> File.read!() =~
              "No Action Proposed"
 
-    tampered_capture = Map.put(capture_receipt, "unexpected", true)
-    tampered_path = Path.join(temporary, "tampered-capture.json")
-    File.write!(tampered_path, Jason.encode!(tampered_capture))
-
-    assert {_tamper_output, 0} =
-             System.cmd(
-               "python3",
-               [
-                 builder,
-                 "--capture",
-                 tampered_path,
-                 "--inventory",
-                 inventory_path,
-                 "--output-dir",
-                 Path.join(temporary, "tampered-artifacts")
-               ],
-               cd: root,
-               stderr_to_stdout: true
-             )
-
     assert_blocked = fn name, capture_input, inventory_input ->
       destination = Path.join(temporary, "#{name}-artifacts")
 
@@ -4163,7 +4159,99 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       assert desired["payload_available"] == false
       assert desired["desired_payload"] == nil
+
+      rollback =
+        Path.join(destination, "79-PROTECTION-ROLLBACK.json")
+        |> File.read!()
+        |> Jason.decode!()
+
+      assert rollback["payload_available"] == false
+      assert rollback["rollback_payload"] == nil
+
+      assert Path.join(destination, "79-REMOTE-BATCH.md") |> File.read!() =~
+               "No Action Proposed"
     end
+
+    tampered_capture = Map.put(capture_receipt, "unexpected", true)
+    tampered_path = Path.join(temporary, "tampered-capture.json")
+    File.write!(tampered_path, Jason.encode!(tampered_capture))
+    assert_blocked.("tampered-capture", tampered_path, inventory_path)
+
+    errored_capture = Map.put(capture_receipt, "capture_errors", ["synthetic capture failure"])
+    errored_path = Path.join(temporary, "errored-capture.json")
+    File.write!(errored_path, Jason.encode!(errored_capture))
+    assert_blocked.("errored-capture", errored_path, inventory_path)
+
+    boolean_app_capture_path = Path.join(temporary, "boolean-app-capture.json")
+
+    File.write!(boolean_app_capture_path, Jason.encode!(capture_receipt))
+
+    forge_boolean_app_id = """
+    import hashlib, json, pathlib, sys
+    path = pathlib.Path(sys.argv[1])
+    receipt = json.loads(path.read_text(encoding="utf-8"))
+    receipt["sources"]["fleet_check_run"]["app_ids"] = [True]
+    source = json.dumps(receipt["sources"], sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    receipt["source_digest"] = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+    """
+
+    assert {_forge_output, 0} =
+             System.cmd("python3", ["-c", forge_boolean_app_id, boolean_app_capture_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert_blocked.("boolean-app-id", boolean_app_capture_path, inventory_path)
+
+    malformed_capture = Map.put(capture_receipt, "capture_errors", nil)
+    malformed_path = Path.join(temporary, "malformed-capture.json")
+    malformed_output_dir = Path.join(temporary, "malformed-artifacts")
+    File.write!(malformed_path, Jason.encode!(malformed_capture))
+
+    assert {malformed_output, 1} =
+             System.cmd(
+               "python3",
+               [
+                 builder,
+                 "--capture",
+                 malformed_path,
+                 "--inventory",
+                 inventory_path,
+                 "--output-dir",
+                 malformed_output_dir
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert malformed_output =~ "Phase 79 batch blocked: malformed capture or inventory shape"
+    refute malformed_output =~ "Traceback"
+    refute File.exists?(Path.join(malformed_output_dir, "79-PROTECTION-DESIRED.json"))
+
+    invalid_utf8_path = Path.join(temporary, "invalid-utf8-capture.json")
+    invalid_utf8_output_dir = Path.join(temporary, "invalid-utf8-artifacts")
+    File.write!(invalid_utf8_path, <<255, 123, 125>>)
+
+    assert {invalid_utf8_output, 1} =
+             System.cmd(
+               "python3",
+               [
+                 builder,
+                 "--capture",
+                 invalid_utf8_path,
+                 "--inventory",
+                 inventory_path,
+                 "--output-dir",
+                 invalid_utf8_output_dir
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert invalid_utf8_output =~ "Phase 79 batch blocked: invalid protection capture JSON"
+    refute invalid_utf8_output =~ "Traceback"
+    refute File.exists?(Path.join(invalid_utf8_output_dir, "79-PROTECTION-DESIRED.json"))
 
     ref_drift_capture = Map.put(capture_receipt, "main_sha", String.duplicate("b", 40))
     ref_drift_path = Path.join(temporary, "ref-drift-capture.json")
