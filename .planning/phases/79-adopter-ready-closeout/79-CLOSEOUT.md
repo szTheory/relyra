@@ -2,26 +2,26 @@
 
 ## Release readiness: BLOCKED
 
-The latest read-only observation is `szTheory/relyra@refs/heads/main` at `c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed `2026-09-30T16:51:05Z`. Readiness is **unknown**; all nine mandatory lanes are absent on this SHA. The branch-protection GET was allowed, but its response is incomplete because it omitted `required_pull_request_reviews` and `restrictions`; this prevents a complete configuration comparison and a safe rollback payload.
+The latest read-only inventory is `szTheory/relyra@refs/heads/main` at `c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed `2026-10-01T01:43:45Z`. Readiness is **unknown**; all nine mandatory lanes lack passing evidence on this SHA. The parent protection response omits `required_pull_request_reviews` and `restrictions`.
 
-The GET exposes a partial required-context list of `security (27, 1.19.5)`, `security (28, 1.19.5)`. The repository expects `fleet-proxy-e2e`, `security (27, 1.19.5)`, `security (28, 1.19.5)`. The incomplete resource does not establish the complete live policy.
+The explicit review subresource reports one required approval. The same-ref GraphQL branch rule reports a null approval count and `requiresApprovingReviews=false`. Because those sources conflict, the composite capture keeps `resource: null`. No complete current writable configuration, desired payload, or exact rollback is available.
 
 ## Repository and ownership
 
-See [79-INVENTORY.md](79-INVENTORY.md) and [79-INVENTORY.json](79-INVENTORY.json) for the bounded local and GitHub observations. `.tool-versions` remains maintainer-owned. Unknown local paths, the GSD state file, ignored candidates, and the registered worktree are preserved without cleanup authority.
+See [79-INVENTORY.md](79-INVENTORY.md) and [79-INVENTORY.json](79-INVENTORY.json) for the timestamped local and GitHub observations. Maintainer-owned and unknown-owner paths remain preserved without cleanup authority.
 
 ## Main CI evidence
 
-The `security-gates.yml` owner has no current-SHA evidence for any mandatory lane. The partial protection response reports the two security contexts as required and `fleet-proxy-e2e` as expected by repository configuration, but the missing review and restrictions settings prevent treating that list as complete. Local tests and external canaries do not satisfy current-main proof.
+The canonical `security-gates.yml` owner has no passing current-SHA evidence for any of the nine mandatory lanes. The available status-check list is partial because the complete protection resource could not be composed. The current check-run source identifies GitHub Actions app ID `15368` for `fleet-proxy-e2e`, but this does not establish that the context is required.
 
 ## External canaries
 
-The receipt contains 34 successful `rulestead-main-canary` observations. The newest is run `109772782212` at `2026-09-30T06:48:55Z` for `c786a9890f2f99f0dd98f89a1d9713db7c486837`. These observations remain separate from deterministic readiness and do not satisfy a mandatory lane.
+The inventory records 34 separate canary observations. They do not satisfy mandatory lanes or replace source-consistent protection evidence.
 
 ## Residual risks
 
-See [79-RISKS.json](79-RISKS.json) for the carried findings, deferred items, and open-window dispositions. `PIPE-73-001` remains a High release blocker: same-SHA evidence is absent and the complete protection state is unavailable. The Phase 76 concurrency windows and lower-severity deferred items retain owners and revisit conditions; no manual acceptance is introduced.
+See [79-RISKS.json](79-RISKS.json). `PIPE-73-001` remains a High release blocker while the live policy and current-main CI evidence are unresolved. Remaining deferred and automation-gap items retain their owners and revisit conditions.
 
 ## Remote action
 
-[79-REMOTE-BATCH.md](79-REMOTE-BATCH.md) records no mutation proposed for this exact source identity. The current receipt does not contain a complete protection resource, so no exact reversible batch can be offered for approval. The desired-configuration candidate is local reference material only, and the rollback artifact records that no rollback payload is available. No GitHub write or workflow dispatch is authorized by this closeout.
+[79-REMOTE-BATCH.md](79-REMOTE-BATCH.md) records no proposal because the REST and GraphQL review settings disagree. [79-PROTECTION-DESIRED.json](79-PROTECTION-DESIRED.json) and [79-PROTECTION-ROLLBACK.json](79-PROTECTION-ROLLBACK.json) are blocked records with no payload. No GitHub workflow was dispatched and no protection write was prepared. Plan 79-06 must first obtain source agreement; no approval option is available while capture remains incomplete.

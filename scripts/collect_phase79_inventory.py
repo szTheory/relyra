@@ -81,14 +81,27 @@ REQUIRED_LANES = (
     "standalone defenses",
 )
 PHASE79_OWNED_LOCAL_PATHS = {
+    ".planning/ROADMAP.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json",
+    ".planning/phases/73-twin-contract-and-baseline/73-SECURITY.md",
+    ".planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md",
+    ".planning/phases/79-adopter-ready-closeout/79-04-SUMMARY.md",
+    ".planning/phases/79-adopter-ready-closeout/79-05-PLAN.md",
+    ".planning/phases/79-adopter-ready-closeout/79-05-SUMMARY.md",
+    ".planning/phases/79-adopter-ready-closeout/79-06-PLAN.md",
     ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md",
     ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
     ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md",
+    ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json",
     ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json",
     ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json",
     ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md",
     ".planning/phases/79-adopter-ready-closeout/79-RISKS.json",
     ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md",
+    ".planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json",
+    "scripts/capture_phase79_protection.py",
+    "scripts/collect_phase79_inventory.py",
+    "test/governance/milestone_scope_test.exs",
 }
 
 
@@ -275,7 +288,7 @@ def local_inventory(root: pathlib.Path, fixture: dict | None) -> dict:
             if path in PHASE79_OWNED_LOCAL_PATHS:
                 owner = "phase-79"
                 disposition = "preserve; no cleanup authority"
-            elif path == ".planning/state.json":
+            elif path in {".planning/state.json", ".planning/STATE.md"}:
                 owner = "gsd-workflow"
                 disposition = "preserve; no cleanup authority"
             else:

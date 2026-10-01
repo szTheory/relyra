@@ -2,26 +2,24 @@
 
 **Status:** no mutation proposed; no command was executed.
 
-## Observed evidence
-
 - **Target repository:** `szTheory/relyra`
 - **Target ref/resource:** `refs/heads/main` branch protection
-- **Observed at:** `2026-09-30T16:51:05Z`
 - **Observed main SHA:** `c786a9890f2f99f0dd98f89a1d9713db7c486837`
-- **Main ref revalidation:** `c786a9890f2f99f0dd98f89a1d9713db7c486837`
-- **Protection endpoint:** `branches/main/protection` (GET allowed)
-- **Capture status:** `incomplete`
-- **Observed configuration fields:** `allow_deletions`, `allow_force_pushes`, `allow_fork_syncing`, `block_creations`, `enforce_admins`, `lock_branch`, `required_conversation_resolution`, `required_linear_history`, `required_signatures`, `required_status_checks`, `url`
-- **Missing required settings:** `required_pull_request_reviews`, `restrictions`
-- **Capture errors:** branch protection response is missing settings: required_pull_request_reviews, restrictions
-- **Partial observed required contexts:** `security (27, 1.19.5)`, `security (28, 1.19.5)`
-- **Repository expected contexts:** `fleet-proxy-e2e`, `security (27, 1.19.5)`, `security (28, 1.19.5)`
-- **Mandatory lanes:** all nine have no passing evidence on this SHA.
+- **Observed at:** `2026-10-01T01:43:45Z`
+- **Composite capture status:** `incomplete`
+- **Composite capture SHA-256:** `6a66b5df7f1e7e9010aa2a095b15d376a625f2be14b456ad5b6617e0b70c48fa`
+- **Composite source digest:** `86cd985a122acd911db7aa13c10894ce1f9db50912af43b108c8d227ddfde777`
+- **Current required contexts from incomplete inventory:** `security (27, 1.19.5), security (28, 1.19.5)`
+- **Repository expected contexts:** `fleet-proxy-e2e, security (27, 1.19.5), security (28, 1.19.5)`
+- **Fleet check app ID observed on this SHA:** `15368`
+- **Desired record:** `79-PROTECTION-DESIRED.json`, SHA-256 `cea6498aa6ff1e0026f261c35e369fc25f18fb934ac948d1f3d8c90354301651`
+- **Rollback record:** `79-PROTECTION-ROLLBACK.json`, record SHA-256 `314abdcaedf9e03eb6f4ec79ba7329e77773a5a757c58534bfa1645c1430066d`
+- **Mandatory lanes without passing evidence:** 9 of 9
 
 ## Why there is no proposal
 
-The protection GET is readable but incomplete: it omits `required_pull_request_reviews` and `restrictions`. The partial context list does not establish the complete protection policy. The exact project-expected configuration candidate is in `79-PROTECTION-DESIRED.json` (SHA-256 `4e2ae3133764813c1c9adf6a90b050561696f78dec7ffae920bd61306eb53f1e`); it is local reference material only and is not an executable whole-resource payload under this incomplete capture. `79-PROTECTION-ROLLBACK.json` (record SHA-256 `3167344226ea9df5aab02fd300860815a4bd7056d78fa0fe1776919800a9355a`) explicitly contains no rollback payload. The current state therefore cannot be restored exactly, and the target-bound batch hash and resume signal cannot safely be offered. No approval is requested.
+The parent protection response omits `required_pull_request_reviews` and `restrictions`. The explicit review subresource reports `1` required approval, while the same-ref GraphQL rule reports `requiredApprovingReviewCount=None` and `requiresApprovingReviews=false`. The value conflict is recorded in `79-PROTECTION-CAPTURE.json`; its resource is null. No current writable resource, desired payload, or exact rollback can be established. The desired and rollback files are blocked records with no payload. The inventory also has no passing same-SHA evidence for any of the nine mandatory lanes. No exact proposal or approval signal is available.
 
 ## Authorization boundary
 
-This record is evidence only. No GitHub write or workflow dispatch was prepared or executed; it grants no permission to mutate the target. The Phase 79 decision checkpoint must omit the approve option until a complete resource, desired payload, captured rollback payload, immediate preflight, expiry rule, and read-back assertion can be verified. Any later approved write requires automated read-back that proves its postcondition. Approval alone is not proof; automated read-back proves its postcondition. This record does not invoke the branch-protection-drift workflow or an apply path.
+No GitHub write or workflow dispatch was prepared or executed. This record grants no permission to mutate the target. Approval is not requested. Any later operation needs a complete source-consistent capture, exact payload and rollback hashes, a distinct target-and-hash approval checkpoint, immediate preflight, and automated read-back that proves its postcondition.

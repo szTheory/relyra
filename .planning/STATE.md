@@ -4,18 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 79
 current_phase_name: Adopter-Ready Closeout
-current_plan: 5
+current_plan: 6
 status: executing
-stopped_at: Completed 79-04-PLAN.md
-last_updated: "2026-09-30T21:52:00Z"
+stopped_at: Completed 79-05-PLAN.md; 79-06 requires source-consistent protection evidence
+last_updated: "2026-09-30T21:36:49-04:00"
 last_activity: 2026-09-30
-last_activity_desc: Phase 79 plan 04 completed; plan 05 is next
+last_activity_desc: Phase 79 Wave 5 completed the source-consistent protection capture, refreshed the Phase 73 proof, and kept the exact batch blocked on conflicting REST and GraphQL approval settings
 state_head: 7fb3560
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 68
-  completed_plans: 67
+  total_plans: 69
+  completed_plans: 68
   percent: 99
 ---
 
@@ -36,13 +36,13 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 Phase: 79 (Adopter-Ready Closeout) — EXECUTING
 
-Current Plan: 5
-Total Plans in Phase: 5
-Next gate: Plan 79-05's explicit approval boundary and automated current-main/protection read-back.
+Current Plan: 6
+Total Plans in Phase: 6
+Next gate: Resolve the REST/GraphQL review-setting conflict in Plan 79-06. Do not offer exact-batch approval unless a fresh automated capture proves source agreement.
 
-Status: Ready to execute
+Status: Executing gap closure; the captured protection evidence conflicts and no payload or approval batch is available.
 
-Last activity: 2026-09-30 — Phase 79 plan 04 completed; plan 05 is next
+Last activity: 2026-09-30 — Wave 5 completed with a verified source-conflict capture and refreshed governed Phase 73 proof; Wave 6 read-only reconciliation is next
 
 ## Milestone Metrics
 
@@ -106,8 +106,9 @@ Last activity: 2026-09-30 — Phase 79 plan 04 completed; plan 05 is next
 - [Phase 79]: Preserve unknown-owner paths; Phase 79 ownership classification does not grant cleanup authority.
 - [Phase 79]: Keep external canary observations separate from deterministic main-SHA readiness.
 - [Phase 79]: Treat omitted required protection settings as incomplete evidence.
+- [Phase 79]: Keep the protection capture incomplete when REST reports one required approval and GraphQL reports no approval requirement; do not choose either source or generate payloads.
 
-Do not prepare a remote approval batch until the full source and rollback are available. — The current read-only GET omitted required_pull_request_reviews and restrictions. Assuming defaults would not prove the writable current state or an exact rollback, and would weaken the fail-closed receipt contract.
+Do not prepare a remote approval batch until the full source and rollback are available. — The parent protection GET omits `required_pull_request_reviews` and `restrictions`; the review subresource reports one required approval while the same-ref GraphQL rule reports no approval requirement. The discrepancy prevents proving the current writable state and exact rollback.
 
 ### Baseline Findings
 
@@ -146,25 +147,25 @@ Do not prepare a remote approval batch until the full source and rollback are av
 
 ## Session Continuity
 
-**Last session:** 2026-09-30T21:52:00Z
+**Last session:** 2026-09-30T21:36:49-04:00
 
-**Stopped at:** Completed 79-04-PLAN.md
+**Stopped at:** Completed Wave 5 / Plan 79-05; Wave 6 / Plan 79-06 is next
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Phase 79 Plans 01 through 04 are complete. Plan 79-04 refreshed the local source-bound
-Phase 73 proof and verified the exact inert batch contract. Release readiness remains
-blocked because the recorded main SHA lacks nine mandatory lanes and the complete
-protection read-back, including `fleet-proxy-e2e`. The next plan is Wave 5 / Plan 79-05,
-which keeps any remote correction behind an exact batch, explicit approval, immediate
-revalidation, and automated read-back. Local and canary evidence do not replace
-main-SHA evidence.
+Phase 79 Plans 01 through 05 are complete. Wave 5 added same-ref REST and GraphQL
+protection capture and refreshed the current Phase 73 reconciliation proof. The live
+sources still conflict: REST reports one required approval while GraphQL reports none;
+the composite capture therefore has no writable resource, desired payload, rollback
+payload, or executable batch. Nine mandatory lanes also lack passing same-SHA evidence,
+so readiness remains unknown. No remote write or workflow dispatch occurred.
 
-Summaries for Phase 79 Plans 01 through 04 are present. STATE.md remains the execution
-position source; ROADMAP.md records Phase 79 at 4/5 plans and the overall readiness
-status separately. The next command is `$gsd-execute-phase 79 --gaps-only --wave 5`.
+ROADMAP.md records Phase 79 at 5/6 plans. The next command is
+`$gsd-execute-phase 79 --gaps-only --wave 6`; Plan 79-06 performs read-only source
+reconciliation and local batch generation. Any future remote action needs a separate
+plan with a concrete exact batch and its own approval gate.
 
 Carryover records: `.planning/WINDOWS.md` retains two Phase 76 concurrency automation
 gaps and the documented advisory waiver. The archival verification audit reports five

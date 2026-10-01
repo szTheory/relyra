@@ -97,8 +97,12 @@ status: complete
 
 ## Task Commits
 
-1. **Task 1: Make the exact remote-batch contract fail closed in mandatory CI** — `f1fa72f` (`test(79-04): bind blocked batch evidence to exact source records`).
-2. **Task 2 recovery record** — `d88a7ed` (`docs(79-04): record task two retry result`); **Task 2 proof and report refresh** — `e4c9a5d` (`docs(provenance): refresh Phase 73 proof from lower-load capture`).
+1. **Task 1: Make the exact remote-batch contract fail closed in mandatory CI** — `f1fa72f837da2f7437476187a1484e2f34e8e11f` (`test(79-04): bind blocked batch evidence to exact source records`).
+2. **Task 2 recovery record** — `f9a36baa3a61c06c5e69e79790c3847fe3b093f9` (`docs(79-04): record source proof capture blocker`).
+3. **Task 2 capture diagnosis** — `88089fca6814a2213cd2f287ebc270d0d46dfe37` (`docs(79-04): record capture timing diagnosis`).
+4. **Task 2 recovery result** — `d88a7ed2c8d0c44c729c3a6698246f041398e62b` (`docs(79-04): record task two retry result`).
+
+The provenance-scoped proof refresh commit is excluded because its Conventional Commit scope is `provenance`, not `79-04`.
 
 ## Files Created/Modified
 

@@ -71,9 +71,9 @@ All acceptance behavior is checked by deterministic automation. The inventory co
 
 **Validation owner:** `test/governance/milestone_scope_test.exs`, selected by the mandatory fresh-process `mix ci.evidence` lane.
 
-**Current inventory identity:** `szTheory/relyra@refs/heads/main`, SHA `c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed `2026-09-30T16:51:05Z`. All nine mandatory lanes remain absent: `mix qa`, `mix ci.security`, `standalone defenses`, `mix ci.verify`, `mix ci.evidence`, `mix ci.phase73.reconciliation`, `mix ci.package`, `mix ci.ledger_loop`, and `browser defenses`. The readable protection GET is incomplete because it omitted `required_pull_request_reviews` and `restrictions`; the partial contexts do not prove the complete policy or the expected `fleet-proxy-e2e` protection context.
+**Current inventory identity:** `szTheory/relyra@refs/heads/main`, SHA `c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed `2026-10-01T01:43:45Z`. All nine mandatory lanes remain absent on this SHA. The parent protection response omits `required_pull_request_reviews` and `restrictions`; supplemental REST and same-ref GraphQL evidence conflict on the required approval count. The composite capture is incomplete and contains no resource.
 
-**Phase 79 exact evidence:** the no-action remote record SHA-256 is `1b139566df0d8f3dc336e44e415b032efd542fe08db75a0c9aaa395a785d544c`. The desired configuration reference SHA-256 is `4e2ae3133764813c1c9adf6a90b050561696f78dec7ffae920bd61306eb53f1e`; the rollback record SHA-256 is `3167344226ea9df5aab02fd300860815a4bd7056d78fa0fe1776919800a9355a` and explicitly has no rollback payload. No executable proposal or proposal hash exists. The risk ledger and closeout remain bound to the inventory identity above.
+**Phase 79 protection capture:** `6a66b5df7f1e7e9010aa2a095b15d376a625f2be14b456ad5b6617e0b70c48fa` file SHA-256; source digest `86cd985a122acd911db7aa13c10894ce1f9db50912af43b108c8d227ddfde777`. REST reports approval count `1`; GraphQL reports `requiredApprovingReviewCount=None` and `requiresApprovingReviews=false`. The desired and rollback records contain no payload. The no-action batch hash and record hashes are bound in `79-REMOTE-BATCH.md`; no approval or remote operation is prepared.
 
 **Prior capture attempts (before the successful lower-load retry):** `mix ci.evidence` passed with 155 tests and 0 failures after the Task 1 source change (63.9 seconds); additional runs with alternate local scheduler settings also passed but were slower (80.5, 100.4, and 102.5 seconds). Earlier supported Phase 73 capture attempts in isolated Phase 75 snapshots reached proof validation but rejected a candidate at `evidence duration must remain below 60000ms`. The live checkout's `STATE.md` and `ROADMAP.md` were not changed. The successful snapshot had the existing root and LedgerLoop build/dependency caches linked. A prior snapshot attempt lacked LedgerLoop caches and failed its nested-project probe; that harness issue was corrected before the successful capture.
 
@@ -92,3 +92,28 @@ All acceptance behavior is checked by deterministic automation. The inventory co
 **Open evidence gaps:** the current main-SHA inventory has no passing evidence for its nine mandatory lanes; the protection resource and exact rollback remain incomplete; and two Phase 76 concurrency windows remain unautomated. Phase 79 local source proof is current, but it does not replace missing protected-main evidence. Release remains blocked. No human review substitutes for these deterministic or live postconditions.
 
 **Approval:** not applicable; this is an automated validation map, not a human acceptance gate.
+
+
+## Plan 79-05 evidence update
+
+The composite capture and verifier passed with status `incomplete` and a null resource because REST/GraphQL review values conflict. The current inventory identity is `c786a9890f2f99f0dd98f89a1d9713db7c486837` at `2026-10-01T00:24:54Z`; readiness remains unknown and all nine mandatory lanes are absent. Exact payload generation and remote approval are deferred to Wave 6, which must first establish automated source agreement. No remote calls beyond read-only GET/query operations were made.
+
+
+## Plan 79-05 evidence update
+
+The composite capture and verifier passed with status `incomplete` and a null resource because REST/GraphQL review values conflict. The current inventory identity is `c786a9890f2f99f0dd98f89a1d9713db7c486837` at `2026-10-01T00:35:33Z`; readiness remains unknown and all nine mandatory lanes are absent. Exact payload generation and remote approval are deferred to Wave 6, which must first establish automated source agreement. No remote calls beyond read-only GET/query operations were made.
+
+
+## Plan 79-05 evidence update
+
+The composite capture and verifier passed with status `incomplete` and a null resource because REST/GraphQL review values conflict. The current inventory identity is `c786a9890f2f99f0dd98f89a1d9713db7c486837` at `2026-10-01T01:06:52Z`; readiness remains unknown and all nine mandatory lanes are absent. Exact payload generation and remote approval are deferred to Wave 6, which must first establish automated source agreement. No remote calls beyond read-only GET/query operations were made.
+
+
+## Plan 79-05 evidence update
+
+The composite capture and verifier passed with status `incomplete` and a null resource because REST/GraphQL review values conflict. The current inventory identity is `c786a9890f2f99f0dd98f89a1d9713db7c486837` at `2026-10-01T01:38:15Z`; readiness remains unknown and all nine mandatory lanes are absent. Exact payload generation and remote approval are deferred to Wave 6, which must first establish automated source agreement. No remote calls beyond read-only GET/query operations were made.
+
+
+## Plan 79-05 evidence update
+
+The composite capture and verifier passed with status `incomplete` and a null resource because REST/GraphQL review values conflict. The current inventory identity is `c786a9890f2f99f0dd98f89a1d9713db7c486837` at `2026-10-01T01:43:45Z`; readiness remains unknown and all nine mandatory lanes are absent. Exact payload generation and remote approval are deferred to Wave 6, which must first establish automated source agreement. No remote calls beyond read-only GET/query operations were made.
