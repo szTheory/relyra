@@ -2,7 +2,7 @@
 
 ## Release readiness: BLOCKED
 
-The latest read-only inventory is `szTheory/relyra@refs/heads/main` at `c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed `2026-10-01T01:43:45Z`. Readiness is **unknown**; all nine mandatory lanes lack passing evidence on this SHA. The parent protection response omits `required_pull_request_reviews` and `restrictions`.
+The latest read-only inventory is `szTheory/relyra@refs/heads/main` at `c786a9890f2f99f0dd98f89a1d9713db7c486837`, observed `2026-10-01T01:51:05Z`. Readiness is **unknown**; all nine mandatory lanes lack passing evidence on this SHA. The parent protection response omits `required_pull_request_reviews` and `restrictions`.
 
 The explicit review subresource reports one required approval. The same-ref GraphQL branch rule reports a null approval count and `requiresApprovingReviews=false`. Because those sources conflict, the composite capture keeps `resource: null`. No complete current writable configuration, desired payload, or exact rollback is available.
 

@@ -1,7 +1,7 @@
 {
   "inventory_source": {
     "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-    "observed_at": "2026-10-01T01:43:45Z",
+    "observed_at": "2026-10-01T01:51:05Z",
     "path": ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
     "ref": "refs/heads/main",
     "repository": "szTheory/relyra"
@@ -25,7 +25,7 @@
       "adopter_impact": "The protected-main contract and complete current-main readiness cannot be established.",
       "approval_boundary": "Do not seek remote_github approval until complete current state, exact desired state, and a verified rollback payload are available; any later write requires the separate blocking approval gate.",
       "demand_or_trigger": "Before v1.11 release and after any required-check topology change.",
-      "evidence": "On szTheory/relyra refs/heads/main at c786a9890f2f99f0dd98f89a1d9713db7c486837 (2026-10-01T01:43:45Z), all 9 mandatory lane results are absent. The parent protection response omits reviews and restrictions; the REST review subresource reports one required approval while the matching GraphQL rule reports no approval requirement. The composite capture is incomplete, no desired/rollback payload exists, and no exact remote batch is available.",
+      "evidence": "On szTheory/relyra refs/heads/main at c786a9890f2f99f0dd98f89a1d9713db7c486837 (2026-10-01T01:51:05Z), all 9 mandatory lane results are absent. The parent protection response omits reviews and restrictions; the REST review subresource reports one required approval while the matching GraphQL rule reports no approval requirement. The composite capture is incomplete, no desired/rollback payload exists, and no exact remote batch is available.",
       "id": "PIPE-73-001",
       "maintenance_cost": "Keep the bounded composite capture current; require automated source agreement before constructing any reversible update.",
       "open_disposition": "approval-blocked",
@@ -137,7 +137,7 @@
       "adopter_impact": "Closeout distinguishes known maintainer configuration from unknown local state without claiming deletion authority.",
       "approval_boundary": "No cleanup without confirmed ownership and explicit scope.",
       "demand_or_trigger": "Refresh before release and after local/worktree changes.",
-      "evidence": "Current inventory at 2026-10-01T01:43:45Z records 19 tracked edits, 22 untracked paths, 4 ignored candidates, and 1 registered worktree(s); maintainer-owned and unknown-owner paths are preserved.",
+      "evidence": "Current inventory at 2026-10-01T01:51:05Z records 1 tracked edits, 19 untracked paths, 4 ignored candidates, and 1 registered worktree(s); maintainer-owned and unknown-owner paths are preserved.",
       "id": "QUAL-73-005",
       "maintenance_cost": "Run the bounded local inventory and preserve unknown-owner paths.",
       "open_disposition": null,
