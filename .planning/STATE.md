@@ -6,17 +6,17 @@ current_phase: 79
 current_phase_name: Adopter-Ready Closeout
 current_plan: 6
 status: executing
-stopped_at: Completed 79-05-PLAN.md; 79-06 requires source-consistent protection evidence
-last_updated: "2026-09-30T21:57:12-04:00"
-last_activity: 2026-09-30
-last_activity_desc: Phase 79 Wave 5 completed the source-consistent protection capture, refreshed the Phase 73 proof, and kept the exact batch blocked on conflicting REST and GraphQL approval settings
-state_head: 7fb3560
+stopped_at: Completed 79-06-PLAN.md
+last_updated: "2026-10-01T12:18:34.596Z"
+last_activity: 2026-10-01
+last_activity_desc: Phase 79 execution started
+state_head: f476efa63b50dbe16ddb6bdaa8e511c245d739f9
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 69
-  completed_plans: 68
-  percent: 99
+  completed_plans: 69
+  percent: 86
 ---
 
 # Project State
@@ -34,15 +34,15 @@ never a silent compromise. Trust mutations are durable, attributable, and review
 
 ## Current Position
 
-Phase: 79 (Adopter-Ready Closeout) — EXECUTING
+Phase: 79 (Adopter-Ready Closeout) — BLOCKED
 
-Current Plan: 6
+Current Plan: 6 (complete)
 Total Plans in Phase: 6
-Next gate: Resolve the REST/GraphQL review-setting conflict in Plan 79-06. Do not offer exact-batch approval unless a fresh automated capture proves source agreement.
+Next gate: The GitHub policy owner must resolve the REST/GraphQL review-setting conflict. Then repeat read-only capture and inventory; all nine mandatory lanes must pass on the same main SHA before preparing any separate exact-action plan.
 
-Status: Executing gap closure; the captured protection evidence conflicts and no payload or approval batch is available.
+Status: Blocked on external source disagreement and missing current-main CI evidence.
 
-Last activity: 2026-09-30 — Wave 5 completed with a verified source-conflict capture and refreshed governed Phase 73 proof; Wave 6 read-only reconciliation is next
+Last activity: 2026-10-01 — Plan 79-06 completed; Phase 79 remains blocked.
 
 ## Milestone Metrics
 
@@ -110,6 +110,10 @@ Last activity: 2026-09-30 — Wave 5 completed with a verified source-conflict c
 
 Do not prepare a remote approval batch until the full source and rollback are available. — The parent protection GET omits `required_pull_request_reviews` and `restrictions`; the review subresource reports one required approval while the same-ref GraphQL rule reports no approval requirement. The discrepancy prevents proving the current writable state and exact rollback.
 
+- [Phase 79]: Require REST and GraphQL agreement for writable protection payloads; conflict yields blocked records with null payloads.
+- [Phase 79]: Keep readiness unknown until all mandatory lanes pass on the captured main SHA.
+- [Phase 79]: Require a separate exact plan and approval gate for any later GitHub mutation.
+
 ### Baseline Findings
 
 - Root adoption journeys execute inside Relyra and use private fixtures; they do not yet
@@ -147,25 +151,27 @@ Do not prepare a remote approval batch until the full source and rollback are av
 
 ## Session Continuity
 
-**Last session:** 2026-09-30T21:57:12-04:00
+**Last session:** 2026-10-01T12:17:17.859Z
 
-**Stopped at:** Completed Wave 5 / Plan 79-05; Wave 6 / Plan 79-06 is next
+**Stopped at:** Completed 79-06-PLAN.md
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Phase 79 Plans 01 through 05 are complete. Wave 5 added same-ref REST and GraphQL
-protection capture and refreshed the current Phase 73 reconciliation proof. The live
-sources still conflict: REST reports one required approval while GraphQL reports none;
-the composite capture therefore has no writable resource, desired payload, rollback
-payload, or executable batch. Nine mandatory lanes also lack passing same-SHA evidence,
-so readiness remains unknown. No remote write or workflow dispatch occurred.
+Phase 79 Plans 01 through 06 are complete, and ROADMAP.md records 6/6 plans. The fresh
+read-only capture at main SHA c786a9890f2f99f0dd98f89a1d9713db7c486837 still conflicts:
+REST reports `required_approving_review_count=1`, while GraphQL reports
+`requiredApprovingReviewCount=null` and `requiresApprovingReviews=false`. The parent
+protection response also omits `required_pull_request_reviews` and `restrictions`; the
+capture has no writable resource and the desired/rollback payloads are null. All nine
+mandatory lanes lack passing evidence on that SHA, so readiness remains unknown. No
+approval was inferred, and no remote write or workflow dispatch occurred.
 
-ROADMAP.md records Phase 79 at 5/6 plans. The next command is
-`$gsd-execute-phase 79 --gaps-only --wave 6`; Plan 79-06 performs read-only source
-reconciliation and local batch generation. Any future remote action needs a separate
-plan with a concrete exact batch and its own approval gate.
+Exact next action: the GitHub policy owner resolves the source discrepancy and complete
+protection state; then perform a new read-only capture and inventory. Proceed only when
+the sources agree and all nine mandatory lanes pass for the same current main SHA. Any
+later GitHub operation requires a separate exact plan and approval gate.
 
 Carryover records: `.planning/WINDOWS.md` retains two Phase 76 concurrency automation
 gaps and the documented advisory waiver. The archival verification audit reports five
@@ -232,6 +238,7 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 | Phase 79 P02 | 97min | 3 tasks | 11 files |
 | Phase 79 P3 | 58min | 3 tasks | 9 files |
 | Phase 79 P04 | 48min | 2 tasks | 6 files |
+| Phase 79 P06 | 12min | 2 tasks | 14 files |
 
 ### Resolved Issues
 
@@ -240,3 +247,4 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 ## Blockers
 
 - Phase 79 release readiness remains blocked: the 2026-09-30 main inventory shows all nine mandatory lanes absent, two live-required security contexts without passing evidence, and missing fleet-proxy-e2e protection context; refresh main evidence and separately plan any authorized remote correction.
+- Phase 79 closeout remains blocked: fresh capture at main SHA c786a9890f2f99f0dd98f89a1d9713db7c486837 still shows REST required_approving_review_count=1 versus GraphQL requiredApprovingReviewCount=null and requiresApprovingReviews=false; nine mandatory lanes lack passing evidence. Resolve source discrepancy, then recapture read-only evidence on the same current-main SHA before any separate exact-action plan.
