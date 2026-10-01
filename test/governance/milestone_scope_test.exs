@@ -2942,6 +2942,133 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert phase79_remote_batch_violations(malformed_no_action, identity) != []
   end
 
+  @tag :phase79_artifact_state
+  test "Phase 79 completion contract joins blocked artifacts and accepts a coherent ready fixture only" do
+    current = phase79_current_artifact_state()
+    assert phase79_completion_contract_violations(current) == []
+
+    ready = phase79_ready_artifact_state_fixture()
+    assert phase79_completion_contract_violations(ready) == []
+
+    rest_graphql_disagreement =
+      put_in(
+        ready,
+        [
+          "capture",
+          "sources",
+          "graphql",
+          "branch_protection",
+          "rule",
+          "requiredApprovingReviewCount"
+        ],
+        nil
+      )
+
+    null_rollback = put_in(ready, ["rollback", "rollback_payload"], nil)
+    stale_capture_hash = put_in(ready, ["batch", "capture_sha256"], String.duplicate("0", 64))
+    absent_lane = update_in(ready, ["ci_receipt", "lanes"], &Map.delete(&1, "mix ci.security"))
+    fabricated_closeout = put_in(ready, ["protection_receipt", "status"], "partial")
+
+    stale_hash_binding =
+      put_in(ready, ["desired", "source_capture_sha256"], String.duplicate("f", 64))
+
+    for invalid <- [
+          rest_graphql_disagreement,
+          null_rollback,
+          stale_capture_hash,
+          absent_lane,
+          fabricated_closeout,
+          stale_hash_binding
+        ] do
+      assert phase79_completion_contract_violations(invalid) != []
+    end
+  end
+
+  @tag :phase79_publication_scope
+  test "Phase 79 publication scope comes from the frozen source tree and rejects packet symlinks" do
+    root = File.cwd!()
+
+    temporary =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-phase79-publication-scope-#{System.unique_integer([:positive])}"
+      )
+
+    phase_plan = Path.join(temporary, ".planning/phases/73-contract/73-01-PLAN.md")
+    File.mkdir_p!(Path.dirname(phase_plan))
+    File.write!(phase_plan, "---\nfiles_modified:\n  - governed.txt\n---\n# source plan\n")
+    File.write!(Path.join(temporary, "governed.txt"), "in source tree\n")
+
+    on_exit(fn -> File.rm_rf!(temporary) end)
+
+    assert {_output, 0} = System.cmd("git", ["init", "-q"], cd: temporary)
+
+    assert {_output, 0} =
+             System.cmd("git", ["config", "user.name", "Phase 79 Fixture"], cd: temporary)
+
+    assert {_output, 0} =
+             System.cmd("git", ["config", "user.email", "phase79@example.invalid"], cd: temporary)
+
+    assert {_output, 0} = System.cmd("git", ["add", "."], cd: temporary)
+    assert {_output, 0} = System.cmd("git", ["commit", "-qm", "source plan"], cd: temporary)
+    assert {sha, 0} = System.cmd("git", ["rev-parse", "HEAD"], cd: temporary)
+
+    File.write!(
+      phase_plan,
+      "---\nfiles_modified:\n  - governed.txt\n  - worktree-only.txt\n---\n# uncommitted edit\n"
+    )
+
+    python = """
+    import importlib.util, json, pathlib, sys
+    spec = importlib.util.spec_from_file_location("publication", sys.argv[1])
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    allowed, _owners = module.planned_paths(pathlib.Path(sys.argv[2]), sys.argv[3])
+    print(json.dumps({"governed": "governed.txt" in allowed, "worktree_only": "worktree-only.txt" in allowed}))
+    """
+
+    assert {output, 0} =
+             System.cmd(
+               "python3",
+               [
+                 "-c",
+                 python,
+                 Path.join(root, "scripts/prepare_phase79_publication.py"),
+                 temporary,
+                 String.trim(sha)
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert Jason.decode!(String.trim(output)) == %{"governed" => true, "worktree_only" => false}
+
+    phase_dir = Path.join(temporary, "phase")
+    File.mkdir_p!(phase_dir)
+    target = Path.join(phase_dir, "target.json")
+    link = Path.join(phase_dir, "linked-packet.json")
+    File.write!(target, "{}\n")
+    File.ln_s!(target, link)
+
+    assert {rejected, 1} =
+             System.cmd(
+               "python3",
+               [
+                 Path.join(root, "scripts/prepare_phase79_publication.py"),
+                 "--verify",
+                 link,
+                 "--repo-root",
+                 root,
+                 "--phase-dir",
+                 phase_dir
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert rejected =~ "non-symlink"
+  end
+
   test "Phase 79 fixture collector emits timestamped, source-bound inventory" do
     root = File.cwd!()
 
@@ -4330,12 +4457,14 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       "ref" => "refs/heads/main",
       "main_sha" => sha,
       "enabled_workflows" => [
-        %{"path" => ".github/workflows/security-gates.yml", "state" => "active"},
-        %{"path" => ".github/workflows/fleet-proxy-e2e.yml", "state" => "active"}
+        %{"id" => 10, "path" => ".github/workflows/security-gates.yml", "state" => "active"},
+        %{"id" => 20, "path" => ".github/workflows/fleet-proxy-e2e.yml", "state" => "active"}
       ],
       "workflow_runs" => [],
+      "workflow_jobs" => [],
       "check_runs" => [],
-      "fleet_context" => %{"name" => "fleet-proxy-e2e", "sha" => sha, "state" => "absent"}
+      "fleet_context" => %{"name" => "fleet-proxy-e2e", "sha" => sha, "state" => "absent"},
+      "receipts" => phase79_ci_observation(sha, false)["receipts"]
     }
 
     File.write!(Path.join(fixture_dir, "ci-preflight.json"), Jason.encode!(fixture))
@@ -4377,12 +4506,334 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert packet["dispatch"]["action"] == "workflow_dispatch"
 
     assert packet["dispatch"]["workflows"] == [
-             ".github/workflows/security-gates.yml",
-             ".github/workflows/fleet-proxy-e2e.yml"
+             ".github/workflows/fleet-proxy-e2e.yml",
+             ".github/workflows/security-gates.yml"
            ]
 
     refute packet["dispatch"]["performed"]
-    assert packet["missing_owner_runs"] == []
+
+    assert packet["missing_owner_runs"] == [
+             ".github/workflows/fleet-proxy-e2e.yml",
+             ".github/workflows/security-gates.yml"
+           ]
+  end
+
+  @tag :phase79_ci_result
+  test "Phase 79 CI result rejects absent evidence and accepts exact same-SHA owner identities" do
+    root = File.cwd!()
+    unique = System.unique_integer([:positive])
+    temporary = Path.join(System.tmp_dir!(), "relyra-phase79-ci-result-#{unique}")
+    phase_dir = Path.join(temporary, "phase")
+    fixture_dir = Path.join(temporary, "fixtures")
+    File.mkdir_p!(phase_dir)
+    File.mkdir_p!(fixture_dir)
+    on_exit(fn -> File.rm_rf!(temporary) end)
+
+    sha = String.duplicate("a", 40)
+    pending = phase79_ci_observation(sha, false)
+    fixture_path = Path.join(fixture_dir, "ci-preflight.json")
+    File.write!(fixture_path, Jason.encode!(pending))
+
+    script = Path.join(root, "scripts/verify_phase79_transaction.py")
+
+    assert {_output, 0} =
+             System.cmd(
+               "python3",
+               [
+                 script,
+                 "--stage",
+                 "ci-preflight",
+                 "--phase-dir",
+                 phase_dir,
+                 "--fixture-dir",
+                 fixture_dir
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert {missing_output, 1} =
+             System.cmd(
+               "python3",
+               [
+                 script,
+                 "--stage",
+                 "ci-result",
+                 "--phase-dir",
+                 phase_dir,
+                 "--fixture-dir",
+                 fixture_dir
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert missing_output =~ "pending CI dispatch requires explicit approval"
+    refute File.exists?(Path.join(phase_dir, "79-MAIN-CI-RECEIPT.json"))
+
+    pending_packet_path = Path.join(phase_dir, "79-CI-DISPATCH-PACKET.json")
+    pending_packet = pending_packet_path |> File.read!() |> Jason.decode!()
+
+    pending_packet =
+      Map.put(pending_packet, "approval", %{
+        "checkpoint_id" => "79-10-ci-dispatch",
+        "packet_sha256" => pending_packet["packet_sha256"],
+        "response" => "approved",
+        "scope" => pending_packet["dispatch"]["requests"]
+      })
+
+    File.write!(pending_packet_path, Jason.encode!(pending_packet))
+    File.write!(Path.join(fixture_dir, "ci-result-preflight.json"), Jason.encode!(pending))
+
+    File.write!(
+      Path.join(fixture_dir, "ci-dispatch.json"),
+      Jason.encode!(%{
+        "requests" => pending_packet["dispatch"]["requests"],
+        "responses" =>
+          Enum.map(pending_packet["dispatch"]["requests"], fn request ->
+            %{"workflow_id" => request["workflow_id"], "status_code" => 204}
+          end)
+      })
+    )
+
+    passed = phase79_ci_observation(sha, true)
+    File.write!(Path.join(fixture_dir, "ci-result.json"), Jason.encode!(passed))
+
+    assert {dispatch_output, 0} =
+             System.cmd(
+               "python3",
+               [
+                 script,
+                 "--stage",
+                 "ci-result",
+                 "--phase-dir",
+                 phase_dir,
+                 "--fixture-dir",
+                 fixture_dir
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert dispatch_output =~ "complete"
+
+    dispatch_receipt =
+      Path.join(phase_dir, "79-MAIN-CI-RECEIPT.json")
+      |> File.read!()
+      |> Jason.decode!()
+
+    assert length(dispatch_receipt["dispatch_responses"]) == 2
+    assert length(dispatch_receipt["dispatch_run_identities"]) == 2
+    assert dispatch_receipt["approval"]["checkpoint_id"] == "79-10-ci-dispatch"
+    File.rm!(Path.join(phase_dir, "79-MAIN-CI-RECEIPT.json"))
+
+    passed = phase79_ci_observation(sha, true)
+    File.write!(fixture_path, Jason.encode!(passed))
+
+    assert {_output, 0} =
+             System.cmd(
+               "python3",
+               [
+                 script,
+                 "--stage",
+                 "ci-preflight",
+                 "--phase-dir",
+                 phase_dir,
+                 "--fixture-dir",
+                 fixture_dir
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    File.write!(Path.join(fixture_dir, "ci-result.json"), Jason.encode!(passed))
+
+    assert {result_output, 0} =
+             System.cmd(
+               "python3",
+               [
+                 script,
+                 "--stage",
+                 "ci-result",
+                 "--phase-dir",
+                 phase_dir,
+                 "--fixture-dir",
+                 fixture_dir
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert result_output =~ "complete"
+
+    receipt =
+      Path.join(phase_dir, "79-MAIN-CI-RECEIPT.json")
+      |> File.read!()
+      |> Jason.decode!()
+
+    assert receipt["target"]["sha"] == sha
+    assert map_size(receipt["lanes"]) == 9
+    assert receipt["fleet_context"]["state"] == "passed"
+    assert receipt["independent_readback"]
+
+    wrong_owner =
+      update_in(passed, ["check_runs", Access.at(0), "workflow_path"], fn _ ->
+        ".github/workflows/fleet-proxy-e2e.yml"
+      end)
+
+    File.write!(Path.join(fixture_dir, "ci-result.json"), Jason.encode!(wrong_owner))
+    File.rm!(Path.join(phase_dir, "79-MAIN-CI-RECEIPT.json"))
+
+    assert {wrong_output, 1} =
+             System.cmd(
+               "python3",
+               [
+                 script,
+                 "--stage",
+                 "ci-result",
+                 "--phase-dir",
+                 phase_dir,
+                 "--fixture-dir",
+                 fixture_dir
+               ],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert wrong_output =~ "attributed to the wrong canonical workflow"
+    refute File.exists?(Path.join(phase_dir, "79-MAIN-CI-RECEIPT.json"))
+  end
+
+  defp phase79_ci_observation(sha, passed?) do
+    security_workflow = ".github/workflows/security-gates.yml"
+    fleet_workflow = ".github/workflows/fleet-proxy-e2e.yml"
+    base_sha = String.duplicate("b", 40)
+    source_sha = String.duplicate("c", 40)
+    tree_sha = String.duplicate("d", 40)
+
+    {workflow_runs, workflow_jobs, check_runs, fleet_context} =
+      if passed? do
+        security_run = %{
+          "id" => 100,
+          "attempt" => 1,
+          "head_sha" => sha,
+          "head_branch" => "main",
+          "path" => security_workflow,
+          "status" => "completed",
+          "conclusion" => "success"
+        }
+
+        fleet_run = %{
+          "id" => 200,
+          "attempt" => 1,
+          "head_sha" => sha,
+          "head_branch" => "main",
+          "path" => fleet_workflow,
+          "status" => "completed",
+          "conclusion" => "success"
+        }
+
+        security_jobs =
+          [2001, 2002]
+          |> Enum.with_index(1)
+          |> Enum.map(fn {job_id, index} ->
+            %{
+              "id" => job_id,
+              "workflow_run_id" => 100,
+              "name" =>
+                if(index == 1, do: "security (27, 1.19.5)", else: "security (28, 1.19.5)"),
+              "status" => "completed",
+              "conclusion" => "success"
+            }
+          end)
+
+        fleet_job = %{
+          "id" => 3000,
+          "workflow_run_id" => 200,
+          "name" => "fleet-proxy-e2e",
+          "status" => "completed",
+          "conclusion" => "success"
+        }
+
+        lane_checks =
+          ["security (27, 1.19.5)", "security (28, 1.19.5)"]
+          |> Enum.with_index(1)
+          |> Enum.map(fn {check_name, index} ->
+            %{
+              "id" => 1000 + index,
+              "name" => check_name,
+              "head_sha" => sha,
+              "status" => "completed",
+              "conclusion" => "success",
+              "workflow_path" => security_workflow,
+              "workflow_run_id" => 100,
+              "workflow_job_id" => 2000 + index
+            }
+          end)
+
+        fleet_check = %{
+          "id" => 1100,
+          "name" => "fleet-proxy-e2e",
+          "head_sha" => sha,
+          "status" => "completed",
+          "conclusion" => "success",
+          "workflow_path" => fleet_workflow,
+          "workflow_run_id" => 200,
+          "workflow_job_id" => 3000
+        }
+
+        fleet = %{
+          "name" => "fleet-proxy-e2e",
+          "sha" => sha,
+          "state" => "passed",
+          "workflow_run_id" => 200,
+          "workflow_job_id" => 3000,
+          "check_run_id" => 1100
+        }
+
+        {[security_run, fleet_run], security_jobs ++ [fleet_job], lane_checks ++ [fleet_check],
+         fleet}
+      else
+        {[], [], [], %{"name" => "fleet-proxy-e2e", "sha" => sha, "state" => "absent"}}
+      end
+
+    %{
+      "repository" => "szTheory/relyra",
+      "ref" => "refs/heads/main",
+      "main_sha" => sha,
+      "enabled_workflows" => [
+        %{"id" => 10, "path" => security_workflow, "state" => "active"},
+        %{"id" => 20, "path" => fleet_workflow, "state" => "active"}
+      ],
+      "workflow_runs" => workflow_runs,
+      "workflow_jobs" => workflow_jobs,
+      "check_runs" => check_runs,
+      "fleet_context" => fleet_context,
+      "receipts" => %{
+        "publication" => %{
+          "source_sha" => source_sha,
+          "candidate_head_sha" => source_sha,
+          "source_tree_sha" => tree_sha,
+          "base_sha" => base_sha
+        },
+        "pr" => %{
+          "status" => "complete",
+          "head_sha" => source_sha,
+          "base_sha" => base_sha,
+          "tree_sha" => tree_sha,
+          "independent" => true
+        },
+        "merge" => %{
+          "status" => "complete",
+          "source_head_sha" => source_sha,
+          "base_sha" => base_sha,
+          "tree_sha" => tree_sha,
+          "main_sha" => sha,
+          "parents" => [base_sha, source_sha],
+          "independent_readback" => true
+        }
+      }
+    }
   end
 
   defp phase79_protection_fixture(sha) do
@@ -9142,6 +9593,579 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       if matches?, do: [], else: ["remote batch target/source identity is stale"]
     end)
   end
+
+  defp phase79_current_artifact_state do
+    phase_dir = ".planning/phases/79-adopter-ready-closeout"
+    capture_bytes = File.read!(Path.join(phase_dir, "79-PROTECTION-CAPTURE.json"))
+    desired_bytes = File.read!(Path.join(phase_dir, "79-PROTECTION-DESIRED.json"))
+    rollback_bytes = File.read!(Path.join(phase_dir, "79-PROTECTION-ROLLBACK.json"))
+    inventory_bytes = File.read!(Path.join(phase_dir, "79-INVENTORY.json"))
+    batch_bytes = File.read!(Path.join(phase_dir, "79-REMOTE-BATCH.md"))
+    closeout = File.read!(Path.join(phase_dir, "79-CLOSEOUT.md"))
+
+    optional_json = fn name ->
+      path = Path.join(phase_dir, name)
+      if File.regular?(path), do: path |> File.read!() |> Jason.decode!(), else: nil
+    end
+
+    capture = Jason.decode!(capture_bytes)
+    desired = Jason.decode!(desired_bytes)
+    rollback = Jason.decode!(rollback_bytes)
+    inventory = Jason.decode!(inventory_bytes)
+    digest = fn bytes -> :crypto.hash(:sha256, bytes) |> Base.encode16(case: :lower) end
+
+    %{
+      "capture" => capture,
+      "capture_bytes" => capture_bytes,
+      "desired" => desired,
+      "desired_bytes" => desired_bytes,
+      "rollback" => rollback,
+      "rollback_bytes" => rollback_bytes,
+      "inventory" => inventory,
+      "post_capture" => optional_json.("79-PROTECTION-POST-CAPTURE.json"),
+      "post_inventory" => optional_json.("79-POST-INVENTORY.json"),
+      "publication" => optional_json.("79-PUBLICATION-PACKET.json"),
+      "pr_receipt" => optional_json.("79-PR-TRANSACTION.json"),
+      "merge_receipt" => optional_json.("79-MERGE-RECEIPT.json"),
+      "ci_receipt" => optional_json.("79-MAIN-CI-RECEIPT.json"),
+      "protection_receipt" => optional_json.("79-PROTECTION-TRANSACTION.json"),
+      "risks" => File.read!(Path.join(phase_dir, "79-RISKS.json")) |> Jason.decode!(),
+      "batch" => %{
+        "status" =>
+          if(String.contains?(batch_bytes, "**Status:** no mutation proposed"),
+            do: "blocked_no_action",
+            else: "proposal"
+          ),
+        "capture_sha256" => digest.(capture_bytes),
+        "desired_sha256" => digest.(desired_bytes),
+        "rollback_sha256" => digest.(rollback_bytes),
+        "batch_sha256" => digest.(batch_bytes),
+        "operations" => []
+      },
+      "batch_bytes" => batch_bytes,
+      "closeout_status" =>
+        if(String.contains?(closeout, "Release readiness: READY"), do: "READY", else: "BLOCKED")
+    }
+  end
+
+  defp phase79_ready_artifact_state_fixture do
+    sha = String.duplicate("a", 40)
+    base_sha = String.duplicate("b", 40)
+    source_sha = String.duplicate("c", 40)
+    tree_sha = String.duplicate("d", 40)
+    repository = "szTheory/relyra"
+    ref = "refs/heads/main"
+
+    target = %{
+      "repository" => repository,
+      "ref" => ref,
+      "main_sha" => sha,
+      "observed_at" => "2026-10-01T00:00:00Z"
+    }
+
+    lane_names = [
+      "browser defenses",
+      "mix ci.evidence",
+      "mix ci.ledger_loop",
+      "mix ci.package",
+      "mix ci.phase73.reconciliation",
+      "mix ci.security",
+      "mix ci.verify",
+      "mix qa",
+      "standalone defenses"
+    ]
+
+    payload = %{
+      "required_status_checks" => %{
+        "strict" => true,
+        "contexts" => ["fleet-proxy-e2e", "security (27, 1.19.5)", "security (28, 1.19.5)"],
+        "checks" => [
+          %{"app_id" => 15368, "context" => "fleet-proxy-e2e"},
+          %{"app_id" => 15368, "context" => "security (27, 1.19.5)"},
+          %{"app_id" => 15368, "context" => "security (28, 1.19.5)"}
+        ]
+      },
+      "required_pull_request_reviews" => %{"required_approving_review_count" => 1},
+      "enforce_admins" => %{"enabled" => true}
+    }
+
+    capture = %{
+      "schema" => "phase79-protection-capture",
+      "version" => 1,
+      "capture_status" => "complete",
+      "capture_errors" => [],
+      "repository" => repository,
+      "ref" => ref,
+      "main_sha" => sha,
+      "observed_at" => target["observed_at"],
+      "target" => target,
+      "resource" => payload,
+      "writable_payload" => payload,
+      "sources" => %{
+        "review_subresource" => %{"configuration" => %{"required_approving_review_count" => 1}},
+        "graphql" => %{
+          "branch_protection" => %{
+            "rule" => %{
+              "requiredApprovingReviewCount" => 1,
+              "requiresApprovingReviews" => true
+            }
+          }
+        },
+        "parent_protection" => %{
+          "configuration" => %{
+            "required_pull_request_reviews" => payload["required_pull_request_reviews"],
+            "restrictions" => %{"users" => [], "teams" => [], "apps" => []}
+          }
+        }
+      }
+    }
+
+    digest = fn bytes -> :crypto.hash(:sha256, bytes) |> Base.encode16(case: :lower) end
+    capture_bytes = Jason.encode!(capture)
+    capture_sha = digest.(capture_bytes)
+
+    desired = %{
+      "schema" => "phase79-protection-desired",
+      "version" => 1,
+      "status" => "ready",
+      "payload_available" => true,
+      "target" => target,
+      "source_capture_sha256" => capture_sha,
+      "desired_payload" => payload
+    }
+
+    desired_bytes = Jason.encode!(desired)
+    desired_sha = digest.(desired_bytes)
+
+    rollback = %{
+      "schema" => "phase79-protection-rollback",
+      "version" => 1,
+      "status" => "ready",
+      "payload_available" => true,
+      "target" => target,
+      "source_capture_sha256" => capture_sha,
+      "rollback_payload" => payload
+    }
+
+    rollback_bytes = Jason.encode!(rollback)
+    rollback_sha = digest.(rollback_bytes)
+
+    batch = %{
+      "status" => "no_action",
+      "capture_sha256" => capture_sha,
+      "desired_sha256" => desired_sha,
+      "rollback_sha256" => rollback_sha,
+      "operations" => [],
+      "approval" => nil,
+      "read_only" => true
+    }
+
+    batch_bytes = Jason.encode!(batch)
+    batch_sha = digest.(batch_bytes)
+
+    lanes =
+      Map.new(lane_names, fn name ->
+        {name,
+         %{
+           "state" => "passed",
+           "sha" => sha,
+           "evidence" => [
+             %{
+               "sha" => sha,
+               "workflow_run_id" => 100,
+               "job_id" => 200,
+               "check_run_id" => 300,
+               "conclusion" => "success"
+             }
+           ]
+         }}
+      end)
+
+    inventory = %{
+      "observation" => %{
+        "repository" => repository,
+        "ref" => ref,
+        "main_sha" => sha,
+        "revalidated_sha" => sha
+      },
+      "collection" => %{"complete" => true, "readiness" => "green", "gaps" => []},
+      "github" => %{
+        "branch_protection" => %{"capture_status" => "complete", "resource" => payload},
+        "mandatory_lanes" => Map.new(lane_names, &{&1, %{"state" => "passed", "sha" => sha}})
+      }
+    }
+
+    inventory_bytes = Jason.encode!(inventory)
+    inventory_sha = digest.(inventory_bytes)
+    post_capture = capture
+    post_capture_bytes = Jason.encode!(post_capture)
+    post_capture_sha = digest.(post_capture_bytes)
+    post_inventory = inventory
+    post_inventory_bytes = Jason.encode!(post_inventory)
+    post_inventory_sha = digest.(post_inventory_bytes)
+
+    publication = %{
+      "status" => "ready",
+      "source_sha" => source_sha,
+      "candidate_head_sha" => source_sha,
+      "base_sha" => base_sha,
+      "source_tree_sha" => tree_sha
+    }
+
+    pr = %{
+      "status" => "complete",
+      "head_sha" => source_sha,
+      "base_sha" => base_sha,
+      "tree_sha" => tree_sha,
+      "independent" => true,
+      "approval" => %{"checkpoint_id" => "79-08-pr-create", "response" => "approved"}
+    }
+
+    merge = %{
+      "status" => "complete",
+      "source_head_sha" => source_sha,
+      "base_sha" => base_sha,
+      "tree_sha" => tree_sha,
+      "main_sha" => sha,
+      "parents" => [base_sha, source_sha]
+    }
+
+    ci = %{
+      "status" => "complete",
+      "target" => %{"repository" => repository, "ref" => ref, "sha" => sha},
+      "lanes" => lanes,
+      "fleet_context" => %{
+        "state" => "passed",
+        "sha" => sha,
+        "workflow_run_id" => 400,
+        "job_id" => 500,
+        "check_run_id" => 600
+      }
+    }
+
+    protection = %{
+      "status" => "complete",
+      "target" => target,
+      "capture_sha256" => capture_sha,
+      "inventory_sha256" => inventory_sha,
+      "desired_sha256" => desired_sha,
+      "rollback_sha256" => rollback_sha,
+      "batch_sha256" => batch_sha,
+      "post_capture_sha256" => post_capture_sha,
+      "post_inventory_sha256" => post_inventory_sha,
+      "readback_payload" => payload,
+      "source_agreement" => true
+    }
+
+    risks = %{
+      "items" => [
+        %{
+          "id" => "PIPE-73-001",
+          "severity" => "High",
+          "status" => "resolved",
+          "evidence" => "All required evidence passes on #{sha}."
+        }
+      ]
+    }
+
+    %{
+      "capture" => capture,
+      "capture_bytes" => capture_bytes,
+      "desired" => desired,
+      "desired_bytes" => desired_bytes,
+      "rollback" => rollback,
+      "rollback_bytes" => rollback_bytes,
+      "inventory" => inventory,
+      "inventory_bytes" => inventory_bytes,
+      "post_capture" => post_capture,
+      "post_capture_bytes" => post_capture_bytes,
+      "post_inventory" => post_inventory,
+      "post_inventory_bytes" => post_inventory_bytes,
+      "publication" => publication,
+      "pr_receipt" => pr,
+      "merge_receipt" => merge,
+      "ci_receipt" => ci,
+      "protection_receipt" => protection,
+      "risks" => risks,
+      "batch" => Map.put(batch, "batch_sha256", batch_sha),
+      "batch_bytes" => batch_bytes,
+      "closeout_status" => "READY"
+    }
+  end
+
+  defp phase79_completion_contract_violations(state) do
+    capture = state["capture"] || %{}
+    desired = state["desired"] || %{}
+    rollback = state["rollback"] || %{}
+    inventory = state["inventory"] || %{}
+    batch = state["batch"] || %{}
+    target_sha = get_in(inventory, ["observation", "main_sha"])
+    digest = fn bytes -> :crypto.hash(:sha256, bytes || "") |> Base.encode16(case: :lower) end
+    capture_sha = digest.(state["capture_bytes"])
+    desired_sha = digest.(state["desired_bytes"])
+    rollback_sha = digest.(state["rollback_bytes"])
+
+    if state["closeout_status"] == "BLOCKED" do
+      []
+      |> maybe_add_phase79_error(
+        capture["capture_status"] == "incomplete",
+        "blocked capture is not explicitly incomplete"
+      )
+      |> maybe_add_phase79_error(
+        capture["resource"] == nil and capture["capture_errors"] != [],
+        "blocked capture lacks its source conflict"
+      )
+      |> maybe_add_phase79_error(
+        desired["status"] == "blocked" and desired["desired_payload"] == nil and
+          desired["source_capture_sha256"] == capture_sha,
+        "blocked desired payload is available or stale"
+      )
+      |> maybe_add_phase79_error(
+        rollback["status"] == "blocked" and rollback["rollback_payload"] == nil and
+          rollback["source_capture_sha256"] == capture_sha,
+        "blocked rollback payload is available or stale"
+      )
+      |> maybe_add_phase79_error(
+        get_in(inventory, ["collection", "complete"]) == false and
+          get_in(inventory, ["collection", "readiness"]) == "unknown",
+        "blocked inventory is reported complete or green"
+      )
+      |> maybe_add_phase79_error(
+        target_sha == capture["main_sha"],
+        "blocked capture and inventory target different main SHAs"
+      )
+      |> maybe_add_phase79_error(
+        batch["status"] == "blocked_no_action" and batch["operations"] == [] and
+          String.contains?(state["batch_bytes"] || "", "no mutation proposed"),
+        "blocked batch contains a write or lacks no-action evidence"
+      )
+      |> maybe_add_phase79_error(
+        batch["capture_sha256"] == capture_sha and batch["desired_sha256"] == desired_sha and
+          batch["rollback_sha256"] == rollback_sha,
+        "blocked batch hashes are stale"
+      )
+      |> maybe_add_phase79_error(
+        Enum.all?(
+          ["pr_receipt", "merge_receipt", "ci_receipt", "post_inventory", "protection_receipt"],
+          &(state[&1] == nil)
+        ),
+        "blocked artifacts fabricate a completed remote transaction"
+      )
+    else
+      ready_phase79_completion_violations(
+        state,
+        capture,
+        desired,
+        rollback,
+        inventory,
+        batch,
+        target_sha,
+        capture_sha,
+        desired_sha,
+        rollback_sha,
+        digest
+      )
+    end
+  end
+
+  defp ready_phase79_completion_violations(
+         state,
+         capture,
+         desired,
+         rollback,
+         inventory,
+         batch,
+         target_sha,
+         capture_sha,
+         desired_sha,
+         rollback_sha,
+         digest
+       ) do
+    post_inventory = state["post_inventory"] || %{}
+    post_capture = state["post_capture"] || %{}
+    publication = state["publication"] || %{}
+    pr = state["pr_receipt"] || %{}
+    merge = state["merge_receipt"] || %{}
+    ci = state["ci_receipt"] || %{}
+    protection = state["protection_receipt"] || %{}
+    lanes = get_in(inventory, ["github", "mandatory_lanes"]) || %{}
+    risks = get_in(state, ["risks", "items"])
+
+    errors =
+      []
+      |> maybe_add_phase79_error(
+        state["closeout_status"] == "READY",
+        "ready closeout status is absent"
+      )
+      |> maybe_add_phase79_error(
+        is_binary(target_sha) and target_sha == capture["main_sha"],
+        "ready capture and inventory target different SHAs"
+      )
+      |> maybe_add_phase79_error(
+        capture["capture_status"] == "complete" and capture["capture_errors"] == [] and
+          is_map(capture["writable_payload"]),
+        "ready capture lacks complete writable source agreement"
+      )
+      |> maybe_add_phase79_error(
+        capture["resource"] == capture["writable_payload"],
+        "capture resource disagrees with its writable payload"
+      )
+      |> maybe_add_phase79_error(
+        get_in(capture, [
+          "sources",
+          "review_subresource",
+          "configuration",
+          "required_approving_review_count"
+        ]) ==
+          get_in(capture, [
+            "sources",
+            "graphql",
+            "branch_protection",
+            "rule",
+            "requiredApprovingReviewCount"
+          ]) and
+          get_in(capture, [
+            "sources",
+            "graphql",
+            "branch_protection",
+            "rule",
+            "requiresApprovingReviews"
+          ]) ==
+            get_in(capture, [
+              "sources",
+              "review_subresource",
+              "configuration",
+              "required_approving_review_count"
+            ]) > 0,
+        "REST and GraphQL review requirements disagree"
+      )
+      |> maybe_add_phase79_error(
+        desired["status"] == "ready" and desired["payload_available"] == true and
+          desired["desired_payload"] == capture["writable_payload"] and
+          desired["source_capture_sha256"] == capture_sha,
+        "ready desired payload or capture hash is inconsistent"
+      )
+      |> maybe_add_phase79_error(
+        rollback["status"] == "ready" and rollback["payload_available"] == true and
+          rollback["rollback_payload"] == capture["writable_payload"] and
+          rollback["source_capture_sha256"] == capture_sha,
+        "ready rollback is not the exact captured current state"
+      )
+      |> maybe_add_phase79_error(
+        batch["status"] == "no_action" and batch["operations"] == [] and batch["approval"] == nil and
+          batch["read_only"] == true,
+        "ready no-action batch contains an operation or authorization"
+      )
+      |> maybe_add_phase79_error(
+        batch["capture_sha256"] == capture_sha and batch["desired_sha256"] == desired_sha and
+          batch["rollback_sha256"] == rollback_sha and
+          batch["batch_sha256"] == digest.(state["batch_bytes"]),
+        "ready batch hashes do not join to immutable artifacts"
+      )
+      |> maybe_add_phase79_error(
+        get_in(inventory, ["collection", "complete"]) == true and
+          get_in(inventory, ["collection", "readiness"]) == "green" and
+          get_in(inventory, ["observation", "revalidated_sha"]) == target_sha,
+        "pre-inventory is not green on the verified SHA"
+      )
+      |> maybe_add_phase79_error(
+        map_size(lanes) == 9 and
+          Enum.all?(Map.values(lanes), &(&1["state"] == "passed" and &1["sha"] == target_sha)),
+        "pre-inventory lacks nine passing same-SHA lanes"
+      )
+      |> maybe_add_phase79_error(
+        get_in(post_inventory, ["collection", "complete"]) == true and
+          get_in(post_inventory, ["collection", "readiness"]) == "green" and
+          get_in(post_inventory, ["observation", "main_sha"]) == target_sha and
+          get_in(post_inventory, ["observation", "revalidated_sha"]) == target_sha,
+        "post-inventory is not green on the same SHA"
+      )
+      |> maybe_add_phase79_error(
+        post_capture["capture_status"] == "complete" and post_capture["capture_errors"] == [] and
+          post_capture["main_sha"] == target_sha,
+        "post-capture is incomplete or stale"
+      )
+      |> maybe_add_phase79_error(
+        publication["status"] == "ready" and
+          publication["candidate_head_sha"] == publication["source_sha"] and
+          publication["source_tree_sha"] == merge["tree_sha"],
+        "publication source/tree is not joined to merged main"
+      )
+      |> maybe_add_phase79_error(
+        pr["status"] == "complete" and pr["head_sha"] == publication["source_sha"] and
+          pr["base_sha"] == publication["base_sha"] and
+          pr["tree_sha"] == publication["source_tree_sha"] and pr["independent"] == true and
+          get_in(pr, ["approval", "response"]) == "approved",
+        "PR receipt or approval is absent or stale"
+      )
+      |> maybe_add_phase79_error(
+        merge["status"] == "complete" and merge["main_sha"] == target_sha and
+          merge["source_head_sha"] == publication["source_sha"] and
+          merge["base_sha"] == publication["base_sha"] and
+          merge["parents"] == [publication["base_sha"], publication["source_sha"]],
+        "merge receipt does not prove normal source-preserving merge"
+      )
+      |> maybe_add_phase79_error(
+        ci["status"] == "complete" and get_in(ci, ["target", "sha"]) == target_sha and
+          is_map(ci["lanes"]) and map_size(ci["lanes"]) == 9 and
+          Enum.all?(Map.values(ci["lanes"]), &phase79_lane_passed?(&1, target_sha)),
+        "CI receipt lacks nine passing same-SHA lanes"
+      )
+      |> maybe_add_phase79_error(
+        phase79_fleet_passed?(ci["fleet_context"], target_sha),
+        "fleet context lacks passing same-SHA owner identities"
+      )
+      |> maybe_add_phase79_error(
+        protection["status"] == "complete" and
+          get_in(protection, ["target", "main_sha"]) == target_sha and
+          protection["source_agreement"] == true and
+          protection["readback_payload"] == desired["desired_payload"] and
+          protection["capture_sha256"] == capture_sha and
+          protection["desired_sha256"] == desired_sha and
+          protection["rollback_sha256"] == rollback_sha and
+          protection["batch_sha256"] == batch["batch_sha256"] and
+          protection["post_capture_sha256"] == digest.(state["post_capture_bytes"]) and
+          protection["post_inventory_sha256"] == digest.(state["post_inventory_bytes"]),
+        "protection receipt/read-back does not join to approved artifacts"
+      )
+      |> maybe_add_phase79_error(
+        is_list(risks) and risks != [] and
+          Enum.all?(risks, fn item ->
+            if item["severity"] in ["High", "Critical"],
+              do:
+                item["status"] == "resolved" and
+                  String.contains?(item["evidence"] || "", target_sha),
+              else: true
+          end),
+        "a High/Critical risk was closed without same-SHA source evidence"
+      )
+
+    errors
+  end
+
+  defp phase79_lane_passed?(lane, sha) do
+    lane["state"] == "passed" and is_list(lane["evidence"]) and lane["evidence"] != [] and
+      Enum.all?(lane["evidence"], fn item ->
+        item["sha"] == sha and item["conclusion"] == "success" and
+          Enum.all?(
+            ["workflow_run_id", "job_id", "check_run_id"],
+            &(is_integer(item[&1]) and item[&1] > 0)
+          )
+      end)
+  end
+
+  defp phase79_fleet_passed?(fleet, sha) when is_map(fleet) do
+    fleet["state"] == "passed" and fleet["sha"] == sha and
+      Enum.all?(
+        ["workflow_run_id", "job_id", "check_run_id"],
+        &(is_integer(fleet[&1]) and fleet[&1] > 0)
+      )
+  end
+
+  defp phase79_fleet_passed?(_fleet, _sha), do: false
+
+  defp maybe_add_phase79_error(errors, true, _message), do: errors
+  defp maybe_add_phase79_error(errors, false, message), do: errors ++ [message]
 
   defp phase79_remote_field(markdown, label) do
     case Regex.run(~r/^#{Regex.escape(label)}\s*(.+)$/m, markdown, capture: :all_but_first) do
