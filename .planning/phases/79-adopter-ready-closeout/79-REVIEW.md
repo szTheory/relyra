@@ -1,10 +1,10 @@
 ---
 phase: 79-adopter-ready-closeout
-reviewed: 2026-09-30T09:37:36Z
+reviewed: 2026-10-01T15:24:35Z
 depth: standard
 files_reviewed: 2
 files_reviewed_list:
-  - scripts/collect_phase79_inventory.py
+  - scripts/prepare_phase79_batch.py
   - test/governance/milestone_scope_test.exs
 findings:
   critical: 0
@@ -16,14 +16,14 @@ status: clean
 
 # Phase 79: Code Review Report
 
-**Reviewed:** 2026-09-30T09:37:36Z
-**Depth:** standard
-**Files Reviewed:** 2
+**Reviewed:** 2026-10-01T15:24:35Z  
+**Depth:** standard  
+**Files Reviewed:** 2  
 **Status:** clean
 
 ## Summary
 
-Re-reviewed the Phase 79 collector and deterministic fixture after the WR-01 and WR-02 fixes. The collector now uses a state-neutral `preserve; no cleanup authority` disposition for allowlisted paths. The fixture supplies all six allowlisted paths in both porcelain status and `git ls-files` responses, then asserts all six are classified as `phase-79`. It also asserts a dirty `README.md` remains `unknown` and untracked `.tool-versions` remains `maintainer`-owned. No issues found in the scoped changes.
+Re-reviewed the Phase 79-06 batch builder and governance fixture test against the plan. The prior findings are resolved: malformed UTF-8 is converted to a controlled builder error, malformed nested shapes are handled, app IDs must be positive non-boolean integers, captures with errors block, and the success fixture compares the complete desired payload against rollback plus only the required check. No remaining correctness, security, or test-reliability issues were found in the scoped changes. Tests were not run.
 
 ## Narrative Findings (AI reviewer)
 
@@ -31,6 +31,6 @@ All reviewed files meet quality standards. No issues found.
 
 ---
 
-_Reviewed: 2026-09-30T09:37:36Z_
-_Reviewer: the agent (gsd-code-reviewer)_
+_Reviewed: 2026-10-01T15:24:35Z_  
+_Reviewer: the agent (gsd-code-reviewer)_  
 _Depth: standard_
