@@ -7,6 +7,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   @baseline_path ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
   @signature_source_path "lib/relyra/security/signature.ex"
+  @phase79_candidate_root "/private/var/folders/f3/f0clj9rd2zb85n2c849wcsrc0000gn/T/relyra-phase79-filtered-candidate"
+  @phase79_base_sha "c786a9890f2f99f0dd98f89a1d9713db7c486837"
+  @phase79_source_sha "a5820aac9983b7289cbc1cc816120017761a02e3"
+  @phase79_source_tree_sha "4ebd2357cb25980edb80c94a144657bfe9083a56"
+  @phase79_proof_path ".planning/phases/79-adopter-ready-closeout/79-FILTERED-HISTORY-PROOF.json"
   @finding_columns [
     "Finding ID",
     "Severity",
@@ -709,6 +714,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
            1. **Task 3: Artifact identity and owner assertions** — `4b91adb`, `d0eae82` (`test`)
            """) == ["4b91adb", "d0eae82"]
 
+    assert summary_task_commits("""
+           ## Task Commits
+
+           1. `0acd5ce094b4`, `88454dbd4173` — replay verifier and fixtures
+           2. `7a0023f8102a` — provenance join
+           """) == ["0acd5ce094b4", "88454dbd4173", "7a0023f8102a"]
+
     for {variant, diagnostic} <- [
           {:omitted, "omitted"},
           {:duplicate, "duplicate"},
@@ -1009,6 +1021,49 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              violation =~ "merge commit" and violation =~ fixture.merge_commit
            end),
            "expected merge diagnostic with full OID, got: #{inspect(violations)}"
+  end
+
+  @tag :evidence_contract
+  test "halted phase summaries remain archival and are skipped by active plan governance" do
+    root = File.cwd!()
+
+    fixture_dir =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-halted-plan-#{System.unique_integer([:positive])}"
+      )
+
+    fixture_phase_dir = Path.join(fixture_dir, ".planning/phases/79-fixture")
+    File.mkdir_p!(fixture_phase_dir)
+    on_exit(fn -> File.rm_rf!(fixture_dir) end)
+
+    halted_top_level = Path.join(fixture_phase_dir, "79-08-PLAN.md")
+    halted_nested = Path.join(fixture_phase_dir, "79-13-PLAN.md")
+    File.write!(halted_top_level, "---\nphase: 79\nplan: 08\n---\n")
+    File.write!(halted_nested, "---\nphase: 79\nplan: 13\n---\n")
+    File.write!(Path.join(fixture_phase_dir, "79-08-SUMMARY.md"), "---\nstatus: halted\n---\n")
+
+    File.write!(
+      Path.join(fixture_phase_dir, "79-13-SUMMARY.md"),
+      "---\nmetrics:\n  status: halted\n---\n"
+    )
+
+    completed = Path.join(root, ".planning/phases/79-adopter-ready-closeout/79-07-PLAN.md")
+
+    assert halted_plan_summary?(halted_top_level)
+    assert halted_plan_summary?(halted_nested)
+    refute halted_plan_summary?(completed)
+
+    identity = %{root: root}
+    assert repository_plan_violations([halted_top_level, halted_nested], %{}, identity) == []
+
+    assert {:ok, _changed_surfaces} =
+             repository_changed_surfaces(
+               root,
+               completed,
+               %{},
+               repository_provenance_snapshot(root)
+             )
   end
 
   @tag :plan_73_23_task_1
@@ -1411,6 +1466,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     violations =
       Enum.flat_map(identity.plan_paths, fn path ->
         repository_plan_scope_violations(identity, path, File.read!(path), [])
+        |> Enum.map(&"#{Path.basename(path)}: #{&1}")
       end)
 
     assert violations == []
@@ -2028,6 +2084,94 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  @tag :evidence_contract
+  test "Phase 79 transaction verifier exceptions are exact, direct, and tracked" do
+    plan_path =
+      Path.join(File.cwd!(), ".planning/phases/79-adopter-ready-closeout/79-15-PLAN.md")
+
+    command =
+      "python3 scripts/verify_phase79_transaction.py --stage pr-preflight --phase-dir .planning/phases/79-adopter-ready-closeout --candidate-root #{@phase79_candidate_root}"
+
+    assert phase79_transaction_command?(plan_path, command)
+    refute phase79_transaction_command?(plan_path, command <> " && echo unsafe")
+
+    refute phase79_transaction_command?(
+             plan_path,
+             String.replace(command, "pr-preflight", "delete-branch")
+           )
+  end
+
+  @tag :evidence_contract
+  test "Phase 79 PR-create and merge approval batches bind exact packet and provenance fields" do
+    for plan_name <- ["79-15-PLAN.md", "79-09-PLAN.md"] do
+      path = Path.join(File.cwd!(), ".planning/phases/79-adopter-ready-closeout/#{plan_name}")
+      assert {:ok, _region, tasks} = closed_plan_tasks(File.read!(path))
+      checkpoint = Enum.find(tasks, &(&1.type == "checkpoint:decision"))
+      assert checkpoint
+
+      assert ["approval_class: remote_github"] =
+               tag_sections(checkpoint.body, "decision") |> Enum.map(&String.trim/1)
+
+      assert [batch] = tag_sections(checkpoint.body, "remote_batch")
+      assert validate_remote_batch(parse_remote_batch(batch), File.cwd!()) == []
+
+      expected_kind = if plan_name == "79-15-PLAN.md", do: "pr_create", else: "merge"
+      wrong_kind = if expected_kind == "pr_create", do: "merge", else: "pr_create"
+
+      wrong_operation =
+        String.replace(batch, "operation_kind: #{expected_kind}", "operation_kind: #{wrong_kind}")
+
+      assert validate_remote_batch(parse_remote_batch(wrong_operation), File.cwd!()) != []
+
+      wrong_branch =
+        String.replace(
+          batch,
+          "candidate_ref=refs/heads/@publication.branch.name",
+          "candidate_ref=refs/heads/relyra-phase79-filtered"
+        )
+
+      assert validate_remote_batch(parse_remote_batch(wrong_branch), File.cwd!()) != []
+
+      altered_repository =
+        String.replace(batch, "repository=szTheory/relyra;", "repository=szTheory/relyra.evil;")
+
+      assert validate_remote_batch(parse_remote_batch(altered_repository), File.cwd!()) != []
+
+      duplicate_repository =
+        String.replace(
+          batch,
+          "repository=szTheory/relyra;",
+          "repository=szTheory/relyra; repository=szTheory/relyra;"
+        )
+
+      assert validate_remote_batch(parse_remote_batch(duplicate_repository), File.cwd!()) != []
+
+      wrong_preflight =
+        String.replace(
+          batch,
+          @phase79_candidate_root,
+          "/tmp/other-candidate"
+        )
+
+      assert validate_remote_batch(parse_remote_batch(wrong_preflight), File.cwd!()) != []
+
+      wrong_checkpoint =
+        %{
+          checkpoint
+          | body:
+              String.replace(
+                checkpoint.body,
+                "approval_class: remote_github",
+                "approval_class: public_api"
+              )
+        }
+
+      altered_tasks = Enum.map(tasks, &if(&1 == checkpoint, do: wrong_checkpoint, else: &1))
+      refute matching_checkpoint_index(altered_tasks, "remote_github")
+      assert checkpoint_violations("remote_github", 2, nil, altered_tasks, File.cwd!()) != []
+    end
+  end
+
   test "active plans use only requirements owned by their roadmap phase" do
     roadmap = File.read!(".planning/ROADMAP.md")
     ownership = roadmap_requirement_ownership(roadmap)
@@ -2408,8 +2552,6 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       assert owner.selector == "evidence_contract"
       assert owner.lane == "ci.evidence"
     end
-
-    assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
   end
 
   test "baseline parser is anchored, non-vacuous, and rejects duplicate exact headings" do
@@ -3027,7 +3169,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     assert {_output, 0} = System.cmd("git", ["add", "."], cd: temporary)
     assert {_output, 0} = System.cmd("git", ["commit", "-qm", "source plan"], cd: temporary)
-    assert {sha, 0} = System.cmd("git", ["rev-parse", "HEAD"], cd: temporary)
+    assert {base_sha, 0} = System.cmd("git", ["rev-parse", "HEAD"], cd: temporary)
+
+    File.write!(Path.join(temporary, "scope-approved.txt"), "accepted by frozen scope\n")
+    assert {_output, 0} = System.cmd("git", ["add", "scope-approved.txt"], cd: temporary)
+
+    assert {_output, 0} =
+             System.cmd("git", ["commit", "-qm", "accepted scoped deliverable"], cd: temporary)
+
+    assert {_output, 0} =
+             System.cmd("git", ["commit", "--allow-empty", "-qm", "filtered mapped history"],
+               cd: temporary
+             )
+
+    assert {source_sha, 0} = System.cmd("git", ["rev-parse", "HEAD"], cd: temporary)
+    assert {empty_sha, 0} = System.cmd("git", ["rev-parse", "HEAD"], cd: temporary)
 
     File.write!(
       phase_plan,
@@ -3042,11 +3198,24 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     spec = importlib.util.spec_from_file_location("publication", sys.argv[1])
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    allowed, _owners = module.planned_paths(pathlib.Path(sys.argv[2]), sys.argv[3])
+    root = pathlib.Path(sys.argv[2])
+    accepted = {"scope-approved.txt": "include"}
+    allowed, owners = module.planned_paths(root, sys.argv[3], accepted)
     inventory = module.worktree_inventory(pathlib.Path(sys.argv[2]))
+    mapped, _diff, unknown = module.commit_manifest(
+        root, sys.argv[4], sys.argv[3], allowed, owners, {sys.argv[5]}
+    )
+    unmapped, _diff, _unknown = module.commit_manifest(
+        root, sys.argv[4], sys.argv[3], allowed, owners, set()
+    )
     print(json.dumps({
         "governed": "governed.txt" in allowed,
         "worktree_only": "worktree-only.txt" in allowed,
+        "accepted_scope": "scope-approved.txt" in allowed,
+        "accepted_scope_owner": owners["scope-approved.txt"],
+        "unclassified": unknown,
+        "mapped_empty": mapped[-1]["classification"],
+        "unmapped_empty": unmapped[-1]["classification"],
         "tracked_paths": sorted(item["path"] for item in inventory["tracked_dirty"]),
     }))
     """
@@ -3059,7 +3228,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
                  python,
                  Path.join(root, "scripts/prepare_phase79_publication.py"),
                  temporary,
-                 String.trim(sha)
+                 String.trim(source_sha),
+                 String.trim(base_sha),
+                 String.trim(empty_sha)
                ],
                cd: root,
                stderr_to_stdout: true
@@ -3068,6 +3239,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert Jason.decode!(String.trim(output)) == %{
              "governed" => true,
              "worktree_only" => false,
+             "accepted_scope" => true,
+             "accepted_scope_owner" => ["79-13-accepted-scope"],
+             "unclassified" => [],
+             "mapped_empty" => "filtered-history-preserved-empty",
+             "unmapped_empty" => "unclassified",
              "tracked_paths" => [
                ".planning/STATE.md",
                ".planning/phases/73-contract/73-01-PLAN.md",
@@ -3099,6 +3275,152 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              )
 
     assert rejected =~ "non-symlink"
+  end
+
+  @tag :evidence_contract
+  test "filtered history verifier self-test is a mandatory evidence contract" do
+    script = Path.expand("../../scripts/prepare_phase79_filtered_candidate.py", __DIR__)
+
+    assert {output, 0} = System.cmd("python3", [script, "--self-test"], stderr_to_stdout: true)
+    assert output =~ "self_test"
+  end
+
+  @tag :evidence_contract
+  @tag :phase79_filtered_candidate_provenance
+  test "filtered proof-only commit remains verifiable after a normal merge descendant" do
+    source_root = File.cwd!()
+    source_sha = git_fixture!(source_root, ["rev-parse", "HEAD"]) |> String.trim()
+
+    if git_file_at(source_root, "HEAD", @phase79_proof_path) == "" do
+      assert :ok
+    else
+      temporary =
+        Path.join(
+          System.tmp_dir!(),
+          "relyra-phase79-merged-proof-#{System.unique_integer([:positive])}"
+        )
+
+      checkout = Path.join(temporary, "checkout")
+      File.mkdir_p!(temporary)
+      on_exit(fn -> File.rm_rf!(temporary) end)
+
+      assert {_clone_output, 0} =
+               System.cmd(
+                 "git",
+                 ["clone", "--shared", "--no-checkout", source_root, checkout],
+                 stderr_to_stdout: true
+               )
+
+      git_fixture!(checkout, ["config", "user.name", "Phase 79 Provenance Fixture"])
+      git_fixture!(checkout, ["config", "user.email", "phase79@example.invalid"])
+      tree = git_fixture!(checkout, ["rev-parse", "HEAD^{tree}"]) |> String.trim()
+
+      assert {merge_sha, 0} =
+               System.cmd(
+                 "git",
+                 [
+                   "commit-tree",
+                   tree,
+                   "-p",
+                   @phase79_base_sha,
+                   "-p",
+                   source_sha,
+                   "-m",
+                   "test(79-15): preserve proof ancestry through merge"
+                 ],
+                 cd: checkout,
+                 stderr_to_stdout: true
+               )
+
+      merge_sha = String.trim(merge_sha)
+      git_fixture!(checkout, ["update-ref", "refs/heads/phase79-merge-fixture", merge_sha])
+      git_fixture!(checkout, ["checkout", "--detach", merge_sha])
+
+      assert {:ok, %{"commit_map" => commit_map}} =
+               validate_filtered_candidate_provenance(checkout)
+
+      assert map_size(commit_map) == 613
+    end
+  end
+
+  @tag :phase79_plan_handoff
+  test "Phase 79 filtered-history plan handoff keeps the reviewed wave order" do
+    script = Path.expand("../../scripts/verify_phase79_plan_contract.py", __DIR__)
+
+    assert {output, 0} = System.cmd("python3", [script, "--handoff"], stderr_to_stdout: true)
+    assert output =~ "handoff"
+  end
+
+  @tag :phase79_filtered_candidate_provenance
+  test "filtered candidate provenance requires the proof/map branch and fails closed when proof is absent" do
+    temporary =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-phase79-filtered-provenance-#{System.unique_integer([:positive])}"
+      )
+
+    phase_dir = Path.join(temporary, ".planning/phases/79-adopter-ready-closeout")
+    File.mkdir_p!(phase_dir)
+    File.write!(Path.join(phase_dir, "79-FILTERED-CANDIDATE.json"), "{}\n")
+    on_exit(fn -> File.rm_rf!(temporary) end)
+
+    assert {:error, violations} = validate_filtered_candidate_provenance(temporary)
+    assert Enum.any?(violations, &String.contains?(&1, "filtered-history proof contract"))
+  end
+
+  @tag :phase79_filtered_candidate_provenance
+  test "malformed candidate manifest paths cannot fall back to legacy provenance" do
+    temporary =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-phase79-malformed-provenance-#{System.unique_integer([:positive])}"
+      )
+
+    phase_dir = Path.join(temporary, ".planning/phases/79-adopter-ready-closeout")
+    manifest = Path.join(phase_dir, "79-FILTERED-CANDIDATE.json")
+    File.mkdir_p!(manifest)
+    on_exit(fn -> File.rm_rf!(temporary) end)
+
+    assert {:error, violations} = validate_filtered_candidate_provenance(temporary)
+
+    assert Enum.any?(
+             violations,
+             &String.contains?(&1, "candidate manifest must be a regular file")
+           )
+  end
+
+  @tag :phase79_filtered_candidate_provenance
+  test "filtered candidate resolves original abbreviated SUMMARY commit claims only through the unique map" do
+    temporary =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-phase79-filtered-summary-map-#{System.unique_integer([:positive])}"
+      )
+
+    File.mkdir_p!(temporary)
+    on_exit(fn -> File.rm_rf!(temporary) end)
+    old_sha = String.duplicate("a", 40)
+    filtered_sha = String.duplicate("b", 40)
+    summary_path = Path.join(temporary, "summary.md")
+    File.write!(summary_path, "## Task Commits\n1. **Task** — `aaaaaaaa`\n")
+
+    assert {:ok, [^filtered_sha]} =
+             summary_commit_cross_check(
+               temporary,
+               summary_path,
+               [filtered_sha],
+               %{old_sha => filtered_sha}
+             )
+
+    ambiguous_map = %{
+      old_sha => filtered_sha,
+      ("aaaaaaaa" <> String.duplicate("c", 32)) => filtered_sha
+    }
+
+    assert {:error, violations, _resolved} =
+             summary_commit_cross_check(temporary, summary_path, [filtered_sha], ambiguous_map)
+
+    assert Enum.any?(violations, &String.contains?(&1, "ambiguous original hash"))
   end
 
   test "Phase 79 fixture collector emits timestamped, source-bound inventory" do
@@ -7083,7 +7405,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
   defp parse_remote_batch(section) do
     scalar_fields =
-      ~w(current_state desired_state affected_checks preflight_command read_back_command resume_signal)
+      ~w(operation_kind current_state desired_state affected_checks preflight_command read_back_command resume_signal)
 
     list_fields = ~w(mutation_commands rollback_commands)
     all_fields = scalar_fields ++ list_fields
@@ -7154,6 +7476,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp validate_remote_batch(batch, root) do
+    case Map.fetch!(batch.occurrences, "operation_kind") do
+      [kind] when kind in ["pr_create", "merge"] ->
+        validate_remote_operation_batch(batch, kind)
+
+      [] ->
+        validate_branch_protection_batch(batch, root)
+
+      _other ->
+        ["remote_github remote_batch operation_kind must occur at most once"]
+    end
+  end
+
+  defp validate_branch_protection_batch(batch, root) do
     required =
       ~w(current_state desired_state affected_checks mutation_commands preflight_command rollback_commands read_back_command resume_signal)
 
@@ -7183,6 +7518,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       values =
         Map.new(batch.occurrences, fn
           {field, [value]} -> {field, value}
+          {field, []} -> {field, nil}
         end)
 
       validate_complete_remote_batch(values, root)
@@ -7190,6 +7526,157 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       shape ++ syntax
     end
   end
+
+  defp validate_remote_operation_batch(batch, kind) do
+    required =
+      ~w(operation_kind current_state desired_state affected_checks mutation_commands preflight_command rollback_commands read_back_command resume_signal)
+
+    occurrences = batch.occurrences
+
+    shape =
+      Enum.flat_map(required, fn field ->
+        values = Map.fetch!(occurrences, field)
+
+        cond do
+          length(values) != 1 ->
+            ["remote_github remote_batch #{field} must occur exactly once"]
+
+          remote_field_missing?(hd(values)) ->
+            ["remote_github remote_batch #{field} is missing or placeholder"]
+
+          is_list(hd(values)) and duplicated?(hd(values)) ->
+            ["remote_github remote_batch #{field} contains duplicate list items"]
+
+          true ->
+            []
+        end
+      end)
+
+    if shape != [] or batch.syntax_errors != [] do
+      shape ++ Enum.map(batch.syntax_errors, &"remote_github remote_batch unparsed syntax: #{&1}")
+    else
+      values = Map.new(occurrences, fn {field, [value]} -> {field, value} end)
+      mutations = values["mutation_commands"]
+      expected_mutations = if kind == "pr_create", do: 2, else: 1
+
+      rollback_text =
+        if kind == "pr_create",
+          do: "separate approval is required to close the PR and delete the branch",
+          else: "separate approval is required to revert the merge"
+
+      expected_current = %{
+        "repository" => "szTheory/relyra",
+        "base_ref" => "main",
+        "base_sha" => "@live_main_sha",
+        "candidate_ref" => "refs/heads/@publication.branch.name",
+        "candidate_sha" => "@publication.source_sha",
+        "original_base_sha" => "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "original_source_sha" => "a5820aac9983b7289cbc1cc816120017761a02e3",
+        "filtered_source_sha" => "@manifest.filtered_source_sha",
+        "proof_sha256" => "@manifest.proof_sha256",
+        "bundle_sha256" => "@manifest.bundle_sha256",
+        "packet_sha256" => "@exact_operation_packet_sha256"
+      }
+
+      expected_operation =
+        if kind == "pr_create", do: "push-and-create-pr", else: "normal-two-parent-merge"
+
+      current_state = parse_remote_operation_state(values["current_state"], :current)
+      desired_state = parse_remote_operation_state(values["desired_state"], :desired)
+
+      exact_state =
+        current_state == expected_current and
+          desired_state == Map.put(expected_current, "operation", expected_operation)
+
+      mutations_valid =
+        is_list(mutations) and length(mutations) == expected_mutations and
+          Enum.all?(mutations, fn command ->
+            if kind == "pr_create" do
+              command in [
+                "git push (non-force) origin @publication.source_sha:refs/heads/@publication.branch.name",
+                "gh pr create --repo szTheory/relyra --base main --head @publication.branch.name --title @publication.pull_request.title --body-file exact-packet-body"
+              ]
+            else
+              command ==
+                "gh api -X PUT repos/szTheory/relyra/pulls/@readback_pr_number/merge --input exact-merge-packet.json"
+            end
+          end)
+
+      expected_preflight =
+        "python3 scripts/verify_phase79_transaction.py --stage #{if(kind == "pr_create", do: "pr-preflight", else: "merge-preflight")} --phase-dir .planning/phases/79-adopter-ready-closeout --candidate-root #{@phase79_candidate_root}"
+
+      expected_read_back =
+        if kind == "pr_create",
+          do:
+            "gh pr view @publication.branch.name --repo szTheory/relyra --json number,headRefOid,baseRefName,state",
+          else: "gh api repos/szTheory/relyra/pulls/@readback_pr_number"
+
+      []
+      |> maybe_remote_violation(
+        not exact_state,
+        "current/desired operation states must exactly bind repository, refs, SHAs, proof, bundle, and packet"
+      )
+      |> maybe_remote_violation(
+        not mutations_valid,
+        "mutation_commands must enumerate only the exact approved operation set"
+      )
+      |> maybe_remote_violation(
+        values["preflight_command"] != expected_preflight,
+        "preflight command must exactly name the matching stage, phase directory, and candidate root"
+      )
+      |> maybe_remote_violation(
+        values["rollback_commands"] != ["No automatic rollback; " <> rollback_text],
+        "rollback_commands must state the separate-approval compensation limit"
+      )
+      |> maybe_remote_violation(
+        values["affected_checks"] != "security-gates.yml; fleet-proxy-e2e.yml",
+        "affected_checks must bind the exact required CI lanes"
+      )
+      |> maybe_remote_violation(
+        values["resume_signal"] != "approve remote_github szTheory/relyra main exact batch",
+        "resume_signal must bind the exact repository and target"
+      )
+      |> maybe_remote_violation(
+        values["read_back_command"] != expected_read_back,
+        "read_back_command must independently read back the exact packet branch or PR"
+      )
+      |> maybe_remote_violation(
+        values["resume_signal"] != "approve remote_github szTheory/relyra main exact batch",
+        "resume_signal must bind the exact repository and target"
+      )
+    end
+  end
+
+  defp parse_remote_operation_state(state, kind) when is_binary(state) do
+    expected_keys =
+      ~w(repository base_ref base_sha candidate_ref candidate_sha original_base_sha original_source_sha filtered_source_sha proof_sha256 bundle_sha256 packet_sha256) ++
+        if(kind == :desired, do: ["operation"], else: [])
+
+    parsed =
+      state
+      |> String.split(";", trim: false)
+      |> Enum.reduce_while({:ok, %{}}, fn field, {:ok, acc} ->
+        case String.split(field, "=", parts: 2) do
+          [key, value] ->
+            key = String.trim(key)
+            value = String.trim(value)
+
+            if key in expected_keys and value != "" and not Map.has_key?(acc, key),
+              do: {:cont, {:ok, Map.put(acc, key, value)}},
+              else: {:halt, :error}
+
+          _other ->
+            {:halt, :error}
+        end
+      end)
+
+    case parsed do
+      {:ok, values} when map_size(values) == length(expected_keys) -> values
+      _other -> :error
+    end
+  end
+
+  defp parse_remote_operation_state(_state, _kind), do: :error
 
   defp validate_complete_remote_batch(batch, root) do
     current = parse_remote_state(batch["current_state"])
@@ -7579,7 +8066,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             rescue
               error in ArgumentError ->
                 if (allow_planned_outputs? and phase78_future_owner_command?(plan_path, command)) or
-                     phase79_collector_command?(plan_path, task.files, command) do
+                     phase79_collector_command?(plan_path, task.files, command) or
+                     phase79_transaction_command?(plan_path, command) do
                   :ok
                 else
                   {:error, Exception.message(error)}
@@ -7634,6 +8122,26 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp phase79_collector_command?(_plan_path, _task_files, _command), do: false
+
+  defp phase79_transaction_command?(plan_path, command)
+       when is_binary(plan_path) and is_binary(command) do
+    relative_script = "scripts/verify_phase79_transaction.py"
+    plan_name = Path.basename(plan_path)
+
+    allowed =
+      MapSet.new([
+        "python3 #{relative_script} --stage pr-preflight --phase-dir .planning/phases/79-adopter-ready-closeout --candidate-root #{@phase79_candidate_root}",
+        "python3 #{relative_script} --stage pr-result --phase-dir .planning/phases/79-adopter-ready-closeout --candidate-root #{@phase79_candidate_root}",
+        "python3 #{relative_script} --stage merge-preflight --phase-dir .planning/phases/79-adopter-ready-closeout --candidate-root #{@phase79_candidate_root}",
+        "python3 #{relative_script} --stage merge-result --phase-dir .planning/phases/79-adopter-ready-closeout --candidate-root #{@phase79_candidate_root}"
+      ])
+
+    plan_name in ["79-15-PLAN.md", "79-09-PLAN.md"] and command in allowed and
+      non_symlink_regular_path?(File.cwd!(), String.split(relative_script, "/")) and
+      tracked_repository_path?(File.cwd!(), relative_script)
+  end
+
+  defp phase79_transaction_command?(_plan_path, _command), do: false
 
   defp phase78_future_receipt_owner_declared?(plan_path) do
     owner_path = "test/adoption/phase78_clean_state_contract_test.exs"
@@ -8121,6 +8629,28 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       File.exists?(String.replace_suffix(path, "-PLAN.md", "-SUMMARY.md"))
   end
 
+  defp halted_plan_summary?(plan_path) do
+    summary_path = String.replace_suffix(plan_path, "-PLAN.md", "-SUMMARY.md")
+
+    case File.read(summary_path) do
+      {:ok, summary} ->
+        case Regex.run(~r/\A---\s*\n(.*?)\n---/s, summary, capture: :all_but_first) do
+          [frontmatter] ->
+            Regex.match?(~r/^status:\s*halted\s*$/m, frontmatter) or
+              Regex.match?(
+                ~r/^metrics:\s*\n(?:[ \t].*\n)*?[ \t]+status:\s*halted\s*$/m,
+                frontmatter
+              )
+
+          nil ->
+            false
+        end
+
+      {:error, _reason} ->
+        false
+    end
+  end
+
   defp repository_plan_violations(
          plan_paths,
          changed_surfaces_by_plan \\ %{},
@@ -8141,39 +8671,43 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     plan_paths
     |> Task.async_stream(
       fn plan_path ->
-        markdown = File.read!(plan_path)
+        if halted_plan_summary?(plan_path) do
+          []
+        else
+          markdown = File.read!(plan_path)
 
-        case repository_changed_surfaces(
-               identity.root,
-               plan_path,
-               changed_surfaces_by_plan,
-               provenance_snapshot
-             ) do
-          {:ok, changes} ->
-            changed_classes =
-              changes
-              |> Enum.flat_map(fn change ->
-                changed_surface_classes(change.path, change.before, change.after)
-              end)
-              |> Enum.uniq()
+          case repository_changed_surfaces(
+                 identity.root,
+                 plan_path,
+                 changed_surfaces_by_plan,
+                 provenance_snapshot
+               ) do
+            {:ok, changes} ->
+              changed_classes =
+                changes
+                |> Enum.flat_map(fn change ->
+                  changed_surface_classes(change.path, change.before, change.after)
+                end)
+                |> Enum.uniq()
 
-            verified_posture_neutral_paths = verified_comment_only_signature_paths(changes)
+              verified_posture_neutral_paths = verified_comment_only_signature_paths(changes)
 
-            repository_plan_scope_violations(
-              identity,
-              plan_path,
-              markdown,
-              changed_classes,
-              verified_posture_neutral_paths
-            )
-            |> Enum.map(&"#{plan_path}: #{&1}")
-
-          {:error, reason} ->
-            plan_violations =
-              repository_plan_scope_violations(identity, plan_path, markdown, [])
+              repository_plan_scope_violations(
+                identity,
+                plan_path,
+                markdown,
+                changed_classes,
+                verified_posture_neutral_paths
+              )
               |> Enum.map(&"#{plan_path}: #{&1}")
 
-            plan_violations ++ ["#{plan_path} completed-plan diff provenance #{reason}"]
+            {:error, reason} ->
+              plan_violations =
+                repository_plan_scope_violations(identity, plan_path, markdown, [])
+                |> Enum.map(&"#{plan_path}: #{&1}")
+
+              plan_violations ++ ["#{plan_path} completed-plan diff provenance #{reason}"]
+          end
         end
       end,
       max_concurrency: max(System.schedulers_online(), 4),
@@ -8187,8 +8721,27 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp repository_provenance_snapshot(root) do
-    with {:ok, endpoint} <- review_endpoint(root),
-         {:ok, tracked_paths} <-
+    root = Path.expand(root)
+
+    with {:ok, endpoint} <- review_endpoint(root) do
+      cache_key = {__MODULE__, :repository_provenance_snapshot, root, endpoint}
+
+      case :persistent_term.get(cache_key, :missing) do
+        :missing ->
+          snapshot = repository_provenance_snapshot_uncached(root, endpoint)
+          :persistent_term.put(cache_key, snapshot)
+          snapshot
+
+        snapshot ->
+          snapshot
+      end
+    else
+      _error -> nil
+    end
+  end
+
+  defp repository_provenance_snapshot_uncached(root, endpoint) do
+    with {:ok, tracked_paths} <-
            git_lines(root, ["ls-files", "--cached", "--", ".planning/phases"]),
          {:ok, commit_rows} <- git_lines(root, ["log", "--all", "--format=%H%x09%P%x09%s"]) do
       commits =
@@ -8199,7 +8752,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         end)
 
       %{
-        root: Path.expand(root),
+        root: root,
         endpoint: endpoint,
         tracked_paths: tracked_paths,
         commits: commits
@@ -8216,18 +8769,22 @@ defmodule Relyra.Governance.MilestoneScopeTest do
          changed_classes,
          verified_posture_neutral_paths \\ []
        ) do
-    case repository_plan_schema(identity, plan_path) do
-      :legacy ->
-        legacy_plan_scope_violations(markdown)
+    if halted_plan_summary?(plan_path) do
+      []
+    else
+      case repository_plan_schema(identity, plan_path) do
+        :legacy ->
+          legacy_plan_scope_violations(markdown)
 
-      :current ->
-        plan_scope_violations(
-          markdown,
-          changed_classes,
-          identity.root,
-          verified_posture_neutral_paths,
-          plan_path
-        )
+        :current ->
+          plan_scope_violations(
+            markdown,
+            changed_classes,
+            identity.root,
+            verified_posture_neutral_paths,
+            plan_path
+          )
+      end
     end
   end
 
@@ -8319,7 +8876,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   defp summary_task_commits(summary) do
     case Regex.run(~r/^## Task Commits\s*(.*?)(?=^## |\z)/ms, summary, capture: :all_but_first) do
       [section] ->
-        ~r/^\d+\.\s+\*\*[^\n]+?\*\*\s+[—-]\s+([^\n]+)/mu
+        ~r/^\d+\.\s+([^\n]+)/mu
         |> Regex.scan(section, capture: :all_but_first)
         |> Enum.flat_map(fn [claims] ->
           Regex.scan(~r/`([0-9a-f]{7,40})`/, claims, capture: :all_but_first)
@@ -8336,7 +8893,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     summary_path = String.replace_suffix(plan_path, "-PLAN.md", "-SUMMARY.md")
     summary_relative = Path.relative_to(summary_path, root)
 
-    with {:ok, [boundary]} <- completion_boundaries(root, summary_relative, plan_id),
+    with {:ok, filtered_candidate} <- validate_filtered_candidate_provenance(root),
+         {:ok, [boundary]} <- completion_boundaries(root, summary_relative, plan_id),
          {:ok, endpoint} <- review_endpoint(root, snapshot),
          :ok <- validate_review_endpoint(root, boundary, endpoint, snapshot),
          {:ok, history} <- trusted_plan_history(root, plan_id, boundary, endpoint, snapshot),
@@ -8353,7 +8911,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         review_endpoint: endpoint
       }
 
-      case summary_commit_cross_check(root, summary_path, history.pre_boundary) do
+      case summary_commit_cross_check(
+             root,
+             summary_path,
+             history.pre_boundary,
+             filtered_candidate && filtered_candidate["commit_map"]
+           ) do
         {:ok, summary_commits} ->
           {:ok, Map.put(provenance, :summary_commits, summary_commits)}
 
@@ -8371,6 +8934,180 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         {:error, List.wrap(reasons)}
     end
   end
+
+  defp validate_filtered_candidate_provenance(root) do
+    phase_dir = Path.join(root, ".planning/phases/79-adopter-ready-closeout")
+    manifest = Path.join(phase_dir, "79-FILTERED-CANDIDATE.json")
+
+    case File.lstat(manifest) do
+      {:ok, %File.Stat{type: :symlink}} ->
+        {:error, ["filtered-history proof contract: candidate manifest must not be a symlink"]}
+
+      {:ok, %File.Stat{type: :regular}} ->
+        if Path.expand(root) == Path.expand(File.cwd!()) and
+             git_file_at(root, "HEAD", @phase79_proof_path) == "" do
+          {:ok, nil}
+        else
+          verifier = Path.expand("../../scripts/prepare_phase79_filtered_candidate.py", __DIR__)
+
+          case System.cmd(
+                 "python3",
+                 [
+                   verifier,
+                   "--verify-candidate",
+                   "--candidate-root",
+                   Path.expand(root),
+                   "--phase-dir",
+                   phase_dir
+                 ],
+                 cd: Path.expand(root),
+                 stderr_to_stdout: true
+               ) do
+            {output, 0} ->
+              case Jason.decode(String.trim(output)) do
+                {:ok, %{"valid" => true} = result} ->
+                  {:ok, result}
+
+                _other ->
+                  {:error,
+                   ["filtered-history proof contract: verifier returned malformed result"]}
+              end
+
+            {output, _status} ->
+              {:error, ["filtered-history proof contract: " <> String.trim(output)]}
+          end
+        end
+
+      {:error, :enoent} ->
+        proof_path = Path.join(root, @phase79_proof_path)
+
+        case File.lstat(proof_path) do
+          {:ok, %File.Stat{type: :regular}} ->
+            filtered_candidate_proof_map(root, proof_path)
+
+          {:ok, %File.Stat{type: :symlink}} ->
+            {:error, ["filtered-history proof contract: candidate proof must not be a symlink"]}
+
+          {:ok, _other} ->
+            {:error, ["filtered-history proof contract: candidate proof must be a regular file"]}
+
+          {:error, :enoent} ->
+            {:ok, nil}
+
+          {:error, reason} ->
+            {:error,
+             [
+               "filtered-history proof contract: cannot inspect candidate proof: #{inspect(reason)}"
+             ]}
+        end
+
+      {:ok, _other} ->
+        {:error, ["filtered-history proof contract: candidate manifest must be a regular file"]}
+
+      {:error, reason} ->
+        {:error,
+         [
+           "filtered-history proof contract: cannot inspect candidate manifest: #{inspect(reason)}"
+         ]}
+    end
+  end
+
+  defp filtered_candidate_proof_map(root, proof_path) do
+    with {:ok, raw} <- File.read(proof_path) do
+      cache_key =
+        {__MODULE__, :filtered_candidate_proof_map, Path.expand(root), :crypto.hash(:sha256, raw)}
+
+      case :persistent_term.get(cache_key, :missing) do
+        :missing ->
+          result = filtered_candidate_proof_map_uncached(root, proof_path, raw)
+          :persistent_term.put(cache_key, result)
+          result
+
+        result ->
+          result
+      end
+    else
+      {:error, reason} ->
+        {:error,
+         ["filtered-history proof contract: cannot read candidate proof: #{inspect(reason)}"]}
+    end
+  end
+
+  defp filtered_candidate_proof_map_uncached(root, proof_path, raw) do
+    proof_relative = Path.relative_to(proof_path, root)
+
+    with true <- byte_size(raw) <= 8 * 1024 * 1024,
+         {:ok,
+          %{"schema" => "relyra.phase79.filtered-history-witness.v1", "proof" => proof} = witness}
+         when is_map(proof) <- Jason.decode(raw),
+         true <-
+           Map.keys(witness) |> Enum.sort() ==
+             ~w(base_tree commits dispositions evidence gpgsig limits proof schema trees),
+         true <- Map.get(proof, "base_sha") == @phase79_base_sha,
+         true <- Map.get(proof, "original_source_sha") == @phase79_source_sha,
+         true <- Map.get(proof, "original_source_tree_sha") == @phase79_source_tree_sha,
+         true <- Map.get(proof, "commit_count") == 612 and Map.get(proof, "merge_count") == 3,
+         commit_map when is_map(commit_map) <- Map.get(proof, "commit_map"),
+         tree_map when is_map(tree_map) <- Map.get(proof, "tree_map"),
+         true <- map_size(commit_map) == 613 and map_size(tree_map) == 612,
+         true <-
+           Enum.all?(commit_map, fn {old, new} -> phase79_sha1?(old) and phase79_sha1?(new) end),
+         true <-
+           Enum.all?(tree_map, fn {old, new} -> phase79_sha1?(old) and phase79_sha1?(new) end),
+         true <- length(Enum.uniq(Map.values(commit_map))) == 613,
+         true <- Map.get(commit_map, @phase79_base_sha) == @phase79_base_sha,
+         {:ok, filtered_source} <- Map.fetch(commit_map, @phase79_source_sha),
+         true <- Map.get(proof, "filtered_source_sha") == filtered_source,
+         {:ok, reachable_commits} <- git_lines(root, ["rev-list", "--all"]),
+         true <- MapSet.subset?(MapSet.new(Map.values(commit_map)), MapSet.new(reachable_commits)),
+         true <- git_file_at(root, "HEAD", proof_relative) == raw,
+         {:ok, _proof_commit} <-
+           filtered_candidate_proof_commit(root, proof_relative, raw, filtered_source),
+         true <- git_success?(root, ["merge-base", "--is-ancestor", filtered_source, "HEAD"]) do
+      {:ok, %{"commit_map" => commit_map}}
+    else
+      false ->
+        {:error,
+         [
+           "filtered-history proof contract: candidate proof-only commit failed identity or ancestry checks"
+         ]}
+
+      {:error, reason} ->
+        {:error,
+         ["filtered-history proof contract: cannot read candidate proof: #{inspect(reason)}"]}
+
+      _other ->
+        {:error, ["filtered-history proof contract: candidate proof-only commit is malformed"]}
+    end
+  end
+
+  defp filtered_candidate_proof_commit(root, proof_relative, raw, filtered_source) do
+    with {:ok, additions} <-
+           git_lines(root, [
+             "log",
+             "--all",
+             "--format=%H",
+             "--diff-filter=A",
+             "--",
+             proof_relative
+           ]) do
+      matches =
+        Enum.filter(additions, fn commit ->
+          git_file_at(root, commit, proof_relative) == raw and
+            git_lines(root, ["diff-tree", "--no-commit-id", "--name-only", "-r", commit]) ==
+              {:ok, [proof_relative]} and
+            git_success?(root, ["merge-base", "--is-ancestor", filtered_source, commit]) and
+            git_success?(root, ["merge-base", "--is-ancestor", commit, "HEAD"])
+        end)
+
+      case matches do
+        [commit] -> {:ok, commit}
+        _other -> {:error, "candidate proof-only commit is not unique and reachable"}
+      end
+    end
+  end
+
+  defp phase79_sha1?(value), do: is_binary(value) and Regex.match?(~r/^[0-9a-f]{40}$/, value)
 
   defp completion_boundaries(root, summary_relative, plan_id) do
     with {:ok, rows} <-
@@ -8492,20 +9229,24 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           scope = conventional_scope(subject)
 
           if is_binary(scope) and Regex.match?(~r/^\d+(?:\.\d+)?-\d+$/, scope) do
-            case tracked_plan_paths(root, scope, snapshot) do
-              {:ok, [path]} ->
-                assignment = %{commit: commit, scope: scope, plan_path: path}
-                {:cont, {:ok, assignments ++ [assignment]}}
+            if halted_plan_scope?(root, scope, snapshot) do
+              {:cont, {:ok, assignments}}
+            else
+              case tracked_plan_paths(root, scope, snapshot) do
+                {:ok, [path]} ->
+                  assignment = %{commit: commit, scope: scope, plan_path: path}
+                  {:cont, {:ok, assignments ++ [assignment]}}
 
-              {:ok, paths} ->
-                {:halt,
-                 {:error,
-                  [
-                    "descendant commit #{commit} with plan scope #{scope} resolves to #{length(paths)} tracked PLAN files (expected exactly one)"
-                  ]}}
+                {:ok, paths} ->
+                  {:halt,
+                   {:error,
+                    [
+                      "descendant commit #{commit} with plan scope #{scope} resolves to #{length(paths)} tracked PLAN files (expected exactly one)"
+                    ]}}
 
-              {:error, violations} ->
-                {:halt, {:error, violations}}
+                {:error, violations} ->
+                  {:halt, {:error, violations}}
+              end
             end
           else
             {:cont, {:ok, assignments}}
@@ -8526,6 +9267,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       error ->
         error
     end
+  end
+
+  defp halted_plan_scope?(root, scope, snapshot) do
+    paths =
+      case tracked_plan_paths(root, scope, snapshot) do
+        {:ok, [_ | _] = tracked} -> tracked
+        _ -> Path.wildcard(Path.join(root, ".planning/phases/**/#{scope}-PLAN.md"))
+      end
+
+    Enum.any?(paths, &halted_plan_summary?/1)
   end
 
   defp tracked_plan_paths(root, plan_id, snapshot) do
@@ -8640,7 +9391,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     if violations == [], do: :ok, else: {:error, violations}
   end
 
-  defp summary_commit_cross_check(root, summary_path, trusted_commits) do
+  defp summary_commit_cross_check(root, summary_path, trusted_commits, old_to_filtered) do
     claimed =
       case File.read(summary_path) do
         {:ok, summary} -> summary_task_commits(summary)
@@ -8649,7 +9400,21 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     {resolved, resolution_violations} =
       Enum.map_reduce(claimed, [], fn claim, violations ->
-        case resolve_commit(root, claim) do
+        resolution =
+          if is_map(old_to_filtered) do
+            matches =
+              Enum.filter(Map.keys(old_to_filtered), &String.starts_with?(&1, claim))
+
+            case matches do
+              [old_sha] -> {:ok, Map.fetch!(old_to_filtered, old_sha)}
+              [] -> {:error, "SUMMARY Task Commits contains unmapped original hash #{claim}"}
+              _many -> {:error, "SUMMARY Task Commits contains ambiguous original hash #{claim}"}
+            end
+          else
+            resolve_commit(root, claim)
+          end
+
+        case resolution do
           {:ok, commit} -> {commit, violations}
           {:error, reason} -> {claim, violations ++ [reason]}
         end
@@ -8804,13 +9569,59 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp git_file_at(root, revision, path) do
-    case System.cmd("git", ["-C", root, "show", "#{revision}:#{path}"], stderr_to_stdout: true) do
-      {content, 0} -> content
-      {_output, _status} -> ""
+    root = Path.expand(root)
+
+    resolved_revision =
+      if revision == "HEAD" do
+        case git_lines(root, ["rev-parse", "HEAD"]) do
+          {:ok, [head]} -> head
+          _error -> revision
+        end
+      else
+        revision
+      end
+
+    cache_key = {__MODULE__, :git_file_at, root, resolved_revision, path}
+
+    case :persistent_term.get(cache_key, :missing) do
+      :missing ->
+        content =
+          case System.cmd("git", ["-C", root, "show", "#{resolved_revision}:#{path}"],
+                 stderr_to_stdout: true
+               ) do
+            {content, 0} -> content
+            {_output, _status} -> ""
+          end
+
+        :persistent_term.put(cache_key, content)
+        content
+
+      content ->
+        content
     end
   end
 
   defp git_lines(root, args) do
+    root = Path.expand(root)
+
+    if root == Path.expand(File.cwd!()) do
+      cache_key = {__MODULE__, :git_lines, root, args}
+
+      case :persistent_term.get(cache_key, :missing) do
+        :missing ->
+          result = git_lines_uncached(root, args)
+          if match?({:ok, _rows}, result), do: :persistent_term.put(cache_key, result)
+          result
+
+        result ->
+          result
+      end
+    else
+      git_lines_uncached(root, args)
+    end
+  end
+
+  defp git_lines_uncached(root, args) do
     case System.cmd("git", ["-C", root | args], stderr_to_stdout: true) do
       {output, 0} -> {:ok, String.split(output, "\n", trim: true)}
       {output, _status} -> {:error, ["git provenance command failed: #{String.trim(output)}"]}

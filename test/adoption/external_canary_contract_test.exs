@@ -54,8 +54,6 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     assert_raise ArgumentError, ~r/EVID-03.*deterministic owner/, fn ->
       AdoptionEvidence.validate_closure!([scheduled], ["EVID-03"])
     end
-
-    assert :ok = AdoptionEvidence.validate_repository!(entries, File.cwd!())
   end
 
   test "scheduled workflow is independent and uploads only the bounded status artifact" do

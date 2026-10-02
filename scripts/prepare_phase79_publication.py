@@ -17,8 +17,11 @@ import tempfile
 from datetime import datetime, timezone
 from typing import Any
 
-
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from prepare_phase79_filtered_candidate import validate_receipt, verify_candidate_contract
+
+
 PHASE_DIR = ROOT / ".planning/phases/79-adopter-ready-closeout"
 REPOSITORY = "szTheory/relyra"
 MAIN_BRANCH = "main"
@@ -26,6 +29,7 @@ MAIN_REF = "refs/heads/main"
 WORKFLOWS = [".github/workflows/security-gates.yml", ".github/workflows/fleet-proxy-e2e.yml"]
 EVIDENCE_NAMES = {
     "79-PUBLICATION-PACKET.json", "79-PUBLICATION-COMMITS.txt", "79-PUBLICATION-REVIEW.md",
+    "79-SCOPE-REVIEW-PACKET.json",
     "79-PR-TRANSACTION.json", "79-MERGE-PACKET.json", "79-MERGE-RECEIPT.json",
     "79-CI-DISPATCH-PACKET.json", "79-MAIN-CI-RECEIPT.json", "79-PROTECTION-POST-CAPTURE.json",
     "79-POST-INVENTORY.json", "79-POST-INVENTORY.md", "79-PROTECTION-TRANSACTION.json",
@@ -101,6 +105,28 @@ def read_json(path: pathlib.Path, label: str) -> dict[str, Any]:
     return value
 
 
+def filtered_contract(root: pathlib.Path, phase_dir: pathlib.Path) -> dict[str, Any]:
+    """Require the Plan 79-14 raw witness and mapped history before publication."""
+    proof_path = phase_dir / "79-FILTERED-HISTORY-PROOF.json"
+    try:
+        verified = verify_candidate_contract(root, phase_dir)
+    except (ValueError, OSError, KeyError, TypeError) as exc:
+        raise PublicationError(f"filtered-history proof contract is invalid: {exc}") from exc
+    witness = read_json(proof_path, "filtered-history proof")
+    proof = witness["proof"]
+    dispositions, _evidence = validate_receipt(phase_dir)
+    return {
+        "proof": proof,
+        "witness": witness,
+        "scope_dispositions": dispositions,
+        "proof_sha256": verified["proof_sha256"],
+        "filtered_source_sha": verified["filtered_source_sha"],
+        "filtered_tree_sha": verified["filtered_tree_sha"],
+        "bundle_sha256": verified["bundle_sha256"],
+        "candidate_manifest_sha256": verified["candidate_manifest_sha256"],
+    }
+
+
 def write_bytes(path: pathlib.Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
@@ -144,7 +170,11 @@ def merge_allowed() -> bool:
     return output.strip() == "true"
 
 
-def planned_paths(root: pathlib.Path, source_sha: str) -> tuple[set[str], dict[str, list[str]]]:
+def planned_paths(
+    root: pathlib.Path,
+    source_sha: str,
+    scope_dispositions: dict[str, str] | None = None,
+) -> tuple[set[str], dict[str, list[str]]]:
     allowed: set[str] = set(GLOBAL_EVIDENCE_PATHS)
     owner: dict[str, list[str]] = {}
     tree_paths = nul_paths(
@@ -169,6 +199,10 @@ def planned_paths(root: pathlib.Path, source_sha: str) -> tuple[set[str], dict[s
         if subprocess.run(["git", "cat-file", "-e", f"{source_sha}:{path}"], cwd=root, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
             allowed.add(path)
             owner.setdefault(path, []).append("project-governance")
+    for path, disposition in (scope_dispositions or {}).items():
+        if disposition == "include":
+            allowed.add(path)
+            owner.setdefault(path, []).append("79-13-accepted-scope")
     return allowed, owner
 
 
@@ -227,7 +261,14 @@ def parse_name_status(raw: str) -> list[dict[str, str]]:
     return output
 
 
-def commit_manifest(root: pathlib.Path, base_sha: str, source_sha: str, allowed: set[str], owner: dict[str, list[str]]) -> tuple[list[dict[str, Any]], list[dict[str, str]], list[dict[str, str]]]:
+def commit_manifest(
+    root: pathlib.Path,
+    base_sha: str,
+    source_sha: str,
+    allowed: set[str],
+    owner: dict[str, list[str]],
+    proof_mapped_commits: set[str] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]], list[dict[str, str]]]:
     commits = [item for item in git(root, "rev-list", "--reverse", f"{base_sha}..{source_sha}").splitlines() if item]
     if not commits:
         raise PublicationError("source candidate contains no commits beyond remote main")
@@ -247,6 +288,8 @@ def commit_manifest(root: pathlib.Path, base_sha: str, source_sha: str, allowed:
         all_phase_paths = [item["path"] for item in changed if re.match(r"\.planning/phases/7[3-9]-", item["path"])]
         if len(parents) > 1 and not changed:
             classification = "merge-topology"
+        elif not changed and sha in (proof_mapped_commits or set()):
+            classification = "filtered-history-preserved-empty"
         elif plan_refs:
             classification = "phase-plan-deliverable"
         elif all_phase_paths:
@@ -360,8 +403,9 @@ def simulate_merge(root: pathlib.Path, remote: str, base_sha: str, source_sha: s
 
 
 def build(root: pathlib.Path, phase_dir: pathlib.Path, fixture_dir: pathlib.Path | None) -> dict[str, Any]:
-    source_sha = git(root, "rev-parse", "HEAD")
-    source_tree = git(root, "rev-parse", f"{source_sha}^{{tree}}")
+    filtered = filtered_contract(root, phase_dir)
+    source_sha = filtered["filtered_source_sha"]
+    source_tree = filtered["filtered_tree_sha"]
     if fixture_dir:
         fixture = read_json(fixture_dir / "publication.json", "publication fixture")
         remote = fixture.get("remote_url")
@@ -373,11 +417,20 @@ def build(root: pathlib.Path, phase_dir: pathlib.Path, fixture_dir: pathlib.Path
         remote = remote_url(root)
         base_sha = live_main_sha(root, remote)
         allow_merge = merge_allowed()
+    if base_sha != filtered["proof"]["base_sha"]:
+        raise PublicationError("live/fixture main base differs from the filtered proof's frozen original base")
     if not allow_merge:
         raise PublicationError("repository settings do not permit the required normal two-parent merge")
 
-    allowed, owner = planned_paths(root, source_sha)
-    commits, diff_paths, unknown_paths = commit_manifest(root, base_sha, source_sha, allowed, owner)
+    allowed, owner = planned_paths(root, source_sha, filtered["scope_dispositions"])
+    commits, diff_paths, unknown_paths = commit_manifest(
+        root,
+        base_sha,
+        source_sha,
+        allowed,
+        owner,
+        set(filtered["proof"]["commit_map"].values()),
+    )
     workflow_digests = {}
     for path in WORKFLOWS:
         workflow = root / path
@@ -423,6 +476,12 @@ def build(root: pathlib.Path, phase_dir: pathlib.Path, fixture_dir: pathlib.Path
         "target": {"repository": REPOSITORY, "ref": MAIN_REF},
         "base_sha": base_sha, "source_sha": source_sha,
         "candidate_head_sha": source_sha, "source_tree_sha": source_tree,
+        "original_source_sha": filtered["proof"]["original_source_sha"],
+        "filtered_source_sha": source_sha,
+        "filtered_tree_sha": source_tree,
+        "filtered_proof_sha256": filtered["proof_sha256"],
+        "bundle_sha256": filtered["bundle_sha256"],
+        "candidate_manifest_sha256": filtered["candidate_manifest_sha256"],
         "commit_count": len(commits), "commit_manifest_sha256": digest(commit_bytes),
         "diff_path_count": len(diff_paths), "diff_manifest_sha256": digest(diff_bytes),
         "commit_manifest_path": "79-PUBLICATION-COMMITS.txt",
@@ -441,7 +500,7 @@ def build(root: pathlib.Path, phase_dir: pathlib.Path, fixture_dir: pathlib.Path
         "pull_request": {
             "title": "v1.11 First-Adopter Twin closeout",
             "head": branch, "base": MAIN_BRANCH,
-            "body": f"Source-bound Phase 73-79 candidate {source_sha}; proposed normal merge only.",
+            "body": f"Filtered Phase 73-79 candidate {source_sha} from original {filtered['proof']['original_source_sha']}; proposed normal merge only.",
             "create_endpoint": f"POST repos/{REPOSITORY}/pulls",
         },
         "merge": {"method": "merge", "expected_parent_order": [base_sha, source_sha], "rollback_limit": "a separate reviewed revert PR; no force push"},
@@ -497,17 +556,26 @@ def verify(root: pathlib.Path, phase_dir: pathlib.Path, packet_path: pathlib.Pat
         raise PublicationError("publication packet schema is unsupported")
     if packet.get("target") != {"repository": REPOSITORY, "ref": MAIN_REF}:
         raise PublicationError("publication packet target is not the exact repository main ref")
+    filtered = filtered_contract(root, phase_dir)
     source = packet.get("source_sha")
     base = packet.get("base_sha")
     if not isinstance(source, str) or not re.fullmatch(r"[0-9a-f]{40}", source) or not isinstance(base, str) or not re.fullmatch(r"[0-9a-f]{40}", base):
         raise PublicationError("publication packet has malformed source/base identities")
-    if packet.get("candidate_head_sha") != source:
-        raise PublicationError("candidate head must be the original source commit")
+    if (
+        packet.get("candidate_head_sha") != source
+        or packet.get("filtered_source_sha") != filtered["filtered_source_sha"]
+        or packet.get("filtered_tree_sha") != filtered["filtered_tree_sha"]
+        or packet.get("original_source_sha") != filtered["proof"]["original_source_sha"]
+        or packet.get("filtered_proof_sha256") != filtered["proof_sha256"]
+        or packet.get("bundle_sha256") != filtered["bundle_sha256"]
+        or packet.get("candidate_manifest_sha256") != filtered["candidate_manifest_sha256"]
+    ):
+        raise PublicationError("candidate, original source, filtered source, or proof digest differs from the filtered contract")
     if subprocess.run(["git", "merge-base", "--is-ancestor", base, source], cwd=root, check=False).returncode:
         raise PublicationError("publication base is not an ancestor of the original source head")
     current_tree = git(root, "rev-parse", f"{source}^{{tree}}")
-    if current_tree != packet.get("source_tree_sha"):
-        raise PublicationError("candidate head/tree differs from the original source commit")
+    if current_tree != packet.get("source_tree_sha") or current_tree != filtered["filtered_tree_sha"]:
+        raise PublicationError("candidate head/tree differs from the filtered source proof")
     worktree_exclusions = packet.get("worktree_exclusions")
     if not isinstance(worktree_exclusions, dict) or worktree_exclusions.get("included") is not False:
         raise PublicationError("uncommitted or untracked working-tree content may not enter the candidate")
@@ -525,11 +593,20 @@ def verify(root: pathlib.Path, phase_dir: pathlib.Path, packet_path: pathlib.Pat
         allow_merge = merge_allowed()
     if observed_base != base:
         raise PublicationError("remote main changed after the publication packet was prepared")
+    if base != filtered["proof"]["base_sha"]:
+        raise PublicationError("publication base differs from the filtered proof's frozen original base")
     if allow_merge is not True:
         raise PublicationError("repository no longer permits the required normal two-parent merge")
 
-    allowed, owner = planned_paths(root, source)
-    commits, diff_paths, unknown_paths = commit_manifest(root, base, source, allowed, owner)
+    allowed, owner = planned_paths(root, source, filtered["scope_dispositions"])
+    commits, diff_paths, unknown_paths = commit_manifest(
+        root,
+        base,
+        source,
+        allowed,
+        owner,
+        set(filtered["proof"]["commit_map"].values()),
+    )
     expected_commit_bytes = json_bytes(commits)
     expected_diff_bytes = json_bytes(diff_paths)
     expected_commit_text = "".join(
@@ -587,7 +664,7 @@ def verify(root: pathlib.Path, phase_dir: pathlib.Path, packet_path: pathlib.Pat
     if packet.get("pull_request") != {
         "title": "v1.11 First-Adopter Twin closeout", "head": branch_name,
         "base": MAIN_BRANCH,
-        "body": f"Source-bound Phase 73-79 candidate {source}; proposed normal merge only.",
+        "body": f"Filtered Phase 73-79 candidate {source} from original {filtered['proof']['original_source_sha']}; proposed normal merge only.",
         "create_endpoint": f"POST repos/{REPOSITORY}/pulls",
     }:
         raise PublicationError("PR proposal differs from the exact candidate and target")

@@ -438,7 +438,15 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 5. A residual-risk report shows that every remaining idea is low-value, demand-gated,
    approval-blocked, or more costly to maintain than the risk it would retire.
 
-**Plans:** 6/12 plans executed; 6 gap-closure plans pending
+**Plans:** 10/15 plans executed have terminal summaries (79-08 and 79-13 halted); 5 plans remain pending
+
+- [ ] 79-09-PLAN.md
+- [ ] 79-10-PLAN.md
+- [ ] 79-11-PLAN.md
+- [ ] 79-12-PLAN.md
+- [x] 79-14-PLAN.md
+- [ ] 79-15-PLAN.md
+
 **Wave 1**
 
 - [x] 79-01-PLAN.md
@@ -465,25 +473,31 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 **Wave 7** *(gap closure; exact local publication proposal)*
 
-- [ ] 79-07-PLAN.md — Prove original milestone commit ancestry and prepare an inert, exact publication and transaction contract.
+- [x] 79-07-PLAN.md — Prove original milestone commit ancestry and prepare an inert, exact publication and transaction contract.
 
-**Wave 8** *(gap closure; separate approval for PR proposal)*
+**Wave 8** *(gap closure; recover exact scope and implement the filtered-history proof contract)*
 
-- [ ] 79-08-PLAN.md — Publish only the approved exact candidate branch and PR; read back both targets.
+- [x] 79-08-PLAN.md — Halted at PR preflight on 55 unclassified paths; preserved as archival evidence.
+- [x] 79-13-PLAN.md — Accept the exact 30/25 path map; halt because excluded paths require a provenance-equivalent filtered-history contract.
+- [x] 79-14-PLAN.md — Verify and wire the exact filtered-history witness, disposition receipt, CI gates, and transaction contract.
 
-**Wave 9** *(gap closure; separate approval for protected-main merge)*
+**Wave 9** *(gap closure; build filtered candidate and request separate approval for PR creation)*
 
-- [ ] 79-09-PLAN.md — Verify PR CI, approve a history-preserving normal merge, and read back main tree and provenance.
+- [ ] 79-15-PLAN.md — Build the isolated proof-bound candidate and create its PR only after the exact branch/PR packet is separately approved.
 
-**Wave 10** *(gap closure; final-main CI, independent of protection-source agreement)*
+**Wave 10** *(gap closure; separate approval for protected-main merge)*
+
+- [ ] 79-09-PLAN.md — Verify the Plan 79-15 PR read-back, approve a normal protected-main merge separately, and read back main tree and provenance.
+
+**Wave 11** *(gap closure; final-main CI, independent of protection-source agreement)*
 
 - [ ] 79-10-PLAN.md — Prove nine mandatory lanes and fleet context on final main; conditionally approve exact CI-only dispatch.
 
-**Wave 11** *(gap closure; external policy-source prerequisite)*
+**Wave 12** *(gap closure; external policy-source prerequisite)*
 
 - [ ] 79-11-PLAN.md — After policy-owner/provider source agreement, preserve approved protection snapshots and verify separate post-state read-back.
 
-**Wave 12** *(gap closure; final evidence gate)*
+**Wave 13** *(gap closure; final evidence gate)*
 
 - [ ] 79-12-PLAN.md — Close only after same-SHA CI, complete protection, ownership, and residual-risk evidence pass.
 
@@ -499,7 +513,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
 | 78. CI Efficiency and Reliability | v1.11 | 9/9 | Complete    | 2026-09-29 |
-| 79. Adopter-Ready Closeout | v1.11 | 6/12 | In Progress|  |
+| 79. Adopter-Ready Closeout | v1.11 | 10/15 | In Progress|  |
 
 ---
 

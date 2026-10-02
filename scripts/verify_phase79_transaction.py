@@ -24,6 +24,7 @@ from urllib.parse import quote
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+CANDIDATE_ROOT = ROOT
 PHASE_NAME = "79-adopter-ready-closeout"
 REPOSITORY = "szTheory/relyra"
 MAIN_REF = "refs/heads/main"
@@ -94,7 +95,8 @@ def write_json(path: pathlib.Path, value: dict[str, Any]) -> bytes:
     return payload
 
 
-def run(argv: list[str], *, cwd: pathlib.Path = ROOT, timeout: int = 120) -> str:
+def run(argv: list[str], *, cwd: pathlib.Path | None = None, timeout: int = 120) -> str:
+    cwd = cwd or CANDIDATE_ROOT
     try:
         result = subprocess.run(
             argv,
@@ -131,7 +133,7 @@ def gh_json(path: str, *, method: str = "GET", fields: dict[str, str] | None = N
 
 def gh_optional(path: str) -> Any | None:
     result = subprocess.run(
-        ["gh", "api", path], cwd=ROOT, stdin=subprocess.DEVNULL,
+        ["gh", "api", path], cwd=CANDIDATE_ROOT, stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=45,
         check=False, env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
     )
@@ -161,6 +163,17 @@ def gh_paginated(path: str, key: str, *, max_pages: int = 20) -> list[dict[str, 
 
 def approval_digest(value: dict[str, Any]) -> str:
     return sha256(encoded(value))
+
+
+def validate_pr_approval(operation_packet: dict[str, Any], approval: Any) -> None:
+    if (
+        not isinstance(approval, dict)
+        or approval.get("checkpoint_id") != "79-15-pr-create"
+        or approval.get("response") != "approved"
+        or approval.get("packet_sha256") != approval_digest(operation_packet)
+        or approval.get("scope") != operation_packet.get("operations")
+    ):
+        raise TransactionError("PR push/create require explicit approval bound to the exact operation packet")
 
 
 def ci_packet_digest(packet: dict[str, Any]) -> str:
@@ -249,7 +262,7 @@ def phase_path(phase_dir: pathlib.Path, name: str) -> pathlib.Path:
 
 
 def expected_lanes() -> dict[str, dict[str, Any]]:
-    path = ROOT / ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json"
+    path = CANDIDATE_ROOT / ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json"
     inventory, _ = read_json(path, "Phase 79 inventory")
     lanes = inventory.get("github", {}).get("mandatory_lanes")
     if not isinstance(lanes, dict) or len(lanes) != 9:
@@ -506,6 +519,10 @@ def validate_receipt_join(receipts: dict[str, dict[str, Any]], observed_sha: str
 
 
 def run_pr_local_gates(source_sha: str) -> list[dict[str, Any]]:
+    preparation_commands = [
+        ["mix", "cmd", "--cd", "demo/ledger_loop", "mix", "deps.get"],
+        ["mix", "cmd", "--cd", "demo/ledger_loop", "mix", "compile"],
+    ]
     commands = [
         ["mix", "qa"],
         ["mix", "test", "--warnings-as-errors"],
@@ -513,20 +530,44 @@ def run_pr_local_gates(source_sha: str) -> list[dict[str, Any]]:
         ["mix", "format", "--check-formatted"],
     ]
     evidence = []
-    env = {"ASDF_ELIXIR_VERSION": "1.19.5-otp-28", "ASDF_ERLANG_VERSION": "28.4.1", "MIX_ENV": "test"}
+    env = {
+        "ASDF_ELIXIR_VERSION": "1.19.5-otp-28",
+        "ASDF_ERLANG_VERSION": "28.4.1",
+        "MIX_ENV": "test",
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
     with tempfile.TemporaryDirectory(prefix="relyra-phase79-local-gates-") as temporary:
         checkout = pathlib.Path(temporary) / "checkout"
         result = subprocess.run(
-            ["git", "clone", "--shared", "--no-checkout", str(ROOT), str(checkout)],
-            cwd=ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            ["git", "clone", "--shared", "--no-checkout", str(CANDIDATE_ROOT), str(checkout)],
+            cwd=CANDIDATE_ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, timeout=180, check=False,
         )
         if result.returncode:
             raise TransactionError(f"could not create isolated local-gate checkout: {result.stdout[-2000:]}")
         run(["git", "checkout", "--detach", source_sha], cwd=checkout)
-        deps = ROOT / "deps"
+        deps = CANDIDATE_ROOT / "deps"
+        linked_deps = checkout / "deps"
+        linked_candidate_deps = False
         if deps.exists() and not (checkout / "deps").exists():
-            (checkout / "deps").symlink_to(deps, target_is_directory=True)
+            linked_deps.symlink_to(deps, target_is_directory=True)
+            linked_candidate_deps = True
+        for argv in preparation_commands:
+            try:
+                result = subprocess.run(
+                    argv, cwd=checkout, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT, text=True, timeout=1800, check=False,
+                    env={**os.environ, **env, "GIT_TERMINAL_PROMPT": "0"},
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise TransactionError(
+                    f"local-gate environment preparation did not complete: {' '.join(argv)} ({exc})"
+                ) from exc
+            if result.returncode:
+                raise TransactionError(
+                    f"local-gate environment preparation failed: {' '.join(argv)}\n"
+                    f"{result.stdout[-4000:].strip()}"
+                )
         for argv in commands:
             try:
                 result = subprocess.run(
@@ -540,8 +581,15 @@ def run_pr_local_gates(source_sha: str) -> list[dict[str, Any]]:
             evidence.append(record)
             if result.returncode:
                 raise TransactionError(f"local gate failed: {' '.join(argv)}\n{result.stdout[-4000:].strip()}")
-        if run(["git", "status", "--porcelain=v1", "--untracked-files=all"], cwd=checkout):
-            raise TransactionError("local gates changed the frozen source checkout")
+        if linked_candidate_deps:
+            if not linked_deps.is_symlink() or linked_deps.resolve() != deps.resolve():
+                raise TransactionError("temporary candidate dependency link changed unexpectedly")
+            linked_deps.unlink()
+        changed_paths = run(["git", "status", "--porcelain=v1", "--untracked-files=all"], cwd=checkout)
+        if changed_paths:
+            raise TransactionError(
+                "local gates changed the frozen source checkout: " + changed_paths.strip()
+            )
     return evidence
 
 
@@ -600,9 +648,23 @@ def make_pr_operation_packet(publication: dict[str, Any]) -> dict[str, Any]:
     branch = publication.get("branch", {}).get("name")
     if not isinstance(pr, dict) or not isinstance(branch, str):
         raise TransactionError("publication packet is missing its exact branch/PR proposal")
+    validate_candidate_branch(publication)
+    proof_sha = publication.get("filtered_proof_sha256")
+    bundle_sha = publication.get("bundle_sha256")
+    manifest_sha = publication.get("candidate_manifest_sha256")
+    if any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in (proof_sha, bundle_sha, manifest_sha)):
+        raise TransactionError("publication packet does not bind filtered proof, bundle, and candidate manifest digests")
+    if publication.get("filtered_source_sha") != publication.get("source_sha") or publication.get("filtered_tree_sha") != publication.get("source_tree_sha"):
+        raise TransactionError("publication packet filtered source/tree identities are inconsistent")
+    validate_sha(publication.get("original_source_sha"), "original source SHA")
     return {
         "repository": REPOSITORY, "base_sha": publication["base_sha"],
         "source_sha": publication["source_sha"], "tree_sha": publication["source_tree_sha"],
+        "original_source_sha": publication["original_source_sha"],
+        "filtered_source_sha": publication["filtered_source_sha"],
+        "filtered_tree_sha": publication["filtered_tree_sha"],
+        "proof_sha256": proof_sha, "bundle_sha256": bundle_sha,
+        "candidate_manifest_sha256": manifest_sha,
         "branch": branch,
         "operations": [
             {"method": "git-push", "ref": f"refs/heads/{branch}", "source_sha": publication["source_sha"], "force": False},
@@ -611,6 +673,20 @@ def make_pr_operation_packet(publication: dict[str, Any]) -> dict[str, Any]:
         "permission": {"contents": "write", "pull-requests": "write"},
         "rollback_limit": "a separate reviewed branch deletion or PR close; no force push",
     }
+
+
+def validate_candidate_branch(publication: dict[str, Any]) -> None:
+    source = publication.get("source_sha")
+    branch = publication.get("branch", {}).get("name") if isinstance(publication.get("branch"), dict) else None
+    pr = publication.get("pull_request")
+    expected_branch = f"codex/v1.11-adopter-ready-{source[:12]}" if isinstance(source, str) and re.fullmatch(r"[0-9a-f]{40}", source) else None
+    if (
+        branch != expected_branch
+        or not isinstance(pr, dict)
+        or pr.get("head") != branch
+        or publication.get("candidate_head_sha") != source
+    ):
+        raise TransactionError("publication branch and candidate SHA do not resolve to the same packet identity")
 
 
 def stage_pr_preflight(phase_dir: pathlib.Path, fixture_dir: pathlib.Path | None, *, run_gates: bool = True) -> dict[str, Any]:
@@ -663,8 +739,7 @@ def stage_pr_result(phase_dir: pathlib.Path, fixture_dir: pathlib.Path | None) -
     approval = transaction.get("approval")
     if transaction.get("status") != "ready" or not isinstance(operation_packet, dict):
         raise TransactionError("PR transaction is not in a ready preflight state")
-    if not isinstance(approval, dict) or approval.get("checkpoint_id") != "79-08-pr-create" or approval.get("response") != "approved" or approval.get("packet_sha256") != approval_digest(operation_packet) or approval.get("scope") != operation_packet.get("operations"):
-        raise TransactionError("PR push/create require explicit approval bound to the exact operation packet")
+    validate_pr_approval(operation_packet, approval)
 
     publication, _ = read_json(phase_path(phase_dir, "79-PUBLICATION-PACKET.json"), "publication packet")
     observation = pr_observation(publication, fixture_dir, "pr-result-preflight")
@@ -684,7 +759,7 @@ def stage_pr_result(phase_dir: pathlib.Path, fixture_dir: pathlib.Path | None) -
         if observation.get("branch_sha") is None:
             try:
                 push = subprocess.run(
-                    ["git", "push", "origin", f"{source}:refs/heads/{branch}"], cwd=ROOT,
+                    ["git", "push", "origin", f"{source}:refs/heads/{branch}"], cwd=CANDIDATE_ROOT,
                     stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                     text=True, timeout=180, check=False,
                     env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
@@ -1167,7 +1242,7 @@ def verify_publication(phase_dir: pathlib.Path, fixture_dir: pathlib.Path | None
     packet = phase_path(phase_dir, "79-PUBLICATION-PACKET.json")
     if not packet.is_file():
         raise TransactionError("publication packet is missing")
-    command = ["python3", str(ROOT / "scripts/prepare_phase79_publication.py"), "--verify", str(packet), "--phase-dir", str(phase_dir)]
+    command = ["python3", str(CANDIDATE_ROOT / "scripts/prepare_phase79_publication.py"), "--verify", str(packet), "--phase-dir", str(phase_dir), "--repo-root", str(CANDIDATE_ROOT)]
     if fixture_dir:
         command.extend(["--fixture-dir", str(fixture_dir)])
     result = run(command)
@@ -1325,8 +1400,8 @@ def live_merge_preflight_observation(
     with tempfile.TemporaryDirectory(prefix="relyra-phase79-pr-merge-test-") as temporary:
         checkout = pathlib.Path(temporary) / "checkout"
         result = subprocess.run(
-            ["git", "clone", "--shared", "--no-checkout", str(ROOT), str(checkout)],
-            cwd=ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            ["git", "clone", "--shared", "--no-checkout", str(CANDIDATE_ROOT), str(checkout)],
+            cwd=CANDIDATE_ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, timeout=180, check=False,
         )
         if result.returncode:
@@ -1399,7 +1474,7 @@ def stage_merge_preflight(phase_dir: pathlib.Path, fixture_dir: pathlib.Path | N
         pr_transaction.get("operation_packet") != expected_pr_packet
         or pr_transaction.get("packet_sha256") != approval_digest(expected_pr_packet)
         or not isinstance(pr_approval, dict)
-        or pr_approval.get("checkpoint_id") != "79-08-pr-create"
+        or pr_approval.get("checkpoint_id") != "79-15-pr-create"
         or pr_approval.get("response") != "approved"
         or pr_approval.get("packet_sha256") != approval_digest(expected_pr_packet)
         or pr_approval.get("scope") != expected_pr_packet["operations"]
@@ -1442,8 +1517,8 @@ def verify_merged_commit(source_sha: str, base_sha: str, expected_tree: str, mai
     with tempfile.TemporaryDirectory(prefix="relyra-phase79-merged-main-") as temporary:
         checkout = pathlib.Path(temporary) / "checkout"
         result = subprocess.run(
-            ["git", "clone", "--shared", "--no-checkout", str(ROOT), str(checkout)],
-            cwd=ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            ["git", "clone", "--shared", "--no-checkout", str(CANDIDATE_ROOT), str(checkout)],
+            cwd=CANDIDATE_ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, timeout=180, check=False,
         )
         if result.returncode:
@@ -1459,7 +1534,7 @@ def verify_merged_commit(source_sha: str, base_sha: str, expected_tree: str, mai
             ["git", "merge-base", "--is-ancestor", source_sha, "HEAD"], cwd=checkout, check=False
         ).returncode:
             raise TransactionError("original source head is not ancestral to resulting main")
-        deps = ROOT / "deps"
+        deps = CANDIDATE_ROOT / "deps"
         if deps.exists() and not (checkout / "deps").exists():
             (checkout / "deps").symlink_to(deps, target_is_directory=True)
         env = {"ASDF_ELIXIR_VERSION": "1.19.5-otp-28", "ASDF_ERLANG_VERSION": "28.4.1", "MIX_ENV": "test"}
@@ -1600,7 +1675,7 @@ def stage_merge_result(phase_dir: pathlib.Path, fixture_dir: pathlib.Path | None
 
 def verify_batch_artifacts(phase_dir: pathlib.Path) -> str:
     command = [
-        "python3", str(ROOT / "scripts/prepare_phase79_batch.py"),
+        "python3", str(CANDIDATE_ROOT / "scripts/prepare_phase79_batch.py"),
         "--capture", str(phase_path(phase_dir, "79-PROTECTION-CAPTURE.json")),
         "--inventory", str(phase_path(phase_dir, "79-INVENTORY.json")),
         "--output-dir", str(phase_dir), "--verify",
@@ -1726,7 +1801,7 @@ def stage_protection_result(phase_dir: pathlib.Path, fixture_dir: pathlib.Path |
         if proposal:
             with tempfile.TemporaryDirectory(prefix="relyra-phase79-protection-preflight-") as temporary:
                 fresh_capture_path = pathlib.Path(temporary) / "capture.json"
-                run(["python3", str(ROOT / "scripts/capture_phase79_protection.py"), "--output", str(fresh_capture_path)])
+                run(["python3", str(CANDIDATE_ROOT / "scripts/capture_phase79_protection.py"), "--output", str(fresh_capture_path)])
                 fresh_capture, _ = read_json(fresh_capture_path, "immediate protection preflight capture")
             stable_keys = ("capture_status", "capture_errors", "main_sha", "ref", "resource", "writable_payload", "sources")
             if any(fresh_capture.get(key) != capture.get(key) for key in stable_keys):
@@ -1763,8 +1838,8 @@ def stage_protection_result(phase_dir: pathlib.Path, fixture_dir: pathlib.Path |
             write_json(transaction_path, in_progress)
         post_capture_path = phase_path(phase_dir, "79-PROTECTION-POST-CAPTURE.json")
         post_inventory_path = phase_path(phase_dir, "79-POST-INVENTORY.json")
-        run(["python3", str(ROOT / "scripts/capture_phase79_protection.py"), "--output", str(post_capture_path)])
-        run(["python3", str(ROOT / "scripts/collect_phase79_inventory.py"), "--output", str(post_inventory_path)])
+        run(["python3", str(CANDIDATE_ROOT / "scripts/capture_phase79_protection.py"), "--output", str(post_capture_path)])
+        run(["python3", str(CANDIDATE_ROOT / "scripts/collect_phase79_inventory.py"), "--output", str(post_inventory_path)])
         post_capture = read_json(post_capture_path, "post protection capture")[0]
         post_inventory = read_json(post_inventory_path, "post inventory")[0]
         independent = True
@@ -1934,7 +2009,7 @@ def stage_closeout(phase_dir: pathlib.Path, fixture_dir: pathlib.Path | None) ->
         pr.get("operation_packet") != expected_pr_operation_packet
         or pr.get("packet_sha256") != approval_digest(expected_pr_operation_packet)
         or not isinstance(pr_approval, dict)
-        or pr_approval.get("checkpoint_id") != "79-08-pr-create"
+        or pr_approval.get("checkpoint_id") != "79-15-pr-create"
         or pr_approval.get("response") != "approved"
         or pr_approval.get("packet_sha256") != approval_digest(expected_pr_operation_packet)
         or pr_approval.get("scope") != expected_pr_operation_packet["operations"]
@@ -2053,7 +2128,7 @@ def verify_protection_artifacts(phase_dir: pathlib.Path) -> None:
         path = phase_path(phase_dir, name)
         if path.is_symlink() or not path.is_file():
             raise TransactionError(f"closeout artifact is missing or unsafe: {name}")
-        run(["python3", str(ROOT / "scripts" / script), "--verify", str(path)])
+        run(["python3", str(CANDIDATE_ROOT / "scripts" / script), "--verify", str(path)])
     verify_batch_artifacts(phase_dir)
 
 
@@ -2083,9 +2158,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", required=True, choices=sorted(EXPECTED_STAGES))
     parser.add_argument("--phase-dir", required=True, type=pathlib.Path)
+    parser.add_argument("--candidate-root", type=pathlib.Path, default=ROOT,
+                        help="repository checkout used for all local Git and gate operations")
     parser.add_argument("--fixture-dir", type=pathlib.Path)
     args = parser.parse_args(argv)
     try:
+        global CANDIDATE_ROOT
+        CANDIDATE_ROOT = args.candidate_root.expanduser().resolve()
         phase_dir = args.phase_dir.expanduser().resolve()
         fixture_dir = args.fixture_dir.expanduser().resolve() if args.fixture_dir else None
         result = dispatch(args.stage, phase_dir, fixture_dir)
