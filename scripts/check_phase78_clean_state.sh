@@ -8,7 +8,8 @@ usage() {
   cat <<'USAGE'
 Usage:
   scripts/check_phase78_clean_state.sh --otp 27|28 --output <private-temp-file>
-  scripts/check_phase78_clean_state.sh --assemble <otp27.json> <otp28.json> --output <receipt.json>
+    [--diagnostics-dir <owned-private-directory>]
+  scripts/check_phase78_clean_state.sh --assemble <otp27.json> <otp28.json> --checkout <git-checkout> --output <receipt.json>
   scripts/check_phase78_clean_state.sh --source-digest <git-checkout>
 USAGE
 }
@@ -54,15 +55,17 @@ PY
 }
 
 assemble_receipts() {
-  python3 - "$1" "$2" "$3" <<'PY'
+  python3 - "$1" "$2" "$3" "$4" <<'PY'
 import datetime
+import hashlib
 import json
 import os
 import pathlib
+import subprocess
 import sys
 import tempfile
 
-path27, path28, output_path = sys.argv[1:]
+path27, path28, checkout, output_path = sys.argv[1:]
 with open(path27, encoding="utf-8") as stream:
     first = json.load(stream)
 with open(path28, encoding="utf-8") as stream:
@@ -77,6 +80,56 @@ for field in ("source_commit", "source_digest", "source_file_count", "phase73"):
     if first.get(field) != second.get(field):
         raise SystemExit("toolchain receipts do not share the same frozen source and proof")
 
+checkout = pathlib.Path(checkout).resolve(strict=True)
+output = pathlib.Path(output_path)
+head = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
+if subprocess.run(["git", "-C", str(checkout), "diff", "--quiet", "HEAD", "--"]).returncode != 0 or subprocess.run(["git", "-C", str(checkout), "diff", "--cached", "--quiet", "HEAD", "--"]).returncode != 0:
+    raise SystemExit("requested receipt checkout is dirty")
+if output.is_absolute() is False:
+    raise SystemExit("receipt output must be an absolute private path")
+if output.resolve(strict=False).is_relative_to(checkout):
+    raise SystemExit("receipt output must be outside the requested checkout")
+if output.exists() or output.is_symlink():
+    raise SystemExit("refusing to replace an existing receipt path")
+
+tracked = subprocess.check_output(["git", "-C", str(checkout), "ls-files", "-z"]).split(b"\0")
+manifest = []
+for raw in tracked:
+    if not raw:
+        continue
+    path = raw.decode("utf-8")
+    basename = pathlib.PurePosixPath(path).name
+    generated_report = path.startswith(".planning/phases/") and basename.endswith("-VERIFICATION.md")
+    if path == ".planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json" or basename.endswith("-SUMMARY.md") or generated_report:
+        continue
+    file_path = checkout / path
+    if not file_path.is_file():
+        raise SystemExit("source manifest contains a missing or non-regular file")
+    manifest.append((path, hashlib.sha256(file_path.read_bytes()).hexdigest()))
+manifest.sort()
+hasher = hashlib.sha256()
+for path, file_hash in manifest:
+    hasher.update(path.encode("utf-8"))
+    hasher.update(b"\0")
+    hasher.update(file_hash.encode("ascii"))
+    hasher.update(b"\n")
+expected_digest, expected_count = hasher.hexdigest(), len(manifest)
+proof_path = checkout / ".planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json"
+proof_bytes = proof_path.read_bytes()
+proof_doc = json.loads(proof_bytes)
+expected_proof = {
+    "source_digest": proof_doc.get("source_digest"),
+    "proof_set_id": proof_doc.get("proof_set_id"),
+    "proof_sha256": hashlib.sha256(proof_bytes).hexdigest(),
+}
+for item in (first, second):
+    if item.get("source_commit") != head:
+        raise SystemExit("producer source commit does not match requested checkout HEAD")
+    if item.get("source_digest") != expected_digest or item.get("source_file_count") != expected_count:
+        raise SystemExit("producer source digest or file count does not match requested checkout")
+    if item.get("phase73") != expected_proof:
+        raise SystemExit("producer Phase 73 proof bytes do not match requested checkout")
+
 payload = {
     "schema": "phase78-clean-state-receipt",
     "version": 1,
@@ -88,7 +141,7 @@ payload = {
     "outcome": "passed" if first.get("outcome") == second.get("outcome") == "passed" else "failed",
     "runs": runs,
 }
-target = pathlib.Path(output_path)
+target = output
 if target.exists() or target.is_symlink():
     raise SystemExit("refusing to replace an existing receipt path")
 target.parent.mkdir(parents=True, exist_ok=True)
@@ -113,17 +166,157 @@ if (($# == 2)) && [[ "$1" == "--source-digest" ]]; then
   source_digest "$2"
   exit $?
 fi
-if (($# == 5)) && [[ "$1" == "--assemble" && "$4" == "--output" ]]; then
-  assemble_receipts "$2" "$3" "$5"
+if (($# == 7)) && [[ "$1" == "--assemble" && "$4" == "--checkout" && "$6" == "--output" ]]; then
+  assemble_receipts "$2" "$3" "$5" "$7"
+  exit $?
+fi
+if (($# == 3)) && [[ "$1" == "--diagnostic-fixture" ]]; then
+  python3 - "$2" "$3" <<'PY'
+import hashlib
+import json
+import os
+import pathlib
+import secrets
+import subprocess
+import sys
+root = pathlib.Path(sys.argv[1])
+checkout = pathlib.Path(sys.argv[2]).resolve(strict=True)
+if not root.is_absolute() or root.exists() or root.is_symlink() or root.resolve().is_relative_to(checkout):
+    raise SystemExit("fixture diagnostics path is not a fresh private path outside checkout")
+root.mkdir(mode=0o700, parents=True)
+(root / "logs").mkdir(mode=0o700)
+run_id = secrets.token_hex(8)
+(root / "owner.marker").write_text(f"{run_id}\n{('0' * 40)}\n28\n", encoding="ascii")
+records = []
+fixtures = [("setup", "fixture successful setup", 0, "setup-1.log", b"setup fixture output\n", 0)]
+for index in range(1, 23):
+    status = 1 if index == 1 else 0
+    text = "fixture failing manifest command" if index == 1 else f"fixture manifest command {index}"
+    payload = b"manifest fixture failed\n" if index == 1 else (text + "\n").encode("utf-8")
+    fixtures.append(("manifest", text, status, f"command-{index}.log", payload, index))
+for kind, command, status, name, payload, index in fixtures:
+    path = root / "logs" / name
+    path.write_bytes(payload)
+    records.append({"command_index": index, "kind": kind, "command": command, "exit_status": status, "byte_count": len(payload), "observed_byte_count": len(payload), "sha256": hashlib.sha256(payload).hexdigest(), "log_path": name, "truncated": False})
+(root / "manifest.jsonl").write_text("".join(json.dumps(item, sort_keys=True, separators=(",", ":")) + "\n" for item in records), encoding="utf-8")
+status = subprocess.check_output(["git", "-C", str(checkout), "status", "--porcelain", "--untracked-files=all"])
+(root / "checkout-status.txt").write_bytes(status)
+(root / "checkout-status.json").write_text(json.dumps({"command": "git status --porcelain --untracked-files=all", "exit_status": 0, "byte_count": len(status), "captured_bytes": len(status), "sha256": hashlib.sha256(status).hexdigest(), "truncated": False, "stderr_sha256": hashlib.sha256(b"").hexdigest()}, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+PY
+  exit $?
+fi
+if (($# == 2)) && [[ "$1" == "--validate-diagnostics" ]]; then
+  python3 - "$2" <<'PY'
+import hashlib
+import json
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+reason = None
+try:
+    if not root.is_absolute() or root.is_symlink() or not root.is_dir():
+        raise ValueError("diagnostic root is missing, non-absolute, or a symlink")
+    marker = root / "owner.marker"
+    if marker.is_symlink() or not marker.is_file():
+        raise ValueError("owner marker is missing or unsafe")
+    marker_lines = marker.read_text(encoding="ascii").splitlines()
+    if len(marker_lines) != 3 or not re.fullmatch(r"[a-f0-9]{16}", marker_lines[0]) or not re.fullmatch(r"[a-f0-9]{40}", marker_lines[1]) or marker_lines[2] not in ("27", "28"):
+        raise ValueError("owner marker has an invalid identity")
+    manifest_path = root / "manifest.jsonl"
+    status_path = root / "checkout-status.txt"
+    status_meta_path = root / "checkout-status.json"
+    for item in (manifest_path, status_path, status_meta_path):
+        if item.is_symlink() or not item.is_file():
+            raise ValueError("required diagnostic snapshot is missing or unsafe")
+        if item.stat().st_size > 1_048_576:
+            raise ValueError("diagnostic metadata exceeds its byte bound")
+    status_bytes = status_path.read_bytes()
+    status_meta = json.loads(status_meta_path.read_text(encoding="utf-8"))
+    if len(status_bytes) > 16_777_216 or status_meta.get("command") != "git status --porcelain --untracked-files=all" or status_meta.get("exit_status") != 0 or status_meta.get("truncated") is not False or status_meta.get("byte_count") != len(status_bytes) or status_meta.get("captured_bytes") != len(status_bytes) or status_meta.get("sha256") != hashlib.sha256(status_bytes).hexdigest():
+        raise ValueError("checkout status snapshot is incomplete or mismatched")
+    records = [json.loads(line) for line in manifest_path.read_text(encoding="utf-8").splitlines() if line]
+    setup_records = [record for record in records if record.get("kind") == "setup"]
+    manifest_records = [record for record in records if record.get("kind") == "manifest"]
+    if len(setup_records) < 1 or len(manifest_records) != 22 or sorted(record.get("command_index") for record in manifest_records) != list(range(1, 23)):
+        raise ValueError("diagnostic command manifest is incomplete")
+    expected_files = {"owner.marker", "manifest.jsonl", "checkout-status.txt", "checkout-status.json", "logs"}
+    logs_dir = root / "logs"
+    if logs_dir.is_symlink() or not logs_dir.is_dir():
+        raise ValueError("diagnostic log directory is missing or unsafe")
+    seen = set()
+    sentinels = re.compile(rb"-----BEGIN (?:CERTIFICATE|(?:RSA |EC |OPENSSH )?PRIVATE KEY)-----|Basic dXNlcjpwYXNz|phase78-(?:cookie|password)-sentinel|(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})|(?:authorization:\s*bearer\s+|set-cookie:\s*)", re.I)
+    for record in records:
+        if set(record) != {"command_index", "kind", "command", "exit_status", "byte_count", "observed_byte_count", "sha256", "log_path", "truncated"}:
+            raise ValueError("diagnostic manifest has an unexpected schema")
+        name = record["log_path"]
+        if not isinstance(name, str) or pathlib.PurePosixPath(name).name != name or not re.fullmatch(r"(?:setup|command)-[0-9]+\.log", name) or name in seen:
+            raise ValueError("diagnostic log path is unexpected")
+        seen.add(name)
+        item = logs_dir / name
+        if item.is_symlink() or not item.is_file():
+            raise ValueError("diagnostic log is missing or unsafe")
+        data = item.read_bytes()
+        if len(data) > 16_777_216 or record["byte_count"] != len(data) or record["observed_byte_count"] < len(data) or record["sha256"] != hashlib.sha256(data).hexdigest():
+            raise ValueError("diagnostic log exceeds its bound or does not match its manifest")
+        if record["truncated"] is not False:
+            raise ValueError("diagnostic log was truncated")
+        if sentinels.search(data):
+            raise ValueError("diagnostic log matched a credential, certificate, or cookie sentinel")
+    expected_files |= {"logs/" + name for name in seen}
+    actual = set()
+    for item in root.rglob("*"):
+        if item.is_symlink():
+            raise ValueError("diagnostic bundle contains a symlink")
+        rel = item.relative_to(root).as_posix()
+        actual.add(rel)
+    if actual != expected_files:
+        raise ValueError("diagnostic bundle contains missing or unexpected files")
+    for rel in actual - {"logs"}:
+        item = root / rel
+        if item.is_file() and sentinels.search(item.read_bytes()):
+            raise ValueError("diagnostic bundle matched a credential, certificate, or cookie sentinel")
+except Exception as error:
+    reason = str(error)
+if reason:
+    report = root.with_name(root.name + ".collection-blocked.json")
+    try:
+        report.write_text(json.dumps({"status": "blocked", "reason": reason}, sort_keys=True) + "\n", encoding="utf-8")
+    except OSError:
+        pass
+    print("phase78 clean-state: diagnostic collection blocked: " + reason, file=sys.stderr)
+    raise SystemExit(1)
+print("phase78 clean-state: owned diagnostic bundle is bounded and safe")
+PY
+  exit $?
+fi
+if (($# == 3)) && [[ "$1" == "--cleanup-diagnostics" ]]; then
+  python3 - "$2" "$3" "${RUNNER_TEMP:-}" <<'PY'
+import pathlib
+import shutil
+import sys
+root = pathlib.Path(sys.argv[1])
+run_id = sys.argv[2]
+runner_temp = pathlib.Path(sys.argv[3]).resolve()
+if not root.is_absolute() or root.is_symlink() or not runner_temp.is_relative_to(root.resolve().parent) or root.parent.resolve() != runner_temp:
+    raise SystemExit("phase78 clean-state: diagnostics cleanup path is outside RUNNER_TEMP")
+marker = root / "owner.marker"
+if marker.is_symlink() or not marker.is_file() or marker.read_text(encoding="ascii").splitlines()[0] != run_id:
+    raise SystemExit("phase78 clean-state: diagnostics cleanup owner does not match")
+shutil.rmtree(root)
+PY
   exit $?
 fi
 
 otp=""
 output_path=""
+diagnostics_root=""
 while (($#)); do
   case "$1" in
     --otp) (($# >= 2)) || { usage >&2; exit 64; }; otp="$2"; shift 2 ;;
     --output) (($# >= 2)) || { usage >&2; exit 64; }; output_path="$2"; shift 2 ;;
+    --diagnostics-dir) (($# >= 2)) || { usage >&2; exit 64; }; diagnostics_root="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; exit 64 ;;
   esac
@@ -157,18 +350,37 @@ done
 
 run_id="$(od -An -N8 -tx1 /dev/urandom | tr -d '[:space:]')"
 [[ "$run_id" =~ ^[a-f0-9]{16}$ ]] || { echo "phase78 clean-state: could not create a run ID" >&2; exit 70; }
+if [[ -z "$diagnostics_root" ]]; then
+  [[ -n "${RUNNER_TEMP:-}" ]] || { echo 'phase78 clean-state: RUNNER_TEMP or --diagnostics-dir is required' >&2; exit 64; }
+  diagnostics_root="$RUNNER_TEMP/phase78-otp$otp-diagnostics"
+fi
+case "$diagnostics_root" in /*) ;; *) echo 'phase78 clean-state: diagnostics directory must be absolute' >&2; exit 65 ;; esac
 tmp_parent="${TMPDIR:-/tmp}"
 tmp_parent="$(CDPATH='' cd -P -- "$tmp_parent" && pwd)" || exit 70
 run_root="$(umask 077; mktemp -d "$tmp_parent/relyra-phase78-cold-$run_id.XXXXXX")" || exit 70
 run_root="$(CDPATH='' cd -P -- "$run_root" && pwd)"
 [[ "$run_root" == "$tmp_parent"/relyra-phase78-cold-"$run_id".* ]] || { echo "phase78 clean-state: unsafe temporary workspace" >&2; exit 70; }
+diagnostics_root="$(python3 - "$diagnostics_root" <<'PY'
+import os
+import sys
+print(os.path.abspath(sys.argv[1]))
+PY
+)"
+case "$diagnostics_root" in "$source_root"|"$source_root"/*) echo 'phase78 clean-state: diagnostics must be outside source checkout' >&2; exit 65 ;; esac
+if [[ -e "$diagnostics_root" || -L "$diagnostics_root" ]]; then
+  echo 'phase78 clean-state: refusing to replace an existing diagnostics directory' >&2
+  exit 65
+fi
+umask 077
+mkdir -m 700 -- "$diagnostics_root" || exit 70
 workspace="$run_root/checkout"
-logs="$run_root/logs"
-mkdir -p "$logs" "$run_root/home" "$run_root/tmp" "$run_root/runner-temp" \
+logs="$diagnostics_root/logs"
+mkdir -m 700 "$logs"
+mkdir -p "$run_root/home" "$run_root/tmp" "$run_root/runner-temp" \
   "$run_root/mix-home" "$run_root/hex-home" "$run_root/mix-archives" \
   "$run_root/npm-cache" "$run_root/playwright-browsers"
-printf '%s\n%s\n' "$run_id" "$source_commit" >"$run_root/owner.marker"
-chmod 600 "$run_root/owner.marker"
+printf '%s\n%s\n%s\n' "$run_id" "$source_commit" "$otp" >"$diagnostics_root/owner.marker"
+chmod 600 "$diagnostics_root/owner.marker"
 
 db_container=""
 cleanup() {
@@ -265,8 +477,10 @@ fi
 
 setup_jsonl="$run_root/setup.jsonl"
 commands_jsonl="$run_root/commands.jsonl"
+diagnostic_manifest="$diagnostics_root/manifest.jsonl"
 : >"$setup_jsonl"
 : >"$commands_jsonl"
+: >"$diagnostic_manifest"
 setup_count=0
 
 timestamp() {
@@ -279,7 +493,6 @@ sha256_file() {
 run_bounded_command() {
   local log_path="$1" overflow_path="$2" command_text="$3"
   python3 - "$workspace" "$log_path" "$overflow_path" "$MAX_OUTPUT_BYTES" "$command_text" <<'PY'
-from collections import deque
 import os
 import subprocess
 import sys
@@ -292,29 +505,19 @@ process = subprocess.Popen(
     stdout=subprocess.PIPE,
     stderr=subprocess.STDOUT,
 )
-chunks = deque()
-retained = 0
 observed = 0
-while True:
-    chunk = process.stdout.read(65536)
-    if not chunk:
-        break
-    observed += len(chunk)
-    chunks.append(chunk)
-    retained += len(chunk)
-    while retained > limit:
-        excess = retained - limit
-        first = chunks[0]
-        if len(first) <= excess:
-            chunks.popleft()
-            retained -= len(first)
-        else:
-            chunks[0] = first[excess:]
-            retained -= excess
-
+captured = 0
 with open(log_path, "wb") as stream:
-    for chunk in chunks:
-        stream.write(chunk)
+    while True:
+        chunk = process.stdout.read(65536)
+        if not chunk:
+            break
+        observed += len(chunk)
+        remaining = max(0, limit - captured)
+        if remaining:
+            retained = chunk[:remaining]
+            stream.write(retained)
+            captured += len(retained)
 
 if observed > limit:
     with open(overflow_path, "w", encoding="ascii") as stream:
@@ -326,6 +529,31 @@ else:
         pass
 
 sys.exit(process.wait())
+PY
+}
+
+record_diagnostic() {
+  python3 - "$diagnostic_manifest" "$1" "$2" "$3" "$4" "$5" "$6" <<'PY'
+import hashlib
+import json
+import pathlib
+import sys
+destination, index, kind, command, status, log_path, overflow_path = sys.argv[1:]
+log = pathlib.Path(log_path)
+observed = int(pathlib.Path(overflow_path).read_text(encoding="ascii").strip()) if pathlib.Path(overflow_path).exists() else log.stat().st_size
+payload = {
+    "command_index": int(index),
+    "kind": kind,
+    "command": command,
+    "exit_status": int(status),
+    "byte_count": log.stat().st_size,
+    "observed_byte_count": observed,
+    "sha256": hashlib.sha256(log.read_bytes()).hexdigest(),
+    "log_path": log.name,
+    "truncated": pathlib.Path(overflow_path).exists(),
+}
+with open(destination, "a", encoding="utf-8") as stream:
+    stream.write(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
 PY
 }
 
@@ -355,7 +583,7 @@ PY
 }
 
 run_setup() {
-  local name="$1" command_text="$2" log_path overflow_path start_epoch end_epoch started completed status bytes digest
+  local name="$1" command_text="$2" log_path overflow_path start_epoch end_epoch started completed status original_status bytes digest
   setup_count=$((setup_count + 1))
   log_path="$logs/setup-$setup_count.log"
   overflow_path="$log_path.overflow"
@@ -364,13 +592,15 @@ run_setup() {
   : >"$log_path"
   run_bounded_command "$log_path" "$overflow_path" "$command_text"
   status=$?
+  original_status="$status"
   end_epoch="$(now_ns)"
   completed="$(timestamp)"
   bytes="$(wc -c <"$log_path" | tr -d '[:space:]')"
   digest="$(sha256_file "$log_path")"
-  if (( bytes > MAX_OUTPUT_BYTES )) || [[ -f "$overflow_path" ]]; then status=1; fi
+  if [[ -f "$overflow_path" ]]; then status=1; fi
   record_result "$setup_jsonl" "$name" setup null "$started" "$completed" \
     "$(((end_epoch - start_epoch) / 1000000))" "$status" "$bytes" "$digest" "$command_text"
+  record_diagnostic "$setup_count" setup "$command_text" "$original_status" "$log_path" "$overflow_path"
   printf 'phase78 clean-state: setup %s exit=%s bytes=%s\n' "$name" "$status" "$bytes"
   return 0
 }
@@ -379,7 +609,7 @@ run_command() {
   local index="$1" name="$2" evidence_kind="$3" command_text="$4"
   local execution_text="$command_text"
   local log_path="$logs/command-$index.log" overflow_path="$logs/command-$index.log.overflow"
-  local start_epoch end_epoch started completed status bytes digest evidence_count
+  local start_epoch end_epoch started completed status original_status bytes digest evidence_count
 
   case "$name" in
     'npm run admin-ui:smoke'|'npm run demo:fake-idp'|'npm run demo:trace-visual'|'npm run demo:fleet-proxy'|'npm run demo:keycloak-proxy')
@@ -392,6 +622,7 @@ run_command() {
   : >"$log_path"
   run_bounded_command "$log_path" "$overflow_path" "$execution_text"
   status=$?
+  original_status="$status"
   end_epoch="$(now_ns)"
   completed="$(timestamp)"
   bytes="$(wc -c <"$log_path" | tr -d '[:space:]')"
@@ -412,11 +643,12 @@ else:
     print("null")
 PY
 )"
-  if (( bytes > MAX_OUTPUT_BYTES )) || [[ -f "$overflow_path" ]]; then status=1; fi
+  if [[ -f "$overflow_path" ]]; then status=1; fi
   if [[ "$evidence_kind" != none && ( -z "$evidence_count" || "$evidence_count" == 0 ) ]]; then status=1; fi
   record_result "$commands_jsonl" "$name" "$evidence_kind" "$evidence_count" \
     "$started" "$completed" "$(((end_epoch - start_epoch) / 1000000))" \
     "$status" "$bytes" "$digest" "$execution_text"
+  record_diagnostic "$index" manifest "$execution_text" "$original_status" "$log_path" "$overflow_path"
   printf 'phase78 clean-state: command %02d/22 %s exit=%s evidence=%s bytes=%s\n' \
     "$index" "$name" "$status" "$evidence_count" "$bytes"
   [[ -f "$FLEET_PROXY_STATUS_PATH" ]] && rm -f -- "$FLEET_PROXY_STATUS_PATH"
@@ -497,6 +729,50 @@ for command_text in "${manifest_names[@]}"; do
   fi
 done
 
+status_path="$diagnostics_root/checkout-status.txt"
+status_metadata="$diagnostics_root/checkout-status.json"
+python3 - "$workspace" "$status_path" "$status_metadata" "$MAX_OUTPUT_BYTES" <<'PY'
+import hashlib
+import json
+import pathlib
+import subprocess
+import sys
+workspace, output_path, metadata_path, limit_raw = sys.argv[1:]
+limit = int(limit_raw)
+command = ["git", "-C", workspace, "status", "--porcelain", "--untracked-files=all"]
+process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+observed = 0
+captured = 0
+digest = hashlib.sha256()
+with open(output_path, "wb") as stream:
+    while True:
+        chunk = process.stdout.read(65536)
+        if not chunk:
+            break
+        observed += len(chunk)
+        digest.update(chunk)
+        remaining = max(0, limit - captured)
+        if remaining:
+            part = chunk[:remaining]
+            stream.write(part)
+            captured += len(part)
+stderr = process.stderr.read()
+status = process.wait()
+truncated = observed > captured
+pathlib.Path(metadata_path).write_text(json.dumps({
+    "command": "git status --porcelain --untracked-files=all",
+    "exit_status": status,
+    "byte_count": observed,
+    "captured_bytes": captured,
+    "sha256": digest.hexdigest(),
+    "truncated": truncated,
+    "stderr_sha256": hashlib.sha256(stderr).hexdigest(),
+}, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+if status != 0 or truncated:
+    raise SystemExit(1)
+PY
+status_snapshot_exit=$?
+
 manifest_values="$(source_digest "$workspace")"
 current_source_digest="$(printf '%s\n' "$manifest_values" | sed -n '1p')"
 current_source_count="$(printf '%s\n' "$manifest_values" | sed -n '2p')"
@@ -529,6 +805,7 @@ proof_set_id="$(printf '%s\n' "$proof_values" | sed -n '2p')"
 proof_sha256="$(printf '%s\n' "$proof_values" | sed -n '3p')"
 
 run_outcome=passed
+if [[ "$status_snapshot_exit" != 0 ]]; then run_outcome=failed; fi
 for records in "$setup_jsonl" "$commands_jsonl"; do
   if ! python3 - "$records" <<'PY'
 import json

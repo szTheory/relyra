@@ -108,6 +108,19 @@ defmodule Relyra.Phase78CleanStateReceiptContract do
   def validate_repository!(root, receipt_path \\ nil) do
     root = Path.expand(root)
     receipt_path = receipt_path || Path.join(root, @receipt_rel)
+    require!(File.regular?(receipt_path), "receipt handoff is missing or not a regular file")
+    require!(!symlink?(receipt_path), "receipt handoff must not be a symlink")
+    private_handoff? = Path.expand(receipt_path) != Path.join(root, @receipt_rel)
+
+    if private_handoff? do
+      require!(Path.type(receipt_path) == :absolute, "private receipt handoff must be absolute")
+
+      require!(
+        Path.relative_to(Path.expand(receipt_path), root) == Path.expand(receipt_path),
+        "private receipt handoff is inside the checkout"
+      )
+    end
+
     require!(File.stat!(receipt_path).size <= 131_072, "receipt exceeds its total byte bound")
     receipt = receipt_path |> File.read!() |> Jason.decode!()
     :ok = validate_shape!(receipt)
@@ -126,16 +139,23 @@ defmodule Relyra.Phase78CleanStateReceiptContract do
     head = git!(root, ["rev-parse", "HEAD"])
     require!(valid_git_id?(head), "checkout HEAD is invalid")
 
-    if tracked?(root, @receipt_rel) do
-      require!(
-        git_status(root, ["merge-base", "--is-ancestor", receipt["source_commit"], head]) == 0,
-        "source commit is not an ancestor of the receipt commit"
-      )
-    else
+    if private_handoff? do
       require!(
         receipt["source_commit"] == head,
-        "uncommitted receipt is not bound to the current source commit"
+        "private receipt source does not match current checkout HEAD"
       )
+    else
+      if tracked?(root, @receipt_rel) do
+        require!(
+          git_status(root, ["merge-base", "--is-ancestor", receipt["source_commit"], head]) == 0,
+          "source commit is not an ancestor of the receipt commit"
+        )
+      else
+        require!(
+          receipt["source_commit"] == head,
+          "uncommitted receipt is not bound to current source commit"
+        )
+      end
     end
 
     require!(
@@ -354,6 +374,13 @@ defmodule Relyra.Phase78CleanStateReceiptContract do
   defp require!(false, message), do: raise(ArgumentError, message)
   defp sha256(binary), do: :crypto.hash(:sha256, binary) |> Base.encode16(case: :lower)
 
+  defp symlink?(path) do
+    case File.lstat(path) do
+      {:ok, %File.Stat{type: :symlink}} -> true
+      _ -> false
+    end
+  end
+
   defp tracked?(root, path) do
     git_status(root, ["ls-files", "--error-unmatch", path]) == 0
   end
@@ -482,12 +509,138 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert producer =~ "execution_text=\"MIX_ENV=dev $command_text\""
   end
 
+  @tag :phase78_clean_state_schema
+  test "diagnostic subprocess fixture preserves failed command bytes, status, and dirty paths" do
+    checkout = fixture_repository!()
+    on_exit(fn -> File.rm_rf!(checkout) end)
+    File.write!(Path.join(checkout, "dirty-sentinel.txt"), "untracked fixture path\n")
+
+    diagnostics =
+      Path.join(System.tmp_dir!(), "phase78-diagnostics-#{System.unique_integer([:positive])}")
+
+    on_exit(fn -> File.rm_rf!(diagnostics) end)
+    script = Path.expand("scripts/check_phase78_clean_state.sh")
+
+    {_, 0} = System.cmd("bash", [script, "--diagnostic-fixture", diagnostics, checkout])
+    {_, 0} = System.cmd("bash", [script, "--validate-diagnostics", diagnostics])
+
+    records =
+      diagnostics
+      |> Path.join("manifest.jsonl")
+      |> File.read!()
+      |> String.split("\n", trim: true)
+      |> Enum.map(&Jason.decode!/1)
+
+    assert length(records) == 23
+    setup = Enum.find(records, &(&1["kind"] == "setup"))
+    command = Enum.find(records, &(&1["command_index"] == 1 and &1["kind"] == "manifest"))
+    assert setup["exit_status"] == 0
+    assert command["command_index"] == 1
+    assert command["command"] == "fixture failing manifest command"
+    assert command["exit_status"] == 1
+
+    assert command["sha256"] ==
+             :crypto.hash(:sha256, File.read!(Path.join([diagnostics, "logs", "command-1.log"])))
+             |> Base.encode16(case: :lower)
+
+    assert File.read!(Path.join([diagnostics, "logs", "command-1.log"])) ==
+             "manifest fixture failed\n"
+
+    assert File.read!(Path.join(diagnostics, "checkout-status.txt")) =~ "dirty-sentinel.txt"
+
+    corrupted =
+      Enum.map(records, fn record ->
+        if record["kind"] == "setup", do: Map.put(record, "truncated", true), else: record
+      end)
+
+    File.write!(
+      Path.join(diagnostics, "manifest.jsonl"),
+      Enum.map_join(corrupted, "\n", &Jason.encode!/1) <> "\n"
+    )
+
+    {_, exit_code} =
+      System.cmd("bash", [script, "--validate-diagnostics", diagnostics], stderr_to_stdout: true)
+
+    assert exit_code != 0
+    assert File.exists?(diagnostics <> ".collection-blocked.json")
+    File.rm!(diagnostics <> ".collection-blocked.json")
+  end
+
+  @tag :phase78_clean_state_schema
   test "the assembler requires matching frozen sources and produces one ordered OTP receipt" do
     root = Path.join(System.tmp_dir!(), "phase78-assembly-#{System.unique_integer([:positive])}")
     File.mkdir_p!(root)
     on_exit(fn -> File.rm_rf!(root) end)
+    checkout = fixture_repository!()
+    on_exit(fn -> File.rm_rf!(checkout) end)
+
+    proof_path =
+      Path.join(
+        checkout,
+        ".planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json"
+      )
+
+    File.write!(
+      proof_path,
+      Jason.encode!(%{
+        "source_digest" => String.duplicate("a", 64),
+        "proof_set_id" => "phase73-0123456789abcdef"
+      })
+    )
+
+    {_output, 0} = System.cmd("git", ["-C", checkout, "add", "--all"])
+
+    {_output, 0} =
+      System.cmd("git", [
+        "-C",
+        checkout,
+        "-c",
+        "user.name=Fixture",
+        "-c",
+        "user.email=fixture@example.test",
+        "commit",
+        "--quiet",
+        "-m",
+        "candidate"
+      ])
+
+    {digest, count} = source_digest!(checkout)
+    {head, 0} = System.cmd("git", ["-C", checkout, "rev-parse", "HEAD"])
+    proof_bytes = File.read!(proof_path)
+    proof_doc = Jason.decode!(proof_bytes)
+
+    proof = %{
+      "source_digest" => proof_doc["source_digest"],
+      "proof_set_id" => proof_doc["proof_set_id"],
+      "proof_sha256" => :crypto.hash(:sha256, proof_bytes) |> Base.encode16(case: :lower)
+    }
+
     receipt = valid_receipt()
+
+    receipt =
+      Map.merge(receipt, %{
+        "source_commit" => String.trim(head),
+        "source_digest" => digest,
+        "source_file_count" => count,
+        "phase73" => proof
+      })
+
     [run27, run28] = receipt["runs"]
+
+    run27 =
+      Map.merge(run27, %{
+        "source_commit" => String.trim(head),
+        "source_digest" => digest,
+        "phase73" => proof
+      })
+
+    run28 =
+      Map.merge(run28, %{
+        "source_commit" => String.trim(head),
+        "source_digest" => digest,
+        "phase73" => proof
+      })
+
     path27 = Path.join(root, "otp27.json")
     path28 = Path.join(root, "otp28.json")
     output = Path.join(root, "combined.json")
@@ -495,7 +648,18 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     write_partial!(path28, receipt, run28)
     script = Path.expand("scripts/check_phase78_clean_state.sh")
 
-    {_, 0} = System.cmd("bash", [script, "--assemble", path27, path28, "--output", output])
+    {_, 0} =
+      System.cmd("bash", [
+        script,
+        "--assemble",
+        path27,
+        path28,
+        "--checkout",
+        checkout,
+        "--output",
+        output
+      ])
+
     combined = output |> File.read!() |> Jason.decode!()
     assert :ok = Receipt.validate_shape!(combined)
     assert Enum.map(combined["runs"], & &1["otp_release"]) == ["27", "28"]
@@ -505,7 +669,9 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     mismatch = Path.join(root, "mismatch.json")
 
     {_output, exit_code} =
-      System.cmd("bash", [script, "--assemble", path27, path28, "--output", mismatch],
+      System.cmd(
+        "bash",
+        [script, "--assemble", path27, path28, "--checkout", checkout, "--output", mismatch],
         stderr_to_stdout: true
       )
 
@@ -531,6 +697,7 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert_raise ArgumentError, fn -> Receipt.validate_shape!(leaked) end
   end
 
+  @tag :phase78_clean_state_schema
   test "only the dedicated receipt owner selects the real receipt test after producers" do
     aliases = Mix.Project.config()[:aliases]
 
@@ -553,20 +720,96 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     steps = job["steps"]
     [otp27] = Enum.filter(steps, &(&1["name"] == "Run OTP 27 cold manifest"))
     [otp28] = Enum.filter(steps, &(&1["name"] == "Run OTP 28 cold manifest"))
+    [validate] = Enum.filter(steps, &(&1["name"] == "Validate owned producer diagnostics"))
     [assemble] = Enum.filter(steps, &(&1["name"] == "Assemble source-bound receipt"))
     [owner] = Enum.filter(steps, &(&1["name"] == "Require Phase 78 cold-state receipt"))
+    [upload] = Enum.filter(steps, &(&1["name"] == "Upload Phase 78 producer diagnostics"))
+
+    [cleanup] =
+      Enum.filter(steps, &(&1["name"] == "Remove uploaded diagnostics owned by this run"))
+
     assert otp27["if"] == "always()"
     assert otp28["if"] == "always()"
+    assert otp27["run"] =~ "--diagnostics-dir"
+    assert otp28["run"] =~ "--diagnostics-dir"
+    assert validate["if"] == "always()"
+    assert validate["run"] =~ "--validate-diagnostics"
     assert assemble["if"] == "always()"
     assert owner["if"] == "always()"
+    assert upload["if"] =~ "always()"
+    assert upload["if"] =~ "steps.validate-diagnostics.outcome == 'success'"
+    assert upload["uses"] =~ "actions/upload-artifact@"
+    assert upload["with"]["name"] =~ "${{ github.run_id }}-${{ github.sha }}-otp27-28"
+
+    assert upload["with"]["path"] ==
+             "${{ runner.temp }}/phase78-otp27-diagnostics/\n${{ runner.temp }}/phase78-otp28-diagnostics/\n"
+
+    assert upload["with"]["retention-days"] == 3
+    assert assemble["run"] =~ "--checkout"
+    assert assemble["run"] =~ "PHASE78_RECEIPT_PATH"
+
+    assert owner["env"]["PHASE78_RECEIPT_PATH"] ==
+             "${{ runner.temp }}/phase78-candidate-receipt.json"
+
     assert owner["run"] =~ "mix ci.phase78.receipt"
+    assert cleanup["if"] == "success()"
+    assert cleanup["run"] =~ "--cleanup-diagnostics"
     assert Enum.find_index(steps, &(&1 == assemble)) < Enum.find_index(steps, &(&1 == owner))
+    assert workflow_diagnostics_contract?(workflow)
+
+    remove_step = fn workflow, name ->
+      update_in(
+        workflow["jobs"]["phase78-clean-state"]["steps"],
+        &Enum.reject(&1, fn step -> step["name"] == name end)
+      )
+    end
+
+    map_step = fn workflow, name, transform ->
+      update_in(
+        workflow["jobs"]["phase78-clean-state"]["steps"],
+        &Enum.map(&1, fn step -> if step["name"] == name, do: transform.(step), else: step end)
+      )
+    end
+
+    missing_upload = remove_step.(workflow, "Upload Phase 78 producer diagnostics")
+
+    success_only =
+      map_step.(workflow, "Upload Phase 78 producer diagnostics", &Map.put(&1, "if", "success()"))
+
+    missing_snapshot =
+      map_step.(
+        workflow,
+        "Validate owned producer diagnostics",
+        &Map.put(&1, "run", "echo missing status snapshot")
+      )
+
+    wrong_paths =
+      map_step.(
+        workflow,
+        "Upload Phase 78 producer diagnostics",
+        &put_in(&1["with"]["path"], "${{ runner.temp }}/other/")
+      )
+
+    unbounded =
+      map_step.(
+        workflow,
+        "Upload Phase 78 producer diagnostics",
+        &put_in(&1["with"]["path"], "${{ runner.temp }}/**")
+      )
+
+    refute workflow_diagnostics_contract?(missing_upload)
+    refute workflow_diagnostics_contract?(success_only)
+    refute workflow_diagnostics_contract?(missing_snapshot)
+    refute workflow_diagnostics_contract?(wrong_paths)
+    refute workflow_diagnostics_contract?(unbounded)
   end
 
   @tag :phase78_clean_state_receipt
   @tag timeout: :infinity
   test "the real mandatory selector accepts only a current source and proof receipt" do
-    assert :ok = Receipt.validate_repository!(File.cwd!())
+    receipt_path = System.fetch_env!("PHASE78_RECEIPT_PATH")
+    assert Path.type(receipt_path) == :absolute
+    assert :ok = Receipt.validate_repository!(File.cwd!(), receipt_path)
   end
 
   defp valid_receipt do
@@ -712,6 +955,45 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
   defp parse_yaml!(yaml) do
     [document] = :yamerl_constr.string(String.to_charlist(yaml))
     convert_yaml(document)
+  end
+
+  defp workflow_diagnostics_contract?(workflow) do
+    with job when is_map(job) <- get_in(workflow, ["jobs", "phase78-clean-state"]),
+         steps when is_list(steps) <- job["steps"],
+         [otp27] <- Enum.filter(steps, &(&1["name"] == "Run OTP 27 cold manifest")),
+         [otp28] <- Enum.filter(steps, &(&1["name"] == "Run OTP 28 cold manifest")),
+         [validate] <- Enum.filter(steps, &(&1["name"] == "Validate owned producer diagnostics")),
+         [upload] <- Enum.filter(steps, &(&1["name"] == "Upload Phase 78 producer diagnostics")),
+         [owner] <- Enum.filter(steps, &(&1["name"] == "Require Phase 78 cold-state receipt")),
+         [cleanup] <-
+           Enum.filter(steps, &(&1["name"] == "Remove uploaded diagnostics owned by this run")) do
+      validate["if"] == "always()" and
+        otp27["if"] == "always()" and otp28["if"] == "always()" and
+        otp27["run"] =~ "--diagnostics-dir \"$RUNNER_TEMP/phase78-otp27-diagnostics\"" and
+        otp28["run"] =~ "--diagnostics-dir \"$RUNNER_TEMP/phase78-otp28-diagnostics\"" and
+        validate["run"] =~ "--validate-diagnostics" and
+        validate["run"] =~ "phase78-otp27-diagnostics" and
+        validate["run"] =~ "phase78-otp28-diagnostics" and
+        upload["if"] =~ "always()" and
+        upload["if"] =~ "steps.validate-diagnostics.outcome == 'success'" and
+        upload["uses"] == "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" and
+        upload["with"]["path"] ==
+          "${{ runner.temp }}/phase78-otp27-diagnostics/\n${{ runner.temp }}/phase78-otp28-diagnostics/\n" and
+        upload["with"]["name"] =~ "${{ github.run_id }}-${{ github.sha }}-otp27-28" and
+        upload["with"]["retention-days"] == 3 and
+        owner["env"]["PHASE78_RECEIPT_PATH"] ==
+          "${{ runner.temp }}/phase78-candidate-receipt.json" and
+        cleanup["if"] == "success()" and cleanup["run"] =~ "--cleanup-diagnostics" and
+        Enum.find_index(steps, &(&1 == otp27)) < Enum.find_index(steps, &(&1 == otp28)) and
+        Enum.find_index(steps, &(&1 == otp28)) < Enum.find_index(steps, &(&1 == validate)) and
+        Enum.find_index(steps, &(&1 == validate)) < Enum.find_index(steps, &(&1 == upload)) and
+        Enum.find_index(steps, &(&1 == upload)) < Enum.find_index(steps, &(&1 == owner)) and
+        Enum.find_index(steps, &(&1 == owner)) < Enum.find_index(steps, &(&1 == cleanup)) and
+        File.read!("scripts/check_phase78_clean_state.sh") =~
+          "git status --porcelain --untracked-files=all"
+    else
+      _ -> false
+    end
   end
 
   defp convert_yaml(value) when is_list(value) do
