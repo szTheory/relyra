@@ -276,6 +276,419 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     assert :cross_run_cache_reuse in workflow_errors(cross_run_reuse)
   end
 
+  test "full consumer teardown removes its labeled volume before a minimal run starts" do
+    fixture_root =
+      Path.join(
+        System.tmp_dir!(),
+        "package-consumer-fixture-#{System.unique_integer([:positive])}"
+      )
+
+    {bin, tmp, events} = prepare_package_consumer_fixture!(fixture_root)
+    on_exit(fn -> File.rm_rf!(fixture_root) end)
+
+    {result, status} =
+      run_consumer_fixture!(fixture_root, bin, tmp, events, [
+        "-c",
+        "bash scripts/check_clean_room_consumer.sh --profile full && bash scripts/check_clean_room_consumer.sh --profile minimal"
+      ])
+
+    assert status == 0, "status=#{status}, output=#{result}"
+    assert result =~ "package consumer [full]: PASS"
+    assert result =~ "PASS: minimal-compile"
+    docker_events = File.read!(events)
+    assert docker_events =~ "volume create"
+    assert docker_events =~ "container inspect"
+    assert docker_events =~ "volume inspect"
+    assert docker_events =~ "rm --force"
+    assert docker_events =~ "volume rm"
+    assert File.ls!(tmp) == []
+
+    {result, status} =
+      run_consumer_fixture!(fixture_root, bin, tmp, events, [
+        "scripts/check_clean_room_consumer.sh",
+        "--profile",
+        "minimal",
+        "--concurrency-check"
+      ])
+
+    assert status == 0, "status=#{status}, output=#{result}"
+    assert result =~ "concurrent run roots and all mutable paths are disjoint"
+  end
+
+  @tag contract_cleanup_case: :failure_guards
+  test "cleanup failures preserve unknown resources and primary contract evidence" do
+    fixture_root =
+      Path.join(
+        System.tmp_dir!(),
+        "package-consumer-failure-fixture-#{System.unique_integer([:positive])}"
+      )
+
+    File.mkdir_p!(fixture_root)
+    on_exit(fn -> File.rm_rf!(fixture_root) end)
+
+    primary_root = Path.join(fixture_root, "primary")
+    {bin, tmp, events} = prepare_package_consumer_fixture!(primary_root)
+    File.write!(Path.join(primary_root, "mode"), "contract-failure\n")
+
+    {result, status} =
+      run_consumer_fixture!(primary_root, bin, tmp, events, [
+        "scripts/check_clean_room_consumer.sh",
+        "--profile",
+        "full"
+      ])
+
+    assert status == 37, result
+    assert result =~ "FAIL: run the public Phoenix consumer installer exited 37"
+    assert result =~ "failure state retained at"
+    assert [_, log_path] = Regex.run(~r/Log retained at (.+?)\. Next:/, result)
+    assert File.regular?(log_path)
+    assert File.read!(log_path) =~ "intentional contract fixture failure"
+    assert File.read!(events) =~ "rm --force"
+    assert File.read!(events) =~ "volume rm"
+
+    for {mode, expected_status, retained_resource} <- [
+          {"volume-create-failure", 1, nil},
+          {"preexisting-volume", 1, "volume"},
+          {"container-start-failure", 1, nil},
+          {"preexisting-container", 1, "container"},
+          {"container-label-missing", 1, "container"},
+          {"container-label-mismatch", 1, "container"},
+          {"volume-label-missing", 1, "volume"},
+          {"volume-label-mismatch", 1, "volume"},
+          {"container-cleanup-failure", 1, "container"},
+          {"volume-cleanup-failure", 1, "volume"},
+          {"unknown-child", 1, "unknown"}
+        ] do
+      mode_root = Path.join(fixture_root, mode)
+      {mode_bin, mode_tmp, mode_events} = prepare_package_consumer_fixture!(mode_root)
+      File.write!(Path.join(mode_root, "mode"), mode <> "\n")
+
+      {mode_result, mode_status} =
+        run_consumer_fixture!(mode_root, mode_bin, mode_tmp, mode_events, [
+          "scripts/check_clean_room_consumer.sh",
+          "--profile",
+          "full"
+        ])
+
+      assert mode_status == expected_status,
+             "#{mode}: expected exit #{expected_status}, got #{mode_status}: #{mode_result}"
+
+      assert File.read!(mode_events) =~ "volume create"
+
+      case retained_resource do
+        "container" ->
+          assert mode_result =~ "container"
+          assert File.regular?(Path.join(mode_root, "container-owner"))
+
+          if mode == "container-cleanup-failure" do
+            assert File.read!(mode_events) =~ "rm --force"
+            assert mode_result =~ "cleanup failed removing owned container"
+          else
+            refute File.read!(mode_events) =~ "rm --force"
+          end
+
+        "volume" ->
+          assert mode_result =~ "volume"
+          assert File.regular?(Path.join(mode_root, "volume-owner"))
+
+          if mode == "volume-cleanup-failure" do
+            assert File.read!(mode_events) =~ "volume rm"
+            assert mode_result =~ "cleanup failed removing owned volume"
+          else
+            refute File.read!(mode_events) =~ "volume rm"
+          end
+
+        "unknown" ->
+          assert [_, run_root] =
+                   Regex.run(~r/cleanup refused run root ([^:]+): unknown-owner/, mode_result)
+
+          assert File.dir?(Path.join(run_root, "unknown-owner"))
+
+        nil ->
+          assert mode_result =~ "failure state retained"
+      end
+    end
+  end
+
+  @tag contract_cleanup_case: :omission
+  test "contracts omission cleanup removes its known run-root directory" do
+    fixture_root =
+      Path.join(
+        System.tmp_dir!(),
+        "package-consumer-omission-#{System.unique_integer([:positive])}"
+      )
+
+    {repo, bin, tmp, events} = prepare_contract_cleanup_fixture!(fixture_root)
+    on_exit(fn -> File.rm_rf!(fixture_root) end)
+    {result, status} = run_contract_cleanup_fixture!(repo, bin, tmp, events, "omission")
+    assert status == 0, "status=#{status}, output=#{result}"
+    assert result =~ "package consumer [contracts]: PASS"
+    assert File.ls!(tmp) == []
+  end
+
+  @tag contract_cleanup_case: :prior_force
+  test "contracts prior force-probe cleanup removes its known run-root directory" do
+    fixture_root =
+      Path.join(System.tmp_dir!(), "package-consumer-force-#{System.unique_integer([:positive])}")
+
+    {repo, bin, tmp, events} = prepare_contract_cleanup_fixture!(fixture_root)
+    on_exit(fn -> File.rm_rf!(fixture_root) end)
+    {result, status} = run_contract_cleanup_fixture!(repo, bin, tmp, events, "prior")
+    assert status == 0, "status=#{status}, output=#{result}"
+    assert result =~ "explicit force changed only resolver/mapper outputs"
+    assert File.read!(events) =~ "volume rm"
+    assert File.ls!(tmp) == []
+  end
+
+  defp prepare_contract_cleanup_fixture!(fixture_root) do
+    project_source = Path.expand("../..", __DIR__)
+    repo = Path.join(fixture_root, "repo")
+    bin = Path.join(fixture_root, "bin")
+    tmp = Path.join(fixture_root, "tmp")
+    events = Path.join(fixture_root, "docker-events.log")
+    fixture_base = Path.join(repo, "test/fixtures/package_consumer")
+    File.mkdir_p!(Path.join(repo, "scripts"))
+    File.mkdir_p!(fixture_base)
+    File.mkdir_p!(bin)
+    File.mkdir_p!(tmp)
+
+    File.cp!(
+      Path.join(project_source, "scripts/check_clean_room_consumer.sh"),
+      Path.join(repo, "scripts/check_clean_room_consumer.sh")
+    )
+
+    for name <- ["consumer", "prior_scaffold", "golden"] do
+      File.cp_r!(
+        Path.join(project_source, "test/fixtures/package_consumer/#{name}"),
+        Path.join(fixture_base, name)
+      )
+    end
+
+    generated_connections = "defmodule PackageConsumer.GeneratedConnections do\nend\n"
+    generated_mapper = "defmodule PackageConsumer.GeneratedMapper do\nend\n"
+    connections_hash = :crypto.hash(:sha256, generated_connections) |> Base.encode16(case: :lower)
+    mapper_hash = :crypto.hash(:sha256, generated_mapper) |> Base.encode16(case: :lower)
+    # The isolated installer stub writes these bytes; align only its private golden
+    # so the real consumer script reaches its cleanup branch without Mix or Docker.
+    File.write!(
+      Path.join(fixture_base, "golden/fresh_files.sha256"),
+      "#{connections_hash}  lib/package_consumer/relyra/connections.ex\n#{mapper_hash}  lib/package_consumer/relyra/user_mapper.ex\n"
+    )
+
+    write_executable!(Path.join(bin, "mix"), """
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cmd="$1"; shift
+    case "$cmd" in
+      hex.build)
+        out=""
+        while (($#)); do if [[ "$1" == "--output" ]]; then out="$2"; shift 2; else shift; fi; done
+        mkdir -p "$out/relyra/lib/relyra"
+        printf 'defmodule Relyra.Mixfile do end\\n' > "$out/relyra/mix.exs"
+        printf 'defmodule Relyra.Testing do end\\n' > "$out/relyra/lib/relyra/testing.ex"
+        ;;
+      deps.get) [[ -f mix.lock ]] || printf '{}\\n' > mix.lock ;;
+      run)
+        for arg in "$@"; do
+          if [[ "$arg" == *"Code.ensure_loaded?"* ]]; then
+            printf 'package contract missing: lib/relyra/testing.ex\\n' >&2
+            exit 1
+          fi
+        done
+        ;;
+      relyra.install)
+        force=false
+        for arg in "$@"; do [[ "$arg" != "--force" ]] || force=true; done
+        if [[ "$force" == true ]]; then
+          printf 'defmodule PackageConsumer.GeneratedConnections do\\nend\\n' > lib/package_consumer/relyra/connections.ex
+          printf 'defmodule PackageConsumer.GeneratedMapper do\\nend\\n' > lib/package_consumer/relyra/user_mapper.ex
+        else
+          printf 'Skipped existing lib/package_consumer/relyra/connections.ex\\n'
+          printf 'Skipped existing lib/package_consumer/relyra/user_mapper.ex\\n'
+          printf 'Relyra SAML routes already present in lib/package_consumer_web/router.ex\\n'
+        fi
+        ;;
+      compile) printf 'prior compile: PASS\\n' ;;
+    esac
+    """)
+
+    write_executable!(Path.join(bin, "docker"), """
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="$PACKAGE_CONSUMER_FIXTURE_ROOT"
+    printf '%s\\n' "$*" >> "$PACKAGE_CONSUMER_FIXTURE_EVENTS"
+    case "$1" in
+      volume)
+        if [[ "$2" == "create" ]]; then
+          volume=""; owner=""
+          while (($#)); do
+            if [[ "$1" == "--label" ]]; then owner="${2#*=}"; shift 2
+            elif [[ "$1" == "--name" ]]; then volume="$2"; shift 2
+            else shift; fi
+          done
+          printf '%s\\n' "$volume" > "$root/volume-name"
+          printf '%s\\n' "$owner" > "$root/volume-owner"
+          printf '%s\\n' "$volume"
+        elif [[ "$2" == "inspect" ]]; then
+          [[ "${5:-}" == "$(cat "$root/volume-name")" ]] || exit 1
+          cat "$root/volume-owner"
+        elif [[ "$2" == "rm" ]]; then :; fi
+        ;;
+      rm) : ;;
+      run)
+        name=""; owner=""
+        while (($#)); do
+          if [[ "$1" == "--name" ]]; then name="$2"; shift 2
+          elif [[ "$1" == "--label" ]]; then owner="${2#*=}"; shift 2
+          else shift; fi
+        done
+        printf '%s\\n' "$name" > "$root/container-name"
+        printf '%s\\n' "$owner" > "$root/container-owner"
+        printf 'container-id\\n'
+        ;;
+      container)
+        if [[ "$2" == "inspect" ]]; then
+          [[ "${5:-}" == "$(cat "$root/container-name" 2>/dev/null || true)" ]] || exit 1
+          cat "$root/container-owner"
+        fi
+        ;;
+      port) printf '127.0.0.1:49152\\n' ;;
+      exec) exit 0 ;;
+      *) exit 0 ;;
+    esac
+    """)
+
+    {repo, bin, tmp, events}
+  end
+
+  defp run_contract_cleanup_fixture!(repo, bin, tmp, events, contract_case) do
+    System.cmd(
+      "bash",
+      ["scripts/check_clean_room_consumer.sh", "--profile", "contracts", "--case", contract_case],
+      cd: repo,
+      env: [
+        {"PATH", bin <> ":" <> System.get_env("PATH")},
+        {"TMPDIR", tmp},
+        {"PACKAGE_CONSUMER_FIXTURE_ROOT", Path.dirname(events)},
+        {"PACKAGE_CONSUMER_FIXTURE_EVENTS", events}
+      ],
+      stderr_to_stdout: true
+    )
+  end
+
+  defp prepare_package_consumer_fixture!(fixture_root) do
+    bin = Path.join(fixture_root, "bin")
+    tmp = Path.join(fixture_root, "tmp")
+    events = Path.join(fixture_root, "docker-events.log")
+
+    File.mkdir_p!(bin)
+    File.mkdir_p!(tmp)
+    File.write!(Path.join(fixture_root, "mode"), "success\n")
+
+    write_executable!(Path.join(bin, "mix"), """
+    #!/usr/bin/env bash
+    set -euo pipefail
+    fixture_root="$(cd "$(dirname "$0")/.." && pwd -P)"
+    mode="$(cat "$fixture_root/mode")"
+    if [[ "$1" == "hex.build" ]]; then
+      if [[ "$mode" == "unknown-child" ]]; then mkdir -p "$PACKAGE_CONSUMER_RUN_ROOT/unknown-owner"; fi
+      output=""
+      while (($#)); do
+        if [[ "$1" == "--output" ]]; then output="$2"; shift 2; else shift; fi
+      done
+      mkdir -p "$output/relyra"
+      printf 'defmodule Relyra.Mixfile do end\\n' > "$output/relyra/mix.exs"
+    elif [[ "$1" == "compile" ]]; then
+      printf 'minimal compile: PASS — isolated fixture\\n'
+    elif [[ "$mode" == "contract-failure" && "$1" == "relyra.install" ]]; then
+      printf 'intentional contract fixture failure\\n' >&2
+      exit 37
+    fi
+    """)
+
+    write_executable!(Path.join(bin, "docker"), """
+    #!/usr/bin/env bash
+    set -euo pipefail
+    fixture_root="$(cd "$(dirname "$0")/.." && pwd -P)"
+    mode="$(cat "$fixture_root/mode")"
+    printf '%s\\n' "$*" >> "$PACKAGE_CONSUMER_FIXTURE_EVENTS"
+    case "$1" in
+      volume)
+        if [[ "$2" == "create" ]]; then
+          volume=""
+          while (($#)); do
+            if [[ "$1" == "--label" ]]; then owner="${2#*=}"; shift 2
+            elif [[ "$1" == "--name" ]]; then volume="$2"; shift 2
+            else shift; fi
+          done
+          printf '%s\\n' "$volume" > "$fixture_root/volume-name"
+          if [[ "$mode" == "preexisting-volume" ]]; then owner="foreign-owner"; printf '%s\\n' "$owner" > "$fixture_root/volume-owner"; exit 17; fi
+          if [[ "$mode" == "volume-create-failure" ]]; then exit 17; fi
+          case "$mode" in volume-label-missing) owner="" ;; volume-label-mismatch) owner="foreign-owner" ;; esac
+          printf '%s\\n' "$owner" > "$fixture_root/volume-owner"
+          printf '%s\\n' "$volume"
+        elif [[ "$2" == "inspect" ]]; then
+          [[ "${5:-}" == "$(cat "$fixture_root/volume-name")" ]] || exit 1
+          cat "$fixture_root/volume-owner"
+        elif [[ "$2" == "rm" ]]; then
+          [[ "$mode" != "volume-cleanup-failure" ]] || exit 27
+        fi
+        ;;
+      rm) [[ "$mode" != "container-cleanup-failure" ]] || exit 26 ;;
+      run)
+        name=""
+        owner=""
+        while (($#)); do
+          if [[ "$1" == "--name" ]]; then name="$2"; shift 2
+          elif [[ "$1" == "--label" ]]; then owner="${2#*=}"; shift 2
+          else shift; fi
+        done
+        if [[ "$mode" == "preexisting-container" ]]; then
+          printf '%s\\n' "$name" > "$fixture_root/container-name"
+          printf 'foreign-owner\\n' > "$fixture_root/container-owner"
+          exit 18
+        fi
+        [[ "$mode" != "container-start-failure" ]] || exit 19
+        case "$mode" in container-label-missing) owner="" ;; container-label-mismatch) owner="foreign-owner" ;; esac
+        printf '%s\\n' "$name" > "$fixture_root/container-name"
+        printf '%s\\n' "$owner" > "$fixture_root/container-owner"
+        printf 'container-id\\n'
+        ;;
+      container)
+        if [[ "$2" == "inspect" ]]; then
+          [[ "${5:-}" == "$(cat "$fixture_root/container-name" 2>/dev/null || true)" ]] || exit 1
+          cat "$fixture_root/container-owner"
+        fi
+        ;;
+      port) printf '127.0.0.1:49152\\n' ;;
+      exec) exit 0 ;;
+      *) exit 0 ;;
+    esac
+    """)
+
+    {bin, tmp, events}
+  end
+
+  defp run_consumer_fixture!(fixture_root, bin, tmp, events, command) do
+    System.cmd(
+      "bash",
+      command,
+      cd: File.cwd!(),
+      env: [
+        {"PATH", bin <> ":" <> System.get_env("PATH")},
+        {"TMPDIR", tmp},
+        {"PACKAGE_CONSUMER_FIXTURE_ROOT", fixture_root},
+        {"PACKAGE_CONSUMER_FIXTURE_EVENTS", events}
+      ],
+      stderr_to_stdout: true
+    )
+  end
+
+  defp write_executable!(path, contents) do
+    File.write!(path, contents)
+    File.chmod!(path, 0o755)
+  end
+
   test "owned cost collector records passing positive-execution receipts" do
     output = Path.join(System.tmp_dir!(), "ci-cost-#{System.unique_integer([:positive])}.json")
 

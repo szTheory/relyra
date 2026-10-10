@@ -107,9 +107,11 @@ hex_home="$run_root/hex-home"
 mix_archives="$run_root/mix-archives"
 deps_path="$run_root/deps"
 build_root="$run_root/build"
-db_data="$run_root/postgres-data"
 output_dir="$run_root/output"
 container_name="relyra-consumer-$(basename "$run_root" | tr -cd '[:alnum:]')"
+volume_name="$container_name-data"
+run_id="$(basename "$run_root")"
+owner_label="org.relyra.consumer.run-id"
 db_user="package_consumer"
 db_name="package_consumer"
 db_password="$(openssl rand -hex 24)"
@@ -118,8 +120,9 @@ command_count=0
 last_command_log=""
 
 mkdir -p "$artifact_output" "$consumer_dir" "$mix_home" "$hex_home" \
-  "$mix_archives" "$deps_path" "$build_root" "$db_data" "$output_dir" \
+  "$mix_archives" "$deps_path" "$build_root" "$output_dir" \
   "$run_root/home" "$run_root/xdg-config" "$run_root/xdg-cache"
+printf '%s\n' "$run_id" >"$run_root/.relyra-consumer-owner"
 
 isolated_env=(
   "PATH=$PATH"
@@ -177,17 +180,88 @@ run_command() {
 
 cleanup() {
   local status=$?
+  local cleanup_status=0
+  local container_owner=""
+  local volume_owner=""
+  local tmp_root="${TMPDIR:-/tmp}"
+  local child=""
+  local child_name=""
+  local known_child="false"
+  local allowed_children=(
+    ".relyra-consumer-owner" "artifact-output" "consumer" "mix-home" "hex-home"
+    "mix-archives" "deps" "build" "output" "home" "xdg-config" "xdg-cache"
+    "omission" "force-consumer"
+  )
 
-  if docker container inspect "$container_name" >/dev/null 2>&1; then
-    docker stop "$container_name" >/dev/null 2>&1 || true
-    docker rm "$container_name" >/dev/null 2>&1 || true
+  trap - EXIT
+
+  if container_owner="$(docker container inspect --format '{{ index .Config.Labels "org.relyra.consumer.run-id" }}' "$container_name" 2>/dev/null)"; then
+    if [[ "$container_owner" == "$run_id" ]]; then
+      if ! docker rm --force "$container_name" >/dev/null 2>&1; then
+        echo "package consumer: cleanup failed removing owned container $container_name" >&2
+        cleanup_status=1
+      fi
+    else
+      echo "package consumer: cleanup refused container $container_name: expected owner label $owner_label=$run_id, found '${container_owner:-missing}'; resource preserved" >&2
+      cleanup_status=1
+    fi
   fi
 
-  if [[ "$status" == "0" ]] || [[ "${CI:-}" == "true" ]] || [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
-    rm -rf "$run_root"
-  else
+  if volume_owner="$(docker volume inspect --format '{{ index .Labels "org.relyra.consumer.run-id" }}' "$volume_name" 2>/dev/null)"; then
+    if [[ "$volume_owner" == "$run_id" ]]; then
+      if ! docker volume rm "$volume_name" >/dev/null 2>&1; then
+        echo "package consumer: cleanup failed removing owned volume $volume_name" >&2
+        cleanup_status=1
+      fi
+    else
+      echo "package consumer: cleanup refused volume $volume_name: expected owner label $owner_label=$run_id, found '${volume_owner:-missing}'; resource preserved" >&2
+      cleanup_status=1
+    fi
+  fi
+
+  if [[ "$status" != "0" ]]; then
     printf 'package consumer [%s]: failure state retained at %s\n' "$profile" "$run_root" >&2
+  elif [[ "$cleanup_status" == "0" ]]; then
+    if tmp_root="$(cd "$tmp_root" 2>/dev/null && pwd -P)" &&
+       [[ "$run_root" == "$tmp_root"/relyra-package-consumer.* ]] &&
+       [[ "$(cat "$run_root/.relyra-consumer-owner" 2>/dev/null || true)" == "$run_id" ]]; then
+      for child in "$run_root"/* "$run_root"/.[!.]* "$run_root"/..?*; do
+        [[ -e "$child" || -L "$child" ]] || continue
+        child_name="${child##*/}"
+        known_child="false"
+        for allowed_child in "${allowed_children[@]}"; do
+          if [[ "$child_name" == "$allowed_child" ]]; then
+            known_child="true"
+            break
+          fi
+        done
+        if [[ "$known_child" != "true" ]]; then
+          echo "package consumer: cleanup refused run root $run_root: unknown-owner path preserved at $child" >&2
+          cleanup_status=1
+          break
+        fi
+      done
+      if [[ "$cleanup_status" == "0" ]]; then
+        if ! rm -rf -- "$run_root"; then
+          echo "package consumer: cleanup failed removing owned run root $run_root" >&2
+          cleanup_status=1
+        fi
+      fi
+    else
+      echo "package consumer: cleanup refused run root: owner marker or canonical temp prefix did not match; path preserved at $run_root" >&2
+      cleanup_status=1
+    fi
   fi
+
+  if [[ "$cleanup_status" != "0" ]]; then
+    printf 'package consumer [%s]: cleanup failed for container=%s volume=%s run-root=%s; unresolved resources were preserved where ownership was ambiguous\n' \
+      "$profile" "$container_name" "$volume_name" "$run_root" >&2
+    if [[ "$status" == "0" ]]; then
+      status=1
+    fi
+  fi
+
+  exit "$status"
 }
 trap cleanup EXIT
 
@@ -206,7 +280,7 @@ assert_under_run_root() {
 
 assert_under_run_root \
   "$artifact_output" "$consumer_dir" "$mix_home" "$hex_home" "$mix_archives" \
-  "$deps_path" "$build_root" "$db_data" "$output_dir"
+  "$deps_path" "$build_root" "$output_dir"
 
 run_command hex-bootstrap "bootstrap Hex in isolated Mix/Hex homes" "$repo_root" mix local.hex --force
 run_command rebar-bootstrap "bootstrap Rebar in isolated Mix home" "$repo_root" mix local.rebar --force
@@ -373,14 +447,19 @@ if [[ "$profile" == "contracts" && "$contract_case" == "prior" ]]; then
   isolated_env+=("PACKAGE_CONSUMER_SCAFFOLD=prior")
 fi
 
-docker run -d --name "$container_name" \
+if ! docker volume create --name "$volume_name" --label "$owner_label=$run_id" >/dev/null; then
+  echo "package consumer: PostgreSQL contract failed: could not create run-owned Docker volume $volume_name" >&2
+  exit 1
+fi
+
+docker run -d --name "$container_name" --label "$owner_label=$run_id" \
   -e POSTGRES_USER="$db_user" \
   -e POSTGRES_PASSWORD="$db_password" \
   -e POSTGRES_DB="$db_name" \
   -p 127.0.0.1::5432 \
-  --mount "type=bind,src=$db_data,dst=/var/lib/postgresql/data" \
+  --mount "type=volume,src=$volume_name,dst=/var/lib/postgresql/data" \
   postgres:16 >"$output_dir/postgres-start.log" 2>&1 || {
-    echo "package consumer: PostgreSQL contract failed: could not start owned postgres:16 container with data under $db_data; check Docker availability and rerun the full profile" >&2
+    echo "package consumer: PostgreSQL contract failed: could not start owned postgres:16 container with data volume $volume_name; check Docker availability and rerun the full profile" >&2
     exit 1
   }
 
