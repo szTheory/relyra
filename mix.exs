@@ -21,6 +21,8 @@ defmodule Relyra.MixProject do
       package: package(),
       docs: docs(),
       aliases: aliases(),
+      # Match ci.security's existing Decimal exception in the real Hex audit.
+      hex: [ignore_advisories: ["GHSA-rhv4-8758-jx7v"]],
       deps: deps()
     ]
   end
@@ -272,12 +274,12 @@ defmodule Relyra.MixProject do
         "cmd mix test test/security/login_trace_test.exs --warnings-as-errors",
         "cmd mix test test/security/testing_fixture_crypto_test.exs --warnings-as-errors",
         # decimal advisory GHSA-rhv4-8758-jx7v (Decimal.new exponent DoS) is ignored:
-        # decimal is transitive via ecto/postgrex (both pin `decimal ~> 2.0`, so 3.0.0 — the
-        # only patched version — is unreachable), and relyra makes no direct Decimal.new/parse
-        # calls (no exposure path). Revisit when ecto/postgrex allow decimal ~> 3.0.
-        "deps.audit --ignore-advisory-ids GHSA-rhv4-8758-jx7v",
-        "hex.audit",
-        "sobelow --config"
+        # decimal is transitive via ecto, which pins `decimal ~> 2.0`, so 3.0.0 — the
+        # only patched version — is unreachable, and relyra makes no direct Decimal.new/parse
+        # calls (no exposure path). Revisit when ecto allows decimal ~> 3.0.
+        "cmd mix deps.audit --ignore-advisory-ids GHSA-rhv4-8758-jx7v",
+        "cmd mix hex.audit",
+        "cmd mix sobelow --config"
       ],
       "ci.verify": [
         "ci.docs",

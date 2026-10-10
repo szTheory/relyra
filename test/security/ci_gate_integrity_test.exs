@@ -78,6 +78,230 @@ defmodule Relyra.Security.CiGateIntegrityTest do
   @standalone_gate_name "GATE-02 binary gate (gate02_c14n zero regressions)"
   @standalone_gate_run "mix test --only gate02_c14n --warnings-as-errors"
 
+  @decimal_advisory "GHSA-rhv4-8758-jx7v"
+  @audit_commands [
+    "cmd mix deps.audit --ignore-advisory-ids #{@decimal_advisory}",
+    "cmd mix hex.audit",
+    "cmd mix sobelow --config"
+  ]
+
+  test "audit and SAST successors use exact independent fail-fast commands" do
+    assert Enum.take(ci_security_steps(), -3) == @audit_commands
+    refute File.exists?("lib/mix/tasks/hex.audit.ex")
+
+    hex_config = Mix.Project.config()[:hex] || []
+    assert Keyword.keys(hex_config) in [[], [:ignore_advisories]]
+    assert Keyword.get(hex_config, :ignore_advisories, []) in [[], [@decimal_advisory]]
+  end
+
+  @tag timeout: 120_000
+  test "the extracted audit pipeline succeeds once per tool in distinct VMs" do
+    {output, status, markers} = audit_fixture("clean")
+    assert status == 0, output
+    assert Enum.map(markers, &hd/1) == ["deps.audit", "hex.audit", "sobelow"]
+    assert markers |> Enum.map(&List.last/1) |> Enum.uniq() |> length() == 3
+    assert output =~ "No vulnerabilities found."
+    assert output =~ "No retired or security advisory packages found"
+    assert output =~ "HEX_OWNER="
+    assert output =~ "/hex-"
+    refute output =~ "continuing without registry audit"
+  end
+
+  @tag timeout: 120_000
+  test "actual MixAudit findings and unavailable data stop both successors" do
+    for {scenario, message} <- [
+          {"deps-finding", "Vulnerabilities found!"},
+          {"deps-error", "owned advisory source unavailable"}
+        ] do
+      {output, status, markers} = audit_fixture(scenario)
+      assert status != 0, output
+      assert Enum.map(markers, &hd/1) == ["deps.audit"]
+      assert output =~ message
+    end
+  end
+
+  @tag timeout: 120_000
+  test "real Hex advisory, retirement, unavailable registry and missing task fail closed" do
+    for {scenario, message} <- [
+          {"hex-advisory", "Found packages with security advisories"},
+          {"hex-retired", "Found retired packages"},
+          {"hex-error", "owned registry unavailable"},
+          {"hex-missing", "could not be found"}
+        ] do
+      {output, status, markers} = audit_fixture(scenario)
+      assert status != 0, output
+
+      expected =
+        if scenario == "hex-missing", do: ["deps.audit"], else: ["deps.audit", "hex.audit"]
+
+      assert Enum.map(markers, &hd/1) == expected
+      assert output =~ message
+    end
+  end
+
+  @tag timeout: 120_000
+  test "Sobelow nonzero status is propagated without normalizing it to success" do
+    {output, status, markers} = audit_fixture("sobelow-failure")
+    assert status != 0, output
+    assert output =~ "** (exit) 42"
+    assert Enum.map(markers, &hd/1) == ["deps.audit", "hex.audit", "sobelow"]
+  end
+
+  @tag timeout: 120_000
+  test "the existing Decimal exception cannot hide another advisory or a retirement" do
+    {output, status, markers} =
+      audit_fixture("decimal-only", hex: [ignore_advisories: [@decimal_advisory]])
+
+    assert status == 0, output
+    assert length(markers) == 3
+    assert output =~ "Ignored advisories:"
+    assert output =~ @decimal_advisory
+
+    for scenario <- ["decimal-plus-new", "decimal-plus-retired"] do
+      {output, status, markers} =
+        audit_fixture(scenario, hex: [ignore_advisories: [@decimal_advisory]])
+
+      assert status != 0, output
+      assert Enum.map(markers, &hd/1) == ["deps.audit", "hex.audit"]
+      assert output =~ "Ignored advisories:"
+      assert output =~ "Found "
+    end
+  end
+
+  # Only external data providers are replaced in these owned child VMs. The
+  # installed MixAudit CLI/report/version matcher/System.stop and archive Hex
+  # task/ignore matcher/exit handler execute unchanged. Mix itself interprets
+  # the real extracted alias strings, so removing `cmd mix` breaks this proof.
+  defp audit_fixture(scenario, opts \\ []) do
+    root = Path.join(System.tmp_dir!(), "relyra-audit-gate-#{System.unique_integer([:positive])}")
+    File.mkdir_p!(root)
+    on_exit(fn -> File.rm_rf!(root) end)
+    marker = Path.join(root, "markers")
+
+    for dir <- ["hex", "cache", "tmp", "archives"], do: File.mkdir_p!(Path.join(root, dir))
+
+    audit_path = :mix_audit |> :code.lib_dir() |> to_string() |> Path.join("ebin")
+    jason_path = :jason |> :code.lib_dir() |> to_string() |> Path.join("ebin")
+    steps = Keyword.get(opts, :steps, Enum.take(ci_security_steps(), -3))
+    hex = Keyword.get(opts, :hex, [])
+
+    File.write!(Path.join(root, "mix.exs"), """
+    Code.prepend_path(#{inspect(audit_path)})
+    Code.prepend_path(#{inspect(jason_path)})
+    defmodule OwnedAuditFixture.MixProject do
+      use Mix.Project
+      def project, do: [app: :owned_audit_fixture, version: "0.0.0", deps: [],
+        hex: #{inspect(hex)}, aliases: [pipeline: #{inspect(steps)}]]
+    end
+    Code.require_file("providers.exs", __DIR__)
+    """)
+
+    File.write!(Path.join(root, "mix.lock"), """
+    %{owned: {:hex, :owned, "1.0.0", "checksum", [:mix], [], "hexpm", "checksum"}}
+    """)
+
+    File.write!(Path.join(root, "providers.exs"), audit_providers())
+
+    env = [
+      {"RELYRA_AUDIT_SCENARIO", scenario},
+      {"RELYRA_AUDIT_MARKERS", marker},
+      {"HEX_HOME", Path.join(root, "hex")},
+      {"XDG_CACHE_HOME", Path.join(root, "cache")},
+      {"TMPDIR", Path.join(root, "tmp")},
+      {"HEX_IGNORE_ADVISORIES", nil},
+      {"HEX_IGNORE_RETIREMENTS", nil},
+      {"MIX_BUILD_PATH", Path.join(root, "_build")},
+      {"MIX_PATH", nil},
+      {"ELIXIR_ERL_OPTIONS", "+S 2"}
+    ]
+
+    env =
+      if scenario == "hex-missing",
+        do: [{"MIX_ARCHIVES", Path.join(root, "archives")} | env],
+        else: env
+
+    {output, status} = System.cmd("mix", ["pipeline"], cd: root, env: env, stderr_to_stdout: true)
+
+    markers =
+      marker |> File.read!() |> String.split("\n", trim: true) |> Enum.map(&String.split(&1, ":"))
+
+    IO.puts("audit fixture #{scenario}: exit=#{status}, markers=#{inspect(markers)}")
+
+    if evidence = System.get_env("RELYRA_AUDIT_EVIDENCE_ROOT") do
+      File.mkdir_p!(evidence)
+      File.write!(Path.join(evidence, scenario <> ".log"), output)
+
+      File.write!(
+        Path.join(evidence, scenario <> ".json"),
+        Jason.encode!(%{status: status, markers: markers})
+      )
+    end
+
+    {output, status, markers}
+  end
+
+  defp audit_providers do
+    ~S"""
+    Code.compiler_options(ignore_module_conflict: true)
+    defmodule OwnedAuditFixture do
+      def scenario, do: System.fetch_env!("RELYRA_AUDIT_SCENARIO")
+      def mark(tool), do: File.write!(System.fetch_env!("RELYRA_AUDIT_MARKERS"), tool <> ":" <> System.pid() <> "\n", [:append])
+      def advisory(id), do: %{id: id, aliases: [], summary: "Owned deterministic finding", severity: :SEVERITY_HIGH}
+    end
+    defmodule MixAudit.Repo do
+      def advisories do
+        OwnedAuditFixture.mark("deps.audit")
+        case OwnedAuditFixture.scenario() do
+          "deps-error" -> raise "owned advisory source unavailable"
+          "deps-finding" -> [struct!(MixAudit.Advisory, id: "GHSA-owned-new-finding", package: "owned",
+            title: "Owned vulnerable version", url: "https://example.invalid/advisory",
+            severity: "high", vulnerable_version_ranges: [">= 1.0.0, < 2.0.0"], first_patched_versions: ["2.0.0"])]
+          _ -> []
+        end
+      end
+    end
+    defmodule MixAudit.Project do
+      def dependencies(_), do: [struct!(MixAudit.Dependency, package: "owned", version: "1.0.0", lockfile: "owned/mix.lock")]
+    end
+    defmodule Mix.Tasks.Sobelow do
+      use Mix.Task
+      def run(["--config"]) do
+        OwnedAuditFixture.mark("sobelow")
+        if OwnedAuditFixture.scenario() == "sobelow-failure", do: System.halt(42)
+      end
+    end
+    if Code.ensure_loaded?(Hex) do
+      Hex.start()
+      Code.compiler_options(ignore_module_conflict: true)
+      defmodule Hex.Registry.Server do
+        def open do
+          OwnedAuditFixture.mark("hex.audit")
+          IO.puts("HEX_OWNER=" <> to_string(:code.which(Mix.Tasks.Hex.Audit)))
+          if OwnedAuditFixture.scenario() == "hex-error", do: raise("owned registry unavailable")
+          :ok
+        end
+        def prefetch(_), do: :ok
+        def persist, do: :ok
+        def retired(_, _, _) do
+          if OwnedAuditFixture.scenario() in ["hex-retired", "decimal-plus-retired"],
+            do: %{reason: :RETIRED_SECURITY, message: "Owned retirement"}
+        end
+        def advisories(_, _, _) do
+          decimal = OwnedAuditFixture.advisory("GHSA-rhv4-8758-jx7v")
+          finding = OwnedAuditFixture.advisory("GHSA-owned-new-finding")
+          case OwnedAuditFixture.scenario() do
+            "hex-advisory" -> [finding]
+            "decimal-only" -> [decimal]
+            "decimal-plus-new" -> [decimal, finding]
+            "decimal-plus-retired" -> [decimal]
+            _ -> []
+          end
+        end
+      end
+    end
+    """
+  end
+
   # The list of `ci.security` step strings, extracted by parsing mix.exs as actual
   # Elixir AST (NOT byte/bracket scanning). The parser already strips comments and
   # understands string literals, so a stray `]`/`[` in a comment, a markdown list,
