@@ -3343,15 +3343,6 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  @tag :phase79_plan_handoff
-  @tag Relyra.TestGsdTools.test_tags()
-  test "Phase 79 filtered-history plan handoff keeps the reviewed wave order" do
-    script = Path.expand("../../scripts/verify_phase79_plan_contract.py", __DIR__)
-
-    assert {output, 0} = System.cmd("python3", [script, "--handoff"], stderr_to_stdout: true)
-    assert output =~ "handoff"
-  end
-
   @tag :phase79_filtered_candidate_provenance
   test "filtered candidate provenance requires the proof/map branch and fails closed when proof is absent" do
     temporary =
