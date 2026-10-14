@@ -110,7 +110,10 @@ defmodule LedgerLoopWeb.RejectionJourneysTest do
         ~r/(<SignatureValue>)([^<]+)(<\/SignatureValue>)/,
         xml,
         fn _, open, signature, close ->
-          replacement = "B" <> binary_part(signature, 1, byte_size(signature) - 1)
+          # Always change the first character; a fixed "B" is a no-op when the
+          # real signature already starts with "B" (about 1 run in 64).
+          first = if String.starts_with?(signature, "B"), do: "C", else: "B"
+          replacement = first <> binary_part(signature, 1, byte_size(signature) - 1)
           open <> replacement <> close
         end,
         global: false
