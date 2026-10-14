@@ -79,8 +79,11 @@ defmodule Relyra.Security.CiGateIntegrityTest do
   @standalone_gate_run "mix test --only gate02_c14n --warnings-as-errors"
 
   @decimal_advisory "GHSA-rhv4-8758-jx7v"
+  # Test-only bandit (runtime: false); remove once a patched bandit ships.
+  @bandit_advisory "GHSA-69m6-wcv4-rwcf"
+  @accepted_advisories [@decimal_advisory, @bandit_advisory]
   @audit_commands [
-    "cmd mix deps.audit --ignore-advisory-ids #{@decimal_advisory}",
+    "cmd mix deps.audit --ignore-advisory-ids #{Enum.join(@accepted_advisories, ",")}",
     "cmd mix hex.audit",
     "cmd mix sobelow --config"
   ]
@@ -91,7 +94,7 @@ defmodule Relyra.Security.CiGateIntegrityTest do
 
     hex_config = Mix.Project.config()[:hex] || []
     assert Keyword.keys(hex_config) in [[], [:ignore_advisories]]
-    assert Keyword.get(hex_config, :ignore_advisories, []) in [[], [@decimal_advisory]]
+    assert Keyword.get(hex_config, :ignore_advisories, []) in [[], @accepted_advisories]
   end
 
   @tag timeout: 120_000
