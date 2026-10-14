@@ -90,6 +90,8 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
   @standalone_gate_name "GATE-02 binary gate (gate02_c14n zero regressions)"
   @standalone_gate_command "mix test --only gate02_c14n --warnings-as-errors"
 
+  @gsd_tools_home_path ~r{/(?:Users|home)/[^/\s"'`]+/[^\s"'`]*gsd-tools(?:\.cjs)?}
+
   test "workflow identities, read defaults, job permissions, and hosted runners stay explicit" do
     workflows = load_workflows!()
 
@@ -300,6 +302,40 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     assert_raise ArgumentError, ~r/verified release pin/, fn ->
       validate_action_pins!(release_path, mismatched_release_label)
     end
+  end
+
+  @tag :gsd_tools_portability
+  test "tracked scripts and tests never hardcode a developer home path to gsd-tools" do
+    planted_cjs = "/" <> "Users" <> "/someone/.codex/gsd-core/bin/gsd-tools.cjs"
+    planted_bare = "/" <> "home" <> "/someone/.claude/gsd-core/bin/gsd-tools"
+    relative = ".codex/gsd-core/bin/" <> "gsd-tools.cjs"
+
+    assert Regex.match?(@gsd_tools_home_path, planted_cjs)
+    assert Regex.match?(@gsd_tools_home_path, planted_bare)
+    refute Regex.match?(@gsd_tools_home_path, relative)
+
+    {listing, 0} = System.cmd("git", ["ls-files", "-z", "--", "scripts", "test"])
+
+    hits =
+      listing
+      |> String.split(<<0>>, trim: true)
+      |> Enum.filter(&File.regular?/1)
+      |> Enum.flat_map(fn path ->
+        content = File.read!(path)
+
+        if String.valid?(content) do
+          content
+          |> String.split("\n")
+          |> Enum.with_index(1)
+          |> Enum.filter(fn {line, _number} -> Regex.match?(@gsd_tools_home_path, line) end)
+          |> Enum.map(fn {_line, number} -> {path, number} end)
+        else
+          []
+        end
+      end)
+
+    assert hits == [],
+           "tracked scripts/tests hardcode a developer home path to gsd-tools: #{inspect(hits)}"
   end
 
   defp load_workflows! do

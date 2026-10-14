@@ -5,13 +5,43 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import subprocess
 import sys
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-GSD_TOOLS = pathlib.Path("/Users/jon/.codex/gsd-core/bin/gsd-tools.cjs")
+GSD_TOOLS_RELATIVE = pathlib.Path("gsd-core/bin/gsd-tools.cjs")
+GSD_TOOLS_UNAVAILABLE_PREFIX = (
+    "gsd_tools_unavailable: gsd-tools not found; set GSD_TOOLS to an installed gsd-tools.cjs or install GSD"
+)
+
+
+class GsdToolsUnavailable(RuntimeError):
+    """gsd-tools could not be located; carries the stable gsd_tools_unavailable marker."""
+
+
+def resolve_gsd_tools(env=None, root: pathlib.Path = ROOT) -> pathlib.Path:
+    """Locate gsd-tools: GSD_TOOLS, CLAUDE_CONFIG_DIR, HOME/.claude, HOME/.codex, then repository."""
+    env = os.environ if env is None else env
+    override = env.get("GSD_TOOLS") or None
+    if override is not None:
+        path = pathlib.Path(override)
+        if path.is_file():
+            return path
+        raise GsdToolsUnavailable(f"{GSD_TOOLS_UNAVAILABLE_PREFIX}; GSD_TOOLS={path} is not a regular file "
+                                  "(an explicit override never falls back)")
+    home = pathlib.Path(env.get("HOME") or pathlib.Path.home())
+    candidates = []
+    if env.get("CLAUDE_CONFIG_DIR"):
+        candidates.append(pathlib.Path(env["CLAUDE_CONFIG_DIR"]) / GSD_TOOLS_RELATIVE)
+    candidates += [home / ".claude" / GSD_TOOLS_RELATIVE, home / ".codex" / GSD_TOOLS_RELATIVE,
+                   pathlib.Path(root) / GSD_TOOLS_RELATIVE]
+    for path in candidates:
+        if path.is_file():
+            return path
+    raise GsdToolsUnavailable(f"{GSD_TOOLS_UNAVAILABLE_PREFIX}; searched: {', '.join(map(str, candidates))}")
 
 
 def run(command: list[str], label: str) -> str:
@@ -22,7 +52,7 @@ def run(command: list[str], label: str) -> str:
 
 
 def verify_handoff() -> None:
-    raw = run(["node", str(GSD_TOOLS), "phase-plan-index", "79", "--raw"], "GSD phase-plan-index")
+    raw = run(["node", str(resolve_gsd_tools()), "phase-plan-index", "79", "--raw"], "GSD phase-plan-index")
     index = json.loads(raw)
     plans = {row["id"]: row for row in index["plans"]}
     assert plans["79-14"]["wave"] == 8 and plans["79-14"]["depends_on"] == ["79-07"]

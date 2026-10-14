@@ -3344,6 +3344,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :phase79_plan_handoff
+  @tag Relyra.TestGsdTools.test_tags()
   test "Phase 79 filtered-history plan handoff keeps the reviewed wave order" do
     script = Path.expand("../../scripts/verify_phase79_plan_contract.py", __DIR__)
 
