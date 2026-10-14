@@ -417,6 +417,12 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     end
   end
 
+  test "test repo query logging cannot echo fixture certificates into producer diagnostics" do
+    repo_config = Application.fetch_env!(:relyra, Relyra.TestSupport.EctoTestRepo)
+
+    assert Keyword.fetch!(repo_config, :log) == false
+  end
+
   test "failure propagation, missing setup, zero execution, and unsupported OTP cannot pass" do
     receipt = valid_receipt()
     [first | rest] = receipt["runs"]
