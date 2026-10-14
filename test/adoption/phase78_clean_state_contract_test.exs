@@ -436,6 +436,13 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert producer =~ ~s(clone_log="$run_root/clone.log")
   end
 
+  test "the private checkout keeps readable modes inside the owner-only run root" do
+    producer = File.read!("scripts/check_phase78_clean_state.sh")
+
+    assert producer =~ ~s{run_root="$(umask 077; mktemp -d}
+    assert producer =~ ~r/if ! \(umask 022 &&\s+git clone --no-local --no-checkout/
+  end
+
   test "failure propagation, missing setup, zero execution, and unsupported OTP cannot pass" do
     receipt = valid_receipt()
     [first | rest] = receipt["runs"]
