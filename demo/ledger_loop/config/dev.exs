@@ -5,6 +5,8 @@ config :ledger_loop, LedgerLoop.Repo,
   username: "postgres",
   password: "postgres",
   hostname: System.get_env("PGHOST") || "localhost",
+  # Ecto defaults the pool to 5432 and ignores PGPORT, though ecto.create honours it.
+  port: String.to_integer(System.get_env("PGPORT") || "5432"),
   database: "ledger_loop_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
