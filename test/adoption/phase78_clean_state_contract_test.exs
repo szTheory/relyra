@@ -423,6 +423,19 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert Keyword.fetch!(repo_config, :log) == false
   end
 
+  test "the producer writes only manifest-recorded logs into the diagnostics bundle" do
+    producer = File.read!("scripts/check_phase78_clean_state.sh")
+    log_writes = Regex.scan(~r{"\$logs/([^"]*)"}, producer, capture: :all_but_first)
+
+    assert log_writes != []
+
+    for [name] <- log_writes do
+      assert name =~ ~r{^(?:setup|command)-\$[a-z_]+\.log(?:\.overflow)?$}
+    end
+
+    assert producer =~ ~s(clone_log="$run_root/clone.log")
+  end
+
   test "failure propagation, missing setup, zero execution, and unsupported OTP cannot pass" do
     receipt = valid_receipt()
     [first | rest] = receipt["runs"]

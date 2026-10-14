@@ -399,9 +399,12 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-if ! git clone --no-local --no-checkout --quiet "$source_root" "$workspace" >"$logs/clone.log" 2>&1 ||
-   ! git -C "$workspace" fetch --quiet "$source_root" "$source_commit" >>"$logs/clone.log" 2>&1 ||
-   ! git -C "$workspace" checkout --quiet --detach "$source_commit" >>"$logs/clone.log" 2>&1; then
+# The clone log stays in the private run root: the diagnostics bundle may only
+# hold manifest-recorded logs, and --validate-diagnostics rejects anything else.
+clone_log="$run_root/clone.log"
+if ! git clone --no-local --no-checkout --quiet "$source_root" "$workspace" >"$clone_log" 2>&1 ||
+   ! git -C "$workspace" fetch --quiet "$source_root" "$source_commit" >>"$clone_log" 2>&1 ||
+   ! git -C "$workspace" checkout --quiet --detach "$source_commit" >>"$clone_log" 2>&1; then
   echo "phase78 clean-state: failed to create private committed-source checkout" >&2
   exit 1
 fi
