@@ -13,20 +13,22 @@ on:
       - "prompts/**"
       - ".github/workflows/planning-pr-checks.yml"
 
-concurrency:
-  group: planning-pr-checks-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 permissions:
-  contents: write
-  actions: write
-  pull-requests: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   trigger-planning-pr-checks:
     name: Trigger security-gates on planning PR
     if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      checks: read
+      pull-requests: read
 
     steps:
       - name: Verify planning-only diff

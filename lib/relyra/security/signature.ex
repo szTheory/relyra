@@ -53,15 +53,10 @@ defmodule Relyra.Security.Signature do
   tag (`:metadata_refresh` instead of `:sp_initiated`) so adopters can
   attach distinct handlers to the unattended metadata-refresh channel.
 
-  Phase 21 contract per D-16: this MUST be called BEFORE the candidate is
-  parsed deeply (no `Parser.parse` invocation between fetch and this call
-  on the scheduled path). The caller (Phase 21 wrapper) builds a
-  metadata-root-shaped `parsed_doc` map exposing the `:signed_candidates`
-  rooted at the EntityDescriptor / EntitiesDescriptor envelope.
-
-  `cert_chain` MUST be the operator-pinned PEM list resolved from
-  `MetadataSource.metadata_trust_fingerprints` per D-17 — NEVER the IdP's
-  assertion certs.
+  Verify the metadata root signature before the candidate is parsed deeply.
+  `cert_chain` must contain the operator-pinned PEM certificates resolved from
+  `MetadataSource.metadata_trust_fingerprints`; never use the IdP assertion
+  certificates as metadata trust anchors.
   """
   @spec verify_metadata_root(map(), map(), [binary()], keyword()) ::
           {:ok, SignedNode.t()} | {:error, Error.t()}
@@ -226,13 +221,9 @@ defmodule Relyra.Security.Signature do
          Error.new(:missing_signature, "No signed node candidates were verified", details)}
 
       [candidate] ->
-        # D-01: THE published-hex auth-bypass site. The crypto runs BETWEEN
-        # matching the single [candidate] and building %SignedNode{}. All
-        # pre-existing trust gates already ran in do_verify/4 (cert_chain present,
-        # KeyInfo-trust rejection, duplicate-ID, algorithm allowlist) and the
-        # single-candidate selection happened above — none of that is touched.
-        # `candidate` is the RAW enriched map off parsed_doc[:signed_candidates]
-        # (Plan 02 D-02), NOT a select_candidate handle.
+        # Verify the selected candidate before constructing SignedNode. The
+        # candidate retains the parsed document's signed node, SignedInfo, and
+        # Reference binding used by the cryptographic checks below.
         with :ok <-
                cryptographically_verify(candidate, signature_method, cert_chain, details) do
           {:ok,
@@ -255,12 +246,10 @@ defmodule Relyra.Security.Signature do
     end
   end
 
-  # Real cryptographic XMLDSig verification of the bound candidate (D-01..D-08).
-  # Every step fails CLOSED to a typed %Relyra.Error{} naming the failed check;
-  # NOTHING here may raise (Pitfalls 3, 4). Step order matters: the digest-atom
-  # / ECDSA gate (D-06/D-07) runs BEFORE any verify attempt, then key extraction
-  # (D-04), then the SignedInfo signature math (D-03), then the Reference digest
-  # recompute (D-05). %SignedNode{} is only built when BOTH crypto checks pass.
+  # Fail closed with a typed error for invalid inputs, unsupported verification
+  # methods, an unusable configured key, a bad SignedInfo signature, or a
+  # mismatched Reference digest. Construct SignedNode only after both
+  # cryptographic checks succeed.
   defp cryptographically_verify(candidate, signature_method, cert_chain, details) do
     signed_info_node = Map.get(candidate, :signed_info_node)
     signature_value_b64 = Map.get(candidate, :signature_value_b64)
@@ -272,11 +261,11 @@ defmodule Relyra.Security.Signature do
            require_field(signature_value_b64, :invalid_signature, "SignatureValue", details),
          :ok <- require_field(digest_value_b64, :digest_mismatch, "DigestValue", details),
          :ok <- require_field(referenced_node, :missing_signature, "referenced node", details),
-         # 1. Digest-atom + ECDSA gate (D-06/D-07) — fail CLOSED before any verify.
+         # Resolve a supported digest before attempting signature verification.
          {:ok, digest_atom} <- digest_atom(signature_method, details),
-         # 2. Trust-source public key (D-04) — configured cert_chain only.
+         # Derive the verification key only from configured certificates.
          {:ok, public_key} <- public_key_from_cert_chain(cert_chain, details),
-         # 3. Signature math (D-03) — :public_key.verify of the canonical SignedInfo.
+         # Verify the canonical SignedInfo with the configured certificate key.
          :ok <-
            verify_signature_math(
              signed_info_node,
@@ -285,7 +274,7 @@ defmodule Relyra.Security.Signature do
              public_key,
              details
            ),
-         # 4. Digest check (D-05) — recompute over the canonical referenced element.
+         # Recompute the digest over the canonicalized referenced node.
          :ok <- verify_reference_digest(candidate, digest_value_b64, digest_atom, details) do
       :ok
     end
@@ -302,9 +291,9 @@ defmodule Relyra.Security.Signature do
      )}
   end
 
-  # D-06/D-07: map the signature-method URI to the digest atom, failing CLOSED
-  # for ECDSA / unknown (the typed reject is the contract — the allowlist still
-  # permits ECDSA URIs, Plan 02 decision).
+  # Map the signature method to the digest used for cryptographic verification.
+  # Reject methods without a supported verification digest, even if the
+  # configured algorithm policy recognizes their URI.
   defp digest_atom(signature_method, details) do
     case AlgorithmPolicy.digest_atom_for_signature_method(signature_method) do
       {:ok, atom} ->
@@ -320,11 +309,8 @@ defmodule Relyra.Security.Signature do
     end
   end
 
-  # D-04: extract the RSA public key from the FIRST (leaf) configured cert PEM.
-  # Mirrors the certificate_facts.ex:26-47 pem_decode + try/rescue idiom and
-  # fails CLOSED with :untrusted_certificate on ANY malformed PEM/DER (Pitfall 3
-  # — pem_entry_decode / pkix_decode_cert RAISE on malformed input). Per A1 the
-  # configured signing cert is the single/first entry; chain-walk is out of scope.
+  # Extract the public key from the first configured certificate and fail
+  # closed with :untrusted_certificate if its PEM or DER cannot be decoded.
   defp public_key_from_cert_chain(cert_chain, details) do
     case public_key_from_cert_chain(cert_chain) do
       {:ok, public_key} ->
@@ -409,10 +395,9 @@ defmodule Relyra.Security.Signature do
        )}
   end
 
-  # D-03: canonicalize the SignedInfo (bare exclusive-C14N — SignedInfo carries
-  # NO enveloped-signature transform; reading its own ds:CanonicalizationMethod
-  # InclusiveNamespaces PrefixList when present, empty list otherwise) and verify
-  # the decoded SignatureValue with :public_key.verify against the configured key.
+  # Canonicalize SignedInfo using its declared canonicalization parameters, then
+  # verify SignatureValue with :public_key.verify and the configured certificate
+  # key.
   defp verify_signature_math(
          signed_info_node,
          signature_value_b64,
@@ -448,11 +433,9 @@ defmodule Relyra.Security.Signature do
     end
   end
 
-  # D-05: recompute the Reference digest over the canonicalized, transformed
-  # referenced element (PureBeam.canonicalize over the bound :node — the EXACT
-  # node the verifier consumes, anti-XSW) and constant-time-compare it to the
-  # declared DigestValue. Length-guard BEFORE :crypto.hash_equals/2 (Pitfall 4 —
-  # it RAISES on unequal-length inputs).
+  # Recompute the Reference digest over the canonicalized node bound to this
+  # candidate, then compare it with DigestValue in constant time. Check lengths
+  # first because :crypto.hash_equals/2 requires equal-length binaries.
   defp verify_reference_digest(candidate, digest_value_b64, digest_atom, details) do
     with {:ok, %{canonical_xml: ref_bytes}} <- PureBeam.canonicalize(candidate),
          {:ok, declared} <- decode_b64(digest_value_b64) do
@@ -485,24 +468,22 @@ defmodule Relyra.Security.Signature do
 
   # Read the SignedInfo's own ds:CanonicalizationMethod InclusiveNamespaces
   # PrefixList when present (reusing the C14N.prefix_list_from_transforms/1 shape,
-  # which scans a node for an InclusiveNamespaces descendant). Empty list is the
-  # DERIVED result for the local signer (Open Q2), NOT a hardcoded default.
+  # which scans a node for an InclusiveNamespaces descendant). An absent list
+  # produces an empty list from the canonicalization parameters.
   defp signed_info_prefix_list(signed_info_node) do
     C14N.prefix_list_from_transforms(signed_info_node)
   end
 
   # Tolerate internal whitespace: real IdPs (ADFS, Shibboleth, OpenSAML stacks)
   # line-wrap <ds:SignatureValue>/<ds:DigestValue> base64 at 64/76 columns
-  # (WR-01). Without `ignore: :whitespace`, Base.decode64/1 rejects embedded
+  # Without `ignore: :whitespace`, Base.decode64/1 rejects embedded
   # newlines, yielding spurious :invalid_signature / :digest_mismatch on
   # legitimately signed material.
   defp decode_b64(value) when is_binary(value), do: Base.decode64(value, ignore: :whitespace)
   defp decode_b64(_value), do: :error
 
-  # :public_key.verify/4 returns false on a bad signature (no raise) but RAISES
-  # on a malformed KEY / decoded ASN.1 (Pitfall 3). Wrap it so a malformed key
-  # surfaces as a non-verifying result (the caller emits :invalid_signature),
-  # never an escaping exception on the auth path.
+  # Treat verification errors from malformed keys as a failed signature so an
+  # exception never escapes the authentication path.
   defp safe_verify(message, digest_atom, signature, public_key) do
     :public_key.verify(message, digest_atom, signature, public_key)
   rescue

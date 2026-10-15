@@ -15,6 +15,15 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
     proxy up up-build up-d up-d-build down reset reseed nuke logs url open fleet keycloak doctor help
   )
 
+  test "signature rationale stays current in source prose" do
+    prose = signature_source_prose()
+
+    refute prose =~ ~r/\b(?:Phase|Plan)\s+\d+|\bD-\d+\b/
+    assert prose =~ "operator-pinned PEM certificates"
+    assert prose =~ "MetadataSource.metadata_trust_fingerprints"
+    assert prose =~ "before the candidate is parsed deeply"
+  end
+
   test "Makefile exposes the canonical documented target inventory" do
     makefile = File.read!(@makefile_path)
 
@@ -911,6 +920,304 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
              Enum.map_join(violations, "\n", &"  - #{&1}")
   end
 
+  test "active completion directives are rejected while quoted examples are ignored" do
+    phase_dir = temp_phase_dir!("77-policy")
+    document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+    File.write!(
+      document_path,
+      """
+      # Policy examples
+
+      Inline example: `<human-check>` and `status: human_needed`.
+
+      > ## Manual-Only Verifications
+      > This is quoted policy vocabulary.
+
+      ```yaml
+      status: human_needed
+      ```
+      """
+    )
+
+    assert phase_policy_violations(phase_dir) == []
+
+    File.write!(
+      document_path,
+      "# Active policy\n\n<human-check> must be completed before release.\n"
+    )
+
+    expected_violation = "#{document_path} contains \"<human-check>\""
+    assert [^expected_violation] = phase_policy_violations(phase_dir)
+  end
+
+  @tag :phase_policy_source_scope
+  test "generated verification evidence is outside actionable policy inputs" do
+    phase_dir = temp_phase_dir!("77-policy-source-scope")
+    plan_path = Path.join(phase_dir, "77-01-PLAN.md")
+    context_path = Path.join(phase_dir, "77-CONTEXT.md")
+    verification_path = Path.join(phase_dir, "77-VERIFICATION.md")
+
+    File.write!(plan_path, "<human-check> must be completed before release.\n")
+    File.write!(context_path, "status: human_needed\n")
+
+    File.write!(
+      verification_path,
+      "Generated audit evidence mentions <human-check> and status: human_needed.\n"
+    )
+
+    assert MapSet.new(phase_policy_violations(phase_dir)) ==
+             MapSet.new([
+               "#{plan_path} contains \"<human-check>\"",
+               "#{context_path} contains \"status: human_needed\""
+             ])
+  end
+
+  test "longer Markdown closing fences keep examples quoted and resume active scanning" do
+    phase_dir = temp_phase_dir!("77-long-fence")
+    document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+    File.write!(
+      document_path,
+      """
+      ```yaml
+      An inner ``` code span cannot close the fence.
+      status: human_needed
+      ````
+      """
+    )
+
+    assert phase_policy_violations(phase_dir) == []
+
+    File.write!(
+      document_path,
+      """
+      ```yaml
+      An inner ``` code span cannot close the fence.
+      status: human_needed
+      ````
+      <human-check> active after the fence.
+      """
+    )
+
+    expected_violation = "#{document_path} contains \"<human-check>\""
+    assert [^expected_violation] = phase_policy_violations(phase_dir)
+  end
+
+  test "Markdown fence boundaries keep quoted directives out and scan after valid closes" do
+    valid_fences = [
+      %{
+        name: "backtick equal",
+        opener: "```yaml",
+        content: ["status: human_needed"],
+        close: "```"
+      },
+      %{
+        name: "backtick longer",
+        opener: "```yaml",
+        content: ["status: human_needed"],
+        close: "````"
+      },
+      %{
+        name: "indented backtick with whitespace",
+        opener: "   ```yaml",
+        content: ["status: human_needed"],
+        close: "   ```` \t"
+      },
+      %{name: "tilde equal", opener: "~~~yaml", content: ["status: human_needed"], close: "~~~"},
+      %{
+        name: "tilde longer",
+        opener: "~~~yaml",
+        content: ["status: human_needed"],
+        close: "~~~~"
+      },
+      %{
+        name: "indented tilde with whitespace",
+        opener: "   ~~~yaml",
+        content: ["status: human_needed"],
+        close: "   ~~~~ \t"
+      }
+    ]
+
+    non_closing_boundaries = [
+      %{name: "shorter backtick run", opener: "````yaml", candidate: "```", close: "````"},
+      %{name: "shorter tilde run", opener: "~~~~yaml", candidate: "~~~", close: "~~~~"},
+      %{
+        name: "opposite character after backticks",
+        opener: "```yaml",
+        candidate: "~~~",
+        close: "```"
+      },
+      %{
+        name: "opposite character after tildes",
+        opener: "~~~yaml",
+        candidate: "```",
+        close: "~~~"
+      },
+      %{
+        name: "mixed run after backticks",
+        opener: "```yaml",
+        candidate: "```~~~",
+        close: "```"
+      },
+      %{
+        name: "mixed run after tildes",
+        opener: "~~~yaml",
+        candidate: "~~~```",
+        close: "~~~"
+      },
+      %{
+        name: "backtick trailing content",
+        opener: "```yaml",
+        candidate: "``` trailing",
+        close: "```"
+      },
+      %{
+        name: "tilde trailing content",
+        opener: "~~~yaml",
+        candidate: "~~~ trailing",
+        close: "~~~"
+      },
+      %{
+        name: "over-indented backtick run",
+        opener: "```yaml",
+        candidate: "    ```",
+        close: "```"
+      },
+      %{name: "over-indented tilde run", opener: "~~~yaml", candidate: "    ~~~", close: "~~~"}
+    ]
+
+    Enum.each(valid_fences, fn boundary ->
+      phase_dir = temp_phase_dir!("77-valid-" <> String.replace(boundary.name, " ", "-"))
+      document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+      File.write!(
+        document_path,
+        Enum.join(
+          [boundary.opener | boundary.content] ++
+            [boundary.close, "<human-check> active after close."],
+          "\n"
+        )
+      )
+
+      expected_violation = "#{document_path} contains \"<human-check>\""
+      assert [^expected_violation] = phase_policy_violations(phase_dir), boundary.name
+    end)
+
+    Enum.each(non_closing_boundaries, fn boundary ->
+      phase_dir = temp_phase_dir!("77-non-close-" <> String.replace(boundary.name, " ", "-"))
+      document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+      File.write!(
+        document_path,
+        Enum.join(
+          [
+            boundary.opener,
+            "status: human_needed",
+            boundary.candidate,
+            "status: human_needed",
+            boundary.close,
+            "<human-check> active after close."
+          ],
+          "\n"
+        )
+      )
+
+      expected_violation = "#{document_path} contains \"<human-check>\""
+      assert [^expected_violation] = phase_policy_violations(phase_dir), boundary.name
+    end)
+  end
+
+  test "invalid backtick openers stay active while tilde info may contain backticks" do
+    invalid_backtick_dir = temp_phase_dir!("77-invalid-backtick-opener")
+    invalid_backtick_path = Path.join(invalid_backtick_dir, "77-CONTEXT.md")
+
+    valid_tilde_dir = temp_phase_dir!("77-tilde-backtick-info")
+    valid_tilde_path = Path.join(valid_tilde_dir, "77-CONTEXT.md")
+
+    File.write!(valid_tilde_path, "~~~elixir`info\nstatus: human_needed\n~~~\n")
+
+    assert phase_policy_violations(valid_tilde_dir) == []
+
+    File.write!(invalid_backtick_path, "```elixir`invalid\nstatus: human_needed\n")
+
+    expected_violation = "#{invalid_backtick_path} contains \"status: human_needed\""
+    assert [^expected_violation] = phase_policy_violations(invalid_backtick_dir)
+  end
+
+  test "an unclosed fence consumes policy text through end of file" do
+    phase_dir = temp_phase_dir!("77-unclosed-fence")
+    document_path = Path.join(phase_dir, "77-CONTEXT.md")
+
+    File.write!(
+      document_path,
+      """
+      ~~~yaml
+      status: human_needed
+          ~~~
+      <human-check> remains inside the unclosed fence.
+      """
+    )
+
+    assert phase_policy_violations(phase_dir) == []
+  end
+
+  test "active incomplete phases still reject required UAT artifacts" do
+    phase_dir = temp_phase_dir!("77-uat")
+    uat_path = Path.join(phase_dir, "77-UAT.md")
+    File.write!(uat_path, "# Required UAT\n")
+
+    expected_violation = "#{uat_path} requires a UAT artifact"
+    assert [^expected_violation] = phase_policy_violations(phase_dir)
+  end
+
+  test "Getting Started proves the adopter flow without repository workflow details" do
+    guide = File.read!("guides/getting_started.md")
+
+    assert_in_order(guide, [
+      "## 1. Install",
+      "## 2. Scaffold",
+      "## 3. Prove local login with `Relyra.Testing`",
+      "## 4. Choose one provider runbook",
+      "## 5. Production follow-ons"
+    ])
+
+    assert guide =~ "Relyra.Testing.signed_success/1"
+    assert guide =~ "Relyra.Testing.Phoenix.post_response/5"
+    assert guide =~ "recipes/okta.md"
+    refute guide =~ "Maintainers:"
+    refute guide =~ "mix ci.docs"
+    refute guide =~ "planning-pr-checks.yml"
+    refute guide =~ "GSD"
+  end
+
+  test "JTBD gap map describes current coverage as a maintainer reference" do
+    gap_map = File.read!("docs/jtbd_gap_map.md")
+
+    assert gap_map =~ "Maintainer reference."
+    assert gap_map =~ "guides/jtbd_user_flows.md"
+
+    Enum.each(
+      [
+        "Phoenix SaaS adopter",
+        "Platform or auth owner",
+        "Operator, support, or SRE",
+        "Security reviewer",
+        "Customer IT admin",
+        "Custom or generic SAML adopter"
+      ],
+      fn job -> assert gap_map =~ job end
+    )
+
+    assert gap_map =~ "AUTHN-POST-01"
+    assert gap_map =~ "KMS-01"
+    assert gap_map =~ "SIGNED-META-01"
+    assert gap_map =~ "What is intentionally out of scope"
+    refute gap_map =~ "What changed since last refresh"
+    refute gap_map =~ "Last refreshed:"
+    refute Regex.match?(~r/\bPhases? \d+/, gap_map)
+  end
+
   test "assert_in_order advances beyond repeated tokens" do
     assert_in_order("repeat middle repeat", ["repeat", "middle", "repeat"])
   end
@@ -931,19 +1238,89 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
   defp automation_policy_violations(phase) do
     phase_dirs = Path.wildcard(".planning/phases/#{phase}-*")
 
+    Enum.flat_map(phase_dirs, &phase_policy_violations/1)
+  end
+
+  defp phase_policy_violations(phase_dir) do
     document_violations =
-      for phase_dir <- phase_dirs,
-          path <- Path.wildcard(Path.join(phase_dir, "*.md")),
+      for path <-
+            Path.wildcard(Path.join(phase_dir, "*-PLAN.md")) ++
+              Path.wildcard(Path.join(phase_dir, "*-CONTEXT.md")),
           marker <- ["<human-check>", "## Manual-Only Verifications", "status: human_needed"],
-          String.contains?(File.read!(path), marker),
+          String.contains?(active_markdown_prose(File.read!(path)), marker),
           do: "#{path} contains #{inspect(marker)}"
 
     uat_violations =
-      for phase_dir <- phase_dirs,
-          path <- Path.wildcard(Path.join(phase_dir, "*-UAT.md")),
+      for path <- Path.wildcard(Path.join(phase_dir, "*-UAT.md")),
           do: "#{path} requires a UAT artifact"
 
     document_violations ++ uat_violations
+  end
+
+  defp active_markdown_prose(markdown) do
+    markdown
+    |> strip_fenced_markdown()
+    |> String.replace(~r/(`+)(?s:.*?)\1/, "")
+    |> String.split("\n")
+    |> Enum.reject(&Regex.match?(~r/^\s{0,3}>/, &1))
+    |> Enum.join("\n")
+  end
+
+  defp strip_fenced_markdown(markdown) do
+    markdown
+    |> String.split("\n")
+    |> strip_fenced_lines(nil, [])
+    |> Enum.join("\n")
+  end
+
+  defp strip_fenced_lines([], _fence, active_lines), do: Enum.reverse(active_lines)
+
+  defp strip_fenced_lines([line | rest], nil, active_lines) do
+    case markdown_fence(line) do
+      nil -> strip_fenced_lines(rest, nil, [line | active_lines])
+      fence -> strip_fenced_lines(rest, fence, active_lines)
+    end
+  end
+
+  defp strip_fenced_lines([line | rest], {character, length} = fence, active_lines) do
+    if markdown_fence_close?(line, character, length) do
+      strip_fenced_lines(rest, nil, active_lines)
+    else
+      strip_fenced_lines(rest, fence, active_lines)
+    end
+  end
+
+  defp markdown_fence(line) do
+    case Regex.run(~r/^ {0,3}(`{3,}|~{3,})(.*)$/, line, capture: :all_but_first) do
+      [fence, info] ->
+        if String.first(fence) == "`" and String.contains?(info, "`") do
+          nil
+        else
+          {String.first(fence), String.length(fence)}
+        end
+
+      _ ->
+        nil
+    end
+  end
+
+  defp markdown_fence_close?(line, character, opening_length) do
+    case Regex.run(~r/^ {0,3}(`{3,}|~{3,})[ \t]*$/, line, capture: :all_but_first) do
+      [fence] -> String.first(fence) == character and String.length(fence) >= opening_length
+      _ -> false
+    end
+  end
+
+  defp temp_phase_dir!(suffix) do
+    path =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-doc-policy-#{suffix}-#{System.unique_integer([:positive])}"
+      )
+
+    File.mkdir_p!(path)
+    on_exit(fn -> File.rm_rf!(path) end)
+    path
   end
 
   defp run_make(args, env \\ []) do
@@ -1015,5 +1392,34 @@ defmodule Relyra.Docs.DemoGuideDriftTest do
           flunk("Missing banner token: #{inspect(token)} after byte #{cursor}")
       end
     end)
+  end
+
+  defp signature_source_prose do
+    "lib/relyra/security/signature.ex"
+    |> File.read!()
+    |> String.split("\n")
+    |> Enum.reduce({false, []}, fn line, {in_doc, prose} ->
+      trimmed = String.trim_leading(line)
+
+      cond do
+        in_doc and String.contains?(line, "\"\"\"") ->
+          {false, [line | prose]}
+
+        in_doc ->
+          {true, [line | prose]}
+
+        String.starts_with?(trimmed, "@doc \"\"\"") ->
+          {true, prose}
+
+        String.starts_with?(trimmed, "#") ->
+          {false, [line | prose]}
+
+        true ->
+          {false, prose}
+      end
+    end)
+    |> elem(1)
+    |> Enum.reverse()
+    |> Enum.join("\n")
   end
 end

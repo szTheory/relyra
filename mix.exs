@@ -13,6 +13,7 @@ defmodule Relyra.MixProject do
       description: "Strict-by-default SAML 2.0 Service Provider library for Elixir and Phoenix.",
       elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
+      test_ignore_filters: [~r{^test/fixtures/}],
       start_permanent: Mix.env() == :prod,
       compilers: [:parser_path_guard] ++ Mix.compilers(),
       elixirc_options: [ignore_module_conflict: true],
@@ -20,6 +21,8 @@ defmodule Relyra.MixProject do
       package: package(),
       docs: docs(),
       aliases: aliases(),
+      # Match ci.security's accepted advisory exceptions in the real Hex audit.
+      hex: [ignore_advisories: ["GHSA-rhv4-8758-jx7v", "GHSA-69m6-wcv4-rwcf"]],
       deps: deps()
     ]
   end
@@ -31,6 +34,9 @@ defmodule Relyra.MixProject do
         "ci.fast": :test,
         "ci.docs": :test,
         "ci.conformance": :test,
+        "ci.evidence": :test,
+        "ci.phase73.reconciliation": :test,
+        "ci.phase78.receipt": :test,
         "ci.security": :test,
         "ci.verify": :test,
         "ci.integration": :test,
@@ -223,13 +229,22 @@ defmodule Relyra.MixProject do
         "cmd mix test test/docs/logout_recipe_drift_test.exs --warnings-as-errors",
         "cmd test -f demo/ledger_loop/README.md",
         "cmd mix test test/docs/demo_guide_drift_test.exs --warnings-as-errors",
-        "test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
-        "test test/mix/relyra_install_test.exs test/test_support_demo_test.exs test/testing_demo_test.exs --warnings-as-errors",
+        "cmd mix test test/mix/tasks/relyra_batteries_included_test.exs --warnings-as-errors",
+        "cmd mix test test/mix/relyra_install_test.exs test/test_support_demo_test.exs test/testing_demo_test.exs --warnings-as-errors",
         "relyra.batteries_included --check"
       ],
       "ci.conformance": [
         "test test/conformance/sp_conformance_test.exs test/mix/tasks/relyra_conformance_test.exs --only conformance --warnings-as-errors",
         "relyra.conformance --check"
+      ],
+      "ci.evidence": [
+        "cmd mix test test/adoption/evidence_contract_test.exs test/adoption/external_canary_contract_test.exs test/governance/milestone_scope_test.exs --only evidence_contract --seed 0 --warnings-as-errors"
+      ],
+      "ci.phase73.reconciliation": [
+        "cmd mix test test/governance/phase_73_reconciliation_test.exs --only phase_73_reconciliation_replay --warnings-as-errors"
+      ],
+      "ci.phase78.receipt": [
+        "cmd mix test test/adoption/phase78_clean_state_contract_test.exs --only phase78_clean_state_receipt --warnings-as-errors"
       ],
       "ci.security": [
         "compile --warnings-as-errors",
@@ -259,16 +274,20 @@ defmodule Relyra.MixProject do
         "cmd mix test test/security/login_trace_test.exs --warnings-as-errors",
         "cmd mix test test/security/testing_fixture_crypto_test.exs --warnings-as-errors",
         # decimal advisory GHSA-rhv4-8758-jx7v (Decimal.new exponent DoS) is ignored:
-        # decimal is transitive via ecto/postgrex (both pin `decimal ~> 2.0`, so 3.0.0 — the
-        # only patched version — is unreachable), and relyra makes no direct Decimal.new/parse
-        # calls (no exposure path). Revisit when ecto/postgrex allow decimal ~> 3.0.
-        "deps.audit --ignore-advisory-ids GHSA-rhv4-8758-jx7v",
-        "hex.audit",
-        "sobelow --config"
+        # decimal is transitive via ecto, which pins `decimal ~> 2.0`, so 3.0.0 — the
+        # only patched version — is unreachable, and relyra makes no direct Decimal.new/parse
+        # calls (no exposure path). Revisit when ecto allows decimal ~> 3.0.
+        # bandit advisory GHSA-69m6-wcv4-rwcf (EEF-CVE-2026-105659, HTTP/2 blocked-send
+        # deadline reset) is ignored: bandit is `only: :test, runtime: false`, never
+        # ships in the Hex package, and no patched release exists yet. Remove the
+        # exception and bump bandit (root + demo/ledger_loop) once one does.
+        "cmd mix deps.audit --ignore-advisory-ids GHSA-rhv4-8758-jx7v,GHSA-69m6-wcv4-rwcf",
+        "cmd mix hex.audit",
+        "cmd mix sobelow --config"
       ],
       "ci.verify": [
         "ci.docs",
-        "test test/relyra/ecto/audit_hardening_test.exs test/relyra/ecto/connection_record_test.exs test/relyra/ecto/metadata_apply_test.exs test/relyra/ecto/certificate_inventory_transition_test.exs test/relyra/ecto/mapping_commands_test.exs test/relyra/ecto/ecto_connection_resolver_test.exs test/relyra/connection_snapshot_test.exs test/relyra/user_mapper/default_attribute_test.exs --warnings-as-errors"
+        "cmd mix test test/relyra/ecto/audit_hardening_test.exs test/relyra/ecto/connection_record_test.exs test/relyra/ecto/metadata_apply_test.exs test/relyra/ecto/certificate_inventory_transition_test.exs test/relyra/ecto/mapping_commands_test.exs test/relyra/ecto/ecto_connection_resolver_test.exs test/relyra/connection_snapshot_test.exs test/relyra/user_mapper/default_attribute_test.exs --warnings-as-errors"
       ],
       "ci.integration": [
         "test test/adoption test/security/xml/integration_smoke_test.exs test/mix/tasks/verify_release_parity_test.exs --only integration --warnings-as-errors"

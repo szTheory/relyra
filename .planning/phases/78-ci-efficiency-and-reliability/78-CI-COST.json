@@ -1,0 +1,3602 @@
+{
+  "comparisons": {
+    "cold": {
+      "matrix_wall_ms": {
+        "baseline_median_ms": 1849424,
+        "candidate_median_ms": 1403236,
+        "reduction_ms": 446188,
+        "reduction_percent": 24.13
+      },
+      "runner_cost_ms": {
+        "baseline_median_ms": 3594206,
+        "candidate_median_ms": 2734452,
+        "reduction_ms": 859754,
+        "reduction_percent": 23.92
+      }
+    },
+    "warm": {
+      "matrix_wall_ms": {
+        "baseline_median_ms": 1700912.0,
+        "candidate_median_ms": 1618698.5,
+        "reduction_ms": 82213.5,
+        "reduction_percent": 4.83
+      },
+      "runner_cost_ms": {
+        "baseline_median_ms": 3291810.5,
+        "candidate_median_ms": 3018485.5,
+        "reduction_ms": 273325.0,
+        "reduction_percent": 8.3
+      }
+    }
+  },
+  "configurations": {
+    "baseline": {
+      "samples": [
+        {
+          "cache_state": "cold",
+          "id": "baseline-1",
+          "proof_set_id": "phase73-dd11175a6d2aa196",
+          "receipts": {
+            "27": {
+              "cache": "cold",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1747055,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 27)",
+                "os": "Linux",
+                "otp": "27"
+              },
+              "runner_ms": 1745915,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 2243,
+              "setup_ms": 107735,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 16651,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 4238,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 31667,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 11468,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 86865,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 606,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 29755,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 501671,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.fast",
+                  "conclusion": "passed",
+                  "duration_ms": 420824,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "fast",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 81408,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 32039,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 399012,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 17706,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 44491,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 893,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 1689,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 56485,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 3701,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 4746,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1747055
+            },
+            "28": {
+              "cache": "cold",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1849424,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 28)",
+                "os": "Linux",
+                "otp": "28"
+              },
+              "runner_ms": 1848291,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 2243,
+              "setup_ms": 106710,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 21619,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 3794,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 29269,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 11065,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 83932,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 942,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 28265,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 542868,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.fast",
+                  "conclusion": "passed",
+                  "duration_ms": 456512,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "fast",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 77469,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 46168,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 425406,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 10458,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 48385,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 796,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 2352,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 52090,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 2107,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 4794,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1849424
+            }
+          },
+          "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "workflow_sha256": "f7f57237c81f26154ac54cd9d31fc3f873b0b0551f1c58864234f52c2be342b8"
+        },
+        {
+          "cache_state": "warm",
+          "id": "baseline-2",
+          "proof_set_id": "phase73-dd11175a6d2aa196",
+          "receipts": {
+            "27": {
+              "cache": "warm",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1640855,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 27)",
+                "os": "Linux",
+                "otp": "27"
+              },
+              "runner_ms": 1639602,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 2243,
+              "setup_ms": 116101,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 20358,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 4785,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 48940,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 19242,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 129408,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 780,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 37315,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 459015,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.fast",
+                  "conclusion": "passed",
+                  "duration_ms": 354960,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "fast",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 71701,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 21505,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 357915,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 8785,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 41552,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 593,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 1734,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 52863,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 3435,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 4716,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1640855
+            },
+            "28": {
+              "cache": "warm",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1724694,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 28)",
+                "os": "Linux",
+                "otp": "28"
+              },
+              "runner_ms": 1723532,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 2243,
+              "setup_ms": 107103,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 20105,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 4364,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 47016,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 18397,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 125218,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 1025,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 34172,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 491671,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.fast",
+                  "conclusion": "passed",
+                  "duration_ms": 391026,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "fast",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 73812,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 29340,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 382253,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 8100,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 37418,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 662,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 1584,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 47437,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 3425,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 6507,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1724694
+            }
+          },
+          "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "workflow_sha256": "f7f57237c81f26154ac54cd9d31fc3f873b0b0551f1c58864234f52c2be342b8"
+        },
+        {
+          "cache_state": "warm",
+          "id": "baseline-3",
+          "proof_set_id": "phase73-dd11175a6d2aa196",
+          "receipts": {
+            "27": {
+              "cache": "warm",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1545637,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 27)",
+                "os": "Linux",
+                "otp": "27"
+              },
+              "runner_ms": 1544503,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 2243,
+              "setup_ms": 98047,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 15653,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 4751,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 35628,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 21509,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 101512,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 597,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 24869,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 402256,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.fast",
+                  "conclusion": "passed",
+                  "duration_ms": 373243,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "fast",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 74650,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 29590,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 337772,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 11912,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 48237,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 564,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 1703,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 52177,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 3717,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 4163,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1545637
+            },
+            "28": {
+              "cache": "warm",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1677130,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 28)",
+                "os": "Linux",
+                "otp": "28"
+              },
+              "runner_ms": 1675984,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 2243,
+              "setup_ms": 97220,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 20099,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 4117,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 36485,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 20272,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 97522,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 865,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 22656,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 429545,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.fast",
+                  "conclusion": "passed",
+                  "duration_ms": 427154,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "fast",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 74781,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 29253,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 396790,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 12295,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 44307,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 824,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 2105,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 49483,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 2203,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 5228,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1677130
+            }
+          },
+          "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "workflow_sha256": "f7f57237c81f26154ac54cd9d31fc3f873b0b0551f1c58864234f52c2be342b8"
+        }
+      ],
+      "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+      "workflow_sha256": "f7f57237c81f26154ac54cd9d31fc3f873b0b0551f1c58864234f52c2be342b8"
+    },
+    "candidate": {
+      "samples": [
+        {
+          "cache_state": "cold",
+          "id": "candidate-1",
+          "proof_set_id": "phase73-dd11175a6d2aa196",
+          "receipts": {
+            "27": {
+              "cache": "cold",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1334161,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 27)",
+                "os": "Linux",
+                "otp": "27"
+              },
+              "runner_ms": 1332713,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 1283,
+              "setup_ms": 126762,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 23946,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 5627,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 59140,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 21058,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 140867,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 1337,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 37995,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 423798,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 74426,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 33592,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 388684,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 8708,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 43933,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 609,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 2086,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 57857,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 4301,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 4749,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1334161
+            },
+            "28": {
+              "cache": "cold",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1403236,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 28)",
+                "os": "Linux",
+                "otp": "28"
+              },
+              "runner_ms": 1401739,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 1283,
+              "setup_ms": 124191,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 22088,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 6351,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 56465,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 20847,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 136521,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 1458,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 36391,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 453430,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 77773,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 38793,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 424306,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 8406,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 45910,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 1248,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 3496,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 57903,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 3656,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 6697,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1403236
+            }
+          },
+          "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "workflow_sha256": "8c846735f5a230702071fb7b39f04e73f843d1325c156f2dceba114ec77a52df"
+        },
+        {
+          "cache_state": "warm",
+          "id": "candidate-2",
+          "proof_set_id": "phase73-dd11175a6d2aa196",
+          "receipts": {
+            "27": {
+              "cache": "warm",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1340373,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 27)",
+                "os": "Linux",
+                "otp": "27"
+              },
+              "runner_ms": 1339178,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 1283,
+              "setup_ms": 108535,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 16583,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 5757,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 50772,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 17641,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 140457,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 983,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 37058,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 481199,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 77046,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 27904,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 383955,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 8611,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 34703,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 712,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 1547,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 48154,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 2184,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 3912,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1340373
+            },
+            "28": {
+              "cache": "warm",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1732079,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 28)",
+                "os": "Linux",
+                "otp": "28"
+              },
+              "runner_ms": 1730949,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 1283,
+              "setup_ms": 448058,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 23319,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 5453,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 46352,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 17655,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 133073,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 1155,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 35000,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 523592,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 76551,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 29269,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 410508,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 7527,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 30103,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 696,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 1445,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 383131,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 1840,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 4280,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1732079
+            }
+          },
+          "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "workflow_sha256": "8c846735f5a230702071fb7b39f04e73f843d1325c156f2dceba114ec77a52df"
+        },
+        {
+          "cache_state": "warm",
+          "id": "candidate-3",
+          "proof_set_id": "phase73-dd11175a6d2aa196",
+          "receipts": {
+            "27": {
+              "cache": "warm",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1464495,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 27)",
+                "os": "Linux",
+                "otp": "27"
+              },
+              "runner_ms": 1462999,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 1283,
+              "setup_ms": 125806,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 28298,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 6495,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 57627,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 20557,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 141789,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 880,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 34948,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 516571,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 79622,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 48490,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 398291,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 13555,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 49774,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 1110,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 2559,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 55185,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 3244,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 4004,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1464495
+            },
+            "28": {
+              "cache": "warm",
+              "conclusion": "success",
+              "dirty": false,
+              "event": "workflow_dispatch",
+              "job_ms": 1505318,
+              "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+              "runner": {
+                "architecture": "aarch64",
+                "elixir": "1.19.5 (compiled with Erlang/OTP 28)",
+                "os": "Linux",
+                "otp": "28"
+              },
+              "runner_ms": 1503845,
+              "schema": "relyra-ci-cost-sample",
+              "selected_tests": 1283,
+              "setup_ms": 119560,
+              "steps": [
+                {
+                  "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+                  "conclusion": "passed",
+                  "duration_ms": 23942,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "runner-actions",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+                  "conclusion": "passed",
+                  "duration_ms": 6951,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "dependencies",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile full",
+                  "conclusion": "passed",
+                  "duration_ms": 55410,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-full",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+                  "conclusion": "passed",
+                  "duration_ms": 20089,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-minimal",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+                  "conclusion": "passed",
+                  "duration_ms": 141367,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "consumer-contracts",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm install",
+                  "conclusion": "passed",
+                  "duration_ms": 1160,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "npm-install",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+                  "conclusion": "passed",
+                  "duration_ms": 31880,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "demo-test-support",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix qa",
+                  "conclusion": "passed",
+                  "duration_ms": 537816,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "qa",
+                  "selected_tests": 960
+                },
+                {
+                  "command": "mix ci.security",
+                  "conclusion": "passed",
+                  "duration_ms": 79380,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "security",
+                  "selected_tests": 66
+                },
+                {
+                  "command": "mix ci.evidence",
+                  "conclusion": "passed",
+                  "duration_ms": 50664,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "evidence",
+                  "selected_tests": 146
+                },
+                {
+                  "command": "mix ci.phase73.reconciliation",
+                  "conclusion": "passed",
+                  "duration_ms": 431130,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "phase73-reconciliation",
+                  "selected_tests": 1
+                },
+                {
+                  "command": "mix ci.verify",
+                  "conclusion": "passed",
+                  "duration_ms": 12647,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "verify",
+                  "selected_tests": 58
+                },
+                {
+                  "command": "mix ci.integration",
+                  "conclusion": "passed",
+                  "duration_ms": 43100,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "integration",
+                  "selected_tests": 9
+                },
+                {
+                  "command": "mix ci.demo",
+                  "conclusion": "passed",
+                  "duration_ms": 955,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "demo",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix ci.admin_ui",
+                  "conclusion": "passed",
+                  "duration_ms": 2950,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "admin-ui",
+                  "selected_tests": 40
+                },
+                {
+                  "command": "npx playwright install --with-deps chromium",
+                  "conclusion": "passed",
+                  "duration_ms": 55627,
+                  "exit_code": 0,
+                  "kind": "setup",
+                  "name": "chromium",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "npm run admin-ui:smoke",
+                  "conclusion": "passed",
+                  "duration_ms": 3229,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "browser-smoke",
+                  "selected_tests": 0
+                },
+                {
+                  "command": "mix test --only gate02_c14n --warnings-as-errors",
+                  "conclusion": "passed",
+                  "duration_ms": 5548,
+                  "exit_code": 0,
+                  "kind": "test",
+                  "name": "gate-02",
+                  "selected_tests": 3
+                }
+              ],
+              "version": 1,
+              "wall_ms": 1505318
+            }
+          },
+          "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "workflow_sha256": "8c846735f5a230702071fb7b39f04e73f843d1325c156f2dceba114ec77a52df"
+        }
+      ],
+      "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+      "workflow_sha256": "8c846735f5a230702071fb7b39f04e73f843d1325c156f2dceba114ec77a52df"
+    }
+  },
+  "decision": {
+    "action": "remove_fast_lane",
+    "cache_decision": "retain existing dependency installation and setup-node policy; local ACT data did not measure hosted cache-service net benefit, so add no compiled cache",
+    "fast_lane_selected_tests_per_otp": 960,
+    "matrix_wall_warm_reduction_percent": 4.83,
+    "measured_redundant_test_executions_per_matrix_run": 1920,
+    "qa_selected_tests_per_otp": 960,
+    "reason_code": "qa_and_fast_select_same_tests",
+    "retained_gates": [
+      "all three unconditional clean-room consumer profiles",
+      "quality gate mix qa",
+      "mix ci.security",
+      "mix ci.evidence",
+      "mix ci.phase73.reconciliation",
+      "mix ci.verify",
+      "mix ci.integration",
+      "mix ci.demo",
+      "mix ci.admin_ui",
+      "Playwright Chromium install and npm run admin-ui:smoke",
+      "standalone blocking GATE-02 binary gate"
+    ],
+    "runner_cost_warm_reduction_percent": 8.3,
+    "sample_count_per_configuration": 3,
+    "supported_by_complete_samples": true
+  },
+  "measured_at": "2026-09-28T00:34:15Z",
+  "measurement_context": {
+    "act_version": "0.2.87",
+    "cache_limits": "ACT action cache was offline; the synthetic local workflow omits setup-node npm cache-service integration. Measurements do not model hosted GitHub cache-service latency or x64 runner timings. No compiled Mix/Hex or clean-room consumer state is reused.",
+    "cache_method": "cold then two warm runs per configuration using isolated persistent NPM_CONFIG_CACHE roots keyed by configuration and OTP",
+    "candidate_identity": "Candidate workflow is a disposable, untracked security-gates-local.yml overlay; tracked security-gates.yml and its canonical Phase 73 proof remained unchanged during measurement. The candidate overlay removes only the duplicate Fast lane.",
+    "database": "one fresh ephemeral PostgreSQL 16 instance per matrix run with isolated OTP-specific databases",
+    "host": "Apple Silicon macOS host, Docker Desktop Linux VM",
+    "runner": "ACT on catthehacker/ubuntu:act-24.04, linux/arm64 (aarch64)",
+    "setup_accounting": "measurement includes checkout, setup-beam, setup-node and all workflow commands; runner setup prelude is collected separately and added to setup_ms, job_ms and wall_ms",
+    "source_revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+    "toolchain": {
+      "elixir": "1.19.5",
+      "otp_matrix": [
+        27,
+        28
+      ]
+    },
+    "workflow_jobs": "security OTP 27 and OTP 28 matrix jobs run concurrently",
+    "workflow_sha256_scope": "Synthetic local workflow bytes with only sample-numbered measurement output paths normalized; policy and command content remain covered by the digest."
+  },
+  "phase73_proof_set_id": "phase73-dd11175a6d2aa196",
+  "rejected_attempts": [
+    {
+      "conclusion": "excluded",
+      "configuration": "candidate",
+      "detail": "The OTP 28 verification retry could not create a fresh Phase 07 database after a local DBConnection queue timeout. A complete fresh-database retry passed and is candidate-2.",
+      "id": "candidate-2-failed-attempt",
+      "raw_receipts": {
+        "27": {
+          "cache": "warm",
+          "conclusion": "success",
+          "dirty": false,
+          "event": "workflow_dispatch",
+          "job_ms": 1243605,
+          "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "runner": {
+            "architecture": "aarch64",
+            "elixir": "1.19.5 (compiled with Erlang/OTP 27)",
+            "os": "Linux",
+            "otp": "27"
+          },
+          "runner_ms": 1241816,
+          "schema": "relyra-ci-cost-sample",
+          "selected_tests": 1283,
+          "setup_ms": 109713,
+          "steps": [
+            {
+              "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+              "conclusion": "passed",
+              "duration_ms": 23361,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "runner-actions",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+              "conclusion": "passed",
+              "duration_ms": 5927,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "dependencies",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile full",
+              "conclusion": "passed",
+              "duration_ms": 40478,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-full",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+              "conclusion": "passed",
+              "duration_ms": 17081,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-minimal",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+              "conclusion": "passed",
+              "duration_ms": 105223,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-contracts",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm install",
+              "conclusion": "passed",
+              "duration_ms": 613,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "npm-install",
+              "selected_tests": 0
+            },
+            {
+              "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+              "conclusion": "passed",
+              "duration_ms": 32184,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "demo-test-support",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix qa",
+              "conclusion": "passed",
+              "duration_ms": 476963,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "qa",
+              "selected_tests": 960
+            },
+            {
+              "command": "mix ci.security",
+              "conclusion": "passed",
+              "duration_ms": 72134,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "security",
+              "selected_tests": 66
+            },
+            {
+              "command": "mix ci.evidence",
+              "conclusion": "passed",
+              "duration_ms": 26052,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "evidence",
+              "selected_tests": 146
+            },
+            {
+              "command": "mix ci.phase73.reconciliation",
+              "conclusion": "passed",
+              "duration_ms": 340140,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "phase73-reconciliation",
+              "selected_tests": 1
+            },
+            {
+              "command": "mix ci.verify",
+              "conclusion": "passed",
+              "duration_ms": 7672,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "verify",
+              "selected_tests": 58
+            },
+            {
+              "command": "mix ci.integration",
+              "conclusion": "passed",
+              "duration_ms": 37635,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "integration",
+              "selected_tests": 9
+            },
+            {
+              "command": "mix ci.demo",
+              "conclusion": "passed",
+              "duration_ms": 576,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "demo",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix ci.admin_ui",
+              "conclusion": "passed",
+              "duration_ms": 1942,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "admin-ui",
+              "selected_tests": 40
+            },
+            {
+              "command": "npx playwright install --with-deps chromium",
+              "conclusion": "passed",
+              "duration_ms": 47628,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "chromium",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm run admin-ui:smoke",
+              "conclusion": "passed",
+              "duration_ms": 3135,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "browser-smoke",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix test --only gate02_c14n --warnings-as-errors",
+              "conclusion": "passed",
+              "duration_ms": 3072,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "gate-02",
+              "selected_tests": 3
+            }
+          ],
+          "version": 1,
+          "wall_ms": 1243605
+        },
+        "28": {
+          "cache": "warm",
+          "conclusion": "failure",
+          "dirty": false,
+          "event": "workflow_dispatch",
+          "job_ms": 1302652,
+          "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "runner": {
+            "architecture": "aarch64",
+            "elixir": "1.19.5 (compiled with Erlang/OTP 28)",
+            "os": "Linux",
+            "otp": "28"
+          },
+          "runner_ms": 1301653,
+          "schema": "relyra-ci-cost-sample",
+          "selected_tests": 1229,
+          "setup_ms": 109442,
+          "steps": [
+            {
+              "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+              "conclusion": "passed",
+              "duration_ms": 29545,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "runner-actions",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+              "conclusion": "passed",
+              "duration_ms": 4625,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "dependencies",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile full",
+              "conclusion": "passed",
+              "duration_ms": 43398,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-full",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+              "conclusion": "passed",
+              "duration_ms": 16910,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-minimal",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+              "conclusion": "passed",
+              "duration_ms": 97248,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-contracts",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm install",
+              "conclusion": "passed",
+              "duration_ms": 1130,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "npm-install",
+              "selected_tests": 0
+            },
+            {
+              "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+              "conclusion": "passed",
+              "duration_ms": 29511,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "demo-test-support",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix qa",
+              "conclusion": "passed",
+              "duration_ms": 498142,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "qa",
+              "selected_tests": 960
+            },
+            {
+              "command": "mix ci.security",
+              "conclusion": "passed",
+              "duration_ms": 73708,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "security",
+              "selected_tests": 66
+            },
+            {
+              "command": "mix ci.evidence",
+              "conclusion": "passed",
+              "duration_ms": 48017,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "evidence",
+              "selected_tests": 146
+            },
+            {
+              "command": "mix ci.phase73.reconciliation",
+              "conclusion": "passed",
+              "duration_ms": 367697,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "phase73-reconciliation",
+              "selected_tests": 1
+            },
+            {
+              "command": "mix ci.verify",
+              "conclusion": "failed",
+              "duration_ms": 5714,
+              "exit_code": 1,
+              "kind": "test",
+              "name": "verify",
+              "selected_tests": 4
+            },
+            {
+              "command": "mix ci.integration",
+              "conclusion": "passed",
+              "duration_ms": 33032,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "integration",
+              "selected_tests": 9
+            },
+            {
+              "command": "mix ci.demo",
+              "conclusion": "passed",
+              "duration_ms": 637,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "demo",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix ci.admin_ui",
+              "conclusion": "passed",
+              "duration_ms": 1928,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "admin-ui",
+              "selected_tests": 40
+            },
+            {
+              "command": "npx playwright install --with-deps chromium",
+              "conclusion": "passed",
+              "duration_ms": 44631,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "chromium",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm run admin-ui:smoke",
+              "conclusion": "passed",
+              "duration_ms": 1882,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "browser-smoke",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix test --only gate02_c14n --warnings-as-errors",
+              "conclusion": "passed",
+              "duration_ms": 3898,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "gate-02",
+              "selected_tests": 3
+            }
+          ],
+          "version": 1,
+          "wall_ms": 1302652
+        }
+      },
+      "reason": "consumer database bootstrap timeout"
+    },
+    {
+      "conclusion": "excluded",
+      "configuration": "candidate",
+      "detail": "The first attempt stopped during the contracts profile after Hex artifact build; the full retry reran and passed all three profiles.",
+      "id": "candidate-3-failed-attempt",
+      "raw_receipts": {
+        "27": {
+          "cache": "warm",
+          "conclusion": "failure",
+          "dirty": false,
+          "event": "workflow_dispatch",
+          "job_ms": 1413904,
+          "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "runner": {
+            "architecture": "aarch64",
+            "elixir": "1.19.5 (compiled with Erlang/OTP 27)",
+            "os": "Linux",
+            "otp": "27"
+          },
+          "runner_ms": 1412230,
+          "schema": "relyra-ci-cost-sample",
+          "selected_tests": 1283,
+          "setup_ms": 143160,
+          "steps": [
+            {
+              "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+              "conclusion": "passed",
+              "duration_ms": 25456,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "runner-actions",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+              "conclusion": "passed",
+              "duration_ms": 6243,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "dependencies",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile full",
+              "conclusion": "passed",
+              "duration_ms": 48535,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-full",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+              "conclusion": "passed",
+              "duration_ms": 18741,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-minimal",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+              "conclusion": "failed",
+              "duration_ms": 48329,
+              "exit_code": 1,
+              "kind": "test",
+              "name": "consumer-contracts",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm install",
+              "conclusion": "passed",
+              "duration_ms": 1335,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "npm-install",
+              "selected_tests": 0
+            },
+            {
+              "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+              "conclusion": "passed",
+              "duration_ms": 43208,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "demo-test-support",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix qa",
+              "conclusion": "passed",
+              "duration_ms": 493191,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "qa",
+              "selected_tests": 960
+            },
+            {
+              "command": "mix ci.security",
+              "conclusion": "passed",
+              "duration_ms": 82802,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "security",
+              "selected_tests": 66
+            },
+            {
+              "command": "mix ci.evidence",
+              "conclusion": "passed",
+              "duration_ms": 45209,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "evidence",
+              "selected_tests": 146
+            },
+            {
+              "command": "mix ci.phase73.reconciliation",
+              "conclusion": "passed",
+              "duration_ms": 441732,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "phase73-reconciliation",
+              "selected_tests": 1
+            },
+            {
+              "command": "mix ci.verify",
+              "conclusion": "passed",
+              "duration_ms": 15092,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "verify",
+              "selected_tests": 58
+            },
+            {
+              "command": "mix ci.integration",
+              "conclusion": "passed",
+              "duration_ms": 60007,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "integration",
+              "selected_tests": 9
+            },
+            {
+              "command": "mix ci.demo",
+              "conclusion": "passed",
+              "duration_ms": 1146,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "demo",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix ci.admin_ui",
+              "conclusion": "passed",
+              "duration_ms": 3093,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "admin-ui",
+              "selected_tests": 40
+            },
+            {
+              "command": "npx playwright install --with-deps chromium",
+              "conclusion": "passed",
+              "duration_ms": 66918,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "chromium",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm run admin-ui:smoke",
+              "conclusion": "passed",
+              "duration_ms": 4403,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "browser-smoke",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix test --only gate02_c14n --warnings-as-errors",
+              "conclusion": "passed",
+              "duration_ms": 6790,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "gate-02",
+              "selected_tests": 3
+            }
+          ],
+          "version": 1,
+          "wall_ms": 1413904
+        },
+        "28": {
+          "cache": "warm",
+          "conclusion": "success",
+          "dirty": false,
+          "event": "workflow_dispatch",
+          "job_ms": 1590552,
+          "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "runner": {
+            "architecture": "aarch64",
+            "elixir": "1.19.5 (compiled with Erlang/OTP 28)",
+            "os": "Linux",
+            "otp": "28"
+          },
+          "runner_ms": 1588783,
+          "schema": "relyra-ci-cost-sample",
+          "selected_tests": 1283,
+          "setup_ms": 132298,
+          "steps": [
+            {
+              "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+              "conclusion": "passed",
+              "duration_ms": 25367,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "runner-actions",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+              "conclusion": "passed",
+              "duration_ms": 7593,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "dependencies",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile full",
+              "conclusion": "passed",
+              "duration_ms": 48480,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-full",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+              "conclusion": "passed",
+              "duration_ms": 19204,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-minimal",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+              "conclusion": "passed",
+              "duration_ms": 142540,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-contracts",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm install",
+              "conclusion": "passed",
+              "duration_ms": 1106,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "npm-install",
+              "selected_tests": 0
+            },
+            {
+              "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+              "conclusion": "passed",
+              "duration_ms": 38214,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "demo-test-support",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix qa",
+              "conclusion": "passed",
+              "duration_ms": 525337,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "qa",
+              "selected_tests": 960
+            },
+            {
+              "command": "mix ci.security",
+              "conclusion": "passed",
+              "duration_ms": 90150,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "security",
+              "selected_tests": 66
+            },
+            {
+              "command": "mix ci.evidence",
+              "conclusion": "passed",
+              "duration_ms": 46601,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "evidence",
+              "selected_tests": 146
+            },
+            {
+              "command": "mix ci.phase73.reconciliation",
+              "conclusion": "passed",
+              "duration_ms": 479741,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "phase73-reconciliation",
+              "selected_tests": 1
+            },
+            {
+              "command": "mix ci.verify",
+              "conclusion": "passed",
+              "duration_ms": 16875,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "verify",
+              "selected_tests": 58
+            },
+            {
+              "command": "mix ci.integration",
+              "conclusion": "passed",
+              "duration_ms": 70330,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "integration",
+              "selected_tests": 9
+            },
+            {
+              "command": "mix ci.demo",
+              "conclusion": "passed",
+              "duration_ms": 1407,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "demo",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix ci.admin_ui",
+              "conclusion": "passed",
+              "duration_ms": 3747,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "admin-ui",
+              "selected_tests": 40
+            },
+            {
+              "command": "npx playwright install --with-deps chromium",
+              "conclusion": "passed",
+              "duration_ms": 60018,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "chromium",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm run admin-ui:smoke",
+              "conclusion": "passed",
+              "duration_ms": 4266,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "browser-smoke",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix test --only gate02_c14n --warnings-as-errors",
+              "conclusion": "passed",
+              "duration_ms": 7807,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "gate-02",
+              "selected_tests": 3
+            }
+          ],
+          "version": 1,
+          "wall_ms": 1590552
+        }
+      },
+      "reason": "incomplete package-consumer command"
+    },
+    {
+      "conclusion": "excluded",
+      "configuration": "candidate",
+      "detail": "Both OTP jobs passed every other gate; OTP 28 mix ci.integration hit its 120-second live Hex release-parity timeout. The run is excluded; only a later fresh full retry can count as candidate-3.",
+      "id": "candidate-3-retry-failed-attempt",
+      "raw_receipts": {
+        "27": {
+          "cache": "warm",
+          "conclusion": "success",
+          "dirty": false,
+          "event": "workflow_dispatch",
+          "job_ms": 1972851,
+          "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "runner": {
+            "architecture": "aarch64",
+            "elixir": "1.19.5 (compiled with Erlang/OTP 27)",
+            "os": "Linux",
+            "otp": "27"
+          },
+          "runner_ms": 1971038,
+          "schema": "relyra-ci-cost-sample",
+          "selected_tests": 1283,
+          "setup_ms": 176824,
+          "steps": [
+            {
+              "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+              "conclusion": "passed",
+              "duration_ms": 21915,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "runner-actions",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+              "conclusion": "passed",
+              "duration_ms": 7819,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "dependencies",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile full",
+              "conclusion": "passed",
+              "duration_ms": 66392,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-full",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+              "conclusion": "passed",
+              "duration_ms": 20359,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-minimal",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+              "conclusion": "passed",
+              "duration_ms": 146154,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-contracts",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm install",
+              "conclusion": "passed",
+              "duration_ms": 857,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "npm-install",
+              "selected_tests": 0
+            },
+            {
+              "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+              "conclusion": "passed",
+              "duration_ms": 39515,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "demo-test-support",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix qa",
+              "conclusion": "passed",
+              "duration_ms": 562926,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "qa",
+              "selected_tests": 960
+            },
+            {
+              "command": "mix ci.security",
+              "conclusion": "passed",
+              "duration_ms": 86458,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "security",
+              "selected_tests": 66
+            },
+            {
+              "command": "mix ci.evidence",
+              "conclusion": "passed",
+              "duration_ms": 61303,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "evidence",
+              "selected_tests": 146
+            },
+            {
+              "command": "mix ci.phase73.reconciliation",
+              "conclusion": "passed",
+              "duration_ms": 694364,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "phase73-reconciliation",
+              "selected_tests": 1
+            },
+            {
+              "command": "mix ci.verify",
+              "conclusion": "passed",
+              "duration_ms": 23604,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "verify",
+              "selected_tests": 58
+            },
+            {
+              "command": "mix ci.integration",
+              "conclusion": "passed",
+              "duration_ms": 114009,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "integration",
+              "selected_tests": 9
+            },
+            {
+              "command": "mix ci.demo",
+              "conclusion": "passed",
+              "duration_ms": 1852,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "demo",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix ci.admin_ui",
+              "conclusion": "passed",
+              "duration_ms": 5895,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "admin-ui",
+              "selected_tests": 40
+            },
+            {
+              "command": "npx playwright install --with-deps chromium",
+              "conclusion": "passed",
+              "duration_ms": 106718,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "chromium",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm run admin-ui:smoke",
+              "conclusion": "passed",
+              "duration_ms": 4182,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "browser-smoke",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix test --only gate02_c14n --warnings-as-errors",
+              "conclusion": "passed",
+              "duration_ms": 6716,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "gate-02",
+              "selected_tests": 3
+            }
+          ],
+          "version": 1,
+          "wall_ms": 1972851
+        },
+        "28": {
+          "cache": "warm",
+          "conclusion": "failure",
+          "dirty": false,
+          "event": "workflow_dispatch",
+          "job_ms": 2015961,
+          "revision": "fee1063e231801e7a31f306429cadcf7a4e5558d",
+          "runner": {
+            "architecture": "aarch64",
+            "elixir": "1.19.5 (compiled with Erlang/OTP 28)",
+            "os": "Linux",
+            "otp": "28"
+          },
+          "runner_ms": 2014265,
+          "schema": "relyra-ci-cost-sample",
+          "selected_tests": 1283,
+          "setup_ms": 133475,
+          "steps": [
+            {
+              "command": "erlef/setup-beam@v1; actions/setup-node@v5",
+              "conclusion": "passed",
+              "duration_ms": 26067,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "runner-actions",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix local.hex --force && mix local.rebar --force && mix deps.get",
+              "conclusion": "passed",
+              "duration_ms": 6518,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "dependencies",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile full",
+              "conclusion": "passed",
+              "duration_ms": 64431,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-full",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check",
+              "conclusion": "passed",
+              "duration_ms": 20120,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-minimal",
+              "selected_tests": 0
+            },
+            {
+              "command": "scripts/check_clean_room_consumer.sh --profile contracts",
+              "conclusion": "passed",
+              "duration_ms": 142635,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "consumer-contracts",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm install",
+              "conclusion": "passed",
+              "duration_ms": 1127,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "npm-install",
+              "selected_tests": 0
+            },
+            {
+              "command": "MIX_ENV=test mix cmd --cd demo/ledger_loop mix deps.get && MIX_ENV=test mix cmd --cd demo/ledger_loop mix compile",
+              "conclusion": "passed",
+              "duration_ms": 37451,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "demo-test-support",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix qa",
+              "conclusion": "passed",
+              "duration_ms": 599815,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "qa",
+              "selected_tests": 960
+            },
+            {
+              "command": "mix ci.security",
+              "conclusion": "passed",
+              "duration_ms": 90072,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "security",
+              "selected_tests": 66
+            },
+            {
+              "command": "mix ci.evidence",
+              "conclusion": "passed",
+              "duration_ms": 56314,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "evidence",
+              "selected_tests": 146
+            },
+            {
+              "command": "mix ci.phase73.reconciliation",
+              "conclusion": "passed",
+              "duration_ms": 741696,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "phase73-reconciliation",
+              "selected_tests": 1
+            },
+            {
+              "command": "mix ci.verify",
+              "conclusion": "passed",
+              "duration_ms": 26042,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "verify",
+              "selected_tests": 58
+            },
+            {
+              "command": "mix ci.integration",
+              "conclusion": "failed",
+              "duration_ms": 124490,
+              "exit_code": 2,
+              "kind": "test",
+              "name": "integration",
+              "selected_tests": 9
+            },
+            {
+              "command": "mix ci.demo",
+              "conclusion": "passed",
+              "duration_ms": 1202,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "demo",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix ci.admin_ui",
+              "conclusion": "passed",
+              "duration_ms": 3003,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "admin-ui",
+              "selected_tests": 40
+            },
+            {
+              "command": "npx playwright install --with-deps chromium",
+              "conclusion": "passed",
+              "duration_ms": 62312,
+              "exit_code": 0,
+              "kind": "setup",
+              "name": "chromium",
+              "selected_tests": 0
+            },
+            {
+              "command": "npm run admin-ui:smoke",
+              "conclusion": "passed",
+              "duration_ms": 3790,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "browser-smoke",
+              "selected_tests": 0
+            },
+            {
+              "command": "mix test --only gate02_c14n --warnings-as-errors",
+              "conclusion": "passed",
+              "duration_ms": 7180,
+              "exit_code": 0,
+              "kind": "test",
+              "name": "gate-02",
+              "selected_tests": 3
+            }
+          ],
+          "version": 1,
+          "wall_ms": 2015961
+        }
+      },
+      "reason": "external Hex integration canary timeout"
+    }
+  ],
+  "schema": "relyra-ci-cost-decision",
+  "statistics": {
+    "baseline": {
+      "cold": {
+        "matrix_wall_ms": {
+          "max_ms": 1849424,
+          "median_ms": 1849424,
+          "min_ms": 1849424
+        },
+        "runner_cost_ms": {
+          "max_ms": 3594206,
+          "median_ms": 3594206,
+          "min_ms": 3594206
+        },
+        "sample_count": 1
+      },
+      "warm": {
+        "matrix_wall_ms": {
+          "max_ms": 1724694,
+          "median_ms": 1700912.0,
+          "min_ms": 1677130
+        },
+        "runner_cost_ms": {
+          "max_ms": 3363134,
+          "median_ms": 3291810.5,
+          "min_ms": 3220487
+        },
+        "sample_count": 2
+      }
+    },
+    "candidate": {
+      "cold": {
+        "matrix_wall_ms": {
+          "max_ms": 1403236,
+          "median_ms": 1403236,
+          "min_ms": 1403236
+        },
+        "runner_cost_ms": {
+          "max_ms": 2734452,
+          "median_ms": 2734452,
+          "min_ms": 2734452
+        },
+        "sample_count": 1
+      },
+      "warm": {
+        "matrix_wall_ms": {
+          "max_ms": 1732079,
+          "median_ms": 1618698.5,
+          "min_ms": 1505318
+        },
+        "runner_cost_ms": {
+          "max_ms": 3070127,
+          "median_ms": 3018485.5,
+          "min_ms": 2966844
+        },
+        "sample_count": 2
+      }
+    }
+  },
+  "version": 1
+}

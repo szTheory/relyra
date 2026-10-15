@@ -27,7 +27,10 @@ defmodule Relyra.ReleaseHardeningTest do
 
     assert mixfile =~ "ci.release"
     assert mixfile =~ "@version"
-    assert release_please =~ "googleapis/release-please-action@v4"
+
+    assert release_please =~
+             "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0"
+
     assert release_please =~ "mix ci.release"
     assert release_please =~ "mix ci.security"
     assert release_please =~ "mix hex.publish --yes"

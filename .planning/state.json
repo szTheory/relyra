@@ -1,0 +1,48 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1.11 — First-Adopter Twin",
+  "phases": [
+    {
+      "number": "73",
+      "name": "Twin Contract and Baseline",
+      "status": "complete"
+    },
+    {
+      "number": "74",
+      "name": "Clean-Room Package Consumer",
+      "status": "complete"
+    },
+    {
+      "number": "75",
+      "name": "SaaS Twin Domain Realism",
+      "status": "complete"
+    },
+    {
+      "number": "76",
+      "name": "Lifecycle and Recovery Journeys",
+      "status": "complete"
+    },
+    {
+      "number": "77",
+      "name": "Code and Documentation Craftsmanship",
+      "status": "complete"
+    },
+    {
+      "number": "78",
+      "name": "CI Efficiency and Reliability",
+      "status": "complete"
+    },
+    {
+      "number": "79",
+      "name": "Adopter-Ready Closeout",
+      "status": "in_progress"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step (verify)",
+    "reason": "Phase 79 of 7 · 86% · ready to verify"
+  },
+  "updated_at": "2026-09-30T02:40:52.932Z"
+}

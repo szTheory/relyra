@@ -1,0 +1,185 @@
+{
+  "capture_errors": [
+    "GraphQL approval settings conflict with the REST review subresource"
+  ],
+  "capture_status": "incomplete",
+  "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+  "observed_at": "2026-10-01T12:07:52Z",
+  "ref": "refs/heads/main",
+  "repository": "szTheory/relyra",
+  "resource": null,
+  "schema": "phase79-protection-capture",
+  "source_digest": "abbfcd7bb34aed797d9ecb91414e2075f193ce929d4eb6eb50849440370e296a",
+  "sources": {
+    "fleet_check_run": {
+      "app_ids": [
+        15368
+      ],
+      "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+      "matching_count": 35,
+      "pages": [
+        {
+          "continuation": true,
+          "item_count": 100,
+          "number": 1,
+          "status": 200
+        },
+        {
+          "continuation": false,
+          "item_count": 7,
+          "number": 2,
+          "status": 200
+        }
+      ],
+      "status": 200
+    },
+    "graphql": {
+      "branch_protection": {
+        "actors": {
+          "bypassForcePushAllowances": {
+            "apps": [],
+            "teams": [],
+            "users": []
+          },
+          "bypassPullRequestAllowances": {
+            "apps": [],
+            "teams": [],
+            "users": []
+          },
+          "pushAllowances": {
+            "apps": [],
+            "teams": [],
+            "users": []
+          },
+          "reviewDismissalAllowances": {
+            "apps": [],
+            "teams": [],
+            "users": []
+          }
+        },
+        "rule": {
+          "actor_counts": {
+            "bypassForcePushAllowances": 0,
+            "bypassPullRequestAllowances": 0,
+            "pushAllowances": 0,
+            "reviewDismissalAllowances": 0
+          },
+          "dismissesStaleReviews": false,
+          "id": "BPR_kwDOSMr5Es4EojPS",
+          "pattern": "main",
+          "requireLastPushApproval": false,
+          "requiredApprovingReviewCount": null,
+          "requiresApprovingReviews": false,
+          "requiresCodeOwnerReviews": false,
+          "restrictsPushes": false,
+          "restrictsReviewDismissals": false
+        }
+      },
+      "ref": {
+        "name": "main",
+        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837"
+      },
+      "status": 200
+    },
+    "main_ref_after": {
+      "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+      "status": 200
+    },
+    "main_ref_before": {
+      "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+      "status": 200
+    },
+    "parent_protection": {
+      "configuration": {
+        "allow_deletions": {
+          "enabled": false
+        },
+        "allow_force_pushes": {
+          "enabled": false
+        },
+        "allow_fork_syncing": {
+          "enabled": false
+        },
+        "block_creations": {
+          "enabled": false
+        },
+        "enforce_admins": {
+          "enabled": true,
+          "url": "https://api.github.com/repos/szTheory/relyra/branches/main/protection/enforce_admins"
+        },
+        "lock_branch": {
+          "enabled": false
+        },
+        "required_conversation_resolution": {
+          "enabled": false
+        },
+        "required_linear_history": {
+          "enabled": false
+        },
+        "required_signatures": {
+          "enabled": false,
+          "url": "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_signatures"
+        },
+        "required_status_checks": {
+          "checks": [
+            {
+              "app_id": 15368,
+              "context": "security (27, 1.19.5)"
+            },
+            {
+              "app_id": 15368,
+              "context": "security (28, 1.19.5)"
+            }
+          ],
+          "contexts": [
+            "security (27, 1.19.5)",
+            "security (28, 1.19.5)"
+          ],
+          "contexts_url": "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_status_checks/contexts",
+          "strict": true,
+          "url": "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_status_checks"
+        },
+        "url": "https://api.github.com/repos/szTheory/relyra/branches/main/protection"
+      },
+      "fields_present": [
+        "allow_deletions",
+        "allow_force_pushes",
+        "allow_fork_syncing",
+        "block_creations",
+        "enforce_admins",
+        "lock_branch",
+        "required_conversation_resolution",
+        "required_linear_history",
+        "required_signatures",
+        "required_status_checks",
+        "url"
+      ],
+      "status": 200
+    },
+    "push_restrictions": {
+      "configuration": {
+        "message": "Push restrictions not enabled"
+      },
+      "status": 404
+    },
+    "review_subresource": {
+      "configuration": {
+        "dismiss_stale_reviews": false,
+        "require_code_owner_reviews": false,
+        "require_last_push_approval": false,
+        "required_approving_review_count": 1,
+        "url": "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_pull_request_reviews"
+      },
+      "fields_present": [
+        "dismiss_stale_reviews",
+        "require_code_owner_reviews",
+        "require_last_push_approval",
+        "required_approving_review_count",
+        "url"
+      ],
+      "status": 200
+    }
+  },
+  "version": 1,
+  "writable_payload": null
+}

@@ -144,31 +144,6 @@ defmodule MyAppWeb.SamlLoginTest do
 end
 ```
 
-Copy-paste source of truth: `test/testing_demo_test.exs` in the Relyra repo.
-
-<details>
-<summary>Maintainers: doc CI gate</summary>
-
-The demo test path is also checked by `mix ci.docs` in the Relyra repository.
-
-Phase closeout PRs that touch only internal GSD metadata are handled by
-`.github/workflows/planning-pr-checks.yml` in the Relyra repository.
-
-</details>
-
-<details>
-<summary>Maintainers: what CI proves</summary>
-
-Adoption journey evidence lives under `test/adoption/` in the Relyra repository (not shipped on Hex):
-
-- **`mix ci.integration`** — install parity, local fixture proof, production `saml_routes()` ACS, Ecto resolver path, LiveAdmin smoke (`@tag :integration`).
-- **`mix ci.demo`** — headless local fixtures round trip via `examples/quickstart.exs`.
-- **`mix ci.external_idp`** — Keycloak SAML happy path (`@tag :external_idp`; separate CI job, not part of default `mix qa`).
-
-Golden host fixture: `test/fixtures/demo_host/` (kept in sync with `mix relyra.install` via journey 01).
-
-</details>
-
 **Stub vs production ACS:** The §3 stub assigns `:current_user` directly for a
 fast receipt. The §2 install scaffold wires production ACS via
 `import Relyra.Phoenix.Router; saml_routes()` on

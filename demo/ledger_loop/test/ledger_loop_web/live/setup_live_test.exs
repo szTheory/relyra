@@ -120,8 +120,7 @@ defmodule LedgerLoopWeb.SetupLiveTest do
     assert html =~ "LedgerLoop established session"
 
     # Assert connection ID from real data is shown
-    conn_id =
-      LedgerLoop.Demo.Fixtures.relyra_connections() |> List.first() |> Map.get(:connection_id)
+    conn_id = LedgerLoop.Demo.Fixtures.relyra_enabled_scenario_id()
 
     assert html =~ conn_id
 

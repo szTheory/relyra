@@ -1,0 +1,161 @@
+RELYRA MILESTONE AND ROADMAP GUIDE
+=================================
+
+Purpose
+-------
+
+Use this guide whenever shaping, refreshing, or closing a Relyra GSD milestone.
+It records the maintainer's lasting intent so future planning starts from the
+same priorities instead of re-creating scope from scratch.
+
+The aim is to make Relyra the Elixir and Phoenix SAML Service Provider library
+teams can trust in production: secure by construction, clear to adopt, honest
+about its guarantees, and maintainable for the people who operate and extend it.
+The central promise governs every tradeoff: each login ends in a verified trust
+path or a typed rejection, never a silent compromise.
+
+Quality means solving real adopter problems with durable evidence. It does not
+mean adding features, tests, abstractions, or process for their own sake. Prefer
+the smallest coherent change that materially improves correctness, safety,
+adoption, operability, or long-term maintenance.
+
+1. Who Relyra serves
+--------------------
+
+Consider the connected people and jobs around enterprise SSO:
+
+- Phoenix engineers integrating Relyra and diagnosing setup or login failures.
+- SaaS platform teams isolating identity and trust configuration by tenant.
+- Tenant and identity administrators configuring providers, certificates,
+  mappings, and recovery actions.
+- End users who need a reliable, understandable sign-in experience.
+- Security reviewers who need precise trust boundaries and reproducible proof.
+- Operators and on-call staff who need safe recovery and actionable traces.
+- Maintainers and contributors who need clear seams, tests, and release behavior.
+
+Look across common SaaS settings, including B2B and B2C products and higher-
+sensitivity domains. Use their shared SSO jobs to guide general design. Do not
+claim industry compliance or build specialized policy into the library without
+a concrete requirement and evidence. Applications own their business,
+authorization, and compliance policy; Relyra owns its SAML trust guarantees and
+clearly documented integration seams.
+
+2. How to choose milestone work
+-------------------------------
+
+Start with current adopter evidence, reported friction, security findings,
+measured repository baselines, and authoritative SAML or dependency contracts.
+Identify the user, the job, the failure or friction being addressed, and the
+evidence that would show the change helped.
+
+Prefer work that removes a high-cost or high-risk barrier for multiple adopters.
+Rank candidates by user impact, security or correctness impact, evidence
+strength, implementation and maintenance cost, and fit with Relyra's core value.
+Choose a bounded milestone with a clear outcome and stop when the material
+findings are resolved or remaining returns no longer justify their cost.
+
+Do not use endpoint count, industry count, test count, coverage percentage,
+code churn, or visual polish as a substitute for adopter value. Do not broaden
+protocol support just because an extension is technically possible. Research
+current external contracts when facts may have changed, and keep the evidence
+and decisions in the GSD planning record.
+
+3. Adopter twins and proof
+-------------------------
+
+Use the two existing adopter twins for complementary evidence:
+
+- LedgerLoop provides a realistic multi-tenant SaaS story with people, roles,
+  provider trust states, operations, incidents, and recovery.
+- The clean-room Phoenix consumer proves what a downstream adopter can do using
+  only the package Relyra actually ships.
+
+Keep fixtures deterministic, isolated, and synthetic. Every retained fixture
+should support a named adopter job or failure mode. A twin is a test model, not
+proof that every IdP, application, industry, or deployment behaves identically.
+Use scheduled external-service canaries for real-provider evidence while keeping
+acceptance criteria independently verifiable in mandatory CI.
+
+Every new acceptance criterion needs deterministic, automated evidence in a
+mandatory CI lane. Preserve independent security gates and existing adversarial
+coverage. Treat missing automation as a visible gap, not as a reason to approve
+manual-only completion.
+
+4. Roadmap horizons
+------------------
+
+Keep horizons relative to milestone boundaries, not fixed dates. Refresh them
+from the current repository state and new evidence rather than treating them as
+promises.
+
+Near term — finish the active v1.11 First-Adopter Twin milestone. Verify Phase
+73, then complete the planned clean-room package consumer, SaaS twin realism,
+lifecycle and recovery journeys, high-value code and documentation cleanup, CI
+efficiency work, and adopter-ready closeout. Keep the scope feature-neutral
+unless the evidence collected by this milestone demonstrates otherwise.
+
+Mid term — after v1.11, reassess the twin results, adopter feedback, security
+and quality findings, and maintenance cost. Select one bounded next milestone
+only when a concrete gap or valuable adopter job justifies it. Otherwise,
+continue maintenance and wait for a meaningful signal.
+
+Long term — retain specialist protocol and integration ideas as demand-gated
+candidates. Current examples are HTTP-POST signed AuthnRequests (AUTHN-POST-01),
+KMS-backed key resolution (KMS-01), and signed SP metadata (SIGNED-META-01).
+Promote a candidate only when a real adopter issue or equivalent concrete
+evidence triggers investigation; re-check its contract, risks, and current
+implementation cost before planning it.
+
+At each milestone boundary, replace stale horizon assumptions with current
+evidence. Preserve deferred candidates and their trigger conditions so they do
+not quietly become commitments.
+
+5. Security, scope, and approval boundaries
+-------------------------------------------
+
+Never weaken Relyra's security invariants: trust signatures only against
+configured IdP certificates; retain the single Saxy XML parse path and raw
+binary pre-parse guards; recompute digests and verify signatures cryptographically;
+co-commit trust mutations with audit rows; and require production-grade replay
+protection.
+
+Follow the repository's coding guide for approval checkpoints. Escalate before
+changing public API or behavior callback shapes, tightening previously
+permissive defaults, changing security posture, or making a real SemVer-major
+release. Treat remote GitHub mutations as exact, separately approved batches.
+Do not introduce maintainer PII, credentials, or personal machine details into
+fixtures, public docs, plans, or generated artifacts.
+
+Keep public-facing code and documentation free of temporary GSD plan narration
+and stale planning references. Preserve useful security rationale and historical
+planning evidence in their appropriate internal records.
+
+6. Milestone completion
+-----------------------
+
+Leave each milestone as a tidy delivery package. Before closeout, verify the
+required CI surface, current documentation, package contents and release parity
+when relevant, collaboration items that the milestone owns, and repository and
+worktree cleanliness. Record residual risks and why deferred work remains
+deferred.
+
+Aim for a release with each milestone when it changes adopter-facing package
+behavior. Use the project's release automation; never publish Hex manually or
+hand-edit generated release history. For a milestone that does not warrant a
+package release, explicitly record that decision and leave the repository
+release-ready. A milestone is not complete while required deterministic checks
+are red or owned cleanup is unexplained.
+
+At completion, update the durable GSD project state, roadmap, milestone record,
+and lessons that future planning needs. Keep this guide focused on lasting
+intent; put current status, detailed requirements, and milestone-specific
+decisions in their changing GSD records.
+
+How to use this guide
+---------------------
+
+When beginning a roadmap refresh, read this guide with the current GSD state,
+active roadmap, requirements, project instructions, and relevant evidence. State
+the strongest recommendation, its assumptions, expected adopter value, proof,
+scope boundary, and closeout path. Change this guide only when the maintainer's
+lasting intent or project-wide planning posture changes.

@@ -12,19 +12,20 @@ on:
     types:
       - completed
 
-concurrency:
-  group: release-please-pr-checks
-  cancel-in-progress: false
-
 permissions:
   contents: read
-  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   trigger-release-pr-checks:
     name: Trigger security-gates on release-please PR
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
 
     steps:
       - name: Find eligible Release Please PR

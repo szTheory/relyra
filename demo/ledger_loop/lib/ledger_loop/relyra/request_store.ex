@@ -21,6 +21,12 @@ defmodule LedgerLoop.Relyra.RequestStore do
     RelyraEcto.fetch_intent(relay_state, fixed_opts)
   end
 
+  @doc false
+  def fetch_consumed_intent(relay_state, opts \\ []) do
+    fixed_opts = Keyword.merge(opts, repo: @repo, table: @table)
+    RelyraEcto.fetch_consumed_intent(relay_state, fixed_opts)
+  end
+
   @impl Relyra.RequestStore
   def consume_intent(relay_state, request_id, opts \\ []) do
     fixed_opts = Keyword.merge(opts, repo: @repo, table: @table)

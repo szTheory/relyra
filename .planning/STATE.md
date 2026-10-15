@@ -1,178 +1,268 @@
 ---
-gsd_state_version: 1.0
-milestone: v1.10
-milestone_name: Docker DX & Fleet Proxy
-status: Awaiting next milestone
-stopped_at: Milestone v1.10 archived
-last_updated: "2026-08-28T02:15:10.462Z"
-last_activity: 2026-08-27
-last_activity_desc: Milestone v1.10 completed and archived
+gsd_state_version: "1.0"
+milestone: v1.11
+milestone_name: First-Adopter Twin
+current_phase: 79
+current_phase_name: Adopter-Ready Closeout
+current_plan: 7
+status: Ready to execute
+stopped_at: Phase 79 gap plans 07–12 verified; next 79-07-PLAN.md
+last_updated: "2026-10-01T17:50:20.111Z"
+last_activity: 2026-10-01
+state_head: eed7e76937e5c47e5afbf947e3a39e9033a8986f
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 6
-  total_plans: 30
-  completed_plans: 30
-  percent: 100
-current_phase: null
-current_phase_name: null
+  total_plans: 75
+  completed_plans: 69
+  percent: 86
+last_activity_desc: Phase 79 gap plans 07–12 passed independent planning checks
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-08-27)
+See `.planning/PROJECT.md`.
 
-**Core value:** Every SAML login ends in a verified trust path or a typed rejection — never a silent compromise. Trust mutations are durable, attributable, and reviewable.
-**Current focus:** Planning the next milestone when adopter demand justifies it
+**Core value:** Every SAML login ends in a verified trust path or a typed rejection —
+never a silent compromise. Trust mutations are durable, attributable, and reviewable.
+
+**Last updated:** 2026-10-01
+
+**Current focus:** Phase 79 — Adopter-Ready Closeout
 
 ## Current Position
 
-Phase: Milestone v1.10 complete
-Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-08-27 — Milestone v1.10 completed and archived
+Phase: 79 (Adopter-Ready Closeout) — READY TO EXECUTE
 
-## Performance Metrics
+Current Plan: 7
+Total Plans in Phase: 12
+Next gate: Execute 79-07 to prepare and verify the exact source publication and transaction contracts. Plans 79-08–11 require separate approval of each concrete remote batch. Plan 79-11 additionally requires machine-proven protection-source agreement before any writable payload.
 
-- Last shipped milestone: v1.10 Docker DX & Fleet Proxy (Phases 68-72.1, 30 plans, 12/12 requirements, archived 2026-08-27)
+Status: Ready to execute
+
+Last activity: 2026-10-01
+
+## Milestone Metrics
+
+- Last shipped milestone: v1.10 Docker DX & Fleet Proxy (Phases 68–72.1, shipped 2026-08-27)
+- Current milestone: v1.11 First-Adopter Twin
+- Requirements: 37 total, 37 mapped, 0 unmapped
+- Planned phases: 7
 - Highest shipped phase: 72.1
-- Current milestone: None — awaiting a demand-backed next cycle
-- Previous milestone: v1.9 Loose Ends & Adoption Honesty (Phases 64-67)
-- v1.10 audit status: `tech_debt`; 12/12 requirements, 6/6 phases, 10/10 integrations, and 6/6 flows; three non-blocking advisories retained
-- v1.9 phase progress: 4/4 phases complete, 13/13 plans complete
-- v1.9 audit status: `tech_debt` for non-blocking validation metadata cleanup; 15/15 requirements satisfied
-- Phase 64 Plan 01 completed in 8min (2 tasks, 5 files)
-- Phase 64 Plan 02 completed in 8min (2 tasks, 5 files)
-- Phase 64 Plan 03 completed in 5min (2 tasks, 4 files)
-- Phase 64 Plan 04 completed in 3min (2 tasks, 2 files)
-- Phase 66 Plan 01 completed in 9min (3 tasks, 1 file)
-- Phase 66 Plan 02 completed in 8min (1 task, 4 planning files; decision checkpoint)
-- Phase 66 Plan 04 completed in 3min (2 tasks, 3 files; retained FakeIdP documentation; SEED-003 resolved)
-- Phase 67 completed 2026-06-19 (4/4 plans; MAINT-01..MAINT-03 verified; CVE backfill and seed cleanup reconciled)
-
-**Per-Plan Metrics:**
-
-| Plan | Duration | Tasks | Files |
-|------|----------|-------|-------|
-| Phase 69-compose-split-fleet-proxy P01 | 24m | 2 tasks | 4 files |
-| Phase 69 P02 | 42m | 2 tasks | 2 files |
-| Phase 69 P03 | 17m | 2 tasks | 21 files |
-| Phase 70 P01 | 9min | 1 tasks | 10 files |
-| Phase 70 P02 | 18min | 2 tasks | 2 files |
-| Phase 70 P03 | 6m | 2 tasks | 2 files |
-| Phase 70 P04 | 14min | 2 tasks | 6 files |
-| Phase 70 P05 | 7m | 2 tasks | 3 files |
-| Phase 70-keycloak-behind-the-proxy P06 | 6min | 1 tasks | 2 files |
-| Phase 70 P07 | 8m | 2 tasks | 2 files |
-| Phase 70-keycloak-behind-the-proxy P08 | 20m | 2 tasks | 9 files |
-| Phase 70 P09 | ~10 minutes | 1 tasks | 2 files |
-| Phase 70 P10 | 12m | 2 tasks | 2 files |
-| Phase 70 P11 | 7m | 2 tasks | 2 files |
-| Phase 70 P12 | 6m | 1 task | 1 file |
-| Phase 70 P13 | — | 1 task | 4 files |
-| Phase 70 P14 | — | 2 tasks | 7 files |
-| Phase 71 P01 | 25min | 2 tasks | 4 files |
-| Phase 71 P02 | 20min | 2 tasks | 3 files |
-| Phase 72-documentation P01 | 6m | 2 tasks | 2 files |
-| Phase 72-documentation P02 | 14m | 2 tasks | 4 files |
-| Phase 72 P03 | ~2 minutes | 1 tasks | 2 files |
-| Phase 72-documentation P04 | ~5 minutes | 2 tasks | 3 files |
-| Phase 72 P05 | ~6 minutes | 2 tasks | 3 files |
-| Phase 72.1-close-v1-10-evaluator-endpoint-and-trace-auth-gaps P01 | 5min | 1 tasks | 5 files |
-| Phase 72.1 P02 | 4m | 1 tasks | 4 files |
-| Phase 72.1 P03 | 5m | 1 tasks | 3 files |
-| Phase 72.1-close-v1-10-evaluator-endpoint-and-trace-auth-gaps P04 | 19min | 1 tasks | 2 files |
+- Baseline `mix qa`: 794 tests, 0 failures on Elixir 1.19.5/OTP 28 (2026-09-09)
 
 ## Accumulated Context
 
 ### Decisions
 
-- v1.10 is demo + docker + docs ONLY — zero changes to lib/ security seams, public API, behaviour callbacks, protocol surface, or the Hex package whitelist (`mix.exs` package.files). Nothing new ships in the tarball.
-- v1.10 locked decisions: simple `relyra.localhost` hostname (static `COMPOSE_PROJECT_NAME=relyra`, single checkout at a time, `RELYRA_HOST` override hook retained); scheme `http` (no mkcert); shared Traefik proxy on external `proxy` network per the `scoria` sibling-lib convention; Keycloak fully behind the proxy.
-- v1.10 dependency chain: 68 (caching) → 69 (compose/proxy) → 70 (keycloak, needs proxy) → 71 (launcher, wraps the compose files) → 72 (docs, describes the finished surface).
-- v1.10 phase→category map: 68=DKR-01..04, 69=FLEET-01..03, 70=KC-01, 71=DX-01..02, 72=DOC-01..02.
-- v1.10 risks to respect: `*.localhost` is browser-only (never rely on it for curl/BEAM/psql); prefix Traefik router/service names `relyra-*`; bind host ports to `127.0.0.1`; keep proxy config out of the auto-loaded `docker-compose.override.yml`; use `KC_PROXY_HEADERS=xforwarded` (not deprecated `KC_PROXY=edge`).
-- Brand voice source of truth for v1.10 docs: `brandbook/notes/decision-log.md` Canonical Lock Set (newest; supersedes `prompts/relyra-brand-book.md`).
-- Demand-gated protocol scope is unchanged and still paused: AUTHN-POST-01, KMS-01, SIGNED-META-01.
-- v1.9 resolved SEED-002, SEED-003, and narrow maintenance sync as bounded adoption-honesty cleanup; SEED-001 is historical v1.7 work, not a future candidate.
-- [Phase ?]: curl added to Dockerfile.dev apk list to preserve existing demo_app healthcheck probe after removing inline apk install block
-- [Phase ?]: Named volumes attach at nested demo paths — NOT generic /app/deps or /app/_build — ensuring macOS host artifacts never enter the Linux container (DKR-02, D-04)
-- [Phase ?]: config :phoenix_live_reload backend: :fs_poll added as separate top-level block in dev.exs, NOT inside Endpoint live_reload: keyword which silently ignores backend: (DKR-04, D-10 corrected, Pitfall 1)
-- [Phase ?]: Solo Compose auto-loads a loopback-only demo_app ingress while PostgreSQL remains internal.
-- [Phase ?]: Phoenix public URL and LiveView origins derive from explicit runtime environment values outside test.
-- [Phase ?]: Shared ingress remains neutral: dev_proxy on external proxy network; Relyra owns only relyra-local-demo labels.
-- [Phase ?]: Fleet mode uses explicit base-plus-proxy Compose files, excluding the automatic solo port overlay.
-- [Phase ?]: Keycloak trace proof uses the three persisted verifier steps; workspace return and LoginReceipt separately prove host mapping and session establishment.
-- [Phase ?]: Unchanged Keycloak descriptors skip all trust mutations after issuer, SSO, active-cert, and Sarah identity comparison.
-- [Phase ?]: Changed Keycloak descriptors disable before import, activate new signing trust, retire stale trust, then enable last.
-- [Phase ?]: Keycloak proxy proof renders default and RELYRA_HOST override contracts from one public-host input.
-- [Phase ?]: The E2E harness uses an owned Compose project and redacted named-layer diagnostics.
-- [Phase ?]: The optional Keycloak job renders only when its stable persisted connection is enabled; FakeIdP remains the first deterministic job.
-- [Phase ?]: Workspace proof uses only durable LoginReceipt presence and exact receipt wording, without cookie or authorization claims.
-- [Phase ?]: Keycloak trace proof uses only the three persisted verifier steps; workspace return and LoginReceipt separately prove host mapping and session establishment.
-- [Phase ?]: Keycloak descriptor bootstrap parses once into a canonical candidate reused for preflight, audited metadata apply, and certificate activation.
-- [Phase ?]: Credential-bearing Keycloak Playwright runs disable all attachments and delete a per-run temporary output directory before diagnostics.
-- [Phase ?]: Keycloak E2E diagnostics retain only validated redacted container-state.log, relyra.log, and audit-actions.log files.
-- [Phase ?]: A single runtime Basic-auth pipeline guards both demo admin scope establishment and every mounted LiveAdmin route.
-- [Phase ?]: The Keycloak harness generates and redacts an ephemeral host-admin credential pair for authenticated trace evidence.
-- [Phase ?]: Keycloak identity creation, attributed mapping audit, and final enablement share one host-owned transaction.
-- [Phase ?]: Diagnostic redaction and promotion validation independently track exact protected XML root QNames and fail closed at EOF.
-- [Phase ?]: Keycloak scenario status is limited to public topology, signed ACS, receipt, trace, diagnostics, and cleanup evidence.
-- [Phase ?]: The recurring Keycloak CI workflow is artifact-free and leaves dependency/security ownership to security-gates.yml.
-- [Phase 71]: Environment-derived launcher values are exported and expanded as quoted shell data, never interpolated into Make recipe syntax.
-- [Phase 71]: Host-specific launcher acceptance uses deterministic command fixtures; recurring fleet and Keycloak browser lanes own live topology proof, so no human UAT gate remains.
-- [Phase ?]: Docker DX guide makes Solo FakeIdP the complete first proof; Fleet and Keycloak remain follow-on proofs.
-- [Phase ?]: Solo/FakeIdP remains the complete first evaluator proof; Fleet and Keycloak are optional follow-ons.
-- [Phase ?]: Published demo documentation uses absolute GitHub links for repository-only evaluator material.
-- [Phase ?]: Root README retains its library Day-1 sequence and routes Docker evaluation separately.
-- [Phase ?]: Keycloak launcher succeeds only after proxy, Fleet profile, provisioner, and exact public descriptor validation.
-- [Phase ?]: Keycloak public readiness uses Traefik loopback resolution, not service DNS.
-- [Phase ?]: The evaluator narrative is bound to FakeIdP's emitted Sarah NameID and the database-backed LoginReceipt assertion.
-- [Phase ?]: Optional Keycloak documentation invokes only the public make keycloak launcher; make fleet remains discovery-only.
-- [Phase ?]: Doctor classifies demo, PostgreSQL, and Traefik listeners by explicit role instead of inferring role from a port number.
-- [Phase ?]: Override guidance uses the loopback origin emitted by make url; localhost:4000 remains default-only documentation.
-- [Phase ?]: Setup derives all SAML endpoint values from one enabled connection and verified scoped routes.
-- [Phase ?]: Trace tests establish admin scope only through credentialed /login/admin before visiting the exact trace path.
-- [Phase ?]: Demo admin credentials forward only from empty-default operator environment values.
-- [Phase ?]: make url names credential keys and 401 recovery without printing or persisting values.
-- [Phase ?]: Evaluator docs require operator-chosen admin credentials before trace access, recover 401 through /login/admin, and publish connection-scoped SAML routes.
-- [Phase ?]: Keycloak trace proof denies unauthenticated access before entering only through /login/admin.
-- [Phase ?]: The Keycloak harness preserves complete operator pairs, generates absent pairs per run, and rejects partial input.
+- Use two cooperating twins: LedgerLoop for adopter/product realism and a clean-room
+  Phoenix consumer for the publishable package boundary.
+- The clean-room consumer builds and unpacks the local Hex artifact and cannot see root
+  test support or checkout-only files.
+- Deepen LedgerLoop/Northstar instead of creating a new demo theme or external repository.
+- Fix adopter-significant findings in this milestone, stopping for public API, default,
+  security-posture, SemVer-major, and remote GitHub changes.
+- Keep scope feature-neutral. `AUTHN-POST-01`, `KMS-01`, and `SIGNED-META-01` remain
+  demand-gated.
+- New acceptance criteria require deterministic automated evidence in mandatory CI;
+  external services remain scheduled canaries.
+- Default to shift-left verification: add integration, E2E, smoke, seam, or browser
+  automation to a mandatory CI lane whenever it provides recurring value. Avoid manual
+  UAT and human completion gates; hand off only checks that cannot yet be automated, and
+  track those as explicit automation gaps.
+- Perform cleanup behind the twin's evidence and stop at diminishing returns rather than
+  pursuing aesthetic purity.
+- [Phase 76]: Bind replay keys to the trusted persisted request or resolved connection; ignore the response document ConnectionId for replay scope.
+- [Phase 76]: Recover consumed request context only from the configured request-store adapter, then let the existing replay-store uniqueness constraint reject duplicates without changing behaviour callback signatures.
+- [Phase 76]: Test the supported organization-scoped LiveAdmin path, including staged-key activation required before the draft connection can be enabled.
+- [Phase 76]: Use the CertificateInventory after_fetch optimistic-lock hook to prove conflict rollback and successful retry; two simultaneous Sandbox transactions remain an automation gap.
+- [Phase 76]: LedgerLoop receipt scenario keys use the verified principal connection ID because LoginResult carries that ID under principal; behaviour signatures remain unchanged.
+- [Phase 76]: Incident recovery ties attempts to the seeded timeline by owning connection and explicit remediation cause; each ACS attempt keeps its own hashed correlation.
+- [Phase 76]: Keep real-provider health on an independent schedule/dispatch workflow; require exact HTTPS origins before entering credentials and persist only allowlisted status metadata.
+- [Phase 77]: Ignore quoted Markdown examples while retaining active prose and UAT rejection.
+- [Phase 77]: Keep the JTBD map current and maintainer-owned; leave adopter narratives in user-flow guides.
+- [Phase 77]: Bound signature rationale checks to source comments and @doc text, excluding executable code and policy strings.
+- [Phase 77]: Only homogeneous same-character runs of sufficient length close a Markdown fence.
+- [Phase 77]: Quoted fence contents are removed before inline-code and blockquote filtering.
+- [Phase 77]: Backtick fence openers reject backticks in info strings while tilde info strings remain permissive.
+- [Phase 77]: Phase 77 Plan 07: check active policy directives in PLAN and CONTEXT inputs; retain UAT artifact rejection as an independent check.
+- [Phase 77]: Use Git-derived commit history and list every task hash on its own line for mechanical provenance checks.
+- [Phase 77]: Treat generated verification reports as audit evidence while enforcing policy on PLAN and CONTEXT inputs and rejecting required UAT artifacts.
+- [Phase 78]: Derive lifecycle membership from the active roadmap and validate all tracked Phase 78 plans.
+- [Phase 78]: Enforce primary ownership uniqueness by requirement and criterion; keep independent defenses separately labeled.
+- [Phase 78]: Remove the duplicate Fast lane from security-gates after QA and ci.fast both selected the same 960 default tests on each supported OTP version. — Three full baseline and three full candidate matrix runs passed. Candidate warm medians reduced matrix wall time by 4.83% and runner cost by 8.30%; QA, every consumer and security gate, browser smoke, and standalone GATE-02 remained enabled. Local ACT could not measure GitHub cache-service overhead, so no compiled cache was introduced.
+- [Phase 78]: Run docs and verification suites with cmd mix test so every selected suite gets a fresh process. — Mix deduplicates bare test tasks inside aliases and can carry earlier selectors forward.
+- [Phase 78]: Keep exact security suite selectors and standalone GATE-02 as blocking independent defenses. — AST and workflow fixtures reject collapsed, omitted, disabled, or zero-test gates.
+- [Phase 78]: Use event- and workflow-qualified concurrency with PR-only cancellation — Evaluated fixtures prove a superseded PR only cancels within its own workflow while main and cross-workflow runs remain isolated.
+- [Phase 78]: Keep deterministic browser journeys as required merge evidence and isolate real-provider checks in a scheduled/manual canary. — Owned local harnesses provide repeatable acceptance; provider availability is external and must not gate pull requests or main acceptance.
+- [Phase 78]: Use exact bounded receipts for browser and canary artifacts. — Exact paths, closed fields, workflow validation, and owned cleanup prevent diagnostics or shared resources from leaking into merge artifacts.
+- [Phase 79]: Keep readiness unknown unless every mandatory lane and expected protection context has current-main evidence.
+- [Phase 79]: Bind mandatory lanes to security-gates.yml; release workflows and scheduled canaries cannot substitute.
+- [Phase 79]: Preserve unknown-owner local paths and report cleanup candidates without deleting them.
+- [Phase 79]: Keep readiness unknown while mandatory main-SHA evidence is absent.
+- [Phase 79]: Keep any GitHub mutation behind a separate exact plan, explicit approval, immediate revalidation, and automated read-back.
+- [Phase 79]: Preserve unknown-owner paths; Phase 79 ownership classification does not grant cleanup authority.
+- [Phase 79]: Keep external canary observations separate from deterministic main-SHA readiness.
+- [Phase 79]: Treat omitted required protection settings as incomplete evidence.
+- [Phase 79]: Keep the protection capture incomplete when REST reports one required approval and GraphQL reports no approval requirement; do not choose either source or generate payloads.
 
-### Blockers/Concerns
+Do not prepare a remote approval batch until the full source and rollback are available. — The parent protection GET omits `required_pull_request_reviews` and `restrictions`; the review subresource reports one required approval while the same-ref GraphQL rule reports no approval requirement. The discrepancy prevents proving the current writable state and exact rollback.
 
-- The milestone-wide invariant (no `lib/`/API/protocol/Hex-whitelist change) is the primary guardrail; every phase plan must keep repo gates (`mix qa`, `mix ci.security`, `mix format --check-formatted`, `mix test --warnings-as-errors`) green by not touching `lib/`.
-- Direct `mix deps.audit` still reports the documented pre-existing Decimal 2.4.1 advisory; Phase 70 remediated Req/Mint without adding a suppression, and `mix ci.security` remains green.
+- [Phase 79]: Require REST and GraphQL agreement for writable protection payloads; conflict yields blocked records with null payloads.
+- [Phase 79]: Keep readiness unknown until all mandatory lanes pass on the captured main SHA.
+- [Phase 79]: Require a separate exact plan and approval gate for any later GitHub mutation.
 
-### Roadmap Evolution
+### Baseline Findings
 
-- Phase 72.1 inserted after Phase 72: Close v1.10 evaluator endpoint and trace-auth gaps (URGENT)
+- Root adoption journeys execute inside Relyra and use private fixtures; they do not yet
+  prove the Hex package as a clean-room consumer.
+- LedgerLoop already has strong narrative and real-IdP foundations worth expanding.
+- Standalone source/docs contain temporary phase, plan, decision-code, and UAT references.
+- Root QA has one known incomplete-phase vocabulary-policy failure, inventoried for
+  Phase 77. Phase 74 added a Mix test-ignore rule for fixture scripts, clearing the
+  recurring test-pattern warning.
+- Recent main and recurring Fleet/Keycloak canaries are green; CI topology still needs
+  measured duration and ownership analysis.
+- Live GitHub inventory currently shows no open issues or pull requests and several old
+  branches; refresh before proposing any action.
+- The untracked user-owned `.tool-versions` selects Node only. Use explicit installed
+  Elixir/Erlang versions for local validation unless the owner changes that file.
+
+### Guardrails
+
+- Never trust XML `KeyInfo`; use configured IdP certificates only.
+- Keep the single Saxy parse path and raw-binary pre-parse guards.
+- Require digest recomputation and genuine `:public_key.verify` signature verification.
+- Co-commit every trust mutation and audit row in one transaction.
+- Preserve production replay protection and the fresh-process `mix ci.security` suites.
+- Do not manually publish Hex or hand-edit `CHANGELOG.md`.
 
 ## Deferred Items
 
-| Category | Item | Status |
-|----------|------|--------|
-| demand_gated | AUTHN-POST-01 | save-for-demand |
-| demand_gated | KMS-01 | save-for-demand |
-| demand_gated | SIGNED-META-01 | save-for-demand |
-| verification | Phase 53 human-needed UI testing (demo Setup/Operator UX click-through) | deferred; run `/gsd:verify-work 53` |
-| v1.10_future | TLS via mkcert for `*.relyra.localhost` | deferred; http suffices on localhost |
-| v1.10_future | Hashed per-checkout instance hostnames (scoria-style) | deferred; simple `relyra.localhost` chosen |
-| v1.10_future | Production multi-stage `mix release` Dockerfile | deferred; dev/demo DX only |
-| brand_future | BRAND-F01 — animated/motion brand assets | deferred to future milestone |
-| brand_future | BRAND-F02 — full 19-icon icon library | deferred to future milestone |
-| Phase 68 P01 | 128 | 3 tasks | 3 files |
-| Phase 68 P02 | 2m 26s | 2 tasks | 2 files |
+| Item | Status |
+|---|---|
+| AUTHN-POST-01 | Demand-gated |
+| KMS-01 | Demand-gated |
+| SIGNED-META-01 | Demand-gated |
+| Hosted external twin | Deferred until the local package twin proves insufficient |
+| Exhaustive compatibility matrix | Deferred until adopter evidence justifies its cost |
 
 ## Session Continuity
 
-**Stopped at:** Milestone v1.10 archived
+**Last session:** 2026-10-01T17:48:44.687Z
+
+**Stopped at:** Phase 79 gap plans 07–12 verified; next 79-07-PLAN.md
+
 **Resume file:** None
 
-Last session: 2026-08-27
-Resume at: $gsd-new-milestone
+## Operator Next Step
 
-## Operator Next Steps
+Phase 79 Plans 01 through 06 are complete, and ROADMAP.md records 6/12 plans executed.
+The six new gap plans 79-07 through 79-12 passed structural, command-contract,
+requirement/decision coverage, and independent planning checks. Research was skipped
+for gap planning. No implementation or remote mutation occurred during planning.
 
-- Start the next milestone with `$gsd-new-milestone` when a demand signal or deliberate maintenance objective exists.
+Run `$gsd-execute-phase 79 --gaps-only`, beginning with 79-07. The sequence prepares
+a history-preserving publication candidate and deterministic transaction validators,
+separately approves PR publication and normal merge, proves final-main CI, then
+reconciles protection and closes only on passing source-bound evidence. Missing CI
+runs can produce a pending dispatch proposal; final CI acceptance requires every
+passing run/job/check identity. Approved protection evidence and rollback remain
+immutable, with separate post-change observations.
+
+Release readiness remains blocked. The captured main SHA
+c786a9890f2f99f0dd98f89a1d9713db7c486837 still has a protection-source conflict:
+REST reports `required_approving_review_count=1`, while GraphQL reports
+`requiredApprovingReviewCount=null` and `requiresApprovingReviews=false`. The parent
+protection response also omits `required_pull_request_reviews` and `restrictions`; the
+capture has no writable resource and the desired/rollback payloads are null. All nine
+mandatory lanes lack passing evidence on that SHA, so readiness remains unknown. No
+approval was inferred, and no remote write or workflow dispatch occurred.
+
+The GitHub policy owner/provider must resolve the source disagreement before 79-11
+can prepare an exact protection correction and rollback. This external prerequisite
+does not prevent 79-07's local preparation or the separately approved CI path. Every
+remote batch still needs its own exact approval, immediate preflight, and automated
+read-back; those approvals do not prove readiness.
+
+Carryover records: `.planning/WINDOWS.md` retains two Phase 76 concurrency automation
+gaps and the documented advisory waiver. The archival verification audit reports five
+items across v1.7/v1.10 and zero current-milestone items. The Phase 73 documentation
+policy window is reconciled to the completed Phase 77 fix and its passed verification.
+
+## Performance Metrics
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 73 P01 | 9min | 2 tasks | 4 files |
+| Phase 73 P02 | 20min | 2 tasks | 5 files |
+| Phase 73 P03 | 17min | 2 tasks | 4 files |
+| Phase 73 P04 | 12min | 2 tasks | 3 files |
+| Phase 73 P05 | 24min | 3 tasks | 1 files |
+| Phase 73 P06 | 9min | 2 tasks | 2 files |
+| Phase 73 P07 | 11min | 2 tasks | 1 files |
+| Phase 73 P08 | 15min | 2 tasks | 2 files |
+| Phase 73 P09 | 39min | 2 tasks | 2 files |
+| Phase 73 P10 | 18min | 2 tasks | 1 files |
+| Phase 73 P11 | 18min | 2 tasks | 1 files |
+| Phase 73 P12 | 16min | 2 tasks | 2 files |
+| Phase 73 P13 | 19min | 3 tasks | 1 files |
+| Phase 73 P14 | 10min | 2 tasks | 2 files |
+| Phase 73 P15 | 26min | 2 tasks | 1 files |
+| Phase 73 P16 | 21min | 2 tasks | 3 files |
+| Phase 73 P17 | 60min | 2 tasks | 2 files |
+| Phase 73 P18 | 12min | 2 tasks | 2 files |
+| Phase 73 P19 | 14min | 2 tasks | 2 files |
+| Phase 73 P20 | 3 min | 2 tasks | 2 files |
+| Phase 73 P21 | 10min | 2 tasks | 1 files |
+| Phase 73 P22 | 14 min | 2 tasks | 3 files |
+| Phase 73 P23 | 17min | 3 tasks | 8 files |
+| Phase 73 P24 | 37min | 3 tasks | 6 files |
+| Phase 73 P25 | 16min | 2 tasks | 1 files |
+| Phase 73 P26 | 38m 9s | 2 tasks | 5 files |
+| Phase 74 P01 | 160 min | 2 tasks | 5 files |
+| Phase 74 P02 | 20 | 2 tasks | 4 files |
+| Phase 74 P03 | 17 | 3 tasks | 8 files |
+| Phase 74 P04 | 75 min | 2 tasks | 35 files |
+| Phase 73 P34 | 53min | 2 tasks | 6 files |
+| Phase 75 P01 | 8 min | 2 tasks | 5 files |
+| Phase 75 P02 | 5 min | 2 tasks | 4 files |
+| Phase 75 P03 | 7 min | 2 tasks | 5 files |
+| Phase 76 P01 | 29 min | 2 tasks | 7 files |
+| Phase 76 P03 | 11min | 2 tasks | 2 files |
+| Phase 76 P2 | 11 min | 2 tasks | 5 files |
+| Phase 76 P4 | 13 min | 2 tasks | 5 files |
+| Phase 76 P5 | 42 min | 2 tasks | 17 files |
+| Phase 77 P1 | 11min | 2 tasks | 3 files |
+| Phase 77 P02 | 13 min | 2 tasks | 3 files |
+| Phase 77 P03 | 27min | 3 tasks | 2 files |
+| Phase 77 P05 | 9min | 2 tasks | 1 files |
+| Phase 77 P06 | 8min | 2 tasks | 1 files |
+| Phase 77 P07 | 2min | 2 tasks | 1 files |
+| Phase 77 P08 | 1h 4m | 2 tasks | 12 files |
+| Phase 78 P01 | 38min | 3 tasks | 3 files |
+| Phase 78 P2 | 8h | 3 tasks | 8 files |
+| Phase 78 P3 | 21m | 2 tasks | 2 files |
+| Phase 78 P4 | 15m | 3 tasks | 7 files |
+| Phase 78 P5 | 26m | 2 tasks | 7 files |
+| Phase 78 P6 | 43m | 3 tasks | 9 files |
+| Phase 79 P01 | 48min | 3 tasks | 4 files |
+| Phase 79 P02 | 97min | 3 tasks | 11 files |
+| Phase 79 P3 | 58min | 3 tasks | 9 files |
+| Phase 79 P04 | 48min | 2 tasks | 6 files |
+| Phase 79 P06 | 12min | 2 tasks | 14 files |
+
+### Resolved Issues
+
+- Phoenix was upgraded from 1.8.7 to 1.8.13 in `ae1f0aa`, resolving GHSA-63mc-hw7g-86rr and GHSA-6983-jfq8-485w; `mix ci.security` passes.
+
+## Blockers
+
+None for starting Plan 79-07's local preparation.
+
+## Release Readiness Prerequisites
+
+- Plans 79-07–10 must publish the reviewed milestone history through separately approved actions and prove all nine mandatory lanes plus fleet-proxy-e2e on the resulting current main SHA. Old-main, PR, local fixture, and canary success cannot substitute for final-main evidence.
+- Plan 79-11 requires the GitHub policy owner/provider to resolve REST required_approving_review_count=1 versus GraphQL requiredApprovingReviewCount=null and requiresApprovingReviews=false, with a complete writable protection observation. Only then may an exact protection delta and rollback be approved; Plan 79-12 requires automated read-back and green same-SHA evidence before completion.

@@ -11,6 +11,7 @@ defmodule LedgerLoopWeb.SetupLive do
     connection =
       Connection
       |> where([c], c.status == :enabled)
+      |> order_by([c], asc: c.connection_id)
       |> limit(1)
       |> Repo.one()
 

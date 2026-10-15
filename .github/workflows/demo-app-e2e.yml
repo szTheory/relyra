@@ -1,5 +1,12 @@
 name: demo-app-e2e
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 on:
   pull_request:
     paths-ignore:
@@ -42,18 +49,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Setup BEAM
-        uses: erlef/setup-beam@v1
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
         with:
           otp-version: "28"
           elixir-version: "1.19.5"
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "22"
           cache: npm
@@ -69,6 +76,9 @@ jobs:
       - name: Install Node deps
         run: npm ci
 
+      - name: Verify trace visual status artifact contract
+        run: bash scripts/test_trace_visual_status_contract.sh
+
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
@@ -79,5 +89,61 @@ jobs:
 
       - name: Trace visual and failed-state browser e2e
         # The dedicated harness generates its own ephemeral Basic credentials,
-        # disables attachments, and removes its temporary Playwright output.
+        # disables attachments, removes its temporary Playwright output, and
+        # writes a fixed-schema bounded status receipt in runner temp.
+        env:
+          TRACE_VISUAL_STATUS_PATH: ${{ runner.temp }}/relyra-trace-visual-status.json
         run: npm run demo:trace-visual
+
+      - name: Require bounded trace visual status receipt
+        id: trace_status_guard
+        if: always()
+        env:
+          TRACE_VISUAL_STATUS_PATH: ${{ runner.temp }}/relyra-trace-visual-status.json
+        run: |
+          if [[ ! -f "$TRACE_VISUAL_STATUS_PATH" || -L "$TRACE_VISUAL_STATUS_PATH" ]]; then
+            echo "::error::trace_visual_status_missing: required bounded receipt was not produced."
+            exit 1
+          fi
+          status_bytes="$(wc -c < "$TRACE_VISUAL_STATUS_PATH")"
+          if (( status_bytes == 0 || status_bytes > 512 )); then
+            echo "::error::trace_visual_status_invalid: receipt must be between 1 and 512 bytes."
+            exit 1
+          fi
+          jq -e '
+            keys == ["checks_failed", "checks_passed", "failure_category", "outcome", "owner", "phase", "run_id", "schema_version"] and
+            .schema_version == 1 and .owner == "demo-app-e2e" and
+            (.run_id | test("^[a-f0-9]{16}$")) and
+            (.phase | IN("setup", "browser", "complete")) and
+            (.outcome | IN("passed", "failed", "cancelled")) and
+            (.failure_category | IN("none", "setup", "assertion", "timeout", "cancelled")) and
+            (.checks_passed | type == "number" and . >= 0 and . <= 1) and
+            (.checks_failed | type == "number" and . >= 0 and . <= 1) and
+            ((.outcome == "passed" and .failure_category == "none" and .phase == "complete" and .checks_failed == 0) or
+             (.outcome == "failed" and .failure_category != "none" and .phase != "complete" and .checks_failed == 1) or
+             (.outcome == "cancelled" and .failure_category == "cancelled" and .phase != "complete" and .checks_failed == 1))
+          ' "$TRACE_VISUAL_STATUS_PATH" >/dev/null || {
+            echo "::error::trace_visual_status_invalid: receipt does not match the bounded trace schema."
+            exit 1
+          }
+
+      - name: Upload safe trace visual status
+        if: ${{ always() && steps.trace_status_guard.conclusion == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: demo-app-e2e-${{ github.job }}-${{ strategy.job-index || 0 }}-${{ github.run_attempt }}-trace-visual-status
+          path: ${{ runner.temp }}/relyra-trace-visual-status.json
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Summarize trace visual ownership and recovery
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            printf '### Deterministic trace visual browser result\n\n'
+            printf '| Owner role | Run status | Rerun / recovery |\n'
+            printf '| --- | --- | --- |\n'
+            printf "| \`demo-app-e2e\` maintainer | \`%s\` | \`npm run demo:trace-visual\` |\n" "$JOB_STATUS"
+          } >> "$GITHUB_STEP_SUMMARY"

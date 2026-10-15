@@ -31,7 +31,10 @@ repo_config =
   end
 
 config :relyra, ecto_repos: [Relyra.TestSupport.EctoTestRepo]
-config :relyra, Relyra.TestSupport.EctoTestRepo, repo_config
+# Query logging stays off in tests: debug query lines echo fixture certificate
+# PEMs into captured command output, which the Phase 78 diagnostics validator
+# (correctly) rejects as certificate material.
+config :relyra, Relyra.TestSupport.EctoTestRepo, Keyword.put(repo_config, :log, false)
 
 config :relyra, Relyra.TestSupport.LiveAdminEndpoint,
   url: [host: "127.0.0.1"],

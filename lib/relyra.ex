@@ -515,10 +515,19 @@ defmodule Relyra do
         {:error, %Error{type: :adapter_not_configured} = error} ->
           {:error, error}
 
-        {:error, _} ->
+        {:error, %Error{type: :request_intent_consumed} = consumed_error} ->
+          case RequestStore.fetch_consumed_intent(relay_state, opts) do
+            {:ok, intent} -> {:ok, intent, opts}
+            {:error, _recovery_error} -> {:error, consumed_error}
+          end
+
+        {:error, %Error{type: :request_intent_not_found}} ->
           # If not found in store, we might be in an IdP-initiated flow.
           # We return nil intent and let the pipeline decide based on connection config.
           {:ok, nil, opts}
+
+        {:error, %Error{} = error} ->
+          {:error, error}
       end
     else
       # No relay_state and no intent map provided.

@@ -1,0 +1,92 @@
+name: real-idp-canary
+
+on:
+  schedule:
+    - cron: "31 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  real-idp-canary:
+    name: real-idp-canary
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: real-idp-canary
+    env:
+      REAL_IDP_CANARY_SP_LOGIN_URL: ${{ vars.REAL_IDP_CANARY_SP_LOGIN_URL }}
+      REAL_IDP_CANARY_SP_ORIGIN: ${{ vars.REAL_IDP_CANARY_SP_ORIGIN }}
+      REAL_IDP_CANARY_IDP_ORIGIN: ${{ vars.REAL_IDP_CANARY_IDP_ORIGIN }}
+      REAL_IDP_CANARY_PROVIDER_ALIAS: ${{ vars.REAL_IDP_CANARY_PROVIDER_ALIAS }}
+      REAL_IDP_CANARY_USERNAME: ${{ secrets.REAL_IDP_CANARY_USERNAME }}
+      REAL_IDP_CANARY_PASSWORD: ${{ secrets.REAL_IDP_CANARY_PASSWORD }}
+      REAL_IDP_CANARY_OWNER: ${{ vars.REAL_IDP_CANARY_OWNER }}
+      REAL_IDP_CANARY_CREDENTIAL_OWNER: ${{ vars.REAL_IDP_CANARY_CREDENTIAL_OWNER }}
+      REAL_IDP_CANARY_RESPONDER: ${{ vars.REAL_IDP_CANARY_RESPONDER }}
+      REAL_IDP_CANARY_RUNBOOK: ${{ vars.REAL_IDP_CANARY_RUNBOOK }}
+      REAL_IDP_CANARY_USER_SELECTOR: ${{ vars.REAL_IDP_CANARY_USER_SELECTOR }}
+      REAL_IDP_CANARY_PASSWORD_SELECTOR: ${{ vars.REAL_IDP_CANARY_PASSWORD_SELECTOR }}
+      REAL_IDP_CANARY_SUBMIT_SELECTOR: ${{ vars.REAL_IDP_CANARY_SUBMIT_SELECTOR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run scheduled real IdP canary
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: bash scripts/test_real_idp_canary.sh
+
+      - name: Upload safe real IdP status
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: real-idp-canary-status-${{ github.run_id }}
+          path: ${{ runner.temp }}/relyra-real-idp-canary-status.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Summarize canary ownership and recovery
+        if: always()
+        env:
+          STATUS_PATH: ${{ runner.temp }}/relyra-real-idp-canary-status.json
+        run: |
+          if [ -f "$STATUS_PATH" ]; then
+            status=$(jq -r '.status' "$STATUS_PATH")
+            provider=$(jq -r '.provider_alias' "$STATUS_PATH")
+            owner=$(jq -r '.owner' "$STATUS_PATH")
+            credential_owner=$(jq -r '.credential_owner' "$STATUS_PATH")
+            responder=$(jq -r '.responder' "$STATUS_PATH")
+            recovery=$(jq -r '.recovery_reference' "$STATUS_PATH")
+          else
+            status=configuration_incomplete
+            provider=unconfigured
+            owner=unconfigured
+            credential_owner=unconfigured
+            responder=unconfigured
+            recovery=unconfigured
+          fi
+          {
+            printf '### Scheduled real IdP canary\n\n'
+            printf '| Provider | Status | Service owner | Credential owner | Responder | Recovery reference |\n'
+            printf '| --- | --- | --- | --- | --- | --- |\n'
+            printf "| \`%s\` | \`%s\` | \`%s\` | \`%s\` | \`%s\` | \`%s\` |\n" \
+              "$provider" "$status" "$owner" "$credential_owner" "$responder" "$recovery"
+          } >> "$GITHUB_STEP_SUMMARY"

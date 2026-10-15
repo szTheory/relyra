@@ -49,11 +49,18 @@ Positioning tagline: **"Enterprise SAML, calmly verified."**
 
 **Brand source of truth (post-v1.8):** `brandbook/notes/decision-log.md` → "Canonical Lock Set" (palette/type/voice); `brandbook/tokens/tokens.css` (`--rl-*`); `brandbook/README.md` (artifact index). The original `prompts/relyra-brand-book.md` remains the narrative brand book; where they differ, the Canonical Lock Set governs (it is the WCAG-remediated, contradiction-resolved set).
 
-## Next Milestone Goals
+## Current Milestone: v1.11 First-Adopter Twin
 
-No milestone is active. v1.10 is archived, and the project returns to the
-demand-gated pause default. Start a new milestone only when adopter evidence or
-a deliberate maintenance objective justifies one.
+Standing guidance for future milestone selection and roadmap refreshes is in
+[`docs/relyra-milestone-roadmap-guide.txt`](../docs/relyra-milestone-roadmap-guide.txt).
+
+**Goal:** Make Relyra as adopter-ready as practical before a real adopter arrives by maintaining a realistic digital first adopter, testing the complete public integration boundary, and closing high-value quality gaps until returns diminish.
+
+**Target features:**
+- Deepen LedgerLoop/Northstar into a realistic multi-tenant SaaS adopter with credible organizations, users, roles, IdPs, trust history, incidents, and operator workflows.
+- Add a clean-room downstream consumer that installs only Relyra's publishable artifact and proves installation, configuration, migrations, runtime integration, representative SAML lifecycles, diagnosis, recovery, and upgrades.
+- Ratchet fixture realism, end-to-end and smoke coverage, code clarity, repository structure, standalone documentation, CI efficiency, and local/GitHub hygiene while preserving every security invariant.
+- Fix adopter-significant findings within the milestone; require explicit approval for public API, stricter-default, security-posture, and shared GitHub state changes.
 
 **Demand-gated future candidates** (investigation threads in `.planning/threads/`; trigger = real GitHub issue):
 
@@ -190,9 +197,18 @@ The v1.x milestone arc:
 - ✓ **DOC-01** — House-voice Docker DX guide provides an executable Solo zero-to-login path, configured-port recovery, Fleet/Keycloak follow-ons, cache model, URL map, and operator troubleshooting — v1.10 (Phase 72 verified 2026-08-27; 21/21 must-haves)
 - ✓ **DOC-02** — Demo README, HexDocs-safe router, and root README route evaluators through the Make-first Docker/Fleet surface while retaining Local Mix and library Day-1 onboarding — v1.10 (Phase 72 verified 2026-08-27)
 
+**v1.11 Phase 74:**
+- ✓ **PKG-01..PKG-06** — Clean-room Phoenix consumer resolves the locally built Hex artifact, compiles with and without optional dependencies, exercises signed ACS and persistent stores, and verifies installer drift and failure diagnostics — Phase 74 verified 2026-09-25
+
+**v1.11 Phase 75:**
+- ✓ **TWIN-01..TWIN-05** — Tenant-owned LedgerLoop fixtures cover distinct organizations and providers, ordered trust history, a redacted support incident, and deterministic isolated reset — Phase 75 verified 2026-09-26
+
 ### Active
 
-None. Fresh active requirements should be defined by the next `/gsd-new-milestone` cycle.
+- [ ] Maintain a realistic LedgerLoop/Northstar first-adopter twin that exercises complete evaluator, implementer, tenant-admin, security-reviewer, SRE, and end-user journeys.
+- [ ] Prove Relyra's public package boundary through a clean-room downstream consumer and deterministic lifecycle evidence.
+- [ ] Close high-value integration, implementation, fixture, documentation, CI, repository, and project-hygiene gaps exposed by the twin and a repository-wide craftsmanship review.
+- [ ] Finish with CI-green `main`, intentional tracked artifacts, clean worktrees, standalone public documentation, and explicitly dispositioned residual findings.
 
 ### Out of Scope
 
@@ -248,6 +264,7 @@ None. Fresh active requirements should be defined by the next `/gsd-new-mileston
 - **Security** — `SECURITY.md` + private advisory workflow from day 1. Every security fix becomes a permanent regression fixture. No unsafe defaults. No "disable signature validation to make the demo pass." **Why:** Relyra sits on the auth boundary.
 - **Compatibility — legacy IdPs** — `legacy_algorithm_policy: [allow_sha1_until: ~D[...], reason: "...", audit: true]` exists but must be time-boxed, auditable, and surfaced in the admin UI (v0.3+) with a clear risk panel. **Why:** unsafe compatibility is explicit, not silent.
 - **OSS discipline** — conventional commits + Release Please + Keep-a-Changelog + `@version` single source of truth + `package.files` explicit whitelist + CI as specification + tag-version guard + post-publish parity verification + daily drift cron. **Why:** sibling-lib convergence is 5-of-10+; skipping re-pays costs already paid.
+- **Verification posture** — Default to shift-left, deterministic verification: add integration, E2E, smoke, seam, or browser checks to mandatory CI when they provide recurring value. Target zero required human UAT; leave human judgment only where automation is not feasible, and record that boundary as an explicit automation gap. **Why:** routine acceptance should be repeatable without maintainer handoffs.
 - **Brand** — always "Relyra" title case. Never `reLyra`, `ReLyra`, `RELYRA`, or lyre/music/constellation/shield/padlock/key/flame/bird imagery. Never "SAML is easy", magic, bulletproof, military-grade. **Why:** brand book §22 do/don't summary is locked.
 - **Runtime** — Claude Code + sibling-lib Claude-first tooling. `CLAUDE.md` + `AGENTS.md` dual entry points. GSD planning discipline (`.planning/` layout). **Why:** matches sibling-repo working model.
 
@@ -279,6 +296,8 @@ None. Fresh active requirements should be defined by the next `/gsd-new-mileston
 | **Assessment 2026-06-12: private adoption-evidence trigger overrides pause; next milestone is runnable demo evidence, not protocol** | Repo inspection + candidate research found Relyra core still near-done, but adoption confidence is blocked by lack of a realistic runnable Phoenix SaaS demo. Phase 50 evidence is strong but hidden in test fixtures; Keycloak proof is real but ConnTest-based; Ecto production path proof still uses ETS request/replay stores. Recommended single pick: **v1.7 Adoption Evidence Demo** — `demo/ledger_loop`, deterministic seeds, Docker DX, mounted LiveAdmin, host-owned customer/admin setup flow, Ecto connection/request/replay stores, local FakeIdP proof, optional Keycloak profile, browser E2E. Protocol wedges remain demand-gated. | Active recommendation for `$gsd-new-milestone`; thread: `.planning/threads/adoption-evidence-demo-roadmap-2026-06-12.md` |
 | **v1.9 includes public testing API planning by explicit maintainer approval** | SEED-002 exposed a real adopter-facing contradiction: Getting Started taught `Relyra.TestSupport`, while Hex packaging deliberately excludes `test_support`. The maintainer chose to include the public testing API direction in v1.9 planning. This allowed a curated `Relyra.Testing` surface to ship as test-only public helpers while keeping adversarial corpus internals private, using ephemeral key material, and avoiding production trust-boundary changes. | ✓ Good (Phases 64-65 resolved SEED-002 through public `Relyra.Testing` package/docs truth) |
 | **v1.10 keeps Docker evaluation outside the published security surface** | The milestone needed a production-like evaluator path without changing Relyra's parser, crypto, replay, audit, public API, or Hex package. Solo/Fleet Compose, Keycloak, launcher, docs, and deterministic harnesses stay in demo/ops surfaces while exercising the real verifier. | ✓ Good (Phases 68-72.1; 12/12 requirements, 10/10 integrations, 6/6 flows; archived with advisory-only tech debt) |
+| **v1.11 uses a clean-room package consumer as an independent adopter boundary** | Root tests and demos can see checkout-only helpers that Hex consumers cannot. Building and unpacking the artifact before compiling an isolated Phoenix consumer makes package provenance, migrations, signed ACS, optional-dependency behavior, and upgrade drift deterministic acceptance evidence. | ✓ Good (Phase 74 verified against the unpacked artifact; all six PKG requirements satisfied) |
+| **v1.11 makes tenant identity the primary LedgerLoop fixture owner** | Northstar and Harborline are separate organizations; each IdP/provider connection, membership, group, and identity resolves within its owning tenant. Reset deletes only declared fixture IDs and preserves unrelated sentinels. | ✓ Good (Phase 75 verified; all five TWIN requirements satisfied) |
 
 ## Evolution
 
@@ -298,4 +317,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-08-27 after v1.10 milestone archive*
+*Last updated: 2026-09-26 after Phase 75 — SaaS twin domain realism verified*

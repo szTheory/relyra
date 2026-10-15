@@ -10,10 +10,17 @@ defmodule LedgerLoop.Relyra.SessionAdapter do
 
   @impl Relyra.SessionAdapter
   def establish_session(subject, context, _opts) do
+    connection_id =
+      Map.get(context, :connection_id) ||
+        context
+        |> Map.get(:principal, %{})
+        |> Map.get(:connection_id) || "unknown"
+
     # context is a %Relyra.LoginResult{} struct — use Map.get, not Access ([]),
-    # since LoginResult does not implement the Access behaviour.
+    # since LoginResult does not implement the Access behaviour. The verified
+    # connection identifier is carried by its Principal.
     scenario_key =
-      "session_#{Map.get(context, :connection_id) || "unknown"}_#{System.unique_integer([:positive])}"
+      "session_#{connection_id}_#{System.unique_integer([:positive])}"
 
     changeset =
       LoginReceipt.changeset(%LoginReceipt{}, %{

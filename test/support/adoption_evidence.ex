@@ -1,0 +1,2290 @@
+defmodule Relyra.AdoptionEvidence do
+  @moduledoc false
+
+  @requirements ~w(
+    EVID-01 EVID-02 EVID-03
+    PKG-01 PKG-02 PKG-03 PKG-04 PKG-05 PKG-06
+    TWIN-01 TWIN-02 TWIN-03 TWIN-04 TWIN-05
+    JOUR-01 JOUR-02 JOUR-03 JOUR-04 JOUR-05 JOUR-06
+    QUAL-01 QUAL-02 QUAL-03 QUAL-04 QUAL-05 QUAL-06
+    PIPE-01 PIPE-02 PIPE-03 PIPE-04 PIPE-05
+    REPO-01 REPO-02 REPO-03
+    GOV-01 GOV-02 EXIT-01
+  )
+  @personas [:evaluator, :developer, :tenant_admin, :security_reviewer, :sre, :end_user]
+  @evidence_kinds [:package_contract, :application, :browser, :external_canary, :security_corpus]
+  @owner_kinds [:mix_exunit, :browser, :shell]
+  @owner_roles [:primary, :defense]
+  @states [:planned, :existing]
+  @registration_cache_namespace :repository_snapshot
+  @phase73_reconciliation_alias "ci.phase73.reconciliation"
+  @phase73_reconciliation_owner "test/governance/phase_73_reconciliation_test.exs"
+  @phase73_reconciliation_selector "phase_73_reconciliation_replay"
+  @phase73_reconciliation_step "Phase 73 reconciliation"
+  @fields [
+    :id,
+    :requirement,
+    :personas,
+    :job,
+    :expected_outcome,
+    :evidence_kind,
+    :owner,
+    :selector,
+    :lane,
+    :state,
+    :fixture_owner,
+    :reset_boundary,
+    :failure_diagnostics,
+    :criterion,
+    :owner_kind,
+    :owner_role,
+    :workflow_job,
+    :workflow_step
+  ]
+
+  @existing_entries [
+                      {"evid-01-evaluator-inspection", [:evaluator], "inspect evaluator proof",
+                       "every evaluator journey names executable evidence"},
+                      {"evid-01-developer-inspection", [:developer], "inspect developer proof",
+                       "every developer journey names executable evidence"},
+                      {"evid-01-tenant-admin-inspection", [:tenant_admin],
+                       "inspect tenant-admin proof",
+                       "every tenant-admin journey names executable evidence"},
+                      {"evid-01-security-reviewer-inspection", [:security_reviewer],
+                       "inspect security-review proof",
+                       "every security-review journey names executable evidence"},
+                      {"evid-01-sre-inspection", [:sre], "inspect SRE proof",
+                       "every SRE journey names executable evidence"},
+                      {"evid-01-end-user-inspection", [:end_user], "inspect end-user proof",
+                       "every end-user journey names executable evidence"}
+                    ]
+                    |> Enum.map(fn {id, personas, job, expected_outcome} ->
+                      %{
+                        id: id,
+                        requirement: "EVID-01",
+                        personas: personas,
+                        job: job,
+                        expected_outcome: expected_outcome,
+                        evidence_kind: :security_corpus,
+                        owner: "test/adoption/evidence_contract_test.exs",
+                        selector: "evidence_contract",
+                        lane: "ci.evidence",
+                        state: :existing,
+                        fixture_owner: "repository evidence ledger",
+                        reset_boundary: "fresh test process and immutable repository source",
+                        failure_diagnostics:
+                          "EVID-01 ledger-to-owner chain identifies the broken seam"
+                      }
+                    end)
+
+  @evid_02_entry %{
+    id: "evid-02-mandatory-ci-contract",
+    requirement: "EVID-02",
+    personas: [:security_reviewer],
+    job: "verify deterministic acceptance ownership",
+    expected_outcome: "hollow or optional evidence cannot close a requirement",
+    evidence_kind: :security_corpus,
+    owner: "test/adoption/evidence_contract_test.exs",
+    selector: "evidence_contract",
+    lane: "ci.evidence",
+    state: :existing,
+    fixture_owner: "repository evidence contract",
+    reset_boundary: "fresh test process and temporary repository fixtures",
+    failure_diagnostics: "EVID-02 reports the requirement and missing deterministic seam"
+  }
+
+  @pipe_02_entry %{
+    id: "pipe-02-criterion-owner-ledger",
+    requirement: "PIPE-02",
+    personas: [:security_reviewer, :sre],
+    job: "prove every mandatory criterion has one primary owner",
+    expected_outcome:
+      "duplicate primary assignments fail and labeled defenses remain independent",
+    evidence_kind: :security_corpus,
+    owner: "test/adoption/evidence_contract_test.exs",
+    selector: "evidence_contract",
+    lane: "ci.evidence",
+    state: :existing,
+    fixture_owner: "repository evidence contract",
+    reset_boundary: "fresh test process and temporary repository fixtures",
+    failure_diagnostics: "PIPE-02 identifies the duplicate primary criterion or owner chain",
+    criterion: "one-primary-owner-per-mandatory-criterion",
+    owner_kind: :mix_exunit,
+    owner_role: :primary,
+    workflow_job: "security",
+    workflow_step: "Evidence contract"
+  }
+
+  @independent_defenses [
+    %{
+      id: "pipe-02-gate02-independent-defense",
+      requirement: "PIPE-02",
+      criterion: "gate02-c14n-independent-defense",
+      owner: "test/security/xml/corpus_security_test.exs",
+      selector: "gate02_c14n",
+      command: "mix test --only gate02_c14n --warnings-as-errors",
+      workflow_job: "security",
+      workflow_step: "GATE-02 binary gate (gate02_c14n zero regressions)",
+      owner_kind: :mix_exunit,
+      owner_role: :defense
+    }
+  ]
+
+  @evid_03_contract_entry %{
+    id: "evid-03-deterministic-canary-contract",
+    requirement: "EVID-03",
+    personas: [:sre, :security_reviewer],
+    job: "verify the external canary safety boundary",
+    expected_outcome:
+      "the scheduled canary is independent and emits safe owned evidence while ci.evidence enforces its contract",
+    evidence_kind: :security_corpus,
+    owner: "test/adoption/external_canary_contract_test.exs",
+    selector: "evidence_contract",
+    lane: "ci.evidence",
+    state: :existing,
+    fixture_owner: "isolated runner status fixtures and repository workflow sources",
+    reset_boundary: "fresh test process and temporary runner directories",
+    failure_diagnostics: "EVID-03 identifies schedule coupling, unsafe status, or missing owner"
+  }
+
+  @evid_03_scheduled_entry %{
+    id: "evid-03-scheduled-real-idp-canary",
+    requirement: "EVID-03",
+    personas: [:sre, :security_reviewer],
+    job: "inspect scheduled real-provider availability evidence",
+    expected_outcome:
+      "the managed IdP login remains a supplemental external signal with explicit recovery ownership",
+    evidence_kind: :external_canary,
+    owner: ".github/workflows/real-idp-canary.yml",
+    selector: "schedule_and_workflow_dispatch",
+    lane: "scheduled:real-idp-canary",
+    state: :existing,
+    fixture_owner: "owner-configured real IdP staging connection",
+    reset_boundary: "each scheduled or explicitly dispatched provider login",
+    failure_diagnostics:
+      "scheduled canary status names the bounded provider result, service owner, responder, and recovery reference"
+  }
+
+  @baseline_entries [
+                      {"qual-01-repository-baseline", "QUAL-01", [:security_reviewer],
+                       "inspect a severity-ranked quality inventory"},
+                      {"pipe-01-ci-baseline", "PIPE-01", [:sre],
+                       "inspect measured CI ownership and duration"}
+                    ]
+                    |> Enum.map(fn {id, requirement, personas, job} ->
+                      %{
+                        id: id,
+                        requirement: requirement,
+                        personas: personas,
+                        job: job,
+                        expected_outcome: "#{job} has a dated, fail-closed governance contract",
+                        evidence_kind: :package_contract,
+                        owner: "test/governance/milestone_scope_test.exs",
+                        selector: "evidence_contract",
+                        lane: "ci.evidence",
+                        state: :existing,
+                        fixture_owner:
+                          ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md",
+                        reset_boundary:
+                          "fresh test process and isolated temporary Markdown controls",
+                        failure_diagnostics:
+                          "#{requirement} reports the missing baseline field, owner, or lane"
+                      }
+                    end)
+
+  @governance_entries [
+                        {"gov-01-approval-boundary", "GOV-01", [:security_reviewer],
+                         "require approval before risky mutations"},
+                        {"gov-02-feature-neutral-scope", "GOV-02", [:evaluator, :developer],
+                         "exclude speculative protocol expansion"}
+                      ]
+                      |> Enum.map(fn {id, requirement, personas, job} ->
+                        %{
+                          id: id,
+                          requirement: requirement,
+                          personas: personas,
+                          job: job,
+                          expected_outcome:
+                            "#{job} is enforced by the active-plan governance contract",
+                          evidence_kind: :security_corpus,
+                          owner: "test/governance/milestone_scope_test.exs",
+                          selector: "evidence_contract",
+                          lane: "ci.evidence",
+                          state: :existing,
+                          fixture_owner:
+                            ".planning/phases/73-twin-contract-and-baseline/*-PLAN.md",
+                          reset_boundary:
+                            "fresh test process and isolated temporary plan fixtures",
+                          failure_diagnostics:
+                            "#{requirement} reports the plan, approval class, or forbidden scope"
+                        }
+                      end)
+
+  @planned_rows [
+    {"PKG-01", [:developer], "install from a local Hex artifact", :package_contract,
+     "test/consumer/package_install_test.exs", "ci.consumer"},
+    {"PKG-02", [:developer, :security_reviewer], "prove checkout internals are inaccessible",
+     :package_contract, "test/consumer/package_boundary_test.exs", "ci.consumer"},
+    {"PKG-03", [:developer], "install, compile, and boot from fresh state", :package_contract,
+     "test/consumer/fresh_boot_test.exs", "ci.consumer"},
+    {"PKG-04", [:developer, :sre], "migrate an empty PostgreSQL database", :application,
+     "test/consumer/migration_test.exs", "ci.consumer"},
+    {"PKG-05", [:developer], "exercise supported BEAM and dependency profiles", :package_contract,
+     "test/consumer/profile_matrix_test.exs", "ci.consumer"},
+    {"PKG-06", [:developer], "detect installer regeneration drift", :package_contract,
+     "test/consumer/installer_drift_test.exs", "ci.consumer"},
+    {"TWIN-01", [:evaluator, :tenant_admin], "inspect distinct organizations and roles",
+     :application, "demo/ledger_loop/test/twin/organization_test.exs", "ci.demo_app"},
+    {"TWIN-02", [:evaluator, :tenant_admin], "inspect isolated provider states", :application,
+     "demo/ledger_loop/test/twin/provider_test.exs", "ci.demo_app"},
+    {"TWIN-03", [:tenant_admin, :security_reviewer], "inspect certificate history", :application,
+     "demo/ledger_loop/test/twin/certificate_history_test.exs", "ci.demo_app"},
+    {"TWIN-04", [:sre], "follow an incident from symptom to recovery", :application,
+     "demo/ledger_loop/test/twin/incident_timeline_test.exs", "ci.demo_app"},
+    {"TWIN-05", [:developer, :sre], "reset deterministic safe fixtures", :application,
+     "demo/ledger_loop/test/twin/reset_test.exs", "ci.demo_app"},
+    {"JOUR-01", [:end_user], "complete SP-initiated login", :browser,
+     "test/adoption/journeys/login_test.exs", "ci.journeys"},
+    {"JOUR-02", [:end_user, :security_reviewer], "receive typed rejection without a session",
+     :security_corpus, "test/adoption/journeys/rejection_test.exs", "ci.journeys"},
+    {"JOUR-03", [:security_reviewer], "reject replayed assertions", :security_corpus,
+     "test/adoption/journeys/replay_test.exs", "ci.journeys"},
+    {"JOUR-04", [:tenant_admin, :security_reviewer], "preserve organization isolation",
+     :security_corpus, "test/adoption/journeys/isolation_test.exs", "ci.journeys"},
+    {"JOUR-05", [:tenant_admin], "roll metadata and certificates with audit evidence", :browser,
+     "test/adoption/journeys/tenant_admin_test.exs", "ci.journeys"},
+    {"JOUR-06", [:sre], "diagnose and recover with redacted evidence", :browser,
+     "test/adoption/journeys/incident_recovery_test.exs", "ci.journeys"},
+    {"QUAL-02", [:developer], "inspect clear production and test abstractions", :package_contract,
+     "test/quality/readability_contract_test.exs", "ci.quality"},
+    {"QUAL-03", [:security_reviewer], "prove security cleanup preserves invariants",
+     :security_corpus, "test/quality/security_characterization_test.exs", "ci.security"},
+    {"QUAL-04", [:evaluator, :developer], "read timeless standalone documentation",
+     :package_contract, "test/docs/timeless_language_test.exs", "ci.docs"},
+    {"QUAL-05", [:developer], "inspect an intentional tracked tree", :package_contract,
+     "test/quality/tracked_tree_test.exs", "ci.quality"},
+    {"QUAL-06", [:security_reviewer], "inspect dispositions for high-value findings",
+     :package_contract, "test/quality/finding_disposition_test.exs", "ci.quality"},
+    {"PIPE-03", [:sre], "verify measured safe CI parallelism", :package_contract,
+     "test/ci/parallelism_contract_test.exs", "ci.quality"},
+    {"PIPE-04", [:sre, :security_reviewer], "verify workflow operational hygiene",
+     :security_corpus, "test/ci/workflow_hygiene_test.exs", "ci.quality"},
+    {"PIPE-05", [:developer, :sre], "run every mandatory quality lane", :security_corpus,
+     "test/ci/mandatory_lanes_test.exs", "ci.quality"},
+    {"REPO-01", [:developer], "verify an intentional clean repository", :package_contract,
+     "test/repository/clean_state_test.exs", "ci.repository"},
+    {"REPO-02", [:security_reviewer], "inspect current GitHub inventory", :external_canary,
+     "test/repository/github_inventory_test.exs", "ci.repository"},
+    {"REPO-03", [:security_reviewer], "approve an exact remote mutation batch", :package_contract,
+     "test/repository/remote_mutation_policy_test.exs", "ci.repository"},
+    {"EXIT-01", [:evaluator, :security_reviewer], "inspect final residual risk",
+     :package_contract, "test/repository/residual_risk_test.exs", "ci.repository"}
+  ]
+
+  @planned_entries Enum.map(@planned_rows, fn {requirement, personas, job, evidence_kind, owner,
+                                               lane} ->
+                     slug = requirement |> String.downcase() |> String.replace("-", "-")
+
+                     %{
+                       id: "#{slug}-planned-owner",
+                       requirement: requirement,
+                       personas: personas,
+                       job: job,
+                       expected_outcome: "#{job} has deterministic, actionable evidence",
+                       evidence_kind: evidence_kind,
+                       owner: owner,
+                       selector: String.downcase(String.replace(requirement, "-", "_")),
+                       lane: lane,
+                       state: :planned,
+                       fixture_owner: "future #{requirement} implementation plan",
+                       reset_boundary: "isolated fixture reset owned by #{requirement}",
+                       failure_diagnostics:
+                         "#{requirement} reports its unmet owner, selector, or lane"
+                     }
+                   end)
+
+  @entries (@existing_entries ++
+              [
+                @evid_02_entry,
+                @pipe_02_entry,
+                @evid_03_contract_entry,
+                @evid_03_scheduled_entry
+              ] ++
+              @baseline_entries ++ @governance_entries ++ @planned_entries)
+           |> Enum.map(fn entry ->
+             {workflow_job, workflow_step} =
+               case entry.lane do
+                 "ci.evidence" -> {"security", "Evidence contract"}
+                 "ci.security" -> {"security", "Security lane"}
+                 "ci.fast" -> {"security", "Fast lane"}
+                 "ci.quality" -> {"security", "Quality gate"}
+                 _other -> {"security", "Evidence contract"}
+               end
+
+             owner_kind =
+               case entry.evidence_kind do
+                 :browser -> :browser
+                 :external_canary -> :shell
+                 _other -> :mix_exunit
+               end
+
+             Map.merge(entry, %{
+               criterion: Map.get(entry, :criterion, entry.id),
+               owner_kind: owner_kind,
+               owner_role: :primary,
+               workflow_job: workflow_job,
+               workflow_step: workflow_step
+             })
+           end)
+
+  def entries, do: @entries
+
+  def independent_defenses, do: @independent_defenses
+
+  def validate_entries!(entries) when is_list(entries) and entries != [] do
+    Enum.each(entries, &validate_entry!/1)
+
+    duplicate_ids =
+      entries
+      |> Enum.frequencies_by(& &1.id)
+      |> Enum.filter(fn {_id, count} -> count > 1 end)
+      |> Enum.map(&elem(&1, 0))
+
+    if duplicate_ids != [] do
+      raise ArgumentError, "duplicate evidence id(s): #{Enum.join(duplicate_ids, ", ")}"
+    end
+
+    duplicate_primary_criteria =
+      entries
+      |> Enum.filter(&(&1.owner_role == :primary))
+      |> Enum.frequencies_by(&{&1.requirement, &1.criterion})
+      |> Enum.filter(fn {_key, count} -> count > 1 end)
+      |> Enum.map(&elem(&1, 0))
+
+    if duplicate_primary_criteria != [] do
+      formatted =
+        Enum.map_join(duplicate_primary_criteria, ", ", fn {requirement, criterion} ->
+          "#{requirement}/#{criterion}"
+        end)
+
+      raise ArgumentError, "duplicate primary criterion assignment(s): #{formatted}"
+    end
+
+    requirements = MapSet.new(entries, & &1.requirement)
+    personas = entries |> Enum.flat_map(& &1.personas) |> MapSet.new()
+
+    assert_coverage!("requirement", MapSet.new(@requirements), requirements)
+    assert_coverage!("persona", MapSet.new(@personas), personas)
+    :ok
+  end
+
+  def validate_entries!(entries) do
+    raise ArgumentError, "evidence ledger must be a non-empty list, got: #{inspect(entries)}"
+  end
+
+  def validate_entry!(entry) when is_map(entry) do
+    keys = entry |> Map.keys() |> MapSet.new()
+    expected_keys = MapSet.new(@fields)
+    raw_id = Map.get(entry, :id)
+    id = if is_binary(raw_id) and String.trim(raw_id) != "", do: raw_id, else: "<missing-id>"
+
+    unless keys == expected_keys do
+      raise ArgumentError,
+            "evidence row #{id} has invalid fields; missing=#{inspect(MapSet.difference(expected_keys, keys) |> MapSet.to_list())} unknown=#{inspect(MapSet.difference(keys, expected_keys) |> MapSet.to_list())}"
+    end
+
+    for field <- @fields -- [:personas, :evidence_kind, :state, :owner_kind, :owner_role] do
+      value = Map.get(entry, field)
+
+      unless is_binary(value) and String.trim(value) != "" do
+        raise ArgumentError, "evidence row #{id} has empty #{field}; expected non-empty text"
+      end
+    end
+
+    validate_member!(id, :requirement, entry.requirement, @requirements)
+    validate_member!(id, :evidence_kind, entry.evidence_kind, @evidence_kinds)
+    validate_member!(id, :state, entry.state, @states)
+    validate_member!(id, :owner_kind, entry.owner_kind, @owner_kinds)
+    validate_member!(id, :owner_role, entry.owner_role, @owner_roles)
+
+    unless is_list(entry.personas) and entry.personas != [] do
+      raise ArgumentError, "evidence row #{id} has no personas"
+    end
+
+    Enum.each(entry.personas, &validate_member!(id, :persona, &1, @personas))
+
+    :ok
+  end
+
+  def validate_entry!(entry) do
+    raise ArgumentError, "evidence row must be a map, got: #{inspect(entry)}"
+  end
+
+  def deterministic_owners(entries, requirement) do
+    owners =
+      Enum.filter(entries, fn entry ->
+        entry.requirement == requirement and entry.state == :existing and
+          entry.evidence_kind != :external_canary and entry.owner_role == :primary
+      end)
+
+    if owners == [], do: [], else: normalize_primary_owners!(owners)
+  end
+
+  def normalize_primary_owners!(owners) when is_list(owners) and owners != [] do
+    Enum.each(owners, &validate_entry!/1)
+
+    unless Enum.all?(owners, &(&1.owner_role == :primary)) do
+      raise ArgumentError, "primary owner collection contains a non-primary row"
+    end
+
+    duplicate_criteria =
+      owners
+      |> Enum.frequencies_by(&{&1.requirement, &1.criterion})
+      |> Enum.filter(fn {_key, count} -> count > 1 end)
+      |> Enum.map(&elem(&1, 0))
+
+    if duplicate_criteria != [] do
+      formatted =
+        Enum.map_join(duplicate_criteria, ", ", fn {requirement, criterion} ->
+          "#{requirement}/#{criterion}"
+        end)
+
+      raise ArgumentError, "duplicate primary criterion assignment(s): #{formatted}"
+    end
+
+    Enum.sort_by(owners, &{&1.requirement, &1.criterion})
+  end
+
+  def normalize_primary_owners!(owners) do
+    raise ArgumentError,
+          "primary owner collection must be a non-empty list, got: #{inspect(owners)}"
+  end
+
+  def validate_closure!(entries, completed_requirements)
+      when is_list(entries) and entries != [] and is_list(completed_requirements) do
+    Enum.each(entries, &validate_entry!/1)
+
+    completed_requirements
+    |> Enum.uniq()
+    |> Enum.each(fn requirement ->
+      validate_member!("closure", :requirement, requirement, @requirements)
+
+      if deterministic_owners(entries, requirement) == [] do
+        raise ArgumentError,
+              "#{requirement} is completed but has no existing deterministic owner; planned and external-canary evidence cannot close it"
+      end
+    end)
+
+    :ok
+  end
+
+  def validate_closure!(entries, completed_requirements) do
+    raise ArgumentError,
+          "closure evidence must be a non-empty list and completed requirements must be a list, got: #{inspect(entries)}, #{inspect(completed_requirements)}"
+  end
+
+  def validate_repository!(entries, root) do
+    snapshot = repository_snapshot!(entries, root)
+    validate_repository_snapshot!(entries, snapshot, root)
+  end
+
+  def repository_snapshot!(entries, root, options \\ []) do
+    validate_entries!(entries)
+
+    registered_test_tags = registered_test_tags_function!(options)
+
+    entries
+    |> repository_owners()
+    |> Enum.uniq_by(& &1.owner)
+    |> Enum.each(fn entry -> snapshot_owner_path!(entries, %{}, root, entry.owner) end)
+
+    aliases = mix_aliases!(root)
+    owner_paths = snapshot_owner_paths(entries, aliases)
+
+    owners =
+      Enum.map(owner_paths, fn owner ->
+        owner_path = snapshot_owner_path!(entries, aliases, root, owner)
+        tags = registered_test_tags.(owner_path, root)
+        normalized_tags = normalize_registered_tags!(owner, tags)
+
+        if normalized_tags == [] do
+          case Enum.find(repository_owners(entries), &(&1.owner == owner)) do
+            nil ->
+              :ok
+
+            entry ->
+              raise ArgumentError,
+                    "#{entry.requirement} row #{entry.id}: selector #{entry.selector} matches zero tests in #{entry.owner}"
+          end
+        end
+
+        %{path: owner, tags: normalized_tags}
+      end)
+
+    governed_input_inventory = governed_inputs!(root)
+
+    %{
+      aliases: aliases,
+      governed_input_inventory: governed_input_inventory,
+      governed_inputs: governed_input_inventory,
+      owners: owners,
+      workflow: File.read!(Path.join(root, ".github/workflows/security-gates.yml"))
+    }
+  end
+
+  def validate_repository_snapshot!(entries, snapshot, root) do
+    validate_entries!(entries)
+    snapshot = validate_snapshot_shape!(entries, snapshot)
+    require_authoritative_governed_inputs!(snapshot, root)
+    required_planning_triggers!(String.split(snapshot.workflow, "\n"), snapshot.governed_inputs)
+
+    owners = repository_owners(entries)
+    owner_tags = Map.new(snapshot.owners, &{&1.path, &1.tags})
+
+    Enum.reduce(owners, MapSet.new(), fn entry, checked ->
+      key = {entry.owner, entry.selector}
+
+      if MapSet.member?(checked, key) do
+        checked
+      else
+        validate_owner_source_snapshot!(entry, owner_tags)
+        MapSet.put(checked, key)
+      end
+    end)
+
+    lane_commands =
+      Enum.reduce(owners, %{}, fn entry, commands ->
+        Map.put_new_lazy(commands, entry.lane, fn ->
+          validate_owner_alias_snapshot!(entry, snapshot.aliases, owner_tags)
+        end)
+      end)
+
+    Enum.each(owners, &validate_owner_chain!(&1, lane_commands, snapshot.workflow))
+
+    validate_phase73_reconciliation_chain!(
+      snapshot.aliases,
+      owner_tags,
+      snapshot.workflow,
+      entries
+    )
+
+    :ok
+  end
+
+  def validate_automated_command!(command, root, options \\ [])
+
+  def validate_automated_command!(command, root, options)
+      when is_binary(command) and is_list(options) do
+    case command_argv!(command) do
+      {"mix", ["test" | arguments]} ->
+        validate_direct_test_command!(arguments, root, options)
+
+      {"mix", ["cmd", "--cd", "demo/ledger_loop", "mix", "test" | arguments]} ->
+        validate_nested_test_command!(arguments, root, "demo/ledger_loop", options)
+
+      {"mix", [alias_name]} ->
+        validate_check_alias!(alias_name, root)
+
+      _other ->
+        raise ArgumentError,
+              "verification command must be a direct mix test or named repository check alias"
+    end
+
+    :ok
+  end
+
+  def validate_automated_command!(_command, _root, _options) do
+    raise ArgumentError, "verification command must be non-empty text"
+  end
+
+  defp repository_owners(entries) do
+    Enum.filter(
+      entries,
+      &(&1.state == :existing and &1.evidence_kind != :external_canary and
+          &1.owner_role == :primary)
+    )
+  end
+
+  defp validate_owner_alias_snapshot!(entry, aliases, owner_tags) do
+    validate_check_alias_snapshot!(entry.lane, aliases, owner_tags)
+  rescue
+    error in ArgumentError ->
+      raise ArgumentError,
+            "#{entry.requirement} row #{entry.id}: alias #{entry.lane} is not wired to an executable owner command: #{Exception.message(error)}"
+  end
+
+  defp validate_owner_source_snapshot!(entry, owner_tags) do
+    tags = Map.fetch!(owner_tags, entry.owner)
+
+    unless Enum.count(tags, &enabled_tag?(&1, entry.selector)) > 0 do
+      raise ArgumentError,
+            "#{entry.requirement} row #{entry.id}: selector #{entry.selector} matches zero tests in #{entry.owner}"
+    end
+  end
+
+  defp validate_owner_chain!(entry, lane_commands, workflow) do
+    command = Map.fetch!(lane_commands, entry.lane)
+
+    owner = Enum.find(command.owners, &(&1.path == entry.owner))
+    selector_filter = {entry.selector, :enabled}
+
+    unless owner && selector_filter in command.includes do
+      raise ArgumentError,
+            "#{entry.requirement} row #{entry.id}: alias #{entry.lane} is not wired to owner #{entry.owner} with selector #{entry.selector}"
+    end
+
+    unless owner.effective_count > 0 do
+      raise ArgumentError,
+            "#{entry.requirement} row #{entry.id}: alias #{entry.lane} owner #{entry.owner} has zero effective selected tests for selector #{entry.selector}"
+    end
+
+    unless mandatory_workflow_step?(
+             workflow,
+             entry.workflow_job,
+             entry.workflow_step,
+             "mix #{entry.lane}"
+           ) do
+      raise ArgumentError,
+            "#{entry.requirement} row #{entry.id}: workflow has no enabled blocking #{entry.workflow_step} step for mix #{entry.lane} under jobs.#{entry.workflow_job}"
+    end
+  end
+
+  defp validate_snapshot_shape!(entries, snapshot) when is_map(snapshot) do
+    expected_keys =
+      MapSet.new([:aliases, :governed_input_inventory, :governed_inputs, :owners, :workflow])
+
+    actual_keys = snapshot |> Map.keys() |> MapSet.new()
+
+    unless actual_keys == expected_keys do
+      raise ArgumentError,
+            "repository snapshot has invalid fields; missing=#{inspect(MapSet.difference(expected_keys, actual_keys) |> MapSet.to_list())} unknown=#{inspect(MapSet.difference(actual_keys, expected_keys) |> MapSet.to_list())}"
+    end
+
+    unless is_binary(snapshot.workflow) and snapshot.workflow != "" do
+      raise ArgumentError, "repository snapshot workflow must be non-empty text"
+    end
+
+    validate_snapshot_aliases!(snapshot.aliases)
+
+    validate_snapshot_governed_inputs!(
+      "governed input inventory",
+      snapshot.governed_input_inventory
+    )
+
+    validate_snapshot_governed_inputs!("governed inputs", snapshot.governed_inputs)
+    require_complete_governed_input_inventory!(snapshot)
+
+    expected_paths = snapshot_owner_paths(entries, snapshot.aliases)
+
+    unless is_list(snapshot.owners) and snapshot.owners != [] do
+      raise ArgumentError, "repository snapshot owners must be a non-empty list"
+    end
+
+    paths = Enum.map(snapshot.owners, &snapshot_owner_path!/1)
+
+    duplicate_paths =
+      paths
+      |> Enum.frequencies()
+      |> Enum.filter(fn {_path, count} -> count > 1 end)
+      |> Enum.map(&elem(&1, 0))
+      |> Enum.sort()
+
+    if duplicate_paths != [] do
+      raise ArgumentError,
+            "owner #{hd(duplicate_paths)} has duplicate snapshot records"
+    end
+
+    if paths != Enum.sort(paths) do
+      raise ArgumentError, "repository snapshot owners must use stable lexical owner order"
+    end
+
+    case Enum.find(expected_paths, &(&1 not in paths)) do
+      nil -> :ok
+      path -> raise ArgumentError, "owner #{path} is missing from repository snapshot"
+    end
+
+    case Enum.find(paths, &(&1 not in expected_paths)) do
+      nil -> :ok
+      path -> raise ArgumentError, "owner #{path} has an unexpected snapshot record"
+    end
+
+    Enum.each(snapshot.owners, &validate_snapshot_owner!/1)
+    snapshot
+  end
+
+  defp validate_snapshot_shape!(_entries, snapshot) do
+    raise ArgumentError, "repository snapshot must be a map, got: #{inspect(snapshot)}"
+  end
+
+  defp validate_snapshot_aliases!(aliases) when is_map(aliases) do
+    Enum.each(aliases, fn
+      {name, steps}
+      when is_binary(name) and name != "" and is_list(steps) ->
+        unless Enum.all?(steps, &is_binary/1) do
+          raise ArgumentError, "repository snapshot aliases must contain normalized steps"
+        end
+
+      _alias ->
+        raise ArgumentError, "repository snapshot aliases must be a normalized map"
+    end)
+  end
+
+  defp validate_snapshot_aliases!(_aliases) do
+    raise ArgumentError, "repository snapshot aliases must be a normalized map"
+  end
+
+  defp validate_snapshot_governed_inputs!(label, inputs) do
+    unless is_list(inputs) and inputs != [] do
+      raise ArgumentError, "repository snapshot #{label} must be a non-empty list"
+    end
+
+    case Enum.find(inputs, &(not normalized_repository_relative_path?(&1))) do
+      nil ->
+        :ok
+
+      path ->
+        raise ArgumentError,
+              "repository snapshot #{label} contains non-normalized repository-relative path #{inspect(path)}"
+    end
+
+    unless length(inputs) == length(Enum.uniq(inputs)) do
+      raise ArgumentError, "repository snapshot #{label} must be unique"
+    end
+
+    unless inputs == Enum.sort(inputs) do
+      raise ArgumentError, "repository snapshot #{label} must use stable lexical order"
+    end
+  end
+
+  defp require_complete_governed_input_inventory!(snapshot) do
+    missing = snapshot.governed_input_inventory -- snapshot.governed_inputs
+    unexpected = snapshot.governed_inputs -- snapshot.governed_input_inventory
+
+    if missing != [] or unexpected != [] do
+      raise ArgumentError,
+            "repository snapshot governed inputs differ from governed input inventory; missing=#{inspect(missing)} unexpected=#{inspect(unexpected)}"
+    end
+  end
+
+  defp require_authoritative_governed_inputs!(snapshot, root) do
+    authority = governed_inputs!(root)
+
+    require_authoritative_governed_input_field!(
+      "governed input inventory",
+      snapshot.governed_input_inventory,
+      authority
+    )
+
+    require_authoritative_governed_input_field!(
+      "governed inputs",
+      snapshot.governed_inputs,
+      authority
+    )
+  end
+
+  defp require_authoritative_governed_input_field!(label, candidate, authority) do
+    missing = authority -- candidate
+    unexpected = candidate -- authority
+
+    if missing != [] or unexpected != [] do
+      raise ArgumentError,
+            "repository snapshot #{label} differs from repository authority; missing=#{inspect(missing)} unexpected=#{inspect(unexpected)}"
+    end
+  end
+
+  defp normalized_repository_relative_path?(path) when is_binary(path) and path != "" do
+    components = Path.split(path)
+
+    components != [] and Path.type(path) == :relative and Path.join(components) == path and
+      Enum.all?(components, &(&1 not in ["", ".", ".."]))
+  end
+
+  defp normalized_repository_relative_path?(_path), do: false
+
+  defp snapshot_owner_paths(entries, aliases) do
+    owners = repository_owners(entries)
+
+    alias_owners =
+      owners
+      |> Enum.map(& &1.lane)
+      |> Enum.uniq()
+      |> Enum.flat_map(&alias_owner_paths(&1, aliases))
+
+    owners
+    |> Enum.map(& &1.owner)
+    |> Kernel.++(alias_owners)
+    |> Kernel.++(alias_owner_paths(@phase73_reconciliation_alias, aliases))
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
+
+  defp validate_phase73_reconciliation_chain!(aliases, owner_tags, workflow, entries) do
+    expected_step =
+      "cmd mix test #{@phase73_reconciliation_owner} --only #{@phase73_reconciliation_selector} --warnings-as-errors"
+
+    unless Map.get(aliases, @phase73_reconciliation_alias) == [expected_step] do
+      raise ArgumentError,
+            "EVID-02 Phase 73 reconciliation alias must be one exact non-recursive fresh-process test command"
+    end
+
+    command = validate_check_alias_snapshot!(@phase73_reconciliation_alias, aliases, owner_tags)
+    selector = {@phase73_reconciliation_selector, :enabled}
+
+    owner = Enum.find(command.owners, &(&1.path == @phase73_reconciliation_owner))
+
+    unless owner && selector in command.includes && owner.effective_count > 0 do
+      raise ArgumentError,
+            "EVID-02 Phase 73 reconciliation owner must select a positive #{@phase73_reconciliation_selector} test"
+    end
+
+    unless mandatory_security_step?(
+             workflow,
+             @phase73_reconciliation_step,
+             "mix #{@phase73_reconciliation_alias}"
+           ) and
+             mandatory_step_follows_evidence_contract?(
+               workflow,
+               entries
+               |> repository_owners()
+               |> Enum.find(&(&1.lane == "ci.evidence"))
+               |> Map.fetch!(:workflow_step)
+             ) do
+      raise ArgumentError,
+            "EVID-02 workflow must own one unconditional blocking Phase 73 reconciliation step after Evidence contract under jobs.security"
+    end
+  end
+
+  defp mandatory_step_follows_evidence_contract?(workflow, evidence_step) do
+    lines = String.split(workflow, "\n")
+
+    step_index = fn name ->
+      lines
+      |> Enum.with_index()
+      |> Enum.filter(fn {line, _index} ->
+        Regex.match?(~r/^      - name:\s*#{Regex.escape(name)}\s*$/, line)
+      end)
+      |> Enum.map(&elem(&1, 1))
+    end
+
+    case {step_index.(evidence_step), step_index.(@phase73_reconciliation_step)} do
+      {[evidence_index], [reconciliation_index]} -> reconciliation_index > evidence_index
+      _other -> false
+    end
+  end
+
+  defp alias_owner_paths(alias_name, aliases) do
+    with ["cmd " <> command] <- Map.get(aliases, alias_name),
+         {"mix", ["test" | arguments]} <- command_argv!(command),
+         parsed <- parse_test_argv!(arguments) do
+      parsed.owner_paths
+    else
+      _other -> []
+    end
+  rescue
+    ArgumentError -> []
+  end
+
+  defp snapshot_owner_path!(entries, aliases, root, owner) do
+    repository_path!(root, owner)
+  rescue
+    error in ArgumentError ->
+      case Enum.find(repository_owners(entries), &(&1.owner == owner)) do
+        nil ->
+          lane_entry =
+            Enum.find(repository_owners(entries), fn entry ->
+              owner in alias_owner_paths(entry.lane, aliases)
+            end)
+
+          if lane_entry do
+            raise ArgumentError,
+                  "#{lane_entry.requirement} row #{lane_entry.id}: alias #{lane_entry.lane} is not wired to an executable owner command: #{Exception.message(error)}"
+          else
+            reraise error, __STACKTRACE__
+          end
+
+        entry ->
+          raise ArgumentError,
+                "#{entry.requirement} row #{entry.id}: missing owner file #{entry.owner}: #{Exception.message(error)}"
+      end
+  end
+
+  defp snapshot_owner_path!(%{path: path, tags: _tags}) when is_binary(path) and path != "",
+    do: path
+
+  defp snapshot_owner_path!(owner) do
+    raise ArgumentError,
+          "repository snapshot contains a malformed owner record: #{inspect(owner)}"
+  end
+
+  defp validate_snapshot_owner!(%{path: path, tags: []}) do
+    raise ArgumentError, "owner #{path} has empty registered tags in repository snapshot"
+  end
+
+  defp validate_snapshot_owner!(%{path: path, tags: tags}) when is_list(tags) do
+    Enum.each(tags, fn
+      tag_map when is_map(tag_map) and map_size(tag_map) > 0 ->
+        Enum.each(tag_map, fn
+          {key, value}
+          when is_binary(key) and key != "" and
+                 (is_boolean(value) or is_nil(value) or is_binary(value) or is_number(value)) ->
+            :ok
+
+          _entry ->
+            raise ArgumentError, "owner #{path} has a non-normalized tag entry"
+        end)
+
+      _tag_map ->
+        raise ArgumentError, "owner #{path} has a non-normalized tag map"
+    end)
+  end
+
+  defp validate_snapshot_owner!(owner) do
+    path = if is_map(owner), do: Map.get(owner, :path, "<missing-owner>"), else: "<missing-owner>"
+    raise ArgumentError, "owner #{path} has malformed registered tags"
+  end
+
+  defp normalize_registered_tags!(owner, tags) when is_list(tags) do
+    Enum.map(tags, fn
+      tag_map when is_map(tag_map) ->
+        Map.new(tag_map, fn {key, value} ->
+          normalized_key =
+            cond do
+              is_binary(key) and key != "" -> key
+              is_atom(key) -> Atom.to_string(key)
+              true -> raise ArgumentError, "owner #{owner} returned an invalid registered tag key"
+            end
+
+          normalized_value =
+            cond do
+              is_boolean(value) or is_nil(value) or is_binary(value) or is_number(value) -> value
+              is_atom(value) -> Atom.to_string(value)
+              true -> inspect(value, limit: :infinity)
+            end
+
+          {normalized_key, normalized_value}
+        end)
+
+      _tag_map ->
+        raise ArgumentError, "owner #{owner} returned a malformed registered tag map"
+    end)
+  end
+
+  defp normalize_registered_tags!(owner, _tags) do
+    raise ArgumentError, "owner #{owner} returned malformed registered tags"
+  end
+
+  defp registered_test_tags!(path, root) do
+    registered_test_tags!(
+      path,
+      root,
+      @registration_cache_namespace,
+      &discover_registered_test_tags!/2
+    )
+  end
+
+  defp registered_test_tags!(path, root, namespace, discover_registered_test_tags) do
+    cache_key =
+      {__MODULE__, :registered_test_tags, namespace, Path.expand(path),
+       :crypto.hash(:sha256, File.read!(path))}
+
+    lock_resource = {__MODULE__, :registered_test_tags_lock, cache_key}
+
+    case :persistent_term.get(cache_key, :missing) do
+      :missing ->
+        :global.trans({lock_resource, self()}, fn ->
+          case :persistent_term.get(cache_key, :missing) do
+            :missing ->
+              owner = Path.relative_to(path, root)
+
+              tags =
+                normalize_registered_tags!(
+                  owner,
+                  discover_registered_test_tags.(path, root)
+                )
+
+              :persistent_term.put(cache_key, tags)
+              tags
+
+            tags ->
+              tags
+          end
+        end)
+
+      tags ->
+        tags
+    end
+  end
+
+  defp registered_test_tags_function!(options) do
+    case Keyword.fetch(options, :registered_test_tags) do
+      {:ok, registered_test_tags} ->
+        require_two_argument_function!(registered_test_tags, :registered_test_tags)
+
+      :error ->
+        namespace =
+          Keyword.get(options, :registration_cache_namespace, @registration_cache_namespace)
+
+        discover_registered_test_tags =
+          Keyword.get(
+            options,
+            :discover_registered_test_tags,
+            &discover_registered_test_tags!/2
+          )
+
+        discover_registered_test_tags =
+          require_two_argument_function!(
+            discover_registered_test_tags,
+            :discover_registered_test_tags
+          )
+
+        fn path, root ->
+          registered_test_tags!(path, root, namespace, discover_registered_test_tags)
+        end
+    end
+  end
+
+  defp require_two_argument_function!(function, _name) when is_function(function, 2), do: function
+
+  defp require_two_argument_function!(_function, name) do
+    raise ArgumentError, "#{name} must be a two-argument function"
+  end
+
+  defp discover_registered_test_tags!(path, root) do
+    probe = """
+    ExUnit.start(autorun: false)
+    [owner] = System.argv()
+
+    tags =
+      owner
+      |> Code.compile_file()
+      |> Enum.flat_map(fn {module, _binary} ->
+        if function_exported?(module, :__ex_unit__, 0) do
+          module.__ex_unit__().tests
+          |> Enum.map(fn test ->
+            Map.new(test.tags, fn {key, value} ->
+              normalized_value =
+                cond do
+                  is_boolean(value) or is_nil(value) or is_binary(value) or is_number(value) ->
+                    value
+
+                  is_atom(value) ->
+                    Atom.to_string(value)
+
+                  true ->
+                    inspect(value, limit: :infinity)
+                end
+
+              {Atom.to_string(key), normalized_value}
+            end)
+          end)
+        else
+          []
+        end
+      end)
+
+    IO.puts("RELYRA_EXUNIT_PROBE:" <> Base.encode64(:erlang.term_to_binary(tags)))
+    """
+
+    elixir =
+      System.find_executable("elixir") || raise ArgumentError, "cannot locate Elixir executable"
+
+    code_path_arguments =
+      :code.get_path()
+      |> Enum.map(&List.to_string/1)
+      |> Enum.filter(&String.contains?(&1, "/_build/test/lib/"))
+      |> Enum.flat_map(&["-pa", &1])
+
+    {output, status} =
+      System.cmd(
+        elixir,
+        code_path_arguments ++ ["-e", probe, "--", path],
+        cd: root,
+        stderr_to_stdout: true
+      )
+
+    with 0 <- status,
+         [encoded] <-
+           Regex.run(~r/^RELYRA_EXUNIT_PROBE:([A-Za-z0-9+\/=]+)$/m, output,
+             capture: :all_but_first
+           ),
+         {:ok, binary} <- Base.decode64(encoded),
+         tags when is_list(tags) <- :erlang.binary_to_term(binary, [:safe]) do
+      tags
+    else
+      _other ->
+        raise ArgumentError,
+              "cannot inspect registered ExUnit tests in #{path}; probe exited #{status}: #{String.trim(output)}"
+    end
+  end
+
+  defp validate_direct_test_command!(arguments, root, options \\ []) do
+    parsed = parse_test_argv!(arguments)
+    planned_files = planned_files(options)
+
+    owners =
+      Enum.map(parsed.owner_paths, fn owner ->
+        case File.lstat(Path.join(root, owner)) do
+          {:error, :enoent} ->
+            if owner in planned_files do
+              _components = repository_path_components!(owner)
+              %{path: owner, effective_count: :planned}
+            else
+              validate_existing_direct_test_owner!(owner, root, parsed)
+            end
+
+          _existing_or_other_error ->
+            validate_existing_direct_test_owner!(owner, root, parsed)
+        end
+      end)
+
+    Map.put(parsed, :owners, owners)
+  end
+
+  defp validate_existing_direct_test_owner!(owner, root, parsed) do
+    owner_path = repository_path!(root, owner)
+
+    effective_count =
+      owner_path
+      |> registered_test_tags!(root)
+      |> Enum.count(&selected_by_filters?(&1, parsed.includes, parsed.exclusions))
+
+    if effective_count == 0 do
+      raise ArgumentError,
+            "test owner #{owner} has zero selected tests: zero effective selected tests after include/exclusion filters"
+    end
+
+    %{path: owner, effective_count: effective_count}
+  end
+
+  defp validate_nested_test_command!(arguments, root, project_directory, options) do
+    parsed = parse_test_argv!(arguments)
+
+    project_root =
+      repository_path!(root, Path.join(project_directory, "mix.exs")) |> Path.dirname()
+
+    planned_files = planned_files(options)
+
+    owners =
+      Enum.map(parsed.owner_paths, fn owner ->
+        unless String.starts_with?(owner, "test/") do
+          raise ArgumentError,
+                "nested test owner #{owner} must be beneath #{project_directory}/test"
+        end
+
+        repository_owner = Path.join(project_directory, owner)
+
+        case File.lstat(Path.join(root, repository_owner)) do
+          {:error, :enoent} ->
+            if repository_owner in planned_files do
+              _components = repository_path_components!(repository_owner)
+              %{path: repository_owner, effective_count: :planned}
+            else
+              validate_existing_nested_owner!(repository_owner, root, project_root, parsed)
+            end
+
+          _existing_or_other_error ->
+            validate_existing_nested_owner!(repository_owner, root, project_root, parsed)
+        end
+      end)
+
+    Map.put(parsed, :owners, owners)
+  end
+
+  defp validate_existing_nested_owner!(repository_owner, root, project_root, parsed) do
+    owner_path = repository_path!(root, repository_owner)
+
+    effective_count =
+      owner_path
+      |> registered_test_tags!(
+        project_root,
+        {:nested_mix_test, "demo/ledger_loop"},
+        &discover_nested_registered_test_tags!/2
+      )
+      |> Enum.count(&selected_by_filters?(&1, parsed.includes, parsed.exclusions))
+
+    if effective_count == 0 do
+      raise ArgumentError,
+            "test owner #{repository_owner} has zero selected tests: zero effective selected tests after include/exclusion filters"
+    end
+
+    %{path: repository_owner, effective_count: effective_count}
+  end
+
+  defp planned_files(options) do
+    options
+    |> Keyword.get(:planned_files, "")
+    |> String.split(~r/[\n,]/, trim: true)
+    |> Enum.map(&String.trim/1)
+  end
+
+  defp discover_nested_registered_test_tags!(path, project_root) do
+    probe = """
+    ExUnit.start(autorun: false)
+    [owner] = System.argv()
+
+    tags =
+      owner
+      |> Code.compile_file()
+      |> Enum.flat_map(fn {module, _binary} ->
+        if function_exported?(module, :__ex_unit__, 0) do
+          module.__ex_unit__().tests
+          |> Enum.map(fn test ->
+            Map.new(test.tags, fn {key, value} ->
+              normalized_value =
+                cond do
+                  is_boolean(value) or is_nil(value) or is_binary(value) or is_number(value) ->
+                    value
+
+                  is_atom(value) ->
+                    Atom.to_string(value)
+
+                  true ->
+                    inspect(value, limit: :infinity)
+                end
+
+              {Atom.to_string(key), normalized_value}
+            end)
+          end)
+        else
+          []
+        end
+      end)
+
+    IO.puts("RELYRA_EXUNIT_PROBE:" <> Base.encode64(:erlang.term_to_binary(tags)))
+    """
+
+    elixir =
+      System.find_executable("elixir") || raise ArgumentError, "cannot locate Elixir executable"
+
+    code_path_arguments =
+      [project_root, Path.join(project_root, "demo/ledger_loop")]
+      |> Enum.flat_map(fn nested_root ->
+        nested_root
+        |> Path.join("_build/test/lib/*/ebin")
+        |> Path.wildcard()
+      end)
+      |> Enum.flat_map(&["-pa", &1])
+
+    {output, status} =
+      System.cmd(
+        elixir,
+        code_path_arguments ++ ["-e", probe, "--", path],
+        cd: project_root,
+        stderr_to_stdout: true
+      )
+
+    with 0 <- status,
+         [encoded] <-
+           Regex.run(~r/^RELYRA_EXUNIT_PROBE:([A-Za-z0-9+\/=]+)$/m, output,
+             capture: :all_but_first
+           ),
+         {:ok, binary} <- Base.decode64(encoded),
+         tags when is_list(tags) <- :erlang.binary_to_term(binary, [:safe]) do
+      tags
+    else
+      _other ->
+        raise ArgumentError,
+              "cannot inspect registered ExUnit tests in #{path}; probe exited #{status}: #{String.trim(output)}"
+    end
+  end
+
+  defp validate_direct_test_command_snapshot!(arguments, owner_tags) do
+    parsed = parse_test_argv!(arguments)
+
+    owners =
+      Enum.map(parsed.owner_paths, fn owner ->
+        tags =
+          case Map.fetch(owner_tags, owner) do
+            {:ok, tags} ->
+              tags
+
+            :error ->
+              raise ArgumentError, "test owner #{owner} is missing from repository snapshot"
+          end
+
+        effective_count =
+          Enum.count(
+            tags,
+            &selected_by_filters?(&1, parsed.includes, parsed.exclusions)
+          )
+
+        if effective_count == 0 do
+          raise ArgumentError,
+                "test owner #{owner} has zero selected tests: zero effective selected tests after include/exclusion filters"
+        end
+
+        %{path: owner, effective_count: effective_count}
+      end)
+
+    Map.put(parsed, :owners, owners)
+  end
+
+  defp validate_check_alias!(alias_name, root) do
+    validate_check_alias!(alias_name, root, mix_aliases!(root))
+  end
+
+  defp validate_check_alias!(alias_name, root, aliases) do
+    steps = Map.get(aliases, alias_name)
+
+    case steps do
+      ["cmd " <> command] ->
+        case command_argv!(command) do
+          {"mix", ["test" | arguments]} ->
+            validate_direct_test_command!(arguments, root)
+
+          _other ->
+            raise ArgumentError,
+                  "named repository check alias #{alias_name} must be one fresh-process test command"
+        end
+
+      nil ->
+        raise ArgumentError, "named repository check alias #{alias_name} does not exist"
+
+      _other ->
+        raise ArgumentError,
+              "named repository check alias #{alias_name} must be one fresh-process test command"
+    end
+  end
+
+  defp validate_check_alias_snapshot!(alias_name, aliases, owner_tags) do
+    steps = Map.get(aliases, alias_name)
+
+    case steps do
+      ["cmd " <> command] ->
+        case command_argv!(command) do
+          {"mix", ["test" | arguments]} ->
+            validate_direct_test_command_snapshot!(arguments, owner_tags)
+
+          _other ->
+            raise ArgumentError,
+                  "named repository check alias #{alias_name} must be one fresh-process test command"
+        end
+
+      nil ->
+        raise ArgumentError, "named repository check alias #{alias_name} does not exist"
+
+      _other ->
+        raise ArgumentError,
+              "named repository check alias #{alias_name} must be one fresh-process test command"
+    end
+  end
+
+  defp parse_test_argv!(arguments) when is_list(arguments) do
+    {owner_paths, warning_count, includes, exclusions, seed_count} =
+      consume_test_argv!(arguments, [], 0, [], [], 0)
+
+    case warning_count do
+      0 ->
+        raise ArgumentError, "direct test command is missing --warnings-as-errors"
+
+      1 ->
+        :ok
+
+      _many ->
+        raise ArgumentError, "direct test command must contain exactly one --warnings-as-errors"
+    end
+
+    owner_paths = Enum.reverse(owner_paths)
+
+    if owner_paths == [] do
+      raise ArgumentError, "direct test command names no executable test owner path"
+    end
+
+    if length(owner_paths) != length(Enum.uniq(owner_paths)) do
+      raise ArgumentError, "direct test command contains duplicate test owner paths"
+    end
+
+    reject_duplicate_filters!(includes, "--only")
+    reject_duplicate_filters!(exclusions, "--exclude")
+
+    if seed_count > 1 do
+      raise ArgumentError, "direct test command must contain at most one --seed"
+    end
+
+    %{
+      owner_paths: owner_paths,
+      includes: Enum.reverse(includes),
+      exclusions: Enum.reverse(exclusions)
+    }
+  end
+
+  defp parse_test_argv!(arguments) do
+    raise ArgumentError, "direct test arguments must be a list, got: #{inspect(arguments)}"
+  end
+
+  defp consume_test_argv!([], owner_paths, warning_count, includes, exclusions, seed_count),
+    do: {owner_paths, warning_count, includes, exclusions, seed_count}
+
+  defp consume_test_argv!(
+         ["--warnings-as-errors" | rest],
+         owner_paths,
+         warning_count,
+         includes,
+         exclusions,
+         seed_count
+       ) do
+    consume_test_argv!(rest, owner_paths, warning_count + 1, includes, exclusions, seed_count)
+  end
+
+  defp consume_test_argv!(
+         ["--seed" | rest],
+         owner_paths,
+         warning_count,
+         includes,
+         exclusions,
+         seed_count
+       ) do
+    case rest do
+      [value | remaining] ->
+        if String.starts_with?(value, "-") do
+          raise ArgumentError, "direct test command --seed is missing its value"
+        end
+
+        case Integer.parse(value) do
+          {seed, ""} when seed >= 0 and seed <= 4_294_967_295 ->
+            consume_test_argv!(
+              remaining,
+              owner_paths,
+              warning_count,
+              includes,
+              exclusions,
+              seed_count + 1
+            )
+
+          _other ->
+            raise ArgumentError,
+                  "direct test command --seed must be an integer between 0 and 4294967295"
+        end
+
+      _other ->
+        raise ArgumentError, "direct test command --seed is missing its value"
+    end
+  end
+
+  defp consume_test_argv!(
+         [option | rest],
+         owner_paths,
+         warning_count,
+         includes,
+         exclusions,
+         seed_count
+       )
+       when option in ["--only", "--exclude"] do
+    case rest do
+      [value | remaining] when value != "" ->
+        if String.starts_with?(value, "-") do
+          raise ArgumentError, "#{option} is missing its filter value"
+        end
+
+        filter = parse_filter!(option, value)
+
+        if option == "--only" do
+          consume_test_argv!(
+            remaining,
+            owner_paths,
+            warning_count,
+            [filter | includes],
+            exclusions,
+            seed_count
+          )
+        else
+          consume_test_argv!(
+            remaining,
+            owner_paths,
+            warning_count,
+            includes,
+            [filter | exclusions],
+            seed_count
+          )
+        end
+
+      _other ->
+        raise ArgumentError, "#{option} is missing its filter value"
+    end
+  end
+
+  defp consume_test_argv!(
+         [argument | rest],
+         owner_paths,
+         warning_count,
+         includes,
+         exclusions,
+         seed_count
+       ) do
+    cond do
+      String.starts_with?(argument, "--only=") ->
+        value = String.replace_prefix(argument, "--only=", "")
+
+        consume_test_argv!(
+          rest,
+          owner_paths,
+          warning_count,
+          [parse_filter!("--only", value) | includes],
+          exclusions,
+          seed_count
+        )
+
+      String.starts_with?(argument, "--exclude=") ->
+        value = String.replace_prefix(argument, "--exclude=", "")
+
+        consume_test_argv!(
+          rest,
+          owner_paths,
+          warning_count,
+          includes,
+          [parse_filter!("--exclude", value) | exclusions],
+          seed_count
+        )
+
+      String.starts_with?(argument, "-") ->
+        raise ArgumentError, "direct test command contains unsupported token #{inspect(argument)}"
+
+      String.ends_with?(argument, ".exs") and normalized_repository_relative_path?(argument) ->
+        consume_test_argv!(
+          rest,
+          [argument | owner_paths],
+          warning_count,
+          includes,
+          exclusions,
+          seed_count
+        )
+
+      true ->
+        raise ArgumentError, "direct test command contains unsupported token #{inspect(argument)}"
+    end
+  end
+
+  defp parse_filter!(option, ""),
+    do: raise(ArgumentError, "#{option} is missing its filter value")
+
+  defp parse_filter!(option, value) do
+    case String.split(value, ":", parts: 2) do
+      [key] when key != "" -> {key, :enabled}
+      [key, expected] when key != "" and expected != "" -> {key, expected}
+      _other -> raise ArgumentError, "#{option} has invalid filter value #{inspect(value)}"
+    end
+  end
+
+  defp reject_duplicate_filters!(filters, option) do
+    if length(filters) != length(Enum.uniq(filters)) do
+      raise ArgumentError, "#{option} has duplicate filter values"
+    end
+  end
+
+  defp selected_by_filters?(tags, [], exclusions) do
+    not Enum.any?(exclusions, &filter_matches?(tags, &1))
+  end
+
+  defp selected_by_filters?(tags, includes, _exclusions) do
+    Enum.any?(includes, &filter_matches?(tags, &1))
+  end
+
+  defp filter_matches?(tags, {key, :enabled}), do: enabled_tag?(tags, key)
+
+  defp filter_matches?(tags, {key, expected}) do
+    case Map.fetch(tags, key) do
+      {:ok, value} -> tag_value_string(value) == expected
+      :error -> false
+    end
+  end
+
+  defp enabled_tag?(tags, key) do
+    case Map.fetch(tags, key) do
+      {:ok, value} -> value not in [false, nil]
+      :error -> false
+    end
+  end
+
+  defp tag_value_string(value) when is_atom(value), do: Atom.to_string(value)
+  defp tag_value_string(value), do: to_string(value)
+
+  defp repository_path!(root, owner, options \\ []) do
+    expanded_root = Path.expand(root)
+    components = repository_path_components!(owner)
+    expanded_owner = Path.join([expanded_root | components])
+
+    root_stat = lstat_repository_component!(owner, expanded_root)
+
+    unless root_stat.type == :directory do
+      raise ArgumentError, "test owner path #{owner} repository root is not a directory"
+    end
+
+    components
+    |> Enum.with_index()
+    |> Enum.reduce(expanded_root, fn {component, index}, parent ->
+      path = Path.join(parent, component)
+      stat = lstat_repository_component!(owner, path)
+
+      if stat.type == :symlink do
+        relative = Path.relative_to(path, expanded_root)
+        raise ArgumentError, "test owner path #{owner} contains symbolic link #{relative}"
+      end
+
+      leaf? = index == length(components) - 1
+
+      cond do
+        leaf? and stat.type != :regular ->
+          raise ArgumentError, "test owner path #{owner} leaf is not a regular file"
+
+        not leaf? and stat.type != :directory ->
+          relative = Path.relative_to(path, expanded_root)
+
+          raise ArgumentError,
+                "test owner path #{owner} has non-directory component #{relative}"
+
+        true ->
+          path
+      end
+    end)
+
+    unless Keyword.get(options, :skip_tracking?, false) do
+      require_tracked_repository_path!(expanded_root, owner)
+    end
+
+    expanded_owner
+  end
+
+  defp repository_path_components!(owner) when is_binary(owner) and owner != "" do
+    components = Path.split(owner)
+    normalized = if components == [], do: "", else: Path.join(components)
+
+    unless Path.type(owner) == :relative and normalized == owner and
+             Enum.all?(components, &(&1 not in ["", ".", ".."])) do
+      raise ArgumentError,
+            "test owner path #{inspect(owner)} must be a non-empty normalized repository-relative path"
+    end
+
+    components
+  end
+
+  defp repository_path_components!(owner) do
+    raise ArgumentError,
+          "test owner path #{inspect(owner)} must be a non-empty normalized repository-relative path"
+  end
+
+  defp lstat_repository_component!(owner, path) do
+    case File.lstat(path) do
+      {:ok, stat} ->
+        stat
+
+      {:error, reason} ->
+        raise ArgumentError,
+              "test owner path #{owner} is missing at #{path}: #{:file.format_error(reason)}"
+    end
+  end
+
+  defp require_tracked_repository_path!(root, owner) do
+    case System.cmd("git", ["ls-files", "--error-unmatch", "--", owner],
+           cd: root,
+           stderr_to_stdout: true
+         ) do
+      {output, 0} ->
+        if String.split(output, "\n", trim: true) != [owner] do
+          raise ArgumentError,
+                "test owner path #{owner} did not resolve to one exact tracked lexical path"
+        end
+
+      {output, status} ->
+        raise ArgumentError,
+              "test owner path is not tracked at #{owner}; git exited #{status}: #{String.trim(output)}"
+    end
+  end
+
+  defp command_argv!(command) do
+    grammar =
+      ~r/\A(?:(?:[A-Z_][A-Z0-9_]*=[A-Za-z0-9._:\/+\-]+) +)*mix(?: +[A-Za-z0-9._\/=:+\-]+)+\z/
+
+    unless Regex.match?(grammar, command) do
+      raise ArgumentError, "verification command is shell-shaped rather than one executable owner"
+    end
+
+    tokens = String.split(command, " ", trim: true)
+
+    {_environment, [executable | arguments]} =
+      Enum.split_while(tokens, &Regex.match?(~r/^[A-Z_][A-Z0-9_]*=/, &1))
+
+    {executable, arguments}
+  end
+
+  defp mix_aliases!(root) do
+    expanded_root = Path.expand(root)
+
+    aliases =
+      if current_project_root() == expanded_root do
+        Mix.Project.config()[:aliases]
+      else
+        mix_aliases_in_fresh_process!(expanded_root)
+      end
+
+    normalize_aliases!(aliases)
+  end
+
+  defp current_project_root do
+    case Mix.Project.project_file() do
+      nil -> nil
+      path -> path |> Path.dirname() |> Path.expand()
+    end
+  end
+
+  defp mix_aliases_in_fresh_process!(root) do
+    probe = """
+    aliases =
+      Mix.Project.config()
+      |> Keyword.get(:aliases, [])
+      |> Enum.map(fn {name, steps} ->
+        normalized_steps =
+          cond do
+            is_binary(steps) -> [steps]
+            is_atom(steps) -> [Atom.to_string(steps)]
+            is_list(steps) and Enum.all?(steps, &(is_binary(&1) or is_atom(&1))) ->
+              Enum.map(steps, fn step -> if is_atom(step), do: Atom.to_string(step), else: step end)
+            true -> %{"unsupported" => true}
+          end
+
+        {to_string(name), normalized_steps}
+      end)
+
+    IO.puts("RELYRA_MIX_ALIASES:" <> Base.encode64(:erlang.term_to_binary(aliases)))
+    """
+
+    mix = System.find_executable("mix") || raise ArgumentError, "cannot locate Mix executable"
+
+    {output, status} =
+      System.cmd(
+        mix,
+        ["run", "--no-start", "--no-compile", "--no-deps-check", "-e", probe],
+        cd: root,
+        env: [{"MIX_ENV", "test"}],
+        stderr_to_stdout: true
+      )
+
+    with 0 <- status,
+         [encoded] <-
+           Regex.run(~r/^RELYRA_MIX_ALIASES:([A-Za-z0-9+\/=]+)$/m, output,
+             capture: :all_but_first
+           ),
+         {:ok, binary} <- Base.decode64(encoded),
+         aliases when is_list(aliases) <- :erlang.binary_to_term(binary, [:safe]) do
+      aliases
+    else
+      _other ->
+        raise ArgumentError,
+              "cannot inspect Mix aliases in #{root}; probe exited #{status}: #{String.trim(output)}"
+    end
+  end
+
+  defp normalize_aliases!(aliases) when is_list(aliases) do
+    Enum.reduce(aliases, %{}, fn {name, steps}, normalized ->
+      key = if is_atom(name), do: Atom.to_string(name), else: name
+
+      if not is_binary(key) or Map.has_key?(normalized, key) do
+        raise ArgumentError, "Mix aliases must have one unique literal name per target"
+      end
+
+      Map.put(normalized, key, normalize_alias_steps(steps))
+    end)
+  end
+
+  defp normalize_aliases!(_aliases),
+    do: raise(ArgumentError, "Mix project aliases must be a list")
+
+  defp normalize_alias_steps(step) when is_binary(step), do: [step]
+  defp normalize_alias_steps(step) when is_atom(step), do: [Atom.to_string(step)]
+
+  defp normalize_alias_steps(steps) when is_list(steps) do
+    if Enum.all?(steps, &(is_binary(&1) or is_atom(&1))) do
+      Enum.map(steps, fn step -> if is_atom(step), do: Atom.to_string(step), else: step end)
+    else
+      :unsupported
+    end
+  end
+
+  defp normalize_alias_steps(_steps), do: :unsupported
+
+  defp mandatory_workflow_step?(workflow, job_name, step_name, command) do
+    lines = String.split(workflow, "\n")
+
+    with {:ok, jobs_index} <- find_line(lines, ~r/^jobs:\s*$/),
+         jobs <- indented_block(lines, jobs_index, 0),
+         [job_index] <-
+           jobs
+           |> Enum.with_index()
+           |> Enum.filter(fn {line, _index} ->
+             Regex.match?(~r/^  #{Regex.escape(job_name)}:\s*$/, line)
+           end)
+           |> Enum.map(&elem(&1, 1)),
+         job <- indented_block(jobs, job_index, 2),
+         :ok <- reject_direct_property!(job, "needs", 4, "jobs.#{job_name}"),
+         nil <- property_at_indent(job, "if", 4),
+         :ok <- blocking_fallibility!(job, 4, "jobs.#{job_name}"),
+         {:ok, steps_index} <- find_line(job, ~r/^    steps:\s*$/),
+         steps <- indented_block(job, steps_index, 4),
+         [step] <- named_steps(steps, step_name),
+         ^command <- property_at_indent(step, "run", 8),
+         nil <- property_at_indent(step, "if", 8),
+         true <- blocking_fallibility?(step, 8) do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  defp mandatory_security_step?(workflow, step_name, command),
+    do: mandatory_workflow_step?(workflow, "security", step_name, command)
+
+  defp find_line(lines, pattern) do
+    case Enum.find_index(lines, &Regex.match?(pattern, &1)) do
+      nil -> :error
+      index -> {:ok, index}
+    end
+  end
+
+  defp indented_block(lines, header_index, header_indent) do
+    lines
+    |> Enum.drop(header_index + 1)
+    |> Enum.take_while(fn line ->
+      String.trim(line) == "" or indentation(line) > header_indent
+    end)
+  end
+
+  defp named_steps(lines, name) do
+    lines
+    |> Enum.with_index()
+    |> Enum.filter(fn {line, _index} ->
+      Regex.match?(~r/^      - name:\s*#{Regex.escape(name)}\s*$/, line)
+    end)
+    |> Enum.map(fn {_line, index} -> indented_block(lines, index, 6) end)
+  end
+
+  defp property(lines, key) do
+    Enum.find_value(lines, fn line ->
+      case Regex.run(~r/^\s+#{Regex.escape(key)}:\s*([^#]*?)\s*$/, line, capture: :all_but_first) do
+        [value] -> String.trim(value)
+        nil -> nil
+      end
+    end)
+  end
+
+  defp property_at_indent(lines, key, indent) do
+    lines
+    |> Enum.filter(&(indentation(&1) == indent))
+    |> property(key)
+  end
+
+  defp reject_direct_property!(lines, key, indent, scope) do
+    occurrences =
+      Enum.filter(lines, fn line ->
+        indentation(line) == indent and
+          Regex.match?(~r/^\s+#{Regex.escape(key)}:\s*[^#]*?\s*$/, line)
+      end)
+
+    if occurrences == [] do
+      :ok
+    else
+      raise ArgumentError,
+            "#{scope} #{key} must be absent; found #{length(occurrences)} direct declaration(s)"
+    end
+  end
+
+  defp blocking_fallibility!(lines, indent, scope) do
+    if blocking_fallibility?(lines, indent) do
+      :ok
+    else
+      raise ArgumentError,
+            "#{scope} continue-on-error must be absent or the literal boolean false"
+    end
+  end
+
+  defp blocking_fallibility?(lines, indent) do
+    values =
+      lines
+      |> Enum.filter(&(indentation(&1) == indent))
+      |> Enum.flat_map(fn line ->
+        case Regex.run(~r/^\s+continue-on-error:\s*([^#]*?)\s*$/, line, capture: :all_but_first) do
+          [value] -> [String.trim(value)]
+          nil -> []
+        end
+      end)
+
+    values in [[], ["false"]]
+  end
+
+  defp indentation(line), do: byte_size(line) - byte_size(String.trim_leading(line))
+
+  defp required_planning_triggers!(lines, governed_inputs) do
+    on_lines = top_level_on_mapping!(lines)
+    pull_request = required_event_contract!(on_lines, "pull_request", ~w(paths paths-ignore))
+    push = required_event_contract!(on_lines, "push", ~w(branches paths paths-ignore))
+
+    branch_patterns = path_filter_values!(push, "branches", allow_missing?: false)
+
+    unless branch_patterns == ["main"] do
+      raise ArgumentError,
+            "workflow push must select exactly one positive main branch; got: #{inspect(branch_patterns)}"
+    end
+
+    validate_required_paths!("pull_request", pull_request, governed_inputs)
+    validate_required_paths!("push", push, governed_inputs)
+    true
+  end
+
+  defp top_level_on_mapping!(lines) do
+    candidates =
+      lines
+      |> Enum.with_index()
+      |> Enum.filter(fn {line, _index} ->
+        indentation(line) == 0 and
+          Regex.match?(~r/^(?:on\s*:|["']on["']\s*:)/, line)
+      end)
+
+    case candidates do
+      [] ->
+        raise ArgumentError, "workflow requires one exact top-level on mapping"
+
+      [{header, index}] ->
+        unless Regex.match?(~r/^on:\s*(?:#.*)?$/, header) do
+          raise ArgumentError,
+                "workflow top-level on must be one block mapping without a scalar or alias"
+        end
+
+        indented_block(lines, index, 0)
+
+      _many ->
+        raise ArgumentError, "workflow top-level on mapping must appear exactly once"
+    end
+  end
+
+  defp required_event_contract!(lines, event, allowed_keys) do
+    occurrences =
+      lines
+      |> Enum.with_index()
+      |> Enum.filter(fn {line, _index} ->
+        indentation(line) == 2 and
+          Regex.match?(~r/^  #{Regex.escape(event)}:/, line)
+      end)
+
+    {header, event_index} =
+      case occurrences do
+        [] ->
+          raise ArgumentError, "workflow is missing the required #{event} event"
+
+        [occurrence] ->
+          occurrence
+
+        _many ->
+          raise ArgumentError, "workflow #{event} event must be declared exactly once"
+      end
+
+    unless Regex.match?(~r/^  #{Regex.escape(event)}:\s*$/, header) do
+      raise ArgumentError, "workflow #{event} event must use a mapping block"
+    end
+
+    event_lines = indented_block(lines, event_index, 2)
+
+    keys =
+      event_lines
+      |> Enum.filter(&(indentation(&1) == 4 and String.trim(&1) != ""))
+      |> Enum.map(&direct_event_key!(&1, event))
+
+    duplicates =
+      keys
+      |> Enum.frequencies()
+      |> Enum.filter(fn {_key, count} -> count > 1 end)
+      |> Enum.map(&elem(&1, 0))
+      |> Enum.sort()
+
+    if duplicates != [] do
+      raise ArgumentError,
+            "workflow #{event} has duplicate direct key(s): #{Enum.join(duplicates, ", ")}"
+    end
+
+    case Enum.find(keys, &(&1 not in allowed_keys)) do
+      nil -> :ok
+      key -> raise ArgumentError, "workflow #{event} has unsupported key #{key}"
+    end
+
+    event_lines
+  end
+
+  defp direct_event_key!(line, event) do
+    captures =
+      Regex.run(
+        ~r/^    (?:"([^"]+)"|'([^']+)'|([A-Za-z0-9_-]+)):/,
+        line,
+        capture: :all_but_first
+      )
+
+    case captures && Enum.find(captures, &(&1 != "")) do
+      key when is_binary(key) -> key
+      _other -> raise ArgumentError, "workflow #{event} contains an unsupported direct entry"
+    end
+  end
+
+  defp validate_required_paths!(event, trigger, governed_inputs) do
+    paths = path_filter_values!(trigger, "paths", allow_missing?: true)
+    paths_ignore = path_filter_values!(trigger, "paths-ignore", allow_missing?: true)
+
+    if is_list(paths) and is_list(paths_ignore) do
+      raise ArgumentError, "workflow #{event} cannot combine paths and paths-ignore"
+    end
+
+    if is_list(paths) do
+      Enum.each(paths, fn pattern ->
+        glob =
+          if String.starts_with?(pattern, "!"),
+            do: String.trim_leading(pattern, "!"),
+            else: pattern
+
+        workflow_glob_regex!(event, glob)
+      end)
+
+      raise ArgumentError,
+            "workflow #{event} must not use positive paths on the mandatory evidence lane"
+    end
+
+    if is_list(paths_ignore) and Enum.any?(paths_ignore, &String.starts_with?(&1, "!")) do
+      raise ArgumentError, "workflow paths-ignore does not support negative patterns"
+    end
+
+    Enum.each(paths_ignore || [], &workflow_glob_regex!(event, &1))
+
+    governed_inputs
+    |> Enum.each(fn path ->
+      included? = not (is_list(paths_ignore) and Enum.any?(paths_ignore, &glob_match?(&1, path)))
+
+      unless included? do
+        raise ArgumentError,
+              "workflow #{event} path filter skips governed input #{path}"
+      end
+    end)
+  end
+
+  defp governed_inputs!(root) do
+    fixed =
+      [
+        "test/support/adoption_evidence.ex",
+        "test/adoption/evidence_contract_test.exs",
+        "test/governance/milestone_scope_test.exs",
+        "mix.exs",
+        ".github/workflows/security-gates.yml",
+        ".planning/PROJECT.md",
+        ".planning/ROADMAP.md",
+        ".planning/REQUIREMENTS.md",
+        ".planning/STATE.md",
+        ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
+      ]
+
+    discovered =
+      tracked_phase_inputs!(root, "73-*-PLAN.md") ++
+        tracked_phase_inputs!(root, "73-*-SUMMARY.md")
+
+    if discovered == [] do
+      raise ArgumentError, "tracked Phase 73 plan and summary input set must not be empty"
+    end
+
+    inputs = (fixed ++ discovered) |> Enum.uniq() |> Enum.sort()
+
+    Enum.each(inputs, &repository_path!(root, &1, skip_tracking?: true))
+    require_tracked_governed_inputs!(root, inputs)
+    inputs
+  end
+
+  defp tracked_phase_inputs!(root, basename) do
+    pattern = ".planning/phases/73-twin-contract-and-baseline/#{basename}"
+
+    case System.cmd("git", ["ls-files", "--", pattern],
+           cd: root,
+           stderr_to_stdout: true
+         ) do
+      {output, 0} ->
+        paths = String.split(output, "\n", trim: true)
+
+        if paths == [] do
+          raise ArgumentError, "governed input discovery found no tracked #{pattern} files"
+        end
+
+        paths
+
+      {output, status} ->
+        raise ArgumentError,
+              "cannot discover governed inputs for #{pattern}; git exited #{status}: #{String.trim(output)}"
+    end
+  end
+
+  defp require_tracked_governed_inputs!(root, inputs) do
+    case System.cmd("git", ["ls-files", "--" | inputs],
+           cd: root,
+           stderr_to_stdout: true
+         ) do
+      {output, 0} ->
+        tracked = output |> String.split("\n", trim: true) |> Enum.sort()
+        missing = inputs -- tracked
+        unexpected = tracked -- inputs
+
+        if missing != [] or unexpected != [] do
+          raise ArgumentError,
+                "governed inputs differ from tracked repository paths; missing=#{inspect(missing)} unexpected=#{inspect(unexpected)}"
+        end
+
+      {output, status} ->
+        raise ArgumentError,
+              "cannot validate tracked governed inputs; git exited #{status}: #{String.trim(output)}"
+    end
+  end
+
+  defp path_filter_values!(lines, key, options) do
+    matching_headers =
+      lines
+      |> Enum.with_index()
+      |> Enum.filter(fn {line, _index} ->
+        indentation(line) == 4 and direct_event_key!(line, "filter") == key
+      end)
+
+    case matching_headers do
+      [] ->
+        if Keyword.fetch!(options, :allow_missing?), do: nil, else: []
+
+      [{header, index}] ->
+        key_pattern = Regex.escape(key)
+
+        unless Regex.match?(
+                 ~r/^    (?:#{key_pattern}|"#{key_pattern}"|'#{key_pattern}'):\s*$/,
+                 header
+               ) do
+          raise ArgumentError, "workflow #{key} must use a non-empty block list"
+        end
+
+        values =
+          lines
+          |> indented_block(index, 4)
+          |> Enum.filter(&(indentation(&1) == 6 and String.trim(&1) != ""))
+          |> Enum.map(&path_list_scalar!(&1, key))
+
+        if values == [] do
+          raise ArgumentError, "workflow #{key} must contain at least one pattern"
+        end
+
+        values
+
+      _many ->
+        raise ArgumentError, "workflow #{key} must be declared at most once"
+    end
+  end
+
+  defp path_list_scalar!(line, key) do
+    case Regex.run(~r/^      -\s+(.+?)\s*$/, line, capture: :all_but_first) do
+      [value] -> normalize_quoted_scalar!(value, key)
+      nil -> raise ArgumentError, "workflow #{key} contains an unsupported list item"
+    end
+  end
+
+  defp normalize_quoted_scalar!(value, key) do
+    normalized =
+      case value do
+        <<quote, rest::binary>> when quote in [?", ?'] ->
+          if String.ends_with?(rest, <<quote>>) do
+            binary_part(rest, 0, byte_size(rest) - 1)
+          else
+            raise ArgumentError, "workflow #{key} contains an unclosed quoted pattern"
+          end
+
+        _other ->
+          value
+      end
+
+    normalized
+  end
+
+  defp glob_match?(pattern, path) do
+    pattern
+    |> glob_regex!()
+    |> Regex.match?(path)
+  end
+
+  defp glob_regex!(pattern) do
+    unless String.match?(pattern, ~r/\A[\x20-\x7E]+\z/) do
+      raise ArgumentError, "workflow path pattern must contain printable ASCII only"
+    end
+
+    segments = String.split(pattern, "/", trim: false)
+    validate_glob_segments!(segments)
+
+    case Regex.compile("\\A" <> glob_source!(segments) <> "\\z") do
+      {:ok, regex} -> regex
+      {:error, reason} -> raise ArgumentError, "unsupported workflow path pattern: #{reason}"
+    end
+  end
+
+  defp workflow_glob_regex!(event, pattern) do
+    glob_regex!(pattern)
+  rescue
+    error in ArgumentError ->
+      raise ArgumentError,
+            "workflow #{event} contains unsupported path pattern #{inspect(pattern)}: #{Exception.message(error)}"
+  end
+
+  defp validate_glob_segments!(segments) do
+    cond do
+      segments == [] or Enum.any?(segments, &(&1 == "")) ->
+        raise ArgumentError, "workflow path pattern must be a non-empty relative path"
+
+      Enum.any?(segments, &(&1 in [".", ".."])) ->
+        raise ArgumentError, "workflow path pattern must not contain dot path components"
+
+      true ->
+        Enum.each(segments, &validate_glob_segment!/1)
+    end
+  end
+
+  defp validate_glob_segment!("**"), do: :ok
+
+  defp validate_glob_segment!(segment) do
+    cond do
+      String.contains?(segment, "[") and not String.contains?(segment, "]") ->
+        raise ArgumentError, "unclosed workflow path character class"
+
+      String.contains?(segment, "**") ->
+        raise ArgumentError, "double star must occupy a complete path segment"
+
+      not String.match?(segment, ~r/\A[A-Za-z0-9._*-]+\z/) ->
+        raise ArgumentError,
+              "path segments may contain only literal letters, digits, dot, underscore, hyphen, and single star"
+
+      true ->
+        :ok
+    end
+  end
+
+  defp glob_source!(["**"]), do: ".*"
+
+  defp glob_source!(["**" | remaining]),
+    do: "(?:[^/]+/)*" <> glob_source!(remaining)
+
+  defp glob_source!([segment]), do: segment_glob_source(segment)
+
+  defp glob_source!([segment | remaining]),
+    do: segment_glob_source(segment) <> "/" <> glob_source!(remaining)
+
+  defp segment_glob_source(segment) do
+    segment
+    |> String.split("*", trim: false)
+    |> Enum.map_join("[^/]*", &Regex.escape/1)
+  end
+
+  defp validate_member!(id, field, value, vocabulary) do
+    unless value in vocabulary do
+      raise ArgumentError,
+            "evidence row #{id} has unknown #{field} #{inspect(value)}; expected one of #{inspect(vocabulary)}"
+    end
+  end
+
+  defp assert_coverage!(label, expected, actual) do
+    missing = expected |> MapSet.difference(actual) |> MapSet.to_list() |> Enum.sort()
+    unknown = actual |> MapSet.difference(expected) |> MapSet.to_list() |> Enum.sort()
+
+    if missing != [] or unknown != [] do
+      raise ArgumentError,
+            "evidence ledger #{label} coverage mismatch; missing=#{inspect(missing)} unknown=#{inspect(unknown)}"
+    end
+  end
+end

@@ -18,7 +18,9 @@ defmodule LedgerLoop.Relyra.MigrationsTest do
 
   test "relyra_migrations_path/0 expands to the root dependency path ending in priv/repo/migrations, not demo/ledger_loop/priv/repo/migrations" do
     path = Migrations.relyra_migrations_path()
-    assert String.ends_with?(path, "relyra/priv/repo/migrations")
+
+    assert Path.expand(path) == Path.expand("../../priv/repo/migrations", File.cwd!())
+    assert File.exists?(Path.join(path, "20260505120000_create_relyra_connections.exs"))
     refute String.contains?(path, "demo/ledger_loop/priv/repo/migrations")
   end
 

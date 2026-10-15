@@ -1,15 +1,20 @@
 name: security-gates
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 on:
   pull_request:
     paths-ignore:
-      - ".planning/**"
       - "prompts/**"
   push:
     branches:
       - main
     paths-ignore:
-      - ".planning/**"
       - "prompts/**"
   workflow_dispatch:
 
@@ -45,12 +50,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Setup BEAM
-        uses: erlef/setup-beam@v1
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
@@ -61,8 +66,14 @@ jobs:
           mix local.rebar --force
           mix deps.get
 
+      - name: Package consumer contracts
+        run: |
+          scripts/check_clean_room_consumer.sh --profile full
+          scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check
+          scripts/check_clean_room_consumer.sh --profile contracts
+
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "22"
           cache: npm
@@ -70,14 +81,24 @@ jobs:
       - name: Install browser dependencies
         run: npm install
 
+      - name: Prepare demo test metadata
+        env:
+          MIX_ENV: test
+        run: |
+          mix cmd --cd demo/ledger_loop mix deps.get
+          mix cmd --cd demo/ledger_loop mix compile
+
       - name: Quality gate
         run: mix qa
 
-      - name: Fast lane
-        run: mix ci.fast
-
       - name: Security lane
         run: mix ci.security
+
+      - name: Evidence contract
+        run: mix ci.evidence
+
+      - name: Phase 73 reconciliation
+        run: mix ci.phase73.reconciliation
 
       - name: Verification lane
         run: mix ci.verify
@@ -108,3 +129,126 @@ jobs:
       # keep it even though ci.security also runs `--only gate02_c14n`.
       - name: GATE-02 binary gate (gate02_c14n zero regressions)
         run: mix test --only gate02_c14n --warnings-as-errors
+
+  phase78-clean-state:
+    name: Phase 78 cold-state receipt
+    needs: security
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      RELYRA_TEST_DATABASE: relyra_phase78_receipt
+      RELYRA_XML_STRATEGY: pure_beam
+    steps:
+      - name: Checkout
+        if: always()
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node 22
+        if: always()
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Install actionlint and ShellCheck
+        if: always()
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes shellcheck
+          mkdir -p "$RUNNER_TEMP/phase78-tools"
+          GOBIN="$RUNNER_TEMP/phase78-tools" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          echo "$RUNNER_TEMP/phase78-tools" >> "$GITHUB_PATH"
+
+      - name: Setup BEAM for OTP 27
+        if: always()
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: "27.3.4.15"
+          elixir-version: "1.19.5"
+
+      - name: Run OTP 27 cold manifest
+        if: always()
+        run: bash scripts/check_phase78_clean_state.sh --otp 27 --output "$RUNNER_TEMP/phase78-otp27.json" --diagnostics-dir "$RUNNER_TEMP/phase78-otp27-diagnostics"
+
+      - name: Setup BEAM for OTP 28
+        if: always()
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: "28.4.1"
+          elixir-version: "1.19.5"
+
+      - name: Run OTP 28 cold manifest
+        if: always()
+        run: bash scripts/check_phase78_clean_state.sh --otp 28 --output "$RUNNER_TEMP/phase78-otp28.json" --diagnostics-dir "$RUNNER_TEMP/phase78-otp28-diagnostics"
+
+      - name: Validate owned producer diagnostics
+        id: validate-diagnostics
+        if: always()
+        run: |
+          bash scripts/check_phase78_clean_state.sh --validate-diagnostics "$RUNNER_TEMP/phase78-otp27-diagnostics"
+          bash scripts/check_phase78_clean_state.sh --validate-diagnostics "$RUNNER_TEMP/phase78-otp28-diagnostics"
+
+      - name: Upload Phase 78 producer diagnostics
+        if: always() && steps.validate-diagnostics.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: phase78-producer-diagnostics-${{ github.run_id }}-${{ github.sha }}-otp27-28
+          path: |
+            ${{ runner.temp }}/phase78-otp27-diagnostics/
+            ${{ runner.temp }}/phase78-otp28-diagnostics/
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Install Mix dependencies for the receipt owner
+        if: always()
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get --check-locked
+
+      - name: Assemble source-bound receipt
+        if: always()
+        run: >-
+          bash scripts/check_phase78_clean_state.sh --assemble
+          "$RUNNER_TEMP/phase78-otp27.json"
+          "$RUNNER_TEMP/phase78-otp28.json"
+          --checkout "$GITHUB_WORKSPACE"
+          --output "$PHASE78_RECEIPT_PATH"
+        env:
+          PHASE78_RECEIPT_PATH: ${{ runner.temp }}/phase78-candidate-receipt.json
+
+      - name: Require Phase 78 cold-state receipt
+        if: always()
+        run: mix ci.phase78.receipt
+        env:
+          PHASE78_RECEIPT_PATH: ${{ runner.temp }}/phase78-candidate-receipt.json
+
+      - name: Remove uploaded diagnostics owned by this run
+        if: success()
+        run: |
+          for otp in 27 28; do
+            diagnostics="$RUNNER_TEMP/phase78-otp${otp}-diagnostics"
+            run_id="$(sed -n '1p' "$diagnostics/owner.marker")"
+            bash scripts/check_phase78_clean_state.sh --cleanup-diagnostics "$diagnostics" "$run_id"
+          done

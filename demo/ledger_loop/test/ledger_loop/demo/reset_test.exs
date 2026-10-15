@@ -2,6 +2,7 @@ defmodule LedgerLoop.Demo.ResetTest do
   use LedgerLoop.DataCase
 
   alias LedgerLoop.Accounts.{Tenant, User, Group, Membership, SAMLIdentity, LoginReceipt}
+  alias LedgerLoop.Demo.Fixtures
   alias Relyra.Ecto.AuditEvent
   alias Relyra.LoginTrace.Export
 
@@ -93,15 +94,15 @@ defmodule LedgerLoop.Demo.ResetTest do
       identities_2 = Repo.all(SAMLIdentity)
       receipts_2 = Repo.all(LoginReceipt)
 
-      assert tenants_1 == tenants_2
-      assert users_1 == users_2
-      assert groups_1 == groups_2
-      assert memberships_1 == memberships_2
-      assert identities_1 == identities_2
-      assert receipts_1 == receipts_2
+      assert Enum.sort_by(tenants_1, & &1.id) == Enum.sort_by(tenants_2, & &1.id)
+      assert Enum.sort_by(users_1, & &1.id) == Enum.sort_by(users_2, & &1.id)
+      assert Enum.sort_by(groups_1, & &1.id) == Enum.sort_by(groups_2, & &1.id)
+      assert Enum.sort_by(memberships_1, & &1.id) == Enum.sort_by(memberships_2, & &1.id)
+      assert Enum.sort_by(identities_1, & &1.id) == Enum.sort_by(identities_2, & &1.id)
+      assert Enum.sort_by(receipts_1, & &1.id) == Enum.sort_by(receipts_2, & &1.id)
     end
 
-    test "default reset retains the six support trace events without the visual fixture" do
+    test "default reset retains six diagnostic steps and five incident stages without visual fixture" do
       for value <- [nil, "true"] do
         with_demo_trace_visual_fixture(value, fn ->
           LedgerLoop.Demo.Reset.reset!()
@@ -113,7 +114,12 @@ defmodule LedgerLoop.Demo.ResetTest do
                 order_by: [asc: event.inserted_at]
             )
 
-          assert length(trace_events) == 6
+          assert length(trace_events) ==
+                   length(Fixtures.relyra_support_trace_events()) +
+                     length(Fixtures.relyra_support_incident_events())
+
+          assert Enum.map(Fixtures.relyra_support_trace_events(), & &1.diff_summary["step"]) ==
+                   Fixtures.relyra_support_trace_steps()
 
           refute Enum.any?(
                    trace_events,

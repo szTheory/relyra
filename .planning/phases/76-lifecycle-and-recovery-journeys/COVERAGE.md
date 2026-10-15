@@ -1,0 +1,1 @@
+No external API integration: Phase 76 exercises Relyra's internal SAML endpoints and configured adopter behavior seams; any real IdP is an independently scheduled canary, not an external API integration owned by this phase.

@@ -6,8 +6,17 @@ defmodule LedgerLoop.Demo.Reset do
   alias LedgerLoop.Repo
   alias LedgerLoop.Demo.Fixtures
   alias LedgerLoop.Accounts.{Tenant, User, Group, Membership, SAMLIdentity}
-  alias Relyra.Ecto.{Connection, Certificate, AttributeMapping, GroupMapping, AuditEvent}
-  alias Relyra.Ecto.AuditWriter
+
+  alias Relyra.Ecto.{
+    Connection,
+    Certificate,
+    AttributeMapping,
+    GroupMapping,
+    AuditEvent,
+    MetadataSource,
+    MetadataRevision
+  }
+
   import Ecto.Query
 
   @doc """
@@ -15,23 +24,32 @@ defmodule LedgerLoop.Demo.Reset do
   """
   def reset! do
     Repo.transaction(fn ->
-      # Delete existing demo data starting with tenant (cascades)
-      Repo.delete_all(from t in Tenant, where: t.id == ^Fixtures.tenant().id)
-
       # Delete Relyra data
-      connections = Repo.all(from c in Connection, where: c.organization_id == "northstar")
+      tenant_ids = Enum.map(Fixtures.tenants(), & &1.id)
+      connection_ids = Enum.map(Fixtures.relyra_connections(), & &1.id)
+      connections = Repo.all(from c in Connection, where: c.id in ^connection_ids)
       conn_ids = Enum.map(connections, & &1.id)
 
       if length(conn_ids) > 0 do
+        Repo.update_all(
+          from(c in Connection, where: c.id in ^conn_ids),
+          set: [active_metadata_revision_id: nil, last_known_good_metadata_revision_id: nil]
+        )
+
         Repo.delete_all(from a in AuditEvent, where: a.connection_record_id in ^conn_ids)
         Repo.delete_all(from c in Certificate, where: c.connection_record_id in ^conn_ids)
+        Repo.delete_all(from r in MetadataRevision, where: r.connection_record_id in ^conn_ids)
+        Repo.delete_all(from s in MetadataSource, where: s.connection_record_id in ^conn_ids)
         Repo.delete_all(from am in AttributeMapping, where: am.connection_record_id in ^conn_ids)
         Repo.delete_all(from gm in GroupMapping, where: gm.connection_record_id in ^conn_ids)
         Repo.delete_all(from c in Connection, where: c.id in ^conn_ids)
       end
 
+      # Delete only host tenants explicitly owned by this fixture catalog.
+      Repo.delete_all(from t in Tenant, where: t.id in ^tenant_ids)
+
       # Insert fixed data
-      Repo.insert_all(Tenant, [Fixtures.tenant()])
+      Repo.insert_all(Tenant, Fixtures.tenants())
       Repo.insert_all(User, Fixtures.users())
       Repo.insert_all(Group, Fixtures.groups())
       Repo.insert_all(Membership, Fixtures.memberships())
@@ -39,77 +57,38 @@ defmodule LedgerLoop.Demo.Reset do
 
       # Insert Relyra data
       Repo.insert_all(Connection, Fixtures.relyra_connections())
+      Repo.insert_all(MetadataSource, Fixtures.relyra_metadata_sources())
+      Repo.insert_all(MetadataRevision, Fixtures.relyra_metadata_revisions())
+      # Rebuild only the fixture-owned trust catalog, including Harborline's
+      # active certificate for paired route-level tenant journeys.
       Repo.insert_all(Certificate, Fixtures.relyra_certificates())
       Repo.insert_all(AttributeMapping, Fixtures.relyra_attribute_mappings())
       Repo.insert_all(GroupMapping, Fixtures.relyra_group_mappings())
 
-      # Insert Support Failure Trace Events.
-      # AuditEvent.connection_record_id is a :binary_id FK to Relyra.Ecto.Connection.id,
-      # so use the connection's internal record id (UUID), not the public ULID connection_id.
-      support_id = Fixtures.relyra_support_scenario_record_id()
+      recovery_revision =
+        Enum.find(Fixtures.relyra_metadata_revisions(), &(&1.cause == "metadata_recovery"))
 
-      trace_steps = [
-        "response.decode",
-        "response.validate",
-        "signature.verify",
-        "replay.check",
-        "user.map",
-        "session.establish"
-      ]
+      Repo.update_all(
+        from(c in Connection, where: c.id == ^Fixtures.trust_scenario_connection_id()),
+        set: [
+          active_metadata_revision_id: recovery_revision.id,
+          last_known_good_metadata_revision_id: recovery_revision.id
+        ]
+      )
 
-      for {step, index} <- Enum.with_index(trace_steps) do
-        action = if step == "session.establish", do: :failed, else: :succeeded
+      visual_events =
+        if System.get_env("DEMO_TRACE_VISUAL_FIXTURE") == "1",
+          do: Fixtures.relyra_support_visual_events(),
+          else: []
 
-        attrs = %{
-          connection_record_id: support_id,
-          domain: :login,
-          action: action,
-          actor: "sso_trace",
-          cause: "demo_seed",
-          correlation_id: "demo-trace-1234",
-          after_summary: %{"status" => "traced"},
-          diff_summary: %{
-            "kind" => "login_trace",
-            "step" => step,
-            "order" => index,
-            "status" => if(action == :failed, do: "error", else: "ok")
-          }
-        }
-
-        {:ok, _} = AuditWriter.append_event(Repo, attrs)
-      end
-
-      maybe_insert_trace_visual_fixture(support_id)
+      Repo.insert_all(
+        AuditEvent,
+        Fixtures.relyra_trust_audit_events() ++
+          Fixtures.relyra_support_trace_events() ++
+          Fixtures.relyra_support_incident_events() ++ visual_events
+      )
     end)
 
     :ok
-  end
-
-  defp maybe_insert_trace_visual_fixture(support_id) do
-    if System.get_env("DEMO_TRACE_VISUAL_FIXTURE") == "1" do
-      {:ok, _} =
-        AuditWriter.append_event(Repo, %{
-          connection_record_id: support_id,
-          domain: :login,
-          action: :failed,
-          actor: "demo_trace_visual_fixture",
-          cause:
-            "visual_fixture_long_failure_cause operator-readable deterministic support evidence for narrow trace viewport validation without protected login material",
-          correlation_id: "visual-fixture-correlation-safe-deterministic",
-          before_summary: %{},
-          after_summary: %{
-            "overall_outcome" => "error",
-            "steps" => %{
-              "response.validate" => %{
-                "outcome" => "error",
-                "error_code" =>
-                  "SAFE_LONG_KNOWN_STEP_ERROR_CODE_for_deterministic_narrow_viewport_evidence_without_sensitive_payloads",
-                "duration_ms" => 17
-              }
-            }
-          },
-          diff_summary: %{"kind" => "login_trace", "fixture" => "trace_visual"}
-        })
-    end
   end
 end
