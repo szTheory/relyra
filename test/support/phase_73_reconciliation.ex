@@ -256,9 +256,23 @@ defmodule Relyra.Phase73Reconciliation do
         raise ArgumentError, "missing governed source #{relative}"
       end
 
-      %{"path" => relative, "sha256" => sha256(File.read!(path))}
+      %{"path" => relative, "sha256" => sha256(governed_content!(relative, File.read!(path)))}
     end)
   end
+
+  # Release Please rewrites only the `@version` literal in mix.exs on every release
+  # PR. Pin everything else byte-for-byte (aliases, deps, audit ignores) and
+  # normalize that single literal so a version bump does not invalidate the proof.
+  @mix_version_line ~r/^  @version "\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?"$/m
+
+  def governed_content!("mix.exs", content) do
+    case Regex.scan(@mix_version_line, content) do
+      [_] -> Regex.replace(@mix_version_line, content, ~s(  @version "0.0.0-governed"))
+      _ -> raise ArgumentError, "mix.exs must define exactly one literal @version"
+    end
+  end
+
+  def governed_content!(_relative, content), do: content
 
   def acceptance_task_ids!(root) do
     {tracked_output, 0} =

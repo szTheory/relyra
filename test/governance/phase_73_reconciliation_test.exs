@@ -223,7 +223,10 @@ defmodule Relyra.Phase73ReconciliationTest do
     proof = Phase73Reconciliation.fixture_proof!(root)
     {security, validation} = Phase73Reconciliation.fixture_documents!(proof, :staged)
     mix_source = File.read!(Path.join(root, "mix.exs"))
-    expected_digest = :crypto.hash(:sha256, mix_source) |> Base.encode16(case: :lower)
+
+    expected_digest =
+      :crypto.hash(:sha256, Phase73Reconciliation.governed_content!("mix.exs", mix_source))
+      |> Base.encode16(case: :lower)
 
     assert [%{"sha256" => ^expected_digest}] =
              Enum.filter(proof["governed_sources"], &(&1["path"] == "mix.exs"))
@@ -242,6 +245,38 @@ defmodule Relyra.Phase73ReconciliationTest do
 
     assert_raise ArgumentError, ~r/governed source manifest/, fn ->
       Phase73Reconciliation.validate_documents!(stale_security, stale_validation, stale, root)
+    end
+  end
+
+  @tag :plan_73_34_task_2
+  test "mix.exs digest ignores only the release version literal" do
+    root = fixture_root!()
+    on_exit(fn -> File.rm_rf!(root) end)
+
+    mix_path = Path.join(root, "mix.exs")
+    original = File.read!(mix_path)
+    baseline = Phase73Reconciliation.source_manifest!(root)
+    [version_line] = Regex.run(~r/^  @version "[^"]+"$/m, original)
+
+    File.write!(mix_path, String.replace(original, version_line, ~s(  @version "99.1.0")))
+    assert Phase73Reconciliation.source_manifest!(root) == baseline
+
+    File.write!(mix_path, String.replace(original, version_line, ~s(  @version "99.1.0-rc.1")))
+    assert Phase73Reconciliation.source_manifest!(root) == baseline
+
+    File.write!(mix_path, String.replace(original, "--warnings-as-errors", "", global: false))
+    refute Phase73Reconciliation.source_manifest!(root) == baseline
+
+    for corrupted <- [
+          String.replace(original, version_line, ""),
+          String.replace(original, version_line, version_line <> "\n" <> version_line),
+          String.replace(original, version_line, ~s[  @version System.get_env("V")])
+        ] do
+      File.write!(mix_path, corrupted)
+
+      assert_raise ArgumentError, ~r/exactly one literal @version/, fn ->
+        Phase73Reconciliation.source_manifest!(root)
+      end
     end
   end
 
