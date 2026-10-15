@@ -132,7 +132,6 @@ jobs:
 
   phase78-clean-state:
     name: Phase 78 cold-state receipt
-    needs: security
     if: always()
     runs-on: ubuntu-latest
     permissions:

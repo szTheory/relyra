@@ -22,7 +22,7 @@ defmodule Relyra.MixProject do
       docs: docs(),
       aliases: aliases(),
       # Match ci.security's accepted advisory exceptions in the real Hex audit.
-      hex: [ignore_advisories: ["GHSA-rhv4-8758-jx7v", "GHSA-69m6-wcv4-rwcf"]],
+      hex: [ignore_advisories: ["GHSA-rhv4-8758-jx7v"]],
       deps: deps()
     ]
   end
@@ -277,11 +277,7 @@ defmodule Relyra.MixProject do
         # decimal is transitive via ecto, which pins `decimal ~> 2.0`, so 3.0.0 — the
         # only patched version — is unreachable, and relyra makes no direct Decimal.new/parse
         # calls (no exposure path). Revisit when ecto allows decimal ~> 3.0.
-        # bandit advisory GHSA-69m6-wcv4-rwcf (EEF-CVE-2026-105659, HTTP/2 blocked-send
-        # deadline reset) is ignored: bandit is `only: :test, runtime: false`, never
-        # ships in the Hex package, and no patched release exists yet. Remove the
-        # exception and bump bandit (root + demo/ledger_loop) once one does.
-        "cmd mix deps.audit --ignore-advisory-ids GHSA-rhv4-8758-jx7v,GHSA-69m6-wcv4-rwcf",
+        "cmd mix deps.audit --ignore-advisory-ids GHSA-rhv4-8758-jx7v",
         "cmd mix hex.audit",
         "cmd mix sobelow --config"
       ],

@@ -741,7 +741,8 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert Map.has_key?(workflow["on"], "push")
 
     job = workflow["jobs"]["phase78-clean-state"]
-    assert job["needs"] == "security"
+    # Runs alongside the security matrix; it builds its own cold checkouts.
+    refute Map.has_key?(job, "needs")
     assert job["if"] == "always()"
     steps = job["steps"]
     [otp27] = Enum.filter(steps, &(&1["name"] == "Run OTP 27 cold manifest"))
