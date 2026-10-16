@@ -132,7 +132,9 @@ jobs:
 
   phase78-clean-state:
     name: Phase 78 cold-state receipt
-    if: always()
+    # Cold from-scratch proof (D-12/PIPE-05) runs on main pushes, dispatches
+    # and the release PR; ordinary PRs rely on the warm security matrix.
+    if: always() && (github.event_name != 'pull_request' || github.head_ref == 'release-please--branches--main')
     runs-on: ubuntu-latest
     permissions:
       contents: read
