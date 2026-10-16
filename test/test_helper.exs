@@ -8,7 +8,16 @@ case Relyra.TestGsdTools.resolve() do
     )
 end
 
-ExUnit.start(exclude: [:pending, :integration, :external_idp, :phase78_clean_state_receipt])
+# The Phase 73 replay re-runs whole lanes; `mix ci.phase73.reconciliation` owns it.
+ExUnit.start(
+  exclude: [
+    :pending,
+    :integration,
+    :external_idp,
+    :phase78_clean_state_receipt,
+    :phase_73_reconciliation_replay
+  ]
+)
 
 Relyra.TestSupport.MigrationCase.bootstrap!()
 

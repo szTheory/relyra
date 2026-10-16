@@ -743,7 +743,10 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     job = workflow["jobs"]["phase78-clean-state"]
     # Runs alongside the security matrix; it builds its own cold checkouts.
     refute Map.has_key?(job, "needs")
-    assert job["if"] == "always()"
+    # Ordinary PRs skip it; main pushes, dispatches and the release PR run it.
+    assert job["if"] ==
+             "always() && (github.event_name != 'pull_request' || github.head_ref == 'release-please--branches--main')"
+
     steps = job["steps"]
     [otp27] = Enum.filter(steps, &(&1["name"] == "Run OTP 27 cold manifest"))
     [otp28] = Enum.filter(steps, &(&1["name"] == "Run OTP 28 cold manifest"))
