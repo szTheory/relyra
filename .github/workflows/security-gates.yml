@@ -64,6 +64,20 @@ jobs:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
 
+      # Warm start only (SEED-004 item 5, Phase 78 D-05): an exact key with no
+      # restore-keys, toolchain tuple included; locked deps.get and Mix's own
+      # staleness checks still run, so a restored cache is never evidence.
+      - name: Restore Mix build cache
+        id: mix-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            deps
+            _build
+            demo/ledger_loop/deps
+            demo/ledger_loop/_build
+          key: ${{ runner.os }}-${{ github.job }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ hashFiles('mix.lock', 'mix.exs', 'config/**', 'demo/ledger_loop/mix.lock', 'demo/ledger_loop/mix.exs', 'demo/ledger_loop/config/**') }}
+
       - name: Install dependencies
         run: |
           mix local.hex --force
@@ -125,6 +139,18 @@ jobs:
       - name: GATE-02 binary gate (gate02_c14n zero regressions)
         run: mix test --only gate02_c14n --warnings-as-errors
 
+      # Only successful main pushes write the cache; PRs restore it read-only.
+      - name: Save Mix build cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.mix-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            deps
+            _build
+            demo/ledger_loop/deps
+            demo/ledger_loop/_build
+          key: ${{ steps.mix-cache.outputs.cache-primary-key }}
+
   phase73-reconciliation:
     # The Phase 73 replay spawns focused mix test owners, ci.evidence (x3) and
     # ci.security, so it needs Postgres, full git history for the governance
@@ -172,6 +198,20 @@ jobs:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
 
+      # Warm start only (SEED-004 item 5, Phase 78 D-05): an exact key with no
+      # restore-keys, toolchain tuple included; locked deps.get and Mix's own
+      # staleness checks still run, so a restored cache is never evidence.
+      - name: Restore Mix build cache
+        id: mix-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            deps
+            _build
+            demo/ledger_loop/deps
+            demo/ledger_loop/_build
+          key: ${{ runner.os }}-${{ github.job }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ hashFiles('mix.lock', 'mix.exs', 'config/**', 'demo/ledger_loop/mix.lock', 'demo/ledger_loop/mix.exs', 'demo/ledger_loop/config/**') }}
+
       - name: Install dependencies
         run: |
           mix local.hex --force
@@ -187,6 +227,18 @@ jobs:
 
       - name: Phase 73 reconciliation
         run: mix ci.phase73.reconciliation
+
+      # Only successful main pushes write the cache; PRs restore it read-only.
+      - name: Save Mix build cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.mix-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            deps
+            _build
+            demo/ledger_loop/deps
+            demo/ledger_loop/_build
+          key: ${{ steps.mix-cache.outputs.cache-primary-key }}
 
   package-consumers:
     # Clean-room package consumers build the Hex artifact and start their own

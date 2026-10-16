@@ -78,7 +78,9 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
       {"actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020", "v7.0.0", 2},
       {"erlef/setup-beam", "54075bcc5e249e4758d363f27d099f55d843f124", "v1.24.1", 5},
       {"actions/upload-artifact", "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "v7.0.1", 2},
-      {"actions/download-artifact", "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c", "v8.0.1", 1}
+      {"actions/download-artifact", "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c", "v8.0.1", 1},
+      {"actions/cache/restore", "55cc8345863c7cc4c66a329aec7e433d2d1c52a9", "v6.1.0", 2},
+      {"actions/cache/save", "55cc8345863c7cc4c66a329aec7e433d2d1c52a9", "v6.1.0", 2}
     ],
     ".github/workflows/demo-app-ci.yml" => [
       {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 1},
@@ -105,6 +107,24 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
   @ci_gate_needs ["security", "phase73-reconciliation", "package-consumers"]
   @ci_gate_exempt_jobs ["phase78-cold-producer", "phase78-clean-state"]
   @ci_gate_max_timeout 10
+
+  # Warm Mix caches are allowed only where SEED-004 item 5 measured a win. The
+  # clean-room consumers, the Phase 78 cold path and ci-gate never touch a cache.
+  @warm_cache_jobs ["security", "phase73-reconciliation"]
+  @warm_cache_paths ["deps", "_build", "demo/ledger_loop/deps", "demo/ledger_loop/_build"]
+  @warm_cache_save_if "github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.mix-cache.outputs.cache-hit != 'true'"
+  @warm_cache_key_parts [
+    "${{ runner.os }}",
+    "${{ github.job }}",
+    "${{ matrix.otp }}",
+    "${{ matrix.elixir }}",
+    "'mix.lock'",
+    "'mix.exs'",
+    "'config/**'",
+    "'demo/ledger_loop/mix.lock'",
+    "'demo/ledger_loop/mix.exs'",
+    "'demo/ledger_loop/config/**'"
+  ]
 
   @standalone_gate_name "GATE-02 binary gate (gate02_c14n zero regressions)"
   @standalone_gate_command "mix test --only gate02_c14n --warnings-as-errors"
@@ -268,6 +288,91 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
       "External IdP adoption lane",
       "mix ci.external_idp"
     )
+  end
+
+  test "warm Mix caches are exact-key, restore-only on PRs, and absent from cold lanes" do
+    workflow = load_yaml!(@security_gates_path)
+
+    assert :ok = validate_warm_caches!(workflow)
+  end
+
+  test "warm cache mutations reject fallback keys, PR saves, and cold or consumer caches" do
+    workflow = load_yaml!(@security_gates_path)
+
+    update_cache_step = fn job_id, name, update ->
+      update_in(workflow, ["jobs", job_id, "steps"], fn steps ->
+        Enum.map(steps, fn
+          %{"name" => ^name} = step -> update.(step)
+          step -> step
+        end)
+      end)
+    end
+
+    restore = "Restore Mix build cache"
+    save = "Save Mix build cache"
+
+    [restore_step] =
+      Enum.filter(workflow["jobs"]["security"]["steps"], &(&1["name"] == restore))
+
+    mutations = [
+      {:restore_keys,
+       update_cache_step.("security", restore, &put_in(&1, ["with", "restore-keys"], "Linux-")),
+       ~r/restore-keys/},
+      {:no_toolchain,
+       update_cache_step.("phase73-reconciliation", restore, fn step ->
+         update_in(step, ["with", "key"], &String.replace(&1, "${{ matrix.otp }}", "27"))
+       end), ~r/key/},
+      {:no_lockfile,
+       update_cache_step.("security", restore, fn step ->
+         update_in(step, ["with", "key"], &String.replace(&1, "'mix.lock', ", ""))
+       end), ~r/key/},
+      {:combined_cache,
+       update_cache_step.("security", restore, fn step ->
+         Map.put(step, "uses", String.replace(step["uses"], "cache/restore@", "cache@"))
+       end), ~r/actions\/cache/},
+      {:pr_save, update_cache_step.("security", save, &Map.delete(&1, "if")), ~r/save/},
+      {:always_save, update_cache_step.("security", save, &Map.put(&1, "if", "always()")),
+       ~r/save/},
+      {:other_key, update_cache_step.("security", save, &put_in(&1, ["with", "key"], "fixture")),
+       ~r/save/},
+      {:fallible_restore,
+       update_cache_step.("security", restore, &Map.put(&1, "continue-on-error", true)),
+       ~r/conditional|fallible/},
+      {:extra_path,
+       update_cache_step.("security", restore, fn step ->
+         update_in(step, ["with", "path"], &(&1 <> "\n~/.mix"))
+       end), ~r/path/},
+      {:consumer_cache,
+       update_in(workflow, ["jobs", "package-consumers", "steps"], &[restore_step | &1]),
+       ~r/package-consumers/},
+      {:cold_cache,
+       update_in(workflow, ["jobs", "phase78-cold-producer", "steps"], &[restore_step | &1]),
+       ~r/phase78-cold-producer/},
+      {:receipt_cache,
+       update_in(workflow, ["jobs", "phase78-clean-state", "steps"], &[restore_step | &1]),
+       ~r/phase78-clean-state/},
+      {:missing_save,
+       update_in(workflow, ["jobs", "phase73-reconciliation", "steps"], fn steps ->
+         Enum.reject(steps, &(&1["name"] == save))
+       end), ~r/save/},
+      {:save_before_lanes,
+       update_in(workflow, ["jobs", "security", "steps"], fn steps ->
+         {[save_step], rest} = Enum.split_with(steps, &(&1["name"] == save))
+         [hd(rest), save_step | tl(rest)]
+       end), ~r/last step/}
+    ]
+
+    for {label, mutated, message} <- mutations do
+      result =
+        try do
+          validate_warm_caches!(mutated)
+        rescue
+          error in ArgumentError -> Exception.message(error)
+        end
+
+      assert is_binary(result) and result =~ message,
+             "warm cache mutation #{label} was not rejected as expected: #{inspect(result)}"
+    end
   end
 
   test "ci-gate aggregates every PR lane and accepts only success" do
@@ -666,6 +771,78 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     end
 
     :ok
+  end
+
+  defp validate_warm_caches!(workflow) do
+    jobs = workflow["jobs"]
+
+    for {job_id, job} <- jobs, job_id not in @warm_cache_jobs do
+      if Enum.any?(job["steps"] || [], &String.starts_with?(&1["uses"] || "", "actions/cache")) do
+        raise ArgumentError, "#{job_id} must not restore or save any cache"
+      end
+    end
+
+    for job_id <- @warm_cache_jobs do
+      steps = jobs[job_id]["steps"]
+
+      if Enum.any?(steps, &String.starts_with?(&1["uses"] || "", "actions/cache@")) do
+        raise ArgumentError, "#{job_id} must split actions/cache into restore and save"
+      end
+
+      restore = only_step!(steps, job_id, "Restore Mix build cache")
+      save = only_step!(steps, job_id, "Save Mix build cache")
+
+      for step <- [restore, save] do
+        if Map.has_key?(step, "continue-on-error"),
+          do: raise(ArgumentError, "#{job_id} cache steps must not be fallible")
+      end
+
+      unless String.starts_with?(restore["uses"], "actions/cache/restore@") and
+               restore["id"] == "mix-cache" and not Map.has_key?(restore, "if") do
+        raise ArgumentError, "#{job_id} restore must be unconditional with id mix-cache"
+      end
+
+      if Map.has_key?(restore["with"], "restore-keys") do
+        raise ArgumentError, "#{job_id} cache must not use restore-keys fallbacks"
+      end
+
+      for step <- [restore, save] do
+        paths = step["with"]["path"] |> String.split("\n", trim: true) |> Enum.map(&String.trim/1)
+
+        if paths != @warm_cache_paths,
+          do:
+            raise(
+              ArgumentError,
+              "#{job_id} cache path must be exactly #{inspect(@warm_cache_paths)}"
+            )
+      end
+
+      key = restore["with"]["key"]
+
+      unless Enum.all?(@warm_cache_key_parts, &String.contains?(key, &1)) do
+        raise ArgumentError, "#{job_id} cache key must bind OS, job, toolchain and lockfiles"
+      end
+
+      unless String.starts_with?(save["uses"], "actions/cache/save@") and
+               save["if"] == @warm_cache_save_if and
+               save["with"]["key"] == "${{ steps.mix-cache.outputs.cache-primary-key }}" do
+        raise ArgumentError,
+              "#{job_id} must save only on successful main pushes, under the restored key"
+      end
+
+      if List.last(steps) != save do
+        raise ArgumentError, "#{job_id} must save the cache as its last step"
+      end
+    end
+
+    :ok
+  end
+
+  defp only_step!(steps, job_id, name) do
+    case Enum.filter(steps, &(&1["name"] == name)) do
+      [step] -> step
+      _ -> raise ArgumentError, "#{job_id} must have exactly one #{name} step (save/restore)"
+    end
   end
 
   defp assert_blocking_step!(steps, name, expected_run) do

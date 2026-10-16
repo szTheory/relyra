@@ -1098,7 +1098,7 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     errors = if consumer_commands, do: errors, else: [:consumer_profile_commands | errors]
     errors = if locked_install, do: errors, else: [:locked_dependency_install | errors]
 
-    if cross_run_consumer_cache?(all_steps),
+    if cross_run_consumer_cache?(steps),
       do: [:cross_run_cache_reuse | errors],
       else: errors
   end

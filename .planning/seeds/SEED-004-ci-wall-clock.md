@@ -77,12 +77,21 @@ maintainer's reference "well oiled machine", runs full CI in ~2 min.
   - the duplicate manifest `mix test` was dropped, leaving 21 commands;
   - the fleet_proxy LiveView-join flake is fixed.
   - Dispatch run 38899494149 had the whole cold path green in 23.5 min, down from 80.
-- **PR `ci/ci-gate-split`** (maintainer-approved) covers follow-ups 3 and 4:
+- **PR #52** merged as 6de90a82 (maintainer-approved). PR CI took 9m22s; main run 38908477737 was green in 23.5 min including the cold path. Live protection on main now requires exactly `ci-gate` (strict). It covers follow-ups 3 and 4:
   - a `ci-gate` aggregator job;
   - `phase73-reconciliation` and `package-consumers` split out of `security` into parallel per-OTP jobs;
   - `timeout-minutes` on every security-gates job.
   - Protection switches to `ci-gate` only after merge, via `apply_ci_gate_protection.sh`.
   - Open: the Phase 79 tooling still assumes `security (27|28)` and `fleet-proxy-e2e` contexts (`scripts/collect_phase79_inventory.py`, `scripts/prepare_phase79_batch.py`). Reconcile them during the Phase 79 closeout.
+
+- **PR `ci/warm-mix-cache`** covers follow-up 5. Measured on main run 38908477737: Mix compiles took about 80 s per `phase73-reconciliation` job (the critical path) and about 135 s per `security` job (demo test, root test and dev builds).
+  - Both jobs restore an exact-key cache (`actions/cache/restore`, no restore-keys) of `deps`, `_build` and the LedgerLoop `deps`/`_build`.
+  - The key binds the OS, job, OTP/Elixir tuple and the mix.lock/mix.exs/config sources.
+  - Only successful main pushes save the cache (`actions/cache/save`, last step). PRs restore read-only.
+  - The package consumers, the Phase 78 cold path and ci-gate are pinned cache-free.
+  - Locked `mix deps.get` still runs, so the cache is a warm start only, never evidence (Phase 78 D-05).
+  - The first main push after merge seeds the cache. Re-measure after that.
+  - Known flake, not fixed by this PR: `test/security/login_trace_test.exs:83` failed once in local `mix qa` because the LiveAdminEndpoint ETS table was missing. `LiveAdminEndpointSupport.do_start_endpoint/0` uses `start_link`, so the endpoint dies when the test process that started it exits, while other async tests still use it. Fix: start it unlinked or under the test app supervisor.
 
 ## Recommended Follow-ups (ordered by dividend ÷ effort)
 
