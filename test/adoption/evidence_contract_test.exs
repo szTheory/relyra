@@ -654,8 +654,85 @@ defmodule Relyra.Adoption.EvidenceContractTest do
                  global: false
                )
          }
-       end, ~r/Phase 73 reconciliation step/}
+       end, ~r/Phase 73 reconciliation step/},
+      {:step_moved_to_security,
+       fn current ->
+         workflow =
+           current.workflow
+           |> String.replace(step <> "\n", "", global: false)
+           |> String.replace(
+             "        run: mix ci.evidence\n",
+             "        run: mix ci.evidence\n\n" <> step <> "\n",
+             global: false
+           )
+
+         %{current | workflow: workflow}
+       end, ~r/Phase 73 reconciliation step/},
+      {:job_ungated,
+       fn current ->
+         %{
+           current
+           | workflow:
+               String.replace(current.workflow, "      - phase73-reconciliation\n", "",
+                 global: false
+               )
+         }
+       end, ~r/Phase 73 reconciliation step/},
+      {:job_conditional,
+       fn current ->
+         %{
+           current
+           | workflow:
+               String.replace(
+                 current.workflow,
+                 "  phase73-reconciliation:\n",
+                 "  phase73-reconciliation:\n    if: github.event_name == 'push'\n",
+                 global: false
+               )
+         }
+       end, ~r/Phase 73 reconciliation step/},
+      {:job_after_security,
+       fn current ->
+         %{
+           current
+           | workflow:
+               String.replace(
+                 current.workflow,
+                 "  phase73-reconciliation:\n",
+                 "  phase73-reconciliation:\n    needs: security\n",
+                 global: false
+               )
+         }
+       end, ~r/needs must be absent|Phase 73 reconciliation step/},
+      {:gate_not_always,
+       fn current ->
+         %{
+           current
+           | workflow:
+               String.replace(
+                 current.workflow,
+                 "\n    if: always()\n    needs:\n",
+                 "\n    if: success()\n    needs:\n",
+                 global: false
+               )
+         }
+       end, ~r/Phase 73 reconciliation step/},
+      {:evidence_contract_missing,
+       fn current ->
+         %{
+           current
+           | workflow:
+               String.replace(
+                 current.workflow,
+                 "        run: mix ci.evidence\n",
+                 "        run: mix ci.evidence || true\n",
+                 global: false
+               )
+         }
+       end, ~r/Evidence contract|Phase 73 reconciliation step|workflow has no enabled blocking/}
     ]
+
+    assert current_workflow_has_gate_shape?(snapshot.workflow)
 
     for {_name, mutate, diagnostic} <- mutations do
       assert_raise ArgumentError, diagnostic, fn ->
@@ -1967,6 +2044,13 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       _other ->
         nil
     end)
+  end
+
+  defp current_workflow_has_gate_shape?(workflow) do
+    String.contains?(workflow, "  phase73-reconciliation:\n") and
+      String.contains?(workflow, "      - phase73-reconciliation\n") and
+      String.contains?(workflow, "\n    if: always()\n    needs:\n") and
+      String.contains?(workflow, "        run: mix ci.evidence\n")
   end
 
   defp workflow_step_command(workflow, name) do

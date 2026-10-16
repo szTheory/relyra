@@ -1,14 +1,14 @@
 defmodule Relyra.FleetProxyCIIntegrityTest do
   use ExUnit.Case, async: true
 
-  @required_checks [
-    "security (27, 1.19.5)",
-    "security (28, 1.19.5)",
-    "fleet-proxy-e2e"
-  ]
+  # Branch protection requires exactly the ci-gate aggregator. The merge-gating
+  # workflows also wait on the separate fleet-proxy-e2e workflow, which ci-gate
+  # cannot aggregate because it lives in another workflow.
+  @protected_checks ["ci-gate"]
+  @merge_gate_checks ["ci-gate", "fleet-proxy-e2e"]
+  @retired_checks ["security (27, 1.19.5)", "security (28, 1.19.5)"]
 
-  @required_check_consumers [
-    "scripts/setup_branch_protection.sh",
+  @merge_gate_consumers [
     ".github/workflows/release-please-automerge.yml",
     ".github/workflows/release-please-pr-checks.yml",
     ".github/workflows/planning-pr-checks.yml"
@@ -369,20 +369,47 @@ defmodule Relyra.FleetProxyCIIntegrityTest do
   end
 
   test "all required-check consumers stay synchronized" do
-    for path <- @required_check_consumers do
-      body = File.read!(path)
+    expected_list =
+      ~s[required_checks=(] <> Enum.map_join(@merge_gate_checks, " ", &inspect/1) <> ")"
 
-      for check <- @required_checks do
-        assert body =~ check, "#{path} is missing required context #{inspect(check)}"
+    for path <- @merge_gate_consumers do
+      body = File.read!(path)
+      lists = Regex.scan(~r/required_checks=\([^)]*\)/, body) |> List.flatten()
+
+      assert lists != [], "#{path} no longer declares its required_checks list"
+
+      for list <- lists do
+        assert list == expected_list,
+               "#{path} required_checks drifted: #{list} (expected #{expected_list})"
+      end
+
+      for retired <- @retired_checks do
+        refute body =~ retired, "#{path} still names retired required context #{inspect(retired)}"
       end
     end
 
     {json, 0} =
       System.cmd("bash", ["scripts/setup_branch_protection.sh", "--print-expected-json"])
 
-    for check <- @required_checks do
-      assert json =~ check
+    expected = Jason.decode!(json)
+
+    assert expected["required_status_checks"] == %{
+             "strict" => true,
+             "contexts" => @protected_checks
+           }
+
+    assert expected["enforce_admins"] == true
+
+    {text, 0} = System.cmd("bash", ["scripts/setup_branch_protection.sh", "--print-expected"])
+    assert text =~ "Expected required status checks:\n  - ci-gate\n\n"
+
+    for retired <- @retired_checks ++ ["fleet-proxy-e2e"] do
+      refute json =~ retired
+      refute text =~ retired
     end
+
+    security_gates = load_yaml!(".github/workflows/security-gates.yml")
+    assert security_gates["jobs"]["ci-gate"]["name"] == "ci-gate"
   end
 
   defp temp_dir!(prefix) do

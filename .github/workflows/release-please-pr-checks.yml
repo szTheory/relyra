@@ -92,7 +92,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)" "fleet-proxy-e2e")
+          required_checks=("ci-gate" "fleet-proxy-e2e")
 
           all_success=true
           any_missing=false
@@ -148,7 +148,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          required_checks=("security (27, 1.19.5)" "security (28, 1.19.5)" "fleet-proxy-e2e")
+          required_checks=("ci-gate" "fleet-proxy-e2e")
           all_success=true
 
           for check in "${required_checks[@]}"; do

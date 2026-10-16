@@ -4,6 +4,8 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
   @moduletag :package_consumer_ci_contract
 
   @workflow_path ".github/workflows/security-gates.yml"
+  @consumer_job "package-consumers"
+  @phase73_job "phase73-reconciliation"
   @cost_report_path ".planning/phases/78-ci-efficiency-and-reliability/78-CI-COST.json"
   @required_commands [
     "scripts/check_clean_room_consumer.sh --profile full",
@@ -11,7 +13,7 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     "scripts/check_clean_room_consumer.sh --profile contracts"
   ]
 
-  test "one unconditional security matrix owner runs every package consumer profile" do
+  test "one unconditional consumer matrix owner runs every package consumer profile" do
     workflow = @workflow_path |> File.read!() |> parse_yaml!()
 
     assert Map.has_key?(workflow["on"], "pull_request")
@@ -22,7 +24,17 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     assert security_job["strategy"]["matrix"]["otp"] == [27, 28]
     assert security_job["strategy"]["matrix"]["elixir"] == ["1.19.5"]
 
-    steps = security_job["steps"]
+    consumer_job = workflow["jobs"][@consumer_job]
+    assert consumer_job["strategy"]["matrix"] == security_job["strategy"]["matrix"]
+    assert consumer_job["strategy"]["fail-fast"] == false
+    refute Map.has_key?(consumer_job, "if")
+    refute Map.has_key?(consumer_job, "needs")
+    refute Map.has_key?(consumer_job, "continue-on-error")
+    assert @consumer_job in workflow["jobs"]["ci-gate"]["needs"]
+    assert workflow["jobs"]["ci-gate"]["if"] == "always()"
+
+    security_steps = security_job["steps"]
+    steps = consumer_job["steps"]
     all_steps = workflow["jobs"] |> Map.values() |> Enum.flat_map(& &1["steps"])
 
     all_package_steps =
@@ -66,14 +78,20 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     assert Enum.find_index(step_names, &(&1 == "Package consumer contracts")) >
              Enum.find_index(step_names, &(&1 == "Install dependencies"))
 
-    demo_setup = Enum.find(steps, &(get_in(&1, ["name"]) == "Prepare demo test metadata"))
+    security_step_names = Enum.map(security_steps, & &1["name"])
+
+    demo_setup =
+      Enum.find(security_steps, &(get_in(&1, ["name"]) == "Prepare demo test metadata"))
+
     assert demo_setup["env"]["MIX_ENV"] == "test"
 
     assert String.trim(demo_setup["run"]) ==
              "mix cmd --cd demo/ledger_loop mix deps.get\nmix cmd --cd demo/ledger_loop mix compile"
 
-    quality_gate_index = Enum.find_index(step_names, &(&1 == "Quality gate"))
-    assert Enum.find_index(step_names, &(&1 == "Prepare demo test metadata")) < quality_gate_index
+    quality_gate_index = Enum.find_index(security_step_names, &(&1 == "Quality gate"))
+
+    assert Enum.find_index(security_step_names, &(&1 == "Prepare demo test metadata")) <
+             quality_gate_index
   end
 
   test "measured topology decision removes only the duplicated fast lane" do
@@ -97,10 +115,20 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     assert quality_gate["run"] == "mix qa"
     refute Map.has_key?(quality_gate, "if")
 
+    [phase73_step] =
+      Enum.filter(
+        workflow["jobs"][@phase73_job]["steps"],
+        &(&1["name"] == "Phase 73 reconciliation")
+      )
+
+    assert phase73_step["run"] == "mix ci.phase73.reconciliation"
+    refute Map.has_key?(phase73_step, "if")
+    refute Map.has_key?(phase73_step, "continue-on-error")
+    assert @phase73_job in workflow["jobs"]["ci-gate"]["needs"]
+
     for gate <- [
           {"Security lane", "mix ci.security"},
           {"Evidence contract", "mix ci.evidence"},
-          {"Phase 73 reconciliation", "mix ci.phase73.reconciliation"},
           {"Verification lane", "mix ci.verify"},
           {"Integration lane", "mix ci.integration"},
           {"Demo lane", "mix ci.demo"},
@@ -186,7 +214,7 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     workflow = @workflow_path |> File.read!() |> parse_yaml!()
 
     cache_only =
-      update_security_steps(workflow, fn steps ->
+      update_consumer_steps(workflow, fn steps ->
         Enum.map(steps, fn
           %{"name" => "Package consumer contracts"} = step ->
             Map.put(step, "run", "echo restored consumer cache")
@@ -207,7 +235,7 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     assert :cross_run_cache_reuse in workflow_errors(cache_only)
 
     missing_locked_install =
-      update_security_steps(workflow, fn steps ->
+      update_consumer_steps(workflow, fn steps ->
         Enum.map(steps, fn
           %{"name" => "Install dependencies"} = step ->
             Map.put(step, "run", "mix local.hex --force\nmix local.rebar --force")
@@ -224,7 +252,7 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     workflow = @workflow_path |> File.read!() |> parse_yaml!()
 
     duplicate_profile =
-      update_security_steps(workflow, fn steps ->
+      update_consumer_steps(workflow, fn steps ->
         Enum.map(steps, fn
           %{"name" => "Package consumer contracts"} = step ->
             Map.put(
@@ -241,7 +269,7 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     assert :consumer_profile_commands in workflow_errors(duplicate_profile)
 
     skipped_profile =
-      update_security_steps(workflow, fn steps ->
+      update_consumer_steps(workflow, fn steps ->
         Enum.map(steps, fn
           %{"name" => "Package consumer contracts"} = step ->
             Map.put(
@@ -258,7 +286,7 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     assert :consumer_profile_commands in workflow_errors(skipped_profile)
 
     cross_run_reuse =
-      update_security_steps(workflow, fn steps ->
+      update_consumer_steps(workflow, fn steps ->
         steps ++
           [
             %{
@@ -274,6 +302,28 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
       end)
 
     assert :cross_run_cache_reuse in workflow_errors(cross_run_reuse)
+
+    assert workflow_errors(workflow) == []
+
+    ungated =
+      update_in(workflow, ["jobs", "ci-gate", "needs"], &List.delete(&1, @consumer_job))
+
+    assert :consumer_job_not_gated in workflow_errors(ungated)
+
+    skippable = put_in(workflow, ["jobs", @consumer_job, "if"], "github.event_name == 'push'")
+    assert :consumer_job_not_gated in workflow_errors(skippable)
+
+    moved_back =
+      workflow
+      |> update_in(["jobs", "security", "steps"], fn steps ->
+        steps ++
+          Enum.filter(
+            workflow["jobs"][@consumer_job]["steps"],
+            &(&1["name"] == "Package consumer contracts")
+          )
+      end)
+
+    assert :consumer_profile_commands in workflow_errors(moved_back)
   end
 
   test "full consumer teardown removes its labeled volume before a minimal run starts" do
@@ -1002,8 +1052,8 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
   defp workflow_errors(workflow) do
     jobs = workflow["jobs"] || %{}
     all_steps = Enum.flat_map(Map.values(jobs), &(&1["steps"] || []))
-    security = jobs["security"] || %{}
-    steps = security["steps"] || []
+    consumers = jobs[@consumer_job] || %{}
+    steps = consumers["steps"] || []
 
     consumer_steps = Enum.filter(all_steps, &(&1["name"] == "Package consumer contracts"))
     dependency_steps = Enum.filter(steps, &(&1["name"] == "Install dependencies"))
@@ -1038,7 +1088,13 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
           false
       end
 
-    errors = []
+    gate = jobs["ci-gate"] || %{}
+
+    consumer_gated =
+      is_list(gate["needs"]) and @consumer_job in gate["needs"] and gate["if"] == "always()" and
+        not Map.has_key?(consumers, "if") and not Map.has_key?(consumers, "needs")
+
+    errors = if consumer_gated, do: [], else: [:consumer_job_not_gated]
     errors = if consumer_commands, do: errors, else: [:consumer_profile_commands | errors]
     errors = if locked_install, do: errors, else: [:locked_dependency_install | errors]
 
@@ -1064,11 +1120,11 @@ defmodule Relyra.Adoption.PackageConsumerCIContractTest do
     end)
   end
 
-  defp update_security_steps(workflow, update) do
+  defp update_consumer_steps(workflow, update) do
     put_in(
       workflow,
-      ["jobs", "security", "steps"],
-      update.(get_in(workflow, ["jobs", "security", "steps"]))
+      ["jobs", @consumer_job, "steps"],
+      update.(get_in(workflow, ["jobs", @consumer_job, "steps"]))
     )
   end
 

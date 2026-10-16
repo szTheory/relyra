@@ -71,6 +71,19 @@ maintainer's reference "well oiled machine", runs full CI in ~2 min.
 - **PR #49:** the release-please publish job gets `fetch-depth: 0` and demo deps before `mix qa`.
 - **PR #48:** the Phase 78 job no longer `needs: security`, which cut ~26 min.
 
+- **PR #50** merged as bc648e8e. Measured PR security-gates time is 19m11s, down from about 80 min. Local `mix qa` tests take 48 s, down from 617 s.
+- **PR #51** merged as bc2e077b. It covers follow-ups 1 and 2:
+  - the OTP 27 and OTP 28 cold producers now run in parallel;
+  - the duplicate manifest `mix test` was dropped, leaving 21 commands;
+  - the fleet_proxy LiveView-join flake is fixed.
+  - Dispatch run 38899494149 had the whole cold path green in 23.5 min, down from 80.
+- **PR `ci/ci-gate-split`** (maintainer-approved) covers follow-ups 3 and 4:
+  - a `ci-gate` aggregator job;
+  - `phase73-reconciliation` and `package-consumers` split out of `security` into parallel per-OTP jobs;
+  - `timeout-minutes` on every security-gates job.
+  - Protection switches to `ci-gate` only after merge, via `apply_ci_gate_protection.sh`.
+  - Open: the Phase 79 tooling still assumes `security (27|28)` and `fleet-proxy-e2e` contexts (`scripts/collect_phase79_inventory.py`, `scripts/prepare_phase79_batch.py`). Reconcile them during the Phase 79 closeout.
+
 ## Recommended Follow-ups (ordered by dividend ÷ effort)
 
 1. **Parallel cold producers.**

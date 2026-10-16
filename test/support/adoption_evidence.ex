@@ -21,6 +21,8 @@ defmodule Relyra.AdoptionEvidence do
   @phase73_reconciliation_owner "test/governance/phase_73_reconciliation_test.exs"
   @phase73_reconciliation_selector "phase_73_reconciliation_replay"
   @phase73_reconciliation_step "Phase 73 reconciliation"
+  @phase73_reconciliation_job "phase73-reconciliation"
+  @ci_gate_job "ci-gate"
   @fields [
     :id,
     :requirement,
@@ -837,38 +839,65 @@ defmodule Relyra.AdoptionEvidence do
             "EVID-02 Phase 73 reconciliation owner must select a positive #{@phase73_reconciliation_selector} test"
     end
 
-    unless mandatory_security_step?(
+    evidence_step =
+      entries
+      |> repository_owners()
+      |> Enum.find(&(&1.lane == "ci.evidence"))
+      |> Map.fetch!(:workflow_step)
+
+    # The replay runs in its own parallel job. Step order inside one job no
+    # longer sequences it after Evidence contract; instead the always() ci-gate
+    # must aggregate both jobs, so neither can be skipped or fail silently.
+    unless mandatory_workflow_step?(
              workflow,
+             @phase73_reconciliation_job,
              @phase73_reconciliation_step,
              "mix #{@phase73_reconciliation_alias}"
            ) and
-             mandatory_step_follows_evidence_contract?(
-               workflow,
-               entries
-               |> repository_owners()
-               |> Enum.find(&(&1.lane == "ci.evidence"))
-               |> Map.fetch!(:workflow_step)
-             ) do
+             single_named_step?(workflow, @phase73_reconciliation_step) and
+             mandatory_security_step?(workflow, evidence_step, "mix ci.evidence") and
+             ci_gate_requires?(workflow, ["security", @phase73_reconciliation_job]) do
       raise ArgumentError,
-            "EVID-02 workflow must own one unconditional blocking Phase 73 reconciliation step after Evidence contract under jobs.security"
+            "EVID-02 workflow must own one unconditional blocking Phase 73 reconciliation step under jobs.#{@phase73_reconciliation_job}, aggregated with the jobs.security Evidence contract by the always() #{@ci_gate_job} job"
     end
   end
 
-  defp mandatory_step_follows_evidence_contract?(workflow, evidence_step) do
+  defp single_named_step?(workflow, name) do
+    workflow
+    |> String.split("\n")
+    |> Enum.count(&Regex.match?(~r/^\s*- name:\s*#{Regex.escape(name)}\s*$/, &1))
+    |> Kernel.==(1)
+  end
+
+  defp ci_gate_requires?(workflow, job_ids) do
     lines = String.split(workflow, "\n")
 
-    step_index = fn name ->
-      lines
-      |> Enum.with_index()
-      |> Enum.filter(fn {line, _index} ->
-        Regex.match?(~r/^      - name:\s*#{Regex.escape(name)}\s*$/, line)
-      end)
-      |> Enum.map(&elem(&1, 1))
-    end
+    with {:ok, jobs_index} <- find_line(lines, ~r/^jobs:\s*$/),
+         jobs <- indented_block(lines, jobs_index, 0),
+         [gate_index] <-
+           jobs
+           |> Enum.with_index()
+           |> Enum.filter(fn {line, _index} ->
+             Regex.match?(~r/^  #{Regex.escape(@ci_gate_job)}:\s*$/, line)
+           end)
+           |> Enum.map(&elem(&1, 1)),
+         gate <- indented_block(jobs, gate_index, 2),
+         "always()" <- property_at_indent(gate, "if", 4),
+         true <- blocking_fallibility?(gate, 4),
+         {:ok, needs_index} <- find_line(gate, ~r/^    needs:\s*$/) do
+      needs =
+        gate
+        |> indented_block(needs_index, 4)
+        |> Enum.flat_map(fn line ->
+          case Regex.run(~r/^      - ([A-Za-z0-9_-]+)\s*$/, line, capture: :all_but_first) do
+            [job_id] -> [job_id]
+            nil -> []
+          end
+        end)
 
-    case {step_index.(evidence_step), step_index.(@phase73_reconciliation_step)} do
-      {[evidence_index], [reconciliation_index]} -> reconciliation_index > evidence_index
-      _other -> false
+      Enum.all?(job_ids, &(&1 in needs))
+    else
+      _ -> false
     end
   end
 

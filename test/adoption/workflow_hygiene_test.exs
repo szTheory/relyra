@@ -22,6 +22,9 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
   @job_contracts %{
     ".github/workflows/security-gates.yml" => %{
       "security" => nil,
+      "phase73-reconciliation" => nil,
+      "package-consumers" => nil,
+      "ci-gate" => "ci-gate",
       "phase78-cold-producer" => "Phase 78 cold producer (OTP ${{ matrix.otp }})",
       "phase78-clean-state" => "Phase 78 cold-state receipt"
     },
@@ -41,6 +44,9 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
 
   @job_permissions %{
     ".github/workflows/security-gates.yml" => %{
+      "phase73-reconciliation" => %{"contents" => "read"},
+      "package-consumers" => %{"contents" => "read"},
+      "ci-gate" => %{"contents" => "read"},
       "phase78-cold-producer" => %{"contents" => "read"},
       "phase78-clean-state" => %{"contents" => "read"}
     },
@@ -68,9 +74,9 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
 
   @action_pin_expectations %{
     ".github/workflows/security-gates.yml" => [
-      {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 3},
+      {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 5},
       {"actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020", "v7.0.0", 2},
-      {"erlef/setup-beam", "54075bcc5e249e4758d363f27d099f55d843f124", "v1.24.1", 3},
+      {"erlef/setup-beam", "54075bcc5e249e4758d363f27d099f55d843f124", "v1.24.1", 5},
       {"actions/upload-artifact", "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "v7.0.1", 2},
       {"actions/download-artifact", "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c", "v8.0.1", 1}
     ],
@@ -90,6 +96,15 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
        1}
     ]
   }
+
+  # ci-gate is the single required check. It must need every PR-path job in
+  # security-gates.yml; only the Phase 78 cold path (skipped on ordinary PRs)
+  # stays outside it.
+  @security_gates_path ".github/workflows/security-gates.yml"
+  @ci_gate_job "ci-gate"
+  @ci_gate_needs ["security", "phase73-reconciliation", "package-consumers"]
+  @ci_gate_exempt_jobs ["phase78-cold-producer", "phase78-clean-state"]
+  @ci_gate_max_timeout 10
 
   @standalone_gate_name "GATE-02 binary gate (gate02_c14n zero regressions)"
   @standalone_gate_command "mix test --only gate02_c14n --warnings-as-errors"
@@ -203,16 +218,48 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     security = workflows[".github/workflows/security-gates.yml"]
     security_steps = security["jobs"]["security"]["steps"]
 
+    assert_blocking_step!(security_steps, "Quality gate", "mix qa")
     assert_blocking_step!(security_steps, "Evidence contract", "mix ci.evidence")
 
     assert_blocking_step!(
-      security_steps,
+      security["jobs"]["package-consumers"]["steps"],
       "Package consumer contracts",
       "scripts/check_clean_room_consumer.sh --profile full\nscripts/check_clean_room_consumer.sh --profile minimal --concurrency-check\nscripts/check_clean_room_consumer.sh --profile contracts"
     )
 
+    assert_blocking_step!(
+      security["jobs"]["phase73-reconciliation"]["steps"],
+      "Phase 73 reconciliation",
+      "mix ci.phase73.reconciliation"
+    )
+
     assert_blocking_step!(security_steps, "Security lane", "mix ci.security")
     assert_blocking_step!(security_steps, @standalone_gate_name, @standalone_gate_command)
+
+    for job_id <- @ci_gate_needs do
+      job = security["jobs"][job_id]
+
+      refute Map.has_key?(job, "needs"),
+             "#{job_id} must start immediately, not after another lane"
+
+      refute Map.has_key?(job, "if"), "#{job_id} must run on every security-gates event"
+      refute Map.get(job, "continue-on-error", false)
+      assert job["strategy"]["fail-fast"] == false
+      assert job["strategy"]["matrix"] == %{"otp" => [27, 28], "elixir" => ["1.19.5"]}
+    end
+
+    for job_id <- ["security", "phase73-reconciliation"] do
+      steps = security["jobs"][job_id]["steps"]
+      checkout = Enum.find(steps, &(&1["name"] == "Checkout"))
+      assert checkout["with"]["fetch-depth"] == 0, "#{job_id} needs full git history"
+      assert security["jobs"][job_id]["services"]["postgres"]["image"] == "postgres:16"
+
+      assert_blocking_step!(
+        steps,
+        "Prepare demo test metadata",
+        "mix cmd --cd demo/ledger_loop mix deps.get\nmix cmd --cd demo/ledger_loop mix compile"
+      )
+    end
 
     adoption = workflows[".github/workflows/adoption-external-idp.yml"]
 
@@ -221,6 +268,98 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
       "External IdP adoption lane",
       "mix ci.external_idp"
     )
+  end
+
+  test "ci-gate aggregates every PR lane and accepts only success" do
+    workflow = load_yaml!(@security_gates_path)
+
+    assert :ok = validate_ci_gate!(workflow)
+    assert :ok = validate_job_timeouts!(@security_gates_path, workflow)
+    assert workflow["jobs"][@ci_gate_job]["needs"] == @ci_gate_needs
+  end
+
+  test "ci-gate mutations reject missing needs, skipped-as-success, and lost always()" do
+    workflow = load_yaml!(@security_gates_path)
+    gate_path = ["jobs", @ci_gate_job]
+    [step] = get_in(workflow, gate_path ++ ["steps"])
+
+    update_step = fn update ->
+      put_in(workflow, gate_path ++ ["steps"], [update.(step)])
+    end
+
+    mutations = [
+      {:missing_need,
+       update_in(workflow, gate_path ++ ["needs"], &List.delete(&1, "phase73-reconciliation")),
+       ~r/needs/},
+      {:missing_consumer_need,
+       update_in(workflow, gate_path ++ ["needs"], &List.delete(&1, "package-consumers")),
+       ~r/needs/},
+      {:scalar_need, put_in(workflow, gate_path ++ ["needs"], "security"), ~r/needs/},
+      {:gates_cold_path,
+       update_in(workflow, gate_path ++ ["needs"], &(&1 ++ ["phase78-clean-state"])), ~r/needs/},
+      {:ungated_new_lane,
+       put_in(workflow, ["jobs", "new-lane"], workflow["jobs"]["package-consumers"]), ~r/needs/},
+      {:no_always, update_in(workflow, gate_path, &Map.delete(&1, "if")), ~r/if: always\(\)/},
+      {:success_only, put_in(workflow, gate_path ++ ["if"], "success()"), ~r/if: always\(\)/},
+      {:negated_always, put_in(workflow, gate_path ++ ["if"], "!always()"), ~r/if: always\(\)/},
+      {:renamed, put_in(workflow, gate_path ++ ["name"], "required"), ~r/name/},
+      {:fallible_job, put_in(workflow, gate_path ++ ["continue-on-error"], true),
+       ~r/continue-on-error/},
+      {:no_timeout, update_in(workflow, gate_path, &Map.delete(&1, "timeout-minutes")),
+       ~r/timeout/},
+      {:fallible_step, update_step.(&Map.put(&1, "continue-on-error", true)), ~r/step/},
+      {:conditional_step, update_step.(&Map.put(&1, "if", "always()")), ~r/step/},
+      {:skipped_is_success,
+       update_step.(fn step ->
+         Map.update!(step, "run", fn run ->
+           String.replace(
+             run,
+             ~s(if [[ "$result" != "success" ]]; then),
+             ~s(if [[ "$result" != "success" && "$result" != "skipped" ]]; then)
+           )
+         end)
+       end), ~r/skipped|success/},
+      {:any_result_passes,
+       update_step.(fn step ->
+         Map.update!(step, "run", &String.replace(&1, ~s(!= "success"), ~s(== "failure")))
+       end), ~r/success/},
+      {:lane_dropped_from_loop,
+       update_step.(fn step ->
+         Map.update!(step, "run", &String.replace(&1, " PACKAGE_CONSUMERS_RESULT; do", "; do"))
+       end), ~r/lane|result/},
+      {:result_rebound,
+       update_step.(fn step ->
+         put_in(step, ["env", "PHASE73_RECONCILIATION_RESULT"], "${{ needs.security.result }}")
+       end), ~r/result/},
+      {:needs_json_unchecked,
+       update_step.(fn step ->
+         Map.update!(step, "run", &String.replace(&1, "length == 3 and ", ""))
+       end), ~r/toJSON|needs context/},
+      {:never_fails,
+       update_step.(fn step ->
+         Map.update!(step, "run", &String.replace(&1, "exit 1", "exit 0"))
+       end), ~r/exit 1/}
+    ]
+
+    for {name, mutated, diagnostic} <- mutations do
+      error = assert_raise ArgumentError, fn -> validate_ci_gate!(mutated) end
+
+      assert Exception.message(error) =~ diagnostic,
+             "#{name} raised an unexpected diagnostic: #{Exception.message(error)}"
+    end
+
+    no_lane_timeout =
+      update_in(workflow, ["jobs", "phase73-reconciliation"], &Map.delete(&1, "timeout-minutes"))
+
+    assert_raise ArgumentError, ~r/timeout-minutes/, fn ->
+      validate_job_timeouts!(@security_gates_path, no_lane_timeout)
+    end
+
+    unbounded_timeout = put_in(workflow, ["jobs", "security", "timeout-minutes"], 0)
+
+    assert_raise ArgumentError, ~r/timeout-minutes/, fn ->
+      validate_job_timeouts!(@security_gates_path, unbounded_timeout)
+    end
   end
 
   test "action references use the rechecked immutable releases and matching release labels" do
@@ -551,6 +690,105 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&(&1 == ""))
     |> Enum.join("\n")
+  end
+
+  defp validate_ci_gate!(workflow) do
+    jobs = workflow["jobs"] || %{}
+    gate = jobs[@ci_gate_job] || raise(ArgumentError, "security-gates.yml lost its ci-gate job")
+
+    pr_jobs =
+      jobs
+      |> Map.keys()
+      |> Kernel.--([@ci_gate_job | @ci_gate_exempt_jobs])
+      |> Enum.sort()
+
+    unless gate["name"] == @ci_gate_job do
+      raise ArgumentError, "ci-gate must keep its stable display name ci-gate"
+    end
+
+    unless gate["if"] == "always()" do
+      raise ArgumentError, "ci-gate must declare exactly if: always() so it reports every outcome"
+    end
+
+    needs = gate["needs"]
+
+    unless is_list(needs) and needs == @ci_gate_needs and Enum.sort(needs) == pr_jobs do
+      raise ArgumentError,
+            "ci-gate needs #{inspect(needs)} must be exactly every PR job #{inspect(pr_jobs)} " <>
+              "(pinned #{inspect(@ci_gate_needs)})"
+    end
+
+    if Map.get(gate, "continue-on-error", false) != false do
+      raise ArgumentError, "ci-gate must not set continue-on-error"
+    end
+
+    timeout = gate["timeout-minutes"]
+
+    unless is_integer(timeout) and timeout > 0 and timeout <= @ci_gate_max_timeout do
+      raise ArgumentError, "ci-gate needs a small positive timeout-minutes"
+    end
+
+    unless gate["permissions"] == %{"contents" => "read"} and gate["runs-on"] == "ubuntu-latest" do
+      raise ArgumentError, "ci-gate must run on ubuntu-latest with contents: read"
+    end
+
+    step =
+      case gate["steps"] do
+        [step] -> step
+        _ -> raise ArgumentError, "ci-gate must own exactly one verification step"
+      end
+
+    if Map.has_key?(step, "if") or Map.get(step, "continue-on-error", false) != false do
+      raise ArgumentError, "ci-gate verification step must be unconditional and blocking"
+    end
+
+    env = step["env"] || %{}
+    run = step["run"] || ""
+
+    lanes =
+      Enum.map(@ci_gate_needs, fn job_id ->
+        var = (job_id |> String.upcase() |> String.replace("-", "_")) <> "_RESULT"
+
+        unless env[var] == "${{ needs.#{job_id}.result }}" do
+          raise ArgumentError, "ci-gate must bind #{var} to the #{job_id} job result"
+        end
+
+        var
+      end)
+
+    unless env["NEEDS_JSON"] == "${{ toJSON(needs) }}" and
+             run =~
+               ~s|jq -e 'length == #{length(@ci_gate_needs)} and all(.[]; .result == "success")'| do
+      raise ArgumentError, "ci-gate must check the whole toJSON(needs) needs context for success"
+    end
+
+    unless run =~ "for lane in #{Enum.join(lanes, " ")}; do" and
+             run =~ ~s(result="${!lane}") and
+             run =~ ~s(if [[ "$result" != "success" ]]; then) do
+      raise ArgumentError, "ci-gate must reject every lane result other than exactly success"
+    end
+
+    if run =~ "skipped" or run =~ "cancelled" do
+      raise ArgumentError, "ci-gate must never accept a skipped or cancelled lane as success"
+    end
+
+    unless run =~ "set -euo pipefail" and run =~ "exit 1" and not (run =~ "exit 0") do
+      raise ArgumentError, "ci-gate must exit 1 when any lane did not succeed"
+    end
+
+    :ok
+  end
+
+  defp validate_job_timeouts!(path, workflow) do
+    for {job_id, job} <- workflow["jobs"] || %{} do
+      timeout = Map.get(job, "timeout-minutes")
+
+      unless is_integer(timeout) and timeout > 0 and timeout <= 180 do
+        raise ArgumentError, "#{path} job #{job_id} must declare a bounded timeout-minutes"
+      end
+    end
+
+    :ok
   end
 
   defp validate_action_pins!(path, source) do
