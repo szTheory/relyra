@@ -346,6 +346,11 @@ defmodule Relyra.FleetProxyCIIntegrityTest do
     assert harness =~ "trap 'exit 143' TERM"
     assert harness =~ "fleet_compose down --remove-orphans"
     assert browser =~ "liveSockets"
+    assert browser =~ ~s|page.locator("[data-phx-main].phx-connected")|
+
+    {joined_at, _} = :binary.match(browser, "[data-phx-main].phx-connected")
+    {click_at, _} = :binary.match(browser, ~s|name: "IdP Metadata" }).click()|)
+    assert joined_at < click_at, "the spec must wait for the LiveView join before clicking"
     assert browser =~ "setSelectionRange"
     assert browser =~ "horizontallyAccessible"
 

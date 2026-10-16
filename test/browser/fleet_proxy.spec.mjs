@@ -28,6 +28,10 @@ test("setup LiveView stays connected and exposes usable public URLs", async ({
     page.getByRole("heading", { name: "SP Settings" }),
   ).toBeVisible();
   await expect.poll(() => liveSockets.length).toBeGreaterThan(0);
+  // The setup steps are href="#" phx-click links, so a click before the
+  // LiveView join completes is silently dropped. LiveView adds phx-connected
+  // to the router-mounted [data-phx-main] container once the join is applied.
+  await expect(page.locator("[data-phx-main].phx-connected")).toHaveCount(1);
 
   const readonlyUrls = page.locator('input[type="text"][readonly]');
   await expect(readonlyUrls).toHaveCount(3);
