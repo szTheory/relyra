@@ -74,6 +74,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
+          fetch-depth: 0
 
       - name: Setup BEAM
         uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
@@ -99,6 +100,13 @@ jobs:
 
       - name: Verify release version in mix.exs
         run: grep -n "@version \"${{ needs.release-please.outputs.version }}\"" mix.exs
+
+      - name: Prepare demo test metadata
+        env:
+          MIX_ENV: test
+        run: |
+          mix cmd --cd demo/ledger_loop mix deps.get
+          mix cmd --cd demo/ledger_loop mix compile
 
       - name: Quality gate (format + compile + test)
         run: mix qa
