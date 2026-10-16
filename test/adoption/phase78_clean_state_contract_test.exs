@@ -7,7 +7,6 @@ defmodule Relyra.Phase78CleanStateReceiptContract do
   @manifest [
     {"mix format --check-formatted", "none"},
     {"mix compile --warnings-as-errors", "none"},
-    {"mix test --warnings-as-errors", "tests"},
     {"mix qa", "tests"},
     {"mix ci.security", "tests"},
     {"mix ci.evidence", "tests"},
@@ -404,7 +403,7 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
   @tag :phase78_clean_state_schema
   test "the closed schema requires the complete manifest, setup, and distinct OTP identities" do
     assert :ok = Receipt.validate_shape!(valid_receipt())
-    assert length(Receipt.manifest()) == 22
+    assert length(Receipt.manifest()) == 21
 
     for {field, value} <- [
           {"unexpected", true},
@@ -557,7 +556,7 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
       |> String.split("\n", trim: true)
       |> Enum.map(&Jason.decode!/1)
 
-    assert length(records) == 23
+    assert length(records) == 22
     setup = Enum.find(records, &(&1["kind"] == "setup"))
     command = Enum.find(records, &(&1["command_index"] == 1 and &1["kind"] == "manifest"))
     assert setup["exit_status"] == 0
@@ -740,42 +739,86 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert Map.has_key?(workflow["on"], "pull_request")
     assert Map.has_key?(workflow["on"], "push")
 
-    job = workflow["jobs"]["phase78-clean-state"]
-    # Runs alongside the security matrix; it builds its own cold checkouts.
-    refute Map.has_key?(job, "needs")
-    # Ordinary PRs skip it; main pushes, dispatches and the release PR run it.
-    assert job["if"] ==
-             "always() && (github.event_name != 'pull_request' || github.head_ref == 'release-please--branches--main')"
+    cold_scope =
+      "always() && (github.event_name != 'pull_request' || github.head_ref == 'release-please--branches--main')"
 
-    steps = job["steps"]
-    [otp27] = Enum.filter(steps, &(&1["name"] == "Run OTP 27 cold manifest"))
-    [otp28] = Enum.filter(steps, &(&1["name"] == "Run OTP 28 cold manifest"))
-    [validate] = Enum.filter(steps, &(&1["name"] == "Validate owned producer diagnostics"))
-    [assemble] = Enum.filter(steps, &(&1["name"] == "Assemble source-bound receipt"))
-    [owner] = Enum.filter(steps, &(&1["name"] == "Require Phase 78 cold-state receipt"))
-    [upload] = Enum.filter(steps, &(&1["name"] == "Upload Phase 78 producer diagnostics"))
+    producer = workflow["jobs"]["phase78-cold-producer"]
+    # Producers run alongside the security matrix; each builds its own cold checkout.
+    refute Map.has_key?(producer, "needs")
+    # Ordinary PRs skip them; main pushes, dispatches and the release PR run them.
+    assert producer["if"] == cold_scope
+    assert producer["permissions"] == %{"contents" => "read"}
+    assert producer["strategy"]["fail-fast"] == false
+
+    assert producer["strategy"]["matrix"] == %{
+             "include" => [
+               %{"otp" => "27", "otp-version" => "27.3.4.15"},
+               %{"otp" => "28", "otp-version" => "28.4.1"}
+             ]
+           }
+
+    assert producer["env"]["PHASE78_OTP"] == "${{ matrix.otp }}"
+
+    job = workflow["jobs"]["phase78-clean-state"]
+    # The receipt owner waits for both producers, even when one of them failed.
+    assert job["needs"] == "phase78-cold-producer"
+    assert job["if"] == cold_scope
+    assert job["permissions"] == %{"contents" => "read"}
+
+    producer_steps = producer["steps"]
+    [beam] = Enum.filter(producer_steps, &(&1["name"] == "Setup BEAM"))
+    [cold] = Enum.filter(producer_steps, &(&1["name"] == "Run cold manifest"))
+
+    [validate] =
+      Enum.filter(producer_steps, &(&1["name"] == "Validate owned producer diagnostics"))
+
+    [upload] =
+      Enum.filter(producer_steps, &(&1["name"] == "Upload Phase 78 producer diagnostics"))
+
+    [run_upload] = Enum.filter(producer_steps, &(&1["name"] == "Upload Phase 78 run receipt"))
 
     [cleanup] =
-      Enum.filter(steps, &(&1["name"] == "Remove uploaded diagnostics owned by this run"))
+      Enum.filter(
+        producer_steps,
+        &(&1["name"] == "Remove uploaded diagnostics owned by this run")
+      )
 
-    assert otp27["if"] == "always()"
-    assert otp28["if"] == "always()"
-    assert otp27["run"] =~ "--diagnostics-dir"
-    assert otp28["run"] =~ "--diagnostics-dir"
+    steps = job["steps"]
+    [download] = Enum.filter(steps, &(&1["name"] == "Download Phase 78 run receipts"))
+    [assemble] = Enum.filter(steps, &(&1["name"] == "Assemble source-bound receipt"))
+    [owner] = Enum.filter(steps, &(&1["name"] == "Require Phase 78 cold-state receipt"))
+
+    assert beam["with"]["otp-version"] == "${{ matrix.otp-version }}"
+    assert beam["with"]["elixir-version"] == "1.19.5"
+    assert cold["if"] == "always()"
+    assert cold["run"] =~ ~s(--otp "$PHASE78_OTP")
+    assert cold["run"] =~ "--diagnostics-dir"
     assert validate["if"] == "always()"
     assert validate["run"] =~ "--validate-diagnostics"
-    assert assemble["if"] == "always()"
-    assert owner["if"] == "always()"
     assert upload["if"] =~ "always()"
     assert upload["if"] =~ "steps.validate-diagnostics.outcome == 'success'"
     assert upload["uses"] =~ "actions/upload-artifact@"
-    assert upload["with"]["name"] =~ "${{ github.run_id }}-${{ github.sha }}-otp27-28"
+    assert upload["with"]["name"] =~ "${{ github.run_id }}-${{ github.sha }}-otp${{ matrix.otp }}"
 
     assert upload["with"]["path"] ==
-             "${{ runner.temp }}/phase78-otp27-diagnostics/\n${{ runner.temp }}/phase78-otp28-diagnostics/\n"
+             "${{ runner.temp }}/phase78-otp${{ matrix.otp }}-diagnostics/"
 
     assert upload["with"]["retention-days"] == 3
-    assert assemble["run"] =~ "--checkout"
+    assert run_upload["if"] == "always()"
+
+    assert run_upload["with"]["name"] ==
+             "phase78-run-${{ github.run_id }}-${{ github.sha }}-otp${{ matrix.otp }}"
+
+    assert run_upload["with"]["path"] == "${{ runner.temp }}/phase78-otp${{ matrix.otp }}.json"
+    assert run_upload["with"]["retention-days"] == 3
+    assert download["if"] == "always()"
+
+    assert download["with"]["pattern"] ==
+             "phase78-run-${{ github.run_id }}-${{ github.sha }}-otp*"
+
+    assert assemble["if"] == "always()"
+    assert owner["if"] == "always()"
+    assert assemble["run"] =~ ~s(--checkout "$GITHUB_WORKSPACE")
     assert assemble["run"] =~ "PHASE78_RECEIPT_PATH"
 
     assert owner["env"]["PHASE78_RECEIPT_PATH"] ==
@@ -784,31 +827,44 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert owner["run"] =~ "mix ci.phase78.receipt"
     assert cleanup["if"] == "success()"
     assert cleanup["run"] =~ "--cleanup-diagnostics"
+    assert Enum.find_index(steps, &(&1 == download)) < Enum.find_index(steps, &(&1 == assemble))
     assert Enum.find_index(steps, &(&1 == assemble)) < Enum.find_index(steps, &(&1 == owner))
+    # Producer manifests run only in the producer matrix, never in the receipt owner.
+    refute Enum.any?(steps, &((&1["run"] || "") =~ "check_phase78_clean_state.sh --otp"))
     assert workflow_diagnostics_contract?(workflow)
 
-    remove_step = fn workflow, name ->
+    remove_step = fn workflow, job_id, name ->
       update_in(
-        workflow["jobs"]["phase78-clean-state"]["steps"],
+        workflow["jobs"][job_id]["steps"],
         &Enum.reject(&1, fn step -> step["name"] == name end)
       )
     end
 
-    map_step = fn workflow, name, transform ->
+    map_step = fn workflow, job_id, name, transform ->
       update_in(
-        workflow["jobs"]["phase78-clean-state"]["steps"],
+        workflow["jobs"][job_id]["steps"],
         &Enum.map(&1, fn step -> if step["name"] == name, do: transform.(step), else: step end)
       )
     end
 
-    missing_upload = remove_step.(workflow, "Upload Phase 78 producer diagnostics")
+    producer_id = "phase78-cold-producer"
+    owner_id = "phase78-clean-state"
+    missing_upload = remove_step.(workflow, producer_id, "Upload Phase 78 producer diagnostics")
+    missing_run_upload = remove_step.(workflow, producer_id, "Upload Phase 78 run receipt")
+    missing_download = remove_step.(workflow, owner_id, "Download Phase 78 run receipts")
 
     success_only =
-      map_step.(workflow, "Upload Phase 78 producer diagnostics", &Map.put(&1, "if", "success()"))
+      map_step.(
+        workflow,
+        producer_id,
+        "Upload Phase 78 producer diagnostics",
+        &Map.put(&1, "if", "success()")
+      )
 
     missing_snapshot =
       map_step.(
         workflow,
+        producer_id,
         "Validate owned producer diagnostics",
         &Map.put(&1, "run", "echo missing status snapshot")
       )
@@ -816,6 +872,7 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     wrong_paths =
       map_step.(
         workflow,
+        producer_id,
         "Upload Phase 78 producer diagnostics",
         &put_in(&1["with"]["path"], "${{ runner.temp }}/other/")
       )
@@ -823,15 +880,41 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     unbounded =
       map_step.(
         workflow,
+        producer_id,
         "Upload Phase 78 producer diagnostics",
         &put_in(&1["with"]["path"], "${{ runner.temp }}/**")
       )
 
+    unpinned_download =
+      map_step.(
+        workflow,
+        owner_id,
+        "Download Phase 78 run receipts",
+        &Map.put(&1, "uses", "actions/download-artifact@v8")
+      )
+
+    unordered_owner = update_in(workflow["jobs"][owner_id], &Map.delete(&1, "needs"))
+    success_gated_owner = put_in(workflow["jobs"][owner_id]["if"], "success()")
+
+    single_otp =
+      put_in(workflow["jobs"][producer_id]["strategy"]["matrix"]["include"], [
+        %{"otp" => "28", "otp-version" => "28.4.1"}
+      ])
+
+    fail_fast = put_in(workflow["jobs"][producer_id]["strategy"]["fail-fast"], true)
+
     refute workflow_diagnostics_contract?(missing_upload)
+    refute workflow_diagnostics_contract?(missing_run_upload)
+    refute workflow_diagnostics_contract?(missing_download)
     refute workflow_diagnostics_contract?(success_only)
     refute workflow_diagnostics_contract?(missing_snapshot)
     refute workflow_diagnostics_contract?(wrong_paths)
     refute workflow_diagnostics_contract?(unbounded)
+    refute workflow_diagnostics_contract?(unpinned_download)
+    refute workflow_diagnostics_contract?(unordered_owner)
+    refute workflow_diagnostics_contract?(success_gated_owner)
+    refute workflow_diagnostics_contract?(single_otp)
+    refute workflow_diagnostics_contract?(fail_fast)
   end
 
   @tag :phase78_clean_state_receipt
@@ -988,37 +1071,83 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
   end
 
   defp workflow_diagnostics_contract?(workflow) do
-    with job when is_map(job) <- get_in(workflow, ["jobs", "phase78-clean-state"]),
+    with producer when is_map(producer) <- get_in(workflow, ["jobs", "phase78-cold-producer"]),
+         job when is_map(job) <- get_in(workflow, ["jobs", "phase78-clean-state"]),
+         producer_steps when is_list(producer_steps) <- producer["steps"],
          steps when is_list(steps) <- job["steps"],
-         [otp27] <- Enum.filter(steps, &(&1["name"] == "Run OTP 27 cold manifest")),
-         [otp28] <- Enum.filter(steps, &(&1["name"] == "Run OTP 28 cold manifest")),
-         [validate] <- Enum.filter(steps, &(&1["name"] == "Validate owned producer diagnostics")),
-         [upload] <- Enum.filter(steps, &(&1["name"] == "Upload Phase 78 producer diagnostics")),
-         [owner] <- Enum.filter(steps, &(&1["name"] == "Require Phase 78 cold-state receipt")),
+         [cold] <- Enum.filter(producer_steps, &(&1["name"] == "Run cold manifest")),
+         [validate] <-
+           Enum.filter(producer_steps, &(&1["name"] == "Validate owned producer diagnostics")),
+         [upload] <-
+           Enum.filter(producer_steps, &(&1["name"] == "Upload Phase 78 producer diagnostics")),
+         [run_upload] <-
+           Enum.filter(producer_steps, &(&1["name"] == "Upload Phase 78 run receipt")),
          [cleanup] <-
-           Enum.filter(steps, &(&1["name"] == "Remove uploaded diagnostics owned by this run")) do
-      validate["if"] == "always()" and
-        otp27["if"] == "always()" and otp28["if"] == "always()" and
-        otp27["run"] =~ "--diagnostics-dir \"$RUNNER_TEMP/phase78-otp27-diagnostics\"" and
-        otp28["run"] =~ "--diagnostics-dir \"$RUNNER_TEMP/phase78-otp28-diagnostics\"" and
+           Enum.filter(
+             producer_steps,
+             &(&1["name"] == "Remove uploaded diagnostics owned by this run")
+           ),
+         [download] <- Enum.filter(steps, &(&1["name"] == "Download Phase 78 run receipts")),
+         [assemble] <- Enum.filter(steps, &(&1["name"] == "Assemble source-bound receipt")),
+         [owner] <- Enum.filter(steps, &(&1["name"] == "Require Phase 78 cold-state receipt")) do
+      producer["strategy"]["fail-fast"] == false and
+        producer["strategy"]["matrix"] == %{
+          "include" => [
+            %{"otp" => "27", "otp-version" => "27.3.4.15"},
+            %{"otp" => "28", "otp-version" => "28.4.1"}
+          ]
+        } and
+        producer["env"]["PHASE78_OTP"] == "${{ matrix.otp }}" and
+        job["needs"] == "phase78-cold-producer" and
+        is_binary(job["if"]) and String.starts_with?(job["if"], "always() && ") and
+        validate["if"] == "always()" and cold["if"] == "always()" and
+        cold["run"] =~
+          ~s(--output "$RUNNER_TEMP/phase78-otp${PHASE78_OTP}.json") and
+        cold["run"] =~
+          ~s(--diagnostics-dir "$RUNNER_TEMP/phase78-otp${PHASE78_OTP}-diagnostics") and
         validate["run"] =~ "--validate-diagnostics" and
-        validate["run"] =~ "phase78-otp27-diagnostics" and
-        validate["run"] =~ "phase78-otp28-diagnostics" and
+        validate["run"] =~ ~s("$RUNNER_TEMP/phase78-otp${PHASE78_OTP}-diagnostics") and
         upload["if"] =~ "always()" and
         upload["if"] =~ "steps.validate-diagnostics.outcome == 'success'" and
         upload["uses"] == "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" and
-        upload["with"]["path"] ==
-          "${{ runner.temp }}/phase78-otp27-diagnostics/\n${{ runner.temp }}/phase78-otp28-diagnostics/\n" and
-        upload["with"]["name"] =~ "${{ github.run_id }}-${{ github.sha }}-otp27-28" and
+        upload["with"]["path"] == "${{ runner.temp }}/phase78-otp${{ matrix.otp }}-diagnostics/" and
+        upload["with"]["name"] ==
+          "phase78-producer-diagnostics-${{ github.run_id }}-${{ github.sha }}-otp${{ matrix.otp }}" and
+        upload["with"]["if-no-files-found"] == "error" and
         upload["with"]["retention-days"] == 3 and
+        run_upload["if"] == "always()" and
+        run_upload["uses"] == "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" and
+        run_upload["with"]["name"] ==
+          "phase78-run-${{ github.run_id }}-${{ github.sha }}-otp${{ matrix.otp }}" and
+        run_upload["with"]["path"] == "${{ runner.temp }}/phase78-otp${{ matrix.otp }}.json" and
+        run_upload["with"]["if-no-files-found"] == "error" and
+        run_upload["with"]["retention-days"] == 3 and
+        cleanup["if"] == "success()" and cleanup["run"] =~ "--cleanup-diagnostics" and
+        cleanup["run"] =~ ~s("$RUNNER_TEMP/phase78-otp${PHASE78_OTP}-diagnostics") and
+        download["if"] == "always()" and
+        download["uses"] ==
+          "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" and
+        download["with"]["pattern"] ==
+          "phase78-run-${{ github.run_id }}-${{ github.sha }}-otp*" and
+        download["with"]["path"] == "${{ runner.temp }}/phase78-runs" and
+        download["with"]["merge-multiple"] == true and
+        assemble["if"] == "always()" and
+        assemble["run"] =~ ~s("$RUNNER_TEMP/phase78-runs/phase78-otp27.json") and
+        assemble["run"] =~ ~s("$RUNNER_TEMP/phase78-runs/phase78-otp28.json") and
+        assemble["run"] =~ ~s(--checkout "$GITHUB_WORKSPACE") and
+        owner["if"] == "always()" and
         owner["env"]["PHASE78_RECEIPT_PATH"] ==
           "${{ runner.temp }}/phase78-candidate-receipt.json" and
-        cleanup["if"] == "success()" and cleanup["run"] =~ "--cleanup-diagnostics" and
-        Enum.find_index(steps, &(&1 == otp27)) < Enum.find_index(steps, &(&1 == otp28)) and
-        Enum.find_index(steps, &(&1 == otp28)) < Enum.find_index(steps, &(&1 == validate)) and
-        Enum.find_index(steps, &(&1 == validate)) < Enum.find_index(steps, &(&1 == upload)) and
-        Enum.find_index(steps, &(&1 == upload)) < Enum.find_index(steps, &(&1 == owner)) and
-        Enum.find_index(steps, &(&1 == owner)) < Enum.find_index(steps, &(&1 == cleanup)) and
+        Enum.find_index(producer_steps, &(&1 == cold)) <
+          Enum.find_index(producer_steps, &(&1 == validate)) and
+        Enum.find_index(producer_steps, &(&1 == validate)) <
+          Enum.find_index(producer_steps, &(&1 == upload)) and
+        Enum.find_index(producer_steps, &(&1 == upload)) <
+          Enum.find_index(producer_steps, &(&1 == run_upload)) and
+        Enum.find_index(producer_steps, &(&1 == run_upload)) <
+          Enum.find_index(producer_steps, &(&1 == cleanup)) and
+        Enum.find_index(steps, &(&1 == download)) < Enum.find_index(steps, &(&1 == assemble)) and
+        Enum.find_index(steps, &(&1 == assemble)) < Enum.find_index(steps, &(&1 == owner)) and
         File.read!("scripts/check_phase78_clean_state.sh") =~
           "git status --porcelain --untracked-files=all"
     else

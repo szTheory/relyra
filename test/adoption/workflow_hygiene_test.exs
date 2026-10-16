@@ -22,6 +22,7 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
   @job_contracts %{
     ".github/workflows/security-gates.yml" => %{
       "security" => nil,
+      "phase78-cold-producer" => "Phase 78 cold producer (OTP ${{ matrix.otp }})",
       "phase78-clean-state" => "Phase 78 cold-state receipt"
     },
     ".github/workflows/demo-app-ci.yml" => %{"demo-app" => nil},
@@ -40,6 +41,7 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
 
   @job_permissions %{
     ".github/workflows/security-gates.yml" => %{
+      "phase78-cold-producer" => %{"contents" => "read"},
       "phase78-clean-state" => %{"contents" => "read"}
     },
     ".github/workflows/demo-app-ci.yml" => %{},
@@ -66,9 +68,11 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
 
   @action_pin_expectations %{
     ".github/workflows/security-gates.yml" => [
-      {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 2},
+      {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 3},
       {"actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020", "v7.0.0", 2},
-      {"erlef/setup-beam", "54075bcc5e249e4758d363f27d099f55d843f124", "v1.24.1", 3}
+      {"erlef/setup-beam", "54075bcc5e249e4758d363f27d099f55d843f124", "v1.24.1", 3},
+      {"actions/upload-artifact", "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "v7.0.1", 2},
+      {"actions/download-artifact", "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c", "v8.0.1", 1}
     ],
     ".github/workflows/demo-app-ci.yml" => [
       {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 1},

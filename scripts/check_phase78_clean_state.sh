@@ -189,7 +189,7 @@ run_id = secrets.token_hex(8)
 (root / "owner.marker").write_text(f"{run_id}\n{('0' * 40)}\n28\n", encoding="ascii")
 records = []
 fixtures = [("setup", "fixture successful setup", 0, "setup-1.log", b"setup fixture output\n", 0)]
-for index in range(1, 23):
+for index in range(1, 22):
     status = 1 if index == 1 else 0
     text = "fixture failing manifest command" if index == 1 else f"fixture manifest command {index}"
     payload = b"manifest fixture failed\n" if index == 1 else (text + "\n").encode("utf-8")
@@ -239,7 +239,7 @@ try:
     records = [json.loads(line) for line in manifest_path.read_text(encoding="utf-8").splitlines() if line]
     setup_records = [record for record in records if record.get("kind") == "setup"]
     manifest_records = [record for record in records if record.get("kind") == "manifest"]
-    if len(setup_records) < 1 or len(manifest_records) != 22 or sorted(record.get("command_index") for record in manifest_records) != list(range(1, 23)):
+    if len(setup_records) < 1 or len(manifest_records) != 21 or sorted(record.get("command_index") for record in manifest_records) != list(range(1, 22)):
         raise ValueError("diagnostic command manifest is incomplete")
     expected_files = {"owner.marker", "manifest.jsonl", "checkout-status.txt", "checkout-status.json", "logs"}
     logs_dir = root / "logs"
@@ -656,7 +656,7 @@ PY
     "$started" "$completed" "$(((end_epoch - start_epoch) / 1000000))" \
     "$status" "$bytes" "$digest" "$execution_text"
   record_diagnostic "$index" manifest "$execution_text" "$original_status" "$log_path" "$overflow_path"
-  printf 'phase78 clean-state: command %02d/22 %s exit=%s evidence=%s bytes=%s\n' \
+  printf 'phase78 clean-state: command %02d/21 %s exit=%s evidence=%s bytes=%s\n' \
     "$index" "$name" "$status" "$evidence_count" "$bytes"
   [[ -f "$FLEET_PROXY_STATUS_PATH" ]] && rm -f -- "$FLEET_PROXY_STATUS_PATH"
   [[ -f "$TRACE_VISUAL_STATUS_PATH" ]] && rm -f -- "$TRACE_VISUAL_STATUS_PATH"
@@ -704,7 +704,6 @@ run_setup 'LedgerLoop test metadata' \
 manifest_names=(
   'mix format --check-formatted'
   'mix compile --warnings-as-errors'
-  'mix test --warnings-as-errors'
   'mix qa'
   'mix ci.security'
   'mix ci.evidence'
@@ -725,7 +724,7 @@ manifest_names=(
   'bash scripts/test_trace_visual_status_contract.sh'
   'actionlint .github/workflows/*.yml'
 )
-manifest_kinds=(none none tests tests tests tests tests tests tests checks checks checks tests tests none journeys journeys journeys journeys journeys checks none)
+manifest_kinds=(none none tests tests tests tests tests tests checks checks checks tests tests none journeys journeys journeys journeys journeys checks none)
 
 command_index=0
 for command_text in "${manifest_names[@]}"; do
@@ -910,5 +909,5 @@ if [[ "$run_outcome" != passed ]]; then
   echo "phase78 clean-state: OTP $otp failed; private receipt contains actual exits and bounded output digests" >&2
   exit 1
 fi
-printf 'phase78 clean-state: OTP %s passed: 22 commands, %s tracked operational files, source=%s\n' \
+printf 'phase78 clean-state: OTP %s passed: 21 commands, %s tracked operational files, source=%s\n' \
   "$otp" "$current_source_count" "${source_commit:0:12}"
