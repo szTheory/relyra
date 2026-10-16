@@ -15,19 +15,18 @@ REPO_NAME="${REPO_NAME##*/}"
 REPO_NAME="${REPO_NAME:-relyra}"
 REPO="${OWNER}/${REPO_NAME}"
 
-# Required job names from security-gates.yml plus fleet-proxy-e2e.yml.
+# The single required check is the ci-gate aggregator job in security-gates.yml.
+# It needs every PR lane (security, phase73-reconciliation, package-consumers)
+# and fails unless each result is exactly success, so new lanes never require a
+# protection change. Never require a path-filtered workflow here.
 REQUIRED_CHECKS=(
-  "security (27, 1.19.5)"
-  "security (28, 1.19.5)"
-  "fleet-proxy-e2e"
+  "ci-gate"
 )
 
 print_expected_text() {
   cat <<'TEXT'
 Expected required status checks:
-  - security (27, 1.19.5)
-  - security (28, 1.19.5)
-  - fleet-proxy-e2e
+  - ci-gate
 
 Expected non-context branch protection fields:
   - required_status_checks.strict: true

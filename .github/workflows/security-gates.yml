@@ -18,9 +18,13 @@ on:
       - "prompts/**"
   workflow_dispatch:
 
+# PR lanes run as parallel jobs (SEED-004 follow-up 4). ci-gate, at the end
+# of this file, is the single required status check and fails unless every
+# PR lane succeeds; it needs every job below except the Phase 78 cold path.
 jobs:
   security:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:16
@@ -66,12 +70,6 @@ jobs:
           mix local.rebar --force
           mix deps.get
 
-      - name: Package consumer contracts
-        run: |
-          scripts/check_clean_room_consumer.sh --profile full
-          scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check
-          scripts/check_clean_room_consumer.sh --profile contracts
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -96,9 +94,6 @@ jobs:
 
       - name: Evidence contract
         run: mix ci.evidence
-
-      - name: Phase 73 reconciliation
-        run: mix ci.phase73.reconciliation
 
       - name: Verification lane
         run: mix ci.verify
@@ -130,6 +125,107 @@ jobs:
       - name: GATE-02 binary gate (gate02_c14n zero regressions)
         run: mix test --only gate02_c14n --warnings-as-errors
 
+  phase73-reconciliation:
+    # The Phase 73 replay spawns focused mix test owners, ci.evidence (x3) and
+    # ci.security, so it needs Postgres, full git history for the governance
+    # owners and the compiled demo test metadata, but no Node or browsers.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      RELYRA_XML_STRATEGY: pure_beam
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      RELYRA_TEST_DATABASE: relyra_test
+    strategy:
+      fail-fast: false
+      matrix:
+        otp: [27, 28]
+        elixir: ["1.19.5"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup BEAM
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+
+      - name: Install dependencies
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get
+
+      - name: Prepare demo test metadata
+        env:
+          MIX_ENV: test
+        run: |
+          mix cmd --cd demo/ledger_loop mix deps.get
+          mix cmd --cd demo/ledger_loop mix compile
+
+      - name: Phase 73 reconciliation
+        run: mix ci.phase73.reconciliation
+
+  package-consumers:
+    # Clean-room package consumers build the Hex artifact and start their own
+    # isolated postgres:16 container, so this job needs no service, Node or
+    # demo metadata.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      RELYRA_XML_STRATEGY: pure_beam
+    strategy:
+      fail-fast: false
+      matrix:
+        otp: [27, 28]
+        elixir: ["1.19.5"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup BEAM
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+
+      - name: Install dependencies
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get
+
+      - name: Package consumer contracts
+        run: |
+          scripts/check_clean_room_consumer.sh --profile full
+          scripts/check_clean_room_consumer.sh --profile minimal --concurrency-check
+          scripts/check_clean_room_consumer.sh --profile contracts
+
   phase78-cold-producer:
     name: Phase 78 cold producer (OTP ${{ matrix.otp }})
     # Cold from-scratch proof (D-12/PIPE-05) runs on main pushes, dispatches
@@ -138,6 +234,7 @@ jobs:
     # phase78-clean-state job assembles both run receipts.
     if: always() && (github.event_name != 'pull_request' || github.head_ref == 'release-please--branches--main')
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     permissions:
       contents: read
     strategy:
@@ -241,6 +338,7 @@ jobs:
     needs: phase78-cold-producer
     if: always() && (github.event_name != 'pull_request' || github.head_ref == 'release-please--branches--main')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     services:
@@ -309,3 +407,46 @@ jobs:
         run: mix ci.phase78.receipt
         env:
           PHASE78_RECEIPT_PATH: ${{ runner.temp }}/phase78-candidate-receipt.json
+
+  ci-gate:
+    name: ci-gate
+    # The single required status check. if: always() makes it report even when
+    # a lane fails or is cancelled, and it passes only when every needed job
+    # result is exactly success: failure, cancelled and skipped all fail it.
+    # The Phase 78 cold path is intentionally absent; it is skipped on
+    # ordinary PRs and release-please-automerge requires the whole run.
+    if: always()
+    needs:
+      - security
+      - phase73-reconciliation
+      - package-consumers
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Require every PR lane to succeed
+        env:
+          SECURITY_RESULT: ${{ needs.security.result }}
+          PHASE73_RECONCILIATION_RESULT: ${{ needs.phase73-reconciliation.result }}
+          PACKAGE_CONSUMERS_RESULT: ${{ needs.package-consumers.result }}
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          failed=0
+          for lane in SECURITY_RESULT PHASE73_RECONCILIATION_RESULT PACKAGE_CONSUMERS_RESULT; do
+            result="${!lane}"
+            if [[ "$result" != "success" ]]; then
+              echo "::error::required lane ${lane%_RESULT} finished with result '${result:-missing}'"
+              failed=1
+            fi
+          done
+          if ! jq -e 'length == 3 and all(.[]; .result == "success")' <<<"$NEEDS_JSON" >/dev/null; then
+            echo "::error::needs context is not exactly three successful lanes: $NEEDS_JSON"
+            failed=1
+          fi
+          if [[ "$failed" -ne 0 ]]; then
+            echo "ci-gate failed: one or more required lanes did not succeed."
+            exit 1
+          fi
+          echo "ci-gate passed: security, phase73-reconciliation and package-consumers succeeded."
