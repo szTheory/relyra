@@ -155,6 +155,8 @@ jobs:
     # The Phase 73 replay spawns focused mix test owners, ci.evidence (x3) and
     # ci.security, so it needs Postgres, full git history for the governance
     # owners and the compiled demo test metadata, but no Node or browsers.
+    # SEED-004 item 10: the three replay parts run as parallel matrix legs;
+    # ci-gate requires every leg, so the union is the full replay.
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -185,6 +187,7 @@ jobs:
       matrix:
         otp: [27, 28]
         elixir: ["1.19.5"]
+        replay: [focused, evidence, security]
 
     steps:
       - name: Checkout
@@ -227,6 +230,8 @@ jobs:
 
       - name: Phase 73 reconciliation
         run: mix ci.phase73.reconciliation
+        env:
+          RELYRA_PHASE73_REPLAY_PART: ${{ matrix.replay }}
 
       # Only successful main pushes write the cache; PRs restore it read-only.
       - name: Save Mix build cache

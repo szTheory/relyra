@@ -111,6 +111,8 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
   # Warm Mix caches are allowed only where SEED-004 item 5 measured a win. The
   # clean-room consumers, the Phase 78 cold path and ci-gate never touch a cache.
   @warm_cache_jobs ["security", "phase73-reconciliation"]
+  @phase73_replay_parts ["focused", "evidence", "security"]
+  @phase73_replay_env "RELYRA_PHASE73_REPLAY_PART"
   @warm_cache_paths ["deps", "_build", "demo/ledger_loop/deps", "demo/ledger_loop/_build"]
   @warm_cache_save_if "github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.mix-cache.outputs.cache-hit != 'true'"
   @warm_cache_key_parts [
@@ -265,7 +267,13 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
       refute Map.has_key?(job, "if"), "#{job_id} must run on every security-gates event"
       refute Map.get(job, "continue-on-error", false)
       assert job["strategy"]["fail-fast"] == false
-      assert job["strategy"]["matrix"] == %{"otp" => [27, 28], "elixir" => ["1.19.5"]}
+
+      expected_matrix =
+        if job_id == "phase73-reconciliation",
+          do: %{"otp" => [27, 28], "elixir" => ["1.19.5"], "replay" => @phase73_replay_parts},
+          else: %{"otp" => [27, 28], "elixir" => ["1.19.5"]}
+
+      assert job["strategy"]["matrix"] == expected_matrix
     end
 
     for job_id <- ["security", "phase73-reconciliation"] do
@@ -372,6 +380,80 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
 
       assert is_binary(result) and result =~ message,
              "warm cache mutation #{label} was not rejected as expected: #{inspect(result)}"
+    end
+  end
+
+  test "Phase 73 replay legs partition the full replay and only the replay step selects a part" do
+    assert :ok = validate_phase73_replay_partition!(load_yaml!(@security_gates_path))
+
+    other_sources =
+      Enum.reject(Path.wildcard(".github/workflows/*.yml"), &(&1 == @security_gates_path)) ++
+        ["scripts/check_phase78_clean_state.sh", "mix.exs"]
+
+    for path <- other_sources do
+      refute File.read!(path) =~ @phase73_replay_env,
+             "#{path} must not select a partial Phase 73 replay"
+    end
+
+    assert @security_gates_path |> File.read!() |> String.split(@phase73_replay_env) |> length() ==
+             2
+  end
+
+  test "Phase 73 replay partition mutations reject dropped, merged, or hardcoded parts" do
+    workflow = load_yaml!(@security_gates_path)
+    job = ["jobs", "phase73-reconciliation"]
+
+    update_replay_step = fn update ->
+      update_in(workflow, job ++ ["steps"], fn steps ->
+        Enum.map(steps, fn
+          %{"name" => "Phase 73 reconciliation"} = step -> update.(step)
+          step -> step
+        end)
+      end)
+    end
+
+    selector = %{@phase73_replay_env => "${{ matrix.replay }}"}
+
+    mutations = [
+      {:dropped_part,
+       put_in(workflow, job ++ ["strategy", "matrix", "replay"], ["focused", "evidence"]),
+       ~r/matrix.replay/},
+      {:merged_part,
+       put_in(workflow, job ++ ["strategy", "matrix", "replay"], [
+         "focused",
+         "evidence,security"
+       ]), ~r/matrix.replay/},
+      {:no_replay_axis,
+       update_in(workflow, job ++ ["strategy", "matrix"], &Map.delete(&1, "replay")),
+       ~r/matrix.replay/},
+      {:hardcoded_part, update_replay_step.(&put_in(&1, ["env", @phase73_replay_env], "focused")),
+       ~r/replay step/},
+      {:no_selector, update_replay_step.(&Map.delete(&1, "env")), ~r/replay step/},
+      {:extra_step_env, update_replay_step.(&put_in(&1, ["env", "MIX_TEST_PARTITION"], "1")),
+       ~r/replay step/},
+      {:job_env, put_in(workflow, job ++ ["env", @phase73_replay_env], "security"),
+       ~r/only the Phase 73 reconciliation step/},
+      {:workflow_env, Map.put(workflow, "env", selector),
+       ~r/only the Phase 73 reconciliation step/},
+      {:security_job_env,
+       put_in(workflow, ["jobs", "security", "env", @phase73_replay_env], "focused"),
+       ~r/only the Phase 73 reconciliation step/},
+      {:cold_step_env,
+       update_in(workflow, ["jobs", "phase78-cold-producer", "steps"], fn [first | rest] ->
+         [Map.put(first, "env", selector) | rest]
+       end), ~r/only the Phase 73 reconciliation step/}
+    ]
+
+    for {name, mutated, message} <- mutations do
+      result =
+        try do
+          validate_phase73_replay_partition!(mutated)
+        rescue
+          error in ArgumentError -> Exception.message(error)
+        end
+
+      assert is_binary(result) and result =~ message,
+             "#{name} mutation was not rejected as expected: #{inspect(result)}"
     end
   end
 
@@ -768,6 +850,42 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     if length(Enum.uniq(evaluated_groups)) != length(evaluated_groups) do
       raise ArgumentError,
             "colliding concurrency groups across workflows or events: #{inspect(evaluated_groups)}"
+    end
+
+    :ok
+  end
+
+  defp validate_phase73_replay_partition!(workflow) do
+    job = workflow["jobs"]["phase73-reconciliation"]
+
+    unless job["strategy"]["matrix"]["replay"] == @phase73_replay_parts do
+      raise ArgumentError,
+            "phase73-reconciliation matrix.replay must be exactly #{inspect(@phase73_replay_parts)}"
+    end
+
+    [step] = Enum.filter(job["steps"], &(&1["name"] == "Phase 73 reconciliation"))
+
+    unless step["env"] == %{@phase73_replay_env => "${{ matrix.replay }}"} do
+      raise ArgumentError,
+            "the Phase 73 replay step must set only #{@phase73_replay_env}: ${{ matrix.replay }}"
+    end
+
+    holders =
+      [{"workflow", workflow["env"]}] ++
+        Enum.flat_map(workflow["jobs"], fn {job_id, current} ->
+          [{"jobs.#{job_id}", current["env"]}] ++
+            Enum.map(current["steps"] || [], &{"jobs.#{job_id}.#{&1["name"]}", &1["env"]})
+        end)
+
+    offenders =
+      for {where, env} <- holders,
+          is_map(env) and Map.has_key?(env, @phase73_replay_env),
+          where != "jobs.phase73-reconciliation.Phase 73 reconciliation",
+          do: where
+
+    unless offenders == [] do
+      raise ArgumentError,
+            "only the Phase 73 reconciliation step may set #{@phase73_replay_env}; found #{inspect(offenders)}"
     end
 
     :ok

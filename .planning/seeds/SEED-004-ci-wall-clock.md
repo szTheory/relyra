@@ -84,7 +84,7 @@ maintainer's reference "well oiled machine", runs full CI in ~2 min.
   - Protection switches to `ci-gate` only after merge, via `apply_ci_gate_protection.sh`.
   - Open: the Phase 79 tooling still assumes `security (27|28)` and `fleet-proxy-e2e` contexts (`scripts/collect_phase79_inventory.py`, `scripts/prepare_phase79_batch.py`). Reconcile them during the Phase 79 closeout.
 
-- **PR `ci/warm-mix-cache`** covers follow-up 5. Measured on main run 38908477737: Mix compiles took about 80 s per `phase73-reconciliation` job (the critical path) and about 135 s per `security` job (demo test, root test and dev builds).
+- **PR #53** (`ci/warm-mix-cache`, merged as 24ba695b) covers follow-up 5. Main run 38947323550 seeded 4 caches. Measured on main run 38908477737: Mix compiles took about 80 s per `phase73-reconciliation` job (the critical path) and about 135 s per `security` job (demo test, root test and dev builds).
   - Both jobs restore an exact-key cache (`actions/cache/restore`, no restore-keys) of `deps`, `_build` and the LedgerLoop `deps`/`_build`.
   - The key binds the OS, job, OTP/Elixir tuple and the mix.lock/mix.exs/config sources.
   - Only successful main pushes save the cache (`actions/cache/save`, last step). PRs restore read-only.
@@ -92,6 +92,23 @@ maintainer's reference "well oiled machine", runs full CI in ~2 min.
   - Locked `mix deps.get` still runs, so the cache is a warm start only, never evidence (Phase 78 D-05).
   - The first main push after merge seeds the cache. Re-measure after that.
   - Known flake, not fixed by this PR: `test/security/login_trace_test.exs:83` failed once in local `mix qa` because the LiveAdminEndpoint ETS table was missing. `LiveAdminEndpointSupport.do_start_endpoint/0` uses `start_link`, so the endpoint dies when the test process that started it exits, while other async tests still use it. Fix: start it unlinked or under the test app supervisor.
+
+- **PR `ci/split-phase73-replay`** (item 10, part 1) splits the Phase 73 replay, which had become the critical path.
+  - Profile from the proof's `duration_ms` (local):
+    - 21 focused `mix test` owners: 102 s;
+    - 3× `mix ci.evidence`: 108 s;
+    - a full `mix ci.security` replay: 115 s.
+    - That is 325 s locally, and the test took 484 s on CI (main run 38947323550). The job took about 10 min.
+  - `phase73-reconciliation` gains a `replay: [focused, evidence, security]` matrix axis, making 6 legs. Only the replay step sets `RELYRA_PHASE73_REPLAY_PART: ${{ matrix.replay }}`.
+  - When the variable is unset, everything is replayed. That covers local runs and the Phase 78 cold manifest, which are unchanged.
+  - Any other value raises: an empty value, `all`, or a comma list.
+  - ci-gate requires every leg, so the union is the full replay. The proof, alias, selector and EVID-02 chain are unchanged.
+  - `workflow_hygiene_test` pins the partition with 10 mutations:
+    - a dropped or merged part;
+    - a hardcoded part, or a missing or extra step env;
+    - the variable set at job, workflow, security-job or cold-step level;
+    - the variable appearing in any other workflow, `check_phase78_clean_state.sh` or `mix.exs`.
+  - Expected: phase73 legs take about 3-4 min, so the critical path becomes `security`, at about 7 min.
 
 ## Recommended Follow-ups (ordered by dividend ÷ effort)
 
