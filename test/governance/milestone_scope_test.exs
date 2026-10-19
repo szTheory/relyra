@@ -11100,7 +11100,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp phase79_expected_protection do
-    {json, 0} = System.cmd(Path.expand("scripts/setup_branch_protection.sh"), ["--print-expected-json"])
+    {json, 0} =
+      System.cmd(Path.expand("scripts/setup_branch_protection.sh"), ["--print-expected-json"])
+
     Jason.decode!(json)
   end
 
