@@ -28,6 +28,10 @@ jobs:
   publish:
     name: Publish to Hex.pm
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
     services:
       postgres:
         image: postgres:16
@@ -55,6 +59,12 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.inputs.tag }}
+
+      - name: Require green ci-gate for the release tree
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: scripts/check_release_ci_gate.sh "$(git rev-parse 'HEAD^{commit}')"
 
       - name: Setup BEAM
         uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
@@ -100,11 +110,10 @@ jobs:
       - name: Verify release version in mix.exs
         run: grep -n "@version \"${{ steps.version.outputs.version }}\"" mix.exs
 
+      # qa and ci.security are not re-run here: the gate above proves this
+      # exact tree already passed the required ci-gate check.
       - name: Release parity lane
         run: mix ci.release
-
-      - name: Security lane
-        run: mix ci.security
 
       - name: Dry run Hex publish
         env:

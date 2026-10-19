@@ -68,7 +68,7 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
         "issues" => "write",
         "pull-requests" => "write"
       },
-      "publish-hex" => %{"contents" => "read"}
+      "publish-hex" => %{"checks" => "read", "contents" => "read", "pull-requests" => "read"}
     }
   }
 

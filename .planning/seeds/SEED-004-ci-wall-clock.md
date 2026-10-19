@@ -121,6 +121,23 @@ maintainer's reference "well oiled machine", runs full CI in ~2 min.
   - The last tag-pinned actions are SHA-pinned to the repo-wide releases (checkout v7.0.1, setup-beam v1.24.1, cache v6.1.0) in `publish-hex.yml`, `release-parity.yml` and `branch-protection-drift.yml`. `workflow_hygiene_test` registers those pins.
   - The publish-hex cache key gains the OTP/Elixir tuple.
   - Flake fix: `LiveAdminEndpointSupport` unlinks the shared PubSub supervisor and endpoint after starting them. Before, they were linked to whichever async test process started them first, and died with it.
+- **PR `ci/release-gate`** covers item 7 (maintainer-approved 2026-10-18).
+  - Both Hex publish jobs (`release-please.yml` publish-hex and the `publish-hex.yml` recovery) no longer re-run `mix qa` and `mix ci.security`.
+  - Instead, a step right after Checkout runs `scripts/check_release_ci_gate.sh`. It passes only when the newest GitHub Actions `ci-gate` run succeeded on either:
+    - the release commit itself; or
+    - the head of the single merged PR whose merge commit it is, with a byte-identical git tree. This fallback applies only when the release commit has no ci-gate run at all.
+  - Release Please PRs are merged with GITHUB_TOKEN, and that push does not trigger security-gates. So the PR-head path is the normal release path; waiting for ci-gate on the tag commit would hang.
+  - Failure modes:
+    - failed, cancelled or skipped: fail;
+    - missing: fail;
+    - another app's or another name's check: ignored;
+    - pending: polled for 30 min.
+  - `ci.release`, the dry run, the idempotency check and the hex.pm poll stay.
+  - The jobs gain `checks: read` and `pull-requests: read`.
+  - Tests:
+    - `release_ci_gate_test.exs` drives the script against a stub `gh` and a real git repo (17 scenarios);
+    - `release_hardening_test` pins the step, its position, its permissions and the absence of qa/ci.security, with 7 mutations;
+    - only security-gates may define a `ci-gate` job.
 - **Decided, no change:**
   - Item 8, concurrency. PR runs already cancel superseded runs in every PR workflow. On main, each push keeps its own run (group by run id) so cold receipts are never cancelled. Queuing per ref would serialize back-to-back merges, which is slower, so it was dropped.
   - Playwright cache: about 10 s for added cache surface in `security`; not worth it.
