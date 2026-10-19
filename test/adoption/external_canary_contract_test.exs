@@ -5,10 +5,16 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
 
   alias Relyra.AdoptionEvidence
 
-  @workflow_path ".github/workflows/real-idp-canary.yml"
-  @runner_path "scripts/test_real_idp_canary.sh"
-  @browser_path "demo/ledger_loop/test/browser/real_idp_canary.spec.ts"
-  @playwright_config_path "playwright.real-idp.config.mjs"
+  # The unconfigured managed-IdP canary was retired 2026-10-19: it needed a
+  # hosted staging deployment, IdP account and owner that never existed, so it
+  # reported configuration_incomplete daily. Keycloak containers cover real-IdP
+  # interop on every PR; the Rulestead canary is the scheduled external signal.
+  @retired_paths [
+    ".github/workflows/real-idp-canary.yml",
+    "scripts/test_real_idp_canary.sh",
+    "demo/ledger_loop/test/browser/real_idp_canary.spec.ts",
+    "playwright.real-idp.config.mjs"
+  ]
   @demo_workflow_path ".github/workflows/demo-app-e2e.yml"
   @keycloak_workflow_path ".github/workflows/keycloak-proxy-e2e.yml"
   @fleet_proxy_workflow_path ".github/workflows/fleet-proxy-e2e.yml"
@@ -18,11 +24,6 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     @keycloak_workflow_path => [
       {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 1},
       {"actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020", "v7.0.0", 1}
-    ],
-    @workflow_path => [
-      {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 1},
-      {"actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020", "v7.0.0", 1},
-      {"actions/upload-artifact", "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "v7.0.1", 1}
     ],
     @fleet_proxy_workflow_path => [
       {"actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7.0.1", 3},
@@ -34,7 +35,7 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
   test "EVID-03 has a deterministic mandatory owner and supplemental scheduled signal" do
     entries = AdoptionEvidence.entries()
     [contract] = AdoptionEvidence.deterministic_owners(entries, "EVID-03")
-    scheduled = Enum.find(entries, &(&1.id == "evid-03-scheduled-real-idp-canary"))
+    scheduled = Enum.find(entries, &(&1.id == "evid-03-scheduled-rulestead-canary"))
 
     assert contract.id == "evid-03-deterministic-canary-contract"
     assert contract.evidence_kind == :security_corpus
@@ -46,8 +47,8 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     assert scheduled.requirement == "EVID-03"
     assert scheduled.evidence_kind == :external_canary
     assert scheduled.state == :existing
-    assert scheduled.owner == @workflow_path
-    assert scheduled.lane == "scheduled:real-idp-canary"
+    assert scheduled.owner == @fleet_proxy_workflow_path
+    assert scheduled.lane == "scheduled:rulestead-main-canary"
 
     assert :ok = AdoptionEvidence.validate_closure!(entries, ["EVID-03"])
 
@@ -56,34 +57,16 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     end
   end
 
-  test "scheduled workflow is independent and uploads only the bounded status artifact" do
-    workflow = File.read!(@workflow_path)
+  test "the unconfigured managed-IdP canary stays retired" do
+    for path <- @retired_paths, do: refute(File.exists?(path), "#{path} was retired")
 
-    [triggers, _permissions_and_jobs] =
-      String.split(workflow, "\npermissions:\n", parts: 2)
+    for path <- Path.wildcard(".github/workflows/*.y*ml") do
+      refute File.read!(path) =~ ~r/REAL_IDP_CANARY|real-idp-canary/,
+             "#{path} must not reintroduce the retired canary"
+    end
+  end
 
-    assert triggers =~ "on:\n  schedule:"
-    assert triggers =~ "\n  workflow_dispatch:"
-    refute workflow =~ ~r/^\s*(pull_request|push):/m
-    refute workflow =~ ~r/^\s+needs:/m
-    assert workflow =~ ~r/^permissions:\n  contents: read$/m
-    assert workflow =~ "environment: real-idp-canary"
-    assert workflow =~ "REAL_IDP_CANARY_USERNAME: ${{ secrets.REAL_IDP_CANARY_USERNAME }}"
-    assert workflow =~ "REAL_IDP_CANARY_PASSWORD: ${{ secrets.REAL_IDP_CANARY_PASSWORD }}"
-    assert workflow =~ "REAL_IDP_CANARY_OWNER: ${{ vars.REAL_IDP_CANARY_OWNER }}"
-
-    assert workflow =~
-             "REAL_IDP_CANARY_CREDENTIAL_OWNER: ${{ vars.REAL_IDP_CANARY_CREDENTIAL_OWNER }}"
-
-    assert workflow =~ "REAL_IDP_CANARY_RESPONDER: ${{ vars.REAL_IDP_CANARY_RESPONDER }}"
-    assert workflow =~ "REAL_IDP_CANARY_RUNBOOK: ${{ vars.REAL_IDP_CANARY_RUNBOOK }}"
-
-    assert workflow =~ "if: always()"
-    assert workflow =~ "path: ${{ runner.temp }}/relyra-real-idp-canary-status.json"
-    assert workflow =~ "if-no-files-found: error"
-    assert workflow =~ "retention-days: 7"
-    refute workflow =~ ~r/^\s+path:.*(?:playwright-report\/|test-results\/|\.zip|\.webm|\.png)/mi
-
+  test "deterministic browser workflows upload only bounded status artifacts" do
     demo_workflow = File.read!(@demo_workflow_path)
     assert demo_workflow =~ "path: ${{ runner.temp }}/relyra-trace-visual-status.json"
 
@@ -91,17 +74,17 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
              ~r/^\s+path:.*(?:playwright-report\/|test-results\/|\.zip|\.webm|\.png)/mi
   end
 
-  test "parsed provider workflow stays scheduled, read-only, and separate from required browser jobs" do
-    provider = load_yaml!(@workflow_path)
+  test "parsed Rulestead canary stays scheduled-only and separate from required browser jobs" do
+    fleet = load_yaml!(@fleet_proxy_workflow_path)
     demo = load_yaml!(@demo_workflow_path)
     keycloak = load_yaml!(@keycloak_workflow_path)
 
-    assert :ok = validate_provider_workflow!(provider)
+    assert :ok = validate_scheduled_canary_job!(fleet)
     assert :ok = validate_deterministic_demo!(demo)
     assert :ok = validate_deterministic_keycloak!(keycloak)
 
     assert_unique_groups!(%{
-      @workflow_path => provider,
+      @fleet_proxy_workflow_path => fleet,
       @demo_workflow_path => demo,
       @keycloak_workflow_path => keycloak
     })
@@ -229,13 +212,23 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
   end
 
   test "canary and browser gate mutations reject trigger leakage, skips, collisions, and pin mismatches" do
-    provider = load_yaml!(@workflow_path)
+    fleet = load_yaml!(@fleet_proxy_workflow_path)
     demo = load_yaml!(@demo_workflow_path)
+    canary = ["jobs", "rulestead-main-canary"]
 
-    provider_on_pr = put_in(provider, ["on", "pull_request"], %{})
-
-    assert_raise ArgumentError, ~r/scheduled only/, fn ->
-      validate_provider_workflow!(provider_on_pr)
+    for leaked <- [
+          put_in(fleet, canary ++ ["if"], "${{ always() }}"),
+          update_in(fleet, canary, &Map.delete(&1, "if")),
+          put_in(
+            fleet,
+            canary ++ ["if"],
+            "${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}"
+          ),
+          put_in(fleet, canary ++ ["needs"], ["fleet-proxy-e2e"])
+        ] do
+      assert_raise ArgumentError, ~r/scheduled only/, fn ->
+        validate_scheduled_canary_job!(leaked)
+      end
     end
 
     skipped_browser = put_in(demo, ["jobs", "fake-idp-e2e", "if"], false)
@@ -247,112 +240,26 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     colliding_group =
       "${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}"
 
-    colliding_provider = put_in(provider, ["concurrency", "group"], colliding_group)
+    colliding_fleet = put_in(fleet, ["concurrency", "group"], colliding_group)
 
     assert_raise ArgumentError, ~r/colliding concurrency groups/, fn ->
       assert_unique_groups!(%{
-        @workflow_path => colliding_provider,
-        @demo_workflow_path => demo,
+        @fleet_proxy_workflow_path => colliding_fleet,
+        @demo_workflow_path => put_in(demo, ["concurrency", "group"], colliding_group),
         @keycloak_workflow_path => load_yaml!(@keycloak_workflow_path)
       })
     end
 
     mismatched_pin =
-      File.read!(@workflow_path)
+      File.read!(@fleet_proxy_workflow_path)
       |> String.replace(
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1",
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0"
       )
 
     assert_raise ArgumentError, ~r/verified release pin/, fn ->
-      validate_action_pins!(@workflow_path, mismatched_pin)
+      validate_action_pins!(@fleet_proxy_workflow_path, mismatched_pin)
     end
-  end
-
-  test "origin checks precede credential entry and browser recordings stay disabled" do
-    browser = File.read!(@browser_path)
-    config = File.read!(@playwright_config_path)
-    runner = File.read!(@runner_path)
-
-    assert index(browser, "currentIdpUrl.origin !== idpOrigin") <
-             index(browser, ".locator(usernameSelector).fill(username)")
-
-    assert browser =~ "currentIdpUrl.protocol !== \"https:\""
-    assert browser =~ "url.origin === spOrigin"
-    assert browser =~ "page.locator(\"#workspace-title\")"
-    assert browser =~ ~r/status = "(passed|unexpected_origin|idp_rejected|callback_failure)"/
-
-    assert config =~ ~s(trace: "off")
-    assert config =~ ~s(screenshot: "off")
-    assert config =~ ~s(video: "off")
-
-    assert runner =~ "REAL_IDP_CANARY_SP_LOGIN_URL"
-    assert runner =~ "login.origin !== sp.origin"
-    assert runner =~ "process.env.REAL_IDP_CANARY_IDP_ORIGIN"
-    assert runner =~ "https:"
-    assert runner =~ "configuration_incomplete"
-    assert runner =~ "relyra-real-idp-canary-status.json"
-    refute runner =~ ~r/console\.log|page\.content\(|storageState\(/
-  end
-
-  test "contract probe exercises missing config and provider failure without invoking npx" do
-    temp =
-      Path.join(
-        System.tmp_dir!(),
-        "relyra-canary-contract-#{System.pid()}-#{System.unique_integer([:positive])}"
-      )
-
-    bin = Path.join(temp, "bin")
-    runner_temp = Path.join(temp, "runner-temp")
-    marker = Path.join(temp, "npx-was-called")
-    npx_stub = Path.join(bin, "npx")
-    File.mkdir_p!(bin)
-    File.mkdir_p!(runner_temp)
-    File.write!(npx_stub, "#!/bin/sh\nprintf called > '#{marker}'\nexit 86\n")
-    File.chmod!(npx_stub, 0o755)
-    on_exit(fn -> File.rm_rf!(temp) end)
-
-    path = System.get_env("PATH") || "/usr/bin:/bin"
-    probe_path = "#{bin}:#{path}"
-
-    tool_resolution_env =
-      ["ASDF_DATA_DIR", "ASDF_NODEJS_VERSION"]
-      |> Enum.flat_map(fn name ->
-        case System.get_env(name) do
-          nil -> []
-          value -> ["#{name}=#{value}"]
-        end
-      end)
-
-    {syntax_output, syntax_exit} =
-      System.cmd("bash", ["-n", @runner_path], cd: File.cwd!(), stderr_to_stdout: true)
-
-    assert syntax_exit == 0, syntax_output
-
-    {output, exit_code} =
-      System.cmd(
-        "env",
-        [
-          "-i",
-          "PATH=#{probe_path}",
-          "HOME=#{System.user_home!()}",
-          "RUNNER_TEMP=#{runner_temp}",
-          "CANARY_NPX_MARKER=#{marker}"
-        ] ++
-          tool_resolution_env ++
-          [
-            "bash",
-            @runner_path,
-            "--contract-probe"
-          ],
-        cd: File.cwd!(),
-        stderr_to_stdout: true
-      )
-
-    assert exit_code == 0, output
-    assert output =~ "contract probe passed"
-    refute File.exists?(marker)
-    refute output =~ ~r/https?:\/\/|password|username|samlrequest|assertion/i
   end
 
   test "ci.evidence owns the external canary contract in its own fresh test process" do
@@ -485,58 +392,21 @@ defmodule Relyra.Adoption.ExternalCanaryContractTest do
     end
   end
 
-  defp index(source, fragment) do
-    case :binary.match(source, fragment) do
-      {position, _length} -> position
-      :nomatch -> flunk("expected source fragment #{inspect(fragment)}")
-    end
-  end
+  # The Rulestead job shares fleet-proxy-e2e.yml with the deterministic
+  # fleet gate, so its own `if` must admit only schedule and explicit dispatch.
+  defp validate_scheduled_canary_job!(workflow) do
+    job = workflow["jobs"]["rulestead-main-canary"]
 
-  defp validate_provider_workflow!(workflow) do
-    unless workflow["name"] == "real-idp-canary" do
-      raise ArgumentError, "real provider workflow changed its stable name"
-    end
+    expected_if =
+      "${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_rulestead_canary) }}"
 
-    events = workflow["on"] || %{}
-
-    unless Enum.sort(Map.keys(events)) == ["schedule", "workflow_dispatch"] and
-             events["workflow_dispatch"] == nil do
-      raise ArgumentError, "real provider canary must remain scheduled only with manual dispatch"
+    unless job["name"] == "rulestead-main-canary" and
+             job["if"] |> to_string() |> String.split() |> Enum.join(" ") == expected_if and
+             not Map.has_key?(job, "needs") and job["runs-on"] == "ubuntu-latest" do
+      raise ArgumentError,
+            "rulestead-main-canary must stay scheduled only (schedule or explicit dispatch), with no needs edge"
     end
 
-    unless length(events["schedule"] || []) == 1 and
-             get_in(events, ["schedule", Access.at(0), "cron"]) == "31 8 * * *" do
-      raise ArgumentError, "real provider schedule changed"
-    end
-
-    unless workflow["permissions"] == %{"contents" => "read"} do
-      raise ArgumentError, "real provider canary must use explicit read-only permissions"
-    end
-
-    unless Map.keys(workflow["jobs"] || %{}) == ["real-idp-canary"] do
-      raise ArgumentError, "real provider workflow changed its stable job identity"
-    end
-
-    job = workflow["jobs"]["real-idp-canary"]
-
-    unless job["name"] == "real-idp-canary" and job["runs-on"] == "ubuntu-latest" and
-             Map.get(job, "permissions", %{}) == %{} and not disabled?(job) and
-             not Map.has_key?(job, "needs") do
-      raise ArgumentError, "real provider canary must keep its blocking scheduled job identity"
-    end
-
-    unless Map.has_key?(job["env"] || %{}, "REAL_IDP_CANARY_USERNAME") and
-             Map.has_key?(job["env"] || %{}, "REAL_IDP_CANARY_PASSWORD") do
-      raise ArgumentError, "real provider credential secret names changed"
-    end
-
-    assert_blocking_step!(
-      job["steps"],
-      "Run scheduled real IdP canary",
-      "bash scripts/test_real_idp_canary.sh"
-    )
-
-    validate_concurrency!(workflow)
     :ok
   end
 
