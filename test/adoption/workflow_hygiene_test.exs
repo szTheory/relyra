@@ -5,7 +5,6 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     ".github/workflows/security-gates.yml",
     ".github/workflows/demo-app-ci.yml",
     ".github/workflows/adoption-external-idp.yml",
-    ".github/workflows/planning-pr-checks.yml",
     ".github/workflows/release-please-pr-checks.yml",
     ".github/workflows/release-please.yml"
   ]
@@ -14,7 +13,6 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     ".github/workflows/security-gates.yml" => "security-gates",
     ".github/workflows/demo-app-ci.yml" => "demo-app-ci",
     ".github/workflows/adoption-external-idp.yml" => "adoption-external-idp",
-    ".github/workflows/planning-pr-checks.yml" => "Planning PR Checks",
     ".github/workflows/release-please-pr-checks.yml" => "Release Please PR Checks",
     ".github/workflows/release-please.yml" => "Release Please"
   }
@@ -30,9 +28,6 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     },
     ".github/workflows/demo-app-ci.yml" => %{"demo-app" => nil},
     ".github/workflows/adoption-external-idp.yml" => %{"keycloak" => nil},
-    ".github/workflows/planning-pr-checks.yml" => %{
-      "trigger-planning-pr-checks" => "Trigger security-gates on planning PR"
-    },
     ".github/workflows/release-please-pr-checks.yml" => %{
       "trigger-release-pr-checks" => "Trigger security-gates on release-please PR"
     },
@@ -52,13 +47,6 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
     },
     ".github/workflows/demo-app-ci.yml" => %{},
     ".github/workflows/adoption-external-idp.yml" => %{},
-    ".github/workflows/planning-pr-checks.yml" => %{
-      "trigger-planning-pr-checks" => %{
-        "contents" => "write",
-        "checks" => "read",
-        "pull-requests" => "read"
-      }
-    },
     ".github/workflows/release-please-pr-checks.yml" => %{
       "trigger-release-pr-checks" => %{"actions" => "write"}
     },
@@ -200,17 +188,16 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
       validate_workflow!(security_path, widened_test_job)
     end
 
-    planning_path = ".github/workflows/planning-pr-checks.yml"
-    planning = workflows[planning_path]
+    release_checks_path = ".github/workflows/release-please-pr-checks.yml"
+    release_checks = workflows[release_checks_path]
 
     missing_scoped_write =
-      put_in(planning, ["jobs", "trigger-planning-pr-checks", "permissions"], %{
-        "checks" => "read",
-        "pull-requests" => "read"
+      put_in(release_checks, ["jobs", "trigger-release-pr-checks", "permissions"], %{
+        "contents" => "read"
       })
 
     assert_raise ArgumentError, ~r/permissions/, fn ->
-      validate_workflow!(planning_path, missing_scoped_write)
+      validate_workflow!(release_checks_path, missing_scoped_write)
     end
 
     disabled_job = put_in(security, ["jobs", "security", "if"], false)
@@ -647,6 +634,27 @@ defmodule Relyra.Adoption.WorkflowHygieneTest do
   end
 
   @tag :gsd_tools_portability
+  # SEED-004 item 6: security-gates runs on every non-prompts PR, .planning/**
+  # included (it is test input: the Phase 73 proof, milestone scope and docs
+  # drift tests read it), so planning PRs need no marker-commit trigger.
+  test "planning-only PRs run security-gates directly, with no marker-push workaround" do
+    refute File.exists?(".github/workflows/planning-pr-checks.yml")
+    refute File.exists?(".github/planning_ci_ref.txt")
+
+    triggers = load_yaml!(@security_gates_path)["on"]
+
+    for event <- ["pull_request", "push"] do
+      ignored = get_in(triggers, [event, "paths-ignore"]) || []
+      assert ignored == ["prompts/**"], "#{event} must ignore only prompts/**"
+      refute Map.has_key?(triggers[event] || %{}, "paths")
+    end
+
+    for path <- Path.wildcard(".github/workflows/*.y*ml") do
+      refute File.read!(path) =~ "planning_ci_ref",
+             "#{path} must not push CI marker commits to PR branches"
+    end
+  end
+
   test "tracked scripts and tests never hardcode a developer home path to gsd-tools" do
     planted_cjs = "/" <> "Users" <> "/someone/.codex/gsd-core/bin/gsd-tools.cjs"
     planted_bare = "/" <> "home" <> "/someone/.claude/gsd-core/bin/gsd-tools"

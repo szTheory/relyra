@@ -10,8 +10,7 @@ defmodule Relyra.FleetProxyCIIntegrityTest do
 
   @merge_gate_consumers [
     ".github/workflows/release-please-automerge.yml",
-    ".github/workflows/release-please-pr-checks.yml",
-    ".github/workflows/planning-pr-checks.yml"
+    ".github/workflows/release-please-pr-checks.yml"
   ]
 
   @demo_path ".github/workflows/demo-app-e2e.yml"

@@ -138,6 +138,21 @@ maintainer's reference "well oiled machine", runs full CI in ~2 min.
     - `release_ci_gate_test.exs` drives the script against a stub `gh` and a real git repo (17 scenarios);
     - `release_hardening_test` pins the step, its position, its permissions and the absence of qa/ci.security, with 7 mutations;
     - only security-gates may define a `ci-gate` job.
+- **PR `ci/drop-planning-marker`** covers item 6 (maintainer-approved 2026-10-18), narrowed after verification.
+  - A skip-CI fast path is unsafe here, because `.planning/**` is test input:
+    - the Phase 73 proof's governed sources include `.planning` documents;
+    - `milestone_scope_test` reads `.planning` about 200 times;
+    - the docs drift, evidence and Phase 78 contracts read it too.
+  - So a planning-only PR that skipped CI could turn main red; editing `73-SECURITY.md` alone invalidates the proof. security-gates keeps running on every non-prompts PR.
+  - What was cut instead: `planning-pr-checks.yml` and `.github/planning_ci_ref.txt`. The marker push dated from when security-gates ignored `.planning/**`, and it had become pure waste:
+    - on every planning-only PR it saw ci-gate pending;
+    - it then pushed a marker commit to the PR branch with a PAT;
+    - that cancelled and restarted the whole run.
+  - Planning PRs now get one about-5-min run instead of two back to back, and no PAT writes to PR branches.
+  - `workflow_hygiene_test` pins the result:
+    - neither file exists;
+    - security-gates ignores only `prompts/**` on PRs and pushes;
+    - no workflow references `planning_ci_ref`.
 - **Decided, no change:**
   - Item 8, concurrency. PR runs already cancel superseded runs in every PR workflow. On main, each push keeps its own run (group by run id) so cold receipts are never cancelled. Queuing per ref would serialize back-to-back merges, which is slower, so it was dropped.
   - Playwright cache: about 10 s for added cache surface in `security`; not worth it.
