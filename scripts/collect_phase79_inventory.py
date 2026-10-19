@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import pathlib
@@ -550,10 +551,31 @@ def protection_resource_errors(resource: object) -> list[str]:
     return errors
 
 
-def capture_protection_resource(body: object, status: int) -> dict:
+CORROBORABLE_FIELDS = {"required_pull_request_reviews", "restrictions"}
+
+
+def corroboration_for(capture: dict | None, capture_bytes: bytes | None, main_sha: str) -> dict | None:
+    """Accept only a complete, valid composite capture bound to the same main SHA."""
+    if capture is None:
+        return None
+    from capture_phase79_protection import validate_capture
+
+    errors = validate_capture(capture)
+    resource = capture.get("resource") if isinstance(capture, dict) else None
+    if errors or capture.get("capture_status") != "complete" or capture.get("main_sha") != main_sha or not isinstance(resource, dict):
+        raise CollectionError("protection capture does not corroborate the observed main SHA")
+    return {
+        "capture_sha256": hashlib.sha256(capture_bytes or b"").hexdigest(),
+        "main_sha": main_sha,
+        "disabled_fields": sorted(key for key in CORROBORABLE_FIELDS if key in resource and resource[key] is None),
+    }
+
+
+def capture_protection_resource(body: object, status: int, corroboration: dict | None = None) -> dict:
     observed_fields = sorted(key for key in body if isinstance(key, str)) if isinstance(body, dict) else []
     errors = []
     resource = None
+    corroborated: list[str] = []
     if status != 200:
         if status == 598:
             errors.append("branch protection response exceeded the 8 MiB receipt bound")
@@ -574,6 +596,13 @@ def capture_protection_resource(body: object, status: int) -> dict:
             known_response_fields = PROTECTION_CONFIGURATION_FIELDS | PROTECTION_TOPLEVEL_METADATA_FIELDS
             unknown = sorted(set(body) - known_response_fields)
             missing = sorted(PROTECTION_CONFIGURATION_FIELDS - set(body))
+            # GitHub omits disabled review/restriction settings from the parent response;
+            # an independent composite capture must prove each omission means disabled.
+            disabled = set(corroboration.get("disabled_fields", [])) if corroboration else set()
+            corroborated = [field for field in missing if field in disabled]
+            missing = [field for field in missing if field not in disabled]
+            if corroborated:
+                body = {**body, **{field: None for field in corroborated}}
             if unknown:
                 errors.append("branch protection response has unmodeled fields: " + ", ".join(unknown))
             if missing:
@@ -583,12 +612,16 @@ def capture_protection_resource(body: object, status: int) -> dict:
                 errors.extend(protection_resource_errors(candidate))
                 if not errors:
                     resource = candidate
-    return {
+    result = {
         "capture_status": "complete" if resource is not None else "incomplete",
         "observed_fields": observed_fields,
         "resource": resource,
         "capture_errors": errors,
     }
+    if resource is not None and corroborated:
+        result["corroborated_fields"] = sorted(corroborated)
+        result["corroboration"] = corroboration
+    return result
 
 
 def lane_owners(root: pathlib.Path, fixture: dict | None = None) -> dict[str, list[str]]:
@@ -637,6 +670,7 @@ def protection_context_owners(name: str) -> list[str]:
         "security (27, 1.19.5)": ["security-gates.yml"],
         "security (28, 1.19.5)": ["security-gates.yml"],
         "fleet-proxy-e2e": ["fleet-proxy-e2e.yml"],
+        "ci-gate": ["security-gates.yml"],
     }
     return owners.get(name, [])
 
@@ -1032,7 +1066,28 @@ def validate_receipt(receipt: object) -> list[str]:
     errors.extend(unknown_field_errors(protection, {
         "access_status", "required_contexts", "expected_contexts", "context_match", "context_results",
         "capture_status", "capture_errors", "observed_fields", "resource", "source_endpoint",
+        "corroborated_fields", "corroboration",
     }, "branch protection"))
+    corroborated_fields = protection.get("corroborated_fields", [])
+    corroboration = protection.get("corroboration")
+    if "corroborated_fields" in protection or "corroboration" in protection:
+        if (
+            not isinstance(corroborated_fields, list)
+            or not corroborated_fields
+            or corroborated_fields != sorted(set(corroborated_fields))
+            or not set(corroborated_fields) <= CORROBORABLE_FIELDS
+            or not isinstance(corroboration, dict)
+            or set(corroboration) != {"capture_sha256", "main_sha", "disabled_fields"}
+            or not re.fullmatch(r"[0-9a-f]{64}", str(corroboration.get("capture_sha256")))
+            or corroboration.get("main_sha") != observation.get("main_sha")
+            or not set(corroborated_fields) <= set(corroboration.get("disabled_fields") or [])
+            or protection.get("capture_status") != "complete"
+            or any(protection.get("resource", {}).get(field) is not None for field in corroborated_fields)
+        ):
+            errors.append("branch protection corroboration is malformed or not bound to the observed main SHA")
+            corroborated_fields = []
+    else:
+        corroborated_fields = []
     protection_source = sources.get("branch_protection", {})
     if protection.get("source_endpoint") != BRANCH_PROTECTION_ENDPOINT or protection_source.get("endpoint") != BRANCH_PROTECTION_ENDPOINT:
         errors.append("branch protection source endpoint is missing or mismatched")
@@ -1055,7 +1110,11 @@ def validate_receipt(receipt: object) -> list[str]:
         resource = protection.get("resource")
         errors.extend(protection_resource_errors(resource))
         allowed_response_fields = PROTECTION_CONFIGURATION_FIELDS | PROTECTION_TOPLEVEL_METADATA_FIELDS
-        if not PROTECTION_CONFIGURATION_FIELDS <= set(observed_fields) or not set(observed_fields) <= allowed_response_fields:
+        if (
+            not PROTECTION_CONFIGURATION_FIELDS <= set(observed_fields) | set(corroborated_fields)
+            or set(observed_fields) & set(corroborated_fields)
+            or not set(observed_fields) <= allowed_response_fields
+        ):
             errors.append("branch protection observed fields do not prove a complete modeled response")
         if capture_errors:
             errors.append("complete branch protection capture retains capture errors")
@@ -1124,7 +1183,11 @@ def validate_receipt(receipt: object) -> list[str]:
     return errors
 
 
-def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
+def build_receipt(
+    root: pathlib.Path,
+    fixture: dict | None = None,
+    protection_capture_input: tuple[dict, bytes] | None = None,
+) -> dict:
     local = local_inventory(root, fixture)
     remote = command(["git", "remote", "get-url", "origin"], cwd=root, fixture=fixture)
     repo = repository_from_remote(remote)
@@ -1151,7 +1214,12 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
         rows[name] = source.get("items", [])
     sources["main_ref"] = {"endpoint": "git/ref/heads/main", "page_count": 1 if main_status == 200 else 0, "pages": [{"number": 1, "item_count": 1, "status": main_status, "continuation": False}] if main_status == 200 else [], "item_count": 1 if main_status == 200 else 0, "access_status": "allowed" if main_status == 200 else access_status(main_status), "completeness": "complete" if main_status == 200 else "incomplete", "failure_status": main_status if main_status != 200 else None}
     protection, protection_status = raw_single(repo, BRANCH_PROTECTION_ENDPOINT, fixture)
-    protection_capture = capture_protection_resource(protection, protection_status)
+    corroboration = corroboration_for(
+        protection_capture_input[0] if protection_capture_input else None,
+        protection_capture_input[1] if protection_capture_input else None,
+        main_sha,
+    )
+    protection_capture = capture_protection_resource(protection, protection_status, corroboration)
     protection_access = "allowed" if protection_status == 200 else access_status(protection_status)
     protection_complete = protection_capture["capture_status"] == "complete"
     sources["branch_protection"] = {
@@ -1248,6 +1316,7 @@ def build_receipt(root: pathlib.Path, fixture: dict | None = None) -> dict:
             "observed_fields": protection_capture["observed_fields"],
             "resource": protection_capture["resource"],
             "source_endpoint": BRANCH_PROTECTION_ENDPOINT,
+            **{key: protection_capture[key] for key in ("corroborated_fields", "corroboration") if key in protection_capture},
         },
         "mandatory_lanes": lane_results,
         "canaries": canaries,
@@ -1309,6 +1378,7 @@ def main() -> int:
     parser.add_argument("--output", type=pathlib.Path)
     parser.add_argument("--verify", type=pathlib.Path)
     parser.add_argument("--fixture", type=pathlib.Path, help="replay fixture command/API responses")
+    parser.add_argument("--protection-capture", type=pathlib.Path, help="complete composite protection capture for the same main SHA")
     args = parser.parse_args()
     if bool(args.verify) == bool(args.output):
         parser.error("provide exactly one of --output or --verify")
@@ -1332,7 +1402,15 @@ def main() -> int:
             print("invalid fixture JSON", file=sys.stderr)
             return 2
     try:
-        receipt = build_receipt(pathlib.Path.cwd(), fixture)
+        capture_input = None
+        if args.protection_capture:
+            try:
+                capture_bytes = args.protection_capture.read_bytes()
+                capture_input = (json.loads(capture_bytes), capture_bytes)
+            except (OSError, json.JSONDecodeError):
+                print("invalid protection capture JSON", file=sys.stderr)
+                return 2
+        receipt = build_receipt(pathlib.Path.cwd(), fixture, capture_input)
         errors = validate_receipt(receipt)
         if errors:
             raise CollectionError("receipt validation failed: " + "; ".join(errors))

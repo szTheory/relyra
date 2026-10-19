@@ -1,33 +1,49 @@
 {
-  "capture_errors": [
-    "GraphQL approval settings conflict with the REST review subresource"
-  ],
-  "capture_status": "incomplete",
-  "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-  "observed_at": "2026-10-01T12:07:52Z",
+  "capture_errors": [],
+  "capture_status": "complete",
+  "main_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+  "observed_at": "2026-10-19T20:11:56Z",
   "ref": "refs/heads/main",
   "repository": "szTheory/relyra",
-  "resource": null,
+  "resource": {
+    "allow_deletions": false,
+    "allow_force_pushes": false,
+    "allow_fork_syncing": false,
+    "block_creations": false,
+    "enforce_admins": true,
+    "lock_branch": false,
+    "required_conversation_resolution": false,
+    "required_linear_history": false,
+    "required_pull_request_reviews": null,
+    "required_signatures": false,
+    "required_status_checks": {
+      "checks": [
+        {
+          "app_id": 15368,
+          "context": "ci-gate"
+        }
+      ],
+      "contexts": [
+        "ci-gate"
+      ],
+      "strict": true
+    },
+    "restrictions": null
+  },
   "schema": "phase79-protection-capture",
-  "source_digest": "abbfcd7bb34aed797d9ecb91414e2075f193ce929d4eb6eb50849440370e296a",
+  "source_digest": "b62a5001a2502e1e06e486b2f05c7138f989780d970684edd4dfb0f32f120999",
   "sources": {
     "fleet_check_run": {
       "app_ids": [
         15368
       ],
-      "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-      "matching_count": 35,
+      "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+      "matching_count": 1,
       "pages": [
         {
-          "continuation": true,
-          "item_count": 100,
-          "number": 1,
-          "status": 200
-        },
-        {
           "continuation": false,
-          "item_count": 7,
-          "number": 2,
+          "item_count": 25,
+          "number": 1,
           "status": 200
         }
       ],
@@ -77,16 +93,16 @@
       },
       "ref": {
         "name": "main",
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e"
       },
       "status": 200
     },
     "main_ref_after": {
-      "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+      "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
       "status": 200
     },
     "main_ref_before": {
-      "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+      "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
       "status": 200
     },
     "parent_protection": {
@@ -124,16 +140,11 @@
           "checks": [
             {
               "app_id": 15368,
-              "context": "security (27, 1.19.5)"
-            },
-            {
-              "app_id": 15368,
-              "context": "security (28, 1.19.5)"
+              "context": "ci-gate"
             }
           ],
           "contexts": [
-            "security (27, 1.19.5)",
-            "security (28, 1.19.5)"
+            "ci-gate"
           ],
           "contexts_url": "https://api.github.com/repos/szTheory/relyra/branches/main/protection/required_status_checks/contexts",
           "strict": true,
@@ -181,5 +192,28 @@
     }
   },
   "version": 1,
-  "writable_payload": null
+  "writable_payload": {
+    "allow_deletions": false,
+    "allow_force_pushes": false,
+    "allow_fork_syncing": false,
+    "block_creations": false,
+    "enforce_admins": true,
+    "lock_branch": false,
+    "required_conversation_resolution": false,
+    "required_linear_history": false,
+    "required_pull_request_reviews": null,
+    "required_status_checks": {
+      "checks": [
+        {
+          "app_id": 15368,
+          "context": "ci-gate"
+        }
+      ],
+      "contexts": [
+        "ci-gate"
+      ],
+      "strict": true
+    },
+    "restrictions": null
+  }
 }

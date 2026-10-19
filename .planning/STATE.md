@@ -4,19 +4,18 @@ milestone: v1.11
 milestone_name: First-Adopter Twin
 current_phase: 79
 current_phase_name: Adopter-Ready Closeout
-current_plan: 7
-status: Ready to execute
-stopped_at: Phase 79 gap plans 07–12 verified; next 79-07-PLAN.md
-last_updated: "2026-10-01T17:50:20.111Z"
-last_activity: 2026-10-01
-state_head: eed7e76937e5c47e5afbf947e3a39e9033a8986f
+current_plan: 15
+status: completed
+stopped_at: Phase 79 closed on live same-SHA evidence; v1.11 ready to archive
+last_updated: "2026-10-19T21:00:00.000Z"
+last_activity: 2026-10-19
 progress:
   total_phases: 7
-  completed_phases: 6
-  total_plans: 75
-  completed_plans: 69
-  percent: 86
-last_activity_desc: Phase 79 gap plans 07–12 passed independent planning checks
+  completed_phases: 7
+  total_plans: 78
+  completed_plans: 78
+  percent: 100
+last_activity_desc: Phase 79 live-evidence closeout; v1.11 all phases complete
 ---
 
 # Project State
@@ -28,21 +27,19 @@ See `.planning/PROJECT.md`.
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection —
 never a silent compromise. Trust mutations are durable, attributable, and reviewable.
 
-**Last updated:** 2026-10-01
+**Last updated:** 2026-10-19
 
 **Current focus:** Phase 79 — Adopter-Ready Closeout
 
 ## Current Position
 
-Phase: 79 (Adopter-Ready Closeout) — READY TO EXECUTE
+Phase: 79 (Adopter-Ready Closeout) — COMPLETE
 
-Current Plan: 7
-Total Plans in Phase: 12
-Next gate: Execute 79-07 to prepare and verify the exact source publication and transaction contracts. Plans 79-08–11 require separate approval of each concrete remote batch. Plan 79-11 additionally requires machine-proven protection-source agreement before any writable payload.
+Status: completed. All seven v1.11 phases are complete.
 
-Status: Ready to execute
+Next gate: archive v1.11 with `/gsd-complete-milestone`.
 
-Last activity: 2026-10-01
+Last activity: 2026-10-19
 
 ## Milestone Metrics
 
@@ -151,46 +148,24 @@ Do not prepare a remote approval batch until the full source and rollback are av
 
 ## Session Continuity
 
-**Last session:** 2026-10-01T17:48:44.687Z
+**Last session:** 2026-10-19
 
-**Stopped at:** Phase 79 gap plans 07–12 verified; next 79-07-PLAN.md
+**Stopped at:** Phase 79 closed on live same-SHA evidence; v1.11 ready to archive
 
 **Resume file:** None
 
 ## Operator Next Step
 
-Phase 79 Plans 01 through 06 are complete, and ROADMAP.md records 6/12 plans executed.
-The six new gap plans 79-07 through 79-12 passed structural, command-contract,
-requirement/decision coverage, and independent planning checks. Research was skipped
-for gap planning. No implementation or remote mutation occurred during planning.
+Phase 79 is complete. Its planned receipt chain (79-09–79-12 and 79-15) was overtaken by the real merges: PR #44, then #49–#58. The maintainer approved closing on live evidence instead. Evidence:
 
-Run `$gsd-execute-phase 79 --gaps-only`, beginning with 79-07. The sequence prepares
-a history-preserving publication candidate and deterministic transaction validators,
-separately approves PR publication and normal merge, proves final-main CI, then
-reconciles protection and closes only on passing source-bound evidence. Missing CI
-runs can produce a pending dispatch proposal; final CI acceptance requires every
-passing run/job/check identity. Approved protection evidence and rollback remain
-immutable, with separate post-change observations.
+- **Main is green.** Main `ed2d2cf1` passes every mandatory lane and the single required `ci-gate` check (security-gates run 39310933824). `79-INVENTORY.json` records it as green and complete.
+- **Protection matches.** The protection capture is complete and equals `scripts/setup_branch_protection.sh --print-expected-json`.
+- **Remote hygiene is done.** The maintainer approved the batch in `79-REMOTE-BATCH.md`: 20 merged branches and the retired `real-idp-canary` environment were deleted. Three branches with unmerged commits are preserved.
+- **Residual risk is recorded.** `79-RISKS.json` resolves PIPE-73-001. Every remaining item is demand-gated or costlier to maintain than the risk it retires.
 
-Release readiness remains blocked. The captured main SHA
-c786a9890f2f99f0dd98f89a1d9713db7c486837 still has a protection-source conflict:
-REST reports `required_approving_review_count=1`, while GraphQL reports
-`requiredApprovingReviewCount=null` and `requiresApprovingReviews=false`. The parent
-protection response also omits `required_pull_request_reviews` and `restrictions`; the
-capture has no writable resource and the desired/rollback payloads are null. All nine
-mandatory lanes lack passing evidence on that SHA, so readiness remains unknown. No
-approval was inferred, and no remote write or workflow dispatch occurred.
+Next: run `/gsd-complete-milestone` to archive v1.11. No milestone is planned after it; AUTHN-POST-01, KMS-01, and SIGNED-META-01 stay demand-gated.
 
-The GitHub policy owner/provider must resolve the source disagreement before 79-11
-can prepare an exact protection correction and rollback. This external prerequisite
-does not prevent 79-07's local preparation or the separately approved CI path. Every
-remote batch still needs its own exact approval, immediate preflight, and automated
-read-back; those approvals do not prove readiness.
-
-Carryover records: `.planning/WINDOWS.md` retains two Phase 76 concurrency automation
-gaps and the documented advisory waiver. The archival verification audit reports five
-items across v1.7/v1.10 and zero current-milestone items. The Phase 73 documentation
-policy window is reconciled to the completed Phase 77 fix and its passed verification.
+Carryover records: `.planning/WINDOWS.md` keeps the two Phase 76 concurrency automation gaps (WINDOW-29 and WINDOW-30). `79-RISKS.json` records both as costlier to maintain than the risk they retire.
 
 ## Performance Metrics
 
@@ -260,9 +235,8 @@ policy window is reconciled to the completed Phase 77 fix and its passed verific
 
 ## Blockers
 
-None for starting Plan 79-07's local preparation.
+None.
 
 ## Release Readiness Prerequisites
 
-- Plans 79-07–10 must publish the reviewed milestone history through separately approved actions and prove all nine mandatory lanes plus fleet-proxy-e2e on the resulting current main SHA. Old-main, PR, local fixture, and canary success cannot substitute for final-main evidence.
-- Plan 79-11 requires the GitHub policy owner/provider to resolve REST required_approving_review_count=1 versus GraphQL requiredApprovingReviewCount=null and requiresApprovingReviews=false, with a complete writable protection observation. Only then may an exact protection delta and rollback be approved; Plan 79-12 requires automated read-back and green same-SHA evidence before completion.
+None outstanding for v1.11. Release publication requires a green `ci-gate` on the release tree, enforced by `scripts/check_release_ci_gate.sh` (#56).

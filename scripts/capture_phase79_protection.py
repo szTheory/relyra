@@ -551,6 +551,29 @@ def capture_sources(fixture: dict | None) -> tuple[dict, list[str]]:
     return source, errors
 
 
+def reviews_disabled(parent_body: object, review_source: dict, graph: object) -> bool:
+    """True only when the parent omits reviews and GraphQL independently disables them."""
+    if not isinstance(parent_body, dict) or "required_pull_request_reviews" in parent_body:
+        return False
+    rule = graph.get("rule") if isinstance(graph, dict) else None
+    actors = graph.get("actors") if isinstance(graph, dict) else None
+    if not isinstance(rule, dict) or not isinstance(actors, dict):
+        return False
+    if rule.get("requiresApprovingReviews") is not False or rule.get("requiredApprovingReviewCount") is not None:
+        return False
+    if any(rule.get(key) is not False for key in ("requiresCodeOwnerReviews", "requireLastPushApproval", "dismissesStaleReviews")):
+        return False
+    if any(actors.get("bypassPullRequestAllowances", {}).values()):
+        return False
+    review = review_source.get("configuration")
+    if review_source.get("status") != 200 or not isinstance(review, dict):
+        return False
+    # The default body never carries enabled review options or actor lists.
+    return all(review.get(key) is False for key in ("dismiss_stale_reviews", "require_code_owner_reviews", "require_last_push_approval")) and not (
+        {"dismissal_restrictions", "bypass_pull_request_allowances"} & set(review)
+    )
+
+
 def compose_resource(source: dict) -> tuple[dict | None, list[str]]:
     errors: list[str] = []
     parent_source = source.get("parent_protection", {})
@@ -563,7 +586,12 @@ def compose_resource(source: dict) -> tuple[dict | None, list[str]]:
     parent_body = parent_source.get("configuration")
     parent_config, parent_errors = protect_summary(parent_body)
     errors.extend(parent_errors)
-    if review_source.get("status") != 200 or not isinstance(review_source.get("configuration"), dict):
+    if reviews_disabled(parent_body, review_source, graph):
+        # GitHub keeps answering the review subresource with a default body after
+        # reviews are disabled (a DELETE returns 204 and the GET is unchanged), so
+        # only the parent omission plus GraphQL agreement establishes the state.
+        review_payload = None
+    elif review_source.get("status") != 200 or not isinstance(review_source.get("configuration"), dict):
         errors.append("review protection subresource is incomplete")
         review_payload = {}
     else:
