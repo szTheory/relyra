@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.10.1](https://github.com/szTheory/relyra/compare/v1.10.0...v1.10.1) (2026-10-19)
+
+
+### Bug Fixes
+
+* **phase79:** read ci-gate protection and disabled reviews correctly ([996ec96](https://github.com/szTheory/relyra/commit/996ec965c5fac94f225c8b1c759004b4ce3d7944))
+
 ## [1.10.0](https://github.com/szTheory/relyra/compare/v1.9.0...v1.10.0) (2026-10-15)
 
 
