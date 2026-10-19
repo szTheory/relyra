@@ -4207,6 +4207,136 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  test "Phase 79 collector completes omitted protection settings only from a corroborating capture" do
+    root = File.cwd!()
+
+    temporary =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-phase79-corroboration-#{System.unique_integer([:positive])}"
+      )
+
+    File.mkdir_p!(temporary)
+    on_exit(fn -> File.rm_rf!(temporary) end)
+    sha = String.duplicate("a", 40)
+    collector = Path.join(root, "scripts/collect_phase79_inventory.py")
+    capturer = Path.join(root, "scripts/capture_phase79_protection.py")
+
+    write_capture = fn name, protection_fixture ->
+      fixture_path = Path.join(temporary, "#{name}-capture-fixture.json")
+      capture_path = Path.join(temporary, "#{name}-capture.json")
+      File.write!(fixture_path, Jason.encode!(protection_fixture))
+
+      assert {_, 0} =
+               System.cmd(
+                 "python3",
+                 [capturer, "--fixture", fixture_path, "--output", capture_path],
+                 cd: root,
+                 stderr_to_stdout: true
+               )
+
+      capture_path
+    end
+
+    omitted =
+      update_in(
+        phase79_fixture(sha),
+        ["github", "branches/main/protection?page=1", "body"],
+        &Map.drop(&1, ["required_pull_request_reviews", "restrictions"])
+      )
+
+    inventory_fixture = Path.join(temporary, "inventory-fixture.json")
+    File.write!(inventory_fixture, Jason.encode!(omitted))
+
+    collect = fn name, extra ->
+      output = Path.join(temporary, "#{name}-inventory.json")
+
+      {text, status} =
+        System.cmd(
+          "python3",
+          [collector, "--fixture", inventory_fixture, "--output", output] ++ extra,
+          cd: root,
+          stderr_to_stdout: true
+        )
+
+      {text, status, output}
+    end
+
+    {_, 0, uncorroborated_path} = collect.(:uncorroborated, [])
+    uncorroborated = uncorroborated_path |> File.read!() |> Jason.decode!()
+    assert uncorroborated["github"]["branch_protection"]["capture_status"] == "incomplete"
+    refute uncorroborated["collection"]["complete"]
+
+    capture_path =
+      write_capture.(:disabled, phase79_disabled_review_protection_fixture(sha))
+
+    capture_digest =
+      :crypto.hash(:sha256, File.read!(capture_path)) |> Base.encode16(case: :lower)
+
+    {_, 0, corroborated_path} =
+      collect.(:corroborated, ["--protection-capture", capture_path])
+
+    corroborated = corroborated_path |> File.read!() |> Jason.decode!()
+    protection = corroborated["github"]["branch_protection"]
+    assert protection["capture_status"] == "complete"
+    assert protection["corroborated_fields"] == ["required_pull_request_reviews", "restrictions"]
+    assert protection["corroboration"]["capture_sha256"] == capture_digest
+    assert protection["corroboration"]["main_sha"] == sha
+    assert protection["resource"]["required_pull_request_reviews"] == nil
+    assert protection["resource"]["restrictions"] == nil
+
+    assert {_, 0} =
+             System.cmd("python3", [collector, "--verify", corroborated_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    enabled_capture_path = write_capture.(:enabled, phase79_protection_fixture(sha))
+
+    {_, 0, enabled_path} =
+      collect.(:enabled, ["--protection-capture", enabled_capture_path])
+
+    enabled = enabled_path |> File.read!() |> Jason.decode!()
+    assert enabled["github"]["branch_protection"]["capture_status"] == "incomplete"
+
+    other_sha_capture =
+      write_capture.(
+        :other_sha,
+        phase79_disabled_review_protection_fixture(String.duplicate("c", 40))
+      )
+
+    assert {mismatch, 1, _} = collect.(:other_sha, ["--protection-capture", other_sha_capture])
+    assert mismatch =~ "does not corroborate"
+
+    for {name, mutate} <- [
+          {:stale_sha,
+           &put_in(
+             &1,
+             ["github", "branch_protection", "corroboration", "main_sha"],
+             String.duplicate("f", 40)
+           )},
+          {:extra_field,
+           &put_in(&1, ["github", "branch_protection", "corroborated_fields"], [
+             "required_pull_request_reviews",
+             "required_status_checks",
+             "restrictions"
+           ])},
+          {:dropped_corroboration,
+           &update_in(&1, ["github", "branch_protection"], fn protection ->
+             Map.drop(protection, ["corroboration", "corroborated_fields"])
+           end)}
+        ] do
+      tampered_path = Path.join(temporary, "#{name}-tampered.json")
+      File.write!(tampered_path, Jason.encode!(mutate.(corroborated)))
+
+      assert {_, 1} =
+               System.cmd("python3", [collector, "--verify", tampered_path],
+                 cd: root,
+                 stderr_to_stdout: true
+               )
+    end
+  end
+
   test "Phase 79 composite protection capture binds sources and rejects conflicts" do
     root = File.cwd!()
 
@@ -4277,33 +4407,38 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         changed_sha
       )
 
+    disabled_review = phase79_disabled_review_protection_fixture(sha)
+
+    {disabled, disabled_path} = run_capture.(:disabled_review, disabled_review)
+    assert disabled["capture_status"] == "complete"
+    assert disabled["resource"]["required_pull_request_reviews"] == nil
+    assert disabled["writable_payload"]["required_pull_request_reviews"] == nil
+
+    assert {disabled_verification, 0} =
+             System.cmd("python3", [script, "--verify", disabled_path],
+               cd: root,
+               stderr_to_stdout: true
+             )
+
+    assert disabled_verification =~ "valid protection capture: complete"
+
     conflicting_review =
-      fixture
-      |> put_in(
+      put_in(
+        disabled_review,
         [
-          "graphql",
-          "protection",
+          "rest",
+          "branches/main/protection/required_pull_request_reviews",
           "body",
-          "data",
-          "repository",
-          "ref",
-          "branchProtectionRule",
-          "requiredApprovingReviewCount"
+          "require_code_owner_reviews"
         ],
-        nil
+        true
       )
-      |> put_in(
-        [
-          "graphql",
-          "protection",
-          "body",
-          "data",
-          "repository",
-          "ref",
-          "branchProtectionRule",
-          "requiresApprovingReviews"
-        ],
-        false
+
+    parent_enabled_review =
+      put_in(
+        disabled_review,
+        ["rest", "branches/main/protection", "body", "required_pull_request_reviews"],
+        %{"required_approving_review_count" => 1}
       )
 
     generic_restriction_404 =
@@ -4372,6 +4507,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     for {name, candidate, expected_error} <- [
           {:shifted_ref, shifted_ref, "main ref changed"},
           {:conflicting_review, conflicting_review, "conflict"},
+          {:parent_enabled_review, parent_enabled_review, "review"},
           {:generic_404, generic_restriction_404, "recognized explicit state"},
           {:unpaged_allowances, unpaged_allowances, "connection is incomplete"},
           {:nonempty_allowances, nonempty_unrestricted_allowances, "conflict"},
@@ -5180,6 +5316,22 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         }
       }
     }
+  end
+
+  defp phase79_disabled_review_protection_fixture(sha) do
+    rule_path = [
+      "graphql",
+      "protection",
+      "body",
+      "data",
+      "repository",
+      "ref",
+      "branchProtectionRule"
+    ]
+
+    phase79_protection_fixture(sha)
+    |> put_in(rule_path ++ ["requiredApprovingReviewCount"], nil)
+    |> put_in(rule_path ++ ["requiresApprovingReviews"], false)
   end
 
   defp phase79_protection_fixture(sha) do
