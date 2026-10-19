@@ -110,6 +110,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         assert identity.governance_phase == "79"
         assert Enum.any?(identity.plan_paths, &String.ends_with?(&1, "/79-01-PLAN.md"))
 
+      {"79", "completed"} ->
+        assert identity.governance_phase == "79"
+        assert identity.plan_paths != []
+        assert Enum.all?(identity.plan_paths, &executed_plan?/1)
+
       {"73", status} when status in ["executing", "in_progress", "ready_for_verification"] ->
         planning_root = governance_repository_fixture()
         planning_state!(planning_root)
@@ -2172,6 +2177,49 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
+  test "a completed milestone requires its final phase and every roadmap phase to be checked" do
+    completed = governance_repository_fixture()
+    replace_state_status!(completed, "status: completed")
+
+    mutate_file(completed, ".planning/STATE.md", fn state ->
+      Regex.replace(~r/^current_phase: .*$/m, state, "current_phase: 79")
+    end)
+
+    mutate_file(completed, ".planning/ROADMAP.md", fn roadmap ->
+      String.replace(roadmap, "- [ ] **Phase", "- [x] **Phase")
+    end)
+
+    File.write!(
+      Path.join(completed, ".planning/phases/79-adopter-ready-closeout/79-01-SUMMARY.md"),
+      "---\nstatus: complete\n---\n"
+    )
+
+    assert {:ok, identity} = validated_governance_identity(completed)
+    assert identity.status == "completed"
+    assert identity.governance_phase == "79"
+    assert Enum.all?(identity.plan_paths, &executed_plan?/1)
+
+    unchecked_final = governance_repository_fixture()
+    File.cp_r!(completed, unchecked_final)
+
+    mutate_file(unchecked_final, ".planning/ROADMAP.md", fn roadmap ->
+      String.replace(roadmap, "- [x] **Phase 79:", "- [ ] **Phase 79:")
+    end)
+
+    assert {:error, unchecked_violations} = validated_governance_identity(unchecked_final)
+    assert Enum.any?(unchecked_violations, &(&1 =~ "current phase"))
+
+    earlier_phase = governance_repository_fixture()
+    File.cp_r!(completed, earlier_phase)
+
+    mutate_file(earlier_phase, ".planning/STATE.md", fn state ->
+      Regex.replace(~r/^current_phase: .*$/m, state, "current_phase: 78")
+    end)
+
+    assert {:error, earlier_violations} = validated_governance_identity(earlier_phase)
+    assert Enum.any?(earlier_violations, &(&1 =~ "current phase"))
+  end
+
   test "active plans use only requirements owned by their roadmap phase" do
     roadmap = File.read!(".planning/ROADMAP.md")
     ownership = roadmap_requirement_ownership(roadmap)
@@ -2739,182 +2787,69 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     assert_violation(leaked, "Main security gate", "Failure Evidence sensitive payload")
   end
 
-  test "Phase 79 risk ledger covers every retained, deferred, and open-window item" do
-    inventory =
-      File.read!(".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json")
-      |> Jason.decode!()
-
-    risks =
-      File.read!(".planning/phases/79-adopter-ready-closeout/79-RISKS.json")
-      |> Jason.decode!()
-
-    closeout = File.read!(".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md")
-    remote_batch = File.read!(".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md")
-    inventory_report = File.read!(".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md")
-    desired_path = ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json"
-    rollback_path = ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json"
-    capture_path = ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json"
-    desired_bytes = File.read!(desired_path)
-    rollback_bytes = File.read!(rollback_path)
-    capture_bytes = File.read!(capture_path)
-    capture = Jason.decode!(capture_bytes)
-    desired = Jason.decode!(desired_bytes)
-    rollback = Jason.decode!(rollback_bytes)
-    capture_digest = :crypto.hash(:sha256, capture_bytes) |> Base.encode16(case: :lower)
-    assert capture["capture_status"] == "incomplete"
-    assert capture["resource"] == nil
-    assert desired["schema"] == "phase79-protection-desired"
-    assert desired["status"] == "blocked"
-    assert desired["desired_payload"] == nil
-    assert desired["source_capture_sha256"] == capture_digest
-    assert rollback["source_capture_sha256"] == capture_digest
-
+  test "Phase 79 live-evidence closeout binds inventory, protection, batch, and risks" do
+    state = phase79_current_artifact_state()
+    inventory = state["inventory"]
+    risks = state["risks"]
+    phase_dir = ".planning/phases/79-adopter-ready-closeout"
+    closeout = File.read!(Path.join(phase_dir, "79-CLOSEOUT.md"))
+    inventory_report = File.read!(Path.join(phase_dir, "79-INVENTORY.md"))
     {_, baseline} = baseline_rows(File.read!(@baseline_path))
-    state_items = phase79_state_deferred_ids(File.read!(".planning/STATE.md"))
-    window_items = phase79_open_window_ids(File.read!(".planning/WINDOWS.md"))
-    expected_ids = Enum.map(baseline, & &1["Finding ID"]) ++ state_items ++ window_items
+
+    expected_ids =
+      Enum.map(baseline, & &1["Finding ID"]) ++
+        phase79_state_deferred_ids(File.read!(".planning/STATE.md")) ++
+        phase79_open_window_ids(File.read!(".planning/WINDOWS.md"))
+
     identity = phase79_inventory_identity(inventory)
 
-    phase79_owned_artifacts = [
-      ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md",
-      ".planning/ROADMAP.md",
-      ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
-      ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md",
-      ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json",
-      ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json",
-      ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json",
-      ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md",
-      ".planning/phases/79-adopter-ready-closeout/79-RISKS.json",
-      ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md"
-    ]
-
-    proof_owned_paths = [
-      ".planning/phases/73-twin-contract-and-baseline/73-RECONCILIATION-PROOF.json",
-      ".planning/phases/73-twin-contract-and-baseline/73-SECURITY.md",
-      ".planning/phases/73-twin-contract-and-baseline/73-VALIDATION.md",
-      ".planning/phases/78-ci-efficiency-and-reliability/78-CLEAN-STATE-RECEIPT.json"
-    ]
-
-    tracked_edits = inventory["local"]["tracked_edits"]
-    tracked_paths = Enum.map(tracked_edits, & &1["path"])
-
-    expected_current_edits = Enum.reject(phase79_owned_artifacts, &(&1 == ".planning/ROADMAP.md"))
-    assert Enum.all?(expected_current_edits, &(&1 in tracked_paths))
-
-    assert Enum.all?(tracked_paths, fn path ->
-             path in phase79_owned_artifacts or path in proof_owned_paths or
-               path == ".planning/state.json" or
-               path == ".planning/STATE.md" or
-               path == ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md"
-           end)
-
-    assert Enum.all?(tracked_edits, fn item ->
-             expected_owner =
-               if item["path"] in [".planning/state.json", ".planning/STATE.md"],
-                 do: "gsd-workflow",
-                 else: "phase-79"
-
-             item["owner"] == expected_owner and
-               item["disposition"] == "preserve; no cleanup authority"
-           end)
-
-    assert Enum.any?(tracked_edits, fn item ->
-             item["path"] in [".planning/state.json", ".planning/STATE.md"] and
-               item["owner"] == "gsd-workflow"
-           end)
-
+    assert state["closeout_status"] == "LIVE_READY"
+    assert phase79_live_ready_violations(state) == []
     assert phase79_risk_violations(risks, expected_ids, identity) == []
-    assert phase79_remote_batch_violations(remote_batch, identity) == []
+    assert inventory["local"]["tracked_edits"] == []
 
-    assert phase79_blocked_remote_violations(
-             remote_batch,
-             inventory,
-             desired_bytes,
-             rollback,
-             rollback_bytes
-           ) == []
+    for value <- Map.values(identity) do
+      assert inventory_report =~ value
+      assert closeout =~ value
+    end
 
-    desired_digest = :crypto.hash(:sha256, desired_bytes) |> Base.encode16(case: :lower)
+    for link <- ["79-INVENTORY.json", "79-RISKS.json", "79-REMOTE-BATCH.md"] do
+      assert closeout =~ "[#{link}](#{link})"
+    end
 
-    tampered_desired_digest =
-      String.replace(remote_batch, desired_digest, String.duplicate("0", 64))
-
-    assert phase79_blocked_remote_violations(
-             tampered_desired_digest,
-             inventory,
-             desired_bytes,
-             rollback,
-             rollback_bytes
-           ) != []
-
-    forged_desired =
-      desired
-      |> Map.put("desired_payload", %{"required_status_checks" => %{"contexts" => ["unsafe"]}})
-
-    assert phase79_blocked_remote_violations(
-             remote_batch,
-             inventory,
-             Jason.encode!(forged_desired),
-             rollback,
-             rollback_bytes
-           ) != []
-
-    forged_rollback =
-      rollback
-      |> Map.put("payload_available", true)
-      |> Map.put("rollback_payload", %{"allow_deletions" => true})
-
-    assert phase79_blocked_remote_violations(
-             remote_batch,
-             inventory,
-             desired_bytes,
-             forged_rollback,
-             rollback_bytes
-           ) != []
-
-    unauthorized_batch =
-      String.replace(
-        remote_batch,
-        "No GitHub write or workflow dispatch was prepared",
-        "gh api -X PUT"
-      )
-
-    assert phase79_blocked_remote_violations(
-             unauthorized_batch,
-             inventory,
-             desired_bytes,
-             rollback,
-             rollback_bytes
-           ) != []
-
-    stale_batch = String.replace(remote_batch, identity["main_sha"], String.duplicate("f", 40))
-
-    assert phase79_blocked_remote_violations(
-             stale_batch,
-             inventory,
-             desired_bytes,
-             rollback,
-             rollback_bytes
-           ) != []
-
-    assert inventory_report =~ identity["repository"]
-    assert inventory_report =~ identity["ref"]
-    assert inventory_report =~ identity["main_sha"]
-    assert inventory_report =~ identity["observed_at"]
-
-    assert closeout =~ "## Release readiness: BLOCKED"
-    assert closeout =~ identity["repository"]
-    assert closeout =~ identity["ref"]
-    assert closeout =~ identity["main_sha"]
-    assert closeout =~ identity["observed_at"]
-    assert closeout =~ "[79-INVENTORY.json](79-INVENTORY.json)"
-    assert closeout =~ "[79-RISKS.json](79-RISKS.json)"
-    assert closeout =~ "[79-REMOTE-BATCH.md](79-REMOTE-BATCH.md)"
-    assert closeout =~ "all nine mandatory lanes lack passing evidence"
     assert closeout =~ "canary"
 
-    assert risks["items"]
-           |> Enum.any?(&(&1["id"] == "PIPE-73-001" and &1["status"] == "release-blocker"))
+    assert Enum.any?(
+             risks["items"],
+             &(&1["id"] == "PIPE-73-001" and &1["status"] == "resolved")
+           )
+
+    lane_path = ["inventory", "github", "mandatory_lanes", "mix ci.security", "state"]
+    context_path = ["inventory", "github", "branch_protection", "context_results", "ci-gate", "state"]
+    reviews_path = ["capture", "writable_payload", "required_pull_request_reviews"]
+
+    for {invalid, expected_error} <- [
+          {put_in(state, lane_path, "failed"), "lane"},
+          {put_in(state, context_path, "pending"), "context"},
+          {put_in(state, ["inventory", "collection", "readiness"], "unknown"), "inventory"},
+          {put_in(state, ["capture_bytes"], state["capture_bytes"] <> " "), "capture"},
+          {put_in(state, reviews_path, %{"required_approving_review_count" => 1}), "protection"},
+          {put_in(state, ["desired", "desired_payload", "enforce_admins"], false), "desired"},
+          {put_in(state, ["rollback", "source_capture_sha256"], String.duplicate("0", 64)),
+           "rollback"},
+          {put_in(state, ["merge_receipt"], %{"status" => "complete"}), "receipt"},
+          {put_in(state, ["batch_bytes"], String.replace(state["batch_bytes"], "204", "500")),
+           "batch"},
+          {update_in(state, ["risks", "items"], fn items ->
+             Enum.map(items, fn
+               %{"id" => "PIPE-73-001"} = item -> Map.put(item, "status", "release-blocker")
+               item -> item
+             end)
+           end), "PIPE-73-001"}
+        ] do
+      violations = phase79_live_ready_violations(invalid)
+      assert Enum.any?(violations, &String.contains?(&1, expected_error)), inspect(violations)
+    end
   end
 
   test "Phase 79 risk and remote-batch contracts reject incomplete or stale evidence" do
@@ -2926,7 +2861,6 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       File.read!(".planning/phases/79-adopter-ready-closeout/79-RISKS.json")
       |> Jason.decode!()
 
-    batch = File.read!(".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md")
     {_, baseline} = baseline_rows(File.read!(@baseline_path))
 
     expected_ids =
@@ -2935,6 +2869,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
         phase79_open_window_ids(File.read!(".planning/WINDOWS.md"))
 
     identity = phase79_inventory_identity(inventory)
+    batch = phase79_no_action_batch_fixture(identity)
+    assert phase79_remote_batch_violations(batch, identity) == []
     missing_owner = put_in(risks, ["items", Access.at(0), "owner"], "")
     missing_source = put_in(risks, ["items", Access.at(0), "source"], "")
     missing_severity = put_in(risks, ["items", Access.at(0), "severity"], "")
@@ -2961,7 +2897,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     medium_not_disposed =
       put_in(risks, ["items", Access.at(-2), "status"], "deferred")
 
-    missing_open_disposition = put_in(risks, ["items", Access.at(1), "open_disposition"], nil)
+    missing_open_disposition = put_in(risks, ["items", Access.at(-2), "open_disposition"], nil)
 
     for {candidate, expected_error} <- [
           {missing_owner, "owner"},
@@ -3099,7 +3035,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   @tag :phase79_artifact_state
-  test "Phase 79 completion contract joins blocked artifacts and accepts a coherent ready fixture only" do
+  test "Phase 79 completion contract joins live artifacts and accepts a coherent ready fixture only" do
     current = phase79_current_artifact_state()
     assert phase79_completion_contract_violations(current) == []
 
@@ -6901,7 +6837,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              "in_progress",
              "ready_for_verification",
              "planning",
-             "Ready to execute"
+             "Ready to execute",
+             "completed"
            ] ->
         {:ok, %{milestone_version: milestone, current_phase: phase, status: status}}
 
@@ -6962,6 +6899,9 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       transition_is_valid? =
         case state.status do
+          "completed" ->
+            through_current == entries and Enum.all?(entries, &(hd(&1) == "x"))
+
           "planning" ->
             length(pending) == 1 and Enum.map(pending, &Enum.at(&1, 1)) == [state.current_phase] and
               Enum.all?(prior, &(hd(&1) == "x"))
@@ -7046,7 +6986,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
             plan_paths =
               cond do
                 governance_phase == "78" -> all_plan_paths
-                state.status == "planning" -> completed
+                state.status in ["planning", "completed"] -> completed
                 true -> completed ++ Enum.take(incomplete, 1)
               end
 
@@ -10442,148 +10382,6 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     end
   end
 
-  defp phase79_blocked_remote_violations(
-         markdown,
-         inventory,
-         desired_bytes,
-         rollback,
-         rollback_bytes
-       ) do
-    identity = phase79_inventory_identity(inventory)
-    protection = get_in(inventory, ["github", "branch_protection"]) || %{}
-    missing_settings = ["required_pull_request_reviews", "restrictions"]
-    capture_path = ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json"
-    capture_bytes = File.read!(capture_path)
-    capture = Jason.decode!(capture_bytes)
-    capture_digest = :crypto.hash(:sha256, capture_bytes) |> Base.encode16(case: :lower)
-    desired_digest = :crypto.hash(:sha256, desired_bytes) |> Base.encode16(case: :lower)
-    rollback_digest = :crypto.hash(:sha256, rollback_bytes) |> Base.encode16(case: :lower)
-
-    capture_errors =
-      if protection["capture_status"] == "incomplete" and protection["resource"] == nil and
-           protection["capture_errors"] == [
-             "branch protection response is missing settings: required_pull_request_reviews, restrictions"
-           ],
-         do: [],
-         else: ["inventory does not prove the current protection resource is incomplete"]
-
-    composite_capture_errors =
-      if capture["schema"] == "phase79-protection-capture" and capture["version"] == 1 and
-           capture["capture_status"] == "incomplete" and capture["resource"] == nil and
-           capture["main_sha"] == identity["main_sha"] and
-           capture["capture_errors"] == [
-             "GraphQL approval settings conflict with the REST review subresource"
-           ] and
-           get_in(capture, [
-             "sources",
-             "review_subresource",
-             "configuration",
-             "required_approving_review_count"
-           ]) ==
-             1 and
-           get_in(capture, [
-             "sources",
-             "graphql",
-             "branch_protection",
-             "rule",
-             "requiredApprovingReviewCount"
-           ]) ==
-             nil and
-           get_in(capture, [
-             "sources",
-             "graphql",
-             "branch_protection",
-             "rule",
-             "requiresApprovingReviews"
-           ]) ==
-             false,
-         do: [],
-         else: ["composite capture does not prove the explicit REST/GraphQL conflict"]
-
-    rollback_errors =
-      if rollback["schema"] == "phase79-protection-rollback" and rollback["version"] == 1 and
-           rollback["status"] == "blocked" and rollback["payload_available"] == false and
-           rollback["rollback_payload"] == nil and
-           rollback["source_capture_status"] == "incomplete" and
-           rollback["source_capture_sha256"] == capture_digest and
-           rollback["source_capture_digest"] == capture["source_digest"] and
-           rollback["required_missing_settings"] == missing_settings and
-           rollback["target"] == identity and
-           rollback["source_endpoint"] == "composite protection capture" and
-           rollback["source_capture_errors"] == capture["capture_errors"] and
-           Jason.decode!(rollback_bytes) == rollback,
-         do: [],
-         else: [
-           "rollback record does not bind the conflicting capture without an executable payload"
-         ]
-
-    missing_setting_errors =
-      if MapSet.new(protection["capture_errors"] || []) ==
-           MapSet.new([
-             "branch protection response is missing settings: required_pull_request_reviews, restrictions"
-           ]) and
-           MapSet.new(rollback["required_missing_settings"] || []) == MapSet.new(missing_settings),
-         do: [],
-         else: ["missing protection settings are not consistently recorded"]
-
-    desired_record_errors =
-      case Jason.decode(desired_bytes) do
-        {:ok, desired_record} ->
-          if desired_record["schema"] == "phase79-protection-desired" and
-               desired_record["version"] == 1 and desired_record["status"] == "blocked" and
-               desired_record["payload_available"] == false and
-               desired_record["desired_payload"] == nil and
-               desired_record["target"] == identity and
-               desired_record["source_capture_status"] == "incomplete" and
-               desired_record["source_capture_sha256"] == capture_digest and
-               desired_record["source_capture_digest"] == capture["source_digest"] and
-               desired_record["source_capture_errors"] == capture["capture_errors"] do
-            []
-          else
-            ["desired record contains a payload or is not bound to the conflict capture"]
-          end
-
-        _ ->
-          ["desired record is invalid JSON"]
-      end
-
-    desired_errors =
-      if String.contains?(markdown, "79-PROTECTION-DESIRED.json") and
-           String.contains?(markdown, "SHA-256 `#{desired_digest}`"),
-         do: [],
-         else: ["no-action record is not bound to the exact desired reference bytes"]
-
-    rollback_hash_errors =
-      if String.contains?(markdown, "79-PROTECTION-ROLLBACK.json") and
-           String.contains?(markdown, "record SHA-256 `#{rollback_digest}`"),
-         do: [],
-         else: ["no-action record is not bound to the exact rollback record bytes"]
-
-    action_markers = [
-      "gh api -X PUT",
-      "gh workflow run",
-      "workflow_dispatch",
-      "- Proposed operation",
-      "- Exact payload JSON:",
-      "- Explicit approval:",
-      "approve remote_github"
-    ]
-
-    action_errors =
-      Enum.flat_map(action_markers, fn marker ->
-        if String.contains?(markdown, marker),
-          do: ["no-action record contains executable or approval content: #{marker}"],
-          else: []
-      end)
-
-    phase79_remote_batch_violations(markdown, identity) ++
-      capture_errors ++
-      composite_capture_errors ++
-      rollback_errors ++
-      desired_record_errors ++
-      missing_setting_errors ++ desired_errors ++ rollback_hash_errors ++ action_errors
-  end
-
   defp phase79_remote_identity_errors(markdown, identity, fields) do
     Enum.flat_map(fields, fn {label, identity_key, match_kind} ->
       value = phase79_remote_field(markdown, label) || ""
@@ -10650,7 +10448,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       },
       "batch_bytes" => batch_bytes,
       "closeout_status" =>
-        if(String.contains?(closeout, "Release readiness: READY"), do: "READY", else: "BLOCKED")
+        cond do
+          String.contains?(closeout, "Release readiness: READY (live evidence)") -> "LIVE_READY"
+          String.contains?(closeout, "Release readiness: READY") -> "READY"
+          true -> "BLOCKED"
+        end
     }
   end
 
@@ -10911,6 +10713,38 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     desired_sha = digest.(state["desired_bytes"])
     rollback_sha = digest.(state["rollback_bytes"])
 
+    if state["closeout_status"] == "LIVE_READY" do
+      phase79_live_ready_violations(state)
+    else
+      phase79_receipt_chain_violations(
+        state,
+        capture,
+        desired,
+        rollback,
+        inventory,
+        batch,
+        target_sha,
+        capture_sha,
+        desired_sha,
+        rollback_sha,
+        digest
+      )
+    end
+  end
+
+  defp phase79_receipt_chain_violations(
+         state,
+         capture,
+         desired,
+         rollback,
+         inventory,
+         batch,
+         target_sha,
+         capture_sha,
+         desired_sha,
+         rollback_sha,
+         digest
+       ) do
     if state["closeout_status"] == "BLOCKED" do
       []
       |> maybe_add_phase79_error(
@@ -11169,6 +11003,136 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp phase79_fleet_passed?(_fleet, _sha), do: false
+
+  # Phase 79 closed on live same-SHA evidence after PR44 and #49-#58 overtook
+  # the planned publication/merge/protection receipt chain (79-08..11, 79-13, 79-15).
+  defp phase79_live_ready_violations(state) do
+    capture = state["capture"] || %{}
+    desired = state["desired"] || %{}
+    rollback = state["rollback"] || %{}
+    inventory = state["inventory"] || %{}
+    batch = state["batch_bytes"] || ""
+    digest = fn bytes -> :crypto.hash(:sha256, bytes || "") |> Base.encode16(case: :lower) end
+    capture_sha = digest.(state["capture_bytes"])
+    observation = inventory["observation"] || %{}
+    target_sha = observation["main_sha"]
+    collection = inventory["collection"] || %{}
+    protection = get_in(inventory, ["github", "branch_protection"]) || %{}
+    lanes = get_in(inventory, ["github", "mandatory_lanes"]) || %{}
+    contexts = protection["context_results"] || %{}
+    expected = phase79_expected_protection()
+    payload = capture["writable_payload"] || %{}
+    risks = get_in(state, ["risks", "items"]) || []
+
+    []
+    |> maybe_add_phase79_error(
+      collection["complete"] == true and collection["readiness"] == "green" and
+        collection["gaps"] == [] and is_binary(target_sha) and
+        observation["revalidated_sha"] == target_sha,
+      "live inventory is not complete, green, and revalidated on one main SHA"
+    )
+    |> maybe_add_phase79_error(
+      map_size(lanes) == 9 and
+        Enum.all?(lanes, fn {_name, lane} ->
+          lane["state"] == "passed" and lane["sha"] == target_sha
+        end),
+      "a mandatory lane lacks passing evidence on the observed main SHA"
+    )
+    |> maybe_add_phase79_error(
+      protection["context_match"] == true and contexts != %{} and
+        Enum.all?(contexts, fn {_name, result} ->
+          result["state"] == "passed" and result["sha"] == target_sha
+        end),
+      "a required protection context lacks passing evidence on the observed main SHA"
+    )
+    |> maybe_add_phase79_error(
+      capture["capture_status"] == "complete" and capture["capture_errors"] == [] and
+        capture["main_sha"] == target_sha and
+        get_in(protection, ["corroboration", "capture_sha256"]) == capture_sha and
+        protection["capture_status"] == "complete",
+      "live capture is incomplete or not the inventory's corroborating capture"
+    )
+    |> maybe_add_phase79_error(
+      phase79_protection_matches?(payload, expected),
+      "captured protection differs from the repository's expected protection"
+    )
+    |> maybe_add_phase79_error(
+      desired["schema"] == "phase79-protection-desired" and desired["status"] == "satisfied" and
+        desired["desired_payload"] == expected and desired["delta"] == [] and
+        desired["source_capture_sha256"] == capture_sha,
+      "desired protection record is stale or not satisfied by the capture"
+    )
+    |> maybe_add_phase79_error(
+      rollback["schema"] == "phase79-protection-rollback" and
+        rollback["status"] == "not-required" and rollback["rollback_payload"] == payload and
+        rollback["source_capture_sha256"] == capture_sha,
+      "rollback record is not bound to the captured protection"
+    )
+    |> maybe_add_phase79_error(
+      Enum.all?(
+        ["pr_receipt", "merge_receipt", "ci_receipt", "post_inventory", "protection_receipt"],
+        &(state[&1] == nil)
+      ),
+      "live closeout carries a transaction receipt that was never produced"
+    )
+    |> maybe_add_phase79_error(
+      phase79_executed_batch_valid?(batch, target_sha),
+      "remote batch lacks its executed, read-back operations"
+    )
+    |> maybe_add_phase79_error(
+      Enum.any?(risks, &(&1["id"] == "PIPE-73-001" and &1["status"] == "resolved")),
+      "PIPE-73-001 is not resolved by live evidence"
+    )
+  end
+
+  defp phase79_expected_protection do
+    {json, 0} = System.cmd("scripts/setup_branch_protection.sh", ["--print-expected-json"])
+    Jason.decode!(json)
+  end
+
+  defp phase79_protection_matches?(payload, expected) do
+    checks = payload["required_status_checks"] || %{}
+    expected_checks = expected["required_status_checks"] || %{}
+
+    checks["strict"] == expected_checks["strict"] and
+      Enum.sort(checks["contexts"] || []) == Enum.sort(expected_checks["contexts"] || []) and
+      Enum.all?(Map.delete(expected, "required_status_checks"), fn {key, value} ->
+        Map.has_key?(payload, key) and payload[key] == value
+      end)
+  end
+
+  defp phase79_executed_batch_valid?(batch, target_sha) do
+    operations = Regex.scan(~r/^## Operation \d+/m, batch)
+
+    String.contains?(batch, "**Status:** executed approved batch; read-back complete.") and
+      is_binary(target_sha) and String.contains?(batch, target_sha) and
+      length(operations) == 3 and
+      length(Regex.scan(~r/^- Result: HTTP 204$/m, batch)) == 3 and
+      length(Regex.scan(~r/^- Read-back: \S/m, batch)) == 3 and
+      length(Regex.scan(~r/^\| [^|]+ \| `[0-9a-f]{40}` \| 0 \| 204 \|$/m, batch)) == 20 and
+      not String.contains?(batch, "gh workflow run")
+  end
+
+  defp phase79_no_action_batch_fixture(identity) do
+    """
+    # Phase 79 Remote Batch
+
+    **Status:** no mutation proposed; no command was executed.
+
+    - **Target repository:** `#{identity["repository"]}`
+    - **Target ref/resource:** `#{identity["ref"]}` branch protection
+    - **Observed main SHA:** `#{identity["main_sha"]}`
+    - **Observed at:** `#{identity["observed_at"]}`
+
+    ## Why there is no proposal
+
+    The fixture state already matches the expected protection.
+
+    ## Authorization boundary
+
+    This record grants no permission. Any future write needs an automated read-back that proves its postcondition.
+    """
+  end
 
   defp maybe_add_phase79_error(errors, true, _message), do: errors
   defp maybe_add_phase79_error(errors, false, message), do: errors ++ [message]

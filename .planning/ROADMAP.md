@@ -51,7 +51,7 @@ returns.
 - [x] **Phase 76: Lifecycle and Recovery Journeys** — Exercise representative login, rejection, isolation, trust-change, diagnosis, and recovery flows end to end. (completed 2026-09-26)
 - [x] **Phase 77: Code and Documentation Craftsmanship** — Remove high-value quality debt and temporary planning narration behind the twin's safety net. (8/8 plans complete; automated verification passed.) (completed 2026-09-27)
 - [x] **Phase 78: CI Efficiency and Reliability** — Give every gate clear ownership and improve measured CI cost without weakening independent defenses. (completed 2026-09-28)
-- [ ] **Phase 79: Adopter-Ready Closeout** — Finish with green intentional repository state, approved GitHub hygiene, and a diminishing-returns assessment.
+- [x] **Phase 79: Adopter-Ready Closeout** — Finish with green intentional repository state, approved GitHub hygiene, and a diminishing-returns assessment.
 
 ## Phase Details
 
@@ -438,14 +438,14 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 5. A residual-risk report shows that every remaining idea is low-value, demand-gated,
    approval-blocked, or more costly to maintain than the risk it would retire.
 
-**Plans:** 10/15 plans executed have terminal summaries (79-08 and 79-13 halted); 5 plans remain pending
+**Plans:** 15/15 plans are terminal. 79-08 and 79-13 halted. 79-09, 79-10, 79-11, 79-12, and 79-15 were superseded on 2026-10-19 by the live-evidence closeout (see 79-CLOSEOUT.md).
 
-- [ ] 79-09-PLAN.md
-- [ ] 79-10-PLAN.md
-- [ ] 79-11-PLAN.md
-- [ ] 79-12-PLAN.md
+- [x] 79-09-PLAN.md
+- [x] 79-10-PLAN.md
+- [x] 79-11-PLAN.md
+- [x] 79-12-PLAN.md
 - [x] 79-14-PLAN.md
-- [ ] 79-15-PLAN.md
+- [x] 79-15-PLAN.md
 
 **Wave 1**
 
@@ -483,23 +483,23 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 
 **Wave 9** *(gap closure; build filtered candidate and request separate approval for PR creation)*
 
-- [ ] 79-15-PLAN.md — Build the isolated proof-bound candidate and create its PR only after the exact branch/PR packet is separately approved.
+- [x] 79-15-PLAN.md — Build the isolated proof-bound candidate and create its PR only after the exact branch/PR packet is separately approved. *Superseded: the candidate was published as PR #44 and merged.*
 
 **Wave 10** *(gap closure; separate approval for protected-main merge)*
 
-- [ ] 79-09-PLAN.md — Verify the Plan 79-15 PR read-back, approve a normal protected-main merge separately, and read back main tree and provenance.
+- [x] 79-09-PLAN.md — Verify the Plan 79-15 PR read-back, approve a normal protected-main merge separately, and read back main tree and provenance. *Superseded: PR #44 merged, and main's first parent restores the proof-only commit.*
 
 **Wave 11** *(gap closure; final-main CI, independent of protection-source agreement)*
 
-- [ ] 79-10-PLAN.md — Prove nine mandatory lanes and fleet context on final main; conditionally approve exact CI-only dispatch.
+- [x] 79-10-PLAN.md — Prove nine mandatory lanes and fleet context on final main; conditionally approve exact CI-only dispatch. *Superseded: all nine lanes and ci-gate are green on main ed2d2cf1.*
 
 **Wave 12** *(gap closure; external policy-source prerequisite)*
 
-- [ ] 79-11-PLAN.md — After policy-owner/provider source agreement, preserve approved protection snapshots and verify separate post-state read-back.
+- [x] 79-11-PLAN.md — After policy-owner/provider source agreement, preserve approved protection snapshots and verify separate post-state read-back. *Superseded: protection is the single ci-gate check, and the capture is complete and matches expected.*
 
 **Wave 13** *(gap closure; final evidence gate)*
 
-- [ ] 79-12-PLAN.md — Close only after same-SHA CI, complete protection, ownership, and residual-risk evidence pass.
+- [x] 79-12-PLAN.md — Close only after same-SHA CI, complete protection, ownership, and residual-risk evidence pass. *Superseded by the live-evidence closeout gate (phase79_live_ready_violations).*
 
 ## Progress
 
@@ -513,7 +513,7 @@ green, and remaining work is demonstrably below the milestone's diminishing-retu
 | 76. Lifecycle and Recovery Journeys | v1.11 | 5/5 | Complete    | 2026-09-26 |
 | 77. Code and Documentation Craftsmanship | v1.11 | 8/8 | Complete    | 2026-09-27 |
 | 78. CI Efficiency and Reliability | v1.11 | 9/9 | Complete    | 2026-09-29 |
-| 79. Adopter-Ready Closeout | v1.11 | 10/15 | In Progress|  |
+| 79. Adopter-Ready Closeout | v1.11 | 15/15 | Complete    | 2026-10-19 |
 
 ---
 

@@ -1,8 +1,8 @@
 ---
 phase: "79"
 slug: "adopter-ready-closeout"
-status: gaps_found
-nyquist_compliant: false
+status: passed
+nyquist_compliant: true
 wave_0_complete: true
 created: "2026-09-29"
 ---
@@ -148,3 +148,19 @@ Both read-only observations bind refs/heads/main at c786a9890f2f99f0dd98f89a1d97
 Artifact SHA-256 values: capture 933243f5dc3d01b9a0673e9270c7abdc6d6185ee2512190c7b7854014580e908; inventory f6633e69eadf3b80d707372bb7347f50a25bec1b47c5ec8ba78d8cfbccaa3d12; desired 5c53f5ecd0d8b65baf87c4c0476bf1700e6e504218a69260f3bf20f77394379d; rollback 1ebc4cebf0cf807f6fca98c6b33d992e84af7fac835ef57cccc9660dc4bc3433; no-action batch ac64a6845b996ef5b0e93188447a165af2dfe06dda2cc96a46b3dfdef8521605. Capture source digest: abbfcd7bb34aed797d9ecb91414e2075f193ce929d4eb6eb50849440370e296a. The exact conflict is preserved; no source was preferred and no approval or remote operation was inferred.
 
 Exact next action: wait for the GitHub policy source discrepancy to be resolved by its owner, then repeat bounded same-SHA reads and current-main inventory. Continue only when sources agree and all nine mandatory lanes have passing evidence; any mutation requires a separate exact-batch approval plan.
+
+---
+
+## Closeout validation (2026-10-19)
+
+Phase 79 closed on live evidence. Each truth below has a deterministic automated check in the mandatory lane; none relies on manual acceptance.
+
+| Truth | Automated check | Lane |
+|-------|-----------------|------|
+| Main is green on one SHA | `phase79_live_ready_violations`: all nine mandatory lanes and the `ci-gate` context pass on the inventory's revalidated main SHA | `mix qa` |
+| Protection is complete and intended | Corroborated capture: the parent omission plus GraphQL agreement must equal `setup_branch_protection.sh --print-expected-json`; desired and rollback records are hash-bound to the capture | `mix qa` |
+| Remote mutations were exact and approved | Executed-batch receipt: three operations, each with HTTP 204 and a read-back, and 20 branch rows each 0 ahead | `mix qa` |
+| No transaction receipt is fabricated | The live closeout rejects any PR, merge, CI, post-inventory, or protection receipt | `mix qa` |
+| Residual risk is disposed | `phase79_risk_violations`: membership, severity rules, and the inventory identity binding; PIPE-73-001 must be resolved | `mix qa` |
+| Capture and collector tolerate only corroborated omissions | Fixture tests cover the disabled review, a conflicting review, a parent that enables reviews, an other-SHA capture, and tampered corroboration | `mix qa` |
+| Governance accepts a completed milestone only when it is final | Fixture test: `status: completed` requires the last roadmap phase and every phase checked | `mix qa` |
