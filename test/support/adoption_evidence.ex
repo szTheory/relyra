@@ -2098,10 +2098,10 @@ defmodule Relyra.AdoptionEvidence do
         "test/governance/milestone_scope_test.exs",
         "mix.exs",
         ".github/workflows/security-gates.yml",
-        ".planning/PROJECT.md",
-        ".planning/ROADMAP.md",
-        ".planning/REQUIREMENTS.md",
-        ".planning/STATE.md",
+        ".planning/milestones/v1.11-PROJECT.md",
+        ".planning/milestones/v1.11-ROADMAP.md",
+        ".planning/milestones/v1.11-REQUIREMENTS.md",
+        ".planning/milestones/v1.11-STATE.md",
         ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
       ]
 
