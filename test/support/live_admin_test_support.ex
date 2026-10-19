@@ -242,7 +242,7 @@ if Code.ensure_loaded?(Phoenix.Endpoint) and Code.ensure_loaded?(Phoenix.LiveVie
                  strategy: :one_for_one,
                  name: @pubsub_supervisor
                ) do
-            {:ok, _pid} -> :ok
+            {:ok, pid} -> detach(pid)
             {:error, {:already_started, _pid}} -> :ok
           end
 
@@ -275,9 +275,18 @@ if Code.ensure_loaded?(Phoenix.Endpoint) and Code.ensure_loaded?(Phoenix.LiveVie
 
     defp do_start_endpoint do
       case Relyra.TestSupport.LiveAdminEndpoint.start_link() do
-        {:ok, _pid} -> :ok
+        {:ok, pid} -> detach(pid)
         {:error, {:already_started, _pid}} -> :ok
       end
+    end
+
+    # The PubSub and endpoint are VM-wide singletons shared by async test
+    # modules. A link would tie them to whichever test process started them
+    # first, so they died (taking the endpoint ETS table) while other modules
+    # were still using them.
+    defp detach(pid) do
+      Process.unlink(pid)
+      :ok
     end
 
     defp endpoint_healthy? do

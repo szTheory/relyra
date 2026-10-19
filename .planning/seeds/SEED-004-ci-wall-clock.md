@@ -91,9 +91,9 @@ maintainer's reference "well oiled machine", runs full CI in ~2 min.
   - The package consumers, the Phase 78 cold path and ci-gate are pinned cache-free.
   - Locked `mix deps.get` still runs, so the cache is a warm start only, never evidence (Phase 78 D-05).
   - The first main push after merge seeds the cache. Re-measure after that.
-  - Known flake, not fixed by this PR: `test/security/login_trace_test.exs:83` failed once in local `mix qa` because the LiveAdminEndpoint ETS table was missing. `LiveAdminEndpointSupport.do_start_endpoint/0` uses `start_link`, so the endpoint dies when the test process that started it exits, while other async tests still use it. Fix: start it unlinked or under the test app supervisor.
+  - Known flake (fixed in PR `ci/hygiene-pins`, see below): `test/security/login_trace_test.exs:83` failed once in local `mix qa` because the LiveAdminEndpoint ETS table was missing. `LiveAdminEndpointSupport.do_start_endpoint/0` uses `start_link`, so the endpoint dies when the test process that started it exits, while other async tests still use it. Fix: start it unlinked or under the test app supervisor.
 
-- **PR `ci/split-phase73-replay`** (item 10, part 1) splits the Phase 73 replay, which had become the critical path.
+- **PR #54** (`ci/split-phase73-replay`, merged as 0cf3bc33; item 10, part 1) splits the Phase 73 replay, which had become the critical path.
   - Profile from the proof's `duration_ms` (local):
     - 21 focused `mix test` owners: 102 s;
     - 3× `mix ci.evidence`: 108 s;
@@ -108,7 +108,23 @@ maintainer's reference "well oiled machine", runs full CI in ~2 min.
     - a hardcoded part, or a missing or extra step env;
     - the variable set at job, workflow, security-job or cold-step level;
     - the variable appearing in any other workflow, `check_phase78_clean_state.sh` or `mix.exs`.
-  - Expected: phase73 legs take about 3-4 min, so the critical path becomes `security`, at about 7 min.
+  - Measured on PR run 39178547294 (the first warm-cache hit): 5m06s end to end, down from about 10 min.
+    - The phase73 legs took 2.4-4.2 min; the focused leg is the slowest.
+    - `security` took 4.3-5.0 min, down from 6-7 min with the warm cache.
+    - package-consumers took 2.5-3 min.
+  - `security` step profile (OTP 28):
+    - security lane 87 s (one `cmd mix test` per suite, which stays);
+    - qa 45 s; evidence 26 s; Playwright install 19 s; verification 12 s; GATE-02 9 s;
+    - containers 25 s; everything else is 5 s or less.
+- **PR `ci/hygiene-pins`** covers item 9 and the login_trace flake:
+  - `npm install` became `npm ci` in `security`.
+  - The last tag-pinned actions are SHA-pinned to the repo-wide releases (checkout v7.0.1, setup-beam v1.24.1, cache v6.1.0) in `publish-hex.yml`, `release-parity.yml` and `branch-protection-drift.yml`. `workflow_hygiene_test` registers those pins.
+  - The publish-hex cache key gains the OTP/Elixir tuple.
+  - Flake fix: `LiveAdminEndpointSupport` unlinks the shared PubSub supervisor and endpoint after starting them. Before, they were linked to whichever async test process started them first, and died with it.
+- **Decided, no change:**
+  - Item 8, concurrency. PR runs already cancel superseded runs in every PR workflow. On main, each push keeps its own run (group by run id) so cold receipts are never cancelled. Queuing per ref would serialize back-to-back merges, which is slower, so it was dropped.
+  - Playwright cache: about 10 s for added cache surface in `security`; not worth it.
+  - demo-app-ci on one OTP and dropping the cron e2e runs: these cut runner cost, not PR wall-clock. Revisit only if runner minutes matter.
 
 ## Recommended Follow-ups (ordered by dividend ÷ effort)
 
