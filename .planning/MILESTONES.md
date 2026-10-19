@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.11 First-Adopter Twin (Shipped: 2026-10-19)
+
+**Phases completed:** 7 phases (73–79), 78 plans, 37/37 requirements
+
+**Key accomplishments:**
+
+- Executable twin contract: closed-vocabulary plan governance, source-bound evidence ownership, and a replayable Phase 73 reconciliation proof, all failing closed in the mandatory `ci.evidence` lane.
+- Clean-room package consumer: a fresh Phoenix app built from the unpacked Hex artifact verifies a signed ACS response, which proves the shipped file boundary.
+- SaaS twin realism: LedgerLoop and Northstar model multi-tenant administrators, connection-scoped replay, typed ACS failures, and audited trust history through real Phoenix routes.
+- Lifecycle and recovery journeys: metadata import, certificate activation, signing-trust recovery, and a support incident that ends in a verified login, covered by persisted LiveAdmin, Ecto, and browser evidence.
+- Craftsmanship and CI: current-tense signature documentation, a Markdown-aware policy scanner, the duplicated fast lane removed after measured comparison, pinned Release Please, and the single `ci-gate` required check (PR CI about 5 min).
+- Adopter-ready closeout on live evidence from the same main SHA: green inventory, protection matching the expected `ci-gate` configuration, an approved and read-back remote hygiene batch, and recorded residual risks.
+
+**Known verification overrides:** 3 newly acknowledged, 0 carried forward from a prior close (see STATE.md Deferred Items).
+
+**Archived:** `.planning/milestones/v1.11-ROADMAP.md`, `.planning/milestones/v1.11-REQUIREMENTS.md`, and the frozen `v1.11-PROJECT.md` and `v1.11-STATE.md`. Phase directories `73-*`–`79-*` remain in `.planning/phases/` because the executable governance contracts read them in place.
+
+---
+
 ## v1.10 Docker DX & Fleet Proxy (Shipped: 2026-08-27)
 
 **Phases completed:** 6 phases, 30 plans, 51 tasks

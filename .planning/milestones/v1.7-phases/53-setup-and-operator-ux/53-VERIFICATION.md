@@ -15,6 +15,10 @@ human_verification:
   - test: "Setup Checklist UI/UX Flow"
     expected: "The UI must display actual copyable SP settings, an IdP metadata intake form, a mapping preview, and functional test login buttons. The UI must follow the `53-UI-SPEC.md` formatting and colors."
     why_human: "Visual appearance, layout, and UX feel require human validation."
+audit_acknowledged:
+  milestone: v1.11
+  at: 2026-10-19
+  status: human_needed
 ---
 
 # Phase 53: Setup And Operator UX Verification Report
@@ -84,6 +88,7 @@ No blockers found.
 ### Human Verification Required
 
 ### 1. Setup Checklist UI/UX Flow
+
 **Test**: Open the SSO Setup LiveView and navigate through the steps.
 **Expected**: The UI must display actual copyable SP settings, an IdP metadata intake form, a mapping preview, and functional test login buttons. The UI must follow the `53-UI-SPEC.md` formatting and colors.
 **Why human**: Visual appearance, layout, and UX feel require human validation.

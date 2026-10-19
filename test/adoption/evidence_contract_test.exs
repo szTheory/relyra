@@ -5,7 +5,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
   alias Relyra.AdoptionEvidence
 
-  @requirements_path ".planning/REQUIREMENTS.md"
+  @requirements_path ".planning/milestones/v1.11-REQUIREMENTS.md"
   @workflow_path ".github/workflows/security-gates.yml"
   @expected_personas [
     :evaluator,
@@ -278,11 +278,12 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       entries,
       %{
         clean
-        | governed_inputs: List.delete(clean.governed_inputs, ".planning/STATE.md"),
+        | governed_inputs:
+            List.delete(clean.governed_inputs, ".planning/milestones/v1.11-STATE.md"),
           workflow: "workflow reduction must not run"
       },
       clean_root,
-      ~r/governed inputs.*inventory.*missing=.*\.planning\/STATE\.md.*unexpected=\[\]/s
+      ~r/governed inputs.*inventory.*missing=.*\.planning\/milestones\/v1\.11-STATE\.md.*unexpected=\[\]/s
     )
 
     discovered =
@@ -1438,7 +1439,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     entries = AdoptionEvidence.entries()
 
     for pattern <- [
-          ".planning/*",
+          ".planning/milestones/*",
           ".planning/**",
           ".planning/**/*",
           ".planning/**/**",
@@ -1578,10 +1579,10 @@ defmodule Relyra.Adoption.EvidenceContractTest do
       "test/governance/milestone_scope_test.exs",
       "mix.exs",
       @workflow_path,
-      ".planning/PROJECT.md",
-      ".planning/ROADMAP.md",
-      ".planning/REQUIREMENTS.md",
-      ".planning/STATE.md",
+      ".planning/milestones/v1.11-PROJECT.md",
+      ".planning/milestones/v1.11-ROADMAP.md",
+      ".planning/milestones/v1.11-REQUIREMENTS.md",
+      ".planning/milestones/v1.11-STATE.md",
       ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md",
       ".planning/phases/73-twin-contract-and-baseline/73-12-PLAN.md",
       ".planning/phases/73-twin-contract-and-baseline/73-11-SUMMARY.md"
@@ -2200,6 +2201,7 @@ defmodule Relyra.Adoption.EvidenceContractTest do
     File.mkdir_p!(Path.join(root, "test/support"))
     File.mkdir_p!(Path.join(root, ".github/workflows"))
     File.mkdir_p!(Path.join(root, ".planning/phases/73-twin-contract-and-baseline"))
+    File.mkdir_p!(Path.join(root, ".planning/milestones"))
     File.write!(Path.join(root, "mix.exs"), fixture_mix_project([fixture_evidence_step()]))
     File.cp!(__ENV__.file, Path.join(root, "test/adoption/evidence_contract_test.exs"))
 
@@ -2227,10 +2229,10 @@ defmodule Relyra.Adoption.EvidenceContractTest do
 
     planning_paths =
       [
-        ".planning/PROJECT.md",
-        ".planning/ROADMAP.md",
-        ".planning/REQUIREMENTS.md",
-        ".planning/STATE.md",
+        ".planning/milestones/v1.11-PROJECT.md",
+        ".planning/milestones/v1.11-ROADMAP.md",
+        ".planning/milestones/v1.11-REQUIREMENTS.md",
+        ".planning/milestones/v1.11-STATE.md",
         ".planning/phases/73-twin-contract-and-baseline/73-BASELINE.md"
       ] ++
         Path.wildcard(".planning/phases/73-twin-contract-and-baseline/73-{*-PLAN,*-SUMMARY}.md")

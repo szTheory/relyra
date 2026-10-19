@@ -305,6 +305,52 @@
 
 ---
 
+## Milestone: v1.11 — First-Adopter Twin
+
+**Shipped:** 2026-10-19
+**Phases:** 7 | **Plans:** 78
+
+### What Was Built
+
+- A clean-room Phoenix consumer that installs only the unpacked Hex artifact and proves signed ACS, persistent stores, optional dependencies, and installer drift.
+- A tenant-owned LedgerLoop/Northstar/Harborline twin with ordered trust history, a redacted support incident, and deterministic isolated reset.
+- End-to-end login, rejection, replay, isolation, trust-lifecycle, and incident-recovery journeys through real Phoenix routes, LiveAdmin, Ecto, and browser harnesses.
+- Executable governance and evidence contracts (plan grammar, evidence ownership, Phase 73 reconciliation proof, Phase 79 closeout contract) in mandatory CI.
+- A measured CI ratchet: the duplicated fast lane removed, pinned Release Please, event-qualified concurrency, PR CI cut to about 5 minutes, and the single required `ci-gate` check.
+
+### What Worked
+
+- The twin found real adopter defects (replay scope, connection-scoped receipts, staged-key activation) without any public API, default, or security-posture change.
+- Exact-batch approval with automated read-back made every GitHub mutation reviewable, including the idempotent review-subresource DELETE.
+- Closing Phase 79 on live evidence from one main SHA was honest and cheap once the planned receipt chain had been overtaken by real merges.
+
+### What Was Inefficient
+
+- Governance tooling grew faster than the product work it governed. Phase 73 alone ran 34 plans, and Phase 79 accumulated debug sessions and plan-shaped provenance stubs (79-255, 79-386).
+- Phase 79's receipt chain assumed a publication flow that the actual merges (PR #44, then #49–#58) never followed, so five plans were superseded rather than executed.
+- Three Phase 79 plans (07, 08, 14) reached the archive with no SUMMARY and needed retroactive records.
+- GitHub's review subresource returns a default body even when reviews are disabled. That stalled the protection capture until a two-source corroboration rule replaced the single-source read.
+
+### Patterns Established
+
+- Bind closeout readiness to a single main SHA: inventory, lanes, protection capture, and remote batch must all name it.
+- Treat an omitted protection field as incomplete unless an independent source corroborates it. Never pick one conflicting source.
+- When executable contracts read milestone artifacts, archive by freezing the planning record (`milestones/vX.Y-*.md`) and repointing the contracts. Moving the evidence would silently retire them.
+
+### Key Lessons
+
+1. Evidence contracts are code with a lifecycle. Plan their archive behavior when they are written, not at milestone close.
+2. Prefer live, re-verifiable evidence over pre-planned receipt chains when remote state can be read back deterministically.
+3. Cap governance scope at the risk it retires. The diminishing-returns line applies to process tooling, too.
+
+### Cost Observations
+
+- Model mix: not measured.
+- Timeline: 2026-09-09 baseline to 2026-10-19 archive.
+- Notable: the largest cost was governance and provenance tooling in Phases 73 and 79, not adopter-facing product work.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -314,6 +360,7 @@
 | v0.1 | 6 | 19 | Established XML-trust-boundary ADR pattern + behaviour-backed store contracts. |
 | v0.2 | 8 (5+3) | 25 | Established closure-phase pattern; established single-AuditWriter seam; established public-ID/internal-PK separation for persisted aggregates. |
 | v1.10 | 6 (5+1) | 30 | Established disposable Docker/Chromium acceptance and dry-run scope reconciliation for decimal closure phases. |
+| v1.11 | 7 | 78 | Established single-SHA live-evidence closeout, two-source protection corroboration, and frozen-record archives for executable governance. |
 
 ### Cumulative Quality
 
@@ -322,6 +369,7 @@
 | v0.1 | n/a (not recorded) | n/a | XML-ADR, behaviour-stores, opaque-RelayState |
 | v0.2 | 168/168 (serial) | 16,534 | closure-phase, AuditWriter seam, public-ID/internal-PK, stage-then-promote |
 | v1.10 | 32 focused docs tests + Phase 68 Docker/Chromium harness | no library-surface change | disposable runtime acceptance, archive-scope preview |
+| v1.11 | 1045 tests (`mix qa`), 0 failures | no public API change | clean-room package consumer, executable evidence ownership, frozen-record archive |
 
 ### Top Lessons (Verified Across Milestones)
 

@@ -11,6 +11,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @phase79_base_sha "c786a9890f2f99f0dd98f89a1d9713db7c486837"
   @phase79_source_sha "a5820aac9983b7289cbc1cc816120017761a02e3"
   @phase79_source_tree_sha "4ebd2357cb25980edb80c94a144657bfe9083a56"
+  # v1.11 is archived; its governance record is frozen beside the milestone archive.
+  @v111_project ".planning/milestones/v1.11-PROJECT.md"
+  @v111_roadmap ".planning/milestones/v1.11-ROADMAP.md"
+  @v111_requirements ".planning/milestones/v1.11-REQUIREMENTS.md"
+  @v111_state ".planning/milestones/v1.11-STATE.md"
   @phase79_proof_path ".planning/phases/79-adopter-ready-closeout/79-FILTERED-HISTORY-PROOF.json"
   @finding_columns [
     "Finding ID",
@@ -47,6 +52,25 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   @phase_76_requirements ~w(EVID-03 JOUR-01 JOUR-02 JOUR-03 JOUR-04 JOUR-05 JOUR-06)
   @phase_77_requirements ~w(QUAL-02 QUAL-03 QUAL-04 QUAL-05 QUAL-06)
   @phase_78_requirements ~w(PIPE-02 PIPE-03 PIPE-04 PIPE-05)
+
+  test "archived v1.11 governance reads a tracked frozen record the live roadmap links" do
+    roadmap = File.read!(".planning/ROADMAP.md")
+
+    assert roadmap =~
+             "- Complete: **v1.11 — First-Adopter Twin** (shipped 2026-10-19). See `#{@v111_roadmap}`."
+
+    refute roadmap =~ "- Active: **v1.11"
+
+    for path <- [@v111_project, @v111_roadmap, @v111_requirements, @v111_state] do
+      assert {_output, 0} =
+               System.cmd("git", ["ls-files", "--error-unmatch", "--", path],
+                 stderr_to_stdout: true
+               )
+    end
+
+    assert {:ok, identity} = validated_governance_identity(File.cwd!())
+    assert {identity.current_phase, identity.status} == {"79", "completed"}
+  end
 
   @tag :plan_73_33_task_1
   @tag :plan_77_04_task_1
@@ -225,7 +249,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     controls = [
       {:duplicate_state,
        fn root ->
-         mutate_file(root, ".planning/STATE.md", fn state ->
+         mutate_file(root, @v111_state, fn state ->
            String.replace(state, "current_phase: 75", "current_phase: 75\ncurrent_phase: 75")
          end)
        end},
@@ -233,7 +257,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
        fn root ->
          mutate_file(
            root,
-           ".planning/STATE.md",
+           @v111_state,
            &String.replace(&1, "status: planning", "status : planning")
          )
        end},
@@ -241,19 +265,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
        fn root ->
          mutate_file(
            root,
-           ".planning/ROADMAP.md",
+           @v111_roadmap,
            &String.replace(&1, "- [x] **Phase 74:", "- [ ] **Phase 74:")
          )
        end},
       {:missing_current,
        fn root ->
-         mutate_file(root, ".planning/ROADMAP.md", &String.replace(&1, "- [ ] **Phase 75:", ""))
+         mutate_file(root, @v111_roadmap, &String.replace(&1, "- [ ] **Phase 75:", ""))
        end},
       {:mismatched_requirements,
        fn root ->
          mutate_file(
            root,
-           ".planning/REQUIREMENTS.md",
+           @v111_requirements,
            &String.replace(
              &1,
              "| TWIN-01 | Phase 75 | Pending |",
@@ -299,19 +323,19 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     malformed_controls = [
       {:duplicate_phase,
        fn root ->
-         mutate_file(root, ".planning/STATE.md", fn state ->
+         mutate_file(root, @v111_state, fn state ->
            String.replace(state, "current_phase: 78", "current_phase: 78\ncurrent_phase: 78")
          end)
        end},
       {:malformed_status,
        fn root ->
-         mutate_file(root, ".planning/STATE.md", fn state ->
+         mutate_file(root, @v111_state, fn state ->
            String.replace(state, "status: executing", "status : executing")
          end)
        end},
       {:skipped_predecessor,
        fn root ->
-         mutate_file(root, ".planning/ROADMAP.md", fn roadmap ->
+         mutate_file(root, @v111_roadmap, fn roadmap ->
            String.replace(roadmap, "- [x] **Phase 77:", "- [ ] **Phase 77:")
          end)
        end}
@@ -356,7 +380,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     skipped_predecessor = governance_repository_fixture()
     planning_state!(skipped_predecessor, "79")
 
-    mutate_file(skipped_predecessor, ".planning/ROADMAP.md", fn roadmap ->
+    mutate_file(skipped_predecessor, @v111_roadmap, fn roadmap ->
       String.replace(roadmap, "- [x] **Phase 78:", "- [ ] **Phase 78:")
     end)
 
@@ -428,7 +452,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
       case source do
         :state ->
-          mutate_file(root, ".planning/STATE.md", fn state ->
+          mutate_file(root, @v111_state, fn state ->
             case name do
               :duplicate_current_phase ->
                 Regex.replace(~r/^current_phase: 74$/m, state, replacement)
@@ -442,7 +466,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           end)
 
         :roadmap ->
-          mutate_file(root, ".planning/ROADMAP.md", fn roadmap ->
+          mutate_file(root, @v111_roadmap, fn roadmap ->
             if name == :nonexistent_phase do
               String.replace(roadmap, "- [ ] **Phase 74:", "")
             else
@@ -451,7 +475,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
           end)
 
         :requirements ->
-          mutate_file(root, ".planning/REQUIREMENTS.md", fn requirements ->
+          mutate_file(root, @v111_requirements, fn requirements ->
             String.replace(requirements, "| PKG-01 | Phase 74 | Pending |", replacement)
           end)
       end
@@ -480,7 +504,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   test "ready_for_verification reaches the complete active governance identity" do
     root = governance_repository_fixture()
 
-    mutate_file(root, ".planning/STATE.md", fn state ->
+    mutate_file(root, @v111_state, fn state ->
       Regex.replace(
         ~r/^status:\s*(?:executing|in_progress|ready_for_verification)$/m,
         state,
@@ -561,7 +585,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       assert {:error, violations} = validated_governance_identity(root)
 
       assert Enum.any?(violations, fn violation ->
-               violation =~ ".planning/STATE.md" and
+               violation =~ @v111_state and
                  violation =~ "must be singular and supported" and
                  violation =~ field_diagnostic
              end),
@@ -583,13 +607,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     controls = [
       {"missing active milestone",
        fn root ->
-         mutate_file(root, ".planning/ROADMAP.md", &String.replace(&1, "- Active:", "- Current:"))
+         mutate_file(root, @v111_roadmap, &String.replace(&1, "- Active:", "- Current:"))
        end},
       {"active phase set is empty",
        fn root ->
          mutate_file(
            root,
-           ".planning/ROADMAP.md",
+           @v111_roadmap,
            &Regex.replace(~r/^- \[[ x]\] \*\*Phase 7[3-9]:.*\n/m, &1, "")
          )
        end},
@@ -597,7 +621,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
        fn root ->
          mutate_file(
            root,
-           ".planning/STATE.md",
+           @v111_state,
            &String.replace(&1, "milestone: v1.11", "milestone: v9.9")
          )
        end},
@@ -605,7 +629,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
        fn root ->
          mutate_file(
            root,
-           ".planning/STATE.md",
+           @v111_state,
            &String.replace(&1, "current_phase: 73", "current_phase: 74")
          )
        end},
@@ -613,7 +637,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
        fn root ->
          mutate_file(
            root,
-           ".planning/PROJECT.md",
+           @v111_project,
            &String.replace(&1, "## Current Milestone: v1.11", "## Current Milestone: v9.9")
          )
        end},
@@ -621,7 +645,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
        fn root ->
          mutate_file(
            root,
-           ".planning/ROADMAP.md",
+           @v111_roadmap,
            &String.replace(&1, "GOV-01, GOV-02", "GOV-01", global: false)
          )
        end},
@@ -629,13 +653,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
        fn root ->
          mutate_file(
            root,
-           ".planning/ROADMAP.md",
+           @v111_roadmap,
            &String.replace(&1, "- [ ] **Phase 73:", "- [-] **Phase 73:")
          )
        end},
       {"duplicate phase identity",
        fn root ->
-         mutate_file(root, ".planning/ROADMAP.md", fn roadmap ->
+         mutate_file(root, @v111_roadmap, fn roadmap ->
            roadmap <> "\n- [ ] **Phase 73: Duplicate** — invalid duplicate.\n"
          end)
        end},
@@ -1058,7 +1082,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       "---\nmetrics:\n  status: halted\n---\n"
     )
 
-    completed = Path.join(root, ".planning/phases/79-adopter-ready-closeout/79-07-PLAN.md")
+    completed = Path.join(root, ".planning/phases/79-adopter-ready-closeout/79-06-PLAN.md")
 
     assert halted_plan_summary?(halted_top_level)
     assert halted_plan_summary?(halted_nested)
@@ -2186,11 +2210,11 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     completed = governance_repository_fixture()
     replace_state_status!(completed, "status: completed")
 
-    mutate_file(completed, ".planning/STATE.md", fn state ->
+    mutate_file(completed, @v111_state, fn state ->
       Regex.replace(~r/^current_phase: .*$/m, state, "current_phase: 79")
     end)
 
-    mutate_file(completed, ".planning/ROADMAP.md", fn roadmap ->
+    mutate_file(completed, @v111_roadmap, fn roadmap ->
       String.replace(roadmap, "- [ ] **Phase", "- [x] **Phase")
     end)
 
@@ -2207,7 +2231,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     unchecked_final = governance_repository_fixture()
     File.cp_r!(completed, unchecked_final)
 
-    mutate_file(unchecked_final, ".planning/ROADMAP.md", fn roadmap ->
+    mutate_file(unchecked_final, @v111_roadmap, fn roadmap ->
       String.replace(roadmap, "- [x] **Phase 79:", "- [ ] **Phase 79:")
     end)
 
@@ -2217,7 +2241,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     earlier_phase = governance_repository_fixture()
     File.cp_r!(completed, earlier_phase)
 
-    mutate_file(earlier_phase, ".planning/STATE.md", fn state ->
+    mutate_file(earlier_phase, @v111_state, fn state ->
       Regex.replace(~r/^current_phase: .*$/m, state, "current_phase: 78")
     end)
 
@@ -2226,7 +2250,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   test "active plans use only requirements owned by their roadmap phase" do
-    roadmap = File.read!(".planning/ROADMAP.md")
+    roadmap = File.read!(@v111_roadmap)
     ownership = roadmap_requirement_ownership(roadmap)
 
     violations =
@@ -2803,7 +2827,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     expected_ids =
       Enum.map(baseline, & &1["Finding ID"]) ++
-        phase79_state_deferred_ids(File.read!(".planning/STATE.md")) ++
+        phase79_state_deferred_ids(File.read!(@v111_state)) ++
         phase79_open_window_ids(File.read!(".planning/WINDOWS.md"))
 
     identity = phase79_inventory_identity(inventory)
@@ -2879,7 +2903,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
 
     expected_ids =
       Enum.map(baseline, & &1["Finding ID"]) ++
-        phase79_state_deferred_ids(File.read!(".planning/STATE.md")) ++
+        phase79_state_deferred_ids(File.read!(@v111_state)) ++
         phase79_open_window_ids(File.read!(".planning/WINDOWS.md"))
 
     identity = phase79_inventory_identity(inventory)
@@ -6281,8 +6305,10 @@ defmodule Relyra.Governance.MilestoneScopeTest do
     File.mkdir_p!(phase_dir)
     on_exit(fn -> File.rm_rf!(root) end)
 
-    for file <- ~w(PROJECT.md ROADMAP.md REQUIREMENTS.md STATE.md) do
-      File.cp!(Path.join(".planning", file), Path.join(root, ".planning/#{file}"))
+    File.mkdir_p!(Path.join(root, ".planning/milestones"))
+
+    for path <- [@v111_project, @v111_roadmap, @v111_requirements, @v111_state] do
+      File.cp!(path, Path.join(root, path))
     end
 
     phase78_dir = Path.join(root, ".planning/phases/78-ci-efficiency-and-reliability")
@@ -6299,13 +6325,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       File.cp!(path, Path.join(phase79_dir, Path.basename(path)))
     end
 
-    mutate_file(root, ".planning/STATE.md", fn state ->
+    mutate_file(root, @v111_state, fn state ->
       state
       |> then(&Regex.replace(~r/^current_phase: .*$/m, &1, "current_phase: 73"))
       |> then(&Regex.replace(~r/^status: .*$/m, &1, "status: executing"))
     end)
 
-    mutate_file(root, ".planning/ROADMAP.md", fn roadmap ->
+    mutate_file(root, @v111_roadmap, fn roadmap ->
       roadmap
       |> String.replace("- [x] **Phase 73:", "- [ ] **Phase 73:")
       |> String.replace("- [ ] **Phase 74:", "- [x] **Phase 74:")
@@ -6320,12 +6346,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp state_for_phase!(root, phase, status) do
-    mutate_file(root, ".planning/STATE.md", fn state ->
+    mutate_file(root, @v111_state, fn state ->
       state = Regex.replace(~r/^current_phase: .*$/m, state, "current_phase: #{phase}")
       Regex.replace(~r/^status: .*$/m, state, "status: #{status}")
     end)
 
-    mutate_file(root, ".planning/ROADMAP.md", fn roadmap ->
+    mutate_file(root, @v111_roadmap, fn roadmap ->
       Regex.replace(~r/^- \[([ x])\] \*\*Phase ([0-9.]+):/m, roadmap, fn line, mark, number ->
         next_mark =
           if number == phase,
@@ -6338,13 +6364,13 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp planning_state!(root, phase \\ "74") do
-    mutate_file(root, ".planning/STATE.md", fn state ->
+    mutate_file(root, @v111_state, fn state ->
       state
       |> String.replace("current_phase: 73", "current_phase: #{phase}")
       |> String.replace("status: executing", "status: planning")
     end)
 
-    mutate_file(root, ".planning/ROADMAP.md", fn roadmap ->
+    mutate_file(root, @v111_roadmap, fn roadmap ->
       Regex.replace(~r/^- \[([ x])\] \*\*Phase ([0-9.]+):/m, roadmap, fn line, mark, number ->
         previous =
           phase_order(number) < phase_order(phase) and phase_order(number) >= phase_order("73")
@@ -6694,17 +6720,17 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp replace_state_status!(root, replacement) do
-    mutate_file(root, ".planning/STATE.md", fn state ->
+    mutate_file(root, @v111_state, fn state ->
       Regex.replace(~r/^status[ \t]*:[^\n]*$/m, state, replacement)
     end)
   end
 
   defp validated_governance_identity(root) do
     sources = %{
-      project: File.read(Path.join(root, ".planning/PROJECT.md")),
-      roadmap: File.read(Path.join(root, ".planning/ROADMAP.md")),
-      requirements: File.read(Path.join(root, ".planning/REQUIREMENTS.md")),
-      state: File.read(Path.join(root, ".planning/STATE.md"))
+      project: File.read(Path.join(root, @v111_project)),
+      roadmap: File.read(Path.join(root, @v111_roadmap)),
+      requirements: File.read(Path.join(root, @v111_requirements)),
+      state: File.read(Path.join(root, @v111_state))
     }
 
     with {:ok, project} <- parse_project_identity(sources.project),
@@ -6869,7 +6895,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       ~w(milestone current_phase status)
       |> Enum.map_join(", ", fn field -> "#{field}=#{inspect(Map.get(fields, field, []))}" end)
 
-    ".planning/STATE.md: STATE milestone/current phase/status must be singular and supported; " <>
+    "#{@v111_state}: STATE milestone/current phase/status must be singular and supported; " <>
       observed
   end
 
@@ -7127,7 +7153,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp demand_gated_exclusion_violations([], markdown, root, plan_path) do
-    project_path = Path.join(root, ".planning/PROJECT.md")
+    project_path = Path.join(root, @v111_project)
 
     phase79_closeout_plan? =
       is_binary(plan_path) and
