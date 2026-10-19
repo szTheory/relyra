@@ -40,6 +40,8 @@ defmodule Relyra.Phase73Reconciliation do
     "mix test test/governance/phase_73_reconciliation_test.exs --only plan_73_34_task_2 --warnings-as-errors"
   ]
   @evidence_command "mix ci.evidence"
+  @replay_part_env "RELYRA_PHASE73_REPLAY_PART"
+  @replay_parts ["focused", "evidence", "security"]
   @security_command "mix ci.security"
   @security_commands [
     "test test/conformance/sp_conformance_test.exs test/mix/tasks/relyra_conformance_test.exs --only conformance --warnings-as-errors",
@@ -200,45 +202,65 @@ defmodule Relyra.Phase73Reconciliation do
     end
   end
 
-  def verify_focused_and_evidence!(root) do
+  def verify_focused_and_evidence!(root, parts \\ @replay_parts) do
     root = Path.expand(root)
     proof = read_proof!(root)
     validate_proof!(proof, root)
 
-    fresh_focused = Enum.map(@focused_commands, &run_command!(root, &1, 1))
-    fresh_evidence = for _run <- 1..3, do: run_command!(root, @evidence_command, 1)
-    require_equal_evidence_vectors!(fresh_evidence)
+    if "focused" in parts do
+      fresh_focused = Enum.map(@focused_commands, &run_command!(root, &1, 1))
 
-    unless result_vectors(fresh_focused) == result_vectors(proof["focused"]) do
-      raise ArgumentError, "fresh focused result vectors differ from canonical proof"
+      unless result_vectors(fresh_focused) == result_vectors(proof["focused"]) do
+        raise ArgumentError, "fresh focused result vectors differ from canonical proof"
+      end
     end
 
-    unless result_vectors(fresh_evidence) == result_vectors(proof["evidence_runs"]) do
-      raise ArgumentError, "fresh evidence result vectors differ from canonical proof"
+    if "evidence" in parts do
+      fresh_evidence = for _run <- 1..3, do: run_command!(root, @evidence_command, 1)
+      require_equal_evidence_vectors!(fresh_evidence)
+
+      unless result_vectors(fresh_evidence) == result_vectors(proof["evidence_runs"]) do
+        raise ArgumentError, "fresh evidence result vectors differ from canonical proof"
+      end
     end
 
     :ok
   end
 
-  def verify_security_lane!(root) do
+  def verify_security_lane!(root, parts \\ @replay_parts) do
     root = Path.expand(root)
     proof = read_proof!(root)
     validate_proof!(proof, root)
-    commands = security_constituent_commands!(root)
-    fresh = run_command!(root, @security_command, length(commands))
 
-    unless result_vector(fresh) == result_vector(proof["security"]) do
-      raise ArgumentError, "fresh security result vector differs from canonical proof"
+    if "security" in parts do
+      commands = security_constituent_commands!(root)
+      fresh = run_command!(root, @security_command, length(commands))
+
+      unless result_vector(fresh) == result_vector(proof["security"]) do
+        raise ArgumentError, "fresh security result vector differs from canonical proof"
+      end
     end
 
     :ok
   end
 
+  # SEED-004 item 10: CI replays the three parts on parallel matrix legs and
+  # ci-gate requires every leg. Unset (local runs, the Phase 78 cold manifest)
+  # replays every part; any other value is rejected, never treated as "all".
   def verify_repository_evidence!(root) do
+    parts = replay_parts!(System.get_env(@replay_part_env))
     :ok = validate_repository!(root)
-    :ok = verify_focused_and_evidence!(root)
-    :ok = verify_security_lane!(root)
+    :ok = verify_focused_and_evidence!(root, parts)
+    :ok = verify_security_lane!(root, parts)
     :ok
+  end
+
+  def replay_parts!(nil), do: @replay_parts
+  def replay_parts!(part) when part in @replay_parts, do: [part]
+
+  def replay_parts!(part) do
+    raise ArgumentError,
+          "#{@replay_part_env} must be unset or one of #{Enum.join(@replay_parts, ", ")}; got #{inspect(part)}"
   end
 
   def source_manifest!(root) do

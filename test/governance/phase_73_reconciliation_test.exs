@@ -9,6 +9,20 @@ defmodule Relyra.Phase73ReconciliationTest do
     assert :ok = Phase73Reconciliation.verify_repository_evidence!(File.cwd!())
   end
 
+  test "replay part selection is unset-means-all and otherwise exactly one known part" do
+    assert Phase73Reconciliation.replay_parts!(nil) == ["focused", "evidence", "security"]
+
+    for part <- ["focused", "evidence", "security"] do
+      assert Phase73Reconciliation.replay_parts!(part) == [part]
+    end
+
+    for bad <- ["", "all", "FOCUSED", " security", "focused,security", "evidence "] do
+      assert_raise ArgumentError, ~r/RELYRA_PHASE73_REPLAY_PART must be unset/, fn ->
+        Phase73Reconciliation.replay_parts!(bad)
+      end
+    end
+  end
+
   @tag :plan_73_27_task_1
   test "recomputes proof identity and honors singular typed report state" do
     root = fixture_root!()
@@ -109,11 +123,11 @@ defmodule Relyra.Phase73ReconciliationTest do
              )
 
     assert Regex.scan(~r/validate_repository!\(root\)/, runner) |> length() == 1
-    assert Regex.scan(~r/verify_focused_and_evidence!\(root\)/, runner) |> length() == 1
-    assert Regex.scan(~r/verify_security_lane!\(root\)/, runner) |> length() == 1
+    assert Regex.scan(~r/verify_focused_and_evidence!\(root, parts\)/, runner) |> length() == 1
+    assert Regex.scan(~r/verify_security_lane!\(root, parts\)/, runner) |> length() == 1
 
     assert runner =~
-             ~r/validate_repository!\(root\).*verify_focused_and_evidence!\(root\).*verify_security_lane!\(root\)/s
+             ~r/replay_parts!\(System.get_env\(@replay_part_env\)\).*validate_repository!\(root\).*verify_focused_and_evidence!\(root, parts\).*verify_security_lane!\(root, parts\)/s
 
     refute runner =~ "ci.phase73.reconciliation"
   end
