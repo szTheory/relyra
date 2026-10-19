@@ -149,22 +149,24 @@ defmodule Relyra.AdoptionEvidence do
     failure_diagnostics: "EVID-03 identifies schedule coupling, unsafe status, or missing owner"
   }
 
+  # The unconfigured managed-IdP canary was retired 2026-10-19; the Rulestead
+  # coexistence canary is the scheduled external signal for EVID-03.
   @evid_03_scheduled_entry %{
-    id: "evid-03-scheduled-real-idp-canary",
+    id: "evid-03-scheduled-rulestead-canary",
     requirement: "EVID-03",
     personas: [:sre, :security_reviewer],
-    job: "inspect scheduled real-provider availability evidence",
+    job: "inspect scheduled external coexistence evidence",
     expected_outcome:
-      "the managed IdP login remains a supplemental external signal with explicit recovery ownership",
+      "the Rulestead main coexistence run remains a supplemental external signal with a bounded status receipt",
     evidence_kind: :external_canary,
-    owner: ".github/workflows/real-idp-canary.yml",
-    selector: "schedule_and_workflow_dispatch",
-    lane: "scheduled:real-idp-canary",
+    owner: ".github/workflows/fleet-proxy-e2e.yml",
+    selector: "rulestead-main-canary",
+    lane: "scheduled:rulestead-main-canary",
     state: :existing,
-    fixture_owner: "owner-configured real IdP staging connection",
-    reset_boundary: "each scheduled or explicitly dispatched provider login",
+    fixture_owner: "szTheory/rulestead main checked out beside Relyra",
+    reset_boundary: "each scheduled or explicitly dispatched coexistence run",
     failure_diagnostics:
-      "scheduled canary status names the bounded provider result, service owner, responder, and recovery reference"
+      "the bounded Rulestead canary status receipt names the failing check without logs or diagnostics"
   }
 
   @baseline_entries [

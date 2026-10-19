@@ -2,7 +2,17 @@
 
 **Generated:** 2026-09-26  
 **Phase:** 76-lifecycle-and-recovery-journeys  
-**Status:** Incomplete
+**Status:** Retired 2026-10-19 (never configured)
+
+> **Retired.** The scheduled managed-IdP canary (`real-idp-canary.yml`, `scripts/test_real_idp_canary.sh`, `real_idp_canary.spec.ts`, `playwright.real-idp.config.mjs`) was removed on 2026-10-19.
+>
+> **Why:** it needed a hosted LedgerLoop staging deployment, a managed IdP account and named owners. None of them ever existed, so it failed daily with `configuration_incomplete`. It is also an operational monitor for a hosted service, which a library does not run. Real-IdP interop stays covered deterministically on every PR by the Keycloak container lanes (`adoption-external-idp`, `keycloak-proxy-e2e`).
+>
+> **What still satisfies EVID-03:**
+> - the deterministic `external_canary_contract_test` in `ci.evidence`;
+> - the daily `rulestead-main-canary` in `fleet-proxy-e2e.yml`, which is the scheduled external signal.
+>
+> The setup steps below are historical.
 
 The deterministic evidence contract is implemented and runs in `ci.evidence`. The external health signal needs an owner-managed staging IdP connection and GitHub Environment values before it can prove provider availability. Until then, scheduled runs report `configuration_incomplete` with a status-only artifact; this setup does not block deterministic phase acceptance.
 
