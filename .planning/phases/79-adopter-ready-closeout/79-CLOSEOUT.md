@@ -1,34 +1,46 @@
 # Phase 79 Closeout
 
-## Release readiness: BLOCKED
+## Release readiness: READY (live evidence)
 
-The latest read-only inventory is szTheory/relyra@refs/heads/main at c786a9890f2f99f0dd98f89a1d9713db7c486837, observed 2026-10-01T12:07:59Z. Readiness is unknown; all nine mandatory lanes lack passing evidence on this SHA. The parent protection response omits required_pull_request_reviews and restrictions.
+szTheory/relyra refs/heads/main at ed2d2cf1c898207f0d825ce9053979b14055e27e is green, observed 2026-10-19T20:19:25Z:
 
-The fresh composite capture observed REST required_approving_review_count=1; same-ref GraphQL reports requiredApprovingReviewCount=None and requiresApprovingReviews=False. The conflict remains unresolved, and the captured resource is null.
+- all nine mandatory lanes and the single required `ci-gate` check pass on that SHA (security-gates run 39310933824);
+- branch protection is complete and equals the repository's expected protection;
+- no open pull requests or issues remain.
+
+## Why this closed on live evidence
+
+Plans 79-09–79-12 and 79-15 described a receipt chain: publication packet, PR transaction, merge receipt, main-CI receipt, and protection transaction. The real work landed differently:
+
+- PR #44 merged the filtered candidate, and main's first parent restores the proof-only commit;
+- #49–#58 cut PR CI to about 5 minutes;
+- the maintainer replaced multi-context protection with the single `ci-gate` check.
+
+The maintainer approved closing on live same-SHA evidence. The superseded plans have halted summaries. No receipt was fabricated, and the closeout contract rejects one if it appears.
 
 ## Repository and ownership
 
-See [79-INVENTORY.md](79-INVENTORY.md) and [79-INVENTORY.json](79-INVENTORY.json) for timestamped local and GitHub observations. Maintainer-owned and unknown-owner paths remain preserved without cleanup authority.
-
-## Main CI evidence
-
-The canonical security-gates.yml owner has no passing current-SHA evidence for any mandatory lane. The available status-check list is partial because the complete protection resource could not be composed. The current check-run source identifies GitHub Actions app ID 15368 for fleet-proxy-e2e, but this does not establish that the context is required.
-
-## External canaries
-
-The inventory records 35 separate canary observations. They do not satisfy mandatory lanes or replace source-consistent protection evidence.
-
-## Residual risks
-
-See [79-RISKS.json](79-RISKS.json). PIPE-73-001 remains a High release blocker while the live policy and current-main CI evidence are unresolved. Remaining deferred and automation-gap items retain their owners and revisit conditions.
+See [79-INVENTORY.json](79-INVENTORY.json) and [79-INVENTORY.md](79-INVENTORY.md). The maintainer's own working checkout (branch `gsd/phase-73-gap-closure`, with local Phase 79 debug history and uncommitted state) is maintainer-owned. This closeout did not touch it. Main supersedes that branch's published content through PR #44.
 
 ## Remote action
 
-[79-REMOTE-BATCH.md](79-REMOTE-BATCH.md) is a verified no-action record. [79-PROTECTION-DESIRED.json](79-PROTECTION-DESIRED.json) and [79-PROTECTION-ROLLBACK.json](79-PROTECTION-ROLLBACK.json) are blocked records with null payloads. No workflow was dispatched and no protection write was prepared. Exact next action: after the GitHub policy source discrepancy is resolved by its owner and all nine mandatory lanes have passing evidence on the same main SHA, repeat the read-only capture and inventory; proceed only if the sources agree, then create a separate exact approval plan before any remote operation.
+[79-REMOTE-BATCH.md](79-REMOTE-BATCH.md) records three maintainer-approved operations, each with preflight, HTTP result, and read-back:
 
-## Plan 79-06 evidence
+1. the idempotent review-subresource DELETE, which proved GitHub's default body;
+2. deletion of 20 merged branches, each 0 commits ahead of main;
+3. deletion of the retired `real-idp-canary` environment.
 
-- Capture SHA-256: 933243f5dc3d01b9a0673e9270c7abdc6d6185ee2512190c7b7854014580e908; source digest abbfcd7bb34aed797d9ecb91414e2075f193ce929d4eb6eb50849440370e296a; main SHA c786a9890f2f99f0dd98f89a1d9713db7c486837.
-- Inventory SHA-256: f6633e69eadf3b80d707372bb7347f50a25bec1b47c5ec8ba78d8cfbccaa3d12; observed 2026-10-01T12:07:59Z; readiness unknown.
-- Desired record SHA-256: 5c53f5ecd0d8b65baf87c4c0476bf1700e6e504218a69260f3bf20f77394379d; rollback record SHA-256: 1ebc4cebf0cf807f6fca98c6b33d992e84af7fac835ef57cccc9660dc4bc3433; no-action batch SHA-256: ac64a6845b996ef5b0e93188447a165af2dfe06dda2cc96a46b3dfdef8521605.
-- REST/GraphQL approval disagreement remains explicit. No preference, approval, workflow dispatch, or GitHub write was inferred or performed.
+No protection write is proposed. [79-PROTECTION-DESIRED.json](79-PROTECTION-DESIRED.json) records an empty delta.
+
+## External canaries
+
+The scheduled `rulestead-main-canary` is reported separately and does not count toward readiness. The never-configured real IdP canary was retired in #58.
+
+## Residual risks
+
+See [79-RISKS.json](79-RISKS.json). PIPE-73-001 is resolved by the same-SHA evidence above. The remaining items are below the milestone's diminishing-returns line:
+
+- AUTHN-POST-01, KMS-01, SIGNED-META-01, the hosted twin, and the compatibility matrix are demand-gated;
+- WINDOW-29, WINDOW-30, and QUAL-73-004 cost more to maintain than the risk they would retire.
+
+Each has an owner and a revisit trigger.

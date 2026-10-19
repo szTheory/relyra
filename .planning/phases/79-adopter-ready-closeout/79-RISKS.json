@@ -1,7 +1,7 @@
 {
   "inventory_source": {
-    "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-    "observed_at": "2026-10-01T12:07:59Z",
+    "main_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+    "observed_at": "2026-10-19T20:19:25Z",
     "path": ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json",
     "ref": "refs/heads/main",
     "repository": "szTheory/relyra"
@@ -22,18 +22,18 @@
       "status": "resolved"
     },
     {
-      "adopter_impact": "The protected-main contract and complete current-main readiness cannot be established.",
-      "approval_boundary": "Do not seek remote_github approval until complete current state, exact desired state, and a verified rollback payload are available; any later write requires the separate blocking approval gate.",
+      "adopter_impact": "The protected-main contract and current-main readiness are established on one SHA.",
+      "approval_boundary": "Any future protection change needs a fresh capture, an exact payload and rollback, and separate remote_github approval.",
       "demand_or_trigger": "Before v1.11 release and after any required-check topology change.",
-      "evidence": "On szTheory/relyra refs/heads/main at c786a9890f2f99f0dd98f89a1d9713db7c486837 (2026-10-01T12:07:59Z), all 9 mandatory lane results are absent. The parent protection response omits reviews and restrictions; fresh REST review evidence reports required approval count 1, while same-ref GraphQL reports count None and requiresApprovingReviews=False. The capture is incomplete and neither desired nor rollback payload is available.",
+      "evidence": "On szTheory/relyra refs/heads/main at ed2d2cf1c898207f0d825ce9053979b14055e27e (2026-10-19T20:19:25Z), all 9 mandatory lanes and the single required ci-gate context pass (security-gates run 39310933824). The composite protection capture is complete: the parent omission and GraphQL agree that reviews and push restrictions are disabled. It equals scripts/setup_branch_protection.sh --print-expected-json, so the desired delta is empty.",
       "id": "PIPE-73-001",
-      "maintenance_cost": "Keep the bounded composite capture current; require automated source agreement before constructing any reversible update.",
-      "open_disposition": "approval-blocked",
+      "maintenance_cost": "Keep the corroborated capture and inventory collector current with the required-check topology.",
+      "open_disposition": null,
       "owner": "Phase 79 release owner",
-      "revisit": "Before v1.11 release, after a fresh current-main inventory.",
+      "revisit": "After any required-check topology or protection change.",
       "severity": "High",
-      "source": "73-BASELINE.md; current 79-INVENTORY.json and 79-PROTECTION-CAPTURE.json",
-      "status": "release-blocker"
+      "source": "73-BASELINE.md; 79-INVENTORY.json; 79-PROTECTION-CAPTURE.json",
+      "status": "resolved"
     },
     {
       "adopter_impact": "Acceptance claims retain deterministic test and lane ownership.",
@@ -109,7 +109,7 @@
       "adopter_impact": "No current warning is evidenced; unrelated governance failures still make a new QA claim unsafe.",
       "approval_boundary": "No remote approval; do not weaken fixture or installer-parity tests.",
       "demand_or_trigger": "Rerun full QA after pinned-manifest and lifecycle failures are reconciled.",
-      "evidence": "The 2026-09-26 root QA attempt had four governance failures and emitted no test-pattern warning; passing mandatory evidence does not establish full QA readiness.",
+      "evidence": "mix qa passes in the mandatory security-gates lane on main ed2d2cf1c898207f0d825ce9053979b14055e27e. The test-pattern warning classification was not re-derived from fresh output, so the item stays deferred rather than resolved.",
       "id": "QUAL-73-004",
       "maintenance_cost": "Preserve the golden snippet and installer-parity contract; classify only from fresh output.",
       "open_disposition": "more-costly-than-retired-risk",
@@ -137,7 +137,7 @@
       "adopter_impact": "Closeout distinguishes known maintainer configuration from unknown local state without claiming deletion authority.",
       "approval_boundary": "No cleanup without confirmed ownership and explicit scope.",
       "demand_or_trigger": "Refresh before release and after local/worktree changes.",
-      "evidence": "Current inventory at 2026-10-01T12:07:59Z records 11 tracked edits, 18 untracked paths, 4 ignored candidates, and 1 registered worktree(s); maintainer-owned and unknown-owner paths are preserved.",
+      "evidence": "The inventory at 2026-10-19T20:19:25Z was collected from a clean checkout. It records 0 tracked edits, 0 untracked paths, 2 ignored build directories, and 1 registered worktree. The maintainer's own local checkout is preserved untouched as maintainer-owned state.",
       "id": "QUAL-73-005",
       "maintenance_cost": "Run the bounded local inventory and preserve unknown-owner paths.",
       "open_disposition": null,

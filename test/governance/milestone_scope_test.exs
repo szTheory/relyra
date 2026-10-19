@@ -516,7 +516,8 @@ defmodule Relyra.Governance.MilestoneScopeTest do
              "in_progress",
              "ready_for_verification",
              "planning",
-             "Ready to execute"
+             "Ready to execute",
+             "completed"
            ]
 
     assert checked_in_identity.phase_requirements["73"] == MapSet.new(@phase_73_requirements)
@@ -533,8 +534,12 @@ defmodule Relyra.Governance.MilestoneScopeTest do
       assert identity.status == status
     end
 
+    premature_completion = governance_repository_fixture()
+    replace_state_status!(premature_completion, "status: completed")
+    assert {:error, premature_violations} = validated_governance_identity(premature_completion)
+    assert Enum.any?(premature_violations, &(&1 =~ "current phase disagrees"))
+
     controls = [
-      {"completed", "status: completed", ~s(status=["completed"])},
       {"blocked", "status: blocked", ~s(status=["blocked"])},
       {"paused", "status: paused", ~s(status=["paused"])},
       {"not started", "status: not_started", ~s(status=["not_started"])},
@@ -2825,7 +2830,16 @@ defmodule Relyra.Governance.MilestoneScopeTest do
            )
 
     lane_path = ["inventory", "github", "mandatory_lanes", "mix ci.security", "state"]
-    context_path = ["inventory", "github", "branch_protection", "context_results", "ci-gate", "state"]
+
+    context_path = [
+      "inventory",
+      "github",
+      "branch_protection",
+      "context_results",
+      "ci-gate",
+      "state"
+    ]
+
     reviews_path = ["capture", "writable_payload", "required_pull_request_reviews"]
 
     for {invalid, expected_error} <- [
@@ -11086,7 +11100,7 @@ defmodule Relyra.Governance.MilestoneScopeTest do
   end
 
   defp phase79_expected_protection do
-    {json, 0} = System.cmd("scripts/setup_branch_protection.sh", ["--print-expected-json"])
+    {json, 0} = System.cmd(Path.expand("scripts/setup_branch_protection.sh"), ["--print-expected-json"])
     Jason.decode!(json)
   end
 

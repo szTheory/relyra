@@ -1,76 +1,54 @@
 {
   "collection": {
-    "complete": false,
-    "gaps": [
-      "branch_protection collection incomplete (allowed)",
-      "branch protection configuration capture is incomplete",
-      "one or more mandatory lanes are not green on observed main SHA",
-      "one or more branch-protection contexts lack passing current-main evidence",
-      "live required contexts differ from repository expected contexts"
-    ],
+    "complete": true,
+    "gaps": [],
     "github_access": "allowed",
-    "readiness": "unknown"
+    "readiness": "green"
   },
   "github": {
     "branch_protection": {
       "access_status": "allowed",
-      "capture_errors": [
-        "branch protection response is missing settings: required_pull_request_reviews, restrictions"
-      ],
-      "capture_status": "incomplete",
-      "context_match": false,
+      "capture_errors": [],
+      "capture_status": "complete",
+      "context_match": true,
       "context_results": {
-        "fleet-proxy-e2e": {
+        "ci-gate": {
           "check_names": [
-            "fleet-proxy-e2e"
+            "ci-gate"
           ],
           "evidence": [
             {
-              "check_name": "fleet-proxy-e2e",
-              "check_run_id": 110253385876,
+              "check_name": "ci-gate",
+              "check_run_id": 118262686271,
               "check_suite_id": null,
               "run_attempt": 1,
-              "workflow_job_id": 110253385876,
-              "workflow_path": ".github/workflows/fleet-proxy-e2e.yml",
-              "workflow_run_id": 36826546468
+              "workflow_job_id": 118262686271,
+              "workflow_path": ".github/workflows/security-gates.yml",
+              "workflow_run_id": 39310933824
             }
           ],
           "evidence_count": 1,
           "owners": [
-            "fleet-proxy-e2e.yml"
+            "security-gates.yml"
           ],
-          "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+          "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
           "state": "passed"
-        },
-        "security (27, 1.19.5)": {
-          "check_names": [
-            "security (27, 1.19.5)"
-          ],
-          "evidence": [],
-          "evidence_count": 0,
-          "owners": [
-            "security-gates.yml"
-          ],
-          "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-          "state": "absent"
-        },
-        "security (28, 1.19.5)": {
-          "check_names": [
-            "security (28, 1.19.5)"
-          ],
-          "evidence": [],
-          "evidence_count": 0,
-          "owners": [
-            "security-gates.yml"
-          ],
-          "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-          "state": "absent"
         }
       },
+      "corroborated_fields": [
+        "required_pull_request_reviews",
+        "restrictions"
+      ],
+      "corroboration": {
+        "capture_sha256": "ab361877eafdadbaa1b9abaaf41b66a2e63134d6e2e50676d9f8fb5afaadf99e",
+        "disabled_fields": [
+          "required_pull_request_reviews",
+          "restrictions"
+        ],
+        "main_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e"
+      },
       "expected_contexts": [
-        "fleet-proxy-e2e",
-        "security (27, 1.19.5)",
-        "security (28, 1.19.5)"
+        "ci-gate"
       ],
       "observed_fields": [
         "allow_deletions",
@@ -86,1398 +64,313 @@
         "url"
       ],
       "required_contexts": [
-        "security (27, 1.19.5)",
-        "security (28, 1.19.5)"
+        "ci-gate"
       ],
-      "resource": null,
+      "resource": {
+        "allow_deletions": {
+          "enabled": false
+        },
+        "allow_force_pushes": {
+          "enabled": false
+        },
+        "allow_fork_syncing": {
+          "enabled": false
+        },
+        "block_creations": {
+          "enabled": false
+        },
+        "enforce_admins": {
+          "enabled": true
+        },
+        "lock_branch": {
+          "enabled": false
+        },
+        "required_conversation_resolution": {
+          "enabled": false
+        },
+        "required_linear_history": {
+          "enabled": false
+        },
+        "required_pull_request_reviews": null,
+        "required_signatures": {
+          "enabled": false
+        },
+        "required_status_checks": {
+          "checks": [
+            {
+              "app_id": 15368,
+              "context": "ci-gate"
+            }
+          ],
+          "contexts": [
+            "ci-gate"
+          ],
+          "strict": true
+        },
+        "restrictions": null
+      },
       "source_endpoint": "branches/main/protection"
     },
     "canaries": [
       {
         "name": "rulestead-main-canary",
-        "observed_at": "2026-10-01T06:50:08Z",
+        "observed_at": "2026-10-19T19:25:58Z",
         "ref": null,
-        "run_id": 110253385695,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "run_id": 118259999002,
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
         "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-30T06:48:55Z",
-        "ref": null,
-        "run_id": 109772782212,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-29T06:48:46Z",
-        "ref": null,
-        "run_id": 109289682580,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-28T07:00:59Z",
-        "ref": null,
-        "run_id": 108820518406,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-27T06:44:35Z",
-        "ref": null,
-        "run_id": 108567964089,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-26T06:43:19Z",
-        "ref": null,
-        "run_id": 108355466453,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-25T06:46:05Z",
-        "ref": null,
-        "run_id": 107972774788,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-24T06:46:20Z",
-        "ref": null,
-        "run_id": 107523933402,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-23T06:46:25Z",
-        "ref": null,
-        "run_id": 107073868167,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-22T06:45:47Z",
-        "ref": null,
-        "run_id": 106642864827,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-21T06:56:04Z",
-        "ref": null,
-        "run_id": 106240460182,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-20T06:41:43Z",
-        "ref": null,
-        "run_id": 106035555233,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-19T06:41:07Z",
-        "ref": null,
-        "run_id": 105854856527,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-18T06:44:58Z",
-        "ref": null,
-        "run_id": 105507480176,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-17T06:45:59Z",
-        "ref": null,
-        "run_id": 105103360594,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-16T06:45:56Z",
-        "ref": null,
-        "run_id": 104692985283,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-15T06:46:13Z",
-        "ref": null,
-        "run_id": 104280429213,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-14T06:55:40Z",
-        "ref": null,
-        "run_id": 103884372711,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-13T06:44:24Z",
-        "ref": null,
-        "run_id": 103686676020,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-12T06:40:11Z",
-        "ref": null,
-        "run_id": 103512748152,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-11T06:43:45Z",
-        "ref": null,
-        "run_id": 103172562109,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-10T06:44:24Z",
-        "ref": null,
-        "run_id": 102771620320,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-09T06:45:05Z",
-        "ref": null,
-        "run_id": 102364846524,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-08T06:43:43Z",
-        "ref": null,
-        "run_id": 101962787817,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-07T06:54:29Z",
-        "ref": null,
-        "run_id": 101649189572,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-06T06:40:09Z",
-        "ref": null,
-        "run_id": 101442209457,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-05T06:39:45Z",
-        "ref": null,
-        "run_id": 101263545652,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-04T06:48:55Z",
-        "ref": null,
-        "run_id": 100935862959,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-03T06:45:13Z",
-        "ref": null,
-        "run_id": 100550080322,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-02T06:48:58Z",
-        "ref": null,
-        "run_id": 100152194004,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-09-01T06:46:25Z",
-        "ref": null,
-        "run_id": 99763513060,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-08-31T06:53:38Z",
-        "ref": null,
-        "run_id": 99405992120,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-08-30T06:40:08Z",
-        "ref": null,
-        "run_id": 99218995873,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-08-29T06:38:57Z",
-        "ref": null,
-        "run_id": 99064471285,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
-      },
-      {
-        "name": "rulestead-main-canary",
-        "observed_at": "2026-08-28T09:29:48Z",
-        "ref": null,
-        "run_id": 98809739801,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "source": "GitHub Actions check run",
-        "status": "success"
+        "status": "skipped"
       }
     ],
     "check_runs": [
       {
-        "completed_at": "2026-10-01T07:05:55Z",
+        "completed_at": "2026-10-19T19:47:59Z",
         "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36828106677/job/110258254947",
-        "id": 110258254947,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-10-01T07:03:03Z",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39313956427/job/118270468476",
+        "id": 118270468476,
+        "name": "Auto-merge eligible Release Please PR",
+        "started_at": "2026-10-19T19:47:54Z",
         "status": "completed"
       },
       {
-        "completed_at": "2026-10-01T06:48:57Z",
+        "completed_at": "2026-10-19T19:47:49Z",
         "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36826546468/job/110253385876",
-        "id": 110253385876,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-10-01T06:46:10Z",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118269819100",
+        "id": 118269819100,
+        "name": "Phase 78 cold-state receipt",
+        "started_at": "2026-10-19T19:46:31Z",
         "status": "completed"
       },
       {
-        "completed_at": "2026-10-01T06:50:08Z",
+        "completed_at": "2026-10-19T19:31:37Z",
         "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36826546468/job/110253385695",
-        "id": 110253385695,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-10-01T06:46:10Z",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118262686271",
+        "id": 118262686271,
+        "name": "ci-gate",
+        "started_at": "2026-10-19T19:31:35Z",
         "status": "completed"
       },
       {
-        "completed_at": "2026-09-30T07:04:54Z",
+        "completed_at": "2026-10-19T19:26:32Z",
         "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36681462517/job/109777611731",
-        "id": 109777611731,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-30T07:02:32Z",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310996912/job/118260216737",
+        "id": 118260216737,
+        "name": "Trigger security-gates on release-please PR",
+        "started_at": "2026-10-19T19:26:28Z",
         "status": "completed"
       },
       {
-        "completed_at": "2026-09-30T06:48:55Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36679875791/job/109772782212",
-        "id": 109772782212,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-30T06:45:11Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-30T06:47:59Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36679875791/job/109772781960",
-        "id": 109772781960,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-30T06:45:11Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-29T07:05:13Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36534341395/job/109294862487",
-        "id": 109294862487,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-29T07:02:47Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-29T06:48:46Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36532687270/job/109289682580",
-        "id": 109289682580,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-29T06:44:49Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-29T06:47:26Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36532687270/job/109289682505",
-        "id": 109289682505,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-29T06:44:49Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-28T07:16:16Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36390496866/job/108825029903",
-        "id": 108825029903,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-28T07:13:36Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-28T06:59:51Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36389026450/job/108820518585",
-        "id": 108820518585,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-28T06:57:03Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-28T07:00:59Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36389026450/job/108820518406",
-        "id": 108820518406,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-28T06:57:04Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-27T07:00:20Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36301647052/job/108570259391",
-        "id": 108570259391,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-27T06:57:56Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-27T06:43:23Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36300806701/job/108567964198",
-        "id": 108567964198,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-27T06:40:49Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-27T06:44:35Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36300806701/job/108567964089",
-        "id": 108567964089,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-27T06:40:49Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-26T06:58:07Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36225219500/job/108357816159",
-        "id": 108357816159,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-26T06:55:46Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-26T06:41:47Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36224387010/job/108355466588",
-        "id": 108355466588,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-26T06:38:59Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-26T06:43:19Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36224387010/job/108355466453",
-        "id": 108355466453,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-26T06:38:59Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-25T07:02:24Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36105445993/job/107976845887",
-        "id": 107976845887,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-25T07:00:00Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-25T06:46:05Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36104126482/job/107972774788",
-        "id": 107972774788,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-25T06:43:04Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-25T06:45:33Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36104126482/job/107972774566",
-        "id": 107972774566,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-25T06:43:04Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-24T07:01:40Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35967184919/job/107528318036",
-        "id": 107528318036,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-24T06:59:06Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-24T06:45:15Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35965785851/job/107523933587",
-        "id": 107523933587,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-24T06:42:23Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-24T06:46:20Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35965785851/job/107523933402",
-        "id": 107523933402,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-24T06:42:23Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-23T07:01:41Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35829329849/job/107078067184",
-        "id": 107078067184,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-23T06:59:15Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-23T06:44:50Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35827988179/job/107073868537",
-        "id": 107073868537,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-23T06:42:10Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-23T06:46:25Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35827988179/job/107073868167",
-        "id": 107073868167,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-23T06:42:11Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-22T07:01:19Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35697322413/job/106646969005",
-        "id": 106646969005,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-22T06:58:52Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-22T06:44:30Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35695994880/job/106642865004",
-        "id": 106642865004,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-22T06:41:43Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-22T06:45:47Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35695994880/job/106642864827",
-        "id": 106642864827,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-22T06:41:43Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-21T07:09:54Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35571443256/job/106243744263",
-        "id": 106243744263,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-21T07:07:21Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-21T06:56:04Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35570339981/job/106240460182",
-        "id": 106240460182,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-21T06:52:32Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-21T06:55:06Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35570339981/job/106240460061",
-        "id": 106240460061,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-21T06:52:32Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-20T06:56:21Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35495427945/job/106037399288",
-        "id": 106037399288,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-20T06:54:03Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-20T06:41:43Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35494719634/job/106035555233",
-        "id": 106035555233,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-20T06:37:42Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-20T06:40:07Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35494719634/job/106035555156",
-        "id": 106035555156,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-20T06:37:42Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-19T06:55:26Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35427821544/job/105856742750",
-        "id": 105856742750,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-19T06:53:15Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-19T06:41:07Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35427107517/job/105854856527",
-        "id": 105854856527,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-19T06:37:30Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-19T06:40:07Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35427107517/job/105854856497",
-        "id": 105854856497,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-19T06:37:30Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-18T06:59:25Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35317132118/job/105511144532",
-        "id": 105511144532,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-18T06:56:59Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-18T06:44:58Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35315938931/job/105507480176",
-        "id": 105507480176,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-18T06:40:59Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-18T06:43:36Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35315938931/job/105507479998",
-        "id": 105507479998,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-18T06:40:59Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-17T07:01:08Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35192282408/job/105107324672",
-        "id": 105107324672,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-17T06:58:46Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-17T06:45:59Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35191010240/job/105103360594",
-        "id": 105103360594,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-17T06:42:20Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-17T06:45:14Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35191010240/job/105103360401",
-        "id": 105103360401,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-17T06:42:20Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-16T07:00:49Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35066190412/job/104696898583",
-        "id": 104696898583,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-16T06:58:21Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-16T06:45:56Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35064922677/job/104692985283",
-        "id": 104692985283,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-16T06:42:12Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-16T06:44:49Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35064922677/job/104692985010",
-        "id": 104692985010,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-16T06:42:12Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-15T07:00:06Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34939335489/job/104284175838",
-        "id": 104284175838,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-15T06:57:51Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-15T06:44:54Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34938127188/job/104280429352",
-        "id": 104280429352,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-15T06:42:14Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-15T06:46:13Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34938127188/job/104280429213",
-        "id": 104280429213,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-15T06:42:15Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-14T07:08:02Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34816234603/job/103887381612",
-        "id": 103887381612,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-14T07:05:34Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-14T06:54:18Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34815216703/job/103884372939",
-        "id": 103884372939,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-14T06:51:34Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-14T06:55:40Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34815216703/job/103884372711",
-        "id": 103884372711,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-14T06:51:34Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-13T06:57:51Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34743946059/job/103688259227",
-        "id": 103688259227,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-13T06:55:28Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-13T06:44:24Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34743344925/job/103686676020",
-        "id": 103686676020,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-13T06:41:00Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-13T06:43:39Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34743344925/job/103686675891",
-        "id": 103686675891,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-13T06:41:00Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-12T06:54:02Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34679220733/job/103514573729",
-        "id": 103514573729,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-12T06:51:39Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-12T06:40:11Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34678566838/job/103512748152",
-        "id": 103512748152,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-12T06:36:26Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-12T06:38:57Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34678566838/job/103512747923",
-        "id": 103512747923,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-12T06:36:25Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-11T06:58:23Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34572055805/job/103176088591",
-        "id": 103176088591,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-11T06:56:02Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-11T06:42:44Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34570896297/job/103172562249",
-        "id": 103172562249,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-11T06:39:57Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-11T06:43:45Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34570896297/job/103172562109",
-        "id": 103172562109,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-11T06:39:57Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-10T06:58:53Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34447516810/job/102775472616",
-        "id": 102775472616,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-10T06:56:32Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-10T06:44:24Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34446267675/job/102771620320",
-        "id": 102771620320,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-10T06:40:32Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-10T06:43:05Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34446267675/job/102771620036",
-        "id": 102771620036,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-10T06:40:32Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-09T06:58:40Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34321377185/job/102368560436",
-        "id": 102368560436,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-09T06:56:23Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-09T06:45:05Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34320178480/job/102364846524",
-        "id": 102364846524,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-09T06:41:01Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-09T06:43:41Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34320178480/job/102364846393",
-        "id": 102364846393,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-09T06:41:01Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-08T06:58:31Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34196887307/job/101966494599",
-        "id": 101966494599,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-08T06:56:06Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-08T06:43:12Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34195690679/job/101962787951",
-        "id": 101962787951,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-08T06:40:22Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-08T06:43:43Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34195690679/job/101962787817",
-        "id": 101962787817,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-08T06:40:22Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-07T07:06:46Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34093662672/job/101652372724",
-        "id": 101652372724,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-07T07:04:11Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-07T06:53:39Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34092632651/job/101649189903",
-        "id": 101649189903,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-07T06:50:43Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-07T06:54:29Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34092632651/job/101649189572",
-        "id": 101649189572,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-07T06:50:42Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-06T06:53:26Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34017577804/job/101444007936",
-        "id": 101444007936,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-06T06:51:07Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-06T06:38:51Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34016921152/job/101442209563",
-        "id": 101442209563,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-06T06:36:16Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-06T06:40:09Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34016921152/job/101442209457",
-        "id": 101442209457,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-06T06:36:15Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-05T06:52:37Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33950913480/job/101265376502",
-        "id": 101265376502,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-05T06:50:28Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-05T06:38:43Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33950252775/job/101263545789",
-        "id": 101263545789,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-05T06:35:53Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-05T06:39:45Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33950252775/job/101263545652",
-        "id": 101263545652,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-05T06:35:53Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-04T07:05:45Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33846473892/job/100939365856",
-        "id": 100939365856,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-04T06:56:19Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-04T06:47:04Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33845334741/job/100935863190",
-        "id": 100935863190,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-04T06:40:19Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-04T06:48:55Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33845334741/job/100935862959",
-        "id": 100935862959,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-04T06:40:19Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-03T06:58:29Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33725570555/job/100553662227",
-        "id": 100553662227,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-03T06:56:02Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-03T06:45:13Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33724398926/job/100550080322",
-        "id": 100550080322,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-03T06:41:30Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-03T06:44:33Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33724398926/job/100550080211",
-        "id": 100550080211,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-03T06:41:30Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-02T07:00:01Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33601238190/job/100155179927",
-        "id": 100155179927,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-02T06:57:43Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-02T06:48:58Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33600266873/job/100152194004",
-        "id": 100152194004,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-02T06:45:13Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-02T06:47:58Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33600266873/job/100152193706",
-        "id": 100152193706,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-02T06:45:13Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-01T06:59:15Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33479794729/job/99766646849",
-        "id": 99766646849,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-09-01T06:56:32Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-01T06:45:35Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33478767859/job/99763513225",
-        "id": 99763513225,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-09-01T06:42:28Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-09-01T06:46:25Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33478767859/job/99763513060",
-        "id": 99763513060,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-09-01T06:42:28Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-31T07:05:35Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33366628964/job/99408520505",
-        "id": 99408520505,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-08-31T07:02:27Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-31T06:52:29Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33365771089/job/99405992324",
-        "id": 99405992324,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-08-31T06:49:51Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-31T06:53:38Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33365771089/job/99405992120",
-        "id": 99405992120,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-08-31T06:49:51Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-30T06:52:53Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33297824701/job/99220413577",
-        "id": 99220413577,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-08-30T06:50:29Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-30T06:40:08Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33297272796/job/99218995873",
-        "id": 99218995873,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-08-30T06:36:14Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-30T06:38:55Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33297272796/job/99218995786",
-        "id": 99218995786,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-08-30T06:36:14Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-29T06:51:41Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33239384891/job/99065974331",
-        "id": 99065974331,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-08-29T06:49:10Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-29T06:37:38Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33238816522/job/99064471431",
-        "id": 99064471431,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-08-29T06:35:06Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-29T06:38:57Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33238816522/job/99064471285",
-        "id": 99064471285,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-08-29T06:35:06Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-28T10:07:53Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33162021362/job/98818481301",
-        "id": 98818481301,
-        "name": "keycloak-proxy-e2e",
-        "started_at": "2026-08-28T10:05:34Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-28T09:28:42Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33159343704/job/98809740093",
-        "id": 98809740093,
-        "name": "fleet-proxy-e2e",
-        "started_at": "2026-08-28T09:26:04Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-28T09:29:48Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33159343704/job/98809739801",
-        "id": 98809739801,
-        "name": "rulestead-main-canary",
-        "started_at": "2026-08-28T09:26:04Z",
-        "status": "completed"
-      },
-      {
-        "completed_at": "2026-08-28T03:20:45Z",
-        "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33138378827/job/98743503270",
-        "id": 98743503270,
+        "completed_at": "2026-10-19T19:26:21Z",
+        "conclusion": "skipped",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933769/job/118260184203",
+        "id": 118260184203,
         "name": "Publish to Hex.pm",
-        "started_at": "2026-08-28T03:16:26Z",
+        "started_at": "2026-10-19T19:26:22Z",
         "status": "completed"
       },
       {
-        "completed_at": "2026-08-28T03:16:23Z",
+        "completed_at": "2026-10-19T19:26:21Z",
         "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33138378827/job/98743464410",
-        "id": 98743464410,
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933769/job/118260000205",
+        "id": 118260000205,
         "name": "Release Please",
-        "started_at": "2026-08-28T03:16:12Z",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:30:12Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259999340",
+        "id": 118259999340,
+        "name": "phase73-reconciliation (27, 1.19.5, focused)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:25:58Z",
+        "conclusion": "skipped",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933864/job/118259999002",
+        "id": 118259999002,
+        "name": "rulestead-main-canary",
+        "started_at": "2026-10-19T19:25:59Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:28:51Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998839",
+        "id": 118259998839,
+        "name": "phase73-reconciliation (28, 1.19.5, evidence)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:46:29Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998780",
+        "id": 118259998780,
+        "name": "Phase 78 cold producer (OTP 28)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:30:34Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998728",
+        "id": 118259998728,
+        "name": "phase73-reconciliation (28, 1.19.5, focused)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:28:32Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998570",
+        "id": 118259998570,
+        "name": "phase73-reconciliation (28, 1.19.5, security)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:28:07Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998541",
+        "id": 118259998541,
+        "name": "phase73-reconciliation (27, 1.19.5, evidence)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:28:41Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998487",
+        "id": 118259998487,
+        "name": "package-consumers (28, 1.19.5)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:28:29Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998447",
+        "id": 118259998447,
+        "name": "phase73-reconciliation (27, 1.19.5, security)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:31:32Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998413",
+        "id": 118259998413,
+        "name": "security (28, 1.19.5)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:45:40Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998206",
+        "id": 118259998206,
+        "name": "Phase 78 cold producer (OTP 27)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:31:04Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998202",
+        "id": 118259998202,
+        "name": "security (27, 1.19.5)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:28:19Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824/job/118259998042",
+        "id": 118259998042,
+        "name": "package-consumers (27, 1.19.5)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:27:50Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933869/job/118259996910",
+        "id": 118259996910,
+        "name": "keycloak-proxy-e2e",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:27:54Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933761/job/118259996687",
+        "id": 118259996687,
+        "name": "demo-app (28, 1.19.5)",
+        "started_at": "2026-10-19T19:26:00Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:27:50Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933809/job/118259996671",
+        "id": 118259996671,
+        "name": "keycloak (28, 1.19.5)",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:28:35Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933864/job/118259996448",
+        "id": 118259996448,
+        "name": "fleet-proxy-e2e",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:28:01Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933808/job/118259996391",
+        "id": 118259996391,
+        "name": "fake-idp-e2e",
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-19T19:28:11Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933761/job/118259996133",
+        "id": 118259996133,
+        "name": "demo-app (27, 1.19.5)",
+        "started_at": "2026-10-19T19:26:01Z",
         "status": "completed"
       }
     ],
@@ -1488,120 +381,471 @@
           "security (27, 1.19.5)",
           "security (28, 1.19.5)"
         ],
-        "evidence": [],
-        "evidence_count": 0,
+        "evidence": [
+          {
+            "check_name": "security (27, 1.19.5)",
+            "check_run_id": 118259998202,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998202,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          },
+          {
+            "check_name": "security (28, 1.19.5)",
+            "check_run_id": 118259998413,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998413,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          }
+        ],
+        "evidence_count": 2,
         "owners": [
           "security-gates.yml"
         ],
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "state": "absent"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "state": "passed"
       },
       "mix ci.evidence": {
         "check_names": [
           "security (27, 1.19.5)",
           "security (28, 1.19.5)"
         ],
-        "evidence": [],
-        "evidence_count": 0,
+        "evidence": [
+          {
+            "check_name": "security (27, 1.19.5)",
+            "check_run_id": 118259998202,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998202,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          },
+          {
+            "check_name": "security (28, 1.19.5)",
+            "check_run_id": 118259998413,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998413,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          }
+        ],
+        "evidence_count": 2,
         "owners": [
           "security-gates.yml"
         ],
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "state": "absent"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "state": "passed"
       },
       "mix ci.ledger_loop": {
         "check_names": [
           "security (27, 1.19.5)",
           "security (28, 1.19.5)"
         ],
-        "evidence": [],
-        "evidence_count": 0,
+        "evidence": [
+          {
+            "check_name": "security (27, 1.19.5)",
+            "check_run_id": 118259998202,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998202,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          },
+          {
+            "check_name": "security (28, 1.19.5)",
+            "check_run_id": 118259998413,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998413,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          }
+        ],
+        "evidence_count": 2,
         "owners": [
           "security-gates.yml"
         ],
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "state": "absent"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "state": "passed"
       },
       "mix ci.package": {
         "check_names": [
           "security (27, 1.19.5)",
           "security (28, 1.19.5)"
         ],
-        "evidence": [],
-        "evidence_count": 0,
+        "evidence": [
+          {
+            "check_name": "security (27, 1.19.5)",
+            "check_run_id": 118259998202,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998202,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          },
+          {
+            "check_name": "security (28, 1.19.5)",
+            "check_run_id": 118259998413,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998413,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          }
+        ],
+        "evidence_count": 2,
         "owners": [
           "security-gates.yml"
         ],
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "state": "absent"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "state": "passed"
       },
       "mix ci.phase73.reconciliation": {
         "check_names": [
           "security (27, 1.19.5)",
           "security (28, 1.19.5)"
         ],
-        "evidence": [],
-        "evidence_count": 0,
+        "evidence": [
+          {
+            "check_name": "security (27, 1.19.5)",
+            "check_run_id": 118259998202,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998202,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          },
+          {
+            "check_name": "security (28, 1.19.5)",
+            "check_run_id": 118259998413,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998413,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          }
+        ],
+        "evidence_count": 2,
         "owners": [
           "security-gates.yml"
         ],
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "state": "absent"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "state": "passed"
       },
       "mix ci.security": {
         "check_names": [
           "security (27, 1.19.5)",
           "security (28, 1.19.5)"
         ],
-        "evidence": [],
-        "evidence_count": 0,
+        "evidence": [
+          {
+            "check_name": "security (27, 1.19.5)",
+            "check_run_id": 118259998202,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998202,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          },
+          {
+            "check_name": "security (28, 1.19.5)",
+            "check_run_id": 118259998413,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998413,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          }
+        ],
+        "evidence_count": 2,
         "owners": [
           "security-gates.yml"
         ],
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "state": "absent"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "state": "passed"
       },
       "mix ci.verify": {
         "check_names": [
           "security (27, 1.19.5)",
           "security (28, 1.19.5)"
         ],
-        "evidence": [],
-        "evidence_count": 0,
+        "evidence": [
+          {
+            "check_name": "security (27, 1.19.5)",
+            "check_run_id": 118259998202,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998202,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          },
+          {
+            "check_name": "security (28, 1.19.5)",
+            "check_run_id": 118259998413,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998413,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          }
+        ],
+        "evidence_count": 2,
         "owners": [
           "security-gates.yml"
         ],
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "state": "absent"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "state": "passed"
       },
       "mix qa": {
         "check_names": [
           "security (27, 1.19.5)",
           "security (28, 1.19.5)"
         ],
-        "evidence": [],
-        "evidence_count": 0,
+        "evidence": [
+          {
+            "check_name": "security (27, 1.19.5)",
+            "check_run_id": 118259998202,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998202,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          },
+          {
+            "check_name": "security (28, 1.19.5)",
+            "check_run_id": 118259998413,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998413,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          }
+        ],
+        "evidence_count": 2,
         "owners": [
           "security-gates.yml"
         ],
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "state": "absent"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "state": "passed"
       },
       "standalone defenses": {
         "check_names": [
           "security (27, 1.19.5)",
           "security (28, 1.19.5)"
         ],
-        "evidence": [],
-        "evidence_count": 0,
+        "evidence": [
+          {
+            "check_name": "security (27, 1.19.5)",
+            "check_run_id": 118259998202,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998202,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          },
+          {
+            "check_name": "security (28, 1.19.5)",
+            "check_run_id": 118259998413,
+            "check_suite_id": null,
+            "run_attempt": 1,
+            "workflow_job_id": 118259998413,
+            "workflow_path": ".github/workflows/security-gates.yml",
+            "workflow_run_id": 39310933824
+          }
+        ],
+        "evidence_count": 2,
         "owners": [
           "security-gates.yml"
         ],
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "state": "absent"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "state": "passed"
       }
     },
     "pull_requests": [
+      {
+        "base_ref": "main",
+        "base_sha": "ff6c0175db2dae3098c89fbed9836bed845d1ab5",
+        "draft": false,
+        "head_ref": "chore/retire-real-idp-canary",
+        "head_sha": "266df70ff5fa1c2e22a6673c3bac0aa243c00f0b",
+        "html_url": "https://github.com/szTheory/relyra/pull/58",
+        "number": 58,
+        "state": "closed",
+        "title": "chore(ci): retire the never-configured real IdP canary",
+        "updated_at": "2026-10-19T19:52:48Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "cc64eb4d07897fdc364cbf9e5efc4c760cae3fd2",
+        "draft": false,
+        "head_ref": "ci/drop-planning-marker",
+        "head_sha": "d3b7fd55156adc8b29de816fda103ef8cea3d0d8",
+        "html_url": "https://github.com/szTheory/relyra/pull/57",
+        "number": 57,
+        "state": "closed",
+        "title": "ci: drop the planning-only marker-push workaround",
+        "updated_at": "2026-10-19T19:52:52Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "05d5cc11277f2bcc1101829444d6a5d63e36ec72",
+        "draft": false,
+        "head_ref": "ci/release-gate",
+        "head_sha": "775efc009f12c368932e9f06e1f25e21b9fdaa0d",
+        "html_url": "https://github.com/szTheory/relyra/pull/56",
+        "number": 56,
+        "state": "closed",
+        "title": "ci(release): gate Hex publish on a green ci-gate for the release tree",
+        "updated_at": "2026-10-19T19:53:02Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "0cf3bc334840cd223ae6d81fcc81a086cffaaed1",
+        "draft": false,
+        "head_ref": "ci/hygiene-pins",
+        "head_sha": "18dce9f9537f33687b2e9b7d23928192f448b5ee",
+        "html_url": "https://github.com/szTheory/relyra/pull/55",
+        "number": 55,
+        "state": "closed",
+        "title": "ci: SHA-pin release workflows, npm ci, fix LiveAdmin endpoint flake",
+        "updated_at": "2026-10-19T19:52:58Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "24ba695b6e407136f65bd7fb84da2b516d22a51f",
+        "draft": false,
+        "head_ref": "ci/split-phase73-replay",
+        "head_sha": "6cbcd03d2672d3926e8303b67c9d710960b71f3f",
+        "html_url": "https://github.com/szTheory/relyra/pull/54",
+        "number": 54,
+        "state": "closed",
+        "title": "ci(security-gates): run the Phase 73 replay as parallel matrix legs",
+        "updated_at": "2026-10-19T19:53:08Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "6de90a82ffba6656a7536e1b3fac830d28fc1c7c",
+        "draft": false,
+        "head_ref": "ci/warm-mix-cache",
+        "head_sha": "689ce1b602ef3f7bed319699e4fadc666350c834",
+        "html_url": "https://github.com/szTheory/relyra/pull/53",
+        "number": 53,
+        "state": "closed",
+        "title": "ci(security-gates): add exact-key warm Mix cache to the PR lanes",
+        "updated_at": "2026-10-19T19:53:10Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "bc2e077ba45709777813c66cfaea8e287010b853",
+        "draft": false,
+        "head_ref": "ci/ci-gate-split",
+        "head_sha": "9ae5d7f59a23e1df4faaf40ad441e3c84ea1c178",
+        "html_url": "https://github.com/szTheory/relyra/pull/52",
+        "number": 52,
+        "state": "closed",
+        "title": "ci(security-gates): add ci-gate aggregator and split the security leg",
+        "updated_at": "2026-10-19T19:52:50Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "bc648e8e70ec8708c96c679576ec27099b19bd16",
+        "draft": false,
+        "head_ref": "ci/parallel-cold-receipt",
+        "head_sha": "351d1802394317987b4ec1dd2c1f2a928214dfdd",
+        "html_url": "https://github.com/szTheory/relyra/pull/51",
+        "number": 51,
+        "state": "closed",
+        "title": "ci(security-gates): run Phase 78 cold producers in parallel per OTP",
+        "updated_at": "2026-10-19T19:53:00Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "707e342fa0d568ad430f1aac6c49024f62d6a491",
+        "draft": false,
+        "head_ref": "ci/fast-pr-gates",
+        "head_sha": "d2b7a84810f18feb1a726a15180b107d71df72dc",
+        "html_url": "https://github.com/szTheory/relyra/pull/50",
+        "number": 50,
+        "state": "closed",
+        "title": "ci(security-gates): run cold receipt off the PR path; dedupe Phase 73 replay",
+        "updated_at": "2026-10-19T19:52:56Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "43db19edf0565d537b668f24e2d7ece7ef5a2d01",
+        "draft": false,
+        "head_ref": "ci/release-publish-job-setup",
+        "head_sha": "a0e51310243c69fa485a22afdec9535141f03997",
+        "html_url": "https://github.com/szTheory/relyra/pull/49",
+        "number": 49,
+        "state": "closed",
+        "title": "ci(release): prepare full history and demo deps before publish quality gate",
+        "updated_at": "2026-10-19T19:53:04Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "c130dc3267e96b420aa377935329ee88a832e9b0",
+        "draft": false,
+        "head_ref": "ci/security-gates-wall-clock",
+        "head_sha": "7ceee68262571cbad8b3c329bebabafab11d33b7",
+        "html_url": "https://github.com/szTheory/relyra/pull/48",
+        "number": 48,
+        "state": "closed",
+        "title": "ci(security-gates): parallel Phase 78 receipt; fix(deps): bandit 1.13.0",
+        "updated_at": "2026-10-19T19:53:06Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "7d03b0a341170576d794c2405ab79d98ba8fa02f",
+        "draft": false,
+        "head_ref": "fix/phase73-version-agnostic-mix-pin",
+        "head_sha": "2563dd58a9fdf655f8a2455e69054c629989bb9e",
+        "html_url": "https://github.com/szTheory/relyra/pull/47",
+        "number": 47,
+        "state": "closed",
+        "title": "test(73): let the reconciliation proof survive release version bumps",
+        "updated_at": "2026-10-19T20:10:28Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "06869f46217e167d9c5c8c6184ef7ac8fb539f2a",
+        "draft": false,
+        "head_ref": "release-please--branches--main",
+        "head_sha": "9682c63794e820fe7d6d4fceac0385de7e62b642",
+        "html_url": "https://github.com/szTheory/relyra/pull/46",
+        "number": 46,
+        "state": "closed",
+        "title": "chore(main): release 1.10.0",
+        "updated_at": "2026-10-16T00:14:03Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "e0540eda72a2542575992096cc027798f7bb49ca",
+        "draft": false,
+        "head_ref": "chore/pr44-history-reachability",
+        "head_sha": "0d0514fea5c666469650119264c45a8da33bf622",
+        "html_url": "https://github.com/szTheory/relyra/pull/45",
+        "number": 45,
+        "state": "closed",
+        "title": "chore: restore PR #44 commit ancestry on main",
+        "updated_at": "2026-10-15T12:26:05Z"
+      },
+      {
+        "base_ref": "main",
+        "base_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+        "draft": false,
+        "head_ref": "codex/v1.11-adopter-ready-42513dccd09c",
+        "head_sha": "e9bde4111942606153cc3a5de995b8eb15f31566",
+        "html_url": "https://github.com/szTheory/relyra/pull/44",
+        "number": 44,
+        "state": "closed",
+        "title": "v1.11 First-Adopter Twin closeout",
+        "updated_at": "2026-10-19T19:53:14Z"
+      },
       {
         "base_ref": "main",
         "base_sha": "8c71a3b5977feeebcdf94bb4fc7a33b2691e8b3d",
@@ -1936,7 +1180,7 @@
         "number": 16,
         "state": "closed",
         "title": "docs: complete deferred housekeeping (jtbd + planning)",
-        "updated_at": "2026-05-28T15:11:06Z"
+        "updated_at": "2026-10-19T19:53:16Z"
       },
       {
         "base_ref": "main",
@@ -1960,7 +1204,7 @@
         "number": 14,
         "state": "closed",
         "title": "ci: automate release-please PR checks and CVE assignment polling",
-        "updated_at": "2026-05-28T14:49:01Z"
+        "updated_at": "2026-10-19T19:52:44Z"
       },
       {
         "base_ref": "main",
@@ -1972,7 +1216,7 @@
         "number": 13,
         "state": "closed",
         "title": "fix(test): isolate replay store and warm FakeIdP keypair",
-        "updated_at": "2026-05-28T14:37:09Z"
+        "updated_at": "2026-10-19T20:10:30Z"
       },
       {
         "base_ref": "main",
@@ -1984,7 +1228,7 @@
         "number": 12,
         "state": "closed",
         "title": "docs(planning): record Hex 1.5.1 maintenance closure",
-        "updated_at": "2026-05-28T12:39:58Z"
+        "updated_at": "2026-10-19T19:53:20Z"
       },
       {
         "base_ref": "main",
@@ -2008,7 +1252,7 @@
         "number": 10,
         "state": "closed",
         "title": "fix(ci): release-please trigger for 1.5.1",
-        "updated_at": "2026-05-28T12:09:27Z"
+        "updated_at": "2026-10-19T20:10:26Z"
       },
       {
         "base_ref": "main",
@@ -2020,7 +1264,7 @@
         "number": 9,
         "state": "closed",
         "title": "chore: maintenance prep for 1.5.1 (deps + planning)",
-        "updated_at": "2026-05-28T12:01:03Z"
+        "updated_at": "2026-10-19T19:52:46Z"
       },
       {
         "base_ref": "main",
@@ -2032,7 +1276,7 @@
         "number": 8,
         "state": "closed",
         "title": "ci: enforce branch protection rules for administrators",
-        "updated_at": "2026-05-28T11:34:50Z"
+        "updated_at": "2026-10-19T19:52:54Z"
       },
       {
         "base_ref": "main",
@@ -2121,49 +1365,14 @@
     ],
     "remote_branches": [
       {
-        "name": "chore/housekeeping-ci-cve",
-        "protected": false,
-        "sha": "162a3704c9bc42d7b56fb50c3c9ba1bb85949636"
-      },
-      {
-        "name": "chore/maintenance-1.5.1",
-        "protected": false,
-        "sha": "b8f2693e57851cf877c0384eccf75a60cf9d69e8"
-      },
-      {
-        "name": "ci/enforce-admins-protection",
-        "protected": false,
-        "sha": "6b0fb578b8ef97e6b57eca89bd17e71d0b505d6b"
-      },
-      {
-        "name": "docs/housekeeping-wave3",
-        "protected": false,
-        "sha": "378ce37a32e508d160f5b8b3743cf0754db3838b"
-      },
-      {
         "name": "docs/phase-50-state-closeout",
         "protected": false,
         "sha": "d0160fbb3e95354a9e39ff72e5a7fa831ec20d36"
       },
       {
-        "name": "docs/planning-1-5-1-closure",
-        "protected": false,
-        "sha": "7b7107ebe6af4e8f79d041faed2cc8b288187276"
-      },
-      {
         "name": "docs/planning-publish-gap-closed",
         "protected": false,
         "sha": "70aabe60ee84c5c8c525a62aebc51653beefcd71"
-      },
-      {
-        "name": "fix/ci-release-1-5-1-trigger",
-        "protected": false,
-        "sha": "7303b3659883458102e97d691540736b3ce2ff64"
-      },
-      {
-        "name": "fix/test-logout-replay-flake",
-        "protected": false,
-        "sha": "d2bb6bf6c957162598d47e2e31657be92fea646d"
       },
       {
         "name": "fix/68-demo-docker-dev-boot",
@@ -2173,1206 +1382,338 @@
       {
         "name": "main",
         "protected": true,
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e"
       }
     ],
     "statuses": [],
     "workflow_jobs": [
       {
-        "check_run_id": 110253385695,
-        "completed_at": "2026-10-01T06:50:08Z",
+        "check_run_id": 118259998042,
+        "completed_at": "2026-10-19T19:28:19Z",
         "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "id": 110253385695,
-        "name": "rulestead-main-canary",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998042,
+        "name": "package-consumers (27, 1.19.5)",
         "run_attempt": 1,
-        "run_id": 36826546468,
-        "started_at": "2026-10-01T06:46:10Z",
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
         "status": "completed",
-        "workflow_path": ".github/workflows/fleet-proxy-e2e.yml"
+        "workflow_path": ".github/workflows/security-gates.yml"
       },
       {
-        "check_run_id": 110253385876,
-        "completed_at": "2026-10-01T06:48:57Z",
+        "check_run_id": 118259998202,
+        "completed_at": "2026-10-19T19:31:04Z",
         "conclusion": "success",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "id": 110253385876,
-        "name": "fleet-proxy-e2e",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998202,
+        "name": "security (27, 1.19.5)",
         "run_attempt": 1,
-        "run_id": 36826546468,
-        "started_at": "2026-10-01T06:46:10Z",
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
         "status": "completed",
-        "workflow_path": ".github/workflows/fleet-proxy-e2e.yml"
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259998206,
+        "completed_at": "2026-10-19T19:45:40Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998206,
+        "name": "Phase 78 cold producer (OTP 27)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259998413,
+        "completed_at": "2026-10-19T19:31:32Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998413,
+        "name": "security (28, 1.19.5)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259998447,
+        "completed_at": "2026-10-19T19:28:29Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998447,
+        "name": "phase73-reconciliation (27, 1.19.5, security)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259998487,
+        "completed_at": "2026-10-19T19:28:41Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998487,
+        "name": "package-consumers (28, 1.19.5)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259998541,
+        "completed_at": "2026-10-19T19:28:07Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998541,
+        "name": "phase73-reconciliation (27, 1.19.5, evidence)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259998570,
+        "completed_at": "2026-10-19T19:28:32Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998570,
+        "name": "phase73-reconciliation (28, 1.19.5, security)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259998728,
+        "completed_at": "2026-10-19T19:30:34Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998728,
+        "name": "phase73-reconciliation (28, 1.19.5, focused)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259998780,
+        "completed_at": "2026-10-19T19:46:29Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998780,
+        "name": "Phase 78 cold producer (OTP 28)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259998839,
+        "completed_at": "2026-10-19T19:28:51Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259998839,
+        "name": "phase73-reconciliation (28, 1.19.5, evidence)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118259999340,
+        "completed_at": "2026-10-19T19:30:12Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118259999340,
+        "name": "phase73-reconciliation (27, 1.19.5, focused)",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:26:01Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118262686271,
+        "completed_at": "2026-10-19T19:31:37Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118262686271,
+        "name": "ci-gate",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:31:35Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
+      },
+      {
+        "check_run_id": 118269819100,
+        "completed_at": "2026-10-19T19:47:49Z",
+        "conclusion": "success",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "id": 118269819100,
+        "name": "Phase 78 cold-state receipt",
+        "run_attempt": 1,
+        "run_id": 39310933824,
+        "started_at": "2026-10-19T19:46:31Z",
+        "status": "completed",
+        "workflow_path": ".github/workflows/security-gates.yml"
       }
     ],
     "workflow_runs": [
       {
-        "check_suite_id": 99747081635,
+        "check_suite_id": 106536074492,
         "conclusion": "success",
-        "event": "schedule",
+        "event": "workflow_run",
         "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36828106677",
-        "id": 36828106677,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39313956427",
+        "id": 39313956427,
+        "name": "Release Please Auto Merge",
+        "path": ".github/workflows/release-please-automerge.yml",
         "run_attempt": 1,
-        "run_started_at": "2026-10-01T07:03:01Z",
+        "run_started_at": "2026-10-19T19:47:52Z",
         "status": "completed",
-        "updated_at": "2026-10-01T07:05:55Z",
-        "workflow_id": 344269450
+        "updated_at": "2026-10-19T19:48:00Z",
+        "workflow_id": 284581812
       },
       {
-        "check_suite_id": 99742845265,
+        "check_suite_id": 106527777298,
         "conclusion": "success",
-        "event": "schedule",
+        "event": "workflow_run",
         "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36826546468",
-        "id": 36826546468,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310996912",
+        "id": 39310996912,
+        "name": "Release Please PR Checks",
+        "path": ".github/workflows/release-please-pr-checks.yml",
         "run_attempt": 1,
-        "run_started_at": "2026-10-01T06:46:07Z",
+        "run_started_at": "2026-10-19T19:26:25Z",
         "status": "completed",
-        "updated_at": "2026-10-01T06:50:09Z",
-        "workflow_id": 344269448
+        "updated_at": "2026-10-19T19:26:33Z",
+        "workflow_id": 284961548
       },
       {
-        "check_suite_id": 99339410726,
+        "check_suite_id": 106527601151,
         "conclusion": "success",
-        "event": "schedule",
+        "event": "push",
         "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36681462517",
-        "id": 36681462517,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-30T07:02:30Z",
-        "status": "completed",
-        "updated_at": "2026-09-30T07:04:55Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 99335107041,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36679875791",
-        "id": 36679875791,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-30T06:45:08Z",
-        "status": "completed",
-        "updated_at": "2026-09-30T06:48:56Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 98929355191,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36534341395",
-        "id": 36534341395,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-29T07:02:45Z",
-        "status": "completed",
-        "updated_at": "2026-09-29T07:05:13Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 98924813722,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36532687270",
-        "id": 36532687270,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-29T06:44:46Z",
-        "status": "completed",
-        "updated_at": "2026-09-29T06:48:47Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 98530954716,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36390496866",
-        "id": 36390496866,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-28T07:13:34Z",
-        "status": "completed",
-        "updated_at": "2026-09-28T07:16:17Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 98526972806,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36389026450",
-        "id": 36389026450,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-28T06:57:01Z",
-        "status": "completed",
-        "updated_at": "2026-09-28T07:01:00Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 98298964729,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36301647052",
-        "id": 36301647052,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-27T06:57:54Z",
-        "status": "completed",
-        "updated_at": "2026-09-27T07:00:21Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 98296840939,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36300806701",
-        "id": 36300806701,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-27T06:40:47Z",
-        "status": "completed",
-        "updated_at": "2026-09-27T06:44:35Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 98101097685,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36225219500",
-        "id": 36225219500,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-26T06:55:43Z",
-        "status": "completed",
-        "updated_at": "2026-09-26T06:58:08Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 98098982202,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36224387010",
-        "id": 36224387010,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-26T06:38:56Z",
-        "status": "completed",
-        "updated_at": "2026-09-26T06:43:20Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 97772106715,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36105445993",
-        "id": 36105445993,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-25T06:59:57Z",
-        "status": "completed",
-        "updated_at": "2026-09-25T07:02:24Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 97768609384,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/36104126482",
-        "id": 36104126482,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-25T06:43:02Z",
-        "status": "completed",
-        "updated_at": "2026-09-25T06:46:06Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 97392571804,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35967184919",
-        "id": 35967184919,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-24T06:59:04Z",
-        "status": "completed",
-        "updated_at": "2026-09-24T07:01:41Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 97388841214,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35965785851",
-        "id": 35965785851,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-24T06:42:20Z",
-        "status": "completed",
-        "updated_at": "2026-09-24T06:46:21Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 97013732710,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35829329849",
-        "id": 35829329849,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-23T06:58:47Z",
-        "status": "completed",
-        "updated_at": "2026-09-23T07:01:41Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 97010093645,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35827988179",
-        "id": 35827988179,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-23T06:42:08Z",
-        "status": "completed",
-        "updated_at": "2026-09-23T06:46:26Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 96647682354,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35697322413",
-        "id": 35697322413,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-22T06:58:49Z",
-        "status": "completed",
-        "updated_at": "2026-09-22T07:01:20Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 96644085627,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35695994880",
-        "id": 35695994880,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-22T06:41:40Z",
-        "status": "completed",
-        "updated_at": "2026-09-22T06:45:48Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 96304004431,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35571443256",
-        "id": 35571443256,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-21T07:07:19Z",
-        "status": "completed",
-        "updated_at": "2026-09-21T07:09:55Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 96301059036,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35570339981",
-        "id": 35570339981,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-21T06:52:30Z",
-        "status": "completed",
-        "updated_at": "2026-09-21T06:56:05Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 96113771670,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35495427945",
-        "id": 35495427945,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-20T06:54:00Z",
-        "status": "completed",
-        "updated_at": "2026-09-20T06:56:21Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 96112059315,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35494719634",
-        "id": 35494719634,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-20T06:37:40Z",
-        "status": "completed",
-        "updated_at": "2026-09-20T06:41:44Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 95944904693,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35427821544",
-        "id": 35427821544,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-19T06:53:13Z",
-        "status": "completed",
-        "updated_at": "2026-09-19T06:55:26Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 95943138593,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35427107517",
-        "id": 35427107517,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-19T06:37:27Z",
-        "status": "completed",
-        "updated_at": "2026-09-19T06:41:08Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 95647594771,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35317132118",
-        "id": 35317132118,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-18T06:56:57Z",
-        "status": "completed",
-        "updated_at": "2026-09-18T06:59:26Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 95644437657,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35315938931",
-        "id": 35315938931,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-18T06:40:56Z",
-        "status": "completed",
-        "updated_at": "2026-09-18T06:44:58Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 95306432684,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35192282408",
-        "id": 35192282408,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-17T06:58:44Z",
-        "status": "completed",
-        "updated_at": "2026-09-17T07:01:09Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 95303022410,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35191010240",
-        "id": 35191010240,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-17T06:42:18Z",
-        "status": "completed",
-        "updated_at": "2026-09-17T06:45:59Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 94960291461,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35066190412",
-        "id": 35066190412,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-16T06:58:19Z",
-        "status": "completed",
-        "updated_at": "2026-09-16T07:00:50Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 94956910037,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/35064922677",
-        "id": 35064922677,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-16T06:42:10Z",
-        "status": "completed",
-        "updated_at": "2026-09-16T06:45:56Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 94612303932,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34939335489",
-        "id": 34939335489,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-15T06:57:49Z",
-        "status": "completed",
-        "updated_at": "2026-09-15T07:00:06Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 94609097283,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34938127188",
-        "id": 34938127188,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-15T06:42:11Z",
-        "status": "completed",
-        "updated_at": "2026-09-15T06:46:13Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 94281344754,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34816234603",
-        "id": 34816234603,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-14T07:05:31Z",
-        "status": "completed",
-        "updated_at": "2026-09-14T07:08:02Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 94278733562,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34815216703",
-        "id": 34815216703,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-14T06:51:31Z",
-        "status": "completed",
-        "updated_at": "2026-09-14T06:55:40Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 94101626738,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34743946059",
-        "id": 34743946059,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-13T06:55:26Z",
-        "status": "completed",
-        "updated_at": "2026-09-13T06:57:52Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 94100201797,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34743344925",
-        "id": 34743344925,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-13T06:40:57Z",
-        "status": "completed",
-        "updated_at": "2026-09-13T06:44:25Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 93940814112,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34679220733",
-        "id": 34679220733,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-12T06:51:37Z",
-        "status": "completed",
-        "updated_at": "2026-09-12T06:54:03Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 93939217757,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34678566838",
-        "id": 34678566838,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-12T06:36:23Z",
-        "status": "completed",
-        "updated_at": "2026-09-12T06:40:12Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 93652840775,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34572055805",
-        "id": 34572055805,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-11T06:55:52Z",
-        "status": "completed",
-        "updated_at": "2026-09-11T06:58:23Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 93649821576,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34570896297",
-        "id": 34570896297,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-11T06:39:55Z",
-        "status": "completed",
-        "updated_at": "2026-09-11T06:43:45Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 93316081673,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34447516810",
-        "id": 34447516810,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-10T06:56:30Z",
-        "status": "completed",
-        "updated_at": "2026-09-10T06:58:54Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 93312813243,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34446267675",
-        "id": 34446267675,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-10T06:40:29Z",
-        "status": "completed",
-        "updated_at": "2026-09-10T06:44:24Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 92972969414,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34321377185",
-        "id": 34321377185,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-09T06:56:21Z",
-        "status": "completed",
-        "updated_at": "2026-09-09T06:58:41Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 92969795709,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34320178480",
-        "id": 34320178480,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-09T06:40:59Z",
-        "status": "completed",
-        "updated_at": "2026-09-09T06:45:05Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 92632875860,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34196887307",
-        "id": 34196887307,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-08T06:56:03Z",
-        "status": "completed",
-        "updated_at": "2026-09-08T06:58:32Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 92629685325,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34195690679",
-        "id": 34195690679,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-08T06:40:20Z",
-        "status": "completed",
-        "updated_at": "2026-09-08T06:43:44Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 92360533356,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34093662672",
-        "id": 34093662672,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-07T07:04:09Z",
-        "status": "completed",
-        "updated_at": "2026-09-07T07:06:47Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 92357802569,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34092632651",
-        "id": 34092632651,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-07T06:50:40Z",
-        "status": "completed",
-        "updated_at": "2026-09-07T06:54:29Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 92171907808,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34017577804",
-        "id": 34017577804,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-06T06:51:05Z",
-        "status": "completed",
-        "updated_at": "2026-09-06T06:53:27Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 92170358835,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/34016921152",
-        "id": 34016921152,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-06T06:36:13Z",
-        "status": "completed",
-        "updated_at": "2026-09-06T06:40:09Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 92007513605,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33950913480",
-        "id": 33950913480,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-05T06:50:26Z",
-        "status": "completed",
-        "updated_at": "2026-09-05T06:52:37Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 92005920689,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33950252775",
-        "id": 33950252775,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-05T06:35:51Z",
-        "status": "completed",
-        "updated_at": "2026-09-05T06:39:46Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 91727107809,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33846473892",
-        "id": 33846473892,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-04T06:56:17Z",
-        "status": "completed",
-        "updated_at": "2026-09-04T07:05:46Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 91724041006,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33845334741",
-        "id": 33845334741,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-04T06:40:16Z",
-        "status": "completed",
-        "updated_at": "2026-09-04T06:48:55Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 91395925063,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33725570555",
-        "id": 33725570555,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-03T06:56:00Z",
-        "status": "completed",
-        "updated_at": "2026-09-03T06:58:29Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 91392857838,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33724398926",
-        "id": 33724398926,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-03T06:41:28Z",
-        "status": "completed",
-        "updated_at": "2026-09-03T06:45:14Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 91052671059,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33601238190",
-        "id": 33601238190,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-02T06:57:41Z",
-        "status": "completed",
-        "updated_at": "2026-09-02T07:00:02Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 91050069122,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33600266873",
-        "id": 33600266873,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-02T06:45:10Z",
-        "status": "completed",
-        "updated_at": "2026-09-02T06:48:59Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 90718554458,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33479794729",
-        "id": 33479794729,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-01T06:56:29Z",
-        "status": "completed",
-        "updated_at": "2026-09-01T06:59:16Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 90715797089,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33478767859",
-        "id": 33478767859,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-09-01T06:42:26Z",
-        "status": "completed",
-        "updated_at": "2026-09-01T06:46:25Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 90408622657,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33366628964",
-        "id": 33366628964,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-31T07:02:24Z",
-        "status": "completed",
-        "updated_at": "2026-08-31T07:05:35Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 90406296630,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33365771089",
-        "id": 33365771089,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-31T06:49:48Z",
-        "status": "completed",
-        "updated_at": "2026-08-31T06:53:39Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 90234225698,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33297824701",
-        "id": 33297824701,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-30T06:50:27Z",
-        "status": "completed",
-        "updated_at": "2026-08-30T06:52:54Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 90232889333,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33297272796",
-        "id": 33297272796,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-30T06:36:11Z",
-        "status": "completed",
-        "updated_at": "2026-08-30T06:40:09Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 90085459653,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33239384891",
-        "id": 33239384891,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-29T06:49:07Z",
-        "status": "completed",
-        "updated_at": "2026-08-29T06:51:41Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 90084046012,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33238816522",
-        "id": 33238816522,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-29T06:35:04Z",
-        "status": "completed",
-        "updated_at": "2026-08-29T06:38:58Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 89867784628,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33162021362",
-        "id": 33162021362,
-        "name": "keycloak-proxy-e2e",
-        "path": ".github/workflows/keycloak-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-28T10:05:32Z",
-        "status": "completed",
-        "updated_at": "2026-08-28T10:07:54Z",
-        "workflow_id": 344269450
-      },
-      {
-        "check_suite_id": 89860132227,
-        "conclusion": "success",
-        "event": "schedule",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33159343704",
-        "id": 33159343704,
-        "name": "fleet-proxy-e2e",
-        "path": ".github/workflows/fleet-proxy-e2e.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-28T09:26:02Z",
-        "status": "completed",
-        "updated_at": "2026-08-28T09:29:48Z",
-        "workflow_id": 344269448
-      },
-      {
-        "check_suite_id": 89802697431,
-        "conclusion": null,
-        "event": "workflow_dispatch",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33138812802",
-        "id": 33138812802,
-        "name": "CVE Advisory Check",
-        "path": ".github/workflows/cve-advisory-check.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-28T03:24:51Z",
-        "status": "queued",
-        "updated_at": "2026-08-28T03:24:51Z",
-        "workflow_id": 284961546
-      },
-      {
-        "check_suite_id": 89802187860,
-        "conclusion": null,
-        "event": "workflow_dispatch",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33138627961",
-        "id": 33138627961,
-        "name": "CVE Advisory Check",
-        "path": ".github/workflows/cve-advisory-check.yml",
-        "run_attempt": 1,
-        "run_started_at": "2026-08-28T03:21:06Z",
-        "status": "queued",
-        "updated_at": "2026-08-28T03:21:06Z",
-        "workflow_id": 284961546
-      },
-      {
-        "check_suite_id": 89801503627,
-        "conclusion": "success",
-        "event": "workflow_dispatch",
-        "head_branch": "main",
-        "head_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-        "html_url": "https://github.com/szTheory/relyra/actions/runs/33138378827",
-        "id": 33138378827,
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933769",
+        "id": 39310933769,
         "name": "Release Please",
         "path": ".github/workflows/release-please.yml",
         "run_attempt": 1,
-        "run_started_at": "2026-08-28T03:16:06Z",
+        "run_started_at": "2026-10-19T19:25:58Z",
         "status": "completed",
-        "updated_at": "2026-08-28T03:20:46Z",
+        "updated_at": "2026-10-19T19:26:22Z",
         "workflow_id": 273365232
+      },
+      {
+        "check_suite_id": 106527601258,
+        "conclusion": "success",
+        "event": "push",
+        "head_branch": "main",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933808",
+        "id": 39310933808,
+        "name": "demo-app-e2e",
+        "path": ".github/workflows/demo-app-e2e.yml",
+        "run_attempt": 1,
+        "run_started_at": "2026-10-19T19:25:58Z",
+        "status": "completed",
+        "updated_at": "2026-10-19T19:28:02Z",
+        "workflow_id": 295827543
+      },
+      {
+        "check_suite_id": 106527601284,
+        "conclusion": "success",
+        "event": "push",
+        "head_branch": "main",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933809",
+        "id": 39310933809,
+        "name": "adoption-external-idp",
+        "path": ".github/workflows/adoption-external-idp.yml",
+        "run_attempt": 1,
+        "run_started_at": "2026-10-19T19:25:58Z",
+        "status": "completed",
+        "updated_at": "2026-10-19T19:27:50Z",
+        "workflow_id": 285169644
+      },
+      {
+        "check_suite_id": 106527601430,
+        "conclusion": "success",
+        "event": "push",
+        "head_branch": "main",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933869",
+        "id": 39310933869,
+        "name": "keycloak-proxy-e2e",
+        "path": ".github/workflows/keycloak-proxy-e2e.yml",
+        "run_attempt": 1,
+        "run_started_at": "2026-10-19T19:25:58Z",
+        "status": "completed",
+        "updated_at": "2026-10-19T19:27:51Z",
+        "workflow_id": 344269450
+      },
+      {
+        "check_suite_id": 106527601144,
+        "conclusion": "success",
+        "event": "push",
+        "head_branch": "main",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933761",
+        "id": 39310933761,
+        "name": "demo-app-ci",
+        "path": ".github/workflows/demo-app-ci.yml",
+        "run_attempt": 1,
+        "run_started_at": "2026-10-19T19:25:58Z",
+        "status": "completed",
+        "updated_at": "2026-10-19T19:28:12Z",
+        "workflow_id": 295355031
+      },
+      {
+        "check_suite_id": 106527601419,
+        "conclusion": "success",
+        "event": "push",
+        "head_branch": "main",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933864",
+        "id": 39310933864,
+        "name": "fleet-proxy-e2e",
+        "path": ".github/workflows/fleet-proxy-e2e.yml",
+        "run_attempt": 1,
+        "run_started_at": "2026-10-19T19:25:58Z",
+        "status": "completed",
+        "updated_at": "2026-10-19T19:28:35Z",
+        "workflow_id": 344269448
+      },
+      {
+        "check_suite_id": 106527601292,
+        "conclusion": "success",
+        "event": "push",
+        "head_branch": "main",
+        "head_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+        "html_url": "https://github.com/szTheory/relyra/actions/runs/39310933824",
+        "id": 39310933824,
+        "name": "security-gates",
+        "path": ".github/workflows/security-gates.yml",
+        "run_attempt": 1,
+        "run_started_at": "2026-10-19T19:25:58Z",
+        "status": "completed",
+        "updated_at": "2026-10-19T19:47:50Z",
+        "workflow_id": 266451586
       }
     ],
     "workflows": [
@@ -3391,8 +1732,8 @@
         "id": 284581811,
         "name": "Branch Protection Apply",
         "path": ".github/workflows/branch-protection-drift.yml",
-        "state": "disabled",
-        "updated_at": "2026-08-19T02:56:30.000-04:00"
+        "state": "active",
+        "updated_at": "2026-10-18T20:55:13.000-04:00"
       },
       {
         "created_at": "2026-05-28T10:49:03.000-04:00",
@@ -3438,15 +1779,6 @@
         "path": ".github/workflows/keycloak-proxy-e2e.yml",
         "state": "active",
         "updated_at": "2026-08-27T23:07:07.000-04:00"
-      },
-      {
-        "created_at": "2026-05-28T21:41:54.000-04:00",
-        "html_url": "https://github.com/szTheory/relyra/blob/main/.github/workflows/planning-pr-checks.yml",
-        "id": 285255168,
-        "name": "Planning PR Checks",
-        "path": ".github/workflows/planning-pr-checks.yml",
-        "state": "active",
-        "updated_at": "2026-05-28T21:50:08.000-04:00"
       },
       {
         "created_at": "2026-05-08T12:07:39.000-04:00",
@@ -3507,56 +1839,20 @@
   "local": {
     "branches": [
       {
-        "name": "docs/phase-50-state-closeout",
-        "sha": "d0160fbb3e95354a9e39ff72e5a7fa831ec20d36"
-      },
-      {
-        "name": "docs/planning-publish-gap-closed",
-        "sha": "70aabe60ee84c5c8c525a62aebc51653beefcd71"
-      },
-      {
-        "name": "fix/68-demo-docker-dev-boot",
-        "sha": "69573536203298c8b62ff57d8d3d73f782a7f608"
-      },
-      {
-        "name": "gsd/phase-73-gap-closure",
-        "sha": "f476efa63b50dbe16ddb6bdaa8e511c245d739f9"
-      },
-      {
-        "name": "keep/pat-free-release-note",
-        "sha": "bebd4f3d5f900e1a554300d51f748c26180f8b0d"
+        "name": "docs/phase79-closeout",
+        "sha": "f46e501bd52566145eceff4793f254ef15c97904"
       },
       {
         "name": "main",
-        "sha": "f8ad6c62b6abb8ecad62533da5b92129725617e6"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e"
       },
       {
-        "name": "release-please--branches--main",
-        "sha": "748c0adb772145463702a1c9c3d15b2a1d96f358"
-      },
-      {
-        "name": "origin/chore/housekeeping-ci-cve",
-        "sha": "162a3704c9bc42d7b56fb50c3c9ba1bb85949636"
-      },
-      {
-        "name": "origin/chore/maintenance-1.5.1",
-        "sha": "b8f2693e57851cf877c0384eccf75a60cf9d69e8"
-      },
-      {
-        "name": "origin/ci/enforce-admins-protection",
-        "sha": "6b0fb578b8ef97e6b57eca89bd17e71d0b505d6b"
-      },
-      {
-        "name": "origin/docs/housekeeping-wave3",
-        "sha": "378ce37a32e508d160f5b8b3743cf0754db3838b"
+        "name": "origin",
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e"
       },
       {
         "name": "origin/docs/phase-50-state-closeout",
         "sha": "d0160fbb3e95354a9e39ff72e5a7fa831ec20d36"
-      },
-      {
-        "name": "origin/docs/planning-1-5-1-closure",
-        "sha": "7b7107ebe6af4e8f79d041faed2cc8b288187276"
       },
       {
         "name": "origin/docs/planning-publish-gap-closed",
@@ -3567,16 +1863,8 @@
         "sha": "69573536203298c8b62ff57d8d3d73f782a7f608"
       },
       {
-        "name": "origin/fix/ci-release-1-5-1-trigger",
-        "sha": "7303b3659883458102e97d691540736b3ce2ff64"
-      },
-      {
-        "name": "origin/fix/test-logout-replay-flake",
-        "sha": "d2bb6bf6c957162598d47e2e31657be92fea646d"
-      },
-      {
         "name": "origin/main",
-        "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837"
+        "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e"
       }
     ],
     "ignored_generated_candidates": [
@@ -3589,215 +1877,29 @@
         "disposition": "inspect only; no cleanup authority",
         "owner": "unknown",
         "path": "deps/"
-      },
-      {
-        "disposition": "inspect only; no cleanup authority",
-        "owner": "unknown",
-        "path": "node_modules/"
-      },
-      {
-        "disposition": "inspect only; no cleanup authority",
-        "owner": "unknown",
-        "path": "tmp/"
       }
     ],
-    "tracked_edits": [
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "gsd-workflow",
-        "path": ".planning/STATE.md"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-CLOSEOUT.md"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-INVENTORY.md"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-CAPTURE.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-DESIRED.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-PROTECTION-ROLLBACK.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-REMOTE-BATCH.md"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-RISKS.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "phase-79",
-        "path": ".planning/phases/79-adopter-ready-closeout/79-VALIDATION.md"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": " M",
-        "owner": "gsd-workflow",
-        "path": ".planning/state.json"
-      }
-    ],
-    "tracked_path_count": 1320,
-    "untracked_paths": [
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".gsd/dispatch-isolation-sentinel.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/milestone.lock"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/research/.cache/37ff52e086866494f11f61caccefe2f2b775b5ea7e8406bbbbce3170c6eb5f7d.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/research/.cache/3ce76252e6ac3857577da8040e2a2ec15089e09f6776cf32788db99d3c2adeff.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/research/.cache/4ab0b34aeedba5bed1649d99aeb0dfbfb3479cd2ebc3d7ec33a9a813abdb57fb.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/research/.cache/8c666556950364f3db857bbfca136661b0dbcacbde62dfe06c7a703b74ffd5d7.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/research/.cache/95d0cbcf56e706688dc7e449040e93913cd71e4d9888cd2e6f19fc00ad6089cf.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/research/.cache/9fe057406625d2df3a5d4b2122228a3784e29f64ce315351990487846737d762.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/research/.cache/ab2d85f7d0b0c2c5663c5f40cbc6bfbd28fec5d53b0a1c3ca7158dad13b50f76.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/research/.cache/c518e4b194e8451f4e5c8c27b1813ee0761a2c8d12aa391d9650569857c90d7b.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": ".planning/research/.cache/d57a659f2c1103294a88312d647e2925e17f8308a1ddf90694bceed899d439e4.json"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "maintainer",
-        "path": ".tool-versions"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": "scripts/__pycache__/capture_phase79_protection.cpython-314.pyc"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": "scripts/__pycache__/collect_phase79_inventory.cpython-314.pyc"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": "tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/CHECKSUM"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": "tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/VERSION"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": "tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/contents.tar.gz"
-      },
-      {
-        "disposition": "preserve; no cleanup authority",
-        "git_state": "??",
-        "owner": "unknown",
-        "path": "tmp_5AC9BEC9C49ECD6F2C077F96F07226D381F28512D8A4F7186985311A17205E58/metadata.config"
-      }
-    ],
+    "tracked_edits": [],
+    "tracked_path_count": 1325,
+    "untracked_paths": [],
     "worktrees": [
       {
-        "branch": "refs/heads/gsd/phase-73-gap-closure",
+        "branch": "refs/heads/docs/phase79-closeout",
         "detached": false,
         "disposition": "preserve; confirm owner before any cleanup",
-        "head": "f476efa63b50dbe16ddb6bdaa8e511c245d739f9",
+        "head": "f46e501bd52566145eceff4793f254ef15c97904",
         "owner": "unknown",
-        "path": "/Users/jon/projects/relyra"
+        "path": "/private/tmp/claude-501/-Users-jon-projects-relyra/bf731493-3364-4000-bbc4-55216fadd3ea/scratchpad/fixclone"
       }
     ]
   },
   "observation": {
-    "main_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+    "main_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
     "ref": "refs/heads/main",
-    "revalidated_sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+    "revalidated_sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
     "source": "GET repos/szTheory/relyra/git/ref/heads/main"
   },
-  "observed_at": "2026-10-01T12:07:59Z",
+  "observed_at": "2026-10-19T20:19:25Z",
   "repository": {
     "name": "szTheory/relyra",
     "source": "git remote origin"
@@ -3806,7 +1908,7 @@
   "sources": {
     "branch_protection": {
       "access_status": "allowed",
-      "completeness": "incomplete",
+      "completeness": "complete",
       "endpoint": "branches/main/protection",
       "failure_status": null,
       "item_count": 1,
@@ -3823,41 +1925,35 @@
     "check_runs": {
       "access_status": "allowed",
       "completeness": "complete",
-      "endpoint": "commits/c786a9890f2f99f0dd98f89a1d9713db7c486837/check-runs",
-      "item_count": 107,
-      "page_count": 2,
+      "endpoint": "commits/ed2d2cf1c898207f0d825ce9053979b14055e27e/check-runs",
+      "item_count": 25,
+      "page_count": 1,
       "pages": [
         {
-          "continuation": true,
-          "item_count": 100,
-          "number": 1,
-          "status": 200
-        },
-        {
           "continuation": false,
-          "item_count": 7,
-          "number": 2,
+          "item_count": 25,
+          "number": 1,
           "status": 200
         }
       ],
-      "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
-      "total_count": 107
+      "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
+      "total_count": 25
     },
     "issues": {
       "access_status": "allowed",
       "completeness": "complete",
       "endpoint": "issues?state=all",
-      "item_count": 43,
+      "item_count": 58,
       "page_count": 1,
       "pages": [
         {
           "continuation": false,
-          "item_count": 43,
+          "item_count": 58,
           "number": 1,
           "status": 200
         }
       ],
-      "total_count": 43
+      "total_count": 58
     },
     "main_ref": {
       "access_status": "allowed",
@@ -3879,38 +1975,38 @@
       "access_status": "allowed",
       "completeness": "complete",
       "endpoint": "pulls?state=all",
-      "item_count": 43,
+      "item_count": 58,
       "page_count": 1,
       "pages": [
         {
           "continuation": false,
-          "item_count": 43,
+          "item_count": 58,
           "number": 1,
           "status": 200
         }
       ],
-      "total_count": 43
+      "total_count": 58
     },
     "remote_branches": {
       "access_status": "allowed",
       "completeness": "complete",
       "endpoint": "branches",
-      "item_count": 11,
+      "item_count": 4,
       "page_count": 1,
       "pages": [
         {
           "continuation": false,
-          "item_count": 11,
+          "item_count": 4,
           "number": 1,
           "status": 200
         }
       ],
-      "total_count": 11
+      "total_count": 4
     },
     "statuses": {
       "access_status": "allowed",
       "completeness": "complete",
-      "endpoint": "commits/c786a9890f2f99f0dd98f89a1d9713db7c486837/status",
+      "endpoint": "commits/ed2d2cf1c898207f0d825ce9053979b14055e27e/status",
       "item_count": 0,
       "page_count": 1,
       "pages": [
@@ -3921,45 +2017,13 @@
           "status": 200
         }
       ],
-      "sha": "c786a9890f2f99f0dd98f89a1d9713db7c486837",
+      "sha": "ed2d2cf1c898207f0d825ce9053979b14055e27e",
       "total_count": 0
     },
-    "workflow_jobs_run_36826546468": {
+    "workflow_jobs_run_39310933824": {
       "access_status": "allowed",
       "completeness": "complete",
-      "endpoint": "actions/runs/36826546468/jobs?filter=latest",
-      "item_count": 2,
-      "page_count": 1,
-      "pages": [
-        {
-          "continuation": false,
-          "item_count": 2,
-          "number": 1,
-          "status": 200
-        }
-      ],
-      "total_count": 2
-    },
-    "workflow_runs": {
-      "access_status": "allowed",
-      "completeness": "complete",
-      "endpoint": "actions/runs?head_sha=c786a9890f2f99f0dd98f89a1d9713db7c486837",
-      "item_count": 73,
-      "page_count": 1,
-      "pages": [
-        {
-          "continuation": false,
-          "item_count": 73,
-          "number": 1,
-          "status": 200
-        }
-      ],
-      "total_count": 73
-    },
-    "workflows": {
-      "access_status": "allowed",
-      "completeness": "complete",
-      "endpoint": "actions/workflows",
+      "endpoint": "actions/runs/39310933824/jobs?filter=latest",
       "item_count": 14,
       "page_count": 1,
       "pages": [
@@ -3971,6 +2035,38 @@
         }
       ],
       "total_count": 14
+    },
+    "workflow_runs": {
+      "access_status": "allowed",
+      "completeness": "complete",
+      "endpoint": "actions/runs?head_sha=ed2d2cf1c898207f0d825ce9053979b14055e27e",
+      "item_count": 9,
+      "page_count": 1,
+      "pages": [
+        {
+          "continuation": false,
+          "item_count": 9,
+          "number": 1,
+          "status": 200
+        }
+      ],
+      "total_count": 9
+    },
+    "workflows": {
+      "access_status": "allowed",
+      "completeness": "complete",
+      "endpoint": "actions/workflows",
+      "item_count": 13,
+      "page_count": 1,
+      "pages": [
+        {
+          "continuation": false,
+          "item_count": 13,
+          "number": 1,
+          "status": 200
+        }
+      ],
+      "total_count": 13
     }
   },
   "version": 2
