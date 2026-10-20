@@ -74,7 +74,7 @@
     "requirement_ids": [
       "CVE-REG-01"
     ],
-    "expected_error_type": "canonicalization_failed",
+    "expected_error_type": "missing_protocol_field",
     "provenance": {
       "source": "PureBeam seam regression corpus",
       "kind": "ported-fixture",
@@ -82,7 +82,7 @@
     },
     "source_ref": "purebeam:c14n-differential",
     "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-c14n\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-c14n\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>",
-    "notes": "The current pure-BEAM seam must keep failing closed when canonicalization inputs are incomplete."
+    "notes": "The current pure-BEAM seam must keep failing closed when canonicalization inputs are incomplete. Phase 80: now rejected at parse (non-conformant assertion shape) before canonicalization; the canonicalize/2 fail-closed path is covered by pure_beam_test.exs."
   },
   {
     "id": "cve-2024-45409-keyinfo-001",
@@ -126,7 +126,7 @@
       "CVE-REG-01",
       "ASSUR-01"
     ],
-    "expected_error_type": "canonicalization_failed",
+    "expected_error_type": "missing_protocol_field",
     "provenance": {
       "source": "Relyra adversarial crypto assurance corpus",
       "kind": "ported-fixture",
@@ -134,6 +134,6 @@
     },
     "source_ref": "relyra:phase-30:c14n-differential-rejection",
     "xml": "<Response Destination=\"https://sp.example.com/saml/acs\" InResponseTo=\"id_request_123\" ConnectionId=\"conn-123\"><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></Status><Assertion ID=\"assertion-c14n-diff\"><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient=\"https://sp.example.com/saml/acs\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"/></SubjectConfirmation></Subject><Conditions NotBefore=\"2026-04-24T15:58:00Z\" NotOnOrAfter=\"2026-04-24T16:05:00Z\"><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions></Assertion><Signature><SignedInfo><SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"/><Reference URI=\"#assertion-c14n-diff\"><DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"/></Reference></SignedInfo></Signature></Response>",
-    "notes": "C14N-differential REJECTION: the pure-BEAM seam fails closed with :canonicalization_failed on an incomplete canonicalization handle (the bare parsed_doc map, mirroring c14n-differential-001). The complementary :digest_mismatch crypto proof lives in the adversarial_crypto suite (ASSUR-01); the JSON evaluator routes parser_differential_and_c14n through parse_safely -> canonicalize only and never reaches Signature.verify/4."
+    "notes": "C14N-differential REJECTION: the pure-BEAM seam fails closed with :canonicalization_failed on an incomplete canonicalization handle (the bare parsed_doc map, mirroring c14n-differential-001). The complementary :digest_mismatch crypto proof lives in the adversarial_crypto suite (ASSUR-01); the JSON evaluator routes parser_differential_and_c14n through parse_safely -> canonicalize only and never reaches Signature.verify/4. Phase 80: now rejected at parse (non-conformant assertion shape) before canonicalization; the canonicalize/2 fail-closed path is covered by pure_beam_test.exs."
   }
 ]

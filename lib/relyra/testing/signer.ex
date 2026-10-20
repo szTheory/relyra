@@ -19,6 +19,9 @@ defmodule Relyra.Testing.Signer do
   @rsa_sha256 "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
   @sha256 "http://www.w3.org/2001/04/xmlenc#sha256"
   @exc_c14n "http://www.w3.org/2001/10/xml-exc-c14n#"
+  @enveloped_signature "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
+  @protocol_ns "urn:oasis:names:tc:SAML:2.0:protocol"
+  @assertion_ns "urn:oasis:names:tc:SAML:2.0:assertion"
   @success_status "urn:oasis:names:tc:SAML:2.0:status:Success"
 
   @typedoc """
@@ -95,6 +98,11 @@ defmodule Relyra.Testing.Signer do
     }
   end
 
+  # A SAML-conformant shape: protocol and assertion namespaces, and an
+  # enveloped ds:Signature as the direct child of the Assertion (after its
+  # Issuer) whose Reference carries the enveloped-signature + exc-c14n
+  # Transforms (saml-core §5.4.1). SubjectConfirmationData carries the signed
+  # InResponseTo correlation.
   defp response_xml(fields, digest_value_b64, signature_value_b64) do
     in_response_to_attr =
       case fields.in_response_to do
@@ -103,32 +111,36 @@ defmodule Relyra.Testing.Signer do
         value -> ~s( InResponseTo="#{AttributeEscape.escape_attribute(value)}")
       end
 
-    "<Response Destination=\"#{AttributeEscape.escape_attribute(fields.destination)}\"#{in_response_to_attr} ConnectionId=\"#{AttributeEscape.escape_attribute(fields.connection_id)}\">" <>
-      "<Issuer>#{xml_text(fields.issuer)}</Issuer>" <>
+    "<Response xmlns=\"#{@protocol_ns}\" Destination=\"#{AttributeEscape.escape_attribute(fields.destination)}\"#{in_response_to_attr} ConnectionId=\"#{AttributeEscape.escape_attribute(fields.connection_id)}\">" <>
+      "<Issuer xmlns=\"#{@assertion_ns}\">#{xml_text(fields.issuer)}</Issuer>" <>
       "<Status><StatusCode Value=\"#{AttributeEscape.escape_attribute(fields.status)}\"/></Status>" <>
-      "<Assertion ID=\"#{AttributeEscape.escape_attribute(fields.assertion_id)}\">" <>
+      "<Assertion xmlns=\"#{@assertion_ns}\" ID=\"#{AttributeEscape.escape_attribute(fields.assertion_id)}\">" <>
       "<Issuer>#{xml_text(fields.issuer)}</Issuer>" <>
-      "<Subject>" <>
-      "<NameID>#{xml_text(fields.name_id)}</NameID>" <>
-      "<SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\">" <>
-      "<SubjectConfirmationData Recipient=\"#{AttributeEscape.escape_attribute(fields.recipient)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.subject_confirmation_not_on_or_after)}\"/>" <>
-      "</SubjectConfirmation>" <>
-      "</Subject>" <>
-      "<Conditions NotBefore=\"#{AttributeEscape.escape_attribute(fields.not_before)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.not_on_or_after)}\">" <>
-      "<AudienceRestriction><Audience>#{xml_text(fields.audience)}</Audience></AudienceRestriction>" <>
-      "</Conditions>" <>
-      "</Assertion>" <>
       "<Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\">" <>
       "<SignedInfo>" <>
       "<CanonicalizationMethod Algorithm=\"#{@exc_c14n}\"/>" <>
       "<SignatureMethod Algorithm=\"#{@rsa_sha256}\"/>" <>
       "<Reference URI=\"##{AttributeEscape.escape_attribute(fields.assertion_id)}\">" <>
+      "<Transforms>" <>
+      "<Transform Algorithm=\"#{@enveloped_signature}\"/>" <>
+      "<Transform Algorithm=\"#{@exc_c14n}\"/>" <>
+      "</Transforms>" <>
       "<DigestMethod Algorithm=\"#{@sha256}\"/>" <>
       "<DigestValue>#{xml_text(digest_value_b64)}</DigestValue>" <>
       "</Reference>" <>
       "</SignedInfo>" <>
       "<SignatureValue>#{xml_text(signature_value_b64)}</SignatureValue>" <>
       "</Signature>" <>
+      "<Subject>" <>
+      "<NameID>#{xml_text(fields.name_id)}</NameID>" <>
+      "<SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\">" <>
+      "<SubjectConfirmationData Recipient=\"#{AttributeEscape.escape_attribute(fields.recipient)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.subject_confirmation_not_on_or_after)}\"#{in_response_to_attr}/>" <>
+      "</SubjectConfirmation>" <>
+      "</Subject>" <>
+      "<Conditions NotBefore=\"#{AttributeEscape.escape_attribute(fields.not_before)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.not_on_or_after)}\">" <>
+      "<AudienceRestriction><Audience>#{xml_text(fields.audience)}</Audience></AudienceRestriction>" <>
+      "</Conditions>" <>
+      "</Assertion>" <>
       "</Response>"
   end
 
@@ -139,8 +151,18 @@ defmodule Relyra.Testing.Signer do
     :public_key.pem_encode([{:Certificate, cert_der, :not_encrypted}])
   end
 
+  # Digest the Assertion with its enveloped Signature pruned, through the
+  # verifier's own canonicalize path.
   defp digest_for(%Node{} = assertion_node) do
-    {:ok, %{canonical_xml: ref_bytes}} = PureBeam.canonicalize(%{node: assertion_node})
+    signature_node = Enum.find(assertion_node.children, &(&1.local == "Signature"))
+
+    {:ok, %{canonical_xml: ref_bytes}} =
+      PureBeam.canonicalize(%{
+        node: assertion_node,
+        signature_node: signature_node,
+        transforms_node: find_first_by_local(signature_node, "Transforms")
+      })
+
     :sha256 |> :crypto.hash(ref_bytes) |> Base.encode64()
   end
 

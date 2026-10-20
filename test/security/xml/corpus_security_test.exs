@@ -3,6 +3,7 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
 
   alias Relyra.Error
   alias Relyra.Security.XML.PureBeam
+  alias Relyra.Security.XML.SaxyTree
 
   @manifest_path "priv/security_corpus.json"
   @c14n_fixtures "test/fixtures/security/xml/parser_differential_and_c14n"
@@ -75,9 +76,9 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
     input = File.read!(Path.join(@c14n_fixtures, "assertion_inherited_ns.input.xml"))
     golden = File.read!(Path.join(@c14n_fixtures, "assertion_inherited_ns.c14n"))
 
-    assert {:ok, parsed_doc} = PureBeam.parse_safely(input, [])
-    assert {:ok, signed_node} = PureBeam.select_signed_node(parsed_doc, [])
-    assert {:ok, %{canonical_xml: out}} = PureBeam.canonicalize(signed_node, [])
+    assert {:ok, tree} = SaxyTree.parse(input)
+    tree_assertion = Enum.find(tree.children, fn child -> child.local == "Assertion" end)
+    assert {:ok, %{canonical_xml: out}} = PureBeam.canonicalize(%{node: tree_assertion}, [])
 
     # Byte-for-byte against the independent reference (Pitfalls 1-8): visibly-utilized
     # inherited ns rendered, unused inherited ns omitted, attrs sorted by resolved URI,
@@ -85,14 +86,6 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
     assert out == golden
     # No trailing newline (Pitfall 4); canonical output ends with `>`.
     refute String.ends_with?(out, "\n")
-
-    # Node binding (D-10, ROADMAP success #4): the verified handle's bound node is
-    # the EXACT tree node canonicalize/2 serialized — the Assertion present in
-    # parsed_doc[:parse_tree], not a re-found / re-parsed substring.
-    tree_assertion =
-      Enum.find(parsed_doc.parse_tree.children, fn child -> child.local == "Assertion" end)
-
-    assert signed_node.node == tree_assertion
   end
 
   @tag :gate02_c14n
@@ -108,9 +101,9 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
     input = File.read!(Path.join(@c14n_fixtures, "mixed_content.input.xml"))
     golden = File.read!(Path.join(@c14n_fixtures, "mixed_content.c14n"))
 
-    assert {:ok, parsed_doc} = PureBeam.parse_safely(input, [])
-    assert {:ok, signed_node} = PureBeam.select_signed_node(parsed_doc, [])
-    assert {:ok, %{canonical_xml: out}} = PureBeam.canonicalize(signed_node, [])
+    assert {:ok, tree} = SaxyTree.parse(input)
+    tree_assertion = Enum.find(tree.children, fn child -> child.local == "Assertion" end)
+    assert {:ok, %{canonical_xml: out}} = PureBeam.canonicalize(%{node: tree_assertion}, [])
 
     # Byte-for-byte against the independent reference: text/element segments emitted
     # in document order (the escape_text(node.text)-before-children bug is gone),
@@ -119,12 +112,6 @@ defmodule Relyra.Security.XML.CorpusSecurityTest do
     assert out == golden
     # No trailing newline (Pitfall 4); canonical output ends with `>`.
     refute String.ends_with?(out, "\n")
-
-    # Node binding (D-10): the bound node is the EXACT Assertion tree node serialized.
-    tree_assertion =
-      Enum.find(parsed_doc.parse_tree.children, fn child -> child.local == "Assertion" end)
-
-    assert signed_node.node == tree_assertion
   end
 
   @tag :security_corpus

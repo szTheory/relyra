@@ -195,15 +195,37 @@ defmodule Relyra.Security.Signature do
     signature_method = Map.get(parsed_doc, :signature_method)
     digest_method = Map.get(parsed_doc, :digest_method)
 
+    canonicalization_method = Map.get(parsed_doc, :canonicalization_method)
+
     with :ok <-
            evaluate_policy(
              AlgorithmPolicy.enforce_signature_method(policy, signature_method),
              details
            ),
          :ok <-
-           evaluate_policy(AlgorithmPolicy.enforce_digest_method(policy, digest_method), details) do
+           evaluate_policy(AlgorithmPolicy.enforce_digest_method(policy, digest_method), details),
+         :ok <- enforce_canonicalization_method(canonicalization_method, details) do
       verified_signed_node(parsed_doc, signature_method, digest_method, cert_chain, details)
     end
+  end
+
+  # A DECLARED ds:CanonicalizationMethod must be Exclusive C14N 1.0 — the one
+  # algorithm the C14N engine byte-proves (S4). An absent declaration is not
+  # rejected here: the SignedInfo is always canonicalized with Exclusive C14N, so
+  # a signature produced under any other algorithm already fails the signature
+  # math. An explicit non-exc-c14n declaration is rejected as defense in depth.
+  defp enforce_canonicalization_method(nil, _details), do: :ok
+
+  defp enforce_canonicalization_method("http://www.w3.org/2001/10/xml-exc-c14n#", _details),
+    do: :ok
+
+  defp enforce_canonicalization_method(method, details) do
+    {:error,
+     Error.new(
+       :unsupported_canonicalization_method,
+       "SignedInfo CanonicalizationMethod is not the supported Exclusive C14N algorithm",
+       Map.put(details, :canonicalization_method, method)
+     )}
   end
 
   defp evaluate_policy(:ok, _details), do: :ok
@@ -225,7 +247,13 @@ defmodule Relyra.Security.Signature do
         # candidate retains the parsed document's signed node, SignedInfo, and
         # Reference binding used by the cryptographic checks below.
         with :ok <-
-               cryptographically_verify(candidate, signature_method, cert_chain, details) do
+               cryptographically_verify(
+                 candidate,
+                 signature_method,
+                 digest_method,
+                 cert_chain,
+                 details
+               ) do
           {:ok,
            %SignedNode{
              xml_id: Map.get(candidate, :xml_id),
@@ -250,7 +278,7 @@ defmodule Relyra.Security.Signature do
   # methods, an unusable configured key, a bad SignedInfo signature, or a
   # mismatched Reference digest. Construct SignedNode only after both
   # cryptographic checks succeed.
-  defp cryptographically_verify(candidate, signature_method, cert_chain, details) do
+  defp cryptographically_verify(candidate, signature_method, digest_method, cert_chain, details) do
     signed_info_node = Map.get(candidate, :signed_info_node)
     signature_value_b64 = Map.get(candidate, :signature_value_b64)
     digest_value_b64 = Map.get(candidate, :digest_value_b64)
@@ -261,8 +289,11 @@ defmodule Relyra.Security.Signature do
            require_field(signature_value_b64, :invalid_signature, "SignatureValue", details),
          :ok <- require_field(digest_value_b64, :digest_mismatch, "DigestValue", details),
          :ok <- require_field(referenced_node, :missing_signature, "referenced node", details),
-         # Resolve a supported digest before attempting signature verification.
-         {:ok, digest_atom} <- digest_atom(signature_method, details),
+         # The SignedInfo signature hash comes from the SignatureMethod; the
+         # Reference digest hash comes from the bound DigestMethod (S4). They are
+         # resolved independently so a mismatched pair cannot reuse one atom.
+         {:ok, signature_digest_atom} <- digest_atom(signature_method, details),
+         {:ok, reference_digest_atom} <- reference_digest_atom(digest_method, details),
          # Derive the verification key only from configured certificates.
          {:ok, public_key} <- public_key_from_cert_chain(cert_chain, details),
          # Verify the canonical SignedInfo with the configured certificate key.
@@ -270,13 +301,38 @@ defmodule Relyra.Security.Signature do
            verify_signature_math(
              signed_info_node,
              signature_value_b64,
-             digest_atom,
+             signature_digest_atom,
              public_key,
              details
            ),
          # Recompute the digest over the canonicalized referenced node.
-         :ok <- verify_reference_digest(candidate, digest_value_b64, digest_atom, details) do
+         :ok <-
+           verify_reference_digest(candidate, digest_value_b64, reference_digest_atom, details) do
       :ok
+    end
+  end
+
+  # Map the bound ds:DigestMethod URI to the digest atom used to recompute the
+  # Reference digest. ECDSA has no bearing here; any unsupported or absent URI
+  # fails closed.
+  defp reference_digest_atom(digest_method, details) do
+    case digest_method do
+      "http://www.w3.org/2001/04/xmlenc#sha256" ->
+        {:ok, :sha256}
+
+      "http://www.w3.org/2001/04/xmldsig-more#sha384" ->
+        {:ok, :sha384}
+
+      "http://www.w3.org/2001/04/xmlenc#sha512" ->
+        {:ok, :sha512}
+
+      _ ->
+        {:error,
+         Error.new(
+           :digest_mismatch,
+           "DigestMethod is not a supported digest algorithm",
+           Map.put(details, :digest_method, digest_method)
+         )}
     end
   end
 
