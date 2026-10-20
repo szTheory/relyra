@@ -1,15 +1,12 @@
 # RELYRA-2026-002: Relyra SAML verified signature not bound to the consumed assertion -> authentication bypass (XML Signature Wrapping)
 
-Status: DRAFT (not yet published). To be requested via GitHub's repository
-advisory flow against `szTheory/relyra` and shipped with the patch release cut
-from the v1.12 "Trust-Path Hardening" milestone. Publication identifiers (GHSA
-id, CVE id) and the exact first-patched version are backfilled at publication,
-as with RELYRA-2026-001. Internal tracking id: `RELYRA-2026-002`.
+Status: Published on 2026-10-20 as [GHSA-5rj3-pwg2-fr8x](https://github.com/szTheory/relyra/security/advisories/GHSA-5rj3-pwg2-fr8x).
+GitHub accepted the CVE request on 2026-10-20 (HTTP 202); assignment is pending.
+Internal tracking id: `RELYRA-2026-002`.
 
-Affected product: hex ecosystem `Erlang` [ASSUMED GitHub label], package `relyra`
-Affected versions: `>= 1.2.0, < 1.10.2` (first-patched `1.10.2` is the release
-release-please cuts from this milestone; the exact number is confirmed at merge)
-Patched version: `1.10.2` (expected)
+Affected product: Hex ecosystem `erlang`, package `relyra`
+Affected versions: `>= 1.2.0, < 1.10.2`
+Patched version: `1.10.2`
 Severity: Critical
 CVSS 3.1: `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N` (9.1 Critical)
 Weaknesses: `CWE-347` (primary), `CWE-287` (companion)
@@ -94,9 +91,12 @@ reading aligned with RELYRA-2026-001 and comparable SAML-library advisories.
 
 | Ecosystem | Package | Vulnerable range | First patched |
 | --- | --- | --- | --- |
-| `Erlang` [ASSUMED GitHub hex label] | `relyra` | `>= 1.2.0, < 1.10.2` | `1.10.2` (expected) |
+| `erlang` | `relyra` | `>= 1.2.0, < 1.10.2` | `1.10.2` |
 
 ## References
+
+- [Published GitHub advisory GHSA-5rj3-pwg2-fr8x](https://github.com/szTheory/relyra/security/advisories/GHSA-5rj3-pwg2-fr8x)
+- [Patched release 1.10.2 on Hex](https://hex.pm/packages/relyra/1.10.2)
 
 - Fix commit `2782344` (`fix(security): bind consumed SAML login fields to the verified signed assertion`)
 - Fix commit `32ae5e6` (`fix(security): bind logout, redirect, encrypted, and metadata to the verified node`)
@@ -113,24 +113,24 @@ Maintainers (finder and reporter).
 
 ## CVE assignment
 
-To be requested via GitHub's "Request CVE" flow on the published GHSA at
-disclosure time, then backfilled here after live verification (CVE Services /
-NVD), mirroring RELYRA-2026-001.
+GitHub accepted the repository advisory CVE request on 2026-10-20 (HTTP 202).
+No CVE ID has been assigned yet. Backfill the assigned ID after GitHub read-back;
+CVE Services and NVD indexing may follow later.
 
 - Internal tracking id: `RELYRA-2026-002`
-- GHSA: `<pending>`
-- CVE: `<pending>`
+- GHSA: [GHSA-5rj3-pwg2-fr8x](https://github.com/szTheory/relyra/security/advisories/GHSA-5rj3-pwg2-fr8x)
+- CVE: assignment pending (request accepted by GitHub on 2026-10-20)
 - Title: `Relyra SAML verified signature not bound to the consumed assertion -> authentication bypass (XML Signature Wrapping)`
-- Ecosystem / package: `Erlang` / `relyra`
+- Ecosystem / package: `erlang` / `relyra`
 - Affected versions: `>= 1.2.0, < 1.10.2`
-- First patched version: `1.10.2` (expected)
+- First patched version: `1.10.2`
 - CVSS 3.1: `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N` (9.1 Critical)
 - Weaknesses: `CWE-347` primary, `CWE-287` companion
 - Description: a genuine signed assertion with identity content injected outside
   it is accepted as `{:ok}` with the attacker-controlled identity, allowing
   arbitrary-user login until the v1.12 binding fix is deployed
 - Credits: maintainers
-- Request mechanism: GitHub repository advisory -> Request CVE at publication time
+- Request mechanism: repository advisory REST API `POST /repos/szTheory/relyra/security-advisories/GHSA-5rj3-pwg2-fr8x/cve`; HTTP 202 Accepted
 
 ## CHANGELOG security note
 
