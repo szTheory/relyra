@@ -2,9 +2,9 @@
 gsd_state_version: "1.0"
 milestone: v1.12
 milestone_name: Trust-Path Hardening
-status: ready_to_plan
-last_updated: "2026-10-20T01:01:50.000Z"
-last_activity: 2026-10-19
+status: in_progress
+last_updated: "2026-10-20T20:04:53Z"
+last_activity: 2026-10-20
 progress:
   total_phases: 5
   completed_phases: 0
@@ -14,6 +14,23 @@ progress:
 ---
 
 # Project State
+
+## Current handoff — 2026-10-20 (supersedes the historical position below)
+
+Trust-path hardening shipped as Hex `1.10.2`; release PR #63 is merged at
+`ab19bc0711dd099d7758bac0efcedbe70cf69ec9`. All applicable PR CI checks and
+Release Please publication passed. The user approved disclosure, and
+[GHSA-5rj3-pwg2-fr8x](https://github.com/szTheory/relyra/security/advisories/GHSA-5rj3-pwg2-fr8x)
+is published. The CVE request returned HTTP 202; assignment remains pending.
+
+Next: read back the existing GHSA's CVE assignment and backfill it, then reconcile
+the automated milestone-readiness gaps in `.planning/v1.12-MILESTONE-AUDIT.md`.
+GSD reports missing phase verification reports and 23 unreconciled requirement
+statuses; no archive or verification override has been performed. Preserve the
+two-clean-property-round gap and reconcile the mutation stopping evidence.
+
+The earlier planning baseline below is retained as history, not a current claim
+that implementation has not started.
 
 ## Project Reference
 

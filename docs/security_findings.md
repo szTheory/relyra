@@ -1,6 +1,6 @@
 # Security Findings Ledger
 
-Current state: `RELYRA-2026-001` is recorded as resolved (published as `GHSA-jv46-xfwm-36j7` / `CVE-2026-49454`). `RELYRA-2026-002` is recorded as resolved with regression proof on `docs/v1.12-start`; its publication identifiers attach when the v1.12 advisory is requested (see `docs/advisories/2026-002-signed-node-not-bound-to-consumed-node.md`).
+Current state: `RELYRA-2026-001` is recorded as resolved (published as `GHSA-jv46-xfwm-36j7` / `CVE-2026-49454`). `RELYRA-2026-002` is fixed in Hex `1.10.2` and published as [GHSA-5rj3-pwg2-fr8x](https://github.com/szTheory/relyra/security/advisories/GHSA-5rj3-pwg2-fr8x). GitHub accepted its CVE request on 2026-10-20; CVE assignment is pending (see `docs/advisories/2026-002-signed-node-not-bound-to-consumed-node.md`).
 
 ## Summary
 
@@ -14,7 +14,7 @@ Current state: `RELYRA-2026-001` is recorded as resolved (published as `GHSA-jv4
 | Finding ID | Severity | Exploit Path | Disposition | Owner | Regression Proof | Blocker State | Revisit Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | RELYRA-2026-001 | Critical | forged `SignatureValue` carrying an attacker-controlled `NameID` accepted as `{:ok}` -> full SAML authentication bypass | Confirmed -> Fixed in v1.1 (hex 1.2.0) | maintainers | `test/security/xml/adversarial_crypto_test.exs` (`:adversarial_crypto`) + `test/security/ci_gate_integrity_test.exs`, green under `mix ci.security` | resolved | at v1.2.0 ship / GHSA publish |
-| RELYRA-2026-002 | Critical | genuine signed `<Assertion>` left intact with identity content injected OUTSIDE it accepted as `{:ok}` with the attacker's identity (XML Signature Wrapping); parallel gaps on logout/redirect/encrypted/metadata | Confirmed -> Fixed in v1.12 (commits `2782344`, `32ae5e6`) | maintainers | `test/security/xml/trust_binding_test.exs` (`:trust_binding`) + `test/security/xml/adversarial_property_test.exs` (`:adversarial_property`), green under `mix ci.security` | resolved | at v1.12 patch ship / GHSA publish |
+| RELYRA-2026-002 | Critical | genuine signed `<Assertion>` left intact with identity content injected OUTSIDE it accepted as `{:ok}` with the attacker's identity (XML Signature Wrapping); parallel gaps on logout/redirect/encrypted/metadata | Confirmed -> Fixed in Hex `1.10.2` (v1.12 milestone; commits `2782344`, `32ae5e6`); [GHSA-5rj3-pwg2-fr8x](https://github.com/szTheory/relyra/security/advisories/GHSA-5rj3-pwg2-fr8x), CVE request accepted / assignment pending | maintainers | `test/security/xml/trust_binding_test.exs` (`:trust_binding`) + `test/security/xml/adversarial_property_test.exs` (`:adversarial_property`), green under `mix ci.security` | resolved | when GitHub assigns the requested CVE |
 
 ## Disposition Workflow
 

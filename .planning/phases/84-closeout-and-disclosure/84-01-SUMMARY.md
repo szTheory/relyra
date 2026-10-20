@@ -1,12 +1,25 @@
 ---
 phase: 84-closeout-and-disclosure
 plan: 01
-status: local-complete-disclosure-pending
+status: published-cve-assignment-pending
 requirements: [DISC-01]
 commit: TBD
 ---
 
 # Phase 84 Summary: Close-out and scripted disclosure
+
+## Disclosure update — 2026-10-20
+
+The user approved disclosure after Hex 1.10.2 shipped. GitHub advisory
+[GHSA-5rj3-pwg2-fr8x](https://github.com/szTheory/relyra/security/advisories/GHSA-5rj3-pwg2-fr8x)
+was published at `2026-10-20T20:04:53Z`. Its CVE request returned HTTP 202
+Accepted; `cve_id` remains null. Confirmed affected range: `>= 1.2.0, < 1.10.2`;
+first patched: `1.10.2`; CVSS 9.1; CWE-347 and CWE-287. The repository advisory,
+findings ledger, and milestone evidence now carry the GHSA and pending request
+status. A final assigned-CVE backfill remains open.
+
+Milestone archive readiness is recorded in `.planning/v1.12-MILESTONE-AUDIT.md`.
+The earlier local-only summary below is historical and superseded by this update.
 
 **Local close-out complete; remote disclosure held for explicit approval.**
 
