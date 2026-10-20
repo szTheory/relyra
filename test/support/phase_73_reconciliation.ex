@@ -705,7 +705,10 @@ defmodule Relyra.Phase73Reconciliation do
   end
 
   defp parse_summaries!(output) do
-    ~r/^(\d+) tests?, (\d+) failures(?: \((\d+) excluded\)|, (\d+) excluded)?$/m
+    # The leading `N properties, ` prefix is emitted by ExUnit for a suite that
+    # runs StreamData properties (e.g. the Phase 82 `adversarial_property` lane);
+    # accept it so a property-bearing security suite still counts as one summary.
+    ~r/^(?:\d+ properties, )?(\d+) tests?, (\d+) failures(?: \((\d+) excluded\)|, (\d+) excluded)?$/m
     |> Regex.scan(output, capture: :all_but_first)
     |> Enum.map(fn captures ->
       [tests, failures, parenthesized, comma] =
