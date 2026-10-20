@@ -101,7 +101,13 @@ defmodule Relyra.Security.AlgorithmPolicy do
   def digest_atom_for_signature_method(uri) when is_binary(uri) do
     cond do
       # D-07: any ECDSA URI fails CLOSED, checked BEFORE the rsa-sha* suffix match
-      # (so an "...#ecdsa-sha256" can never fall through to a digest atom).
+      # (so an "...#ecdsa-sha256" can never fall through to a digest atom). This is
+      # a fast-path guard only: altering or dropping it still reaches the `true ->`
+      # arm, which returns the SAME :unsupported_signature_algorithm, so no mutant
+      # on this line is observable. (The mirror branch in signing_digest_atom/1 is
+      # NOT equivalent — its fall-through returns a different atom — and its mutants
+      # are killed by that function's own tests.)
+      # mutare:ignore equivalent — fall-through yields the same error atom
       String.contains?(uri, "ecdsa") -> {:error, :unsupported_signature_algorithm}
       String.ends_with?(uri, "rsa-sha256") -> {:ok, :sha256}
       String.ends_with?(uri, "rsa-sha384") -> {:ok, :sha384}

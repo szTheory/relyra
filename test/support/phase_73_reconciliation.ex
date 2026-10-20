@@ -53,6 +53,7 @@ defmodule Relyra.Phase73Reconciliation do
     "cmd mix test test/security/xml/adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors",
     "cmd mix test test/security/xml/trust_binding_test.exs --only trust_binding --warnings-as-errors",
     "cmd mix test test/security/xml/adversarial_property_test.exs --only adversarial_property --warnings-as-errors",
+    "cmd mix test test/security/mutation_lane_test.exs --only mutation_lane --warnings-as-errors",
     "cmd mix test test/security/authn_request_signing_test.exs --only authn_request_signing --warnings-as-errors",
     "cmd mix test test/security/xml_enc_test.exs --warnings-as-errors",
     "cmd mix test test/security/xml_enc_adversarial_test.exs --warnings-as-errors",

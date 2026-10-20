@@ -1,0 +1,121 @@
+name: mutation
+
+# Phase 83 mutation-testing lane (MUT-01..MUT-03). NOT a merge gate: it is
+# intentionally absent from ci-gate in security-gates.yml. Mutare mutates the
+# security core (see .mutare.exs), compiles one metamutant, and runs the
+# covering tests per mutant in a fresh `mix test` process. It uploads the
+# mutation-score JSON (Stryker schema) as an artifact so the score trend can be
+# tracked round over round. A survivor is triaged into a sharper test, a source
+# fix with a corpus row, or a `# mutare:ignore <reason>` — never by weakening a
+# gate.
+#
+# RELYRA_MUTATION_SUITE=1 scopes the baseline to hermetic suites: a few
+# governance/adoption meta-tests assert against the live git checkout, which
+# mutare's git-less sandbox copy lacks (see test/test_helper.exs).
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+on:
+  schedule:
+    # 04:42 UTC on Mondays — weekly, off-peak, deliberately off the hour.
+    - cron: "42 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Restrict to a path under lib/ (blank = full .mutare.exs scope)"
+        required: false
+        default: ""
+      time_budget:
+        description: "Per-mutant-phase wall-clock budget (e.g. 45m, blank = none)"
+        required: false
+        default: "45m"
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      RELYRA_XML_STRATEGY: pure_beam
+      RELYRA_MUTATION_SUITE: "1"
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      RELYRA_TEST_DATABASE: relyra_test
+    strategy:
+      fail-fast: false
+      matrix:
+        otp: [28]
+        elixir: ["1.19.5"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup BEAM
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+
+      - name: Install dependencies
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get
+
+      - name: Compile (warnings as errors)
+        env:
+          MIX_ENV: test
+        run: mix compile --warnings-as-errors
+
+      - name: Resolve scope
+        id: scope
+        run: |
+          only="${{ github.event.inputs.only }}"
+          budget="${{ github.event.inputs.time_budget }}"
+          [ -z "$budget" ] && budget="45m"
+          only_flag=""
+          [ -n "$only" ] && only_flag="--only $only"
+          echo "only_flag=$only_flag" >> "$GITHUB_OUTPUT"
+          echo "budget=$budget" >> "$GITHUB_OUTPUT"
+          echo "::notice title=mutation::scope='${only_flag:-full .mutare.exs}' time_budget=$budget"
+
+      - name: Mutation run
+        env:
+          MIX_ENV: test
+        run: |
+          mix mutare \
+            ${{ steps.scope.outputs.only_flag }} \
+            --time-budget ${{ steps.scope.outputs.budget }} \
+            --report json:mutare.json \
+            --report human \
+            --quiet
+
+      - name: Upload mutation score report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-score-${{ github.run_id }}-otp${{ matrix.otp }}
+          path: mutare.json
+          if-no-files-found: warn
+          retention-days: 14
