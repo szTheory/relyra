@@ -40,20 +40,45 @@ Standing guidance for future milestone selection and roadmap refreshes is in
 
 **Delivered:** clean-room package consumer (PKG-01..06), tenant-owned LedgerLoop twin (TWIN-01..05), end-to-end lifecycle and recovery journeys (JOUR-01..06, EVID-03), craftsmanship and documentation cleanup (QUAL-02..06), measured CI ownership and efficiency (PIPE-02..05), and an adopter-ready closeout (REPO-01..03, EXIT-01). Full record: `.planning/milestones/v1.11-ROADMAP.md`. The frozen v1.11 PROJECT and STATE live beside it.
 
-## Current Milestone: v1.12 Adversarial Twin
+## Current Milestone: v1.12 Trust-Path Hardening
 
-**Goal:** Move the twin from scenarios we wrote by hand to signal we didn't anticipate. Generate and mutate attacks on the trust path, measure whether the security tests catch broken checks, and test against real IdP output, stopping each technique at a measured point of diminishing returns.
+**Goal:** Close every place where the consumed SAML data, or the signature's own structure, is not bound to the cryptographically verified node. Then hammer the trust core with property-based and mutation testing until each technique reaches a measured point of diminishing returns.
+
+**Why now:** v1.12 research (2026-10-19) found that `Relyra.consume_response/3` accepts identity, Conditions, and attributes injected outside the signed `<Assertion>`. A follow-up seam audit found related bypasses:
+- signature parts found by searching the whole `<Signature>`;
+- the Reference URI never checked;
+- `bind_signed_node/2` a no-op;
+- POST logout bound to an embedded assertion;
+- HTTP-Redirect duplicate parameters;
+- regex metadata extraction.
+
+Nobody is known to depend on the library yet, so v1.12 fails forward: fixes land in the open on `main` as `fix(...)` commits, and release-please ships patches. Disclosure (GHSA/CVE) happens at close-out, scripted.
 
 **Target features:**
-- **Generative adversarial twin:** property-based mutation of signed SAML responses (signature wrapping, duplicate elements, namespace and whitespace changes, encoding, time boundaries, truncation and size). Every input either verifies, with the consumed node exactly the signed node, or gets a typed rejection. It never crashes and never accepts a tampered response. Findings become permanent `ci.security` corpus rows.
-- **Mutation testing of the security core:** signature, digest, audience, time window, and replay checks. The mutation score is the diminishing-returns metric.
-- **Real-IdP fidelity corpus:** containerized Keycloak, SimpleSAMLphp, and Shibboleth responses as scheduled canaries, never merge gates.
-- **Chaos journeys for the existing twin personas:** WINDOW-29/30 concurrency, a database failure during an audit co-commit, a metadata refresh during certificate rollover, and clock skew.
-- **Customer-IT-admin journey** through connection testing and attribute preview, to test the Partial JTBD rating.
+- **Seal the login trust path:**
+  - namespace-URI structural binding;
+  - exactly one enveloped signature, with Reference URI equal to the Assertion ID;
+  - every field derived from the signed Assertion only;
+  - Assertion Issuer, bearer SubjectConfirmation, and `InResponseTo` checks;
+  - `bind_signed_node/2` enforced.
+- **Seal logout, redirect, encrypted, and metadata paths:**
+  - root-bound logout signatures;
+  - duplicate-parameter rejection;
+  - span-exact decryption splice;
+  - metadata derived from the verified tree, not regex.
+- **Property-based adversarial twin (StreamData):** mutation op lists over genuinely signed inputs. The oracle says the consumed data equals the signed data, or the result is a typed rejection. Shrunk failures become permanent `ci.security` rows.
+- **Mutation testing of the security core (mutare):** scheduled lane, with the score trend as the diminishing-returns metric.
+- **Close-out:** one hardening evidence file, an advisory doc, and a scripted GHSA/CVE.
 
 **Stopping rule:** a technique stops after two consecutive rounds with no new defect class, or when the mutation score plateaus. What remains becomes recorded residual risk.
 
-**Constraints:** one evidence contract and no new receipt chains. No public API, default, or security-posture change without explicit approval. The v1.11 phase directories stay in `.planning/phases/` for the archived contracts. Phase numbering continues at 80.
+**Constraints:**
+- The security invariants are strengthened, never relaxed. The metadata regex retirement restores invariant #2.
+- No public function or behaviour signature change; new error atoms are additive.
+- One evidence file, and no new receipt chains.
+- Phase numbering continues at 80.
+
+**Deferred to a later milestone:** the real-IdP fidelity corpus (Keycloak, SimpleSAMLphp, Shibboleth), chaos journeys (WINDOW-29/30, audit co-commit failure, rollover refresh, clock skew), and the customer-IT-admin journey.
 
 **Demand-gated future candidates** (investigation threads in `.planning/threads/`; trigger = real GitHub issue):
 
@@ -205,11 +230,11 @@ The v1.x milestone arc:
 
 ### Active
 
-- [ ] Generative adversarial testing proves the trust-path invariant over mutated signed responses, with findings captured as permanent corpus rows.
-- [ ] Mutation testing measures whether security-core tests catch broken signature, digest, audience, time-window, and replay checks.
-- [ ] A real-IdP fidelity corpus from containerized providers runs as scheduled canaries.
-- [ ] Chaos journeys cover concurrency, mid-transaction failure, rollover-time refresh, and clock skew for the existing twin personas.
-- [ ] A customer-IT-admin journey settles whether the Partial JTBD rating is a product gap or a documentation gap.
+- [ ] Every login field Relyra consumes comes from the single signed `<Assertion>`. The signature structure is bound by namespace URI, direct-child position, and a Reference URI equal to the Assertion ID.
+- [ ] The logout POST, HTTP-Redirect, encrypted-assertion, and metadata paths bind consumed data to the verified node.
+- [ ] Property-based adversarial testing proves the trust-path invariant over mutated signed inputs, and findings become permanent corpus rows.
+- [ ] Mutation testing measures whether the security-core tests catch broken checks, with the score trend as the stopping metric.
+- [ ] The hardening is disclosed through a scripted advisory, recording the residual risk.
 
 ### Out of Scope
 
@@ -321,4 +346,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state (Hex adoption, security advisories, provider coverage, adopter feedback themes)
 
 ---
-*Last updated: 2026-10-19 after starting v1.12 Adversarial Twin*
+*Last updated: 2026-10-19 after re-scoping v1.12 to Trust-Path Hardening*

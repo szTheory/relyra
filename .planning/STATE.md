@@ -1,7 +1,7 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1.12
-milestone_name: Adversarial Twin
+milestone_name: Trust-Path Hardening
 status: planning
 last_updated: "2026-10-20T00:08:42.942Z"
 last_activity: 2026-10-19
@@ -22,7 +22,7 @@ See: `.planning/PROJECT.md` (updated 2026-10-19)
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection —
 never a silent compromise. Trust mutations are durable, attributable, and reviewable.
 
-**Current focus:** v1.12 Adversarial Twin — defining requirements
+**Current focus:** v1.12 Trust-Path Hardening — defining requirements
 
 ## Current Position
 
@@ -35,7 +35,7 @@ Last activity: 2026-10-19 — Milestone v1.12 started
 
 - Last shipped milestone: v1.11 First-Adopter Twin (Phases 73–79, 78 plans, 37/37 requirements, archived 2026-10-19)
 - Highest shipped phase: 79
-- Current milestone: v1.12 Adversarial Twin (Phases 80+)
+- Current milestone: v1.12 Trust-Path Hardening (Phases 80+)
 - Previous milestone: v1.10 Docker DX & Fleet Proxy (Phases 68–72.1)
 - Final v1.11 `mix qa`: 1045 tests, 0 failures. Main `ed2d2cf1` was green on every mandatory lane before the archive.
 
@@ -93,4 +93,4 @@ None.
 
 ## Operator Next Steps
 
-- v1.12 Adversarial Twin: research, then requirements and roadmap (`/gsd-new-milestone` in progress). Phase numbering continues at 80.
+- v1.12 Trust-Path Hardening: research, then requirements and roadmap (`/gsd-new-milestone` in progress). Phase numbering continues at 80.
