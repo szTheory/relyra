@@ -87,6 +87,63 @@ defmodule Relyra.Security.AlgorithmPolicyTest do
     end
   end
 
+  # Phase 83 (mutation): the enforce_* membership checks were only ever exercised
+  # with SHA-1 (rejection) — nothing asserted that the strong algorithms the
+  # default policy LISTS as allowed are actually accepted. A mutant that blanked
+  # an allowlist entry (e.g. the rsa-sha384 / sha512 strings) therefore survived.
+  # Pin acceptance of EVERY configured entry so corrupting the allowlist is a
+  # test failure.
+  describe "enforce_* accepts every allow-listed method (mutation kill)" do
+    test "every allowed signature method is accepted by the default policy" do
+      policy = AlgorithmPolicy.default()
+
+      for method <- policy.allowed_signature_methods do
+        assert AlgorithmPolicy.enforce_signature_method(policy, method) == :ok,
+               "default policy must accept its own allowed signature method #{method}"
+      end
+
+      # the strong RSA hashes specifically (the survivors the lane surfaced)
+      assert AlgorithmPolicy.enforce_signature_method(policy, @rsa_sha384) == :ok
+      assert AlgorithmPolicy.enforce_signature_method(policy, @rsa_sha512) == :ok
+    end
+
+    test "every allowed digest method is accepted by the default policy" do
+      policy = AlgorithmPolicy.default()
+
+      for method <- policy.allowed_digest_methods do
+        assert AlgorithmPolicy.enforce_digest_method(policy, method) == :ok,
+               "default policy must accept its own allowed digest method #{method}"
+      end
+
+      # Literal URIs (NOT read from the list) so a mutant that blanks an allowlist
+      # entry is caught — iterating the list alone would adapt to the mutation.
+      assert AlgorithmPolicy.enforce_digest_method(
+               policy,
+               "http://www.w3.org/2001/04/xmlenc#sha256"
+             ) == :ok
+
+      assert AlgorithmPolicy.enforce_digest_method(
+               policy,
+               "http://www.w3.org/2001/04/xmldsig-more#sha384"
+             ) == :ok
+
+      assert AlgorithmPolicy.enforce_digest_method(
+               policy,
+               "http://www.w3.org/2001/04/xmlenc#sha512"
+             ) == :ok
+    end
+
+    test "a method NOT on the allowlist is rejected (not silently accepted)" do
+      policy = AlgorithmPolicy.default()
+
+      assert %Relyra.Error{} =
+               AlgorithmPolicy.enforce_signature_method(
+                 policy,
+                 "http://www.w3.org/2001/04/xmldsig-more#rsa-ripemd160"
+               )
+    end
+  end
+
   describe "signing_digest_atom/1 (Phase 35 D-05 RSA -> atom)" do
     test "rsa-sha256 URI maps to :sha256" do
       assert AlgorithmPolicy.signing_digest_atom(@rsa_sha256) == {:ok, :sha256}

@@ -192,7 +192,7 @@ defmodule Relyra.TestSupport.FakeIdP do
   The inner `<Assertion>` is genuinely signed FIRST via the canonical
   `XmldsigSigner` path, THEN encrypted, so the post-decrypt bytes carry the real
   `DigestValue` / `SignatureValue` the verifier checks (RESEARCH note line 381).
-  The encrypted `<Assertion>` (and its sibling `<Signature>`) carry their own
+  The encrypted `<Assertion>` (with its enveloped `<Signature>`) carries its own
   `xmlns="urn:oasis:names:tc:SAML:2.0:assertion"` so canonical bytes survive the
   decrypt → re-parse → splice (Pitfall 1 / T-34-04).
 
@@ -262,10 +262,8 @@ defmodule Relyra.TestSupport.FakeIdP do
   end
 
   # Genuinely sign a Response via the canonical signer, then extract the signed
-  # <Assertion> together with its sibling <Signature> for wrapping into an
-  # <EncryptedAssertion>. The Signature stays a sibling of the Assertion — the
-  # shape PureBeam.signed_candidates/1 pairs by Assertion ID + the bound
-  # ds:Signature (find_first(root, "Signature")).
+  # <Assertion> (carrying its enveloped ds:Signature) for wrapping into an
+  # <EncryptedAssertion>.
   #
   # CRITICAL (T-34-04): the signer emits the Assertion ALREADY carrying its own
   # default namespace (`assertion_namespace: true`), so the genuine DigestValue is
@@ -280,10 +278,9 @@ defmodule Relyra.TestSupport.FakeIdP do
 
     %{response_xml: signed_xml} = Relyra.TestSupport.XmldsigSigner.signed_response(signer_opts)
 
-    assertion = extract_element(signed_xml, "Assertion")
-    signature = extract_element(signed_xml, "Signature")
-
-    assertion <> signature
+    # The signer emits an ENVELOPED ds:Signature (a direct child of the
+    # Assertion), so the Assertion element alone is the complete signed unit.
+    extract_element(signed_xml, "Assertion")
   end
 
   # Extract the first <Local ...>...</Local> element (verbatim bytes) from xml.

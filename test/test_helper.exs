@@ -8,15 +8,31 @@ case Relyra.TestGsdTools.resolve() do
     )
 end
 
+# Phase 83 mutation lane: mutare runs the baseline suite inside a git-less
+# sandbox COPY of the project. A handful of governance/adoption META-tests assert
+# against the live git checkout and repo layout (milestone SHAs, workflow
+# hygiene, evidence receipts) and so fail there through no fault of the code
+# under mutation. When `RELYRA_MUTATION_SUITE` is set, those `:non_hermetic_sandbox`
+# suites are excluded so the baseline is green; they still run in every ordinary
+# lane (mix qa, mix ci.security, ci-gate). This scopes mutation to the security
+# core only — never a relaxation of any gate.
+mutation_suite_excludes =
+  if System.get_env("RELYRA_MUTATION_SUITE") in ["1", "true"] do
+    [:non_hermetic_sandbox]
+  else
+    []
+  end
+
 # The Phase 73 replay re-runs whole lanes; `mix ci.phase73.reconciliation` owns it.
 ExUnit.start(
-  exclude: [
-    :pending,
-    :integration,
-    :external_idp,
-    :phase78_clean_state_receipt,
-    :phase_73_reconciliation_replay
-  ]
+  exclude:
+    [
+      :pending,
+      :integration,
+      :external_idp,
+      :phase78_clean_state_receipt,
+      :phase_73_reconciliation_replay
+    ] ++ mutation_suite_excludes
 )
 
 Relyra.TestSupport.MigrationCase.bootstrap!()

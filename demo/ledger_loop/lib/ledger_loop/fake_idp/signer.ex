@@ -33,6 +33,7 @@ defmodule LedgerLoop.FakeIdP.Signer do
   @rsa_sha256 "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
   @sha256 "http://www.w3.org/2001/04/xmlenc#sha256"
   @exc_c14n "http://www.w3.org/2001/10/xml-exc-c14n#"
+  @enveloped_signature "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
   @success_status "urn:oasis:names:tc:SAML:2.0:status:Success"
 
   @doc """
@@ -144,9 +145,13 @@ defmodule LedgerLoop.FakeIdP.Signer do
     }
   end
 
-  # The Response XML carries the genuine ds:Signature as a sibling of
-  # <Assertion> (NOT enveloped — no enveloped-signature transform needed; the
-  # digest is plain exc-C14N over the referenced <Assertion>).
+  # The Response XML carries the genuine ds:Signature ENVELOPED inside the
+  # referenced <Assertion> (a direct child, immediately after the Assertion's
+  # Issuer, per saml-core §5.4 / schema order). The Reference carries the
+  # enveloped-signature + exc-c14n Transforms and the digest is exc-C14N over the
+  # Assertion with its own enveloped Signature pruned — matching Relyra's strict
+  # Phase-80 binding (`do_verify/4` requires the signature to be the enveloped
+  # direct-child of the bound <Assertion>).
   #
   # WR-01: All interpolated values are escaped at the point of interpolation,
   # inside this single function. Because signed_response/1 calls response_xml/3
@@ -168,32 +173,46 @@ defmodule LedgerLoop.FakeIdP.Signer do
         v -> ~s( InResponseTo="#{AttributeEscape.escape_attribute(v)}")
       end
 
+    # Mirror the Response InResponseTo onto the bearer SubjectConfirmationData
+    # when present (SP-initiated): Phase 80 requires the signed SCD@InResponseTo
+    # to match where a correlation is in play. Omit it for a direct visit.
+    scd_in_response_to =
+      case fields.in_response_to do
+        nil -> ""
+        "" -> ""
+        v -> ~s( InResponseTo="#{AttributeEscape.escape_attribute(v)}")
+      end
+
     "<Response Destination=\"#{AttributeEscape.escape_attribute(fields.destination)}\"#{in_response_to_attr} ConnectionId=\"valid\">" <>
       "<Issuer>#{xml_text(fields.issuer)}</Issuer>" <>
       "<Status><StatusCode Value=\"#{AttributeEscape.escape_attribute(fields.status)}\"/></Status>" <>
       "<Assertion ID=\"#{AttributeEscape.escape_attribute(fields.assertion_id)}\">" <>
       "<Issuer>#{xml_text(fields.issuer)}</Issuer>" <>
-      "<Subject>" <>
-      "<NameID>#{xml_text(fields.name_id)}</NameID>" <>
-      "<SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\">" <>
-      "<SubjectConfirmationData Recipient=\"#{AttributeEscape.escape_attribute(fields.recipient)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.subject_confirmation_not_on_or_after)}\"/>" <>
-      "</SubjectConfirmation>" <>
-      "</Subject>" <>
-      "<Conditions NotBefore=\"#{AttributeEscape.escape_attribute(fields.not_before)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.not_on_or_after)}\">" <>
-      "<AudienceRestriction><Audience>#{xml_text(fields.audience)}</Audience></AudienceRestriction>" <>
-      "</Conditions>" <>
-      "</Assertion>" <>
       "<Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\">" <>
       "<SignedInfo>" <>
       "<CanonicalizationMethod Algorithm=\"#{@exc_c14n}\"/>" <>
       "<SignatureMethod Algorithm=\"#{@rsa_sha256}\"/>" <>
       "<Reference URI=\"##{AttributeEscape.escape_attribute(fields.assertion_id)}\">" <>
+      "<Transforms>" <>
+      "<Transform Algorithm=\"#{@enveloped_signature}\"/>" <>
+      "<Transform Algorithm=\"#{@exc_c14n}\"/>" <>
+      "</Transforms>" <>
       "<DigestMethod Algorithm=\"#{@sha256}\"/>" <>
       "<DigestValue>#{xml_text(digest_value_b64)}</DigestValue>" <>
       "</Reference>" <>
       "</SignedInfo>" <>
       "<SignatureValue>#{xml_text(signature_value_b64)}</SignatureValue>" <>
       "</Signature>" <>
+      "<Subject>" <>
+      "<NameID>#{xml_text(fields.name_id)}</NameID>" <>
+      "<SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\">" <>
+      "<SubjectConfirmationData Recipient=\"#{AttributeEscape.escape_attribute(fields.recipient)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.subject_confirmation_not_on_or_after)}\"#{scd_in_response_to}/>" <>
+      "</SubjectConfirmation>" <>
+      "</Subject>" <>
+      "<Conditions NotBefore=\"#{AttributeEscape.escape_attribute(fields.not_before)}\" NotOnOrAfter=\"#{AttributeEscape.escape_attribute(fields.not_on_or_after)}\">" <>
+      "<AudienceRestriction><Audience>#{xml_text(fields.audience)}</Audience></AudienceRestriction>" <>
+      "</Conditions>" <>
+      "</Assertion>" <>
       "</Response>"
   end
 
@@ -213,11 +232,20 @@ defmodule LedgerLoop.FakeIdP.Signer do
   # Internal — crypto (vendored technique from XmldsigSigner, re-homed here)
   # ---------------------------------------------------------------------------
 
-  # Digest the referenced <Assertion> via the verifier's canonicalize path
-  # so the DigestValue is byte-identical to what do_verify/4 recomputes.
-  # Source technique: lib/relyra/test_support/xmldsig_signer.ex:284-287
+  # Digest the referenced <Assertion> via the verifier's canonicalize path, with
+  # the Assertion's own enveloped <Signature> pruned (enveloped-signature
+  # transform), so the DigestValue is byte-identical to what do_verify/4
+  # recomputes. Source technique: lib/relyra/test_support/xmldsig_signer.ex.
   defp digest_for(%Node{} = assertion_node) do
-    {:ok, %{canonical_xml: ref_bytes}} = PureBeam.canonicalize(%{node: assertion_node})
+    signature_node = Enum.find(assertion_node.children, &(&1.local == "Signature"))
+
+    {:ok, %{canonical_xml: ref_bytes}} =
+      PureBeam.canonicalize(%{
+        node: assertion_node,
+        signature_node: signature_node,
+        transforms_node: signature_node && find_first_by_local(signature_node, "Transforms")
+      })
+
     :sha256 |> :crypto.hash(ref_bytes) |> Base.encode64()
   end
 

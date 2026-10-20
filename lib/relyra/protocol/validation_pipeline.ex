@@ -230,6 +230,8 @@ defmodule Relyra.Protocol.ValidationPipeline do
          {:ok, signed_node} <-
            Relyra.Security.Signature.verify(parsed_doc, connection, cert_chain, opts),
          :ok <- bind_signed_node(parsed_doc, signed_node),
+         :ok <- validate_assertion_issuer(parsed_doc, connection),
+         :ok <- validate_subject_confirmation(parsed_doc, request_intent),
          :ok <- Relyra.Protocol.Response.validate_status(Map.get(parsed_doc, :status)),
          :ok <-
            Relyra.Protocol.Response.validate_destination(
@@ -323,8 +325,93 @@ defmodule Relyra.Protocol.ValidationPipeline do
     end
   end
 
-  defp bind_signed_node(_parsed_doc, _signed_node) do
-    :ok
+  # The signed Assertion's own Issuer must match the Response Issuer and the
+  # configured IdP (S10). The Response Issuer is unsigned in assertion-signed
+  # SAML, so the signed Assertion Issuer is the authoritative one. It is checked
+  # only when the Assertion carries an Issuer (encrypted/pre-decrypt docs have
+  # none at this stage); absence there is caught by the field gates.
+  # The bearer SubjectConfirmationData InResponseTo is signed (inside the
+  # Assertion) and must agree with the pending request (S9). For SP-initiated
+  # logins it must equal the request ID; for IdP-initiated logins it must be
+  # absent (a bearer assertion minted for a different SP-initiated flow cannot be
+  # replayed into the IdP-initiated path).
+  defp validate_subject_confirmation(parsed_doc, request_intent) do
+    scd_in_response_to = Map.get(parsed_doc, :subject_confirmation_in_response_to)
+
+    case request_intent do
+      nil ->
+        # An unsolicited (IdP-initiated) bearer assertion must not claim to
+        # answer a request. A present InResponseTo here is a replayed
+        # SP-initiated assertion.
+        if is_nil(scd_in_response_to) do
+          :ok
+        else
+          {:error,
+           Error.new(
+             :subject_confirmation_invalid,
+             "IdP-initiated assertion carries a SubjectConfirmationData InResponseTo",
+             %{actual: scd_in_response_to}
+           )}
+        end
+
+      intent ->
+        expected_id = Map.get(intent, :request_id) || Map.get(intent, :in_response_to)
+
+        # Bind the signed SubjectConfirmationData InResponseTo WHEN the IdP
+        # supplies it. It is optional in SAML core, so an absent value is not
+        # rejected here — the unsigned Response-level InResponseTo correlation
+        # (validate_request_correlation) still gates the flow — but a present
+        # value that disagrees with the pending request is a mismatch.
+        if is_nil(scd_in_response_to) or scd_in_response_to == expected_id do
+          :ok
+        else
+          {:error,
+           Error.new(
+             :subject_confirmation_invalid,
+             "SubjectConfirmationData InResponseTo does not match the request ID",
+             %{expected: expected_id, actual: scd_in_response_to}
+           )}
+        end
+    end
+  end
+
+  defp validate_assertion_issuer(parsed_doc, connection) do
+    assertion_issuer = Map.get(parsed_doc, :assertion_issuer)
+    expected_issuer = Map.get(connection, :idp_entity_id) || Map.get(connection, :issuer)
+
+    cond do
+      is_nil(assertion_issuer) ->
+        :ok
+
+      assertion_issuer == expected_issuer ->
+        :ok
+
+      true ->
+        {:error,
+         Error.new(
+           :assertion_issuer_mismatch,
+           "Signed Assertion Issuer does not match the configured IdP",
+           %{expected: expected_issuer, actual: assertion_issuer}
+         )}
+    end
+  end
+
+  # The consumed identity MUST come from exactly the node the signature verified
+  # (S6): the parsed document's consumed Assertion ID must equal the verified
+  # SignedNode's xml_id.
+  defp bind_signed_node(parsed_doc, %SignedNode{xml_id: xml_id}) do
+    consumed = Map.get(parsed_doc, :consumed_xml_id)
+
+    if is_binary(consumed) and is_binary(xml_id) and consumed == xml_id do
+      :ok
+    else
+      {:error,
+       Error.new(
+         :signed_node_binding_mismatch,
+         "Consumed assertion node does not match the verified signed node",
+         %{consumed: consumed, signed: xml_id}
+       )}
+    end
   end
 
   defp login_result(

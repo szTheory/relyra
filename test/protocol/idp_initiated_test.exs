@@ -40,33 +40,38 @@ defmodule Relyra.Protocol.IdpInitiatedTest do
       )
 
     in_response_to_attr =
-      if fields.in_response_to, do: "InResponseTo=\"#{fields.in_response_to}\"", else: ""
+      if fields.in_response_to, do: ~s( InResponseTo="#{fields.in_response_to}"), else: ""
 
+    # A parse-valid, SAML-conformant Response (enveloped ds:Signature inside the
+    # Assertion, bearer SubjectConfirmation). These tests exercise the
+    # request-correlation stage, which runs before signature verification, so
+    # the signature placeholders are left empty on purpose — correlation fires
+    # first for the IdP-initiated cases under test.
     """
-    <Response Destination="#{fields.destination}" #{in_response_to_attr}>
-      <Issuer>#{fields.issuer}</Issuer>
-      <Signature>
-        <SignedInfo>
-          <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
-          <Reference>
-            <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-          </Reference>
-        </SignedInfo>
-      </Signature>
-      <Status><StatusCode Value="#{@success_status}"/></Status>
-      <Assertion ID="a1">
-        <Issuer>#{fields.issuer}</Issuer>
-        <Subject>
-          <NameID>user@example.com</NameID>
-          <SubjectConfirmation>
-            <SubjectConfirmationData Recipient="#{fields.recipient}" NotOnOrAfter="2026-04-24T16:05:00Z"/>
-          </SubjectConfirmation>
-        </Subject>
-        <Conditions NotBefore="2026-04-24T15:58:00Z" NotOnOrAfter="2026-04-24T16:05:00Z">
-          <AudienceRestriction><Audience>#{fields.audience}</Audience></AudienceRestriction>
-        </Conditions>
-      </Assertion>
-    </Response>
+    <samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Destination="#{fields.destination}"#{in_response_to_attr}>
+      <saml:Issuer>#{fields.issuer}</saml:Issuer>
+      <samlp:Status><samlp:StatusCode Value="#{@success_status}"/></samlp:Status>
+      <saml:Assertion ID="a1">
+        <saml:Issuer>#{fields.issuer}</saml:Issuer>
+        <ds:Signature><ds:SignedInfo>
+          <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+          <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+          <ds:Reference URI="#a1">
+            <ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms>
+            <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+          </ds:Reference>
+        </ds:SignedInfo></ds:Signature>
+        <saml:Subject>
+          <saml:NameID>user@example.com</saml:NameID>
+          <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+            <saml:SubjectConfirmationData Recipient="#{fields.recipient}" NotOnOrAfter="2026-04-24T16:05:00Z"/>
+          </saml:SubjectConfirmation>
+        </saml:Subject>
+        <saml:Conditions NotBefore="2026-04-24T15:58:00Z" NotOnOrAfter="2026-04-24T16:05:00Z">
+          <saml:AudienceRestriction><saml:Audience>#{fields.audience}</saml:Audience></saml:AudienceRestriction>
+        </saml:Conditions>
+      </saml:Assertion>
+    </samlp:Response>
     """
     |> String.trim()
   end

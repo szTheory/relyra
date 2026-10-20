@@ -397,10 +397,14 @@ defmodule Relyra do
   end
 
   defp detect_logout_type(payload, :post) do
-    cond do
-      String.contains?(payload, "LogoutRequest") -> :request
-      String.contains?(payload, "LogoutResponse") -> :response
-      true -> :unknown
+    # Detect by the PARSED root element (S15), not a substring: a signed login
+    # <Response> carrying an injected "<SessionIndex>" string must never be
+    # mistaken for a LogoutRequest. A malformed payload is :unknown and the
+    # validator re-parses and rejects it with a typed error.
+    case Relyra.Security.XML.SaxyTree.parse(payload) do
+      {:ok, %Relyra.Security.XML.SaxyTree.Node{local: "LogoutRequest"}} -> :request
+      {:ok, %Relyra.Security.XML.SaxyTree.Node{local: "LogoutResponse"}} -> :response
+      _ -> :unknown
     end
   end
 

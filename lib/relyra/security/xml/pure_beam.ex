@@ -33,6 +33,14 @@ defmodule Relyra.Security.XML.PureBeam do
   # ds:Signature node is unresolved, refuse rather than serialize-without-pruning.
   @enveloped_signature "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
 
+  # Namespace URIs used for structural, namespace-aware binding (Phase 80, S20).
+  # A security element matches only when its resolved namespace URI is one of
+  # these, or when it carries no namespace at all.
+  @saml_assertion_ns "urn:oasis:names:tc:SAML:2.0:assertion"
+  @samlp_ns "urn:oasis:names:tc:SAML:2.0:protocol"
+  @dsig_ns "http://www.w3.org/2000/09/xmldsig#"
+  @bearer_method "urn:oasis:names:tc:SAML:2.0:cm:bearer"
+
   @impl true
   def parse_safely(xml, opts \\ [])
 
@@ -257,31 +265,102 @@ defmodule Relyra.Security.XML.PureBeam do
     # decrypted plaintext (one parse path, CLAUDE.md #2). A cleartext+encrypted
     # ambiguity still hits the full cleartext path here (cleartext Assertion present)
     # and is rejected by the pre-stage as :ambiguous_assertion.
-    if encrypted_only?(root) do
-      build_pre_decrypt_parsed_doc(root)
-    else
-      build_cleartext_parsed_doc(root)
+    with :ok <- require_response_root(root) do
+      # Any <EncryptedAssertion> (with or without a sibling cleartext assertion)
+      # routes to the minimal pre-decrypt doc, so the ValidationPipeline decrypt
+      # pre-stage can decrypt the single-encrypted case or reject the
+      # cleartext+encrypted ambiguity (:ambiguous_assertion) before the strict
+      # cleartext binding runs. A document with no EncryptedAssertion takes the
+      # strict cleartext binding path directly.
+      if has_encrypted_assertion?(root) do
+        build_pre_decrypt_parsed_doc(root)
+      else
+        build_cleartext_parsed_doc(root)
+      end
     end
   end
 
+  # The document root MUST be a samlp:Response (S11). A non-Response root — or a
+  # Response-named root in a foreign namespace — is rejected before any field is
+  # derived.
+  defp require_response_root(%Node{local: "Response"} = root) do
+    if ns_match?(root, "Response", [@samlp_ns]) do
+      :ok
+    else
+      {:error,
+       Error.new(
+         :unexpected_root_element,
+         "Response root element is in an unexpected namespace",
+         %{namespace: ns_uri(root)}
+       )}
+    end
+  end
+
+  defp require_response_root(%Node{local: local}) do
+    {:error,
+     Error.new(
+       :unexpected_root_element,
+       "SAML Response document root must be <samlp:Response>",
+       %{root_element: local}
+     )}
+  end
+
+  # A LogoutRequest / LogoutResponse binds its signature to the message ROOT
+  # (Phase 81, S15): the enveloped ds:Signature is a direct child of the root and
+  # its Reference URI equals the root ID. A logout message must NOT carry an
+  # <Assertion> (that is the embedded-assertion wrapping attack). When the
+  # message carries no signature at all (the HTTP-Redirect case, where the query
+  # is signed instead), the base doc is returned and the POST path's
+  # require_xml_signature rejects it.
   defp build_logout_parsed_doc(%Node{} = root) do
     base = %{
       type: :parsed_logout_xml,
       parse_tree: root
     }
 
-    case signature_fields(root) do
-      {:ok, fields} -> {:ok, Map.merge(base, fields)}
-      {:error, _} -> {:ok, base}
+    with :ok <- reject_logout_assertion(root),
+         :ok <- reject_duplicate_ids(root),
+         :ok <- reject_rogue_key_info(root) do
+      case bind_enveloped_signature(root, attr(root, "ID"), "/" <> root.local) do
+        {:ok, candidate} ->
+          {:ok,
+           Map.merge(base, %{
+             signature_method: candidate.signature_method,
+             digest_method: candidate.digest_method,
+             canonicalization_method: candidate.canonicalization_method,
+             signed_candidates: [candidate],
+             duplicate_ids: duplicate_ids(root),
+             key_info_trust: rogue_key_info_present?(root)
+           })}
+
+        {:error, _} ->
+          {:ok, base}
+      end
     end
   end
 
-  # True iff the document carries at least one <EncryptedAssertion> and NO cleartext
-  # <Assertion> (prefix-agnostic, by local name). This is the encrypted-only shape
-  # the :decrypt_assertion pre-stage must be allowed to reach.
-  defp encrypted_only?(%Node{} = root) do
-    not is_nil(find_first(root, "EncryptedAssertion")) and
-      is_nil(find_first(root, "Assertion"))
+  # A logout message carrying an <Assertion> is rejected (S15): the embedded
+  # assertion is the signature-wrapping vector that let any IdP-signed assertion
+  # stand in for a root signature.
+  defp reject_logout_assertion(%Node{} = root) do
+    if is_nil(find_first(root, "Assertion")) do
+      :ok
+    else
+      {:error,
+       Error.new(
+         :logout_assertion_forbidden,
+         "A logout message must not contain an <Assertion>",
+         %{}
+       )}
+    end
+  end
+
+  # True iff the document carries at least one <EncryptedAssertion> (prefix-
+  # agnostic, by local name). The ValidationPipeline decrypt pre-stage then
+  # decrypts the single-encrypted case or rejects the cleartext+encrypted
+  # ambiguity before any cleartext binding.
+  defp has_encrypted_assertion?(%Node{} = root) do
+    not is_nil(find_first(root, "EncryptedAssertion"))
   end
 
   # The minimal pre-decrypt parsed_doc: response_fields (Issuer/Status/Destination
@@ -301,10 +380,20 @@ defmodule Relyra.Security.XML.PureBeam do
     end
   end
 
+  # Bind the single signed <Assertion> FIRST, then derive every assertion and
+  # signature field strictly from that bound node — never from a descendant-or-
+  # self search over the whole Response (Phase 80, seams S1-S11, S20). Response-
+  # envelope fields (Issuer / Status / Destination) are read from the Response
+  # root's own direct children; they are inherently outside the assertion
+  # signature in standard assertion-signed SAML, so binding them to the signed
+  # node is neither possible nor expected.
   defp build_cleartext_parsed_doc(%Node{} = root) do
-    with {:ok, response_fields} <- response_fields(root),
-         {:ok, assertion_fields} <- assertion_fields(root),
-         {:ok, signature_fields} <- signature_fields(root) do
+    with :ok <- reject_duplicate_ids(root),
+         :ok <- reject_rogue_key_info(root),
+         {:ok, assertion} <- bind_signed_assertion(root),
+         {:ok, response_fields} <- response_fields(root),
+         {:ok, assertion_fields} <- assertion_fields(assertion),
+         {:ok, signature_fields} <- signature_fields(root, assertion) do
       assertion_times = %{
         not_before: Map.fetch!(assertion_fields, :not_before),
         not_on_or_after: Map.fetch!(assertion_fields, :not_on_or_after),
@@ -316,7 +405,8 @@ defmodule Relyra.Security.XML.PureBeam do
        %{
          type: :parsed_xml,
          assertion_times: assertion_times,
-         parse_tree: root
+         parse_tree: root,
+         signed_assertion_node: assertion
        }
        |> Map.merge(response_fields)
        |> Map.merge(assertion_fields)
@@ -324,10 +414,86 @@ defmodule Relyra.Security.XML.PureBeam do
     end
   end
 
+  # Duplicate ID/id attribute values anywhere in the tree are rejected before
+  # anything is bound (CVE-2024-45409 / XSW defense). This runs before the
+  # single-assertion cardinality check so a duplicated-ID wrapping attack keeps
+  # its precise :duplicate_xml_id signal.
+  defp reject_duplicate_ids(%Node{} = root) do
+    case duplicate_ids(root) do
+      [] ->
+        :ok
+
+      dups ->
+        {:error,
+         Error.new(
+           :duplicate_xml_id,
+           "Duplicate XML IDs detected in signed material",
+           %{duplicate_ids: dups, duplicate_count: length(dups)}
+         )}
+    end
+  end
+
+  # A document-provided KeyInfo outside any ds:Signature is an attempt to supply
+  # the SP's trust key from the document (CVE-2024-45409 class). It is rejected
+  # before any field derivation so the :untrusted_certificate signal is not
+  # masked by a downstream field-shape rejection.
+  defp reject_rogue_key_info(%Node{} = root) do
+    if rogue_key_info_present?(root) do
+      {:error,
+       Error.new(
+         :untrusted_certificate,
+         "Document-provided KeyInfo cannot be used as a trust source",
+         %{reason: :document_keyinfo_forbidden}
+       )}
+    else
+      :ok
+    end
+  end
+
+  # Exactly ONE <Assertion> (any namespace, any depth — cardinality over local
+  # name) may be present, and the single one MUST be a direct child of the
+  # <Response> root in the SAML assertion namespace (or no namespace). More than
+  # one is :ambiguous_signed_node (fail closed; also covers an ID-less decoy
+  # sibling, S8, and nested Advice assertions, S12). A single assertion that is
+  # not a bound direct child is :missing_protocol_field.
+  defp bind_signed_assertion(%Node{} = root) do
+    case find_all(root, "Assertion") do
+      [_single] ->
+        case direct_children_ns(root, "Assertion", [@saml_assertion_ns]) do
+          [%Node{} = assertion] ->
+            {:ok, assertion}
+
+          _ ->
+            {:error,
+             Error.new(
+               :missing_protocol_field,
+               "Signed <Assertion> is not a direct child of the <Response> root",
+               %{}
+             )}
+        end
+
+      [] ->
+        {:error,
+         Error.new(
+           :missing_protocol_field,
+           "Response payload carries no <Assertion>",
+           %{}
+         )}
+
+      multiple ->
+        {:error,
+         Error.new(
+           :ambiguous_signed_node,
+           "Exactly one <Assertion> is required in a signed Response",
+           %{assertion_count: length(multiple)}
+         )}
+    end
+  end
+
   defp response_fields(%Node{} = root) do
     fields = %{
-      issuer: first_text(root, "Issuer"),
-      status: first_attr(root, "StatusCode", "Value"),
+      issuer: direct_child_text(root, "Issuer"),
+      status: status_code_value(root),
       destination: attr(root, "Destination"),
       in_response_to: attr(root, "InResponseTo"),
       connection_id: attr(root, "ConnectionId")
@@ -341,19 +507,38 @@ defmodule Relyra.Security.XML.PureBeam do
     )
   end
 
-  defp assertion_fields(%Node{} = root) do
+  # Only the <Response>'s own direct <Status>/<StatusCode Value> is authoritative
+  # (S10): a nested or injected StatusCode elsewhere must never be read.
+  defp status_code_value(%Node{} = root) do
+    with %Node{} = status <- first_direct_child(root, "Status"),
+         %Node{} = status_code <- first_direct_child(status, "StatusCode") do
+      attr(status_code, "Value")
+    else
+      _ -> nil
+    end
+  end
+
+  # EVERY field below is derived from within the bound <Assertion> subtree, which
+  # the signature covers. Subject-confirmation fields are scoped to the bearer
+  # SubjectConfirmation (S9); the assertion's own Issuer is surfaced for the
+  # issuer-binding check (S10).
+  defp assertion_fields(%Node{} = assertion) do
+    bearer_scd = bearer_subject_confirmation_data(assertion)
+    conditions = first_descendant_ns(assertion, "Conditions")
+
     fields = %{
-      audiences: all_texts(root, "Audience"),
-      recipient: first_attr(root, "SubjectConfirmationData", "Recipient"),
-      not_before: first_attr(root, "Conditions", "NotBefore"),
-      not_on_or_after: first_attr(root, "Conditions", "NotOnOrAfter"),
-      subject_confirmation_not_on_or_after:
-        first_attr(root, "SubjectConfirmationData", "NotOnOrAfter"),
-      consumed_xml_id: first_attr(root, "Assertion", "ID"),
-      name_id: first_text(root, "NameID"),
-      name_id_format: first_attr(root, "NameID", "Format"),
-      session_index: first_attr(root, "AuthnStatement", "SessionIndex"),
-      attributes: derive_attributes(root)
+      audiences: all_texts(assertion, "Audience"),
+      recipient: attr(bearer_scd, "Recipient"),
+      not_before: attr(conditions, "NotBefore"),
+      not_on_or_after: attr(conditions, "NotOnOrAfter"),
+      subject_confirmation_not_on_or_after: attr(bearer_scd, "NotOnOrAfter"),
+      subject_confirmation_in_response_to: attr(bearer_scd, "InResponseTo"),
+      consumed_xml_id: attr(assertion, "ID"),
+      assertion_issuer: assertion_issuer(assertion),
+      name_id: subject_name_id_text(assertion),
+      name_id_format: subject_name_id_format(assertion),
+      session_index: first_attr(assertion, "AuthnStatement", "SessionIndex"),
+      attributes: derive_attributes(assertion)
     }
 
     require_present_fields(
@@ -371,79 +556,195 @@ defmodule Relyra.Security.XML.PureBeam do
     )
   end
 
-  defp signature_fields(%Node{} = root) do
-    signature_method = first_attr(root, "SignatureMethod", "Algorithm")
-    digest_method = first_attr(root, "DigestMethod", "Algorithm")
-
-    fields = %{
-      signature_method: signature_method,
-      digest_method: digest_method,
-      signed_candidates:
-        signed_candidates(root)
-        |> Enum.map(fn candidate ->
-          Map.merge(candidate, %{
-            signature_method: signature_method,
-            digest_method: digest_method
-          })
-        end),
-      duplicate_ids: duplicate_ids(root),
-      key_info_trust: rogue_key_info_present?(root)
-    }
-
-    require_present_fields(
-      fields,
-      [:signature_method, :digest_method, :signed_candidates],
-      :missing_signature,
-      "Signed XML material is missing required signature fields"
-    )
+  # The Assertion's own direct-child <Issuer> text (S10). An <Issuer> nested
+  # deeper (e.g. inside an Advice assertion) is not read.
+  defp assertion_issuer(%Node{} = assertion) do
+    case first_direct_child(assertion, "Issuer") do
+      %Node{} = issuer -> trimmed_text(issuer)
+      _ -> nil
+    end
   end
 
-  # Each <Assertion> with an ID attribute becomes a signed candidate. The xpath
-  # indexes Assertion elements 1-based in document order (matching the regex-era
-  # /Response/Assertion[N] shape). D-10: each candidate carries the EXACT tree
-  # node (:node) plus the bound ds:Signature node (:signature_node) and that
-  # Reference's ds:Transforms node (:transforms_node) so canonicalize/2 can apply
-  # the reference transform chain over the same node it bound.
-  defp signed_candidates(%Node{} = root) do
-    response_signature = find_first(root, "Signature")
-
-    root
-    |> find_all("Assertion")
-    |> Enum.with_index(1)
-    |> Enum.flat_map(fn {%Node{} = assertion, index} ->
-      case attr(assertion, "ID") do
-        nil ->
-          []
-
-        assertion_id ->
-          signature_node = find_first(assertion, "Signature") || response_signature
-
-          transforms_node =
-            if signature_node, do: find_first(signature_node, "Transforms"), else: nil
-
-          signed_info_node =
-            if signature_node, do: find_first(signature_node, "SignedInfo"), else: nil
-
-          digest_value_b64 = trimmed_node_text(maybe_find(signature_node, "DigestValue"))
-          signature_value_b64 = trimmed_node_text(maybe_find(signature_node, "SignatureValue"))
-
-          [
-            %{
-              xml_id: assertion_id,
-              xpath: "/Response/Assertion[#{index}]",
-              signed_xml: render_signed_xml(assertion),
-              node: assertion,
-              signature_node: signature_node,
-              transforms_node: transforms_node,
-              signed_info_node: signed_info_node,
-              digest_value_b64: digest_value_b64,
-              signature_value_b64: signature_value_b64
-            }
-          ]
-      end
-    end)
+  # NameID strictly from the Assertion's Subject (S7), not any descendant NameID.
+  defp subject_name_id_text(%Node{} = assertion) do
+    case subject_name_id(assertion) do
+      %Node{} = name_id -> trimmed_text(name_id)
+      _ -> nil
+    end
   end
 
+  defp subject_name_id_format(%Node{} = assertion) do
+    attr(subject_name_id(assertion), "Format")
+  end
+
+  defp subject_name_id(%Node{} = assertion) do
+    with %Node{} = subject <- first_direct_child(assertion, "Subject") do
+      first_direct_child(subject, "NameID")
+    else
+      _ -> nil
+    end
+  end
+
+  # The SubjectConfirmationData of the FIRST bearer SubjectConfirmation in the
+  # Subject (S9). A non-bearer confirmation is ignored.
+  defp bearer_subject_confirmation_data(%Node{} = assertion) do
+    with %Node{} = subject <- first_direct_child(assertion, "Subject"),
+         %Node{} = confirmation <- bearer_subject_confirmation(subject) do
+      first_direct_child(confirmation, "SubjectConfirmationData")
+    else
+      _ -> nil
+    end
+  end
+
+  defp bearer_subject_confirmation(%Node{} = subject) do
+    subject
+    |> direct_children_ns("SubjectConfirmation", [@saml_assertion_ns])
+    |> Enum.find(fn sc -> attr(sc, "Method") == @bearer_method end)
+  end
+
+  # Bind the signature structurally to the Assertion (S1-S4): the ds:Signature
+  # MUST be the enveloped, direct-child Signature of the bound Assertion, in the
+  # XMLDSig namespace. Its SignedInfo must carry exactly ONE Reference whose URI
+  # is "#" <> Assertion@ID, and DigestValue / DigestMethod / Transforms must be
+  # that Reference's own direct children. The crypto methods come from the bound
+  # SignedInfo, never a document-wide search.
+  defp signature_fields(%Node{} = root, %Node{} = assertion) do
+    with {:ok, candidate} <-
+           bind_enveloped_signature(assertion, attr(assertion, "ID"), "/Response/Assertion[1]") do
+      fields = %{
+        signature_method: candidate.signature_method,
+        digest_method: candidate.digest_method,
+        canonicalization_method: candidate.canonicalization_method,
+        signed_candidates: [candidate],
+        duplicate_ids: duplicate_ids(root),
+        key_info_trust: rogue_key_info_present?(root)
+      }
+
+      require_present_fields(
+        fields,
+        [:signature_method, :digest_method, :signed_candidates],
+        :missing_signature,
+        "Signed XML material is missing required signature fields"
+      )
+    end
+  end
+
+  # Bind an enveloped ds:Signature to an arbitrary signed element (the Assertion
+  # on the login path, the LogoutRequest/LogoutResponse root on the logout path).
+  defp bind_enveloped_signature(%Node{} = signed_element, element_id, xpath) do
+    with {:ok, signature} <- enveloped_signature(signed_element),
+         {:ok, signed_info} <- direct_child_required(signature, "SignedInfo", @dsig_ns),
+         {:ok, reference} <- single_reference(signed_info),
+         :ok <- reference_uri_matches(reference, element_id) do
+      transforms_node = first_direct_child(reference, "Transforms")
+      digest_method = first_attr_in(reference, "DigestMethod", "Algorithm")
+      digest_value = direct_child_text(reference, "DigestValue")
+      signature_value = direct_child_text(signature, "SignatureValue")
+      signature_method = first_attr_in(signed_info, "SignatureMethod", "Algorithm")
+      canonicalization_method = first_attr_in(signed_info, "CanonicalizationMethod", "Algorithm")
+
+      {:ok,
+       %{
+         xml_id: element_id,
+         xpath: xpath,
+         signed_xml: render_signed_xml(signed_element),
+         node: signed_element,
+         signature_node: signature,
+         transforms_node: transforms_node,
+         signed_info_node: signed_info,
+         digest_value_b64: digest_value,
+         signature_value_b64: signature_value,
+         signature_method: signature_method,
+         digest_method: digest_method,
+         canonicalization_method: canonicalization_method
+       }}
+    end
+  end
+
+  # The signature MUST be a direct child of the bound Assertion (enveloped) in
+  # the XMLDSig namespace (S3). A Signature elsewhere in the document, or nested
+  # below the Assertion but not a direct child, is not a valid binding.
+  defp enveloped_signature(%Node{} = assertion) do
+    case direct_children_ns(assertion, "Signature", [@dsig_ns]) do
+      [%Node{} = signature] ->
+        {:ok, signature}
+
+      [] ->
+        {:error,
+         Error.new(
+           :signature_placement_invalid,
+           "The bound <Assertion> has no enveloped direct-child <ds:Signature>",
+           %{}
+         )}
+
+      multiple ->
+        {:error,
+         Error.new(
+           :signature_placement_invalid,
+           "The bound <Assertion> carries more than one direct-child <ds:Signature>",
+           %{signature_count: length(multiple)}
+         )}
+    end
+  end
+
+  defp single_reference(%Node{} = signed_info) do
+    case direct_children_ns(signed_info, "Reference", [@dsig_ns]) do
+      [%Node{} = reference] ->
+        {:ok, reference}
+
+      references ->
+        {:error,
+         Error.new(
+           :reference_mismatch,
+           "SignedInfo must carry exactly one Reference",
+           %{reference_count: length(references)}
+         )}
+    end
+  end
+
+  defp reference_uri_matches(%Node{} = reference, assertion_id)
+       when is_binary(assertion_id) and assertion_id != "" do
+    if attr(reference, "URI") == "#" <> assertion_id do
+      :ok
+    else
+      {:error,
+       Error.new(
+         :reference_mismatch,
+         "Reference URI does not match the bound Assertion ID",
+         %{reference_uri: attr(reference, "URI"), assertion_id: assertion_id}
+       )}
+    end
+  end
+
+  defp reference_uri_matches(%Node{} = reference, _assertion_id) do
+    {:error,
+     Error.new(
+       :reference_mismatch,
+       "Signed Assertion has no ID for the Reference URI to bind to",
+       %{reference_uri: attr(reference, "URI")}
+     )}
+  end
+
+  defp direct_child_required(%Node{} = parent, local, uri) do
+    case first_direct_child_ns(parent, local, [uri]) do
+      %Node{} = node ->
+        {:ok, node}
+
+      _ ->
+        {:error,
+         Error.new(
+           :missing_signature,
+           "Signed material is missing a required <#{local}>",
+           %{}
+         )}
+    end
+  end
+
+  # A ds:KeyInfo INSIDE a ds:Signature is standard XMLDSig and harmless — the
+  # verifier never reads it, always using the operator-configured certificates
+  # (CLAUDE.md #1). A KeyInfo OUTSIDE any Signature is a document trying to place
+  # trust material where it does not belong; it is flagged, and
+  # select_signed_node/2 rejects the document (:untrusted_certificate).
   defp rogue_key_info_present?(%Node{} = root) do
     has_rogue_key_info?(root, false)
   end
@@ -682,6 +983,68 @@ defmodule Relyra.Security.XML.PureBeam do
 
   defp direct_child(_other, _local), do: nil
 
+  # The resolved namespace URI of a node (the in-scope URI for its prefix; the
+  # default-namespace "" key for an unprefixed element), or nil when none is in
+  # scope.
+  defp ns_uri(%Node{prefix: prefix, ns: ns}), do: Map.get(ns, prefix)
+
+  # True when the node's local name matches AND its namespace is one of `uris`
+  # (or the element carries no namespace at all — an unqualified element inside a
+  # signed subtree is covered by the signature). A FOREIGN namespace never
+  # matches (S20): a lookalike <x:NameID xmlns:x="urn:attacker"> is rejected.
+  defp ns_match?(%Node{local: local} = node, local, uris) do
+    case ns_uri(node) do
+      nil -> true
+      "" -> true
+      uri -> uri in uris
+    end
+  end
+
+  defp ns_match?(_node, _local, _uris), do: false
+
+  # Direct children (not descendants) with the given local name and an allowed
+  # namespace, in document order.
+  defp direct_children_ns(%Node{children: children}, local, uris) do
+    Enum.filter(children, &ns_match?(&1, local, uris))
+    |> Enum.filter(fn %Node{local: l} -> l == local end)
+  end
+
+  defp direct_children_ns(_other, _local, _uris), do: []
+
+  defp first_direct_child_ns(node, local, uris) do
+    node |> direct_children_ns(local, uris) |> List.first()
+  end
+
+  # Direct child by local name, any namespace (used for Response-envelope
+  # elements and the Subject/NameID walk, which are structural position checks).
+  defp first_direct_child(%Node{children: children}, local) do
+    Enum.find(children, fn %Node{local: l} -> l == local end)
+  end
+
+  defp first_direct_child(_other, _local), do: nil
+
+  # Trimmed text of the first direct child with this local name, or nil.
+  defp direct_child_text(%Node{} = node, local) do
+    case first_direct_child(node, local) do
+      %Node{} = child -> trimmed_text(child)
+      _ -> nil
+    end
+  end
+
+  defp direct_child_text(_other, _local), do: nil
+
+  # First descendant-or-self with this local name and an allowed namespace.
+  defp first_descendant_ns(%Node{local: local} = node, local) do
+    if ns_match?(node, local, [@saml_assertion_ns]), do: node, else: descend_ns(node, local)
+  end
+
+  defp first_descendant_ns(%Node{} = node, local), do: descend_ns(node, local)
+  defp first_descendant_ns(_other, _local), do: nil
+
+  defp descend_ns(%Node{children: children}, local) do
+    Enum.find_value(children, fn child -> first_descendant_ns(child, local) end)
+  end
+
   # first_attr/3 starting from a possibly-nil parent (e.g. an absent SignedInfo):
   # the value of the first descendant-or-self element (with this local name)
   # carrying the given attribute, trimmed; or nil. nil-safe.
@@ -714,15 +1077,6 @@ defmodule Relyra.Security.XML.PureBeam do
 
   defp collect_all(%Node{children: children} = node, acc) do
     Enum.reduce(children, [node | acc], fn child, a -> collect_all(child, a) end)
-  end
-
-  # Trimmed text of the first descendant-or-self element with this local name, or
-  # nil. Trimming matches the regex-era first_tag_text/2 contract.
-  defp first_text(%Node{} = root, local) do
-    case find_first(root, local) do
-      %Node{} = node -> trimmed_text(node)
-      _ -> nil
-    end
   end
 
   # Trimmed text of every descendant-or-self element with this local name,

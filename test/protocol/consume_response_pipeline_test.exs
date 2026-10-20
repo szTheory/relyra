@@ -236,7 +236,12 @@ defmodule Relyra.Protocol.ConsumeResponsePipelineTest do
                consume_opts(now: @fixed_now)
              )
 
-    assert error_type in [:missing_signature, :missing_protocol_field, :malformed_xml]
+    assert error_type in [
+             :missing_signature,
+             :missing_protocol_field,
+             :malformed_xml,
+             :unexpected_root_element
+           ]
   end
 
   @tag :replay_consume_failure_blocks_success

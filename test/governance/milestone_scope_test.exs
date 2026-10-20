@@ -1,5 +1,9 @@
 defmodule Relyra.Governance.MilestoneScopeTest do
   use ExUnit.Case, async: true
+  # Excluded from the Phase 83 mutation baseline (RELYRA_MUTATION_SUITE): this
+  # meta-suite asserts against the live git checkout, which mutare's git-less
+  # sandbox copy lacks. It runs in every ordinary lane.
+  @moduletag :non_hermetic_sandbox
 
   @moduletag :evidence_contract
 

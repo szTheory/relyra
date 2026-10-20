@@ -9,10 +9,12 @@ defmodule Relyra.Security.XML.PureBeamTest do
   @signature_method "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
   @digest_method "http://www.w3.org/2001/04/xmlenc#sha256"
 
-  # A well-formed single-signed-node SAML Response (the seam_contract fixture
-  # shape). Single-quoted attrs are valid XML 1.0 and Saxy parses them; the tree
-  # path must re-derive the SAME flat field values the regex path produced.
-  @well_formed_response "<Response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123' ConnectionId='conn-123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-1'><Issuer>https://idp.example.com/metadata</Issuer><Subject><NameID Format='urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'>user@example.com</NameID><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><AuthnStatement SessionIndex='session-xyz'><AttributeStatement><Attribute Name='email'><AttributeValue>user@example.com</AttributeValue></Attribute></AttributeStatement></AuthnStatement></Assertion><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-1'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></Response>"
+  # A well-formed, SAML-conformant single-signed-node Response (Phase 80 binding
+  # contract): samlp/saml/ds namespaces, an enveloped ds:Signature that is a
+  # direct child of the <Assertion>, a Reference URI bound to the Assertion ID,
+  # and a bearer SubjectConfirmation. The tree path derives every field strictly
+  # from within the bound Assertion.
+  @well_formed_response "<samlp:Response xmlns:samlp='urn:oasis:names:tc:SAML:2.0:protocol' xmlns:saml='urn:oasis:names:tc:SAML:2.0:assertion' xmlns:ds='http://www.w3.org/2000/09/xmldsig#' Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123' ConnectionId='conn-123'><saml:Issuer>https://idp.example.com/metadata</saml:Issuer><samlp:Status><samlp:StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></samlp:Status><saml:Assertion ID='assertion-1'><saml:Issuer>https://idp.example.com/metadata</saml:Issuer><ds:Signature><ds:SignedInfo><ds:CanonicalizationMethod Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'/><ds:SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><ds:Reference URI='#assertion-1'><ds:Transforms><ds:Transform Algorithm='http://www.w3.org/2000/09/xmldsig#enveloped-signature'/><ds:Transform Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'/></ds:Transforms><ds:DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/><ds:DigestValue>AA==</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>AA==</ds:SignatureValue></ds:Signature><saml:Subject><saml:NameID Format='urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'>user@example.com</saml:NameID><saml:SubjectConfirmation Method='urn:oasis:names:tc:SAML:2.0:cm:bearer'><saml:SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></saml:SubjectConfirmation></saml:Subject><saml:Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><saml:AudienceRestriction><saml:Audience>https://sp.example.com/metadata</saml:Audience></saml:AudienceRestriction></saml:Conditions><saml:AuthnStatement SessionIndex='session-xyz'><saml:AttributeStatement><saml:Attribute Name='email'><saml:AttributeValue>user@example.com</saml:AttributeValue></saml:Attribute></saml:AttributeStatement></saml:AuthnStatement></saml:Assertion></samlp:Response>"
 
   describe "parse_safely/2 onto the saxy tree (Task 1)" do
     test "returns a non-binary parsed_doc carrying every legacy key plus :parse_tree" do
@@ -122,29 +124,53 @@ defmodule Relyra.Security.XML.PureBeamTest do
 
   describe "tree-derived guards (Task 1)" do
     test "KeyInfo inside a ds:Signature block is standard XMLDSig and does not elevate trust" do
+      # A conformant Response whose enveloped signature carries a KeyInfo inside
+      # the ds:Signature — standard XMLDSig, ignored by the verifier (it always
+      # uses configured certs). key_info_trust stays false.
       xml =
-        "<Response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='assertion-1'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><Signature><KeyInfo><X509Data>cert</X509Data></KeyInfo><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-1'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></Response>"
+        String.replace(
+          @well_formed_response,
+          "<ds:SignedInfo>",
+          "<ds:KeyInfo><ds:X509Data>cert</ds:X509Data></ds:KeyInfo><ds:SignedInfo>",
+          global: false
+        )
 
       assert {:ok, %{key_info_trust: false}} = PureBeam.parse_safely(xml)
     end
 
-    test "rogue KeyInfo outside ds:Signature still surfaces key_info_trust" do
+    test "rogue KeyInfo outside ds:Signature is rejected as untrusted_certificate" do
+      # A KeyInfo placed OUTSIDE any ds:Signature is a document-trust injection
+      # (CVE-2024-45409 class) and is rejected before any field is derived.
       xml =
-        "<Response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><KeyInfo>attacker</KeyInfo><Assertion ID='assertion-1'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#assertion-1'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></Response>"
+        String.replace(
+          @well_formed_response,
+          "<saml:Assertion ID='assertion-1'>",
+          "<saml:KeyInfo>attacker</saml:KeyInfo><saml:Assertion ID='assertion-1'>",
+          global: false
+        )
 
-      assert {:ok, %{key_info_trust: true}} = PureBeam.parse_safely(xml)
+      assert {:error, %Error{type: :untrusted_certificate}} = PureBeam.parse_safely(xml)
     end
 
     test "a document with no KeyInfo yields key_info_trust == false" do
       assert {:ok, %{key_info_trust: false}} = PureBeam.parse_safely(@well_formed_response)
     end
 
-    test "duplicate ID attrs across the tree yield a non-empty duplicate_ids list" do
+    test "duplicate ID attrs across the tree are rejected as duplicate_xml_id" do
+      # Two elements sharing an ID (an XSW / CVE-2024-45409 pattern) are rejected
+      # before binding, with the precise duplicate-ID signal.
       xml =
-        "<Response Destination='https://sp.example.com/saml/acs' InResponseTo='id_request_123'><Issuer>https://idp.example.com/metadata</Issuer><Status><StatusCode Value='urn:oasis:names:tc:SAML:2.0:status:Success'/></Status><Assertion ID='dup'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><Assertion ID='dup'><Conditions NotBefore='2026-04-24T15:58:00Z' NotOnOrAfter='2026-04-24T16:05:00Z'><AudienceRestriction><Audience>https://sp.example.com/metadata</Audience></AudienceRestriction></Conditions><Subject><SubjectConfirmation><SubjectConfirmationData Recipient='https://sp.example.com/saml/acs' NotOnOrAfter='2026-04-24T16:05:00Z'/></SubjectConfirmation></Subject></Assertion><Signature><SignedInfo><SignatureMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/><Reference URI='#dup'><DigestMethod Algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/></Reference></SignedInfo></Signature></Response>"
+        String.replace(
+          @well_formed_response,
+          "<saml:AttributeStatement>",
+          "<saml:AttributeStatement ID='assertion-1'>",
+          global: false
+        )
 
-      assert {:ok, %{duplicate_ids: dups}} = PureBeam.parse_safely(xml)
-      assert "dup" in dups
+      assert {:error, %Error{type: :duplicate_xml_id, details: details}} =
+               PureBeam.parse_safely(xml)
+
+      assert "assertion-1" in details.duplicate_ids
     end
   end
 
@@ -244,18 +270,23 @@ defmodule Relyra.Security.XML.PureBeamTest do
       assert {:ok, handle} = PureBeam.select_signed_node(parsed_doc)
       assert {:ok, %{canonical_xml: out}} = PureBeam.canonicalize(handle)
 
-      # These fixtures carry no ds:Transforms subtree, so the transform list is
-      # empty: no prune, plain exclusive-C14N over the bound node. That equals
-      # canonicalize_reference over the same node with an empty transform list.
+      # The conformant fixture carries the enveloped-signature + exc-c14n
+      # Transforms, so canonicalize/2 applies that chain over the bound node
+      # (pruning the enveloped signature). That equals canonicalize_reference
+      # over the same node with the same transform URIs.
+      transform_uris = Relyra.Security.XML.C14N.transform_uris(handle.transforms_node)
+
       {:ok, expected} =
         Relyra.Security.XML.C14N.canonicalize_reference(
           handle.node,
-          [],
+          transform_uris,
           handle.signature_node,
           prefix_list: []
         )
 
       assert out == expected
+      # The pruned enveloped signature must not appear in the canonical bytes.
+      refute out =~ "SignatureValue"
     end
   end
 

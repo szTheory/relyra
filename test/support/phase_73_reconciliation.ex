@@ -51,6 +51,9 @@ defmodule Relyra.Phase73Reconciliation do
     "cmd mix test test/security/xml/corpus_security_test.exs test/relyra/security/xml/corpus_gate_test.exs --only security_corpus --warnings-as-errors",
     "cmd mix test test/security/xml/corpus_security_test.exs --only gate02_c14n --warnings-as-errors",
     "cmd mix test test/security/xml/adversarial_crypto_test.exs --only adversarial_crypto --warnings-as-errors",
+    "cmd mix test test/security/xml/trust_binding_test.exs --only trust_binding --warnings-as-errors",
+    "cmd mix test test/security/xml/adversarial_property_test.exs --only adversarial_property --warnings-as-errors",
+    "cmd mix test test/security/mutation_lane_test.exs --only mutation_lane --warnings-as-errors",
     "cmd mix test test/security/authn_request_signing_test.exs --only authn_request_signing --warnings-as-errors",
     "cmd mix test test/security/xml_enc_test.exs --warnings-as-errors",
     "cmd mix test test/security/xml_enc_adversarial_test.exs --warnings-as-errors",
@@ -702,7 +705,10 @@ defmodule Relyra.Phase73Reconciliation do
   end
 
   defp parse_summaries!(output) do
-    ~r/^(\d+) tests?, (\d+) failures(?: \((\d+) excluded\)|, (\d+) excluded)?$/m
+    # The leading `N properties, ` prefix is emitted by ExUnit for a suite that
+    # runs StreamData properties (e.g. the Phase 82 `adversarial_property` lane);
+    # accept it so a property-bearing security suite still counts as one summary.
+    ~r/^(?:\d+ properties, )?(\d+) tests?, (\d+) failures(?: \((\d+) excluded\)|, (\d+) excluded)?$/m
     |> Regex.scan(output, capture: :all_but_first)
     |> Enum.map(fn captures ->
       [tests, failures, parenthesized, comma] =

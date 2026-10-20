@@ -1,158 +1,94 @@
 # Project Research Summary
 
 **Project:** Relyra
-**Domain:** Public SAML testing API and adoption-honesty maintenance
-**Researched:** 2026-06-15
-**Confidence:** HIGH
+**Domain:** Strict SAML 2.0 SP library (Elixir/Phoenix): trust-path hardening plus adversarial and mutation testing
+**Researched:** 2026-10-19
+**Confidence:** HIGH for the seam inventory (code read and partially reproduced live). HIGH for StreamData. MEDIUM for mutare (a young tool).
 
 ## Executive Summary
 
-The next milestone should be a bounded v1.9 maintenance/adoption-honesty milestone. The primary product issue is real: docs teach `Relyra.TestSupport`, while the Hex package deliberately excludes every `test_support` path. The maintainer explicitly approved planning the public API direction, so the coherent fix is a curated `Relyra.Testing` surface that ships in Hex while private `Relyra.TestSupport` remains repo-internal.
+v1.12 started as a test-only "Adversarial Twin". The architecture research ran one live oracle probe and found that `Relyra.consume_response/3` accepts a `NameID`, `Conditions`, `Audience`, or `AttributeStatement` injected outside the signed `<Assertion>`. A follow-up read-only seam audit showed this is systemic. The verified node is never bound to the consumed data, and the signature's own parts are found by loose descendant search. Several seams are standalone authentication bypasses.
 
-The recommended technical shape is core-first: public fixture generation that returns signed SAML inputs, matching test cert chain, and expected outcomes without requiring Phoenix. A thin optional Phoenix helper/case-template can sit on top if phase design proves the optional dependency boundary stays clean. The helper must never bypass the verifier, never trust document `KeyInfo`, never auto-register test certs globally, and must keep the private adversarial corpus private.
+The milestone is therefore re-scoped to **Trust-Path Hardening**:
+1. Fix the login path.
+2. Fix the logout, redirect, encrypted, and metadata paths.
+3. Run property-based adversarial testing (StreamData) until two empty rounds.
+4. Run mutation testing (mutare) until the score plateaus.
+5. Close out with a scripted disclosure.
 
-SEED-003 needs current-state handling rather than a blind implementation plan. The demo now contains `/fake_idp/login` and `/fake_idp/sso` routes plus controller tests. The milestone should verify whether that browser flow is complete, documented, and CI-covered; if not, finish it or remove it and close the stale seed deliberately.
+Nobody is known to depend on the library, so fixes fail forward on `main`.
+
+## Seam Inventory
+
+All entries were confirmed by reading the code. S6/S7 were reproduced live. **Bold** = standalone bypass.
+
+| ID | Path | Seam | Location |
+|----|------|------|----------|
+| **S1** | login | `DigestValue`, `SignedInfo`, `SignatureValue`, and `Transforms` are found by searching the whole `<Signature>`. An attacker can replay a genuine SignedInfo/SignatureValue pair and supply their own DigestValue in `<ds:Object>`. | `pure_beam.ex:421-428` |
+| **S2** | login | The Reference URI and Reference count are never checked. | `signature.ex` (no `Reference`/`URI` reads) |
+| S3 | login | The signature need not be an enveloped direct child. It falls back to the first `<Signature>` anywhere, and the enveloped prune matches by value. | `pure_beam.ex:408,419`; `c14n.ex:185-202` |
+| S4 | login | SignatureMethod and DigestMethod are read document-wide. The digest uses SignatureMethod's hash. CanonicalizationMethod is ignored. | `pure_beam.ex:375-376`; `signature.ex:265,278,410` |
+| S5 | login | A Response-only signature is unsupported. It fails closed, so this is an interop backlog item. | `pure_beam.ex:407-445` |
+| **S6** | login | `bind_signed_node/2` is a no-op, and `consumed_xml_id` is never compared. | `validation_pipeline.ex:326-328` |
+| **S7** | login | All assertion fields are derived by root-wide search. | `pure_beam.ex:344-357` |
+| **S8** | login | An ID-less `<Assertion>` is skipped as a candidate but still feeds the fields. | `pure_beam.ex:414-416` |
+| S9 | login | InResponseTo is read only from the unsigned Response. `SubjectConfirmationData@InResponseTo` and the bearer Method are unchecked. | `pure_beam.ex:332` |
+| S10 | login | Only the first Issuer anywhere is checked, never the Assertion Issuer. Status is the first StatusCode with a Value attribute anywhere. | `pure_beam.ex:329-330` |
+| S11 | login | The root is never checked to be `samlp:Response`. | `pure_beam.ex:250` |
+| S12 | login | Nested Advice assertions are treated as ambiguous. This fails closed and is kept as a regression row. | `pure_beam.ex:411` |
+| S13 | encrypted | The plaintext splice uses `String.replace`. Nothing checks for a single Assertion root, and ambiguity is not re-checked after the re-parse. | `validation_pipeline.ex:135-173` |
+| S14 | encrypted | SaxyTree byte-span tracking ignores comments, PIs, and CDATA, so a decoy can win. | `saxy_tree.ex:310-406` |
+| **S15** | logout POST | Only an embedded `<Assertion>` is verified, while fields are read from the root, so any session can be terminated. Type detection uses `String.contains?`. | `pure_beam.ex:267-277`; `logout_request.ex:53-59`; `relyra.ex:399-419` |
+| **S16** | logout redirect | Duplicate query parameters let the signed prefix differ from the processed parameters. | logout validator `:164-209` |
+| S17 | logout | The replay key is the bare ID, not connection-prefixed. | logout validator `:87,98` |
+| **S18** | metadata | entityID, SSO endpoints, certs, and validUntil are extracted by regex over the raw XML, including comments, unsigned wrappers, and KeyInfo. This violates invariant #2. | `metadata/parser.ex:57-103`; `auto_refresh.ex:70-72,529`; `pure_beam.ex:201-207` |
+| S19 | guards | The pre-parse guards are case-sensitive, but Saxy rejects the variants. CVE-2017-11427 comment truncation does not apply. Kept as regression rows. | `pure_beam.ex:49,52` |
+| S20 | all | Elements are matched by local name only, ignoring the namespace URI. | every `find_first`/`find_all` |
 
 ## Key Findings
 
 ### Recommended Stack
-
-No new dependencies are recommended. Use existing Elixir/OTP crypto primitives and Relyra's parser/canonicalization/signature code. Follow ExUnit/Phoenix testing idioms only at the edges: `ExUnit.CaseTemplate` for reusable case ergonomics and `Phoenix.ConnTest` for optional endpoint posting helpers.
-
-**Core technologies:**
-- Elixir/OTP: public fixture generation and key/cert handling.
-- Existing Relyra XML/signature internals: keep signer/verifier byte behavior aligned.
-- ExUnit.CaseTemplate: optional `use` ergonomics for test modules.
-- Phoenix.ConnTest: optional Phoenix-specific posting helper, not a core dependency.
-- Release parity task: package truth gate for public `testing` inclusion and private `test_support` exclusion.
-
-### Expected Features
-
-**Must have (table stakes):**
-- Public Hex-shipped testing module under `Relyra.Testing`.
-- Genuine signed success fixture that enters real verification.
-- Representative typed rejection fixtures.
-- Docs migrated away from private `Relyra.TestSupport` for Hex adopters.
-- Package parity proof.
-- Demo FakeIdP flow verified/finished or removed.
-- Seed and maintenance triage.
-
-**Should have (competitive):**
-- Optional Phoenix helper/case-template.
-- Validation trace/rejection assertion helpers.
-- Demo/docs cross-proof showing the same testing story in code and browser.
-
-**Defer:**
-- Full public adversarial corpus.
-- Protocol candidates `AUTHN-POST-01`, `KMS-01`, `SIGNED-META-01`.
-- Large browser-testing matrix.
+- **`stream_data` 1.4.0** (test/dev only): generate mutation op lists over genuinely signed fixtures, with integrated shrinking that yields minimal corpus rows.
+- **`mutare` 0.5.1** (test/dev only, exact pin): compiles once into a metamutant and runs one fresh `mix test` OS process per mutant, matching the hollow-gate discipline. It produces JSON/SARIF score reports. The fallback is `muex`. Avoid muzak (non-commercial licence) and exavier (stale).
+- No new runtime dependencies. Saxy is used test-side only, to build inputs.
 
 ### Architecture Approach
-
-Use a public `Relyra.Testing` layer that generates data, not global state. It should return response XML/Base64 SAMLResponse, cert chain, connection hints, and expected result metadata. Phoenix posting should be a separate optional layer. Package filters should continue excluding `test_support` while explicitly including `testing`.
-
-**Major components:**
-1. `Relyra.Testing` - public core fixture generation and small assertions.
-2. Optional `Relyra.Testing.Phoenix` - endpoint/ACS posting helpers if dependency boundaries are clean.
-3. Package parity checks - prove Hex contents match docs.
-4. Demo FakeIdP flow - verify or prune current LedgerLoop routes/controllers/tests.
-5. Docs/maintenance sync - align README, guides, JTBD/ADFS notes, seeds, CVE/CI status.
+Fixes stay inside the existing seams: `pure_beam.ex` derives and binds, `signature.ex` `do_verify/4` holds the crypto, `validation_pipeline.ex` binds and checks protocol, the logout modules, and `metadata/parser.ex`. Add namespace-aware direct-child helpers next to `direct_child/2`. The harness is a twin signer (sign-then-mutate, mutate-then-resign) in `xmldsig_signer.ex`, plus generators, an oracle, and corpus promotion under `test/support/twin/`. Bounded seeded properties run in `ci.security`; deep runs and mutation runs use scheduled workflows.
 
 ### Critical Pitfalls
-
-1. **Public helper becomes a trust bypass** - require real signed XML through ACS or `consume_response/3`.
-2. **Static test keys leak into production** - use ephemeral/default test-only key material and explicit returned cert chains.
-3. **Shipping private `test_support` internals** - create allowlisted public `testing` modules instead.
-4. **Phoenix optional dependency leak** - keep core fixture generation Phoenix-free.
-5. **Publishing the private adversarial corpus** - expose representative rejection fixtures only.
-6. **Planning stale demo work** - verify current demo routes/tests before deciding finish vs remove.
+1. **Oracle shares bugs with the system under test.** The oracle compares against what the generator signed, never against Relyra's own parse.
+2. **Shrinking invalidates the signature.** Shrink the op list, not the bytes, and re-sign after structural ops.
+3. **Hollow gates.** Each new suite is its own `cmd mix test` line, with the `ci_gate_integrity_test.exs` lists updated.
+4. **Killing mutants by weakening tests.** Never delete from `adversarial_crypto_test.exs` or the corpus.
+5. **Tightening breaks real IdPs.** Keep the FakeIdP, `Relyra.Testing`, and Keycloak lanes green. Response-only signatures stay fail-closed rather than becoming a new acceptance path.
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+### Phase 80: Seal the login trust path
+**Addresses:** S1–S4, S6–S11, S20 (rows for S5, S12, S19). **Delivers:** structural binding, bound crypto inputs, an enforced `bind_signed_node`, and a `trust_binding` corpus suite.
 
-### Phase 64: Public Testing API Contract
+### Phase 81: Seal logout, redirect, encrypted, metadata
+**Addresses:** S13–S18. **Delivers:** root-bound logout signatures, duplicate-parameter rejection, a span-exact splice, and tree-derived metadata.
 
-**Rationale:** The public API/package-posture decision is the riskiest part and must come first.
-**Delivers:** `Relyra.Testing` contract, fixture shape, safety rules, and tests for positive/negative fixtures.
-**Addresses:** public Hex testing module, genuine signed fixture, selected negative fixtures.
-**Avoids:** trust bypass, static key leakage, private corpus publication.
+### Phase 82: Property-based adversarial twin
+**Uses:** stream_data. **Delivers:** generators, oracle, bounded `ci.security` lane, scheduled deep run, and corpus promotion. Stops after two empty rounds.
 
-### Phase 65: Package and Documentation Truth
+### Phase 83: Mutation testing of the security core
+**Uses:** mutare. **Delivers:** scheduled mutation lane and score trend. Stops at a plateau; survivors are recorded.
 
-**Rationale:** Docs and package filters depend on the public API contract.
-**Delivers:** package allowlist/parity proof, README/Getting Started/overview/recipes migration from `TestSupport` to `Testing`.
-**Uses:** release parity gate and docs drift tests.
-**Implements:** docs/package truth boundary.
-
-### Phase 66: Demo FakeIdP Disposition
-
-**Rationale:** SEED-003 is partially stale; current state must be verified before finishing or removing.
-**Delivers:** verified and documented browser FakeIdP flow, or deleted stale flow with tests/docs updated.
-**Addresses:** demo clarity and seed cleanup.
-**Avoids:** duplicate/confusing login paths.
-
-### Phase 67: Maintenance Narrative Sync
-
-**Rationale:** Keep this low-risk work last so it cannot distort the public API design.
-**Delivers:** JTBD Scene 3/ADFS sync, optional reviewer quick-architecture note, CVE/CI/review-item triage, seed disposition.
-**Addresses:** loose planning and narrative debt.
-
-### Phase Ordering Rationale
-
-- API contract first because package/docs work depends on it.
-- Package/docs truth second because it closes the adopter-facing contradiction and gives release proof.
-- Demo cleanup third because it is independent but should incorporate the new testing story if useful.
-- Maintenance sync last because it is lowest risk and easiest to defer if the API work expands.
+### Phase 84: Close-out and scripted disclosure
+**Delivers:** one hardening evidence file, `docs/advisories/2026-002-*`, and a GHSA plus CVE request via the REST API, with batch approval.
 
 ### Research Flags
+- Phase 83 needs a mutare baseline spike (custom `:parser_path_guard` compiler, function lifting).
+- Phase 81's metadata rewrite must keep the AutoRefresh pinning semantics.
 
-Phases likely needing deeper research during planning:
-- **Phase 64:** final API shape, key lifecycle, optional Phoenix module compile behavior.
-- **Phase 65:** package parity mechanics and doc drift tests.
-
-Phases with standard patterns:
-- **Phase 66:** route/controller/browser test verification uses existing demo conventions.
-- **Phase 67:** doc and seed maintenance follows existing planning patterns.
-
-## Confidence Assessment
-
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Stack | HIGH | Verified against local `mix.exs`, existing modules, and official ExUnit/Phoenix docs. |
-| Features | HIGH | Derived from current seeds, docs/package contradiction, and user-approved scope. |
-| Architecture | HIGH | Clear boundary: public `testing`, private `test_support`, optional Phoenix layer. |
-| Pitfalls | HIGH | Security pitfalls map directly to Relyra's existing invariants and prior TD-02. |
-
-**Overall confidence:** HIGH
-
-### Gaps to Address
-
-- **Exact `Relyra.Testing` API shape:** settle in Phase 64 before implementation.
-- **Ephemeral key performance:** measure during implementation if test generation feels slow.
-- **Demo FakeIdP status:** run the demo test lane to decide whether it is already complete or needs finishing/removal.
-- **Hex release version implication:** Release Please will decide final package version; do not hand-edit CHANGELOG or manually publish.
+## Deferred
+- Real-IdP fidelity corpus (STACK.md container images remain valid).
+- Chaos journeys (WINDOW-29/30, audit co-commit failure, rollover refresh, clock skew).
+- Customer-IT-admin journey.
 
 ## Sources
-
-### Primary (HIGH confidence)
-
-- `mix.exs` - package filters, optional deps, current version.
-- `lib/relyra/test_support.ex` - current private macro and Phoenix posting behavior.
-- `lib/relyra/test_support/fake_idp.ex` - private FakeIdP fixture shape and prod guard.
-- `lib/relyra/test_support/xmldsig_signer.ex` - existing genuine signer behavior.
-- `demo/ledger_loop/lib/ledger_loop_web/router.ex` - current `/fake_idp/*` routes.
-- `demo/ledger_loop/lib/ledger_loop_web/controllers/fake_idp_controller.ex` - demo browser FakeIdP behavior.
-- `https://phoenix.hexdocs.pm/Phoenix.ConnTest.html` - endpoint testing and helper composition.
-- `https://phoenix.hexdocs.pm/testing.html` - Phoenix case-template setup pattern.
-- `https://ex-unit.hexdocs.pm/ExUnit.CaseTemplate.html` - `using/2` case-template behavior.
-- `https://oban.hexdocs.pm/testing_workers.html` - public test helper precedent.
-
-### Secondary (MEDIUM confidence)
-
-- `.planning/seeds/SEED-002-testsupport-vs-hex-package.md` - original contradiction and risk framing.
-- `.planning/seeds/SEED-003-demo-fakeidp-login-wip.md` - original demo WIP framing, now partially stale.
-
----
-*Research completed: 2026-06-15*
-*Ready for roadmap: yes*
+- `STACK.md`, `FEATURES.md`, `ARCHITECTURE.md`, `PITFALLS.md` (this directory).
+- Live probe through `Relyra.consume_response/3` (2026-10-19): envelope NameID gives `{:ok}` as the attacker; envelope Conditions on an expired assertion gives `{:ok}`; envelope AttributeStatement gives injected groups.
+- Read-only seam audit of `lib/` (2026-10-19), spot-checked: no Reference/URI reads in `signature.ex`, and `bind_signed_node/2` returns `:ok`.

@@ -1216,3 +1216,122 @@ redacted evidence bundle for an external handoff, run `mix relyra.diagnostic`.
 Every login resolves to a verified trust path or a typed rejection — the trace
 shows where in the pipeline that happened; the diagnostic bundle packages
 operator-safe exports for review.
+
+### :unexpected_root_element
+
+**Means:** The SAML document root was not a `<samlp:Response>` (or carried
+an unexpected namespace), so no login fields were derived.
+
+**Likely root cause:** A non-Response document delivered to the ACS, a
+namespace-stripped probe, or an element-substitution attack.
+
+**Operator action:** Confirm the IdP posts a `samlp:Response` to the ACS.
+Treat a persistent mismatch from one source as a probe.
+
+**Source:** `lib/relyra/security/xml/pure_beam.ex`
+
+### :ambiguous_signed_node
+
+**Means:** The Response did not contain exactly one `<Assertion>`, so no
+single signed node could be bound.
+
+**Likely root cause:** A signature-wrapping (XSW) probe injecting a second
+or decoy assertion, or an IdP emitting multiple assertions (unsupported).
+
+**Operator action:** Reject and investigate the source; Relyra requires a
+single signed assertion per Response.
+
+**Source:** `lib/relyra/security/xml/pure_beam.ex`, `lib/relyra/security/signature.ex`
+
+### :signature_placement_invalid
+
+**Means:** The bound `<Assertion>` did not carry exactly one enveloped,
+direct-child `<ds:Signature>` in the XMLDSig namespace.
+
+**Likely root cause:** A signature-wrapping probe moving the signature out
+of the assertion, or an IdP signing the Response envelope only
+(assertion-level signing is required).
+
+**Operator action:** Confirm the IdP signs the assertion with an enveloped
+signature. Report envelope-only signing as an interop gap.
+
+**Source:** `lib/relyra/security/xml/pure_beam.ex`
+
+### :reference_mismatch
+
+**Means:** The signature's `SignedInfo` did not carry exactly one
+`<Reference>` whose `URI` matches the bound Assertion's `ID`.
+
+**Likely root cause:** A signature-wrapping probe repointing or duplicating
+the Reference, or a malformed signer.
+
+**Operator action:** Reject and investigate; the signed Reference must bind
+to the consumed assertion by ID.
+
+**Source:** `lib/relyra/security/xml/pure_beam.ex`
+
+### :unsupported_canonicalization_method
+
+**Means:** The `SignedInfo` declared a `CanonicalizationMethod` other than
+Exclusive C14N 1.0.
+
+**Likely root cause:** An IdP configured for inclusive C14N, or an
+algorithm-substitution probe.
+
+**Operator action:** Configure the IdP to sign with Exclusive C14N
+(`http://www.w3.org/2001/10/xml-exc-c14n#`).
+
+**Source:** `lib/relyra/security/signature.ex`
+
+### :signed_node_binding_mismatch
+
+**Means:** The assertion node whose fields were consumed was not the node
+the signature verified.
+
+**Likely root cause:** A signature-wrapping probe, or an internal
+derivation error.
+
+**Operator action:** Reject; this is a hard trust-binding failure. Capture
+the payload for investigation.
+
+**Source:** `lib/relyra/protocol/validation_pipeline.ex`
+
+### :assertion_issuer_mismatch
+
+**Means:** The signed Assertion's own `<Issuer>` did not match the
+connection's configured IdP entity ID.
+
+**Likely root cause:** A cross-IdP assertion replay, or an IdP whose
+assertion Issuer differs from its configured entity ID.
+
+**Operator action:** Confirm the IdP's assertion Issuer equals the
+configured entity ID.
+
+**Source:** `lib/relyra/protocol/validation_pipeline.ex`
+
+### :subject_confirmation_invalid
+
+**Means:** The bearer `SubjectConfirmationData` `InResponseTo` did not match
+the pending request (SP-initiated), or was present on an IdP-initiated
+login.
+
+**Likely root cause:** An assertion minted for a different login flow
+replayed into this one, or a missing bearer confirmation.
+
+**Operator action:** Confirm the IdP issues bearer subject confirmations
+with the correct `InResponseTo` for SP-initiated logins.
+
+**Source:** `lib/relyra/protocol/validation_pipeline.ex`
+
+### :logout_assertion_forbidden
+
+**Means:** A LogoutRequest or LogoutResponse carried an `<Assertion>`, which
+is never legitimate for a logout message.
+
+**Likely root cause:** A signature-wrapping probe embedding an IdP-signed
+assertion to stand in for a signature over the logout root.
+
+**Operator action:** Reject and investigate the source. A conformant logout
+message is signed on its own root, with no embedded assertion.
+
+**Source:** `lib/relyra/security/xml/pure_beam.ex`

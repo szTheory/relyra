@@ -1,5 +1,9 @@
 defmodule Relyra.Phase73ReconciliationTest do
   use ExUnit.Case, async: true
+  # Excluded from the Phase 83 mutation baseline (RELYRA_MUTATION_SUITE): this
+  # meta-suite asserts against the live git checkout, which mutare's git-less
+  # sandbox copy lacks. It runs in every ordinary lane.
+  @moduletag :non_hermetic_sandbox
 
   alias Relyra.Phase73Reconciliation
 
@@ -80,7 +84,7 @@ defmodule Relyra.Phase73ReconciliationTest do
     on_exit(fn -> File.rm_rf!(root) end)
 
     commands = Phase73Reconciliation.security_constituent_commands!(root)
-    assert length(commands) == 13
+    assert length(commands) == 16
 
     mix_path = Path.join(root, "mix.exs")
     original = File.read!(mix_path)

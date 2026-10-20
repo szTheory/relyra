@@ -48,6 +48,7 @@ defmodule Relyra.TestSupport.XmldsigSigner do
   @rsa_sha256 "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
   @sha256 "http://www.w3.org/2001/04/xmlenc#sha256"
   @exc_c14n "http://www.w3.org/2001/10/xml-exc-c14n#"
+  @enveloped_signature "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
 
   @default_issuer "https://idp.example.com/metadata"
   @default_destination "https://sp.example.com/saml/acs"
@@ -96,37 +97,19 @@ defmodule Relyra.TestSupport.XmldsigSigner do
     ensure_not_prod!()
 
     fields = response_fields(opts)
-    cert_pem = self_signed_cert_pem()
 
-    # 1. Build the Response with placeholder digest/signature so the tree shape
-    #    (and therefore the in-scope namespaces the C14N engine sees for the
-    #    Assertion + SignedInfo) is EXACTLY the emitted shape.
-    placeholder_xml = response_xml(fields, "", "")
+    # Build the unsigned template (Reference + DigestMethod, no DigestValue /
+    # SignatureValue yet) and sign it through the SAME sign_response/1 path every
+    # other fixture uses, so there is exactly one enveloping + digest + signature
+    # implementation in the suite.
+    %{response_xml: signed_xml, cert_chain: cert_chain} =
+      fields |> response_template_xml() |> sign_response()
 
-    # 2. Parse with the verifier's parser; locate the bound <Assertion> node and
-    #    compute the genuine DigestValue over its canonicalized bytes (the SAME
-    #    PureBeam.canonicalize path the verifier uses — no ds:Transforms here, so
-    #    plain exclusive-C14N over the bound node).
-    placeholder_tree = parse_tree!(placeholder_xml)
-    assertion_node = find_by_local_and_id(placeholder_tree, "Assertion", fields.assertion_id)
-    digest_value_b64 = digest_for(assertion_node)
-
-    # 3. Re-emit with the real DigestValue embedded, re-parse, locate the
-    #    SignedInfo node, canonicalize it with the SAME engine (C14N.serialize),
-    #    and sign those exact bytes with FakeIdP's key.
-    digest_xml = response_xml(fields, digest_value_b64, "")
-    digest_tree = parse_tree!(digest_xml)
-    signed_info_node = find_first_by_local(digest_tree, "SignedInfo")
-    signature_value_b64 = sign_signed_info(signed_info_node)
-
-    # 4. Emit the final, genuinely-signed Response.
-    signed_xml = response_xml(fields, digest_value_b64, signature_value_b64)
-
-    # 5. Optional post-signing NameID tamper for the :digest_mismatch negative —
-    #    the SignatureValue stays valid; only the referenced content changes.
+    # Optional post-signing NameID tamper for the :digest_mismatch negative —
+    # the SignatureValue stays valid; only the referenced content changes.
     final_xml = maybe_tamper_name_id(signed_xml, fields.name_id, opts[:tamper_name_id])
 
-    %{response_xml: final_xml, cert_chain: [cert_pem]}
+    %{response_xml: final_xml, cert_chain: cert_chain}
   end
 
   @doc """
@@ -166,9 +149,21 @@ defmodule Relyra.TestSupport.XmldsigSigner do
 
     assertion_id = reference_assertion_id!(response_xml)
 
-    # 1. Genuine DigestValue over the bound <Assertion> (canonicalized via the
-    #    verifier's path), computed from the EMITTED structure-only tree.
-    tree = parse_tree!(response_xml)
+    # 0. Normalize the template to the SAML-conformant shape the verifier
+    #    requires (saml-core §5.4.1): an ENVELOPED ds:Signature that is a direct
+    #    child of the referenced <Assertion> and carries the enveloped-signature +
+    #    exc-c14n Transforms, plus a SubjectConfirmationData@InResponseTo that
+    #    mirrors the Response's InResponseTo (Phase 80 D-80-01 / D-80-05).
+    template =
+      response_xml
+      |> envelope_signature!(assertion_id)
+      |> ensure_canonicalization_method()
+      |> ensure_bearer_method()
+      |> mirror_in_response_to()
+
+    # 1. Genuine DigestValue over the bound <Assertion> with its enveloped
+    #    Signature pruned (canonicalized via the verifier's path).
+    tree = parse_tree!(template)
     assertion_node = find_by_local_and_id(tree, "Assertion", assertion_id)
 
     unless is_struct(assertion_node, Node) do
@@ -179,7 +174,7 @@ defmodule Relyra.TestSupport.XmldsigSigner do
     digest_value_b64 = digest_for(assertion_node)
 
     # 2. Inject the DigestValue into the Reference (before </Reference>).
-    with_digest = inject_digest_value(response_xml, digest_value_b64)
+    with_digest = inject_digest_value(template, digest_value_b64)
 
     # 3. Genuine SignatureValue over the canonicalized <SignedInfo> of the
     #    digest-bearing tree (SAME engine), signed with FakeIdP's key.
@@ -191,6 +186,56 @@ defmodule Relyra.TestSupport.XmldsigSigner do
     signed_xml = inject_signature_value(with_digest, signature_value_b64)
 
     %{response_xml: signed_xml, cert_chain: [cert_pem]}
+  end
+
+  @doc """
+  Genuinely sign an arbitrary enveloped-signed root element in place.
+
+  Unlike `sign_response/1` (which binds the signature into a contained
+  `<Assertion>`), this signs the document ROOT itself: the input must already
+  carry a `<Signature>` that is a direct child of the root, whose `<SignedInfo>`
+  holds a single `<Reference URI="#rootID">` (matching the root's `ID`) with the
+  enveloped-signature + exc-c14n Transforms and a `<DigestMethod>` but no
+  `<DigestValue>`/`<SignatureValue>` yet.
+
+  This is the signing counterpart to Phase 81's generalized
+  `PureBeam.bind_enveloped_signature/3`, used to mint genuinely signed
+  `LogoutRequest`/`LogoutResponse` and `EntityDescriptor` documents for the
+  adversarial twin. The digest is computed over the canonicalized root with its
+  own enveloped `<Signature>` pruned — byte-identical to what the verifier
+  recomputes.
+
+  Returns `%{xml: signed_xml, cert_chain: [pem]}`.
+  """
+  @spec sign_enveloped(String.t()) :: %{xml: String.t(), cert_chain: [String.t()]}
+  def sign_enveloped(xml) when is_binary(xml) do
+    ensure_not_prod!()
+
+    cert_pem = self_signed_cert_pem()
+
+    # The Reference URI (#rootID) names the signed root; require the signature to
+    # be enveloped there (a direct child of the root node the tree parses to).
+    root_id = reference_assertion_id!(xml)
+    root = parse_tree!(xml)
+
+    unless attr_value(root.attrs, "ID") == root_id and
+             Enum.any?(root.children, &(&1.local == "Signature")) do
+      raise ArgumentError,
+            "XmldsigSigner.sign_enveloped/1: root must carry ID=\"#{root_id}\" and a " <>
+              "direct-child <Signature> (enveloped root signature)"
+    end
+
+    # 1. Genuine DigestValue over the canonicalized root (enveloped Signature
+    #    pruned), via the verifier's canonicalize path.
+    digest_value_b64 = digest_for(root)
+    with_digest = inject_digest_value(xml, digest_value_b64)
+
+    # 2. Genuine SignatureValue over the canonicalized SignedInfo.
+    signed_info_node = find_first_by_local(parse_tree!(with_digest), "SignedInfo")
+    signature_value_b64 = sign_signed_info(signed_info_node)
+    signed_xml = inject_signature_value(with_digest, signature_value_b64)
+
+    %{xml: signed_xml, cert_chain: [cert_pem]}
   end
 
   @doc """
@@ -247,42 +292,176 @@ defmodule Relyra.TestSupport.XmldsigSigner do
     end
   end
 
-  # The Response carries the genuine ds:Signature (SignedInfo + Reference to the
-  # Assertion ID, with the real DigestValue and SignatureValue substituted in).
-  defp response_xml(fields, digest_value_b64, signature_value_b64) do
+  # The unsigned Response template: the ds:Signature is enveloped in the
+  # Assertion (after its Issuer) and SignedInfo carries a Reference to the
+  # Assertion ID with the enveloped-signature + exc-c14n Transforms. DigestValue
+  # and SignatureValue are injected by sign_response/1.
+  defp response_template_xml(fields) do
     "<Response Destination=\"#{fields.destination}\" InResponseTo=\"#{fields.in_response_to}\" ConnectionId=\"valid\">" <>
       "<Issuer>#{fields.issuer}</Issuer>" <>
       "<Status><StatusCode Value=\"#{fields.status}\"/></Status>" <>
       assertion_open_tag(fields) <>
       "<Issuer>#{fields.issuer}</Issuer>" <>
+      "<Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\">" <>
+      "<SignedInfo>" <>
+      "<CanonicalizationMethod Algorithm=\"#{@exc_c14n}\"/>" <>
+      "<SignatureMethod Algorithm=\"#{@rsa_sha256}\"/>" <>
+      "<Reference URI=\"##{fields.assertion_id}\">" <>
+      "<Transforms>" <>
+      "<Transform Algorithm=\"#{@enveloped_signature}\"/>" <>
+      "<Transform Algorithm=\"#{@exc_c14n}\"/>" <>
+      "</Transforms>" <>
+      "<DigestMethod Algorithm=\"#{@sha256}\"/>" <>
+      "</Reference>" <>
+      "</SignedInfo>" <>
+      "</Signature>" <>
       "<Subject>" <>
       "<NameID>#{fields.name_id}</NameID>" <>
       "<SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\">" <>
-      "<SubjectConfirmationData Recipient=\"#{fields.recipient}\" NotOnOrAfter=\"#{fields.subject_confirmation_not_on_or_after}\"/>" <>
+      "<SubjectConfirmationData Recipient=\"#{fields.recipient}\" NotOnOrAfter=\"#{fields.subject_confirmation_not_on_or_after}\" InResponseTo=\"#{fields.in_response_to}\"/>" <>
       "</SubjectConfirmation>" <>
       "</Subject>" <>
       "<Conditions NotBefore=\"#{fields.not_before}\" NotOnOrAfter=\"#{fields.not_on_or_after}\">" <>
       "<AudienceRestriction><Audience>#{fields.audience}</Audience></AudienceRestriction>" <>
       "</Conditions>" <>
       "</Assertion>" <>
-      "<Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\">" <>
-      "<SignedInfo>" <>
-      "<CanonicalizationMethod Algorithm=\"#{@exc_c14n}\"/>" <>
-      "<SignatureMethod Algorithm=\"#{@rsa_sha256}\"/>" <>
-      "<Reference URI=\"##{fields.assertion_id}\">" <>
-      "<DigestMethod Algorithm=\"#{@sha256}\"/>" <>
-      "<DigestValue>#{digest_value_b64}</DigestValue>" <>
-      "</Reference>" <>
-      "</SignedInfo>" <>
-      "<SignatureValue>#{signature_value_b64}</SignatureValue>" <>
-      "</Signature>" <>
       "</Response>"
+  end
+
+  # Move a legacy sibling <Signature> template INTO the referenced Assertion
+  # (directly after the Assertion's Issuer, per the saml:Assertion schema order)
+  # and make sure its Reference carries the enveloped-signature + exc-c14n
+  # Transforms. A template whose Signature is already enveloped only gets the
+  # Transforms check. Byte edits use the SaxyTree wire spans of the template,
+  # applied highest-offset first so earlier offsets stay valid.
+  defp envelope_signature!(xml, assertion_id) do
+    tree = parse_tree!(xml)
+    assertion = find_by_local_and_id(tree, "Assertion", assertion_id)
+    signature = find_first_by_local(tree, "Signature")
+
+    unless is_struct(assertion, Node) and is_struct(signature, Node) and
+             is_integer(signature.start_byte) and is_integer(signature.end_byte) do
+      raise ArgumentError,
+            "XmldsigSigner.sign_response/1: template needs <Assertion ID=\"#{assertion_id}\"> and a <Signature>"
+    end
+
+    signature_xml =
+      xml
+      |> binary_part(signature.start_byte, signature.end_byte - signature.start_byte)
+      |> ensure_transforms(signature.prefix)
+
+    if Enum.any?(assertion.children, &(&1 == signature)) do
+      splice(xml, [{signature.start_byte, signature.end_byte, signature_xml}])
+    else
+      insert_at = assertion_insertion_point!(xml, assertion)
+
+      splice(xml, [
+        {signature.start_byte, signature.end_byte, ""},
+        {insert_at, insert_at, signature_xml}
+      ])
+    end
+  end
+
+  defp assertion_insertion_point!(xml, %Node{} = assertion) do
+    case Enum.find(assertion.children, &(&1.local == "Issuer")) do
+      %Node{end_byte: end_byte} when is_integer(end_byte) ->
+        end_byte
+
+      _ ->
+        {open_end, 1} =
+          :binary.match(xml, ">",
+            scope: {assertion.start_byte, byte_size(xml) - assertion.start_byte}
+          )
+
+        open_end + 1
+    end
+  end
+
+  defp ensure_transforms(signature_xml, prefix) do
+    if String.contains?(signature_xml, "Transforms") do
+      signature_xml
+    else
+      p = if prefix in [nil, ""], do: "", else: prefix <> ":"
+
+      transforms =
+        "<#{p}Transforms>" <>
+          "<#{p}Transform Algorithm=\"#{@enveloped_signature}\"/>" <>
+          "<#{p}Transform Algorithm=\"#{@exc_c14n}\"/>" <>
+          "</#{p}Transforms>"
+
+      String.replace(signature_xml, "<#{p}DigestMethod", transforms <> "<#{p}DigestMethod",
+        global: false
+      )
+    end
+  end
+
+  # Apply {start, end, replacement} byte edits, highest offset first.
+  defp splice(xml, edits) do
+    edits
+    |> Enum.sort_by(fn {start, _end, _replacement} -> start end, :desc)
+    |> Enum.reduce(xml, fn {start, stop, replacement}, acc ->
+      binary_part(acc, 0, start) <> replacement <> binary_part(acc, stop, byte_size(acc) - stop)
+    end)
+  end
+
+  # Ensure the SignedInfo declares Exclusive C14N as its CanonicalizationMethod
+  # (the verifier requires it, S4). Legacy structure-only templates omit it.
+  defp ensure_canonicalization_method(xml) do
+    if Regex.match?(~r/<(?:[A-Za-z_][\w.-]*:)?CanonicalizationMethod\b/, xml) do
+      xml
+    else
+      Regex.replace(
+        ~r/(<((?:[A-Za-z_][\w.-]*:)?)SignedInfo>)/,
+        xml,
+        "\\1<\\2CanonicalizationMethod Algorithm=\"#{@exc_c14n}\"/>",
+        global: false
+      )
+    end
+  end
+
+  # Ensure the first SubjectConfirmation declares the bearer method (the verifier
+  # reads subject-confirmation fields only from a bearer confirmation, S9).
+  defp ensure_bearer_method(xml) do
+    Regex.replace(
+      ~r/<((?:[A-Za-z_][\w.-]*:)?SubjectConfirmation)\b(?![^>]*\bMethod=)/,
+      xml,
+      "<\\1 Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\"",
+      global: false
+    )
+  end
+
+  # Mirror the Response InResponseTo onto the first SubjectConfirmationData when
+  # the template omits it, so SP-initiated fixtures carry the signed correlation
+  # the verifier requires (D-80-05). Fixtures that set it explicitly are untouched.
+  defp mirror_in_response_to(xml) do
+    tree = parse_tree!(xml)
+
+    case attr_value(tree.attrs, "InResponseTo") do
+      value when is_binary(value) and value != "" ->
+        Regex.replace(
+          ~r/<((?:[A-Za-z_][\w.-]*:)?SubjectConfirmationData)\b(?![^>]*\bInResponseTo=)/,
+          xml,
+          "<\\1 InResponseTo=\"#{value}\"",
+          global: false
+        )
+
+      _ ->
+        xml
+    end
   end
 
   # Digest the referenced element via the verifier's canonicalize path so the
   # signer's DigestValue is byte-identical to what the verifier recomputes.
   defp digest_for(%Node{} = assertion_node) do
-    {:ok, %{canonical_xml: ref_bytes}} = PureBeam.canonicalize(%{node: assertion_node})
+    signature_node = Enum.find(assertion_node.children, &(&1.local == "Signature"))
+
+    {:ok, %{canonical_xml: ref_bytes}} =
+      PureBeam.canonicalize(%{
+        node: assertion_node,
+        signature_node: signature_node,
+        transforms_node: signature_node && find_first_by_local(signature_node, "Transforms")
+      })
+
     :sha256 |> :crypto.hash(ref_bytes) |> Base.encode64()
   end
 
@@ -299,7 +478,7 @@ defmodule Relyra.TestSupport.XmldsigSigner do
   # Read the Reference's URI (#assertion_id) from the SignedInfo so sign_response/1
   # can locate the referenced <Assertion> in any fixture shape.
   defp reference_assertion_id!(xml) do
-    case Regex.run(~r/<Reference\s+URI="#([^"]+)"/, xml) do
+    case Regex.run(~r/<(?:[A-Za-z_][\w.-]*:)?Reference\s+URI="#([^"]+)"/, xml) do
       [_, id] ->
         id
 
@@ -311,10 +490,10 @@ defmodule Relyra.TestSupport.XmldsigSigner do
 
   # Insert <DigestValue>…</DigestValue> immediately before the first </Reference>.
   defp inject_digest_value(xml, digest_value_b64) do
-    String.replace(
+    Regex.replace(
+      ~r/<\/((?:[A-Za-z_][\w.-]*:)?)Reference>/,
       xml,
-      "</Reference>",
-      "<DigestValue>#{digest_value_b64}</DigestValue></Reference>",
+      "<\\1DigestValue>#{digest_value_b64}</\\1DigestValue></\\1Reference>",
       global: false
     )
   end
@@ -322,10 +501,10 @@ defmodule Relyra.TestSupport.XmldsigSigner do
   # Insert <SignatureValue>…</SignatureValue> immediately after the first
   # </SignedInfo>.
   defp inject_signature_value(xml, signature_value_b64) do
-    String.replace(
+    Regex.replace(
+      ~r/<\/((?:[A-Za-z_][\w.-]*:)?)SignedInfo>/,
       xml,
-      "</SignedInfo>",
-      "</SignedInfo><SignatureValue>#{signature_value_b64}</SignatureValue>",
+      "</\\1SignedInfo><\\1SignatureValue>#{signature_value_b64}</\\1SignatureValue>",
       global: false
     )
   end

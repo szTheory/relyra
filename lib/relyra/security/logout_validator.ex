@@ -90,12 +90,17 @@ defmodule Relyra.Security.LogoutValidator do
       {:error,
        Error.new(:missing_protocol_field, "Message ID is required for replay protection", %{})}
     else
-      metadata = %{
-        connection_id: expected_connection_id(connection),
-        issuer: Map.get(message, :issuer)
-      }
+      connection_id = expected_connection_id(connection)
+      issuer = Map.get(message, :issuer)
 
-      ReplayStore.consume_replay_key(id, metadata, opts)
+      metadata = %{connection_id: connection_id, issuer: issuer}
+
+      # Connection-scope the replay key (S17): the bare message ID could collide
+      # across connections and be used to deny service to another tenant. This
+      # mirrors the login replay key shape (connection:issuer:id).
+      replay_key = "#{connection_id}:#{issuer}:#{id}"
+
+      ReplayStore.consume_replay_key(replay_key, metadata, opts)
     end
   end
 
@@ -205,9 +210,38 @@ defmodule Relyra.Security.LogoutValidator do
      )}
   end
 
+  # Parse the raw query into a map, rejecting duplicate security parameters
+  # (S16). The redirect signature covers only the octets before `&Signature=`,
+  # so a repeated SAMLRequest/SAMLResponse/RelayState/SigAlg/Signature appended
+  # after the signed prefix would let `URI.decode_query` (last-wins) hand a
+  # different value to the rest of the pipeline than the one that was signed.
+  @redirect_single_params ~w(SAMLRequest SAMLResponse RelayState SigAlg Signature)
   defp parse_raw_query(raw_query) do
-    parts = URI.decode_query(raw_query)
-    {:ok, parts}
+    pairs =
+      raw_query
+      |> String.split("&", trim: true)
+      |> Enum.map(fn pair ->
+        case String.split(pair, "=", parts: 2) do
+          [k, v] -> {URI.decode_www_form(k), v}
+          [k] -> {URI.decode_www_form(k), ""}
+        end
+      end)
+
+    duplicate =
+      Enum.find(@redirect_single_params, fn name ->
+        Enum.count(pairs, fn {k, _v} -> k == name end) > 1
+      end)
+
+    if duplicate do
+      {:error,
+       Error.new(
+         :invalid_binding,
+         "Redirect query carries a duplicate #{duplicate} parameter",
+         %{parameter: duplicate}
+       )}
+    else
+      {:ok, Map.new(pairs, fn {k, v} -> {k, URI.decode_www_form(v)} end)}
+    end
   end
 
   defp extract_payload(:request, query_parts) do
