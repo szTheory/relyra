@@ -1,20 +1,16 @@
 ---
 gsd_state_version: "1.0"
-milestone: v1.11
-milestone_name: First-Adopter Twin
-status: Awaiting next milestone
-stopped_at: Milestone v1.11 archived
-last_updated: "2026-10-19T21:30:00.000Z"
+milestone: v1.12
+milestone_name: Adversarial Twin
+status: planning
+last_updated: "2026-10-20T00:08:42.942Z"
 last_activity: 2026-10-19
-last_activity_desc: Milestone v1.11 completed and archived
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 78
-  completed_plans: 78
-  percent: 100
-current_phase: null
-current_phase_name: null
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -26,20 +22,20 @@ See: `.planning/PROJECT.md` (updated 2026-10-19)
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection —
 never a silent compromise. Trust mutations are durable, attributable, and reviewable.
 
-**Current focus:** Planning the next milestone when adopter demand justifies it
+**Current focus:** v1.12 Adversarial Twin — defining requirements
 
 ## Current Position
 
-Phase: Milestone v1.11 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-10-19 — Milestone v1.11 completed and archived
+Status: Defining requirements
+Last activity: 2026-10-19 — Milestone v1.12 started
 
 ## Milestone Metrics
 
 - Last shipped milestone: v1.11 First-Adopter Twin (Phases 73–79, 78 plans, 37/37 requirements, archived 2026-10-19)
 - Highest shipped phase: 79
-- Current milestone: None — awaiting a demand-backed next cycle
+- Current milestone: v1.12 Adversarial Twin (Phases 80+)
 - Previous milestone: v1.10 Docker DX & Fleet Proxy (Phases 68–72.1)
 - Final v1.11 `mix qa`: 1045 tests, 0 failures. Main `ed2d2cf1` was green on every mandatory lane before the archive.
 
@@ -97,5 +93,4 @@ None.
 
 ## Operator Next Steps
 
-- No milestone is planned. Start the next one with `/gsd-new-milestone` only when real
-  adopter demand justifies it. Phase numbering continues after 79.
+- v1.12 Adversarial Twin: research, then requirements and roadmap (`/gsd-new-milestone` in progress). Phase numbering continues at 80.
