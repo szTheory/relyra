@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project targets [Semantic Versioning](https://semver.org/).
 
+## [1.10.2](https://github.com/szTheory/relyra/compare/v1.10.1...v1.10.2) (2026-10-20)
+
+
+### Bug Fixes
+
+* **demo:** emit an enveloped assertion signature in the LedgerLoop FakeIdP ([3a2379e](https://github.com/szTheory/relyra/commit/3a2379e0d877451613967905b02e33341ccd5b25))
+* **security:** bind consumed SAML login fields to the verified signed assertion ([2782344](https://github.com/szTheory/relyra/commit/278234409aa198008a782c1a86f20c14bb106226))
+* **security:** bind logout, redirect, encrypted, and metadata to the verified node ([32ae5e6](https://github.com/szTheory/relyra/commit/32ae5e699f560c206171a3b641e1860ef064385f))
+* **security:** make the XML seam never crash on malformed input ([31fe63f](https://github.com/szTheory/relyra/commit/31fe63f63695ba971f63fc9b5d5e22f1ebd1ca25))
+* **security:** v1.12 Trust-Path Hardening — bind the verified node to the consumed node (XSW) ([a95f6e7](https://github.com/szTheory/relyra/commit/a95f6e7581670d33b00364cbc025fc47600eddf6))
+
 ## [1.10.1](https://github.com/szTheory/relyra/compare/v1.10.0...v1.10.1) (2026-10-19)
 
 
