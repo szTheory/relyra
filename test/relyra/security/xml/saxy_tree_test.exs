@@ -192,6 +192,22 @@ defmodule Relyra.Security.XML.SaxyTreeTest do
 
       assert {:error, %Saxy.ParseError{}} = parse(xml)
     end
+
+    # Phase 82 twin counterexample (PROP-05): Saxy itself RAISES rather than
+    # returning {:error, _} on some malformed/truncated input — a truncated prolog
+    # processing instruction like "<?t" trips a CaseClauseError inside
+    # Saxy.Parser.Binary.prolog_pi_content/7. The single XML seam must never crash
+    # on attacker input: every such payload is a typed Saxy.ParseError whose
+    # message/1 also renders without raising.
+    test "truncated / malformed prolog input never raises — always a renderable Saxy.ParseError" do
+      for xml <- ["<?t", "<?", "<?x ", "<!", "<!-", "<", "<a", "<?xml", "﻿<?p"] do
+        assert {:error, %Saxy.ParseError{} = error} = parse(xml),
+               "expected a typed ParseError (never a raise) for #{inspect(xml)}"
+
+        # message/1 must not itself raise (format_message/3 has no catch-all)
+        assert is_binary(Saxy.ParseError.message(error))
+      end
+    end
   end
 
   describe "tree structure" do

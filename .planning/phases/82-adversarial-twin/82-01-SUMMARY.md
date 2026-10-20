@@ -63,6 +63,18 @@ Per the stopping rule, one more clean deep round with no new defect class closes
 the technique; the round log lives in the milestone evidence file at close-out
 (Phase 84).
 
+## Round 2 — a real defect (PROP-05 promotion)
+
+A broader run (the PR's OTP-27 CI lane, and `TWIN_MAX_RUNS=1500` locally) found a
+defect local OTP-28 runs missed: a truncated prolog processing instruction
+(`"<?t"`) makes **Saxy itself raise** a `CaseClauseError` in
+`prolog_pi_content/7`, so the single XML seam `SaxyTree.parse/1` crashed instead
+of returning a typed rejection — on EVERY entry point. Fixed by converting any
+Saxy raise/exit in `SaxyTree.parse/1` into the `{:error, %Saxy.ParseError{}}`
+callers map to `:malformed_xml`; promoted to a permanent regression row in
+`test/relyra/security/xml/saxy_tree_test.exs`. This is the twin's headline
+result — a latent crash across all trust paths that manual audit missed.
+
 ## Guardrails honored
 
 No public API/default/security-posture change (new error atoms are additive; the

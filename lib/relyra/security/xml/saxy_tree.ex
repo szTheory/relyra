@@ -122,6 +122,25 @@ defmodule Relyra.Security.XML.SaxyTree do
       {:ok, %{root: %Node{} = root}} -> {:ok, root}
       {:error, %Saxy.ParseError{} = error} -> {:error, error}
     end
+  rescue
+    # The single XML seam must NEVER crash on attacker-controlled input — a
+    # malformed payload is a typed rejection, not an exception. Saxy itself can
+    # raise rather than return `{:error, _}` on some malformed/truncated input
+    # (e.g. a truncated prolog processing instruction `"<?t"` trips a
+    # `CaseClauseError` inside `Saxy.Parser.Binary.prolog_pi_content/7`). Convert
+    # any such raise into the same `{:error, %Saxy.ParseError{}}` every seam
+    # caller already maps to `:malformed_xml`. (Surfaced by the Phase 82 twin.)
+    _error -> {:error, malformed_parse_error(xml)}
+  catch
+    _kind, _reason -> {:error, malformed_parse_error(xml)}
+  end
+
+  # A `Saxy.ParseError` whose `reason` renders safely via `Saxy.ParseError.message/1`
+  # (its `format_message/3` has no catch-all clause, so the reason shape matters).
+  # `{:token, _}` at `position == byte_size(binary)` takes the end-of-input branch,
+  # which never indexes into the binary.
+  defp malformed_parse_error(xml) do
+    %Saxy.ParseError{reason: {:token, "well-formed XML"}, binary: xml, position: byte_size(xml)}
   end
 
   @impl true
