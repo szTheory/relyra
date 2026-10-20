@@ -442,6 +442,43 @@ defmodule Relyra.Adoption.Phase78CleanStateContractTest do
     assert producer =~ ~r/if ! \(umask 022 &&\s+git clone --no-local --no-checkout/
   end
 
+  test "the producer counts ExUnit tests and properties without accepting empty execution" do
+    producer = File.read!("scripts/check_phase78_clean_state.sh")
+
+    [_, counter] =
+      Regex.run(
+        ~r/evidence_count="\$\(python3 - "\$log_path" "\$evidence_kind" <<'PY'\n(.*?)\nPY/s,
+        producer
+      )
+
+    path =
+      Path.join(
+        System.tmp_dir!(),
+        "relyra-phase78-summary-#{System.unique_integer([:positive])}.log"
+      )
+
+    on_exit(fn -> File.rm(path) end)
+
+    for {summary, expected} <- [
+          {"1088 tests, 0 failures\n", 1088},
+          {"5 properties, 1088 tests, 0 failures, 1 skipped (12 excluded)\n", 1093},
+          {"1 property, 1 test, 0 failures\n", 2},
+          {"5 properties, 0 failures\n", 5},
+          {"1 property, 0 failures\n", 1},
+          {"2 tests, 0 failures\n3 properties, 4 tests, 0 failures\n", 9},
+          {"0 tests, 0 failures\n", 0},
+          {"0 properties, 0 tests, 0 failures\n", 0},
+          {"0 failures\n", 0},
+          {"Compiled 1088 tests\n", 0},
+          {"", 0}
+        ] do
+      File.write!(path, summary)
+      {output, status} = System.cmd("python3", ["-c", counter, path, "tests"])
+      assert status == 0
+      assert String.trim(output) == to_string(expected), inspect(summary)
+    end
+  end
+
   test "failure propagation, missing setup, zero execution, and unsupported OTP cannot pass" do
     receipt = valid_receipt()
     [first | rest] = receipt["runs"]

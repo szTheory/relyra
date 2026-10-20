@@ -641,7 +641,8 @@ import sys
 text = open(sys.argv[1], "rb").read().decode("utf-8", "replace")
 kind = sys.argv[2]
 if kind == "tests":
-    print(sum(int(item) for item in re.findall(r"(?m)^\s*(\d+) tests?,\s*\d+ failures?\b", text)))
+    summaries = re.findall(r"(?m)^\s*(?:(\d+) propert(?:y|ies),\s*)?(?:(\d+) tests?,\s*)?\d+ failures?\b", text)
+    print(sum(int(count) for summary in summaries for count in summary if count))
 elif kind == "journeys":
     print(sum(int(item) for item in re.findall(r"(?m)^\s*(\d+) passed(?:\s+\([^\n)]*\))?\s*$", text)))
 elif kind == "checks":
