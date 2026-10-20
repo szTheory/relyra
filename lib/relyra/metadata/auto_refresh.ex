@@ -525,20 +525,14 @@ if Code.ensure_loaded?(Ecto.Repo) and Code.ensure_loaded?(Req) do
     # `<EntitiesDescriptor>`). Mirrors the existing regex extraction style
     # in `lib/relyra/metadata/parser.ex` (lines 31, 55) so the wrapper does
     # NOT parse-deeply for this step.
+    # S18: derive validUntil through the single SaxyTree seam (scoped to the
+    # authoritative EntityDescriptor the Parser binds), never a second regex
+    # pass over the raw document. This is a telemetry warning window only, not a
+    # trust input.
     defp extract_valid_until(xml) when is_binary(xml) do
-      case Regex.run(
-             ~r/^<(?:\w+:)?(?:EntityDescriptor|EntitiesDescriptor)\b[^>]*\bvalidUntil=(["\'])([^"\']+)\1/is,
-             String.trim(xml),
-             capture: :all_but_first
-           ) do
-        [_quote, iso8601] ->
-          case DateTime.from_iso8601(iso8601) do
-            {:ok, dt, _offset} -> dt
-            _ -> nil
-          end
-
-        _ ->
-          nil
+      case Relyra.Metadata.Parser.parse(xml) do
+        {:ok, %{valid_until: %DateTime{} = valid_until}} -> valid_until
+        _ -> nil
       end
     end
   end

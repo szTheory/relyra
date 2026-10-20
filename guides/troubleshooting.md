@@ -1322,3 +1322,16 @@ replayed into this one, or a missing bearer confirmation.
 with the correct `InResponseTo` for SP-initiated logins.
 
 **Source:** `lib/relyra/protocol/validation_pipeline.ex`
+
+### :logout_assertion_forbidden
+
+**Means:** A LogoutRequest or LogoutResponse carried an `<Assertion>`, which
+is never legitimate for a logout message.
+
+**Likely root cause:** A signature-wrapping probe embedding an IdP-signed
+assertion to stand in for a signature over the logout root.
+
+**Operator action:** Reject and investigate the source. A conformant logout
+message is signed on its own root, with no embedded assertion.
+
+**Source:** `lib/relyra/security/xml/pure_beam.ex`

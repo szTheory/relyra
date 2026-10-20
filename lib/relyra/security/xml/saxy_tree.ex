@@ -309,11 +309,15 @@ defmodule Relyra.Security.XML.SaxyTree do
 
   defp locate_open_tag(source, pos, qname) do
     needle = "<" <> qname
-    rest = binary_part(source, pos, byte_size(source) - pos)
 
-    case :binary.match(rest, needle) do
-      {rel_start, _} ->
-        open_start = pos + rel_start
+    # Saxy emits no comment / PI events, so the running `pos` is not advanced
+    # past them. A naive `:binary.match` for `<qname` would therefore match an
+    # occurrence of that text INSIDE a comment, CDATA, or processing instruction
+    # (e.g. a commented-out decoy `<xenc:EncryptedAssertion>`), mislocating the
+    # element's wire span (S14). Skip those markup regions so the span binds the
+    # REAL element the parser emitted.
+    case next_real_tag(source, pos, needle) do
+      {:ok, open_start} ->
         after_name = open_start + byte_size(needle)
 
         case byte_size(source) > after_name && :binary.at(source, after_name) do
@@ -324,11 +328,110 @@ defmodule Relyra.Security.XML.SaxyTree do
             end
 
           _ ->
-            :error
+            # A longer element name shares this prefix (e.g. <Assertion> vs the
+            # needle <Assert): keep scanning past this `<` for the real tag.
+            next_real_tag(source, open_start + 1, needle)
+            |> case do
+              {:ok, next_start} -> finish_open_tag(source, next_start, needle)
+              :error -> :error
+            end
+        end
+
+      :error ->
+        :error
+    end
+  end
+
+  defp finish_open_tag(source, open_start, needle) do
+    after_name = open_start + byte_size(needle)
+
+    case byte_size(source) > after_name && :binary.at(source, after_name) do
+      char when char in [?\s, ?>, ?/, ?\t, ?\n, ?\r] ->
+        case scan_to_tag_close(source, after_name) do
+          {:ok, after_tag} -> {:ok, open_start, after_tag}
+          :error -> :error
+        end
+
+      _ ->
+        case next_real_tag(source, open_start + 1, needle) do
+          {:ok, next_start} -> finish_open_tag(source, next_start, needle)
+          :error -> :error
+        end
+    end
+  end
+
+  # The byte offset of the first `needle` at or after `pos` that is NOT inside a
+  # comment (`<!-- -->`), CDATA (`<![CDATA[ ]]>`), or PI (`<? ?>`) region.
+  defp next_real_tag(source, pos, needle) when pos < byte_size(source) do
+    rest = binary_part(source, pos, byte_size(source) - pos)
+
+    case :binary.match(rest, needle) do
+      {rel, _} ->
+        candidate = pos + rel
+
+        case enclosing_markup_end(source, pos, candidate) do
+          nil -> {:ok, candidate}
+          skip_to -> next_real_tag(source, skip_to, needle)
         end
 
       :nomatch ->
         :error
+    end
+  end
+
+  defp next_real_tag(_source, _pos, _needle), do: :error
+
+  # If `candidate` falls inside a comment / CDATA / PI that opens at or after
+  # `from`, return the byte offset just past that region; otherwise nil. Scans
+  # the markup openers between `from` and `candidate` in document order.
+  defp enclosing_markup_end(source, from, candidate) do
+    region =
+      [
+        {"<!--", "-->"},
+        {"<![CDATA[", "]]>"},
+        {"<?", "?>"}
+      ]
+      |> Enum.flat_map(fn {open, close} ->
+        case markup_region(source, from, candidate, open, close) do
+          nil -> []
+          end_pos -> [end_pos]
+        end
+      end)
+      |> Enum.min(fn -> nil end)
+
+    region
+  end
+
+  defp markup_region(source, from, candidate, open, close) do
+    span = binary_part(source, from, candidate - from)
+
+    case last_occurrence(span, open) do
+      nil ->
+        nil
+
+      rel_open ->
+        open_at = from + rel_open
+
+        # The region encloses `candidate` only if its close is after `candidate`
+        # (or absent — an unterminated region swallows the rest).
+        after_open = open_at + byte_size(open)
+        tail = binary_part(source, after_open, byte_size(source) - after_open)
+
+        case :binary.match(tail, close) do
+          {rel_close, _} ->
+            close_end = after_open + rel_close + byte_size(close)
+            if close_end > candidate, do: close_end, else: nil
+
+          :nomatch ->
+            byte_size(source)
+        end
+    end
+  end
+
+  defp last_occurrence(haystack, needle) do
+    case :binary.matches(haystack, needle) do
+      [] -> nil
+      matches -> matches |> List.last() |> elem(0)
     end
   end
 

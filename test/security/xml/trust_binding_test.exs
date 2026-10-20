@@ -16,6 +16,7 @@ defmodule Relyra.Security.XML.TrustBindingTest do
   @moduletag :trust_binding
 
   alias Relyra.Error
+  alias Relyra.Security.LogoutValidator
   alias Relyra.TestSupport.XmldsigSigner
 
   @assertion_ns "urn:oasis:names:tc:SAML:2.0:assertion"
@@ -229,8 +230,86 @@ defmodule Relyra.Security.XML.TrustBindingTest do
   end
 
   # ---------------------------------------------------------------------------
+  # Phase 81: logout POST binding (S15)
+  # ---------------------------------------------------------------------------
+
+  describe "logout POST binding (S15)" do
+    test "a LogoutRequest carrying an embedded Assertion is rejected" do
+      # The embedded-assertion wrapping attack: any IdP-signed assertion stuffed
+      # into a LogoutRequest must never stand in for a signature over the root.
+      xml =
+        ~s(<samlp:LogoutRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="#{@assertion_ns}" ID="lo_1" Version="2.0" IssueInstant="2026-04-24T16:00:00Z"><saml:Issuer>#{@idp}</saml:Issuer><saml:NameID>victim@example.com</saml:NameID><samlp:SessionIndex>s1</samlp:SessionIndex><saml:Assertion ID="a1"><saml:Issuer>#{@idp}</saml:Issuer></saml:Assertion></samlp:LogoutRequest>)
+
+      assert {:error, %Error{type: :logout_assertion_forbidden}} =
+               LogoutValidator.validate_logout_request(xml, logout_connection(), binding: :post)
+    end
+
+    test "an unsigned POST LogoutRequest (no root signature) is rejected" do
+      xml =
+        ~s(<samlp:LogoutRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="#{@assertion_ns}" ID="lo_2" Version="2.0" IssueInstant="2026-04-24T16:00:00Z"><saml:Issuer>#{@idp}</saml:Issuer><saml:NameID>victim@example.com</saml:NameID><samlp:SessionIndex>s1</samlp:SessionIndex></samlp:LogoutRequest>)
+
+      assert {:error, %Error{type: :missing_signature}} =
+               LogoutValidator.validate_logout_request(xml, logout_connection(), binding: :post)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Phase 81: logout HTTP-Redirect duplicate parameters (S16)
+  # ---------------------------------------------------------------------------
+
+  describe "logout redirect duplicate parameters (S16)" do
+    test "a duplicated SAMLRequest query parameter is rejected" do
+      query =
+        "SAMLRequest=abc&SigAlg=#{URI.encode_www_form("http://www.w3.org/2001/04/xmldsig-more#rsa-sha256")}&Signature=zzz&SAMLRequest=evil"
+
+      assert {:error, %Error{type: :invalid_binding}} =
+               LogoutValidator.validate_logout_request(query, logout_connection(),
+                 binding: :redirect
+               )
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Phase 81: metadata wrapper (S18)
+  # ---------------------------------------------------------------------------
+
+  describe "metadata wrapper (S18)" do
+    test "entityID, endpoints and certs come from the signed EntityDescriptor, not an unsigned wrapper" do
+      inner =
+        ~s(<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="#{@dsig_ns}" entityID="https://good.example.com"><ds:Signature><ds:SignedInfo/></ds:Signature><md:IDPSSODescriptor><md:KeyDescriptor use="signing"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>GOODCERT</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://good.example.com/sso"/></md:IDPSSODescriptor></md:EntityDescriptor>)
+
+      wrapped =
+        ~s(<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="#{@dsig_ns}" entityID="https://evil.example.com"><md:IDPSSODescriptor><md:KeyDescriptor use="signing"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>EVILCERT</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://evil.example.com/sso"/></md:IDPSSODescriptor>) <>
+          inner <> ~s(</md:EntityDescriptor>)
+
+      assert {:ok, parsed} = Relyra.Metadata.Parser.parse(wrapped)
+      assert parsed.entity_id == "https://good.example.com"
+      assert parsed.certificates == ["GOODCERT"]
+      assert [%{location: "https://good.example.com/sso"}] = parsed.sso_services
+    end
+
+    test "metadata values are not read from an XML comment" do
+      xml =
+        ~s(<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="#{@dsig_ns}" entityID="https://good.example.com"><!-- <md:SingleSignOnService Binding="b" Location="https://evil.example.com/sso"/> --><md:IDPSSODescriptor><md:KeyDescriptor use="signing"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>GOODCERT</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://good.example.com/sso"/></md:IDPSSODescriptor></md:EntityDescriptor>)
+
+      assert {:ok, parsed} = Relyra.Metadata.Parser.parse(xml)
+      assert [%{location: "https://good.example.com/sso"}] = parsed.sso_services
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # Helpers
   # ---------------------------------------------------------------------------
+
+  defp logout_connection do
+    %{
+      id: "conn-123",
+      connection_id: "conn-123",
+      idp_entity_id: @idp,
+      issuer: @idp,
+      cert_chain: [XmldsigSigner.self_signed_cert_pem()]
+    }
+  end
 
   defp consume(xml) do
     Relyra.consume_response(xml, request_intent(), consume_opts())

@@ -305,81 +305,54 @@ defmodule Relyra.Security.XML.PureBeam do
      )}
   end
 
+  # A LogoutRequest / LogoutResponse binds its signature to the message ROOT
+  # (Phase 81, S15): the enveloped ds:Signature is a direct child of the root and
+  # its Reference URI equals the root ID. A logout message must NOT carry an
+  # <Assertion> (that is the embedded-assertion wrapping attack). When the
+  # message carries no signature at all (the HTTP-Redirect case, where the query
+  # is signed instead), the base doc is returned and the POST path's
+  # require_xml_signature rejects it.
   defp build_logout_parsed_doc(%Node{} = root) do
     base = %{
       type: :parsed_logout_xml,
       parse_tree: root
     }
 
-    # Logout signature binding is hardened in Phase 81. For now the logout path
-    # keeps its pre-Phase-80 signature derivation (document-wide methods + the
-    # Assertion-based candidate), unchanged, so this phase's scope stays on login.
-    case legacy_signature_fields(root) do
-      {:ok, fields} -> {:ok, Map.merge(base, fields)}
-      {:error, _} -> {:ok, base}
+    with :ok <- reject_logout_assertion(root),
+         :ok <- reject_duplicate_ids(root),
+         :ok <- reject_rogue_key_info(root) do
+      case bind_enveloped_signature(root, attr(root, "ID"), "/" <> root.local) do
+        {:ok, candidate} ->
+          {:ok,
+           Map.merge(base, %{
+             signature_method: candidate.signature_method,
+             digest_method: candidate.digest_method,
+             canonicalization_method: candidate.canonicalization_method,
+             signed_candidates: [candidate],
+             duplicate_ids: duplicate_ids(root),
+             key_info_trust: rogue_key_info_present?(root)
+           })}
+
+        {:error, _} ->
+          {:ok, base}
+      end
     end
   end
 
-  # Pre-Phase-80 signature derivation, retained ONLY for the logout path until
-  # Phase 81 rebinds it to the logout root. Do not use for the login path.
-  defp legacy_signature_fields(%Node{} = root) do
-    signature_method = first_attr(root, "SignatureMethod", "Algorithm")
-    digest_method = first_attr(root, "DigestMethod", "Algorithm")
-
-    fields = %{
-      signature_method: signature_method,
-      digest_method: digest_method,
-      signed_candidates:
-        legacy_signed_candidates(root)
-        |> Enum.map(fn candidate ->
-          Map.merge(candidate, %{
-            signature_method: signature_method,
-            digest_method: digest_method
-          })
-        end),
-      duplicate_ids: duplicate_ids(root),
-      key_info_trust: rogue_key_info_present?(root)
-    }
-
-    require_present_fields(
-      fields,
-      [:signature_method, :digest_method, :signed_candidates],
-      :missing_signature,
-      "Signed XML material is missing required signature fields"
-    )
-  end
-
-  defp legacy_signed_candidates(%Node{} = root) do
-    response_signature = find_first(root, "Signature")
-
-    root
-    |> find_all("Assertion")
-    |> Enum.with_index(1)
-    |> Enum.flat_map(fn {%Node{} = assertion, index} ->
-      case attr(assertion, "ID") do
-        nil ->
-          []
-
-        assertion_id ->
-          signature_node = find_first(assertion, "Signature") || response_signature
-          transforms_node = signature_node && find_first(signature_node, "Transforms")
-          signed_info_node = signature_node && find_first(signature_node, "SignedInfo")
-
-          [
-            %{
-              xml_id: assertion_id,
-              xpath: "/Response/Assertion[#{index}]",
-              signed_xml: render_signed_xml(assertion),
-              node: assertion,
-              signature_node: signature_node,
-              transforms_node: transforms_node,
-              signed_info_node: signed_info_node,
-              digest_value_b64: trimmed_node_text(maybe_find(signature_node, "DigestValue")),
-              signature_value_b64: trimmed_node_text(maybe_find(signature_node, "SignatureValue"))
-            }
-          ]
-      end
-    end)
+  # A logout message carrying an <Assertion> is rejected (S15): the embedded
+  # assertion is the signature-wrapping vector that let any IdP-signed assertion
+  # stand in for a root signature.
+  defp reject_logout_assertion(%Node{} = root) do
+    if is_nil(find_first(root, "Assertion")) do
+      :ok
+    else
+      {:error,
+       Error.new(
+         :logout_assertion_forbidden,
+         "A logout message must not contain an <Assertion>",
+         %{}
+       )}
+    end
   end
 
   # True iff the document carries at least one <EncryptedAssertion> (prefix-
@@ -636,7 +609,8 @@ defmodule Relyra.Security.XML.PureBeam do
   # that Reference's own direct children. The crypto methods come from the bound
   # SignedInfo, never a document-wide search.
   defp signature_fields(%Node{} = root, %Node{} = assertion) do
-    with {:ok, candidate} <- bind_signature_candidate(assertion) do
+    with {:ok, candidate} <-
+           bind_enveloped_signature(assertion, attr(assertion, "ID"), "/Response/Assertion[1]") do
       fields = %{
         signature_method: candidate.signature_method,
         digest_method: candidate.digest_method,
@@ -655,13 +629,13 @@ defmodule Relyra.Security.XML.PureBeam do
     end
   end
 
-  defp bind_signature_candidate(%Node{} = assertion) do
-    assertion_id = attr(assertion, "ID")
-
-    with {:ok, signature} <- enveloped_signature(assertion),
+  # Bind an enveloped ds:Signature to an arbitrary signed element (the Assertion
+  # on the login path, the LogoutRequest/LogoutResponse root on the logout path).
+  defp bind_enveloped_signature(%Node{} = signed_element, element_id, xpath) do
+    with {:ok, signature} <- enveloped_signature(signed_element),
          {:ok, signed_info} <- direct_child_required(signature, "SignedInfo", @dsig_ns),
          {:ok, reference} <- single_reference(signed_info),
-         :ok <- reference_uri_matches(reference, assertion_id) do
+         :ok <- reference_uri_matches(reference, element_id) do
       transforms_node = first_direct_child(reference, "Transforms")
       digest_method = first_attr_in(reference, "DigestMethod", "Algorithm")
       digest_value = direct_child_text(reference, "DigestValue")
@@ -671,10 +645,10 @@ defmodule Relyra.Security.XML.PureBeam do
 
       {:ok,
        %{
-         xml_id: assertion_id,
-         xpath: "/Response/Assertion[1]",
-         signed_xml: render_signed_xml(assertion),
-         node: assertion,
+         xml_id: element_id,
+         xpath: xpath,
+         signed_xml: render_signed_xml(signed_element),
+         node: signed_element,
          signature_node: signature,
          transforms_node: transforms_node,
          signed_info_node: signed_info,
