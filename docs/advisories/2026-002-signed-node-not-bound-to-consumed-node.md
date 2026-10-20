@@ -100,6 +100,7 @@ reading aligned with RELYRA-2026-001 and comparable SAML-library advisories.
 
 - Fix commit `2782344` (`fix(security): bind consumed SAML login fields to the verified signed assertion`)
 - Fix commit `32ae5e6` (`fix(security): bind logout, redirect, encrypted, and metadata to the verified node`)
+- Robustness hardening `31fe63f` (`fix(security): make the XML seam never crash on malformed input`) — a separate, lower-severity defect the adversarial twin surfaced (a truncated prolog PI made Saxy raise instead of returning a typed error); shipped in the same release
 - Hardening evidence: [`.planning/milestones/v1.12-HARDENING.md`](../../.planning/milestones/v1.12-HARDENING.md)
 - Regression proof: `test/security/xml/trust_binding_test.exs` (`:trust_binding`, 21 rows)
 - Regression proof: `test/security/xml/adversarial_property_test.exs` (`:adversarial_property`)
