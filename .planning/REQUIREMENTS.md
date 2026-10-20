@@ -84,7 +84,32 @@ Seam IDs (S1–S20) refer to `.planning/research/SUMMARY.md` § Seam Inventory. 
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by roadmap) | | |
+| BIND-01 | Phase 80 | Pending |
+| BIND-02 | Phase 80 | Pending |
+| BIND-03 | Phase 80 | Pending |
+| BIND-04 | Phase 80 | Pending |
+| BIND-05 | Phase 80 | Pending |
+| BIND-06 | Phase 80 | Pending |
+| BIND-07 | Phase 80 | Pending |
+| BIND-08 | Phase 80 | Pending |
+| PATH-01 | Phase 81 | Pending |
+| PATH-02 | Phase 81 | Pending |
+| PATH-03 | Phase 81 | Pending |
+| PATH-04 | Phase 81 | Pending |
+| PATH-05 | Phase 81 | Pending |
+| PROP-01 | Phase 82 | Pending |
+| PROP-02 | Phase 82 | Pending |
+| PROP-03 | Phase 82 | Pending |
+| PROP-04 | Phase 82 | Pending |
+| PROP-05 | Phase 82 | Pending |
+| MUT-01 | Phase 83 | Pending |
+| MUT-02 | Phase 83 | Pending |
+| MUT-03 | Phase 83 | Pending |
+| CLOSE-01 | Phase 84 | Pending |
+| CLOSE-02 | Phase 84 | Pending |
 
 ---
 *Requirements defined: 2026-10-19*
+*Traceability filled: 2026-10-19 (v1.12 roadmap, Phases 80–84)*
+
+**Coverage:** 23/23 v1 requirements mapped, 0 unmapped, 0 duplicated.

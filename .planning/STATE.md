@@ -2,11 +2,11 @@
 gsd_state_version: "1.0"
 milestone: v1.12
 milestone_name: Trust-Path Hardening
-status: planning
-last_updated: "2026-10-20T00:08:42.942Z"
+status: ready_to_plan
+last_updated: "2026-10-20T01:01:50.000Z"
 last_activity: 2026-10-19
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -22,20 +22,22 @@ See: `.planning/PROJECT.md` (updated 2026-10-19)
 **Core value:** Every SAML login ends in a verified trust path or a typed rejection —
 never a silent compromise. Trust mutations are durable, attributable, and reviewable.
 
-**Current focus:** v1.12 Trust-Path Hardening — defining requirements
+**Current focus:** v1.12 Trust-Path Hardening — Phase 80: Seal the login trust path
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 80 of 84 (Seal the login trust path) — not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-10-19 — Milestone v1.12 started
+Status: Ready to plan
+Last activity: 2026-10-19 — v1.12 roadmap created (Phases 80–84, 23/23 requirements mapped)
+
+Progress: [░░░░░░░░░░] 0% (0/5 phases)
 
 ## Milestone Metrics
 
 - Last shipped milestone: v1.11 First-Adopter Twin (Phases 73–79, 78 plans, 37/37 requirements, archived 2026-10-19)
 - Highest shipped phase: 79
-- Current milestone: v1.12 Trust-Path Hardening (Phases 80+)
+- Current milestone: v1.12 Trust-Path Hardening (Phases 80–84, 5 phases, 23 requirements)
 - Previous milestone: v1.10 Docker DX & Fleet Proxy (Phases 68–72.1)
 - Final v1.11 `mix qa`: 1045 tests, 0 failures. Main `ed2d2cf1` was green on every mandatory lane before the archive.
 
@@ -87,10 +89,12 @@ None.
 
 **Last session:** 2026-10-19
 
-**Stopped at:** Milestone v1.11 archived
+**Stopped at:** v1.12 roadmap created; Phase 80 ready to plan
 
 **Resume file:** None
 
 ## Operator Next Steps
 
-- v1.12 Trust-Path Hardening: research, then requirements and roadmap (`/gsd-new-milestone` in progress). Phase numbering continues at 80.
+- Next: `/gsd-plan-phase 80` (Seal the login trust path, BIND-01..BIND-08).
+- Execution order: 80 → 81 → (82 and 83 in parallel) → 84.
+- Research flags: Phase 83 needs a mutare baseline spike; Phase 81 metadata rewrite must keep AutoRefresh pinning semantics.
