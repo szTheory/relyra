@@ -189,6 +189,56 @@ defmodule Relyra.TestSupport.XmldsigSigner do
   end
 
   @doc """
+  Genuinely sign an arbitrary enveloped-signed root element in place.
+
+  Unlike `sign_response/1` (which binds the signature into a contained
+  `<Assertion>`), this signs the document ROOT itself: the input must already
+  carry a `<Signature>` that is a direct child of the root, whose `<SignedInfo>`
+  holds a single `<Reference URI="#rootID">` (matching the root's `ID`) with the
+  enveloped-signature + exc-c14n Transforms and a `<DigestMethod>` but no
+  `<DigestValue>`/`<SignatureValue>` yet.
+
+  This is the signing counterpart to Phase 81's generalized
+  `PureBeam.bind_enveloped_signature/3`, used to mint genuinely signed
+  `LogoutRequest`/`LogoutResponse` and `EntityDescriptor` documents for the
+  adversarial twin. The digest is computed over the canonicalized root with its
+  own enveloped `<Signature>` pruned — byte-identical to what the verifier
+  recomputes.
+
+  Returns `%{xml: signed_xml, cert_chain: [pem]}`.
+  """
+  @spec sign_enveloped(String.t()) :: %{xml: String.t(), cert_chain: [String.t()]}
+  def sign_enveloped(xml) when is_binary(xml) do
+    ensure_not_prod!()
+
+    cert_pem = self_signed_cert_pem()
+
+    # The Reference URI (#rootID) names the signed root; require the signature to
+    # be enveloped there (a direct child of the root node the tree parses to).
+    root_id = reference_assertion_id!(xml)
+    root = parse_tree!(xml)
+
+    unless attr_value(root.attrs, "ID") == root_id and
+             Enum.any?(root.children, &(&1.local == "Signature")) do
+      raise ArgumentError,
+            "XmldsigSigner.sign_enveloped/1: root must carry ID=\"#{root_id}\" and a " <>
+              "direct-child <Signature> (enveloped root signature)"
+    end
+
+    # 1. Genuine DigestValue over the canonicalized root (enveloped Signature
+    #    pruned), via the verifier's canonicalize path.
+    digest_value_b64 = digest_for(root)
+    with_digest = inject_digest_value(xml, digest_value_b64)
+
+    # 2. Genuine SignatureValue over the canonicalized SignedInfo.
+    signed_info_node = find_first_by_local(parse_tree!(with_digest), "SignedInfo")
+    signature_value_b64 = sign_signed_info(signed_info_node)
+    signed_xml = inject_signature_value(with_digest, signature_value_b64)
+
+    %{xml: signed_xml, cert_chain: [cert_pem]}
+  end
+
+  @doc """
   The self-signed certificate PEM (a single-element cert chain) the verifier must
   trust to accept this signer's Responses. Derived from `FakeIdP.keypair()`.
 

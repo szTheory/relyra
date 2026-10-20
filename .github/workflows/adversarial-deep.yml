@@ -1,0 +1,99 @@
+name: adversarial-deep
+
+# Phase 82 deep-run lane for the adversarial twin (PROP-04). This is NOT a
+# merge gate: it is intentionally absent from `ci-gate` in security-gates.yml.
+# It runs the SAME property suite as `mix ci.security` but with a far larger
+# `TWIN_MAX_RUNS` and a printed random seed, so a counterexample the bounded PR
+# lane missed surfaces here. A failure here is triaged into a permanent
+# `trust_binding_test.exs` corpus row (and a `fix(...)` if it exposes real code
+# slack), never silenced.
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+on:
+  schedule:
+    # 06:17 UTC daily — off-peak, deliberately not on the hour.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      max_runs:
+        description: "Property runs per property (TWIN_MAX_RUNS)"
+        required: false
+        default: "5000"
+      seed:
+        description: "ExUnit seed (blank = random, printed in the log)"
+        required: false
+        default: ""
+
+jobs:
+  adversarial-deep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      RELYRA_XML_STRATEGY: pure_beam
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      RELYRA_TEST_DATABASE: relyra_test
+    strategy:
+      fail-fast: false
+      matrix:
+        otp: [27, 28]
+        elixir: ["1.19.5"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup BEAM
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+
+      - name: Install dependencies
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get
+
+      - name: Resolve run parameters
+        id: params
+        run: |
+          max_runs="${{ github.event.inputs.max_runs }}"
+          seed="${{ github.event.inputs.seed }}"
+          [ -z "$max_runs" ] && max_runs=5000
+          [ -z "$seed" ] && seed="$RANDOM$RANDOM"
+          echo "max_runs=$max_runs" >> "$GITHUB_OUTPUT"
+          echo "seed=$seed" >> "$GITHUB_OUTPUT"
+          echo "::notice title=adversarial-deep::TWIN_MAX_RUNS=$max_runs ExUnit seed=$seed OTP=${{ matrix.otp }}"
+
+      - name: Adversarial twin deep run
+        env:
+          TWIN_MAX_RUNS: ${{ steps.params.outputs.max_runs }}
+        run: |
+          echo "Deep adversarial run: TWIN_MAX_RUNS=$TWIN_MAX_RUNS seed=${{ steps.params.outputs.seed }}"
+          mix test test/security/xml/adversarial_property_test.exs \
+            --only adversarial_property \
+            --seed ${{ steps.params.outputs.seed }} \
+            --warnings-as-errors
